@@ -1,17 +1,17 @@
 #![warn(missing_docs)]
 #![warn(missing_doc_code_examples)]
 
-//! [`Modint`] 型を提供します。
+//! [`Mint`] 型を提供します。
 //!
-//! [`Modint`]: struct.Modint.html
+//! [`Mint`]: struct.Mint.html
 
-/// [`Modint`] の中に入れる数値型が実装していないといけないトレイトをまとめました。
+/// [`Mint`] の中に入れる数値型が実装していないといけないトレイトをまとめました。
 ///
 /// どうやら普通の符号付き整数型ならば大丈夫そうですね。
 ///
 /// いかがでしたでしょうか？（真顔）
 ///
-/// [`Modint`]: struct.Modint.html
+/// [`Mint`]: struct.Mint.html
 pub trait ModValue:
     std::ops::Add<Output = Self>
     + std::ops::Sub<Output = Self>
@@ -55,10 +55,10 @@ impl<
 {
 }
 
-/// [`Modint`] の型引数になるために実装すべきトレイトです。
+/// mod に関数情報を [`Mint`] に伝えるための型引数だッピ！
 ///
-/// [`Modint`]: struct.Modint.html
-pub trait ModInfo {
+/// [`Mint`]: struct.Mint.html
+pub trait Minfo: Clone + Copy + std::fmt::Debug {
     /// 中身の型です。
     type Value: ModValue;
 
@@ -74,16 +74,16 @@ pub trait ModInfo {
 
 /// 自動で mod を取ってくれる整数型です。
 ///
-/// 型引数は、トレイト [`ModInfo`] を実装している必要があります。
+/// 型引数は、トレイト [`Minfo`] を実装している必要があります。
 ///
 /// # Examples
 ///
-/// [`from_value`] によって、`Modint<Mod>` が作れます。
+/// [`from_value`] によって、`Mint<Mod>` が作れます。
 /// 逆に、[`value`] によって、中身がとれます。
 ///
 /// ```
-/// use modint::Mint100000007;
-/// type Mint = Mint100000007;
+/// use modint::Mint1000000007;
+/// type Mint = Mint1000000007;
 ///
 /// let x: Mint = Mint::from_value(2);
 ///
@@ -93,8 +93,8 @@ pub trait ModInfo {
 /// 四則演算ができます。
 ///
 /// ```
-/// use modint::Mint100000007;
-/// type Mint = Mint100000007;
+/// use modint::Mint1000000007;
+/// type Mint = Mint1000000007;
 ///
 /// let x: Mint = Mint::from_value(6);
 /// let y: Mint = Mint::from_value(2);
@@ -108,8 +108,8 @@ pub trait ModInfo {
 /// [`pow`] もあります。
 ///
 /// ```
-/// use modint::Mint100000007;
-/// type Mint = Mint100000007;
+/// use modint::Mint1000000007;
+/// type Mint = Mint1000000007;
 ///
 /// let x: Mint = Mint::from_value(6);
 /// assert_eq!(x.pow(3).value(), 216);
@@ -118,11 +118,12 @@ pub trait ModInfo {
 /// [`value`]: #method.value
 /// [`from_value`]: #method.from_value
 /// [`pow`]: #method.pow
+/// [`Minfo`]:trait.Minfo.html
 
 #[derive(Clone, Copy, Debug)]
-pub struct Modint<Mod: ModInfo>(Mod::Value);
+pub struct Mint<Mod: Minfo>(Mod::Value);
 
-impl<Mod: ModInfo> Modint<Mod> {
+impl<Mod: Minfo> Mint<Mod> {
     #[inline]
     #[allow(dead_code)]
     fn is_within_the_range(x: Mod::Value) -> bool {
@@ -145,42 +146,114 @@ impl<Mod: ModInfo> Modint<Mod> {
     }
 
     /// 0 を構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::zero();
+    /// assert_eq!(x.value(), 0);
+    /// ```
     #[allow(dead_code)]
     pub fn zero() -> Self {
         Self(Mod::zero())
     }
 
     /// 1 を構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::one();
+    /// assert_eq!(x.value(), 1);
+    /// ```
     #[allow(dead_code)]
     pub fn one() -> Self {
         Self(Mod::one())
     }
 
-    /// mod の値を取得します。
+    /// mod を取得します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::modulus();
+    /// assert_eq!(x, 998244353);
+    /// ```
     #[allow(dead_code)]
     pub fn modulus() -> Mod::Value {
         Mod::modulus()
     }
 
     /// 0 であるときに `true` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::zero();
+    /// assert!(x.is_zero());
+    ///
+    /// let x = Mint::one();
+    /// assert!(!x.is_zero());
+    /// ```
     #[allow(dead_code)]
     pub fn is_zero(&self) -> bool {
         self.value() == Mod::zero()
     }
 
     /// 構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::from_value(4);
+    /// ```
     #[allow(dead_code)]
     pub fn from_value(x: Mod::Value) -> Self {
         Self(Self::normalize(x))
     }
 
-    /// 中身の値を取得します。
+    /// 中身を取得します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::from_value(4);
+    /// assert_eq!(x.value(), 4);
+    /// ```
     #[allow(dead_code)]
     pub fn value(&self) -> Mod::Value {
         self.0
     }
 
     /// mod 逆元を計算します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::Mint998244353;
+    /// type Mint = Mint998244353;
+    ///
+    /// let x = Mint::from_value(2);
+    /// assert_eq!(x.inv().value(), 499122177);
+    /// ```
     #[allow(dead_code)]
     pub fn inv(&self) -> Self {
         if self.is_zero() {
@@ -190,6 +263,19 @@ impl<Mod: ModInfo> Modint<Mod> {
     }
 
     /// ユークリッドの互除法を用いて、pow を計算します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let x = Mint17::from_value(2);
+    /// assert_eq!(x.pow(6).value(), 64 % 17);
+    /// ```
     #[allow(dead_code)]
     pub fn pow(&self, b: u64) -> Self {
         Self(Self::raw_pow(self.value(), b))
@@ -269,19 +355,19 @@ macro_rules! impl_biop {
         )*
     ) => {
         $(
-            impl<Mod: ModInfo> std::ops::$biop_trait for Modint<Mod> {
+            impl<Mod: Minfo> std::ops::$biop_trait for Mint<Mod> {
                 type Output = Self;
                 fn $biop_fn(self, rhs: Self) -> Self::Output {
-                    Modint(Self::$biop_impl(self.value(), rhs.value()))
+                    Mint(Self::$biop_impl(self.value(), rhs.value()))
                 }
             }
-            impl<Mod: ModInfo> std::ops::$biop_assign_trait for Modint<Mod>
+            impl<Mod: Minfo> std::ops::$biop_assign_trait for Mint<Mod>
             where
                 Self: Copy
             {
                 fn $biop_assign_fn(&mut self, rhs: Self) {
                     use std::ops::$biop_trait;
-                    *self = Modint::$biop_fn(*self, rhs)
+                    *self = Mint::$biop_fn(*self, rhs)
                 }
             }
         )*
@@ -295,44 +381,243 @@ impl_biop! {
     Div::div, DivAssign::div_assign, raw_div;
 }
 
-impl<Mod: ModInfo> std::ops::Neg for Modint<Mod> {
+impl<Mod: Minfo> std::ops::Neg for Mint<Mod> {
     type Output = Self;
     fn neg(self) -> Self::Output {
         Self(Self::raw_neg(self.value()))
     }
 }
 
-impl<Mod: ModInfo> std::fmt::Display for Modint<Mod> {
+impl<Mod: Minfo> std::cmp::PartialEq for Mint<Mod> {
+    fn eq(&self, other: &Self) -> bool {
+        self.value().eq(&other.value())
+    }
+
+    fn ne(&self, other: &Self) -> bool {
+        self.value().ne(&other.value())
+    }
+}
+impl<Mod: Minfo> std::cmp::Eq for Mint<Mod> {}
+
+impl<Mod: Minfo> std::fmt::Display for Mint<Mod> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value())
     }
 }
+/// 階乗とその逆元を前計算するマシーンです。
+pub struct Factorial<Mod: Minfo> {
+    normal: Vec<Mint<Mod>>,
+    inverted: Vec<Mint<Mod>>,
+}
 
-/// Modint 型を定義するためのマクロです。
+impl<Mod: Minfo> Factorial<Mod>
+where
+    Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
+{
+    /// サイズを指定して初期化です。
+    /// 最大値は一つ小さくなりますから、注意です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, Factorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    /// let fact = Factorial::<Minfo17>::new(16);
+    /// ```
+    pub fn new(n: usize) -> Self {
+        use std::convert::TryFrom;
+        let mut normal = vec![Mint::one(); n];
+        for i in 1..n {
+            normal[i] = normal[i - 1] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+        }
+        let mut inverted = vec![Mint::one(); n];
+        inverted[n - 1] = normal[n - 1].inv();
+        for i in (1..n).rev() {
+            inverted[i - 1] = inverted[i] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+        }
+        Self { normal, inverted }
+    }
+}
+
+impl<Mod: Minfo> Factorial<Mod> {
+    /// 階乗の逆元を取得します。
+    ///
+    /// 逆元でなくて普通の階乗は、[`implementations`] をご覧いただけると幸いです。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, Factorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = Factorial::<Minfo17>::new(17);
+    ///
+    /// for i in 0..17 {
+    ///     assert_eq!(fact[i] * fact.inverted(i), Mint17::one());
+    /// }
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn inverted(&self, i: usize) -> Mint<Mod> {
+        self.inverted[i]
+    }
+}
+
+impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I> for Factorial<Mod> {
+    type Output = I::Output;
+
+    /// Index でも取ることができます。
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, Factorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = Factorial::<Minfo17>::new(17);
+    ///
+    /// assert_eq!(fact[0], Mint17::from_value(1));
+    /// assert_eq!(fact[1], Mint17::from_value(1));
+    /// assert_eq!(fact[2], Mint17::from_value(2));
+    /// assert_eq!(fact[3], Mint17::from_value(6));
+    /// assert_eq!(fact[4], Mint17::from_value(24 % 17));
+    /// assert_eq!(fact[5], Mint17::from_value(120 % 17));
+    /// ```
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.normal[index]
+    }
+}
+
+/// 二重階乗とその逆元を前計算するマシーンです。
+pub struct DoubleFactorial<Mod: Minfo> {
+    normal: Vec<Mint<Mod>>,
+    inverted: Vec<Mint<Mod>>,
+}
+
+impl<Mod: Minfo> DoubleFactorial<Mod>
+where
+    Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
+{
+    /// サイズを指定して初期化です。
+    /// 最大値は一つ小さくなりますから、注意です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, DoubleFactorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    /// let fact = DoubleFactorial::<Minfo17>::new(16);
+    /// ```
+    pub fn new(n: usize) -> Self {
+        use std::convert::TryFrom;
+        let mut normal = vec![Mint::one(); n];
+        for i in 2..n {
+            normal[i] = normal[i - 2] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+        }
+        let mut inverted = vec![Mint::one(); n];
+        inverted[n - 1] = normal[n - 1].inv();
+        inverted[n - 2] = normal[n - 2].inv();
+        for i in (2..n).rev() {
+            inverted[i - 2] = inverted[i] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+        }
+        Self { normal, inverted }
+    }
+}
+
+impl<Mod: Minfo> DoubleFactorial<Mod> {
+    /// 二重階乗の逆元を取得します。
+    ///
+    /// 逆元でなくて普通の二重階乗は、[`implementations`] をご覧いただけると幸いです。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, DoubleFactorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = DoubleFactorial::<Minfo17>::new(17);
+    ///
+    /// for i in 0..17 {
+    ///     assert_eq!(fact[i] * fact.inverted(i), Mint17::one());
+    /// }
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn inverted(&self, i: usize) -> Mint<Mod> {
+        self.inverted[i]
+    }
+}
+
+impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I>
+    for DoubleFactorial<Mod>
+{
+    type Output = I::Output;
+
+    /// Index でも取ることができます。
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, DoubleFactorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = DoubleFactorial::<Minfo17>::new(17);
+    ///
+    /// assert_eq!(fact[0], Mint17::from_value(1));
+    /// assert_eq!(fact[1], Mint17::from_value(1));
+    /// assert_eq!(fact[2], Mint17::from_value(2));
+    /// assert_eq!(fact[3], Mint17::from_value(3));
+    /// assert_eq!(fact[4], Mint17::from_value(8));
+    /// assert_eq!(fact[5], Mint17::from_value(15));
+    /// ```
+    #[inline]
+    fn index(&self, index: I) -> &Self::Output {
+        &self.normal[index]
+    }
+}
+
+/// Mint 型を定義するためのマクロです。
 ///
 /// # Examples
 ///
 /// ```
-/// use modint::{define_modint, ModInfo, Modint};
+/// use modint::{define_mint, Minfo, Mint};
 ///
-/// define_modint! {
-///     struct Mint(Minfo(1_000_000_007; i64));
+/// define_mint! {
+///     struct Mint17(Minfo17(17; i64));
 /// }
 ///
-/// let x = Mint::from_value(1);
-/// let y = Mint::from_value(2);
+/// let x = Mint17::from_value(1);
+/// let y = Mint17::from_value(2);
 /// let z = x / y;
-/// assert_eq!(z.value(), 500_000_004);
+/// assert_eq!(z.value(), 9);
 /// ```
 #[macro_export]
-macro_rules! define_modint {
+macro_rules! define_mint {
     (
         struct $modint: ident ($modinfo: ident ($modvalue: expr; $modty: ty));
     ) => {
         #[allow(dead_code)]
         #[derive(Clone, Copy, Debug)]
         pub struct $modinfo {}
-        impl ModInfo for $modinfo {
+        impl Minfo for $modinfo {
             type Value = $modty;
             fn modulus() -> Self::Value {
                 $modvalue
@@ -344,16 +629,16 @@ macro_rules! define_modint {
                 1
             }
         }
-        type $modint = Modint<$modinfo>;
+        type $modint = Mint<$modinfo>;
     };
 }
 
-/// Mod = 1000000007 なる ModInfo です。
+/// Mod = 1000000007 なる Minfo です。
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
-pub struct Mod100000007 {}
+pub struct Minfo1000000007 {}
 
-impl ModInfo for Mod100000007 {
+impl Minfo for Minfo1000000007 {
     type Value = i64;
     fn modulus() -> Self::Value {
         1000000007
@@ -366,15 +651,16 @@ impl ModInfo for Mod100000007 {
     }
 }
 
-/// Mod = 1000000007 なる Modint です。
-pub type Mint100000007 = Modint<Mod100000007>;
+/// Mod = 1000000007 なる Mint です。
+#[allow(dead_code)]
+pub type Mint1000000007 = Mint<Minfo1000000007>;
 
-/// Mod = 998244353 なる ModInfo です。
+/// Mod = 998244353 なる Minfo です。
 #[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
-pub struct Mod998244353 {}
+pub struct Minfo998244353 {}
 
-impl ModInfo for Mod998244353 {
+impl Minfo for Minfo998244353 {
     type Value = i64;
     fn modulus() -> Self::Value {
         998244353
@@ -387,15 +673,16 @@ impl ModInfo for Mod998244353 {
     }
 }
 
-/// Mod = 998244353 なる Modint です。
-pub type Mint998244353 = Modint<Mod998244353>;
+/// Mod = 998244353 なる Mint です。
+#[allow(dead_code)]
+pub type Mint998244353 = Mint<Minfo998244353>;
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    define_modint! {
-        struct Mint17(Modinfo17(17; i64));
+    define_mint! {
+        struct Mint17(Minfo17(17; i16));
     }
 
     #[test]
