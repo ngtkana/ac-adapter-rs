@@ -105,19 +105,8 @@ pub trait Minfo: Clone + Copy + std::fmt::Debug {
 /// assert_eq!((x / y).value(), 3);
 /// ```
 ///
-/// [`pow`] もあります。
-///
-/// ```
-/// use modint::Mint1000000007;
-/// type Mint = Mint1000000007;
-///
-/// let x: Mint = Mint::from_value(6);
-/// assert_eq!(x.pow(3).value(), 216);
-/// ```
-///
 /// [`value`]: #method.value
 /// [`from_value`]: #method.from_value
-/// [`pow`]: #method.pow
 /// [`Minfo`]:trait.Minfo.html
 
 #[derive(Clone, Copy, Debug)]
@@ -315,6 +304,7 @@ impl<Mod: Minfo> Mint<Mod> {
         Self::raw_mul(x, Self::raw_inv(y))
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn raw_inv(mut x: Mod::Value) -> Mod::Value {
         let mut y = Mod::modulus();
         let mut u = Mod::one();
@@ -389,27 +379,112 @@ impl<Mod: Minfo> std::ops::Neg for Mint<Mod> {
 }
 
 impl<Mod: Minfo> std::cmp::PartialEq for Mint<Mod> {
+    /// 中身をそのまま 比較です。
+    /// 構築時に normalize され、それ以降も normalized な状態に保たれますから、
+    /// 結局あまりを比較しているのと同じことになります。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// assert_eq!(Mint17::from_value(3), Mint::from_value(-31));
+    /// assert_eq!(Mint17::from_value(3), Mint::from_value(-14));
+    /// assert_eq!(Mint17::from_value(3), Mint::from_value(3));
+    /// assert_eq!(Mint17::from_value(3), Mint::from_value(20));
+    /// assert_eq!(Mint17::from_value(3), Mint::from_value(37));
+    ///
+    /// assert_ne!(Mint17::from_value(3), Mint::from_value(31));
+    /// assert_ne!(Mint17::from_value(3), Mint::from_value(14));
+    /// assert_ne!(Mint17::from_value(3), Mint::from_value(-3));
+    /// assert_ne!(Mint17::from_value(3), Mint::from_value(-20));
+    /// assert_ne!(Mint17::from_value(3), Mint::from_value(-37));
+    /// ```
     fn eq(&self, other: &Self) -> bool {
         self.value().eq(&other.value())
-    }
-
-    fn ne(&self, other: &Self) -> bool {
-        self.value().ne(&other.value())
     }
 }
 impl<Mod: Minfo> std::cmp::Eq for Mint<Mod> {}
 
 impl<Mod: Minfo> std::fmt::Display for Mint<Mod> {
+    /// 中身をそのまま Display です。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// println!("{}", modint::Mint998244353::from_value(42));
+    /// ```
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.value())
     }
 }
+
+impl<Mod: Minfo> std::iter::Sum<Self> for Mint<Mod> {
+    /// 総和を取ります。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use modint::{define_mint, Minfo, Mint};
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    /// assert_eq!(
+    ///     vec![
+    ///         Mint17::from_value(2),
+    ///         Mint17::from_value(4),
+    ///         Mint17::from_value(6),
+    ///         Mint17::from_value(8),
+    ///     ]
+    ///     .into_iter()
+    ///     .sum::<Mint17>(),
+    ///     Mint17::from_value(3)
+    /// );
+    /// ```
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Mint::zero(), |acc, x| acc + x)
+    }
+}
+
+impl<Mod: Minfo> std::iter::Product<Self> for Mint<Mod> {
+    /// 総積を取ります。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use modint::{define_mint, Minfo, Mint};
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    /// assert_eq!(
+    ///     vec![
+    ///         Mint17::from_value(1),
+    ///         Mint17::from_value(2),
+    ///         Mint17::from_value(3),
+    ///         Mint17::from_value(4),
+    ///     ]
+    ///     .into_iter()
+    ///     .product::<Mint17>(),
+    ///     Mint17::from_value(7)
+    /// );
+    /// ```
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Mint::one(), |acc, x| acc * x)
+    }
+}
+
 /// 階乗とその逆元を前計算するマシーンです。
+#[allow(dead_code)]
 pub struct Factorial<Mod: Minfo> {
     normal: Vec<Mint<Mod>>,
     inverted: Vec<Mint<Mod>>,
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo> Factorial<Mod>
 where
     Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
@@ -442,6 +517,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo> Factorial<Mod> {
     /// 階乗の逆元を取得します。
     ///
@@ -470,6 +546,7 @@ impl<Mod: Minfo> Factorial<Mod> {
     }
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I> for Factorial<Mod> {
     type Output = I::Output;
 
@@ -498,11 +575,13 @@ impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I> for 
 }
 
 /// 二重階乗とその逆元を前計算するマシーンです。
+#[allow(dead_code)]
 pub struct DoubleFactorial<Mod: Minfo> {
     normal: Vec<Mint<Mod>>,
     inverted: Vec<Mint<Mod>>,
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo> DoubleFactorial<Mod>
 where
     Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
@@ -536,6 +615,7 @@ where
     }
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo> DoubleFactorial<Mod> {
     /// 二重階乗の逆元を取得します。
     ///
@@ -564,6 +644,7 @@ impl<Mod: Minfo> DoubleFactorial<Mod> {
     }
 }
 
+#[allow(dead_code)]
 impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I>
     for DoubleFactorial<Mod>
 {
@@ -641,7 +722,7 @@ pub struct Minfo1000000007 {}
 impl Minfo for Minfo1000000007 {
     type Value = i64;
     fn modulus() -> Self::Value {
-        1000000007
+        1_000_000_007
     }
     fn zero() -> Self::Value {
         0
@@ -663,7 +744,7 @@ pub struct Minfo998244353 {}
 impl Minfo for Minfo998244353 {
     type Value = i64;
     fn modulus() -> Self::Value {
-        998244353
+        998_244_353
     }
     fn zero() -> Self::Value {
         0
