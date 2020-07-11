@@ -316,11 +316,7 @@ impl<Mod: Minfo> Mint<Mod> {
             std::mem::swap(&mut x, &mut y);
             std::mem::swap(&mut u, &mut v);
         }
-        if v < Mod::zero() {
-            v + Mod::modulus()
-        } else {
-            v
-        }
+        Self::normalize(v)
     }
 
     fn raw_pow(mut a: Mod::Value, mut b: u64) -> Mod::Value {
