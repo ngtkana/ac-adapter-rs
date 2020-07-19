@@ -1,6 +1,7 @@
 [workspace]
 
 members = [
+    "ordtools",
     "modint",
     "segtree",
     "union-find"
