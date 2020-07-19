@@ -499,22 +499,59 @@ where
     /// let fact = Factorial::<Minfo17>::new(16);
     /// ```
     pub fn new(n: usize) -> Self {
-        use std::convert::TryFrom;
-        let mut normal = vec![Mint::one(); n];
-        for i in 1..n {
-            normal[i] = normal[i - 1] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+        if n == 0 {
+            Self {
+                normal: Vec::new(),
+                inverted: Vec::new(),
+            }
+        } else {
+            use std::convert::TryFrom;
+            let mut normal = vec![Mint::one(); n];
+            for i in 1..n {
+                normal[i] = normal[i - 1] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+            }
+            let mut inverted = vec![Mint::one(); n];
+            inverted[n - 1] = normal[n - 1].inv();
+            for i in (1..n).rev() {
+                inverted[i - 1] = inverted[i] * Mint::from_value(Mod::Value::try_from(i).unwrap());
+            }
+            Self { normal, inverted }
         }
-        let mut inverted = vec![Mint::one(); n];
-        inverted[n - 1] = normal[n - 1].inv();
-        for i in (1..n).rev() {
-            inverted[i - 1] = inverted[i] * Mint::from_value(Mod::Value::try_from(i).unwrap());
-        }
-        Self { normal, inverted }
     }
 }
 
 #[allow(dead_code)]
 impl<Mod: Minfo> Factorial<Mod> {
+    /// 空かどうかを判定です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert!( modint::Factorial::<modint::Minfo998244353>::new(0).is_empty());
+    /// assert!(!modint::Factorial::<modint::Minfo998244353>::new(4).is_empty());
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn is_empty(&self) -> bool {
+        self.normal.is_empty()
+    }
+
+    /// サイズを取得です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// assert_eq!(modint::Factorial::<modint::Minfo998244353>::new(0).len(), 0);
+    /// assert_eq!(modint::Factorial::<modint::Minfo998244353>::new(4).len(), 4);
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn len(&self) -> usize {
+        self.normal.len()
+    }
+
     /// 階乗の逆元を取得します。
     ///
     /// 逆元でなくて普通の階乗は、[`implementations`] をご覧いただけると幸いです。
@@ -539,6 +576,107 @@ impl<Mod: Minfo> Factorial<Mod> {
     ///
     pub fn inverted(&self, i: usize) -> Mint<Mod> {
         self.inverted[i]
+    }
+
+    /// 下方階乗を取得です。
+    ///
+    /// - 第二引数が 0 のときには 1 です。
+    /// - 第二引数のほうが大きいときには（範囲外であっても）常に 0 です。
+    /// - そうでなく、第一引数が範囲外のときにはパニックします。
+    ///
+    /// # Panics
+    ///
+    /// 第一引数が第二引数以上、第二引数が 1 でなく、かつ範囲外のときにはパニックします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, Factorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = Factorial::<Minfo17>::new(17);
+    ///
+    /// // 第二引数が 0 のときには 1 を返します。
+    /// assert_eq!(fact.falling(0, 0), Mint17::from_value(1));
+    /// assert_eq!(fact.falling(1, 0), Mint17::from_value(1));
+    /// assert_eq!(fact.falling(2, 0), Mint17::from_value(1));
+    ///
+    /// // 第二引数が第一引数よりも大きいときには 0 を返します。
+    /// assert_eq!(fact.falling(0, 1), Mint17::from_value(0));
+    /// assert_eq!(fact.falling(1, 2), Mint17::from_value(0));
+    /// assert_eq!(fact.falling(2, 3), Mint17::from_value(0));
+    ///
+    /// // そうでないときです。
+    /// assert_eq!(fact.falling(1, 1), Mint17::from_value(1));
+    /// assert_eq!(fact.falling(2, 1), Mint17::from_value(2));
+    /// assert_eq!(fact.falling(2, 2), Mint17::from_value(2));
+    /// assert_eq!(fact.falling(3, 1), Mint17::from_value(3));
+    /// assert_eq!(fact.falling(3, 2), Mint17::from_value(6));
+    /// assert_eq!(fact.falling(3, 3), Mint17::from_value(6));
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn falling(&self, x: usize, p: usize) -> Mint<Mod> {
+        if p == 0 {
+            Mint::one()
+        } else if x < p {
+            Mint::zero()
+        } else {
+            assert!(x < self.len());
+            self[x] * self.inverted(x - p)
+        }
+    }
+
+    /// 二項係数を計算します。
+    ///
+    /// - 第二引数のほうが大きいときには（範囲外であっても）常に 0 です。
+    /// - そうでなく、第一引数が範囲外のときにはパニックします。
+    ///
+    /// # Panics
+    ///
+    /// 第一引数が第二引数以上であり、かつ範囲外のときにはパニックします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use modint::{define_mint, Mint, Minfo, Factorial};
+    ///
+    /// define_mint! {
+    ///     struct Mint17(Minfo17(17; i16));
+    /// }
+    ///
+    /// let fact = Factorial::<Minfo17>::new(17);
+    ///
+    /// // 第二引数が第一引数よりも大きいときには 0 を返します。
+    /// assert_eq!(fact.binom(0, 1), Mint17::from_value(0));
+    /// assert_eq!(fact.binom(1, 2), Mint17::from_value(0));
+    /// assert_eq!(fact.binom(2, 3), Mint17::from_value(0));
+    ///
+    /// // そうでないときです。
+    /// assert_eq!(fact.binom(1, 0), Mint17::from_value(1));
+    /// assert_eq!(fact.binom(1, 1), Mint17::from_value(1));
+    /// assert_eq!(fact.binom(2, 0), Mint17::from_value(1));
+    /// assert_eq!(fact.binom(2, 1), Mint17::from_value(2));
+    /// assert_eq!(fact.binom(2, 2), Mint17::from_value(1));
+    /// assert_eq!(fact.binom(3, 0), Mint17::from_value(1));
+    /// assert_eq!(fact.binom(3, 1), Mint17::from_value(3));
+    /// assert_eq!(fact.binom(3, 2), Mint17::from_value(3));
+    /// assert_eq!(fact.binom(3, 3), Mint17::from_value(1));
+    /// ```
+    ///
+    /// [`implementations`]: #implementations
+    ///
+    pub fn binom(&self, n: usize, k: usize) -> Mint<Mod> {
+        if n < k {
+            Mint::zero()
+        } else {
+            assert!(n < self.len());
+            self[n] * self.inverted(k) * self.inverted(n - k)
+        }
     }
 }
 
