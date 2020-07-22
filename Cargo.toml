@@ -4,5 +4,6 @@ members = [
     "ordtools",
     "modint",
     "segtree",
-    "union-find"
+    "union-find",
+    "slicetools"
 ]

@@ -1,0 +1,57 @@
+#![warn(missing_docs)]
+#![warn(missing_doc_code_examples)]
+
+//! slice の機能を増やします。
+
+/// `[partition_point]` を実装します。
+/// `[partition_point]`: trait.Partitioned#method.partition_point.html
+pub trait Partitioned {
+    /// slice `[T]` ならば `T` のことです。
+    type Item;
+
+    /// `f(&self[i])` が `true` となる最小の `i` を返します。
+    /// 存在しない場合は `self.len()` を返します。
+    ///
+    /// # Example
+    /// ```
+    /// use slicetools::Partitioned;
+    /// let seq = [3, 4, 6, 6, 7];
+    /// assert_eq!(
+    ///     seq.partition_point(|&x| 5 <= x),
+    ///     2
+    /// );
+    /// ```
+    fn partition_point(&self, f: impl Fn(&Self::Item) -> bool) -> usize;
+}
+
+impl<T: PartialOrd> Partitioned for [T] {
+    type Item = T;
+    fn partition_point(&self, f: impl Fn(&Self::Item) -> bool) -> usize {
+        if f(&self[0]) {
+            0
+        } else {
+            let mut l = 0;
+            let mut r = self.len();
+            while 1 < r - l {
+                let c = l + (r - l) / 2;
+                match f(&self[c]) {
+                    false => {
+                        l = c;
+                    }
+                    true => {
+                        r = c;
+                    }
+                }
+            }
+            r
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    #[test]
+    fn it_works() {
+        assert_eq!(2 + 2, 4);
+    }
+}
