@@ -114,13 +114,11 @@ pub struct Mint<Mod: Minfo>(Mod::Value);
 
 impl<Mod: Minfo> Mint<Mod> {
     #[inline]
-    #[allow(dead_code)]
     fn is_within_the_range(x: Mod::Value) -> bool {
         Mod::zero() <= x && x < Mod::modulus()
     }
 
     #[inline]
-    #[allow(dead_code)]
     fn normalize(x: Mod::Value) -> Mod::Value {
         if Self::is_within_the_range(x) {
             x
@@ -145,7 +143,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::zero();
     /// assert_eq!(x.value(), 0);
     /// ```
-    #[allow(dead_code)]
     pub fn zero() -> Self {
         Self(Mod::zero())
     }
@@ -161,7 +158,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::one();
     /// assert_eq!(x.value(), 1);
     /// ```
-    #[allow(dead_code)]
     pub fn one() -> Self {
         Self(Mod::one())
     }
@@ -177,7 +173,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::modulus();
     /// assert_eq!(x, 998244353);
     /// ```
-    #[allow(dead_code)]
     pub fn modulus() -> Mod::Value {
         Mod::modulus()
     }
@@ -196,7 +191,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::one();
     /// assert!(!x.is_zero());
     /// ```
-    #[allow(dead_code)]
     pub fn is_zero(&self) -> bool {
         self.value() == Mod::zero()
     }
@@ -211,7 +205,6 @@ impl<Mod: Minfo> Mint<Mod> {
     ///
     /// let x = Mint::from_value(4);
     /// ```
-    #[allow(dead_code)]
     pub fn from_value(x: Mod::Value) -> Self {
         Self(Self::normalize(x))
     }
@@ -227,7 +220,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::from_value(4);
     /// assert_eq!(x.value(), 4);
     /// ```
-    #[allow(dead_code)]
     pub fn value(&self) -> Mod::Value {
         self.0
     }
@@ -243,7 +235,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint::from_value(2);
     /// assert_eq!(x.inv().value(), 499122177);
     /// ```
-    #[allow(dead_code)]
     pub fn inv(&self) -> Self {
         if self.is_zero() {
             panic!("inv(0)");
@@ -265,7 +256,6 @@ impl<Mod: Minfo> Mint<Mod> {
     /// let x = Mint17::from_value(2);
     /// assert_eq!(x.pow(6).value(), 64 % 17);
     /// ```
-    #[allow(dead_code)]
     pub fn pow(&self, b: u64) -> Self {
         Self(Self::raw_pow(self.value(), b))
     }
@@ -474,13 +464,11 @@ impl<Mod: Minfo> std::iter::Product<Self> for Mint<Mod> {
 }
 
 /// 階乗とその逆元を前計算するマシーンです。
-#[allow(dead_code)]
 pub struct Factorial<Mod: Minfo> {
     normal: Vec<Mint<Mod>>,
     inverted: Vec<Mint<Mod>>,
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo> Factorial<Mod>
 where
     Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
@@ -520,7 +508,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo> Factorial<Mod> {
     /// 空かどうかを判定です。
     ///
@@ -680,7 +667,6 @@ impl<Mod: Minfo> Factorial<Mod> {
     }
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I> for Factorial<Mod> {
     type Output = I::Output;
 
@@ -709,13 +695,11 @@ impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I> for 
 }
 
 /// 二重階乗とその逆元を前計算するマシーンです。
-#[allow(dead_code)]
 pub struct DoubleFactorial<Mod: Minfo> {
     normal: Vec<Mint<Mod>>,
     inverted: Vec<Mint<Mod>>,
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo> DoubleFactorial<Mod>
 where
     Mod::Value: std::convert::TryFrom<usize, Error = std::num::TryFromIntError>,
@@ -749,7 +733,6 @@ where
     }
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo> DoubleFactorial<Mod> {
     /// 二重階乗の逆元を取得します。
     ///
@@ -778,7 +761,6 @@ impl<Mod: Minfo> DoubleFactorial<Mod> {
     }
 }
 
-#[allow(dead_code)]
 impl<Mod: Minfo, I: std::slice::SliceIndex<[Mint<Mod>]>> std::ops::Index<I>
     for DoubleFactorial<Mod>
 {
@@ -829,7 +811,6 @@ macro_rules! define_mint {
     (
         struct $modint: ident ($modinfo: ident ($modvalue: expr; $modty: ty));
     ) => {
-        #[allow(dead_code)]
         #[derive(Clone, Copy, Debug)]
         pub struct $modinfo {}
         impl Minfo for $modinfo {
@@ -849,7 +830,6 @@ macro_rules! define_mint {
 }
 
 /// Mod = 1000000007 なる Minfo です。
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct Minfo1000000007 {}
 
@@ -867,11 +847,9 @@ impl Minfo for Minfo1000000007 {
 }
 
 /// Mod = 1000000007 なる Mint です。
-#[allow(dead_code)]
 pub type Mint1000000007 = Mint<Minfo1000000007>;
 
 /// Mod = 998244353 なる Minfo です。
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 pub struct Minfo998244353 {}
 
@@ -889,7 +867,6 @@ impl Minfo for Minfo998244353 {
 }
 
 /// Mod = 998244353 なる Mint です。
-#[allow(dead_code)]
 pub type Mint998244353 = Mint<Minfo998244353>;
 
 #[cfg(test)]

@@ -3,7 +3,6 @@
 
 //! union-find です。
 
-#[allow(dead_code)]
 #[derive(Clone, Copy, Debug)]
 enum ParentOrSize {
     Parent(usize),
@@ -11,11 +10,9 @@ enum ParentOrSize {
 }
 
 /// union-find です。
-#[allow(dead_code)]
 #[derive(Clone, Debug)]
 pub struct UnionFind(Vec<ParentOrSize>);
 
-#[allow(dead_code)]
 impl UnionFind {
     /// 構築です。
     ///
