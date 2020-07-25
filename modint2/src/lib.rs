@@ -21,7 +21,7 @@
 //! use modint2::{Mint998244353, mint};
 //! type Mint = modint2::Mint998244353;
 //! let x = Mint::from_i64(6);  // from_i64 メソッドによる構築です。
-//! let y: Mint = 3.into();           // From トレイトによる構築です。
+//! let y: Mint = 3.into();     // From トレイトによる構築です。
 //! let z = mint!(2);           // マクロによる構築です。ここでは Mint998244353 が構築されます。
 //!
 //! // 四則演算ができます。
@@ -100,6 +100,22 @@
 //! assert_eq!(fact.binom(8, 3), mint!(56));            // 二項係数です。
 //! ```
 //!
+//! # formatting
+//!
+//! [`Debug`] と [`Display`] を実装しています。
+//!
+//! [`Debug`] は、ありそうな有理数をサジェストしてくれます。
+//!
+//! ```
+//! use modint2::{from_frac, Mint998244353};
+//! type Mint = Mint998244353;
+//! let num = 5;
+//! let den = 12;
+//! let x = from_frac!(num, den);
+//! assert_eq!(format!("{:?}", x), format!("Mint(\"{}/{}\")", num, den),);
+//! ```
+//!
+//!
 //! # sum / product
 //!
 //! [`Sum`] と [`Product`] も実装済みです。
@@ -112,29 +128,32 @@
 //! ```
 //!
 //!
-//! [`Mint998244353`]: struct.Mint998244353.html
-//! [`Mint100000007`]: struct.Mint100000007.html
+//! [`Mint998244353`]: type.Mint998244353.html
+//! [`Mint100000007`]: type.Mint100000007.html
+//!
 //! [`Factorial`]: macro.Factorial.html
 //! [`mint`]: macro.mint.html
 //! [`from_frac`]: macro.from_frac.html
 //! [`from_pow`]: macro.from_pow.html
+//!
 //! [`pow`]: struct.Mint.html#method.pow
 //! [`from_i64`]: struct.Mint.html#method.from_i64
 //! [`Mint::from_frac`]: struct.Mint.html#method.from_frac
 //! [`Mint::from_pow`]: struct.Mint.html#method.from_pow
 //!
+//! [`From`]: struct.Mint.html#impl-From<i64>
+//! [`Debug`]: struct.Mint.html#impl-Debug
+//! [`Display`]: struct.Mint.html#impl-Display
+//! [`Eq`]: struct.Mint.html#impl-Eq
+//! [`Ord`]: struct.Mint.html#impl-Ord
+//! [`Sum`]: struct.Mint.html#impl-Sum<Mint<Mod>>
+//! [`Product`]: struct.Mint.html#impl-Product<Mint<Mod>>
+//! [`neg`]: struct.Mint.html#impl-Neg
+//!
 //! [`i64`]: https://doc.rust-lang.org/stable/std/primitive.i64.html
 //! [`ops`]: https://doc.rust-lang.org/stable/std/ops/
 //! [`cmp`]: https://doc.rust-lang.org/stable/std/cmp/
 //! [`fmt`]: https://doc.rust-lang.org/stable/std/fmt/
-//! [`neg`]: https://doc.rust-lang.org/stable/std/ops/trait.Neg.html#tymethod.neg
-//! [`From`]: https://doc.rust-lang.org/stable/std/convert/trait.From.html
-//! [`Debug`]: https://doc.rust-lang.org/stable/std/fmt/trait.Debug.html
-//! [`Display`]: https://doc.rust-lang.org/stable/std/fmt/trait.Display.html
-//! [`Eq`]: https://doc.rust-lang.org/stable/std/cmp/trait.Eq.html
-//! [`Ord`]: https://doc.rust-lang.org/stable/std/cmp/trait.Ord.html
-//! [`Sum`]: https://doc.rust-lang.org/stable/std/iter/trait.Sum.html
-//! [`Product`]: https://doc.rust-lang.org/stable/std/iter/trait.Product.html
 
 use std::{
     cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
