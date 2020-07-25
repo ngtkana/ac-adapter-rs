@@ -35,7 +35,7 @@
 //! assert_eq!(x.pow(3), mint!(216));
 //!
 //! // 複合代入ができます。
-//! let mut x: Mint998244353 = mint!(10);
+//! let mut x = mint!(10);
 //! x += mint!(10);
 //! assert_eq!(x, mint!(20));
 //! x -= mint!(15);
