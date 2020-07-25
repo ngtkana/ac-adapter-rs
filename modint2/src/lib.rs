@@ -21,7 +21,7 @@
 //! use modint2::{Mint998244353, mint};
 //! type Mint = modint2::Mint998244353;
 //! let x = Mint::from_i64(6);  // from_i64 メソッドによる構築です。
-//! let y = 3.into();           // From トレイトによる構築です。
+//! let y: Mint = 3.into();           // From トレイトによる構築です。
 //! let z = mint!(2);           // マクロによる構築です。ここでは Mint998244353 が構築されます。
 //!
 //! // 四則演算ができます。
@@ -100,6 +100,17 @@
 //! assert_eq!(fact.binom(8, 3), mint!(56));            // 二項係数です。
 //! ```
 //!
+//! # sum / product
+//!
+//! [`Sum`] と [`Product`] も実装済みです。
+//!
+//! ```
+//! use modint2::{mint, Mint998244353};
+//! type Mint = Mint998244353;
+//! assert_eq!([mint!(3), mint!(2), mint!(7)].iter().sum::<Mint>(), mint!(12));
+//! assert_eq!([mint!(3), mint!(2), mint!(7)].iter().product::<Mint>(), mint!(42));
+//! ```
+//!
 //!
 //! [`Mint998244353`]: struct.Mint998244353.html
 //! [`Mint100000007`]: struct.Mint100000007.html
@@ -122,10 +133,13 @@
 //! [`Display`]: https://doc.rust-lang.org/stable/std/fmt/trait.Display.html
 //! [`Eq`]: https://doc.rust-lang.org/stable/std/cmp/trait.Eq.html
 //! [`Ord`]: https://doc.rust-lang.org/stable/std/cmp/trait.Ord.html
+//! [`Sum`]: https://doc.rust-lang.org/stable/std/iter/trait.Sum.html
+//! [`Product`]: https://doc.rust-lang.org/stable/std/iter/trait.Product.html
 
 use std::{
     cmp::{Eq, Ord, Ordering, PartialEq, PartialOrd},
     fmt::{Debug, Display},
+    iter::{Product, Sum},
     mem::swap,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
@@ -240,6 +254,11 @@ impl<Mod: ModTrait> Mint<Mod> {
     /// ```
     #[allow(clippy::many_single_char_names)]
     pub fn inv(self) -> Self {
+        assert_ne!(
+            self,
+            Self::zero(),
+            "attempted to take the inverse of zero mint"
+        );
         let mut x = self.0;
         let mut y = Mod::modulus();
         let mut u = 1;
@@ -319,9 +338,57 @@ impl<Mod: ModTrait> Display for Mint<Mod> {
 // operators ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////
 
+macro_rules! forward_ref_binop {
+    ($(impl $imp:ident, $method:ident)*) => {
+        $(
+            impl<'a, Mod: ModTrait> $imp<Mint<Mod>> for &'a Mint<Mod> {
+                type Output = Mint<Mod>;
+
+                #[inline]
+                fn $method(self, other: Mint<Mod>) -> Self::Output {
+                    $imp::$method(*self, other)
+                }
+            }
+
+            impl<'a, Mod: ModTrait> $imp<&'a Mint<Mod>> for Mint<Mod> {
+                type Output = Mint<Mod>;
+
+                #[inline]
+                fn $method(self, other: &Mint<Mod>) -> Self::Output {
+                    $imp::$method(self, *other)
+                }
+            }
+
+            impl<'a, Mod: ModTrait> $imp<&'a Mint<Mod>> for &'a Mint<Mod> {
+                type Output = Mint<Mod>;
+
+                #[inline]
+                fn $method(self, other: &Mint<Mod>) -> Self::Output {
+                    $imp::$method(*self, *other)
+                }
+            }
+        )*
+    };
+}
+
+macro_rules! forward_ref_op_assign {
+    ($(impl $imp:ident, $method:ident)*) => {
+        $(
+            impl<'a, Mod: ModTrait> $imp<&Mint<Mod>> for Mint<Mod> {
+                #[inline]
+                fn $method(&mut self, other: &Mint<Mod>) {
+                    $imp::$method(self, *other);
+                }
+            }
+        )*
+    }
+}
+
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<Mod: ModTrait> Add for Mint<Mod> {
     type Output = Self;
+
+    #[inline]
     fn add(self, rhs: Self) -> Self {
         let value = self.0 + rhs.0;
         Self::from_value_unchecked(if value < Mod::modulus() {
@@ -335,6 +402,8 @@ impl<Mod: ModTrait> Add for Mint<Mod> {
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<Mod: ModTrait> Sub for Mint<Mod> {
     type Output = Self;
+
+    #[inline]
     fn sub(self, rhs: Self) -> Self {
         let value = self.0 - rhs.0;
         Self::from_value_unchecked(if 0 <= value {
@@ -348,6 +417,8 @@ impl<Mod: ModTrait> Sub for Mint<Mod> {
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<Mod: ModTrait> Mul for Mint<Mod> {
     type Output = Self;
+
+    #[inline]
     fn mul(self, rhs: Self) -> Self {
         Self::from_value_unchecked(self.0 * rhs.0 % Mod::modulus())
     }
@@ -356,6 +427,8 @@ impl<Mod: ModTrait> Mul for Mint<Mod> {
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<Mod: ModTrait> Div for Mint<Mod> {
     type Output = Self;
+
+    #[inline]
     fn div(self, rhs: Self) -> Self {
         self * rhs.inv()
     }
@@ -363,6 +436,8 @@ impl<Mod: ModTrait> Div for Mint<Mod> {
 
 impl<Mod: ModTrait> Neg for Mint<Mod> {
     type Output = Self;
+
+    #[inline]
     fn neg(self) -> Self {
         if self.0 == 0 {
             Self::zero()
@@ -372,10 +447,20 @@ impl<Mod: ModTrait> Neg for Mint<Mod> {
     }
 }
 
-macro_rules! impl_composite_assignment_operators {
-    ($($trait: ident: $fn_assign: ident, $fn: ident;)*) => {
+impl<Mod: ModTrait> Neg for &Mint<Mod> {
+    type Output = Mint<Mod>;
+
+    #[inline]
+    fn neg(self) -> Self::Output {
+        (*self).neg()
+    }
+}
+
+macro_rules! forward_assign_biop {
+    ($(impl $trait: ident, $fn_assign: ident, $fn: ident)*) => {
         $(
             impl<Mod: ModTrait> $trait for Mint<Mod> {
+                #[inline]
                 fn $fn_assign(&mut self, rhs: Self) {
                     *self = self.$fn(rhs);
                 }
@@ -384,11 +469,25 @@ macro_rules! impl_composite_assignment_operators {
     };
 }
 
-impl_composite_assignment_operators! {
-    AddAssign: add_assign, add;
-    SubAssign: sub_assign, sub;
-    MulAssign: mul_assign, mul;
-    DivAssign: div_assign, div;
+forward_assign_biop! {
+    impl AddAssign, add_assign, add
+    impl SubAssign, sub_assign, sub
+    impl MulAssign, mul_assign, mul
+    impl DivAssign, div_assign, div
+}
+
+forward_ref_binop! {
+    impl Add, add
+    impl Sub, sub
+    impl Mul, mul
+    impl Div, div
+}
+
+forward_ref_op_assign! {
+    impl AddAssign, add_assign
+    impl SubAssign, sub_assign
+    impl MulAssign, mul_assign
+    impl DivAssign, div_assign
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -425,6 +524,43 @@ impl<Mod: ModTrait> From<ModValue> for Mint<Mod> {
 impl<Mod: ModTrait> From<Mint<Mod>> for ModValue {
     fn from(mint: Mint<Mod>) -> Self {
         mint.0
+    }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// sum / product ///////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+
+impl<Mod: ModTrait> Sum for Mint<Mod> {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Self::zero(), Add::add)
+    }
+}
+impl<'a, Mod: 'a + ModTrait> Sum<&'a Self> for Mint<Mod> {
+    fn sum<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        iter.fold(Self::zero(), Add::add)
+    }
+}
+impl<Mod: ModTrait> Product for Mint<Mod> {
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = Self>,
+    {
+        iter.fold(Self::one(), Mul::mul)
+    }
+}
+impl<'a, Mod: 'a + ModTrait> Product<&'a Self> for Mint<Mod> {
+    fn product<I>(iter: I) -> Self
+    where
+        I: Iterator<Item = &'a Self>,
+    {
+        iter.fold(Self::one(), Mul::mul)
     }
 }
 
