@@ -18,8 +18,8 @@
 //! また [`pow`] もできます。
 //!
 //! ```
-//! use modint2::{Mint998244353, mint};
-//! type Mint = modint2::Mint998244353;
+//! use modint::{Mint998244353, mint};
+//! type Mint = modint::Mint998244353;
 //! let x = Mint::from_i64(6);  // from_i64 メソッドによる構築です。
 //! let y: Mint = 3.into();     // From トレイトによる構築です。
 //! let z = mint!(2);           // マクロによる構築です。ここでは Mint998244353 が構築されます。
@@ -52,7 +52,7 @@
 //! 998244353 の暗算は厳しいですから、5 くらいにしておきましょう。
 //!
 //! ```
-//! use modint2::{mint, ModTrait, ModValue};
+//! use modint::{mint, ModTrait, ModValue};
 //!
 //! #[derive(Debug, Clone, Copy)]
 //! struct Mod5 {}
@@ -61,7 +61,7 @@
 //!         5
 //!     }
 //! }
-//! type Mint = modint2::Mint<Mod5>;
+//! type Mint = modint::Mint<Mod5>;
 //!
 //! assert_eq!(mint!(3) + mint!(3), mint!(1));
 //! assert_eq!(mint!(1) - mint!(3), mint!(3));
@@ -77,7 +77,7 @@
 //! おそらく競プロ以外でやるととても怒られます。
 //!
 //! ```
-//! use modint2::{mint, from_frac, from_pow, Mint998244353};
+//! use modint::{mint, from_frac, from_pow, Mint998244353};
 //! type Mint = Mint998244353;  // 実はこれが本質です。
 //!
 //! assert_eq!(from_frac!(6, 2), mint!(3));
@@ -90,7 +90,7 @@
 //! さらに階乗の逆元、下方階乗冪、二項係数の計算もできます。
 //!
 //! ```
-//! use modint2::{mint, Mint998244353, Mod998244353, Factorial};
+//! use modint::{mint, Mint998244353, Mod998244353, Factorial};
 //! let fact = Factorial::<Mod998244353>::with_len(20);
 //! type Mint = Mint998244353;
 //!
@@ -107,7 +107,7 @@
 //! [`Debug`] は、ありそうな有理数をサジェストしてくれます。
 //!
 //! ```
-//! use modint2::{from_frac, Mint998244353};
+//! use modint::{from_frac, Mint998244353};
 //! type Mint = Mint998244353;
 //! let num = 5;
 //! let den = 12;
@@ -121,7 +121,7 @@
 //! [`Sum`] と [`Product`] も実装済みです。
 //!
 //! ```
-//! use modint2::{mint, Mint998244353};
+//! use modint::{mint, Mint998244353};
 //! type Mint = Mint998244353;
 //! assert_eq!([mint!(3), mint!(2), mint!(7)].iter().sum::<Mint>(), mint!(12));
 //! assert_eq!([mint!(3), mint!(2), mint!(7)].iter().product::<Mint>(), mint!(42));
@@ -224,7 +224,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// type Mint = modint2::Mint998244353;
+    /// type Mint = modint::Mint998244353;
     /// let x = Mint::from_i64(2);
     /// ```
     pub fn from_i64(value: ModValue) -> Self {
@@ -234,7 +234,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// type Mint = modint2::Mint998244353;
+    /// type Mint = modint::Mint998244353;
     /// let x = Mint::from_i64(2);
     /// ```
     pub fn from_frac(num: ModValue, den: ModValue) -> Self {
@@ -244,7 +244,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// type Mint = modint2::Mint998244353;
+    /// type Mint = modint::Mint998244353;
     /// let x = Mint::zero();
     /// ```
     pub fn zero() -> Self {
@@ -254,7 +254,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// type Mint = modint2::Mint998244353;
+    /// type Mint = modint::Mint998244353;
     /// let x = Mint::one();
     /// ```
     pub fn one() -> Self {
@@ -264,7 +264,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// type Mint = modint2::Mint998244353;
+    /// type Mint = modint::Mint998244353;
     /// for i in 1..30 {
     ///     let x = Mint::from_i64(i);
     ///     let y = x.inv();
@@ -296,7 +296,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// use modint2::{mint,Mint998244353};
+    /// use modint::{mint,Mint998244353};
     /// type Mint = Mint998244353;
     /// assert_eq!(mint!(1), mint!(7).pow(0));
     /// assert_eq!(mint!(7), mint!(7).pow(1));
@@ -318,7 +318,7 @@ impl<Mod: ModTrait> Mint<Mod> {
     ///
     /// # Examples
     /// ```
-    /// use modint2::{mint,Mint998244353};
+    /// use modint::{mint,Mint998244353};
     /// type Mint = Mint998244353;
     /// assert_eq!(mint!(1), Mint::from_pow(7, 0));
     /// assert_eq!(mint!(7), Mint::from_pow(7, 1));
@@ -594,7 +594,7 @@ impl<'a, Mod: 'a + ModTrait> Product<&'a Self> for Mint<Mod> {
 /// パスを指定していないため、そのとき `use` されているものが選ばれます。
 ///
 /// ```
-/// use modint2::{Mint, mint, Mint100000007, Mint998244353};
+/// use modint::{Mint, mint, Mint100000007, Mint998244353};
 /// let x: Mint998244353 = mint!(0);
 /// let y: Mint100000007 = mint!(0);
 /// ```
@@ -602,27 +602,27 @@ impl<'a, Mod: 'a + ModTrait> Product<&'a Self> for Mint<Mod> {
 /// `use` していないときには、コンパイルエラーになります。
 ///
 /// ```compile_fail
-/// use modint2::{mint, Mint998244353};
+/// use modint::{mint, Mint998244353};
 /// let x: Mint998244353 = mint!(0);
 /// ```
 ///
 /// `use` していても、型矯正がなければ ambiguous ですから、コンパイルエラーになります。
 ///
 /// ```compile_fail
-/// use modint2::{mint, Mint, Mint998244353};
+/// use modint::{mint, Mint, Mint998244353};
 /// let x = mint!(0);
 /// ```
 ///
 /// また、これが想定した使い方なのですが、型別名をつけておくことで、それを呼ぶことができます。
 /// ```
-/// use modint2::{mint, Mint998244353};
+/// use modint::{mint, Mint998244353};
 /// type Mint = Mint998244353;
 /// let x = mint!(0);
 /// ```
 ///
 /// こういうとても邪悪な使い方もできるのですが、想定された使い方ではありません。
 /// ```
-/// use modint2::mint;
+/// use modint::mint;
 /// struct Mint {}
 /// impl Mint {
 ///     pub fn from_i64(name: &'static str) -> String {
@@ -647,7 +647,7 @@ macro_rules! mint {
 /// # Examples
 ///
 /// ```
-/// use modint2::{from_frac, mint, Mint998244353};
+/// use modint::{from_frac, mint, Mint998244353};
 /// type Mint = Mint998244353;
 /// let x = from_frac!(5, 12);
 /// let y = from_frac!(12, 5);
@@ -669,7 +669,7 @@ macro_rules! from_frac {
 /// # Examples
 ///
 /// ```
-/// use modint2::{from_pow, mint, Mint998244353};
+/// use modint::{from_pow, mint, Mint998244353};
 /// type Mint = Mint998244353;
 /// let x = from_pow!(5, 3);
 /// assert_eq!(x, mint!(125));
@@ -697,7 +697,7 @@ macro_rules! from_pow {
 /// を継承していますから、それも忘れず実装です。
 ///
 /// ```
-/// use modint2::ModTrait;
+/// use modint::ModTrait;
 /// #[derive(Debug, Clone, Copy)]
 /// struct Mod17 {}
 /// impl ModTrait for Mod17 {
@@ -728,9 +728,9 @@ pub trait ModTrait: Clone + Copy + Debug {
 /// [`with_len`] で構築をして、[`index`] で取得です。
 ///
 /// ```
-/// use modint2::{mint, Mod998244353, Mint998244353};
+/// use modint::{mint, Mod998244353, Mint998244353};
 /// type Mint = Mint998244353;
-/// type Factorial = modint2::Factorial<modint2::Mod998244353>;
+/// type Factorial = modint::Factorial<modint::Mod998244353>;
 ///
 /// let fact = Factorial::with_len(20);
 /// assert_eq!(fact[3], mint!(6));                      // 階乗です。
@@ -755,7 +755,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// type Factorial = modint2::Factorial<modint2::Mod998244353>;
+    /// type Factorial = modint::Factorial<modint::Mod998244353>;
     /// assert!(Factorial::with_len(0).is_empty());
     /// assert!(!Factorial::with_len(2).is_empty());
     /// ```
@@ -767,7 +767,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// type Factorial = modint2::Factorial<modint2::Mod998244353>;
+    /// type Factorial = modint::Factorial<modint::Mod998244353>;
     /// assert_eq!(Factorial::with_len(0).len(), 0);
     /// assert_eq!(Factorial::with_len(2).len(), 2);
     /// ```
@@ -779,7 +779,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// modint2::Factorial::<modint2::Mod998244353>::with_len(42);
+    /// modint::Factorial::<modint::Mod998244353>::with_len(42);
     /// ```
     pub fn with_len(len: usize) -> Self {
         if len == 0 {
@@ -804,7 +804,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// use modint2::{mint, Factorial, Mod998244353, Mint998244353};
+    /// use modint::{mint, Factorial, Mod998244353, Mint998244353};
     /// type Mint = Mint998244353;
     /// let fact = Factorial::<Mod998244353>::with_len(20);
     /// assert_eq!(fact.inv(3), mint!(6).inv());
@@ -830,7 +830,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// use modint2::{mint, Factorial, Mod998244353, Mint998244353};
+    /// use modint::{mint, Factorial, Mod998244353, Mint998244353};
     /// type Mint = Mint998244353;
     /// let fact = Factorial::<Mod998244353>::with_len(20);
     /// assert_eq!(fact.falling(8, 3), mint!(8 * 7 * 6));
@@ -862,7 +862,7 @@ impl<Mod: ModTrait> Factorial<Mod> {
     /// # Examples
     ///
     /// ```
-    /// use modint2::{mint, Factorial, Mod998244353, Mint998244353};
+    /// use modint::{mint, Factorial, Mod998244353, Mint998244353};
     /// type Mint = Mint998244353;
     /// let fact = Factorial::<Mod998244353>::with_len(20);
     /// assert_eq!(fact.binom(8, 3), mint!(56));
