@@ -7,4 +7,5 @@ members = [
     "union-find",
     "slicetools",
     "suffix-array",
+    "rmq",
 ]
