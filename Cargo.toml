@@ -2,7 +2,6 @@
 
 members = [
     "ordtools",
-    "modint",
     "modint2",
     "segtree",
     "union-find",
