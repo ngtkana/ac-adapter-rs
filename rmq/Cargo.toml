@@ -8,6 +8,12 @@ edition = "2018"
 
 [dependencies]
 ordtools = { path = "../ordtools" }
+rand = "0.7.3"
 
 [dev-dependencies]
 segtree = { path = "../segtree" }
+criterion = "0.3"
+
+[[bench]]
+name = "rmq"
+harness = false
