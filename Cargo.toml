@@ -4,7 +4,7 @@ members = [
     "ordtools",
     "modint",
     "segtree",
-    "union-find",
+    "union_find",
     "slicetools",
-    "suffix-array",
+    "suffix_array",
 ]
