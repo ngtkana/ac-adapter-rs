@@ -8,4 +8,5 @@ members = [
     "slicetools",
     "suffix_array",
     "dbg",
+    "max_flow",
 ]
