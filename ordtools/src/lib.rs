@@ -50,7 +50,7 @@
 //! let mut person = kana.clone();
 //! assert_eq!(&person, &kana);
 //! assert_ne!(&person, &hiroshi);
-//! person.change_min(&hiroshi);
+//! person.change_min(hiroshi.clone());
 //! assert_ne!(&person, &kana);
 //! assert_eq!(&person, &hiroshi);
 //! ```
@@ -71,14 +71,14 @@ pub trait Ordtools: PartialOrd + Clone + Sized {
     /// ```
     /// use ordtools::Ordtools;
     /// let mut x: i32 = 3;
-    /// x.change_min(&4);
+    /// x.change_min(4);
     /// assert_eq!(x, 3);
-    /// x.change_min(&2);
+    /// x.change_min(2);
     /// assert_eq!(x, 2);
     /// ```
     ///
-    fn change_min(&mut self, rhs: &Self) {
-        if rhs < self {
+    fn change_min(&mut self, mut rhs: Self) {
+        if self > &mut rhs {
             *self = rhs.clone();
         }
     }
@@ -91,14 +91,14 @@ pub trait Ordtools: PartialOrd + Clone + Sized {
     /// ```
     /// use ordtools::Ordtools;
     /// let mut x: i32 = 3;
-    /// x.change_max(&2);
+    /// x.change_max(2);
     /// assert_eq!(x, 3);
-    /// x.change_max(&4);
+    /// x.change_max(4);
     /// assert_eq!(x, 4);
     /// ```
     ///
-    fn change_max(&mut self, rhs: &Self) {
-        if rhs > self {
+    fn change_max(&mut self, mut rhs: Self) {
+        if self < &mut rhs {
             *self = rhs.clone();
         }
     }
