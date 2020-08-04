@@ -62,7 +62,7 @@
 ///
 /// [`change_min`]: trait.Ordtools.html#method.change_min
 /// [`change_max`]: trait.Ordtools.html#method.change_max
-pub trait Ordtools: PartialOrd + Clone + Sized {
+pub trait Ordtools: PartialOrd + Sized {
     /// `rhs` が `self` よりも小さいときに、`self` を `rhs` で置き換えます。
     /// 等しい場合は代入は行いません。
     ///
@@ -79,7 +79,7 @@ pub trait Ordtools: PartialOrd + Clone + Sized {
     ///
     fn change_min(&mut self, mut rhs: Self) {
         if self > &mut rhs {
-            *self = rhs.clone();
+            *self = rhs;
         }
     }
 
@@ -99,12 +99,12 @@ pub trait Ordtools: PartialOrd + Clone + Sized {
     ///
     fn change_max(&mut self, mut rhs: Self) {
         if self < &mut rhs {
-            *self = rhs.clone();
+            *self = rhs;
         }
     }
 }
 
-impl<T: PartialOrd + Clone + Sized> Ordtools for T {}
+impl<T: PartialOrd + Sized> Ordtools for T {}
 
 #[cfg(test)]
 mod tests {
