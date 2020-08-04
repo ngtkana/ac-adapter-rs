@@ -7,4 +7,5 @@ members = [
     "union_find",
     "slicetools",
     "suffix_array",
+    "dbg",
 ]
