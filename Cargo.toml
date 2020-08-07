@@ -9,4 +9,5 @@ members = [
     "suffix_array",
     "dbg",
     "max_flow",
+    "centroid",
 ]
