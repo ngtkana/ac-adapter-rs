@@ -9,7 +9,7 @@ use std::fmt::{Debug, Formatter};
 
 /// `&[<Vec<T>]` を、表形式で列に添字をつけて出力できます。
 #[derive(Clone)]
-pub struct Tabular<'a, T: Debug>(pub &'a [Vec<T>]);
+pub struct Tabular<'a, T: Debug>(pub &'a [T]);
 impl<'a, T: Debug> Debug for Tabular<'a, T> {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         for i in 0..self.0.len() {
