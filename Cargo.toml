@@ -1,12 +1,3 @@
 [workspace]
 
-members = [
-    "ordtools",
-    "modint",
-    "segtree",
-    "union_find",
-    "slicetools",
-    "suffix_array",
-    "dbg",
-    "max_flow",
-]
+members = [ "crates/*" ]
