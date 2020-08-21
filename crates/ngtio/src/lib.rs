@@ -52,7 +52,7 @@ impl Buffer {
         self.buf.pop_front()
     }
 
-    /// パースします。
+    /// トークンをパースします。
     ///
     /// # Examples
     ///
@@ -69,6 +69,22 @@ impl Buffer {
             .expect("Reached the end of the input.")
             .parse::<T>()
             .expect("Failed to parse the input.")
+    }
+
+    /// トークンを `len` 回パースして、`Vec` に入れます。
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use ngtio::Buffer;
+    /// let mut buffer = Buffer::new();
+    /// let x = buffer.read_vec::<u32>();
+    /// ```
+    pub fn read_vec<T: ::std::str::FromStr>(&mut self, len: usize) -> Vec<T>
+    where
+        <T as ::std::str::FromStr>::Err: ::std::fmt::Debug,
+    {
+        (0..len).map(|_| self.read::<T>()).collect()
     }
 }
 
