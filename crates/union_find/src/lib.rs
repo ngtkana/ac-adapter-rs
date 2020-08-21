@@ -19,9 +19,9 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// let uf = union_find::UnionFind::new(3);
+    /// let uf = union_find::UnionFind::with_len(3);
     /// ```
-    pub fn new(len: usize) -> Self {
+    pub fn with_len(len: usize) -> Self {
         Self(vec![ParentOrSize::Size(1); len])
     }
 
@@ -30,8 +30,8 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// assert!(!union_find::UnionFind::new(3).is_empty());
-    /// assert!(union_find::UnionFind::new(0).is_empty());
+    /// assert!(!union_find::UnionFind::with_len(3).is_empty());
+    /// assert!(union_find::UnionFind::with_len(0).is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
@@ -42,7 +42,7 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// assert_eq!(union_find::UnionFind::new(3).len(), 3);
+    /// assert_eq!(union_find::UnionFind::with_len(3).len(), 3);
     /// ```
     pub fn len(&self) -> usize {
         self.0.len()
@@ -53,7 +53,7 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// let mut uf = union_find::UnionFind::new(3);
+    /// let mut uf = union_find::UnionFind::with_len(3);
     /// assert_ne!(uf.find(0), uf.find(1));
     /// uf.unite(0, 1);
     /// assert_eq!(uf.find(0), uf.find(1));
@@ -67,7 +67,7 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// let mut uf = union_find::UnionFind::new(3);
+    /// let mut uf = union_find::UnionFind::with_len(3);
     /// assert_eq!(uf.size(0), 1);
     /// uf.unite(0, 1);
     /// assert_eq!(uf.size(0), 2);
@@ -93,7 +93,7 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// let mut uf = union_find::UnionFind::new(3);
+    /// let mut uf = union_find::UnionFind::with_len(3);
     /// uf.unite(0, 1);
     /// ```
     pub fn unite(&mut self, u: usize, v: usize) {
@@ -115,7 +115,7 @@ impl UnionFind {
     /// # Example
     ///
     /// ```
-    /// let mut uf = union_find::UnionFind::new(3);
+    /// let mut uf = union_find::UnionFind::with_len(3);
     /// assert!(!uf.same(0, 1));
     /// uf.unite(0, 1);
     /// assert!(uf.same(0, 1));
