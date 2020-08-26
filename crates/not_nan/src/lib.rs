@@ -8,7 +8,7 @@ pub trait Float: PartialEq + PartialOrd {
 
 impl Float for f64 {
     fn is_nan(&self) -> bool {
-        *self == std::f64::NAN
+        self.is_nan()
     }
 }
 
