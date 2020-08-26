@@ -47,9 +47,40 @@ impl Buffer {
         }
     }
 
-    fn pop_token(&mut self) -> Option<String> {
+    /// トークンをポップします。
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use ngtio::Buffer;
+    /// let mut buffer = Buffer::new();
+    /// let x = buffer.string();
+    /// ```
+    pub fn string(&mut self) -> String {
         self.load();
-        self.buf.pop_front()
+        self.buf
+            .pop_front()
+            .unwrap_or_else(|| panic!("入力が終了したのですが。"))
+    }
+
+    /// トークンをポップして、char 型にパースです。
+    ///
+    /// # Examples
+    ///
+    /// ```ignore
+    /// use ngtio::Buffer;
+    /// let mut buffer = Buffer::new();
+    /// let x = buffer.char();
+    /// ```
+    pub fn char(&mut self) -> char {
+        let string = self.string();
+        let mut chars = string.chars();
+        let res = chars.next().unwrap();
+        assert!(
+            chars.next().is_none(),
+            "char で受け取りたいのも山々なのですが、さては 2 文字以上ありますね？"
+        );
+        res
     }
 
     /// トークンをパースします。
@@ -65,8 +96,7 @@ impl Buffer {
     where
         <T as ::std::str::FromStr>::Err: ::std::fmt::Debug,
     {
-        self.pop_token()
-            .expect("Reached the end of the input.")
+        self.string()
             .parse::<T>()
             .expect("Failed to parse the input.")
     }
@@ -86,6 +116,26 @@ impl Buffer {
     {
         (0..len).map(|_| self.read::<T>()).collect()
     }
+}
+
+macro_rules! define_primitive_reader {
+    ($($ty:tt,)*) => {
+        impl Buffer {
+            $(
+                /// トークンをパースします。
+                ///
+                #[inline]
+                pub fn $ty(&mut self) -> $ty {
+                    self.read::<$ty>()
+                }
+            )*
+        }
+    }
+}
+
+define_primitive_reader! {
+    u8, u16, u32, u64, usize,
+    i8, i16, i32, i64, isize,
 }
 
 impl Default for Buffer {
