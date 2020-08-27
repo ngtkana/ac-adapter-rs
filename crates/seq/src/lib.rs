@@ -6,6 +6,9 @@
 //! [`Seq`]: trait.Seq.html
 //!
 
+pub use adjacent::{adjacent, Adjacent};
+pub use grid_next::{grid_next, GridNext};
+
 impl<I: Iterator> Seq for I {}
 
 /// イテレータのユーティルです。
@@ -64,84 +67,94 @@ pub trait Seq: Iterator + Sized {
     where
         Self: Iterator<Item = (i64, i64)>,
     {
+        grid_next(self, ij, h, w)
+    }
+}
+
+mod adjacent {
+    #[allow(missing_docs)]
+    pub fn adjacent<I, T>(mut iter: I) -> Adjacent<I, T>
+    where
+        I: Iterator<Item = T>,
+        T: Clone,
+    {
+        if let Some(first) = iter.next() {
+            Adjacent {
+                iter,
+                prv: Some(first),
+            }
+        } else {
+            Adjacent { iter, prv: None }
+        }
+    }
+
+    #[allow(missing_docs)]
+    pub struct Adjacent<I, T>
+    where
+        I: Iterator<Item = T>,
+    {
+        iter: I,
+        prv: Option<T>,
+    }
+
+    impl<I, T> Iterator for Adjacent<I, T>
+    where
+        I: Iterator<Item = T>,
+        T: Clone,
+    {
+        type Item = (T, T);
+
+        fn next(&mut self) -> Option<(T, T)> {
+            self.prv.as_ref().cloned().and_then(|first| {
+                self.iter.next().map(|second| {
+                    self.prv = Some(second.clone());
+                    (first, second)
+                })
+            })
+        }
+    }
+}
+
+mod grid_next {
+    #[allow(missing_docs)]
+    pub fn grid_next<T>(difference: T, ij: (usize, usize), h: usize, w: usize) -> GridNext<T>
+    where
+        T: Iterator<Item = (i64, i64)>,
+    {
         GridNext {
             i: ij.0 as i64,
             j: ij.1 as i64,
             h: h as i64,
             w: w as i64,
-            difference: self,
+            difference,
         }
     }
-}
 
-#[allow(missing_docs)]
-pub struct Adjacent<I, T>
-where
-    I: Iterator<Item = T>,
-{
-    iter: I,
-    prv: Option<T>,
-}
-
-/// [`Adjacent`] のフリー関数版です。
-///
-/// [`adjacent`]: trait.Seq.html#method.adjacent
-pub fn adjacent<I, T>(mut iter: I) -> Adjacent<I, T>
-where
-    I: Iterator<Item = T>,
-    T: Clone,
-{
-    if let Some(first) = iter.next() {
-        Adjacent {
-            iter,
-            prv: Some(first),
-        }
-    } else {
-        Adjacent { iter, prv: None }
+    #[allow(missing_docs)]
+    #[derive(Debug, Clone)]
+    pub struct GridNext<T> {
+        i: i64,
+        j: i64,
+        h: i64,
+        w: i64,
+        difference: T,
     }
-}
 
-impl<I, T> Iterator for Adjacent<I, T>
-where
-    I: Iterator<Item = T>,
-    T: Clone,
-{
-    type Item = (T, T);
+    impl<T> Iterator for GridNext<T>
+    where
+        T: Iterator<Item = (i64, i64)>,
+    {
+        type Item = (usize, usize);
 
-    fn next(&mut self) -> Option<(T, T)> {
-        self.prv.as_ref().cloned().and_then(|first| {
-            self.iter.next().map(|second| {
-                self.prv = Some(second.clone());
-                (first, second)
-            })
-        })
-    }
-}
-
-#[allow(missing_docs)]
-#[derive(Debug, Clone)]
-pub struct GridNext<T> {
-    i: i64,
-    j: i64,
-    h: i64,
-    w: i64,
-    difference: T,
-}
-
-impl<T> Iterator for GridNext<T>
-where
-    T: Iterator<Item = (i64, i64)>,
-{
-    type Item = (usize, usize);
-
-    fn next(&mut self) -> Option<(usize, usize)> {
-        while let Some((di, dj)) = self.difference.next() {
-            let ni = self.i + di;
-            let nj = self.j + dj;
-            if 0 <= ni && ni < self.h && 0 <= nj && nj < self.w {
-                return Some((ni as usize, nj as usize));
+        fn next(&mut self) -> Option<(usize, usize)> {
+            while let Some((di, dj)) = self.difference.next() {
+                let ni = self.i + di;
+                let nj = self.j + dj;
+                if 0 <= ni && ni < self.h && 0 <= nj && nj < self.w {
+                    return Some((ni as usize, nj as usize));
+                }
             }
+            None
         }
-        None
     }
 }
