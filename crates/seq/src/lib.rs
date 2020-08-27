@@ -36,7 +36,7 @@ pub trait Seq: Iterator + Sized {
         adjacent(self)
     }
 
-    /// 隣接するグリッドを捜査できます。
+    /// 隣接するグリッドを走査できます。
     ///
     /// # Examples
     ///
