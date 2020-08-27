@@ -3,11 +3,11 @@
 use std::cmp::{Ord, Ordering};
 
 pub trait Float: PartialEq + PartialOrd {
-    fn is_nan(&self) -> bool;
+    fn float_is_nan(&self) -> bool;
 }
 
 impl Float for f64 {
-    fn is_nan(&self) -> bool {
+    fn float_is_nan(&self) -> bool {
         self.is_nan()
     }
 }
@@ -18,7 +18,7 @@ pub struct NotNaN<T: Float>(T);
 impl<T: Float> NotNaN<T> {
     pub fn from_float(value: T) -> Self {
         match value {
-            ref value if value.is_nan() => panic!("これはなんですか？"),
+            ref value if value.float_is_nan() => panic!("これはなんですか？"),
             value => NotNaN(value),
         }
     }
