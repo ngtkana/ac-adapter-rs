@@ -1,5 +1,4 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
+#![warn(missing_docs, missing_doc_code_examples)]
 //! イテレータのユーティルです。
 //!
 //! 詳しくは [`Seq`] までです。
@@ -36,11 +35,46 @@ pub trait Seq: Iterator + Sized {
     {
         adjacent(self)
     }
+
+    /// 隣接するグリッドを捜査できます。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use seq::Seq;
+    /// const KNIGHT: [(i64, i64); 8] = [
+    ///     (1, 2),
+    ///     (2, 1),
+    ///     (1, -2),
+    ///     (2, -1),
+    ///     (-1, 2),
+    ///     (-2, 1),
+    ///     (-1, -2),
+    ///     (-2, -1),
+    /// ];
+    /// let mut result = KNIGHT
+    ///     .iter()
+    ///     .copied()
+    ///     .grid_next((1, 2), 4, 3)
+    ///     .collect::<Vec<_>>();
+    /// let expected = vec![(2, 0),(3, 1), (0, 0)];
+    /// assert_eq!(result, expected);
+    /// ```
+    fn grid_next(self, ij: (usize, usize), h: usize, w: usize) -> GridNext<Self>
+    where
+        Self: Iterator<Item = (i64, i64)>,
+    {
+        GridNext {
+            i: ij.0 as i64,
+            j: ij.1 as i64,
+            h: h as i64,
+            w: w as i64,
+            difference: self,
+        }
+    }
 }
 
-/// 詳しくは [`adjacent`] までです。
-///
-/// [`adjacent`]: trait.Seq.html#method.adjacent
+#[allow(missing_docs)]
 pub struct Adjacent<I, T>
 where
     I: Iterator<Item = T>,
@@ -84,10 +118,30 @@ where
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+#[allow(missing_docs)]
+#[derive(Debug, Clone)]
+pub struct GridNext<T> {
+    i: i64,
+    j: i64,
+    h: i64,
+    w: i64,
+    difference: T,
+}
+
+impl<T> Iterator for GridNext<T>
+where
+    T: Iterator<Item = (i64, i64)>,
+{
+    type Item = (usize, usize);
+
+    fn next(&mut self) -> Option<(usize, usize)> {
+        while let Some((di, dj)) = self.difference.next() {
+            let ni = self.i + di;
+            let nj = self.j + dj;
+            if 0 <= ni && ni < self.h && 0 <= nj && nj < self.w {
+                return Some((ni as usize, nj as usize));
+            }
+        }
+        None
     }
 }
