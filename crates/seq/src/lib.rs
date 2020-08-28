@@ -6,8 +6,10 @@
 //! [`Seq`]: trait.Seq.html
 //!
 
-pub use adjacent::{adjacent, Adjacent};
-pub use grid_next::{grid_next, GridNext};
+pub use self::adjacent::{adjacent, Adjacent};
+pub use self::grid_next::{grid_next, GridNext};
+pub use self::repeat_with::{repeat_with, RepeatWith};
+pub use self::step::{step, Step};
 
 impl<I: Iterator> Seq for I {}
 
@@ -155,6 +157,67 @@ mod grid_next {
                 }
             }
             None
+        }
+    }
+}
+
+mod step {
+    #[allow(missing_docs)]
+    pub fn step<T, U>(init: T, step: U) -> Step<T, U>
+    where
+        T: Copy,
+        U: Copy,
+        T: ::std::ops::Add<U, Output = T>,
+    {
+        Step { now: init, step }
+    }
+
+    #[allow(missing_docs)]
+    #[derive(Debug, Clone)]
+    pub struct Step<T, U> {
+        now: T,
+        step: U,
+    }
+
+    #[allow(missing_docs)]
+    impl<T, U> Iterator for Step<T, U>
+    where
+        T: Copy,
+        U: Copy,
+        T: ::std::ops::Add<U, Output = T>,
+    {
+        type Item = T;
+
+        fn next(&mut self) -> Option<T> {
+            let next = self.now + self.step;
+            Some(::std::mem::replace(&mut self.now, next))
+        }
+    }
+}
+
+mod repeat_with {
+    #[allow(missing_docs)]
+    pub fn repeat_with<A, F: FnMut() -> A>(repeater: F) -> RepeatWith<F> {
+        RepeatWith { repeater }
+    }
+
+    #[allow(missing_docs)]
+    #[derive(Debug, Clone)]
+    pub struct RepeatWith<F> {
+        repeater: F,
+    }
+
+    impl<A, F: FnMut() -> A> Iterator for RepeatWith<F> {
+        type Item = A;
+
+        #[inline]
+        fn next(&mut self) -> Option<A> {
+            Some((self.repeater)())
+        }
+
+        #[inline]
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            (::std::usize::MAX, None)
         }
     }
 }
