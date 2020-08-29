@@ -81,7 +81,7 @@ pub trait Seq: Iterator + Sized {
         Self: Sized + Iterator<Item = &'a T>,
         T: Copy,
     {
-        AojCopied::new(self)
+        AojCopied { iter: self }
     }
 
     /// `itertools::Itertools::cartesian_product` とほぼ同じ機能です。
@@ -102,17 +102,7 @@ mod aoj_copied {
     #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct AojCopied<I> {
-        it: I,
-    }
-
-    impl<I> AojCopied<I> {
-        pub(super) fn new(it: I) -> AojCopied<I> {
-            AojCopied { it }
-        }
-    }
-
-    fn copy_fold<T: Copy, Acc>(mut f: impl FnMut(Acc, T) -> Acc) -> impl FnMut(Acc, &T) -> Acc {
-        move |acc, &elt| f(acc, elt)
+        pub iter: I,
     }
 
     impl<'a, I, T: 'a> Iterator for AojCopied<I>
@@ -123,30 +113,30 @@ mod aoj_copied {
         type Item = T;
 
         fn next(&mut self) -> Option<T> {
-            self.it.next().copied()
+            self.iter.next().map(|&x| x)
         }
 
         fn size_hint(&self) -> (usize, Option<usize>) {
-            self.it.size_hint()
+            self.iter.size_hint()
         }
 
-        fn fold<Acc, F>(self, init: Acc, f: F) -> Acc
+        fn fold<Acc, F>(self, initer: Acc, mut f: F) -> Acc
         where
             F: FnMut(Acc, Self::Item) -> Acc,
         {
-            self.it.fold(init, copy_fold(f))
+            self.iter.fold(initer, move |acc, &elt| f(acc, elt))
         }
 
         fn nth(&mut self, n: usize) -> Option<T> {
-            self.it.nth(n).copied()
+            self.iter.nth(n).map(|&x| x)
         }
 
         fn last(self) -> Option<T> {
-            self.it.last().copied()
+            self.iter.last().map(|&x| x)
         }
 
         fn count(self) -> usize {
-            self.it.count()
+            self.iter.count()
         }
     }
 
@@ -156,7 +146,7 @@ mod aoj_copied {
         T: Copy,
     {
         fn next_back(&mut self) -> Option<T> {
-            self.it.next_back().copied()
+            self.iter.next_back().map(|&x| x)
         }
     }
 
@@ -166,7 +156,7 @@ mod aoj_copied {
         T: Copy,
     {
         fn len(&self) -> usize {
-            self.it.len()
+            self.iter.len()
         }
     }
 }
