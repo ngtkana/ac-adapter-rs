@@ -8,6 +8,7 @@
 
 pub use self::adjacent::{adjacent, Adjacent};
 pub use self::grid_next::{grid_next, GridNext};
+pub use self::mul_step::{mul_step, MulStep};
 pub use self::repeat_with::{repeat_with, RepeatWith};
 pub use self::step::{step, Step};
 
@@ -190,6 +191,40 @@ mod step {
 
         fn next(&mut self) -> Option<T> {
             let next = self.now + self.step;
+            Some(::std::mem::replace(&mut self.now, next))
+        }
+    }
+}
+
+mod mul_step {
+    #[allow(missing_docs)]
+    pub fn mul_step<T, U>(init: T, step: U) -> MulStep<T, U>
+    where
+        T: Copy,
+        U: Copy,
+        T: ::std::ops::Mul<U, Output = T>,
+    {
+        MulStep { now: init, step }
+    }
+
+    #[allow(missing_docs)]
+    #[derive(Debug, Clone)]
+    pub struct MulStep<T, U> {
+        now: T,
+        step: U,
+    }
+
+    #[allow(missing_docs)]
+    impl<T, U> Iterator for MulStep<T, U>
+    where
+        T: Copy,
+        U: Copy,
+        T: ::std::ops::Mul<U, Output = T>,
+    {
+        type Item = T;
+
+        fn next(&mut self) -> Option<T> {
+            let next = self.now * self.step;
             Some(::std::mem::replace(&mut self.now, next))
         }
     }
