@@ -9,10 +9,14 @@
 pub use self::adjacent::{adjacent, Adjacent};
 pub use self::aoj_copied::AojCopied;
 pub use self::cartesian_product::{cartesian_product, CartesianProduct};
+pub use self::format_intersparse::format_intersparse;
 pub use self::grid_next::{grid_next, GridNext};
+pub use self::intersperse::{intersperse, Intersperse};
 pub use self::mul_step::{mul_step, MulStep};
 pub use self::repeat_with::{repeat_with, RepeatWith};
 pub use self::step::{step, Step};
+
+use std::fmt;
 
 impl<I: Iterator> Seq for I {}
 
@@ -84,7 +88,7 @@ pub trait Seq: Iterator + Sized {
         AojCopied { iter: self }
     }
 
-    /// `itertools::Itertools::cartesian_product` とほぼ同じ機能です。
+    /// `itertools` の同名のメソッドと同じです。
     fn cartesian_product<J>(self, other: J) -> CartesianProduct<Self, J::IntoIter>
     where
         Self: Sized,
@@ -93,6 +97,22 @@ pub trait Seq: Iterator + Sized {
         J::IntoIter: Clone,
     {
         cartesian_product::cartesian_product(self, other.into_iter())
+    }
+
+    /// `itertools` の同名のメソッドと同じです。
+    fn intersperse(self, elt: Self::Item) -> Intersperse<Self> {
+        intersperse::intersperse(self, elt)
+    }
+
+    /// アイテムをフォーマットして、間に `separator` をはさみます。
+    fn format_intersparse<T>(self, separator: T) -> String
+    where
+        Self::Item: fmt::Display,
+        T: fmt::Display,
+    {
+        self.map(|x| format!("{}", x))
+            .intersperse(format!("{}", separator))
+            .collect::<String>()
     }
 }
 
@@ -432,6 +452,100 @@ mod cartesian_product {
             }
             accum
         }
+    }
+}
+
+#[allow(missing_docs)]
+mod intersperse {
+    use super::size_hint;
+    use std::iter;
+
+    #[derive(Debug, Clone)]
+    #[must_use = "iterator adaptors are lazy and do nothing unless consumed"]
+    pub struct Intersperse<I>
+    where
+        I: Iterator,
+    {
+        element: I::Item,
+        iter: iter::Fuse<I>,
+        peek: Option<I::Item>,
+    }
+
+    pub fn intersperse<I>(iter: I, elt: I::Item) -> Intersperse<I>
+    where
+        I: Iterator,
+    {
+        let mut iter = iter.fuse();
+        Intersperse {
+            peek: iter.next(),
+            iter,
+            element: elt,
+        }
+    }
+
+    impl<I> Iterator for Intersperse<I>
+    where
+        I: Iterator,
+        I::Item: Clone,
+    {
+        type Item = I::Item;
+        #[inline]
+        fn next(&mut self) -> Option<I::Item> {
+            if self.peek.is_some() {
+                self.peek.take()
+            } else {
+                self.peek = self.iter.next();
+                if self.peek.is_some() {
+                    Some(self.element.clone())
+                } else {
+                    None
+                }
+            }
+        }
+
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            // 2 * SH + { 1 or 0 }
+            let has_peek = self.peek.is_some() as usize;
+            let sh = self.iter.size_hint();
+            size_hint::add_scalar(size_hint::add(sh, sh), has_peek)
+        }
+
+        fn fold<B, F>(mut self, init: B, mut f: F) -> B
+        where
+            Self: Sized,
+            F: FnMut(B, Self::Item) -> B,
+        {
+            let mut accum = init;
+
+            if let Some(x) = self.peek.take() {
+                accum = f(accum, x);
+            }
+
+            let element = &self.element;
+
+            self.iter.fold(accum, |accum, x| {
+                let accum = f(accum, element.clone());
+                let accum = f(accum, x);
+                accum
+            })
+        }
+    }
+}
+
+#[allow(missing_docs)]
+mod format_intersparse {
+    use super::Seq;
+    use std::fmt;
+
+    pub fn format_intersparse<I, T>(iter: I, separator: T) -> String
+    where
+        I: Iterator,
+        I::Item: fmt::Display,
+        T: fmt::Display,
+    {
+        iter.map(|x| format!("{}", x))
+            .intersperse(format!("{}", separator))
+            .collect::<String>()
     }
 }
 
