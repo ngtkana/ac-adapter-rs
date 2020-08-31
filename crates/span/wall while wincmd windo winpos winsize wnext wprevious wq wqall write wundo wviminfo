@@ -32,7 +32,7 @@ impl<T> Span<T> for [T] {
     where
         F: FnMut(&T, &T) -> cmp::Ordering,
     {
-        self.sort_by(compare)
+        self.sort_by(f)
     }
 
     #[inline]
@@ -80,20 +80,11 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     }
 
     /// 比較関数を用いて逆順でソートします。
-    fn sort_reverse_by<F>(&mut self, mut compare: F)
+    fn sort_reverse_by<F>(&mut self, compare: F)
     where
-        F: FnMut(&T, &T) -> cmp::Ordering,
+        F: FnMut(&T, &T) -> cmp::Ordering;
     {
         self.span_sort_by(|a, b| compare(a, b).reverse())
-    }
-
-    /// キー抽出関数を用いて逆順でソートします。
-    fn sort_reverse_by_key<K, F>(&mut self, mut f: F)
-    where
-        F: FnMut(&T) -> K,
-        K: cmp::Ord,
-    {
-        self.span_sort_by_key(|x| cmp::Reverse(f(x)))
     }
 
     /// 二分探索をします。
@@ -142,7 +133,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     /// assert_eq!(s.lower_bound_by_key(&seek, Clone::clone), 1);
     /// ```
     #[inline]
-    fn lower_bound_by_key<B, F>(&self, b: &B, mut f: F) -> usize
+    fn lower_bound_by_key<'a, B, F>(&'a self, b: &B, mut f: F) -> usize
     where
         F: FnMut(&T) -> B,
         B: Ord,
@@ -169,7 +160,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     /// assert_eq!(s.lower_bound_by(|probe| probe.cmp(&seek)), 1);
     /// ```
     #[inline]
-    fn lower_bound_by<F>(&self, mut f: F) -> usize
+    fn lower_bound_by<'a, F>(&'a self, mut f: F) -> usize
     where
         F: FnMut(&T) -> cmp::Ordering,
     {
@@ -222,7 +213,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     /// assert_eq!(s.upper_bound_by_key(&seek, Clone::clone), 5);
     /// ```
     #[inline]
-    fn upper_bound_by_key<B, F>(&self, b: &B, mut f: F) -> usize
+    fn upper_bound_by_key<'a, B, F>(&'a self, b: &B, mut f: F) -> usize
     where
         F: FnMut(&T) -> B,
         B: Ord,
@@ -249,7 +240,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     /// assert_eq!(s.upper_bound_by(|probe| probe.cmp(&seek)), 5);
     /// ```
     #[inline]
-    fn upper_bound_by<F>(&self, mut f: F) -> usize
+    fn upper_bound_by<'a, F>(&'a self, mut f: F) -> usize
     where
         F: FnMut(&T) -> cmp::Ordering,
     {
@@ -271,7 +262,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
     /// assert!(v[i..].iter().all(|&x| !(x < 5)));
     /// ```
     /// [`slice::partition_point`]: https://doc.rust-lang.org/std/primitive.slice.html#method.partition_point
-    fn span_partition_point<F>(&self, mut pred: F) -> usize
+    fn span_partition_point<'a, F>(&'a self, mut pred: F) -> usize
     where
         F: FnMut(&T) -> bool,
     {
