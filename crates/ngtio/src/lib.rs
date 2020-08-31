@@ -1,11 +1,6 @@
 #![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
 
 //! 標準入力を楽にします。
-//!
-//! # 特徴
-//!
-//! Rust 1.17.0 でコンパイルができます。（本質）
 
 use ::std::collections::VecDeque;
 
@@ -63,15 +58,21 @@ impl Buffer {
             .unwrap_or_else(|| panic!("入力が終了したのですが。"))
     }
 
+    /// トークンをポップして `Vec<char>` に変換です。
+    pub fn string_char_vec(&mut self) -> Vec<char> {
+        let s = self.string();
+        s.chars().collect::<Vec<_>>()
+    }
+
+    /// トークンをポップして `Vec<char>` に変換して長さを検査です。
+    pub fn string_char_vec_trusted_len(&mut self, len: usize) -> Vec<char> {
+        let s = self.string();
+        let s = s.chars().collect::<Vec<_>>();
+        assert_eq!(s.len(), len, "あら、思ったのと長さ違いますね……");
+        s
+    }
+
     /// トークンをポップして、char 型にパースです。
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// use ngtio::Buffer;
-    /// let mut buffer = Buffer::new();
-    /// let x = buffer.char();
-    /// ```
     pub fn char(&mut self) -> char {
         let string = self.string();
         let mut chars = string.chars();
@@ -84,14 +85,6 @@ impl Buffer {
     }
 
     /// トークンをパースします。
-    ///
-    /// # Examples
-    ///
-    /// ```ignore
-    /// use ngtio::Buffer;
-    /// let mut buffer = Buffer::new();
-    /// let x = buffer.read::<usize>();
-    /// ```
     pub fn read<T: ::std::str::FromStr>(&mut self) -> T
     where
         <T as ::std::str::FromStr>::Err: ::std::fmt::Debug,
