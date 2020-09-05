@@ -6,6 +6,7 @@
 //! [`Seq`]: trait.Seq.html
 //!
 
+pub use self::accumulate::{accumulate, Accumulate};
 pub use self::adjacent::{adjacent, Adjacent};
 pub use self::aoj_copied::AojCopied;
 pub use self::cartesian_product::{cartesian_product, CartesianProduct};
@@ -16,7 +17,7 @@ pub use self::mul_step::{mul_step, MulStep};
 pub use self::repeat_with::{repeat_with, RepeatWith};
 pub use self::step::{step, Step};
 
-use std::fmt;
+use std::{fmt, ops};
 
 impl<I: Iterator> Seq for I {}
 
@@ -97,6 +98,14 @@ pub trait Seq: Iterator + Sized {
         J::IntoIter: Clone,
     {
         cartesian_product::cartesian_product(self, other.into_iter())
+    }
+
+    /// 累積和です。
+    fn accumulate<T>(self, init: T) -> Accumulate<Self, T>
+    where
+        T: Clone + ops::AddAssign<Self::Item>,
+    {
+        accumulate::accumulate(self, init)
     }
 
     /// `itertools` の同名のメソッドと同じです。
@@ -364,6 +373,53 @@ mod repeat_with {
     }
 }
 
+mod accumulate {
+    use super::*;
+
+    #[allow(missing_docs)]
+    #[derive(Debug, Clone)]
+    pub struct Accumulate<I, T> {
+        prev: Option<T>,
+        iter: I,
+    }
+
+    #[allow(missing_docs)]
+    pub fn accumulate<I, T>(iter: I, init: T) -> Accumulate<I, T>
+    where
+        I: Iterator,
+        T: Clone + ops::AddAssign<I::Item>,
+    {
+        Accumulate {
+            prev: Some(init),
+            iter,
+        }
+    }
+
+    impl<I, T> Iterator for Accumulate<I, T>
+    where
+        I: Iterator,
+        T: Clone + ops::AddAssign<I::Item>,
+    {
+        type Item = T;
+
+        fn next(&mut self) -> Option<T> {
+            let res = self.prev.clone();
+            if let Some(prev) = self.prev.as_mut() {
+                if let Some(next) = self.iter.next() {
+                    *prev += next;
+                } else {
+                    self.prev = None;
+                }
+            }
+            res
+        }
+
+        fn size_hint(&self) -> (usize, Option<usize>) {
+            size_hint::add_scalar(self.iter.size_hint(), 1)
+        }
+    }
+}
+
 mod cartesian_product {
     #[allow(missing_docs)]
     #[derive(Debug, Clone)]
@@ -525,8 +581,7 @@ mod intersperse {
 
             self.iter.fold(accum, |accum, x| {
                 let accum = f(accum, element.clone());
-                let accum = f(accum, x);
-                accum
+                f(accum, x)
             })
         }
     }
