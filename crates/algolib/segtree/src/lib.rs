@@ -98,7 +98,6 @@ where
     T: Value,
 {
     geta: usize,
-    is_sentinel: Vec<bool>,
     table: Vec<T>,
 }
 
@@ -359,25 +358,17 @@ impl<T: Value> iter::FromIterator<T> for Segtree<T> {
                 table[i] = table[2 * i + 1].op(&table[2 * i + 2]);
             }
 
-            let mut is_sentinel = vec![false; table.len() + 1];
             if !table.is_empty() {
                 let mut i = table.len();
-                is_sentinel[i] = true;
                 while i != 0 {
                     i = (i - 1) / 2;
-                    is_sentinel[i] = true;
                 }
             }
 
-            Self {
-                geta,
-                is_sentinel,
-                table,
-            }
+            Self { geta, table }
         } else {
             Self {
                 geta: 0,
-                is_sentinel: Vec::new(),
                 table: Vec::new(),
             }
         }
