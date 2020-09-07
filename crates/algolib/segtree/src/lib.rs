@@ -5,7 +5,7 @@
 //! このように、値を演算のラッパー型で包んで、イテレータから構築します。
 //!
 //! ```
-//! use segtree_binary_search::*;
+//! use segtree::*;
 //!
 //! let mut seg = (0..10).map(|x| Add(x)).collect::<Segtree<_>>();
 //! assert_eq!(seg.fold(4..6), Some(Add(9)));
@@ -44,7 +44,7 @@
 //! このように、[`Value`] トレイトを実装した型を定義すると良いです。
 //!
 //! ```
-//! use segtree_binary_search::*;
+//! use segtree::*;
 //!
 //! #[derive(Debug, Clone, PartialEq, Eq)]
 //! struct First<T: std::fmt::Debug + Clone>(pub T);
@@ -110,7 +110,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// assert!((0..0).map(|x| Add(x)).collect::<Segtree<_>>().is_empty());
     /// assert!(!(0..1).map(|x| Add(x)).collect::<Segtree<_>>().is_empty());
     /// ```
@@ -126,7 +126,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// assert_eq!(0, (0..0).map(|x| Add(x)).collect::<Segtree<_>>().len());
     /// assert_eq!(1, (0..1).map(|x| Add(x)).collect::<Segtree<_>>().len());
     /// assert_eq!(2, (0..2).map(|x| Add(x)).collect::<Segtree<_>>().len());
@@ -141,7 +141,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let seg = Segtree::from_slice(&[Add(10), Add(20)]);
     /// assert_eq!(seg.fold(..), Some(Add(30)));
     /// ```
@@ -154,7 +154,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let a = [Add(10), Add(20)];
     /// assert_eq!(&a, Segtree::from_slice(&a).as_slice());
     /// ```
@@ -174,7 +174,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
     /// seg.set(0, Add(5));
     /// assert_eq!(seg.fold(..), Some(Add(25)));
@@ -196,7 +196,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
     /// seg.update(0, |Add(ref mut x)| *x = *x + 1);
     /// assert_eq!(seg.fold(..), Some(Add(31)));
@@ -221,7 +221,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let seg = Segtree::from_slice(&[Add(10), Add(20)]);
     /// assert_eq!(seg.fold(0..0), None);
     /// assert_eq!(seg.fold(0..1), Some(Add(10)));
@@ -286,7 +286,7 @@ impl<T: Value> Segtree<T> {
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
     /// assert_eq!(1, seg.partition_point(1, |&Add(x)| x <= -500000));
     /// assert_eq!(1, seg.partition_point(1, |&Add(x)| x <= 19));
@@ -392,7 +392,7 @@ impl<T: Value, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for Segtree<T>
     /// # Examples
     ///
     /// ```
-    /// use segtree_binary_search::*;
+    /// use segtree::*;
     ///
     /// let seg = (0..10).map(|x| Add(x)).collect::<Segtree<_>>();
     /// assert_eq!(seg[4], Add(4));
