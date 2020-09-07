@@ -1,5 +1,5 @@
 [package]
-name = "segtree_binary_search"
+name = "segtree"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
