@@ -1,4 +1,8 @@
+#![warn(missing_docs)]
+
 //! セグツリーです。
+//!
+//! 本体は [`Segtree`] です。
 //!
 //! # 使い方
 //!
@@ -14,6 +18,16 @@
 //!
 //! seg.set(4, Add(5));
 //! assert_eq!(seg.fold(4..6), Some(Add(10)));
+//! ```
+//!
+//!
+//! このように、値を演算のラッパー型を自動で開封してくれるものもあります。
+//!
+//! ```
+//! use segtree::*;
+//!
+//! let mut seg = (0..10).map(|x| Add(x)).collect::<Segtree<_>>();
+//! assert_eq!(seg.fold_inner(4..6), Some(9));
 //! ```
 //!
 //!
@@ -66,6 +80,7 @@
 //! - [`partition_point`] : 二分探索
 //! - [`as_slice`] : デバッグにどうぞです。
 //!
+//! [`Segtree`]: struct.Segtree.html
 //! [`Cat`]: struct.Cat.html
 //! [`Add`]: struct.Add.html
 //! [`Mul`]: struct.Mul.html
@@ -83,10 +98,10 @@
 //! [`partition_point`]: struct.Segtree.html#method.partition_point
 //! [`as_slice`]: struct.Segtree.html#method.as_slice
 
-pub use traits::Value;
+pub use traits::{Value, Wrapper};
 pub use values::{Add, Affine, Cat, First, Inversion, Max, Min, Mul, Second};
 
-use std::{iter, ops};
+use std::{cmp, iter, ops};
 
 /// 本体です。
 ///
@@ -100,6 +115,129 @@ where
     geta: usize,
     table: Vec<T>,
 }
+// dbg {{{
+#[allow(dead_code)]
+mod dbg {
+    #[macro_export]
+    macro_rules! lg {
+        () => {
+            $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
+        };
+        ($val:expr) => {
+            match $val {
+                tmp => {
+                    eprintln!("[{}:{}] {} = {:?}",
+                        file!(), line!(), stringify!($val), &tmp);
+                    tmp
+                }
+            }
+        };
+        ($val:expr,) => { lg!($val) };
+        ($($val:expr),+ $(,)?) => {
+            ($(lg!($val)),+,)
+        };
+    }
+
+    #[macro_export]
+    macro_rules! lg_nl {
+        () => {
+            $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
+        };
+        ($val:expr) => {
+            match $val {
+                tmp => {
+                    eprintln!("[{}:{}] {}:\n{:?}", file!(), line!(), stringify!($val), tmp);
+                    tmp
+                }
+            };
+        };
+    }
+
+    #[macro_export]
+    macro_rules! msg {
+        () => {
+            compile_error!();
+        };
+        ($msg:expr) => {
+            $crate::eprintln!("[{}:{}][{}]", $crate::file!(), $crate::line!(), $msg);
+        };
+        ($msg:expr, $val:expr) => {
+            match $val {
+                tmp => {
+                    eprintln!("[{}:{}][{}] {} = {:?}",
+                        file!(), line!(), $msg, stringify!($val), &tmp);
+                    tmp
+                }
+            }
+        };
+        ($msg:expr, $val:expr,) => { msg!($msg, $val) };
+        ($msg:expr, $($val:expr),+ $(,)?) => {
+            ($(msg!($msg, $val)),+,)
+        };
+    }
+
+    #[macro_export]
+    macro_rules! tabular {
+        ($val:expr) => {
+            lg_nl!(crate::dbg::Tabular($val))
+        };
+    }
+
+    #[macro_export]
+    macro_rules! boolean_table {
+        ($val:expr) => {
+            lg_nl!(crate::dbg::BooleanTable($val));
+        };
+    }
+
+    #[macro_export]
+    macro_rules! boolean_slice {
+        ($val:expr) => {
+            lg!(crate::dbg::BooleanSlice($val));
+        };
+    }
+
+    use std::fmt::{Debug, Formatter};
+
+    #[derive(Clone)]
+    pub struct Tabular<'a, T: Debug>(pub &'a [T]);
+    impl<'a, T: Debug> Debug for Tabular<'a, T> {
+        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+            for i in 0..self.0.len() {
+                writeln!(f, "{:2} | {:?}", i, &self.0[i])?;
+            }
+            Ok(())
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct BooleanTable<'a>(pub &'a [Vec<bool>]);
+    impl<'a> Debug for BooleanTable<'a> {
+        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+            for i in 0..self.0.len() {
+                writeln!(f, "{:2} | {:?}", i, BooleanSlice(&self.0[i]))?;
+            }
+            Ok(())
+        }
+    }
+
+    #[derive(Clone)]
+    pub struct BooleanSlice<'a>(pub &'a [bool]);
+    impl<'a> Debug for BooleanSlice<'a> {
+        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+            write!(
+                f,
+                "{}",
+                self.0
+                    .iter()
+                    .map(|&b| if b { "1 " } else { "0 " })
+                    .collect::<String>()
+            )?;
+            Ok(())
+        }
+    }
+}
+// }}}
 
 impl<T: Value> Segtree<T> {
     /// 空かどうかです。
@@ -200,9 +338,9 @@ impl<T: Value> Segtree<T> {
     /// seg.update(0, |Add(ref mut x)| *x = *x + 1);
     /// assert_eq!(seg.fold(..), Some(Add(31)));
     /// ```
-    pub fn update<F>(&mut self, mut i: usize, modifier: F)
+    pub fn update<F>(&mut self, mut i: usize, mut modifier: F)
     where
-        F: Fn(&mut T),
+        F: FnMut(&mut T),
     {
         assert!(i <= self.len(), "添字がはみ出していてですね……");
         i += self.len() - 1;
@@ -275,11 +413,23 @@ impl<T: Value> Segtree<T> {
 
     /// 二分探索をします。
     ///
-    /// 概念的な配列を `a` として、`start..end` 内の任意の `i` について `pred(&a[i])`
-    /// が `true` であり、`end..self.len()` 内の任意の `i` について `pred(&a[i])` が `false`
-    /// であるような `end` を返します。
+    /// さて、関数 `f: start..=len() -> bool` を `f(i) = pred(seg.fold(start..=i))`
+    /// で定義しましょう。このとき、
     ///
-    /// そのような `end` が存在しないとき（つまり、`pred` によって区分化されていないとき）
+    /// - `start..i` 内の任意の `j` について `f(j)` が `true`
+    /// - `i..=seg.len()` 内の任意の `j` について `f(j)` が `false`
+    ///
+    /// を満たす `i` が `start..=seg.len() + 1` 内にただ一つ存在するとき、それを返します。
+    ///
+    ///
+    /// # 定義上の注意
+    ///
+    /// 単位元がないという事情を鑑み、`f` の定義は閉区間です。
+    ///
+    ///
+    /// # 未定義
+    ///
+    /// そのような `i` が存在しないとき（つまり、`pred` によって区分化されていないとき）
     /// の結果は未定義です。
     ///
     /// # Examples
@@ -294,7 +444,7 @@ impl<T: Value> Segtree<T> {
     /// assert_eq!(3, seg.partition_point(1, |&Add(x)| x <= 50));
     /// assert_eq!(3, seg.partition_point(1, |&Add(x)| x <= 500000));
     /// ```
-    pub fn partition_point(&self, start: usize, pred: impl Fn(&T) -> bool) -> usize {
+    pub fn partition_point(&self, start: usize, mut pred: impl FnMut(&T) -> bool) -> usize {
         let mut i = self.geta + start;
         if !pred(&self.table[i]) {
             start
@@ -340,6 +490,344 @@ impl<T: Value> Segtree<T> {
 
             i - self.geta
         }
+    }
+
+    /// 二分探索をします。
+    ///
+    /// さて、関数 `g: 0..end -> bool` を `g(i) = pred(seg.fold(start..=i))`
+    /// で定義しましょう。このとき、
+    ///
+    /// - `i..end` 内の任意の `j` について `g(j)` が `true`
+    /// - `0..i` 内の任意の `j` について `g(j)` が `false`
+    ///
+    /// を満たす `i` が `0..end` 内にただ一つ存在するとき、それを返します。
+    ///
+    ///
+    /// # 定義上の注意
+    ///
+    /// 単位元がないという事情を鑑み、`g` の定義は閉区間です。
+    ///
+    ///
+    /// # 未定義
+    ///
+    /// そのような `i` が存在しないとき（つまり、`pred` によって区分化されていないとき）
+    /// の結果は未定義です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_partition_point(2, |&Add(x)| x <= -500000));
+    /// assert_eq!(2, seg.reverse_partition_point(2, |&Add(x)| x <= 19));
+    /// assert_eq!(1, seg.reverse_partition_point(2, |&Add(x)| x <= 20));
+    /// assert_eq!(1, seg.reverse_partition_point(2, |&Add(x)| x <= 29));
+    /// assert_eq!(0, seg.reverse_partition_point(2, |&Add(x)| x <= 30));
+    /// assert_eq!(0, seg.reverse_partition_point(2, |&Add(x)| x <= 500000));
+    /// ```
+    pub fn reverse_partition_point(&self, end: usize, mut pred: impl FnMut(&T) -> bool) -> usize {
+        let mut i = self.geta + end;
+        if end == 0 || !pred(&self.table[i - 1]) {
+            end
+        } else if self.fold(..end).map(|folded| pred(&folded)).unwrap_or(true) {
+            0
+        } else {
+            i -= 1;
+            let mut value = self.table[i].clone();
+
+            while i != 0 {
+                match i % 2 {
+                    0 => {
+                        let next_value = self.table[i - 1].op(&value);
+                        if !pred(&next_value) {
+                            break;
+                        }
+                        i -= 1;
+                        value = next_value;
+                    }
+                    1 => {
+                        i = (i - 1) / 2;
+                    }
+                    _ => unreachable!(),
+                }
+            }
+
+            loop {
+                if i != 0 {
+                    let next_value = self.table[i - 1].op(&value);
+                    if pred(&next_value) {
+                        i -= 1;
+                        value = next_value;
+                    }
+                }
+                let next_i = i * 2 + 1;
+                if self.table.len() < next_i {
+                    break;
+                }
+                i = next_i;
+            }
+
+            i - self.geta
+        }
+    }
+}
+
+impl<T> Segtree<T>
+where
+    T: Value + Wrapper,
+{
+    /// ラッパーの中身の値を変更します。
+    ///
+    /// 場所 `i` の値が `Wrapper::from_inner(x)` になります。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
+    /// seg.set_inner(0, 5);
+    /// assert_eq!(seg.fold(..), Some(Add(25)));
+    /// ```
+    #[inline]
+    pub fn set_inner(&mut self, i: usize, x: T::Inner) {
+        self.set(i, T::from_inner(x));
+    }
+
+    /// ラッパーの中身の値を編集します。
+    ///
+    /// 場所 `i` の値を編集します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
+    /// seg.update_inner(0, |x| *x = *x + 1);
+    /// assert_eq!(seg.fold(..), Some(Add(31)));
+    /// ```
+    #[inline]
+    pub fn update_inner<F>(&mut self, i: usize, mut modifier: F)
+    where
+        F: FnMut(&mut T::Inner),
+    {
+        self.update(i, |x| modifier(x.get_mut()));
+    }
+
+    /// 畳み込んでラッパーの中身を取ります。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20)]);
+    /// assert_eq!(seg.fold_inner(0..0), None);
+    /// assert_eq!(seg.fold_inner(0..1), Some(10));
+    /// assert_eq!(seg.fold_inner(..), Some(30));
+    /// ```
+    ///
+    /// [`Value`]: trait.Value.html
+    /// [`op`]: trait.Value.html#method.op
+    #[inline]
+    pub fn fold_inner(&self, range: impl ops::RangeBounds<usize>) -> Option<T::Inner> {
+        self.fold(range).map(Wrapper::into_inner)
+    }
+
+    /// ラッパー型の中身で二分探索をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.partition_point_inner(1, |&x| x <= -500000));
+    /// assert_eq!(1, seg.partition_point_inner(1, |&x| x <= 19));
+    /// assert_eq!(2, seg.partition_point_inner(1, |&x| x <= 20));
+    /// assert_eq!(2, seg.partition_point_inner(1, |&x| x <= 49));
+    /// assert_eq!(3, seg.partition_point_inner(1, |&x| x <= 50));
+    /// assert_eq!(3, seg.partition_point_inner(1, |&x| x <= 500000));
+    /// ```
+    #[inline]
+    pub fn partition_point_inner(
+        &self,
+        start: usize,
+        mut pred: impl FnMut(&T::Inner) -> bool,
+    ) -> usize {
+        self.partition_point(start, |x| pred(x.get()))
+    }
+
+    /// ラッパー型の中身で逆向きに二分探索をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= -500000));
+    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= 19));
+    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 20));
+    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 29));
+    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 30));
+    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 500000));
+    /// ```
+    #[inline]
+    pub fn reverse_partition_point_inner(
+        &self,
+        start: usize,
+        mut pred: impl FnMut(&T::Inner) -> bool,
+    ) -> usize {
+        self.reverse_partition_point(start, |x| pred(x.get()))
+    }
+
+    /// ラッパー型の中身で `lower_bound_by` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.lower_bound_inner_by(1, |x| x.cmp(&-500000)));
+    /// assert_eq!(1, seg.lower_bound_inner_by(1, |x| x.cmp(&19)));
+    /// assert_eq!(1, seg.lower_bound_inner_by(1, |x| x.cmp(&20)));
+    /// assert_eq!(2, seg.lower_bound_inner_by(1, |x| x.cmp(&49)));
+    /// assert_eq!(2, seg.lower_bound_inner_by(1, |x| x.cmp(&50)));
+    /// assert_eq!(3, seg.lower_bound_inner_by(1, |x| x.cmp(&500000)));
+    /// ```
+    #[inline]
+    pub fn lower_bound_inner_by(
+        &self,
+        start: usize,
+        mut cmp: impl FnMut(&T::Inner) -> cmp::Ordering,
+    ) -> usize {
+        self.partition_point_inner(start, |x| cmp(x) == cmp::Ordering::Less)
+    }
+
+    /// ラッパー型の中身で `upper_bound_by` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.upper_bound_inner_by(1, |x| x.cmp(&-500000)));
+    /// assert_eq!(1, seg.upper_bound_inner_by(1, |x| x.cmp(&19)));
+    /// assert_eq!(2, seg.upper_bound_inner_by(1, |x| x.cmp(&20)));
+    /// assert_eq!(2, seg.upper_bound_inner_by(1, |x| x.cmp(&49)));
+    /// assert_eq!(3, seg.upper_bound_inner_by(1, |x| x.cmp(&50)));
+    /// assert_eq!(3, seg.upper_bound_inner_by(1, |x| x.cmp(&500000)));
+    /// ```
+    #[inline]
+    pub fn upper_bound_inner_by(
+        &self,
+        start: usize,
+        mut cmp: impl FnMut(&T::Inner) -> cmp::Ordering,
+    ) -> usize {
+        self.partition_point_inner(start, |x| cmp(x) != cmp::Ordering::Greater)
+    }
+
+    /// ラッパー型の中身で `lower_bound_by_key` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.lower_bound_inner_by_key(1, &-500000, |&x| x));
+    /// assert_eq!(1, seg.lower_bound_inner_by_key(1, &19, |&x| x));
+    /// assert_eq!(1, seg.lower_bound_inner_by_key(1, &20, |&x| x));
+    /// assert_eq!(2, seg.lower_bound_inner_by_key(1, &49, |&x| x));
+    /// assert_eq!(2, seg.lower_bound_inner_by_key(1, &50, |&x| x));
+    /// assert_eq!(3, seg.lower_bound_inner_by_key(1, &500000, |&x| x));
+    /// ```
+    #[inline]
+    pub fn lower_bound_inner_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut key: impl FnMut(&T::Inner) -> U,
+    ) -> usize {
+        self.lower_bound_inner_by(start, |x| key(x).cmp(value))
+    }
+
+    /// ラッパー型の中身で `upper_bound_by_key` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// use std::convert::identity;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.upper_bound_inner_by_key(1, &-500000, |&x| x));
+    /// assert_eq!(1, seg.upper_bound_inner_by_key(1, &19, |&x| x));
+    /// assert_eq!(2, seg.upper_bound_inner_by_key(1, &20, |&x| x));
+    /// assert_eq!(2, seg.upper_bound_inner_by_key(1, &49, |&x| x));
+    /// assert_eq!(3, seg.upper_bound_inner_by_key(1, &50, |&x| x));
+    /// assert_eq!(3, seg.upper_bound_inner_by_key(1, &500000, |&x| x));
+    /// ```
+    #[inline]
+    pub fn upper_bound_inner_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut key: impl FnMut(&T::Inner) -> U,
+    ) -> usize {
+        self.upper_bound_inner_by(start, |x| key(x).cmp(value))
+    }
+
+    /// 中身の [`Vec`] に変換します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let a = [Add(10), Add(20)];
+    /// assert_eq!(vec![10, 20], Segtree::from_slice(&a).to_vec_inner());
+    /// ```
+    pub fn to_vec_inner(&self) -> Vec<T::Inner> {
+        self.as_slice().iter().cloned().map(T::into_inner).collect()
+    }
+}
+
+impl<T> Segtree<T>
+where
+    T: Value + Wrapper,
+    T::Inner: Ord,
+{
+    /// ラッパー型の中身で `lower_bound` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.lower_bound_inner(1, &-500000));
+    /// assert_eq!(1, seg.lower_bound_inner(1, &19));
+    /// assert_eq!(1, seg.lower_bound_inner(1, &20));
+    /// assert_eq!(2, seg.lower_bound_inner(1, &49));
+    /// assert_eq!(2, seg.lower_bound_inner(1, &50));
+    /// assert_eq!(3, seg.lower_bound_inner(1, &500000));
+    /// ```
+    #[inline]
+    pub fn lower_bound_inner(&self, start: usize, value: &T::Inner) -> usize {
+        self.partition_point_inner(start, |x| x < value)
+    }
+
+    /// ラッパー型の中身で `upper_bound` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(1, seg.upper_bound_inner(1, &-500000));
+    /// assert_eq!(1, seg.upper_bound_inner(1, &19));
+    /// assert_eq!(2, seg.upper_bound_inner(1, &20));
+    /// assert_eq!(2, seg.upper_bound_inner(1, &49));
+    /// assert_eq!(3, seg.upper_bound_inner(1, &50));
+    /// assert_eq!(3, seg.upper_bound_inner(1, &500000));
+    /// ```
+    #[inline]
+    pub fn upper_bound_inner(&self, start: usize, value: &T::Inner) -> usize {
+        self.partition_point_inner(start, |x| x <= value)
     }
 }
 
@@ -396,29 +884,102 @@ impl<T: Value, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for Segtree<T>
 }
 
 mod traits {
+    /// 演算 [`op`] の入っている型です。
+    ///
+    /// [`op`]: traits.Value.html#methods.op
     pub trait Value: Clone {
+        /// 演算をします。
         fn op(&self, rhs: &Self) -> Self;
 
+        /// 右から演算をします。
         fn op_assign_from_the_right(&mut self, rhs: &Self) {
             *self = self.op(rhs);
         }
 
+        /// 左から演算をします。
         fn op_assign_from_the_left(&mut self, rhs: &Self) {
             *self = rhs.op(self);
         }
     }
+
+    /// ラッパー型です。
+    pub trait Wrapper {
+        /// [`into_inner`] と [`from_inner`] で使われます。
+        ///
+        /// [`into_inner`]: traits.Wrapper.html#method.into_inner
+        /// [`from_inner`]: traits.Wrapper.html#method.from_inner
+        type Inner;
+
+        /// 中身への参照をとります。
+        fn get(&self) -> &Self::Inner;
+
+        /// 中身への可変参照をとります。
+        fn get_mut(&mut self) -> &mut Self::Inner;
+
+        /// 中身へ変換します。
+        fn into_inner(self) -> Self::Inner;
+
+        /// 中身から構築します。
+        fn from_inner(src: Self::Inner) -> Self;
+    }
 }
 
 mod values {
-    use super::Value;
+    use super::{Value, Wrapper};
     use std::{cmp, ops};
+
+    macro_rules! impl_wrapper {
+        (impl Wrapper for $struct_name:ident {}) => {
+            impl<T> Wrapper for $struct_name<T> {
+                type Inner = T;
+
+                #[inline]
+                fn get(&self) -> &Self::Inner {
+                    &self.0
+                }
+                #[inline]
+                fn get_mut(&mut self) -> &mut Self::Inner {
+                    &mut self.0
+                }
+                #[inline]
+                fn into_inner(self) -> Self::Inner {
+                    self.0
+                }
+                #[inline]
+                fn from_inner(src: Self::Inner) -> Self {
+                    Self(src)
+                }
+            }
+        };
+    }
 
     /// 文字列結合
     #[derive(Debug, Clone, PartialEq, Eq)]
     pub struct Cat(pub String);
     impl Value for Cat {
+        #[inline]
         fn op(&self, rhs: &Self) -> Self {
             Cat(self.0.chars().chain(rhs.0.chars()).collect())
+        }
+    }
+    impl Wrapper for Cat {
+        type Inner = String;
+
+        #[inline]
+        fn get(&self) -> &Self::Inner {
+            &self.0
+        }
+        #[inline]
+        fn get_mut(&mut self) -> &mut Self::Inner {
+            &mut self.0
+        }
+        #[inline]
+        fn into_inner(self) -> Self::Inner {
+            self.0
+        }
+        #[inline]
+        fn from_inner(src: Self::Inner) -> Self {
+            Self(src)
         }
     }
 
@@ -433,6 +994,7 @@ mod values {
             Add(self.0.clone() + rhs.0.clone())
         }
     }
+    impl_wrapper! { impl Wrapper for Add {} }
 
     /// 掛け算
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -445,6 +1007,7 @@ mod values {
             Mul(self.0.clone() * rhs.0.clone())
         }
     }
+    impl_wrapper! { impl Wrapper for Mul {} }
 
     /// 最小
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -457,6 +1020,7 @@ mod values {
             Min(self.0.clone().min(rhs.0.clone()))
         }
     }
+    impl_wrapper! { impl Wrapper for Min {} }
 
     /// 最大
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -469,6 +1033,7 @@ mod values {
             Max(self.0.clone().max(rhs.0.clone()))
         }
     }
+    impl_wrapper! { impl Wrapper for Max {} }
 
     /// 転倒数
     #[derive(Debug, Clone, PartialEq, Eq)]
@@ -478,9 +1043,11 @@ mod values {
         inv: usize,
     }
     impl Inversion {
+        /// 転倒数を返します。
         pub fn inv(&self) -> usize {
             self.inv
         }
+        /// bit ひとつ分のデータであればその bit を返します。
         pub fn try_into_bool(self) -> Option<bool> {
             match self {
                 Self {
@@ -496,6 +1063,7 @@ mod values {
                 _ => None,
             }
         }
+        /// bit 0 に対応するオブジェクトを作ります。
         pub fn zero() -> Self {
             Self {
                 zeros: 1,
@@ -503,6 +1071,7 @@ mod values {
                 inv: 0,
             }
         }
+        /// bit 1 に対応するオブジェクトを作ります。
         pub fn one() -> Self {
             Self {
                 zeros: 0,
@@ -510,6 +1079,7 @@ mod values {
                 inv: 0,
             }
         }
+        /// ひとつの bit からオブジェクトを構築します。
         pub fn from_bool(b: bool) -> Self {
             if b {
                 Self::one()
@@ -529,25 +1099,27 @@ mod values {
 
     /// 第一成分を返します。
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct First<T: std::fmt::Debug + Clone>(pub T);
+    pub struct First<T>(pub T);
     impl<T: std::fmt::Debug + Clone> Value for First<T> {
         fn op(&self, _rhs: &Self) -> Self {
             self.clone()
         }
     }
+    impl_wrapper! { impl Wrapper for First {} }
 
     /// 第二成分を返します。
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct Second<T: std::fmt::Debug + Clone>(pub T);
+    pub struct Second<T>(pub T);
     impl<T: std::fmt::Debug + Clone> Value for Second<T> {
         fn op(&self, rhs: &Self) -> Self {
             rhs.clone()
         }
     }
+    impl_wrapper! { impl Wrapper for Second {} }
 
     /// アフィンです。
     #[derive(Debug, Clone, PartialEq, Eq)]
-    pub struct Affine<T: std::fmt::Debug + Clone> {
+    pub struct Affine<T> {
         a: T,
         b: T,
     }
@@ -573,20 +1145,35 @@ mod tests {
         let n = 11;
         let seg = Segtree::from_slice(&vec![Add(1); n]);
 
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 0), 0);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 1), 1);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 2), 2);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 3), 3);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 4), 4);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 5), 5);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 6), 6);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 7), 7);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 8), 8);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 9), 9);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 10), 10);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 11), 11);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 12), 11);
-        assert_eq!(seg.partition_point(0, |&Add(x)| x <= 13), 11);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 0), 0);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 1), 1);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 2), 2);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 3), 3);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 4), 4);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 5), 5);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 6), 6);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 7), 7);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 8), 8);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 9), 9);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 10), 10);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 11), 11);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 12), 11);
+        assert_eq!(seg.partition_point_inner(0, |&x| x <= 13), 11);
+
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 0), 11);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 1), 10);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 2), 9);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 3), 8);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 4), 7);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 5), 6);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 6), 5);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 7), 4);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 8), 3);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 9), 2);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 10), 1);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 11), 0);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 12), 0);
+        assert_eq!(seg.reverse_partition_point_inner(11, |&x| x <= 13), 0);
     }
 
     #[test]
@@ -595,7 +1182,11 @@ mod tests {
             let seg = Segtree::from_slice(&vec![Add(1); n]);
             for l in 0..n {
                 for d in 0..n + 2 {
-                    assert_eq!(seg.partition_point(l, |&Add(x)| x <= d), (l + d).min(n));
+                    assert_eq!(seg.partition_point_inner(l, |&x| x <= d), (l + d).min(n));
+                    assert_eq!(
+                        seg.reverse_partition_point_inner(l, |&x| x <= d),
+                        l.saturating_sub(d)
+                    );
                 }
             }
         }
@@ -609,13 +1200,13 @@ mod tests {
         let mut seg = Segtree::from_slice(&a);
 
         assert_eq!(seg.as_slice(), a.as_slice());
-        assert_eq!(seg.fold(3..5), Some(Cat("34".to_owned())));
-        assert_eq!(seg.fold(2..9), Some(Cat("2345678".to_owned())));
-        assert_eq!(seg.fold(0..4), Some(Cat("0123".to_owned())));
-        assert_eq!(seg.fold(8..8), None);
+        assert_eq!(seg.fold_inner(3..5), Some("34".to_owned()));
+        assert_eq!(seg.fold_inner(2..9), Some("2345678".to_owned()));
+        assert_eq!(seg.fold_inner(0..4), Some("0123".to_owned()));
+        assert_eq!(seg.fold_inner(8..8), None);
 
-        seg.set(3, Cat("d".to_owned()));
-        seg.set(6, Cat("g".to_owned()));
+        seg.set_inner(3, "d".to_owned());
+        seg.set_inner(6, "g".to_owned());
     }
 
     const NUMBER_OF_TEST_CASES: usize = 20;
@@ -648,7 +1239,7 @@ mod tests {
                         let x = rng.sample(rand::distributions::Alphanumeric);
 
                         a[i] = x;
-                        seg.set(i, Cat(x.to_string()));
+                        seg.set_inner(i, x.to_string());
 
                         println!("\tSet {}, {}, a = {:?}", i, x, a.iter().collect::<String>());
                     }
@@ -657,8 +1248,7 @@ mod tests {
                         let range = gen_valid_range(&mut rng, n);
                         let expected = a[range.clone()].iter().copied().collect::<String>();
                         let result = seg
-                            .fold(range.clone())
-                            .map(|x| x.0)
+                            .fold_inner(range.clone())
                             .unwrap_or_else(Default::default);
                         println!(
                             "\tFold {:?}, expected = {}, result = {}",
@@ -697,7 +1287,7 @@ mod tests {
                         let x = rng.gen_range(0, 100);
 
                         a[i] = x;
-                        seg.set(i, Add(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -714,7 +1304,7 @@ mod tests {
                         }
 
                         let expected = i;
-                        let result = seg.partition_point(start, |&Add(x)| x <= value);
+                        let result = seg.partition_point_inner(start, |&x| x <= value);
 
                         println!(
                             "\tLower bound (start = {}, value = {}) -> (expected = {}, result = {})",
@@ -727,8 +1317,7 @@ mod tests {
                         let range = gen_valid_range(&mut rng, n);
                         let expected = a[range.clone()].iter().sum::<u32>();
                         let result = seg
-                            .fold(range.clone())
-                            .map(|x| x.0)
+                            .fold_inner(range.clone())
                             .unwrap_or_else(Default::default);
                         println!(
                             "\tFold (range = {:?}) -> (expected = {}, result = {})",
@@ -767,7 +1356,7 @@ mod tests {
                         let x = rng.gen_range(1, 256);
 
                         a[i] = x;
-                        seg.set(i, Mul(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -797,8 +1386,7 @@ mod tests {
                         let range = gen_valid_range(&mut rng, n);
                         let expected = a[range.clone()].iter().product::<u128>();
                         let result = seg
-                            .fold(range.clone())
-                            .map(|x| x.0)
+                            .fold_inner(range.clone())
                             .unwrap_or_else(Default::default);
                         println!(
                             "\tFold (range = {:?}) -> (expected = {}, result = {})",
@@ -837,7 +1425,7 @@ mod tests {
                         let x = rng.gen_range(0, 100);
 
                         a[i] = x;
-                        seg.set(i, Min(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -845,7 +1433,7 @@ mod tests {
                     85..=100 => {
                         let range = gen_valid_range(&mut rng, n);
                         let expected = a[range.clone()].iter().min().copied();
-                        let result = seg.fold(range.clone()).map(|x| x.0);
+                        let result = seg.fold_inner(range.clone());
                         println!(
                             "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
                             &range, expected, result
@@ -883,7 +1471,7 @@ mod tests {
                         let x = rng.gen_range(0, 100);
 
                         a[i] = x;
-                        seg.set(i, Max(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -891,7 +1479,7 @@ mod tests {
                     85..=100 => {
                         let range = gen_valid_range(&mut rng, n);
                         let expected = a[range.clone()].iter().max().copied();
-                        let result = seg.fold(range.clone()).map(|x| x.0);
+                        let result = seg.fold_inner(range.clone());
                         println!(
                             "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
                             &range, expected, result
@@ -1003,7 +1591,7 @@ mod tests {
                         let x = rng.gen_range(0, 100);
 
                         a[i] = x;
-                        seg.set(i, First(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -1015,7 +1603,7 @@ mod tests {
                         } else {
                             Some(a[range.start])
                         };
-                        let result = seg.fold(range.clone()).map(|x| x.0);
+                        let result = seg.fold_inner(range.clone());
                         println!(
                             "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
                             &range, expected, result
@@ -1053,7 +1641,7 @@ mod tests {
                         let x = rng.gen_range(0, 100);
 
                         a[i] = x;
-                        seg.set(i, Second(x));
+                        seg.set_inner(i, x);
 
                         println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
                     }
@@ -1065,7 +1653,7 @@ mod tests {
                         } else {
                             Some(a[range.end - 1])
                         };
-                        let result = seg.fold(range.clone()).map(|x| x.0);
+                        let result = seg.fold_inner(range.clone());
                         println!(
                             "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
                             &range, expected, result
