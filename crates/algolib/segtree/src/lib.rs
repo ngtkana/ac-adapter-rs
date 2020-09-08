@@ -16,7 +16,7 @@
 //! assert_eq!(seg.fold(4..4), None);
 //! assert_eq!(seg.fold(..), Some(Add(45)));
 //!
-//! seg.set(4, Add(5));
+//! seg.update(4, Add(5));
 //! assert_eq!(seg.fold(4..6), Some(Add(10)));
 //! ```
 //!
@@ -71,7 +71,7 @@
 //!
 //! # 基本的な機能
 //!
-//! - [`set`] : 更新
+//! - [`update`] : 更新
 //! - [`fold`] : 区間クエリ
 //!
 //!
@@ -93,7 +93,7 @@
 //!
 //! [`Value`]: trait.Value.html
 //!
-//! [`set`]: struct.Segtree.html#method.set
+//! [`update`]: struct.Segtree.html#method.update
 //! [`fold`]: struct.Segtree.html#method.fold
 //! [`partition_point`]: struct.Segtree.html#method.partition_point
 //! [`as_slice`]: struct.Segtree.html#method.as_slice
@@ -115,129 +115,6 @@ where
     geta: usize,
     table: Vec<T>,
 }
-// dbg {{{
-#[allow(dead_code)]
-mod dbg {
-    #[macro_export]
-    macro_rules! lg {
-        () => {
-            $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
-        };
-        ($val:expr) => {
-            match $val {
-                tmp => {
-                    eprintln!("[{}:{}] {} = {:?}",
-                        file!(), line!(), stringify!($val), &tmp);
-                    tmp
-                }
-            }
-        };
-        ($val:expr,) => { lg!($val) };
-        ($($val:expr),+ $(,)?) => {
-            ($(lg!($val)),+,)
-        };
-    }
-
-    #[macro_export]
-    macro_rules! lg_nl {
-        () => {
-            $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
-        };
-        ($val:expr) => {
-            match $val {
-                tmp => {
-                    eprintln!("[{}:{}] {}:\n{:?}", file!(), line!(), stringify!($val), tmp);
-                    tmp
-                }
-            };
-        };
-    }
-
-    #[macro_export]
-    macro_rules! msg {
-        () => {
-            compile_error!();
-        };
-        ($msg:expr) => {
-            $crate::eprintln!("[{}:{}][{}]", $crate::file!(), $crate::line!(), $msg);
-        };
-        ($msg:expr, $val:expr) => {
-            match $val {
-                tmp => {
-                    eprintln!("[{}:{}][{}] {} = {:?}",
-                        file!(), line!(), $msg, stringify!($val), &tmp);
-                    tmp
-                }
-            }
-        };
-        ($msg:expr, $val:expr,) => { msg!($msg, $val) };
-        ($msg:expr, $($val:expr),+ $(,)?) => {
-            ($(msg!($msg, $val)),+,)
-        };
-    }
-
-    #[macro_export]
-    macro_rules! tabular {
-        ($val:expr) => {
-            lg_nl!(crate::dbg::Tabular($val))
-        };
-    }
-
-    #[macro_export]
-    macro_rules! boolean_table {
-        ($val:expr) => {
-            lg_nl!(crate::dbg::BooleanTable($val));
-        };
-    }
-
-    #[macro_export]
-    macro_rules! boolean_slice {
-        ($val:expr) => {
-            lg!(crate::dbg::BooleanSlice($val));
-        };
-    }
-
-    use std::fmt::{Debug, Formatter};
-
-    #[derive(Clone)]
-    pub struct Tabular<'a, T: Debug>(pub &'a [T]);
-    impl<'a, T: Debug> Debug for Tabular<'a, T> {
-        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-            for i in 0..self.0.len() {
-                writeln!(f, "{:2} | {:?}", i, &self.0[i])?;
-            }
-            Ok(())
-        }
-    }
-
-    #[derive(Clone)]
-    pub struct BooleanTable<'a>(pub &'a [Vec<bool>]);
-    impl<'a> Debug for BooleanTable<'a> {
-        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-            for i in 0..self.0.len() {
-                writeln!(f, "{:2} | {:?}", i, BooleanSlice(&self.0[i]))?;
-            }
-            Ok(())
-        }
-    }
-
-    #[derive(Clone)]
-    pub struct BooleanSlice<'a>(pub &'a [bool]);
-    impl<'a> Debug for BooleanSlice<'a> {
-        fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-            write!(
-                f,
-                "{}",
-                self.0
-                    .iter()
-                    .map(|&b| if b { "1 " } else { "0 " })
-                    .collect::<String>()
-            )?;
-            Ok(())
-        }
-    }
-}
-// }}}
 
 impl<T: Value> Segtree<T> {
     /// 空かどうかです。
@@ -313,10 +190,10 @@ impl<T: Value> Segtree<T> {
     /// ```
     /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
-    /// seg.set(0, Add(5));
+    /// seg.update(0, Add(5));
     /// assert_eq!(seg.fold(..), Some(Add(25)));
     /// ```
-    pub fn set(&mut self, mut i: usize, x: T) {
+    pub fn update(&mut self, mut i: usize, x: T) {
         assert!(i <= self.len(), "添字がはみ出していてですね……");
         i += self.len() - 1;
         self.table[i] = x;
@@ -335,10 +212,10 @@ impl<T: Value> Segtree<T> {
     /// ```
     /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
-    /// seg.update(0, |Add(ref mut x)| *x = *x + 1);
+    /// seg.modify(0, |Add(ref mut x)| *x = *x + 1);
     /// assert_eq!(seg.fold(..), Some(Add(31)));
     /// ```
-    pub fn update<F>(&mut self, mut i: usize, mut modifier: F)
+    pub fn modify<F>(&mut self, mut i: usize, mut modifier: F)
     where
         F: FnMut(&mut T),
     {
@@ -585,12 +462,12 @@ where
     /// ```
     /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
-    /// seg.set_inner(0, 5);
+    /// seg.update_inner(0, 5);
     /// assert_eq!(seg.fold(..), Some(Add(25)));
     /// ```
     #[inline]
-    pub fn set_inner(&mut self, i: usize, x: T::Inner) {
-        self.set(i, T::from_inner(x));
+    pub fn update_inner(&mut self, i: usize, x: T::Inner) {
+        self.update(i, T::from_inner(x));
     }
 
     /// ラッパーの中身の値を編集します。
@@ -602,15 +479,15 @@ where
     /// ```
     /// use segtree::*;
     /// let mut seg = Segtree::from_slice(&[Add(10), Add(20)]);
-    /// seg.update_inner(0, |x| *x = *x + 1);
+    /// seg.modify_inner(0, |x| *x = *x + 1);
     /// assert_eq!(seg.fold(..), Some(Add(31)));
     /// ```
     #[inline]
-    pub fn update_inner<F>(&mut self, i: usize, mut modifier: F)
+    pub fn modify_inner<F>(&mut self, i: usize, mut modifier: F)
     where
         F: FnMut(&mut T::Inner),
     {
-        self.update(i, |x| modifier(x.get_mut()));
+        self.modify(i, |x| modifier(x.get_mut()));
     }
 
     /// 畳み込んでラッパーの中身を取ります。
@@ -828,6 +705,44 @@ where
     #[inline]
     pub fn upper_bound_inner(&self, start: usize, value: &T::Inner) -> usize {
         self.partition_point_inner(start, |x| x <= value)
+    }
+
+    /// ラッパー型の中身で逆向きに `lower_bound` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_lower_bound_inner(2, &-500000));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner(2, &19));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner(2, &20));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner(2, &29));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner(2, &30));
+    /// assert_eq!(0, seg.reverse_lower_bound_inner(2, &500000));
+    /// ```
+    #[inline]
+    pub fn reverse_lower_bound_inner(&self, end: usize, value: &T::Inner) -> usize {
+        self.reverse_partition_point_inner(end, |x| x < value)
+    }
+
+    /// ラッパー型の中身で逆向きに `upper_bound` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_upper_bound_inner(2, &-500000));
+    /// assert_eq!(2, seg.reverse_upper_bound_inner(2, &19));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner(2, &20));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner(2, &29));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner(2, &30));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner(2, &500000));
+    /// ```
+    #[inline]
+    pub fn reverse_upper_bound_inner(&self, end: usize, value: &T::Inner) -> usize {
+        self.reverse_partition_point_inner(end, |x| x <= value)
     }
 }
 
@@ -1138,7 +1053,8 @@ mod values {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::{iter, mem};
+    use rand::prelude::*;
+    use std::{fmt, iter, marker, mem};
 
     #[test]
     fn test_add_partition_point_hand() {
@@ -1205,291 +1121,331 @@ mod tests {
         assert_eq!(seg.fold_inner(0..4), Some("0123".to_owned()));
         assert_eq!(seg.fold_inner(8..8), None);
 
-        seg.set_inner(3, "d".to_owned());
-        seg.set_inner(6, "g".to_owned());
+        seg.update_inner(3, "d".to_owned());
+        seg.update_inner(6, "g".to_owned());
     }
 
     const NUMBER_OF_TEST_CASES: usize = 20;
     const NUMBER_OF_QUERIES: usize = 50;
 
-    #[test]
-    fn test_cat_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+    #[derive(Debug)]
+    struct Test<T, F, G> {
+        rng: rand::rngs::StdRng,
+        gen: F,
+        gen_large: G,
+        marker: marker::PhantomData<T>,
+    }
 
-        for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.sample(rand::distributions::Alphanumeric))
+    impl<T, F, G> Test<T, F, G>
+    where
+        T: Value + Wrapper,
+        T::Inner: fmt::Debug + cmp::PartialEq + Clone,
+        F: Fn(&mut rand::rngs::StdRng) -> T::Inner,
+        G: Fn(&mut rand::rngs::StdRng) -> T::Inner,
+    {
+        pub fn new(seed: u64, gen: F, gen_large: G) -> Self {
+            Self {
+                rng: rand::SeedableRng::seed_from_u64(seed),
+                gen,
+                gen_large: gen_large,
+                marker: marker::PhantomData::<T>,
+            }
+        }
+
+        pub fn run(&mut self, spec: Spec) {
+            let n = self.rng.gen_range(16, 32);
+            let a = iter::repeat_with(|| (self.gen)(&mut self.rng))
                 .take(n)
                 .collect::<Vec<_>>();
-            let mut seg = a
-                .iter()
-                .map(|&c| Cat(c.to_string()))
-                .collect::<Segtree<_>>();
-
+            let seg = a.iter().cloned().map(T::from_inner).collect::<Segtree<_>>();
             println!(" === Created an instance === ");
-            println!("n = {}, a = {}", n, &a.iter().collect::<String>());
+            println!("n = {}, a = {:?}", n, &a);
+            let mut instance = Instance { a, seg };
 
             for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=84 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.sample(rand::distributions::Alphanumeric);
-
-                        a[i] = x;
-                        seg.set_inner(i, x.to_string());
-
-                        println!("\tSet {}, {}, a = {:?}", i, x, a.iter().collect::<String>());
+                match spec.what(self.rng.gen_range(0, spec.sum())) {
+                    TestNames::UpdateInner => {
+                        let i = self.rng.gen_range(0, n);
+                        let x = (self.gen)(&mut self.rng);
+                        instance.test_update_inner(i, x);
                     }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = a[range.clone()].iter().copied().collect::<String>();
-                        let result = seg
-                            .fold_inner(range.clone())
-                            .unwrap_or_else(Default::default);
-                        println!(
-                            "\tFold {:?}, expected = {}, result = {}",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
+                    TestNames::FoldInner => {
+                        let range = gen_valid_range(&mut self.rng, n);
+                        instance.test_fold_inner(range);
                     }
-                    _ => unreachable!(),
+                    TestNames::LowerBoundInner => panic!(),
+                    TestNames::ReverseLowerBoundInner => panic!(),
                 }
             }
-            println!();
+        }
+
+        pub fn run_ord(&mut self, spec: Spec)
+        where
+            T::Inner: Ord,
+        {
+            let n = self.rng.gen_range(16, 32);
+            let a = iter::repeat_with(|| (self.gen)(&mut self.rng))
+                .take(n)
+                .collect::<Vec<_>>();
+            let seg = a.iter().cloned().map(T::from_inner).collect::<Segtree<_>>();
+            println!(" === Created an instance === ");
+            println!("n = {}, a = {:?}", n, &a);
+            let mut instance = Instance { a, seg };
+
+            for _ in 0..NUMBER_OF_QUERIES {
+                match spec.what(self.rng.gen_range(0, spec.sum())) {
+                    TestNames::UpdateInner => {
+                        let i = self.rng.gen_range(0, n);
+                        let x = (self.gen)(&mut self.rng);
+                        instance.test_update_inner(i, x);
+                    }
+                    TestNames::FoldInner => {
+                        let range = gen_valid_range(&mut self.rng, n);
+                        instance.test_fold_inner(range);
+                    }
+                    TestNames::LowerBoundInner => {
+                        let start = self.rng.gen_range(0, n);
+                        let value = (self.gen_large)(&mut self.rng);
+                        instance.test_lower_bound_inner(start, value);
+                    }
+                    TestNames::ReverseLowerBoundInner => {
+                        let end = self.rng.gen_range(1, n + 1);
+                        let value = (self.gen_large)(&mut self.rng);
+                        instance.test_reverse_lower_bound_inner(end, value);
+                    }
+                }
+            }
+        }
+    }
+
+    #[derive(Debug)]
+    struct Instance<T>
+    where
+        T: Value + Wrapper,
+    {
+        a: Vec<T::Inner>,
+        seg: Segtree<T>,
+    }
+
+    impl<T> Instance<T>
+    where
+        T: Value + Wrapper,
+        T::Inner: fmt::Debug + Clone + cmp::PartialEq,
+    {
+        pub fn test_update_inner(&mut self, i: usize, x: T::Inner) {
+            self.a[i] = x.clone();
+            self.seg.update_inner(i, x.clone());
+
+            println!(
+                "\tUpdate (i = {}, x = {:?}) -> a = {:?}",
+                i,
+                &x,
+                self.a.iter().collect::<Vec<_>>()
+            );
+        }
+
+        pub fn test_fold_inner(&self, range: ops::Range<usize>) {
+            let expected = self.a[range.clone()]
+                .iter()
+                .cloned()
+                .map(T::from_inner)
+                .fold(None, |acc: Option<T>, x| {
+                    Some(if let Some(acc) = acc {
+                        acc.op(&x)
+                    } else {
+                        x.clone()
+                    })
+                })
+                .map(T::into_inner);
+            let result = self.seg.fold_inner(range.clone());
+            println!(
+                "\tFold {:?}, expected = {:?}, result = {:?}",
+                &range, expected, result
+            );
+            assert_eq!(&expected, &result);
+        }
+
+        pub fn test_lower_bound_inner(&self, start: usize, value: T::Inner)
+        where
+            T::Inner: Ord,
+        {
+            use span::Span;
+
+            let a = self.a[start..]
+                .iter()
+                .cloned()
+                .map(T::from_inner)
+                .collect::<Vec<_>>();
+            let mut v = vec![a[0].clone()];
+            for x in a.iter().skip(1).cloned() {
+                let x = v.last().unwrap().op(&x);
+                v.push(x);
+            }
+            let a = v.iter().cloned().map(T::into_inner).collect::<Vec<_>>();
+
+            let expected = start + a.lower_bound(&value);
+            let result = self.seg.lower_bound_inner(start, &value);
+
+            println!(
+                "\tLower bound (start = {}, value = {:?}) -> (expected = {}, result = {}, fold_inner(start..result) = {:?})",
+                start, value, expected, result, self.seg.fold_inner(start..result)
+            );
+            assert_eq!(expected, result);
+        }
+
+        pub fn test_reverse_lower_bound_inner(&self, end: usize, value: T::Inner)
+        where
+            T::Inner: Ord,
+        {
+            use span::Span;
+
+            let a = self.a[..end]
+                .iter()
+                .rev()
+                .cloned()
+                .map(T::from_inner)
+                .collect::<Vec<_>>();
+            let mut v = vec![a[0].clone()];
+            for x in a.iter().skip(1).cloned() {
+                let x = v.last().unwrap().op(&x);
+                v.push(x);
+            }
+            let a = v.iter().cloned().map(T::into_inner).collect::<Vec<_>>();
+
+            let expected = end - a.lower_bound(&value);
+            let result = self.seg.reverse_lower_bound_inner(end, &value);
+
+            println!(
+                "\tReverse lower bound (start = {}, value = {:?}) -> (expected = {}, result = {}, fold_inner(start..result) = {:?})",
+                end, value, expected, result, self.seg.fold_inner(result..end)
+            );
+            assert_eq!(expected, result);
+        }
+    }
+
+    #[derive(Debug, Clone)]
+    enum TestNames {
+        UpdateInner,
+        FoldInner,
+        LowerBoundInner,
+        ReverseLowerBoundInner,
+    }
+
+    #[derive(Debug, Clone)]
+    struct Spec {
+        update_inner: u32,
+        fold_inner: u32,
+        lower_bound_inner: u32,
+        reverse_lower_bound_inner: u32,
+    }
+    impl Spec {
+        fn sum(&self) -> u32 {
+            self.update_inner
+                + self.fold_inner
+                + self.lower_bound_inner
+                + self.reverse_lower_bound_inner
+        }
+        fn what(&self, x: u32) -> TestNames {
+            assert!(x < self.sum());
+            if x < self.update_inner {
+                TestNames::UpdateInner
+            } else if x < self.update_inner + self.fold_inner {
+                TestNames::FoldInner
+            } else if x < self.update_inner + self.fold_inner + self.lower_bound_inner {
+                TestNames::LowerBoundInner
+            } else {
+                TestNames::ReverseLowerBoundInner
+            }
+        }
+    }
+
+    #[test]
+    fn test_cat_random() {
+        let mut test = Test::<Cat, _, _>::new(
+            42,
+            |rng| rng.sample(rand::distributions::Alphanumeric).to_string(),
+            |rng| rng.sample(rand::distributions::Alphanumeric).to_string(),
+        );
+
+        for _ in 0..NUMBER_OF_TEST_CASES {
+            test.run(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 0,
+                reverse_lower_bound_inner: 0,
+            });
         }
     }
 
     #[test]
     fn test_add_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<Add<u32>, _, _>::new(
+            42,
+            |rng| rng.gen_range(0, 100),
+            |rng| rng.gen_range(0, 3000),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.gen_range(0, 100))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| Add(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=69 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 100);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Partition point
-                    70..=84 => {
-                        let start = rng.gen_range(0, n);
-                        let value = rng.gen_range(0, 1000);
-
-                        let mut now = 0;
-                        let mut i = start;
-                        while i < n && (now + a[i]) <= value {
-                            now += a[i];
-                            i += 1;
-                        }
-
-                        let expected = i;
-                        let result = seg.partition_point_inner(start, |&x| x <= value);
-
-                        println!(
-                            "\tLower bound (start = {}, value = {}) -> (expected = {}, result = {})",
-                            start, value, expected, result
-                        );
-                        assert_eq!(expected, result);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = a[range.clone()].iter().sum::<u32>();
-                        let result = seg
-                            .fold_inner(range.clone())
-                            .unwrap_or_else(Default::default);
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {}, result = {})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 20,
+                reverse_lower_bound_inner: 20,
+            });
         }
     }
 
     #[test]
     fn test_mul_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<Mul<u128>, _, _>::new(
+            42,
+            |rng| rng.gen_range(1, 5),
+            |rng| rng.gen_range(1, 100000),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(8, 16);
-            let mut a = iter::repeat_with(|| rng.gen_range::<u128, _, _>(1, 256))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| Mul(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=69 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(1, 256);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Partition point
-                    70..=84 => {
-                        let start = rng.gen_range(0, n);
-                        let value = rng.gen_range(0u128, 100000);
-
-                        let mut now = 1;
-                        let mut i = start;
-                        while i < n && (now * a[i]) <= value {
-                            now *= a[i];
-                            i += 1;
-                        }
-
-                        let expected = i;
-                        let result = seg.partition_point(start, |&Mul(x)| x <= value);
-
-                        println!(
-                            "\tLower bound (start = {}, value = {}) -> (expected = {}, result = {})",
-                            start, value, expected, result
-                        );
-                        assert_eq!(expected, result);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = a[range.clone()].iter().product::<u128>();
-                        let result = seg
-                            .fold_inner(range.clone())
-                            .unwrap_or_else(Default::default);
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {}, result = {})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 20,
+                reverse_lower_bound_inner: 20,
+            });
         }
     }
 
     #[test]
     fn test_min_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<Min<i32>, _, _>::new(
+            42,
+            |rng| rng.gen_range(-99, 100),
+            |rng| rng.gen_range(-99, 100),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.gen_range(-99, 100))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| Min(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=84 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 100);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = a[range.clone()].iter().min().copied();
-                        let result = seg.fold_inner(range.clone());
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 0,
+                reverse_lower_bound_inner: 0,
+            });
         }
     }
 
     #[test]
     fn test_max_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<Max<i32>, _, _>::new(
+            42,
+            |rng| rng.gen_range(-99, 100),
+            |rng| rng.gen_range(-99, 100),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.gen_range(-99, 100))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| Max(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=84 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 100);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = a[range.clone()].iter().max().copied();
-                        let result = seg.fold_inner(range.clone());
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 20,
+                reverse_lower_bound_inner: 20,
+            });
         }
     }
 
@@ -1521,7 +1477,7 @@ mod tests {
                         let x = rng.gen_ratio(1, 2);
 
                         a[i] = x;
-                        seg.set(i, Inversion::from_bool(x));
+                        seg.update(i, Inversion::from_bool(x));
 
                         println!(
                             "\tSet (i = {}, x = {}) -> a = {:?}",
@@ -1569,101 +1525,37 @@ mod tests {
 
     #[test]
     fn test_first_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<First<i32>, _, _>::new(
+            42,
+            |rng| rng.gen_range(-99, 100),
+            |rng| rng.gen_range(-99, 100),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.gen_range(-99, 100))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| First(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=84 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 100);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = if range.start == range.end {
-                            None
-                        } else {
-                            Some(a[range.start])
-                        };
-                        let result = seg.fold_inner(range.clone());
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 0,
+                reverse_lower_bound_inner: 0,
+            });
         }
     }
 
     #[test]
     fn test_second_random() {
-        use rand::prelude::*;
-        let mut rng: rand::rngs::StdRng = rand::SeedableRng::seed_from_u64(42);
+        let mut test = Test::<First<i32>, _, _>::new(
+            42,
+            |rng| rng.gen_range(-99, 100),
+            |rng| rng.gen_range(-99, 100),
+        );
 
         for _ in 0..NUMBER_OF_TEST_CASES {
-            let n = rng.gen_range(32, 64);
-            let mut a = iter::repeat_with(|| rng.gen_range(-99, 100))
-                .take(n)
-                .collect::<Vec<_>>();
-            let mut seg = a.iter().map(|&x| Second(x)).collect::<Segtree<_>>();
-
-            println!(" === Created an instance === ");
-            println!("n = {}, a = {:?}", n, &a);
-
-            for _ in 0..NUMBER_OF_QUERIES {
-                let command = rng.gen_range(0, 100);
-                match command {
-                    // Update
-                    0..=84 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 100);
-
-                        a[i] = x;
-                        seg.set_inner(i, x);
-
-                        println!("\tSet (i = {}, x = {}) -> a = {:?}", i, x, &a);
-                    }
-                    // Fold
-                    85..=100 => {
-                        let range = gen_valid_range(&mut rng, n);
-                        let expected = if range.start == range.end {
-                            None
-                        } else {
-                            Some(a[range.end - 1])
-                        };
-                        let result = seg.fold_inner(range.clone());
-                        println!(
-                            "\tFold (range = {:?}) -> (expected = {:?}, result = {:?})",
-                            &range, expected, result
-                        );
-                        assert_eq!(&expected, &result);
-                    }
-                    _ => unreachable!(),
-                }
-            }
-            println!();
+            test.run_ord(Spec {
+                update_inner: 100,
+                fold_inner: 20,
+                lower_bound_inner: 0,
+                reverse_lower_bound_inner: 0,
+            });
         }
     }
 
