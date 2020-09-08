@@ -532,29 +532,6 @@ where
         self.partition_point(start, |x| pred(x.get()))
     }
 
-    /// ラッパー型の中身で逆向きに二分探索をします。
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use segtree::*;
-    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
-    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= -500000));
-    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= 19));
-    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 20));
-    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 29));
-    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 30));
-    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 500000));
-    /// ```
-    #[inline]
-    pub fn reverse_partition_point_inner(
-        &self,
-        start: usize,
-        mut pred: impl FnMut(&T::Inner) -> bool,
-    ) -> usize {
-        self.reverse_partition_point(start, |x| pred(x.get()))
-    }
-
     /// ラッパー型の中身で `lower_bound_by` をします。
     ///
     /// # Examples
@@ -648,6 +625,123 @@ where
         mut key: impl FnMut(&T::Inner) -> U,
     ) -> usize {
         self.upper_bound_inner_by(start, |x| key(x).cmp(value))
+    }
+
+    /// ラッパー型の中身で逆向きに二分探索をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= -500000));
+    /// assert_eq!(2, seg.reverse_partition_point_inner(2, |&x| x <= 19));
+    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 20));
+    /// assert_eq!(1, seg.reverse_partition_point_inner(2, |&x| x <= 29));
+    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 30));
+    /// assert_eq!(0, seg.reverse_partition_point_inner(2, |&x| x <= 500000));
+    /// ```
+    #[inline]
+    pub fn reverse_partition_point_inner(
+        &self,
+        start: usize,
+        mut pred: impl FnMut(&T::Inner) -> bool,
+    ) -> usize {
+        self.reverse_partition_point(start, |x| pred(x.get()))
+    }
+
+    /// ラッパー型の中身で逆向きに `lower_bound_by` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&-500000)));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&19)));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&20)));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&29)));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&30)));
+    /// assert_eq!(0, seg.reverse_lower_bound_inner_by(2, |x| x.cmp(&500000)));
+    /// ```
+    #[inline]
+    pub fn reverse_lower_bound_inner_by(
+        &self,
+        end: usize,
+        mut cmp: impl FnMut(&T::Inner) -> cmp::Ordering,
+    ) -> usize {
+        self.reverse_partition_point_inner(end, |x| cmp(x) == cmp::Ordering::Less)
+    }
+
+    /// ラッパー型の中身で逆向きに `upper_bound_by` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&-500000)));
+    /// assert_eq!(2, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&19)));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&20)));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&29)));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&30)));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner_by(2, |x| x.cmp(&500000)));
+    /// ```
+    #[inline]
+    pub fn reverse_upper_bound_inner_by(
+        &self,
+        end: usize,
+        mut cmp: impl FnMut(&T::Inner) -> cmp::Ordering,
+    ) -> usize {
+        self.reverse_partition_point_inner(end, |x| cmp(x) != cmp::Ordering::Greater)
+    }
+
+    /// ラッパー型の中身で逆向きに `lower_bound_by_key` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by_key(2, &-500000,|&x| x));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by_key(2, &19,|&x| x));
+    /// assert_eq!(2, seg.reverse_lower_bound_inner_by_key(2, &20,|&x| x));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner_by_key(2, &29,|&x| x));
+    /// assert_eq!(1, seg.reverse_lower_bound_inner_by_key(2, &30,|&x| x));
+    /// assert_eq!(0, seg.reverse_lower_bound_inner_by_key(2, &500000, |&x| x));
+    /// ```
+    #[inline]
+    pub fn reverse_lower_bound_inner_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut key: impl FnMut(&T::Inner) -> U,
+    ) -> usize {
+        self.reverse_lower_bound_inner_by(end, |x| key(x).cmp(value))
+    }
+
+    /// ラッパー型の中身で逆向きに `upper_bound_by_key` をします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use segtree::*;
+    /// let seg = Segtree::from_slice(&[Add(10), Add(20), Add(30)]);
+    /// assert_eq!(2, seg.reverse_upper_bound_inner_by_key(2, &-500000,|&x| x));
+    /// assert_eq!(2, seg.reverse_upper_bound_inner_by_key(2, &19, |&x| x));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner_by_key(2, &20, |&x| x));
+    /// assert_eq!(1, seg.reverse_upper_bound_inner_by_key(2, &29, |&x| x));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner_by_key(2, &30, |&x| x));
+    /// assert_eq!(0, seg.reverse_upper_bound_inner_by_key(2, &500000, |&x| x));
+    /// ```
+    #[inline]
+    pub fn reverse_upper_bound_inner_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut key: impl FnMut(&T::Inner) -> U,
+    ) -> usize {
+        self.reverse_upper_bound_inner_by(end, |x| key(x).cmp(value))
     }
 
     /// 中身の [`Vec`] に変換します。
