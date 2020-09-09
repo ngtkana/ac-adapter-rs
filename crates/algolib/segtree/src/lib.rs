@@ -7,28 +7,21 @@
 //! # 使い方
 //!
 //! このように、値を演算のラッパー型で包んで、イテレータから構築します。
-//!
-//! ```
-//! use segtree::*;
-//!
-//! let mut seg = (0..10).map(|x| Add(x)).collect::<Segtree<_>>();
-//! assert_eq!(seg.fold(4..6), Some(Add(9)));
-//! assert_eq!(seg.fold(4..4), None);
-//! assert_eq!(seg.fold(..), Some(Add(45)));
-//!
-//! seg.update(4, Add(5));
-//! assert_eq!(seg.fold(4..6), Some(Add(10)));
-//! ```
-//!
-//!
-//! このように、値を演算のラッパー型を自動で開封してくれるものもあります。
+//! 値は `fold` などで取るのですが、`_inner`
+//! のついたものを使うと、自動的にラッパーを開封してくれます。
 //!
 //! ```
 //! use segtree::*;
 //!
 //! let mut seg = (0..10).map(|x| Add(x)).collect::<Segtree<_>>();
 //! assert_eq!(seg.fold_inner(4..6), Some(9));
+//! assert_eq!(seg.fold_inner(4..4), None);
+//! assert_eq!(seg.fold_inner(..), Some(45));
+//!
+//! seg.update_inner(4, 5);
+//! assert_eq!(seg.fold_inner(4..6), Some(10));
 //! ```
+//!
 //!
 //!
 //! # 提供しているラッパー型
@@ -41,7 +34,7 @@
 //! - [`Inversion`] : 転倒数
 //! - [`First`] : 第一成分
 //! - [`Second`] : 第二成分
-//! - [`Affine`] : アフィン（未テスト）
+//! - [`Affine`] : アフィン
 //!
 //! # ほしいラッパー型
 //!
@@ -79,6 +72,12 @@
 //!
 //! - [`partition_point`] : 二分探索
 //! - [`as_slice`] : デバッグにどうぞです。
+//!
+//!
+//! # まだ悩んでいること
+//!
+//! - `_inner` 系のほうがよく使うので、そちらを短くして、そうでない方に `raw_` などの prefix
+//! をつけるのを検討したいです。
 //!
 //! [`Segtree`]: struct.Segtree.html
 //! [`Cat`]: struct.Cat.html
