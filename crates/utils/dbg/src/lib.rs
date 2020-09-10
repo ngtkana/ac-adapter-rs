@@ -12,9 +12,9 @@ macro_rules! lg {
             }
         }
     };
-    ($val:expr,) => { lg!($val) };
+    ($val:expr,) => { $crate::lg!($val) };
     ($($val:expr),+ $(,)?) => {
-        ($(lg!($val)),+,)
+        ($($crate::lg!($val)),+,)
     };
 }
 
@@ -59,21 +59,21 @@ macro_rules! msg {
 #[macro_export]
 macro_rules! tabular {
     ($val:expr) => {
-        lg_nl!(crate::dbg::Tabular($val))
+        $crate::lg_nl!(crate::dbg::Tabular($val))
     };
 }
 
 #[macro_export]
 macro_rules! boolean_table {
     ($val:expr) => {
-        lg_nl!(crate::dbg::BooleanTable($val));
+        $crate::lg_nl!(crate::dbg::BooleanTable($val));
     };
 }
 
 #[macro_export]
 macro_rules! boolean_slice {
     ($val:expr) => {
-        lg!(crate::dbg::BooleanSlice($val));
+        $crate::lg!(crate::dbg::BooleanSlice($val));
     };
 }
 
