@@ -1,3 +1,6 @@
 [workspace]
-
-members = [ "crates/utils/*", "crates/algolib/*" ]
+members = [
+    'crates/utils/*',
+    'crates/algolib/*',
+    'crates/test_utils',
+]
