@@ -79,7 +79,7 @@ where
 
     #[inline]
     fn normalize_from_the_bottom(src: Mod::Output) -> Mod::Output {
-        if Mod::VALUE < src {
+        if Mod::VALUE <= src {
             src - Mod::VALUE
         } else {
             src
