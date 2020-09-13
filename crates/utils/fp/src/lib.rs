@@ -355,6 +355,15 @@ impl_value! {
     i8, i16, i32, i64, i128, isize,
 }
 
+pub mod aliases {
+    use super::*;
+
+    constant::define_constant! { pub type Mod100000007: i64 = 1_000_000_007; }
+    constant::define_constant! { pub type Mod998244353: i64 = 998_244_353; }
+    pub type F100000007 = Fp<Mod100000007>;
+    pub type F998244353 = Fp<Mod998244353>;
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
