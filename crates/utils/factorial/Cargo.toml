@@ -8,4 +8,4 @@ edition = "2018"
 
 [dev-dependencies]
 fp = { path = "../fp" }
-constant = { path = "../constant" }
+type_traits = { path = "../type_traits" }

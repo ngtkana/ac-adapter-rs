@@ -12,5 +12,5 @@ dbg = { path = "../../utils/dbg" }
 [dev-dependencies]
 test_utils = { path = "../../test_utils" }
 fp = { path = "../../utils/fp" }
-constant = { path = "../../utils/constant" }
+type_traits = { path = "../../utils/type_traits" }
 rand = "0.7.3"

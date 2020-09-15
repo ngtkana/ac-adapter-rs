@@ -5,7 +5,7 @@ macro_rules! define_constant {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
         $vis struct $wrapper_type {}
 
-        impl constant::Constant for $wrapper_type {
+        impl Constant for $wrapper_type {
             type Output = $value_type;
             const VALUE: Self::Output = $value;
         }

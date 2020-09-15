@@ -1,5 +1,5 @@
-use constant::Constant;
 use std::{cmp, fmt, iter, mem, ops::*};
+use type_traits::Constant;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Fp<Mod: Constant>(Mod::Output);
@@ -357,9 +357,10 @@ impl_value! {
 
 pub mod aliases {
     use super::*;
+    use type_traits::Constant;
 
-    constant::define_constant! { pub type Mod100000007: i64 = 1_000_000_007; }
-    constant::define_constant! { pub type Mod998244353: i64 = 998_244_353; }
+    type_traits::define_constant! { pub type Mod100000007: i64 = 1_000_000_007; }
+    type_traits::define_constant! { pub type Mod998244353: i64 = 998_244_353; }
     pub type F100000007 = Fp<Mod100000007>;
     pub type F998244353 = Fp<Mod998244353>;
 }
@@ -367,7 +368,7 @@ pub mod aliases {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use constant::define_constant;
+    use type_traits::define_constant;
 
     define_constant! { type Mod97: i16 = 97; }
     type F97 = Fp<Mod97>;

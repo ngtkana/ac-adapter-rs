@@ -75,8 +75,9 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use type_traits::Constant;
 
-    constant::define_constant! { type Mod97: i16 = 97; }
+    type_traits::define_constant! { type Mod97: i16 = 97; }
     type F97 = fp::Fp<Mod97>;
 
     #[test]
