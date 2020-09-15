@@ -455,7 +455,8 @@ mod tests {
 
     #[test]
     fn test_fp() {
-        constant::define_constant! { type Mod97: i16 = 97; }
+        use type_traits::Constant;
+        type_traits::define_constant! { type Mod97: i16 = 97; }
         type Fp = fp::Fp<Mod97>;
 
         fn gen_value(rng: &mut StdRng) -> Fp {

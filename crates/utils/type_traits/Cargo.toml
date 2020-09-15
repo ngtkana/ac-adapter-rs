@@ -1,5 +1,5 @@
 [package]
-name = "constant"
+name = "type_traits"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
