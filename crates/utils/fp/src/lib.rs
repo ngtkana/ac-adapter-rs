@@ -1,38 +1,129 @@
+#![warn(missing_docs)]
+//! 有限体ライブラリです。
+//!
+//! # 構築
+//!
+//! [`new`] で構築できます。便利関数 [`frac`] で分数からも構築できます。
+//!
+//! ```
+//! use fp::*;
+//! let _ = F998244353::new(4); // 4 （整数から）
+//! let _ = F998244353::frac(4, 3); // 4 / 3 （分数から）
+//! ```
+//!
+//! # 取り出し
+//!
+//! [`into_inner`] で取り出せます。（`.0` で取り出せないのは、`0 <= self.0 && self.0 < Mod::VALUE`
+//! の条件を勝手に壊されると困るからです。）
+//!
+//! ```
+//! use fp::*;
+//! let x = F998244353::new(4);
+//! assert_eq!(x.into_inner(), 4);
+//! ```
+//!
+//! # トレイト実装
+//!
+//! - 演算系 : [`Add`], [`AddAssign`], [`Sub`], [`SubAssign`], [`Mul`], [`MulAssign`], [`Div`],
+//! [`DivAssign`], [`Neg`]
+//! - [`iter`] 系 : [`Sum`], [`Product`]
+//! - [`type_traits`] 系 : [`Zero`], [`One`]
+//! - [`cmp`] 系: [`PartialEq`], [`Eq`]
+//! - [`fmt`] 系: [`Debug`], [`Display`]
+//!
+//!
+//! # その他計算関数
+//!
+//! [`inv`], [`pow`] があります。
+//!
+//! ```
+//! use fp::*;
+//! assert_eq!(F998244353::new(2).pow(3), F998244353::new(8));
+//! assert_eq!(F998244353::new(2).inv(), F998244353::new(499122177));
+//! ```
+//!
+//! # 新しい `Mod` の作りかた
+//!
+//! [`F998244353`] の定義はこのようになっております。導出している 5 つのトレイトはすべて
+//! [`Modable`] が継承しているため、必須となっております。
+//!
+//! ```
+//! use fp::*;
+//! use type_traits::*;
+//! #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+//! pub struct Mod998244353 {}
+//! pub type F998244353 = Fp<Mod998244353>;
+//! impl Constant for Mod998244353 {
+//!     type Output = i64;
+//!     const VALUE: i64 = 998_244_353;
+//! }
+//! ```
+//!
+//! [`new`]: struct.Fp.html#method.new
+//! [`frac`]: struct.Fp.html#method.frac
+//! [`into_inner`]: struct.Fp.html#method.into_inner
+//! [`inv`]: struct.Fp.html#method.inv
+//! [`pow`]: struct.Fp.html#method.pow
+//! [`F998244353`]: struct.F998244353.html
+//! [`Modable`]: trait.Modable.html
+//!
+//! [`type_traits`]: ../type_traits/index.html
+//! [`Zero`]: ../type_traits/trait.Zero.html
+//! [`One`]: ../type_traits/trait.One.html
+//!
+//! [`fmt`]: https://doc.rust-lang.org/std/fmt/index.html
+//! [`cmp`]: https://doc.rust-lang.org/std/cmp/index.html
+//! [`iter`]: https://doc.rust-lang.org/std/iter/index.html
+//! [`Add`]: https://doc.rust-lang.org/std/ops/trait.Add.html
+//! [`Sub`]: https://doc.rust-lang.org/std/ops/trait.Sub.html
+//! [`Mul`]: https://doc.rust-lang.org/std/ops/trait.Mul.html
+//! [`Div`]: https://doc.rust-lang.org/std/ops/trait.Div.html
+//! [`Neg`]: https://doc.rust-lang.org/std/ops/trait.Neg.html
+//! [`AddAssign`]: https://doc.rust-lang.org/std/ops/trait.AddAssign.html
+//! [`SubAssign`]: https://doc.rust-lang.org/std/ops/trait.SubAssign.html
+//! [`MulAssign`]: https://doc.rust-lang.org/std/ops/trait.MulAssign.html
+//! [`DivAssign`]: https://doc.rust-lang.org/std/ops/trait.DivAssign.html
+//! [`Sum`]: https://doc.rust-lang.org/std/iter/trait.Sum.html
+//! [`Product`]: https://doc.rust-lang.org/std/iter/trait.Product.html
+//! [`PartialEq`]: https://doc.rust-lang.org/std/cmp/trait.PartialEq.html
+//! [`Eq`]: https://doc.rust-lang.org/std/cmp/trait.Eq.html
+//! [`Debug`]: https://doc.rust-lang.org/std/fmt/trait.Debug.html
+//! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
+pub use aliases::*;
 use std::{cmp, fmt, iter, mem, ops::*};
-use type_traits::Constant;
+use type_traits::*;
 
+mod arith;
+
+/// 有限体ライブラリ本体です。
+///
+/// 詳しくは[モジュールレベルドキュメント](index.html)をご覧ください。
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub struct Fp<Mod: Constant>(Mod::Output);
+pub struct Fp<Mod: Modable>(Mod::Output);
 
-impl<Mod: Constant> Fp<Mod>
+impl<Mod: Modable> Fp<Mod>
 where
     Mod::Output: Value,
 {
+    /// 整数から構築します。
     #[inline]
     pub fn new(src: Mod::Output) -> Self {
         Self(Self::normalize(src))
     }
 
+    /// 分数から構築します。
     #[inline]
-    pub fn from_frac(num: Mod::Output, den: Mod::Output) -> Self {
+    pub fn frac(num: Mod::Output, den: Mod::Output) -> Self {
         Self::new(num) / Self::new(den)
     }
 
+    /// 中身にキャストします。
     #[inline]
     pub fn into_inner(self) -> Mod::Output {
         self.0
     }
 
-    #[inline]
-    pub fn zero() -> Self {
-        Self(Mod::Output::zero())
-    }
-
-    #[inline]
-    pub fn one() -> Self {
-        Self(Mod::Output::one())
-    }
-
+    /// Mod 逆元を返します。[`Div`](https://doc.rust-lang.org/std/ops/trait.Div.html) からも呼ばれています。
     #[allow(clippy::many_single_char_names)]
     pub fn inv(self) -> Self {
         assert_ne!(
@@ -60,6 +151,7 @@ where
         Self(Self::normalize_from_the_top(v))
     }
 
+    /// 塁乗をします。
     pub fn pow(mut self, mut p: u64) -> Self {
         let mut ans = Self::one();
         while p != 0 {
@@ -96,92 +188,27 @@ where
     }
 }
 
-impl<Mod: Constant> Add for Fp<Mod>
+impl<Mod: Modable> Zero for Fp<Mod>
 where
     Mod::Output: Value,
 {
-    type Output = Self;
-
     #[inline]
-    fn add(self, rhs: Self) -> Self {
-        Self(Self::normalize_from_the_bottom(
-            self.into_inner() + rhs.into_inner(),
-        ))
+    fn zero() -> Fp<Mod> {
+        Fp::new(Mod::Output::zero())
     }
 }
 
-impl<Mod: Constant> Sub for Fp<Mod>
+impl<Mod: Modable> One for Fp<Mod>
 where
     Mod::Output: Value,
 {
-    type Output = Self;
-
     #[inline]
-    fn sub(self, rhs: Self) -> Self {
-        Self(Self::normalize_from_the_top(
-            self.into_inner() - rhs.into_inner(),
-        ))
+    fn one() -> Fp<Mod> {
+        Fp::new(Mod::Output::one())
     }
 }
 
-impl<Mod: Constant> Mul for Fp<Mod>
-where
-    Mod::Output: Value,
-{
-    type Output = Self;
-
-    #[inline]
-    fn mul(self, rhs: Self) -> Self {
-        Self::new(self.into_inner() * rhs.into_inner())
-    }
-}
-
-#[allow(clippy::suspicious_arithmetic_impl)]
-impl<Mod: Constant> Div for Fp<Mod>
-where
-    Mod::Output: Value,
-{
-    type Output = Self;
-
-    #[inline]
-    fn div(self, rhs: Self) -> Self {
-        self * rhs.inv()
-    }
-}
-
-impl<Mod: Constant> Neg for Fp<Mod>
-where
-    Mod::Output: Value,
-{
-    type Output = Self;
-
-    #[inline]
-    fn neg(self) -> Self {
-        if self.into_inner() == Mod::Output::zero() {
-            Self::zero()
-        } else {
-            Self(Mod::VALUE - self.into_inner())
-        }
-    }
-}
-
-impl<Mod: Constant> Neg for &Fp<Mod>
-where
-    Mod::Output: Value,
-{
-    type Output = Fp<Mod>;
-
-    #[inline]
-    fn neg(self) -> Fp<Mod> {
-        if self.into_inner() == Mod::Output::zero() {
-            Fp::zero()
-        } else {
-            Fp(Mod::VALUE - self.into_inner())
-        }
-    }
-}
-
-impl<Mod: Constant> iter::Sum<Fp<Mod>> for Fp<Mod>
+impl<Mod: Modable> iter::Sum<Fp<Mod>> for Fp<Mod>
 where
     Mod::Output: Value,
 {
@@ -189,11 +216,11 @@ where
     where
         I: iter::Iterator<Item = Fp<Mod>>,
     {
-        iter.fold(Self::zero(), Add::add)
+        iter.fold(Fp::zero(), Add::add)
     }
 }
 
-impl<'a, Mod: 'a + Constant> iter::Sum<&'a Fp<Mod>> for Fp<Mod>
+impl<'a, Mod: 'a + Modable> iter::Sum<&'a Fp<Mod>> for Fp<Mod>
 where
     Mod::Output: Value,
 {
@@ -201,11 +228,11 @@ where
     where
         I: iter::Iterator<Item = &'a Fp<Mod>>,
     {
-        iter.fold(Self::zero(), Add::add)
+        iter.fold(Fp::zero(), Add::add)
     }
 }
 
-impl<Mod: Constant> iter::Product<Fp<Mod>> for Fp<Mod>
+impl<Mod: Modable> iter::Product<Fp<Mod>> for Fp<Mod>
 where
     Mod::Output: Value,
 {
@@ -217,7 +244,7 @@ where
     }
 }
 
-impl<'a, Mod: 'a + Constant> iter::Product<&'a Fp<Mod>> for Fp<Mod>
+impl<'a, Mod: 'a + Modable> iter::Product<&'a Fp<Mod>> for Fp<Mod>
 where
     Mod::Output: Value,
 {
@@ -229,77 +256,7 @@ where
     }
 }
 
-macro_rules! forward_assign_biop {
-    ($(impl $trait:ident, $fn_assign:ident, $fn:ident)*) => {
-        $(
-            impl<Mod: Constant> $trait for Fp<Mod>
-            where
-                Mod::Output: Value
-            {
-                #[inline]
-                fn $fn_assign(&mut self, rhs: Self) {
-                    *self = self.$fn(rhs);
-                }
-            }
-        )*
-    };
-}
-forward_assign_biop! {
-    impl AddAssign, add_assign, add
-    impl SubAssign, sub_assign, sub
-    impl MulAssign, mul_assign, mul
-    impl DivAssign, div_assign, div
-}
-
-macro_rules! forward_ref_binop {
-    ($(impl $imp:ident, $method:ident)*) => {
-        $(
-            impl<'a, Mod: Constant> $imp<Fp<Mod>> for &'a Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: Fp<Mod>) -> Self::Output {
-                    $imp::$method(*self, other)
-                }
-            }
-
-            impl<'a, Mod: Constant> $imp<&'a Fp<Mod>> for Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: &Fp<Mod>) -> Self::Output {
-                    $imp::$method(self, *other)
-                }
-            }
-
-            impl<'a, Mod: Constant> $imp<&'a Fp<Mod>> for &'a Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: &Fp<Mod>) -> Self::Output {
-                    $imp::$method(*self, *other)
-                }
-            }
-        )*
-    };
-}
-forward_ref_binop! {
-    impl Add, add
-    impl Sub, sub
-    impl Mul, mul
-    impl Div, div
-}
-
-impl<Mod: Constant> fmt::Display for Fp<Mod>
+impl<Mod: Modable> fmt::Display for Fp<Mod>
 where
     Mod::Output: Value,
 {
@@ -308,61 +265,66 @@ where
     }
 }
 
+/// `Mod` が満たすべき性質をまとめた型です。
+pub trait Modable: Constant + Clone + fmt::Debug + cmp::PartialEq + cmp::Eq {}
+impl<Mod: Constant + Clone + fmt::Debug + cmp::PartialEq + cmp::Eq> Modable for Mod {}
+
+/// `<Mod as Constant>::Output` が満たすべき性質をまとめた型です。
+///
+/// TODO: [`type_traits`](../type_traits/index.html) に移動移動します。
 pub trait Value:
     Sized
     + Clone
     + Copy
+    + Zero
+    + One
     + fmt::Debug
     + fmt::Display
     + cmp::PartialOrd
     + cmp::PartialEq
     + cmp::Ord
     + cmp::Eq
-    + Add<Output = Self>
     + Sub<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
     + Rem<Output = Self>
     + Neg<Output = Self>
-    + AddAssign
     + SubAssign
     + MulAssign
     + DivAssign
     + RemAssign
 {
-    fn zero() -> Self;
-    fn one() -> Self;
 }
 
 macro_rules! impl_value {
-    ($($type:ty,)*) => {
-        $(
-        impl Value for $type {
-            #[inline]
-            fn zero() -> $type {
-                0
-            }
-            #[inline]
-            fn one() -> $type {
-                1
-            }
-        }
-        )*
-    };
+    ($($type:ty,)*) => { $(impl Value for $type {})* };
 }
 
-impl_value! {
-    i8, i16, i32, i64, i128, isize,
-}
+impl_value! { i8, i16, i32, i64, i128, isize, }
 
-pub mod aliases {
-    use super::*;
+mod aliases {
+    use super::Fp;
     use type_traits::Constant;
 
-    type_traits::define_constant! { pub type Mod100000007: i64 = 1_000_000_007; }
-    type_traits::define_constant! { pub type Mod998244353: i64 = 998_244_353; }
-    pub type F100000007 = Fp<Mod100000007>;
+    /// [`F1000000007`](aliases/struct.F1000000007.html) の中身です。
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Mod1000000007 {}
+    /// [`Fp`](struct.Fp.html) の mod 1,000,000,007 特殊化です。
+    pub type F1000000007 = Fp<Mod1000000007>;
+    impl Constant for Mod1000000007 {
+        type Output = i64;
+        const VALUE: i64 = 1_000_000_007;
+    }
+
+    /// [`F998244353`](aliases/struct.F998244353.html) の中身です。
+    #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+    pub struct Mod998244353 {}
+    /// [`Fp`](struct.Fp.html) の mod 998,244,353 特殊化です。
     pub type F998244353 = Fp<Mod998244353>;
+    impl Constant for Mod998244353 {
+        type Output = i64;
+        const VALUE: i64 = 998_244_353;
+    }
 }
 
 #[cfg(test)]
