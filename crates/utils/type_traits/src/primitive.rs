@@ -4,13 +4,17 @@ macro_rules! int {
     ($($T:ty,)*) => {
         $(
             impl Zero for $T {
-                #[inline]
                 fn zero() -> $T {
                     0
                 }
+                fn times(self, n: u64) -> $T {
+                    self * n as $T
+                }
+                fn from_u64(n: u64) -> $T {
+                    n as $T
+                }
             }
             impl One for $T {
-                #[inline]
                 fn one() -> $T {
                     1
                 }
