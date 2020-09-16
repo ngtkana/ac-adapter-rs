@@ -75,7 +75,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use type_traits::Constant;
+    use type_traits::{Constant, One};
 
     type_traits::define_constant! { type Mod97: i16 = 97; }
     type F97 = fp::Fp<Mod97>;
@@ -95,7 +95,7 @@ mod tests {
 
     #[test]
     fn test_998244353_hand() {
-        type Fp = fp::aliases::F998244353;
+        type Fp = fp::F998244353;
         let fact = Factorial::new(100, |x| Fp::new(x as i64));
 
         assert_eq!(fact[0], Fp::one());
