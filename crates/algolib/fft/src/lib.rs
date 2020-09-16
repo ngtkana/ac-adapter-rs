@@ -55,8 +55,10 @@ where
     if 1 < n {
         assert!(n.is_power_of_two());
         let mut a = bit_reverse(a);
-        let mut d = 1;
-        for &root in &T::root_seq::<Tag>()[1..] {
+        for (d, &root) in iter::successors(Some(1), |x| Some(x * 2))
+            .take_while(|&d| d != n)
+            .zip(T::root_seq::<Tag>()[1..].iter())
+        {
             for (i, coeff) in iter::successors(Some((0, T::one())), |&(mut i, mut coeff)| {
                 i += 1;
                 coeff *= root;
@@ -72,10 +74,6 @@ where
                 let y = a[i + d];
                 a[i] = x + y * coeff;
                 a[i + d] = x - y * coeff;
-            }
-            d *= 2;
-            if d == a.len() {
-                break;
             }
         }
         a
@@ -149,6 +147,8 @@ mod tests {
         fft(&b, marker::PhantomData::<Backward>)
     }
 
+    #[test_case(fp_vec![], fp_vec![] => fp_vec![])]
+    #[test_case(fp_vec![], fp_vec![99, 999] => fp_vec![])]
     #[test_case(fp_vec![10], fp_vec![100] => fp_vec![1000])]
     #[test_case(fp_vec![1, 1], fp_vec![1, 1, 1] => fp_vec![1, 2, 2, 1])]
     #[test_case(fp_vec![1, 2], fp_vec![1, 4, 5] => fp_vec![1, 6, 13, 10])]
@@ -161,8 +161,8 @@ mod tests {
     fn test_multiply_random() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let l = rng.gen_range(3, 42);
-            let m = rng.gen_range(3, 42);
+            let l = rng.gen_range(0, 42);
+            let m = rng.gen_range(0, 42);
             let a = Poly::new(
                 iter::repeat_with(|| rng.gen_range(0, <Mod998244353 as Constant>::VALUE))
                     .take(l)
