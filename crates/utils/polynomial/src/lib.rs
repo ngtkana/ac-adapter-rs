@@ -118,8 +118,11 @@ impl<T: Poliable> Zero for Poly<T> {
         Poly(Vec::new())
     }
     fn times(mut self, n: u64) -> Poly<T> {
-        self.0.iter_mut().for_each(|x| *x = x.times(n));
+        self.times_assign(n);
         self
+    }
+    fn times_assign(&mut self, n: u64) {
+        self.0.iter_mut().for_each(|x| *x = x.times(n));
     }
     fn from_u64(n: u64) -> Poly<T> {
         if n == 0 {
