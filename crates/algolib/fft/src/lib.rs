@@ -116,34 +116,30 @@ where
     Tag: DirectionTag,
 {
     let n = a.len();
-    if 1 < n {
-        assert!(n.is_power_of_two());
-        let mut a = bit_reverse(a);
-        for (d, &root) in iter::successors(Some(1), |x| Some(x * 2))
-            .take_while(|&d| d != n)
-            .zip(T::root_seq::<Tag>()[1..].iter())
-        {
-            for (i, coeff) in iter::successors(Some((0, T::one())), |&(mut i, mut coeff)| {
-                i += 1;
-                coeff *= root;
-                if i % d == 0 {
-                    i += d;
-                    coeff = T::one();
-                }
-                Some((i, coeff))
-            })
-            .take_while(|&(i, _)| i != n)
-            {
-                let x = a[i];
-                let y = a[i + d];
-                a[i] = x + y * coeff;
-                a[i + d] = x - y * coeff;
+    assert!(n.is_power_of_two());
+    let mut a = bit_reverse(a);
+    for (d, &root) in iter::successors(Some(1), |x| Some(x * 2))
+        .take_while(|&d| d != n)
+        .zip(T::root_seq::<Tag>()[1..].iter())
+    {
+        for (i, coeff) in iter::successors(Some((0, T::one())), |&(mut i, mut coeff)| {
+            i += 1;
+            coeff *= root;
+            if i % d == 0 {
+                i += d;
+                coeff = T::one();
             }
+            Some((i, coeff))
+        })
+        .take_while(|&(i, _)| i != n)
+        {
+            let x = a[i];
+            let y = a[i + d];
+            a[i] = x + y * coeff;
+            a[i + d] = x - y * coeff;
         }
-        a
-    } else {
-        a.to_vec()
     }
+    a
 }
 
 /// [`root`](trait.Fftable.html#tymethod.root) と [`root_inv`](trait.Fftable.html#tymethod.root)
