@@ -1,13 +1,66 @@
+#![warn(missing_docs)]
+
+//! 高速フーリエ変換をします。
+//!
+//! # 使い方
+//!
+//! [`F998244353`] を [`Poly`] で包んで [`multiply`] に渡します。
+//!
+//! ```
+//! use fp::fp_vec;
+//! use polynomial::Poly;
+//! let a = Poly::new(fp_vec![3, 4]);
+//! let b = Poly::new(fp_vec![2, 1, 4]);
+//! let c = Poly::new(fp_vec![6, 11, 16, 16]);
+//! assert_eq!(fft::multiply(a, b), c);
+//! ```
+//!
+//! [`F998244353`]: ../fp/type.F998244353.html
+//! [`Poly`]: ../polynomial/struct.Poly.html
+//! [`multiply`]: fn.multiply.html
 use polynomial::Poly;
 use std::{iter, marker};
 use type_traits::Ring;
 
+mod fftable;
+
+/// 高次の 2 冪根を持つ自然数で除算可能な [`Ring`](../type_traits/index.html) です。
 pub trait Fftable: Ring + Copy {
+    /// 高次の 2 冪根です。
     fn root() -> Self;
+
+    /// [`root`](trait.Fftable.html#tymethod.root) の返す 2 冪根の逆数です。
     fn root_inv() -> Self;
+
+    /// [`root`](trait.Fftable.html#tymethod.root) の返す 2 冪根の位数のログです。
     fn lg_ord() -> usize;
+
+    /// 自然数による除算です。
+    ///
+    /// なお、assign しかないのはたまたまそれしか使わないからです。
     fn div_assign_by_usize(&mut self, den: usize);
 
+    /// [`root`] や [`root_inv`] の返す 2 冪根を 2 乗していってできる列の逆順です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use fft::Fftable;
+    /// type Fp = fp::F998244353;
+    /// let a = Fp::root_seq::<fft::Forward>();
+    /// assert_eq!(a[0], Fp::new(1));
+    /// assert_eq!(a[1], Fp::new(-1));
+    /// ```
+    ///
+    /// # `Tag` について
+    ///
+    /// [`Forward`] を使うと [`root`] が、[`Backward`] を使うと [`root_inv`] が呼ばれます。
+    ///
+    ///
+    /// [`root`]: trait.Fftable.html#tymethod.root
+    /// [`root_inv`]: trait.Fftable.html#tymethod.root_inv
+    /// [`Forward`]: struct.Forward.html
+    /// [`Backward`]: struct.Backward.html
     fn root_seq<Tag: DirectionTag>() -> Vec<Self> {
         let mut root = Tag::root::<Self>();
         let mut res = Vec::with_capacity(Self::lg_ord());
@@ -21,6 +74,7 @@ pub trait Fftable: Ring + Copy {
     }
 }
 
+/// フーリエ変換で高速化された多項式乗算をします。
 #[must_use]
 pub fn multiply<T>(a: Poly<T>, b: Poly<T>) -> Poly<T>
 where
@@ -44,6 +98,16 @@ where
     Poly::new(c)
 }
 
+/// 長さが 2 冪であるスライスをフーリエ変換します。
+///
+/// # `Tag` について
+///
+/// [`Forward`] を使うと [`root`] が、[`Backward`] を使うと [`root_inv`] が呼ばれます。
+///
+/// [`root`]: trait.Fftable.html#tymethod.root
+/// [`root_inv`]: trait.Fftable.html#tymethod.root_inv
+/// [`Forward`]: struct.Forward.html
+/// [`Backward`]: struct.Backward.html
 #[allow(clippy::many_single_char_names)]
 #[must_use]
 pub fn fft<T, Tag>(a: &[T], _tag: marker::PhantomData<Tag>) -> Vec<T>
@@ -82,15 +146,21 @@ where
     }
 }
 
+/// [`root`](trait.Fftable.html#tymethod.root) と [`root_inv`](trait.Fftable.html#tymethod.root)
+/// の呼び分けに使います。
 pub trait DirectionTag {
+    /// [`root`](trait.Fftable.html#tymethod.root) か [`root_inv`](trait.Fftable.html#tymethod.root)
+    /// を呼びます。
     fn root<T: Fftable>() -> T;
 }
+/// [`root`](trait.Fftable.html#tymethod.root) を担当します。
 pub struct Forward {}
 impl DirectionTag for Forward {
     fn root<T: Fftable>() -> T {
         T::root()
     }
 }
+/// [`root_inv`](trait.Fftable.html#tymethod.root_inv) を担当します。
 pub struct Backward {}
 impl DirectionTag for Backward {
     fn root<T: Fftable>() -> T {
@@ -110,26 +180,19 @@ fn bit_reverse<T: Copy>(a: &[T]) -> Vec<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_impl::assert_impl;
     use fp::{fp_vec, Mod998244353, F998244353};
     use rand::prelude::*;
     use test_case::test_case;
     use type_traits::Constant;
 
-    type Fp = F998244353;
-    impl Fftable for Fp {
-        fn root() -> Fp {
-            Fp::new(3).pow(7 * 17)
-        }
-        fn root_inv() -> Fp {
-            Fp::root().inv()
-        }
-        fn lg_ord() -> usize {
-            23
-        }
-        fn div_assign_by_usize(&mut self, den: usize) {
-            *self /= Fp::new(den as i64)
-        }
+    #[test]
+    fn test_impl() {
+        assert_impl!(Fftable: fp::F998244353);
+        assert_impl!(!Fftable: fp::F1000000007, f64);
     }
+
+    type Fp = F998244353;
 
     #[test_case(&[0] => vec![0])]
     #[test_case(&[0, 1] => vec![0, 1])]
