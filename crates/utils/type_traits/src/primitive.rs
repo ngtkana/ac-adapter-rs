@@ -10,6 +10,9 @@ macro_rules! int {
                 fn times(self, n: u64) -> $T {
                     self * n as $T
                 }
+                fn times_assign(&mut self, n: u64) {
+                    *self *= n as $T
+                }
                 fn from_u64(n: u64) -> $T {
                     n as $T
                 }

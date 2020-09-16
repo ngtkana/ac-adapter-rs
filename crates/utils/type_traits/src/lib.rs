@@ -41,6 +41,9 @@ pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign {
     /// 自然数倍です。
     fn times(self, n: u64) -> Self;
 
+    /// [`times`](trait.Zero.html#method.times) の複合代入版です。
+    fn times_assign(&mut self, n: u64);
+
     /// 自然数の埋め込みです。
     fn from_u64(x: u64) -> Self;
 }

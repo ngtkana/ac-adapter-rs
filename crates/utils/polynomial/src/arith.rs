@@ -9,7 +9,7 @@ impl<T: Poliable> Add for Poly<T> {
             res.resize(rhs.0.len(), T::zero());
         }
         res.iter_mut().zip(rhs.0.iter()).for_each(|(x, y)| {
-            *x += y.clone();
+            *x += *y;
         });
         Self::remove_trailig_zeros(&mut res);
         Poly(res)
@@ -27,7 +27,7 @@ where
             res.resize(rhs.0.len(), T::zero());
         }
         res.iter_mut().zip(rhs.0.iter()).for_each(|(x, y)| {
-            *x -= y.clone();
+            *x -= *y;
         });
         Self::remove_trailig_zeros(&mut res);
         Poly(res)
@@ -42,9 +42,9 @@ impl<T: Poliable> Mul for Poly<T> {
             Poly(Vec::new())
         } else {
             let mut res = vec![T::zero(); self.0.len() + rhs.0.len() - 1];
-            for (i, x) in self.0.iter().enumerate() {
-                for (j, y) in rhs.0.iter().enumerate() {
-                    res[i + j] += x.clone() * y.clone();
+            for (i, &x) in self.0.iter().enumerate() {
+                for (j, &y) in rhs.0.iter().enumerate() {
+                    res[i + j] += x * y;
                 }
             }
             Self::remove_trailig_zeros(&mut res);
