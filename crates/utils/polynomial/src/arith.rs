@@ -1,7 +1,8 @@
-use super::{Poliable, Poly};
+use super::Poly;
 use std::ops::*;
+use type_traits::Ring;
 
-impl<T: Poliable> Add for Poly<T> {
+impl<T: Ring + Copy> Add for Poly<T> {
     type Output = Poly<T>;
     fn add(self, rhs: Self) -> Self::Output {
         let mut res = self.0.clone();
@@ -16,7 +17,7 @@ impl<T: Poliable> Add for Poly<T> {
     }
 }
 
-impl<T: Poliable> Sub for Poly<T>
+impl<T: Ring + Copy> Sub for Poly<T>
 where
     T: Sub + SubAssign,
 {
@@ -35,7 +36,7 @@ where
 }
 
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<T: Poliable> Mul for Poly<T> {
+impl<T: Ring + Copy> Mul for Poly<T> {
     type Output = Poly<T>;
     fn mul(self, rhs: Self) -> Self::Output {
         if self.0.is_empty() && rhs.0.is_empty() {
@@ -57,7 +58,7 @@ impl<T: Poliable> Mul for Poly<T> {
 macro_rules! forward_assign_biop {
     ($(impl $trait:ident, $fn_assign:ident, $fn:ident)*) => {
         $(
-            impl<T: Poliable> $trait for Poly<T> {
+            impl<T: Ring + Copy> $trait for Poly<T> {
                 #[inline]
                 fn $fn_assign(&mut self, rhs: Self) {
                     *self = self.clone().$fn(&rhs);
@@ -76,7 +77,7 @@ forward_assign_biop! {
 macro_rules! forward_ref_binop {
     ($(impl $imp:ident, $method:ident)*) => {
         $(
-            impl<'a, T: Poliable> $imp<Poly<T>> for &'a Poly<T> {
+            impl<'a, T: Ring + Ring + Copy> $imp<Poly<T>> for &'a Poly<T> {
                 type Output = Poly<T>;
                 #[inline]
                 fn $method(self, other: Poly<T>) -> Self::Output {
@@ -84,7 +85,7 @@ macro_rules! forward_ref_binop {
                 }
             }
 
-            impl<'a, T: Poliable> $imp<&'a Poly<T>> for Poly<T> {
+            impl<'a, T: Ring + Copy> $imp<&'a Poly<T>> for Poly<T> {
                 type Output = Poly<T>;
                 #[inline]
                 fn $method(self, other: &Poly<T>) -> Self::Output {
@@ -92,7 +93,7 @@ macro_rules! forward_ref_binop {
                 }
             }
 
-            impl<'a, T: Poliable> $imp<&'a Poly<T>> for &'a Poly<T> {
+            impl<'a, T: Ring + Copy> $imp<&'a Poly<T>> for &'a Poly<T> {
                 type Output = Poly<T>;
                 #[inline]
                 fn $method(self, other: &Poly<T>) -> Self::Output {

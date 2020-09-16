@@ -55,26 +55,16 @@
 //! [`MulAssign`]: https://doc.rust-lang.org/std/ops/trait.MulAssign.html
 //! [`Debug`]: https://doc.rust-lang.org/std/ops/trait.Debug.html
 
-use std::ops;
-use type_traits::{One, Zero};
+use type_traits::{One, Ring, Zero};
 
 mod arith;
 
-/// 多項式です。値型は [`Poliable`](traits.Poliable.html) を満たすことが要求されます。
+/// 多項式です。値型は [`Copy`](https://doc.rust-lang.org/std/ops/trait.Debug.html)
+/// と [`Ring`](../type_traits/traits.Ring.html) を満たすことが要求されます。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Poly<T>(Vec<T>);
 
-/// [`Poly`](std.Poly.html) に入れられる最低限の条件をまとめました。
-pub trait Poliable:
-    std::fmt::Debug + Copy + Zero + One + ops::Sub + ops::SubAssign + PartialEq
-{
-}
-impl<T: std::fmt::Debug + Copy + Zero + One + ops::Sub + ops::SubAssign + PartialEq> Poliable
-    for T
-{
-}
-
-impl<T: Poliable> Poly<T> {
+impl<T: Ring + Copy> Poly<T> {
     /// [`Vec`](https://doc.rust-lang.org/std/vec/struct.Vec.html) から trailing zeros を消して
     /// キャストします。
     pub fn new(mut src: Vec<T>) -> Self {
@@ -107,13 +97,13 @@ impl<T: Poliable> Poly<T> {
     }
 }
 
-impl<T: Poliable> Default for Poly<T> {
+impl<T: Ring + Copy> Default for Poly<T> {
     fn default() -> Poly<T> {
         Poly(Vec::new())
     }
 }
 
-impl<T: Poliable> Zero for Poly<T> {
+impl<T: Ring + Copy> Zero for Poly<T> {
     fn zero() -> Poly<T> {
         Poly(Vec::new())
     }
@@ -133,7 +123,7 @@ impl<T: Poliable> Zero for Poly<T> {
     }
 }
 
-impl<T: Poliable> One for Poly<T> {
+impl<T: Ring + Copy> One for Poly<T> {
     fn one() -> Poly<T> {
         Poly(vec![T::one()])
     }
@@ -142,13 +132,7 @@ impl<T: Poliable> One for Poly<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use assert_impl::assert_impl;
     type Fp = fp::F998244353;
-
-    #[test]
-    fn test_impl_polyable() {
-        assert_impl! {Poliable: i32, u32, Fp };
-    }
 
     #[test]
     fn test_call_method_of_vec() {
