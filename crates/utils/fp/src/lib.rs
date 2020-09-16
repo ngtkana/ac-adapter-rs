@@ -197,10 +197,10 @@ where
         Fp::new(Mod::Output::zero())
     }
     fn times(self, n: u64) -> Fp<Mod> {
-        self * Fp::new(n as i64)
+        self * Fp::new(Mod::Output::from_u64(n))
     }
     fn from_u64(n: u64) -> Fp<Mod> {
-        Fp::new(n as i64)
+        Fp::new(Mod::Output::from_u64(n))
     }
 }
 
