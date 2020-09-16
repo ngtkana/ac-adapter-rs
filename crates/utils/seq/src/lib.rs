@@ -8,7 +8,6 @@
 
 pub use self::accumulate::{accumulate, Accumulate};
 pub use self::adjacent::{adjacent, Adjacent};
-pub use self::aoj_copied::AojCopied;
 pub use self::cartesian_product::{cartesian_product, CartesianProduct};
 pub use self::format_intersparse::format_intersparse;
 pub use self::grid_next::{grid_next, GridNext};
@@ -80,15 +79,6 @@ pub trait Seq: Iterator + Sized {
         grid_next(self, ij, h, w)
     }
 
-    /// `std::iter::copied` とほぼ同じ機能です。
-    fn aoj_copied<'a, T: 'a>(self) -> AojCopied<Self>
-    where
-        Self: Sized + Iterator<Item = &'a T>,
-        T: Copy,
-    {
-        AojCopied { iter: self }
-    }
-
     /// `itertools` の同名のメソッドと同じです。
     fn cartesian_product<J>(self, other: J) -> CartesianProduct<Self, J::IntoIter>
     where
@@ -122,71 +112,6 @@ pub trait Seq: Iterator + Sized {
         self.map(|x| format!("{}", x))
             .intersperse(format!("{}", separator))
             .collect::<String>()
-    }
-}
-
-mod aoj_copied {
-    use std::iter::DoubleEndedIterator;
-
-    #[allow(missing_docs)]
-    #[derive(Debug, Clone)]
-    pub struct AojCopied<I> {
-        pub iter: I,
-    }
-
-    impl<'a, I, T: 'a> Iterator for AojCopied<I>
-    where
-        I: Iterator<Item = &'a T>,
-        T: Copy,
-    {
-        type Item = T;
-
-        fn next(&mut self) -> Option<T> {
-            self.iter.next().map(|&x| x)
-        }
-
-        fn size_hint(&self) -> (usize, Option<usize>) {
-            self.iter.size_hint()
-        }
-
-        fn fold<Acc, F>(self, initer: Acc, mut f: F) -> Acc
-        where
-            F: FnMut(Acc, Self::Item) -> Acc,
-        {
-            self.iter.fold(initer, move |acc, &elt| f(acc, elt))
-        }
-
-        fn nth(&mut self, n: usize) -> Option<T> {
-            self.iter.nth(n).map(|&x| x)
-        }
-
-        fn last(self) -> Option<T> {
-            self.iter.last().map(|&x| x)
-        }
-
-        fn count(self) -> usize {
-            self.iter.count()
-        }
-    }
-
-    impl<'a, I, T: 'a> DoubleEndedIterator for AojCopied<I>
-    where
-        I: DoubleEndedIterator<Item = &'a T>,
-        T: Copy,
-    {
-        fn next_back(&mut self) -> Option<T> {
-            self.iter.next_back().map(|&x| x)
-        }
-    }
-
-    impl<'a, I, T: 'a> ExactSizeIterator for AojCopied<I>
-    where
-        I: ExactSizeIterator<Item = &'a T>,
-        T: Copy,
-    {
-        fn len(&self) -> usize {
-            self.iter.len()
-        }
     }
 }
 
