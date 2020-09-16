@@ -26,7 +26,7 @@ pub trait Identity: Assoc {
 }
 
 /// `ops::Add` の単位元（零元）を持つトレイトです。
-pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign {
+pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign + PartialEq {
     /// `ops::Add` の単位元（零元）を返します。
     fn zero() -> Self;
 
@@ -49,7 +49,7 @@ pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign {
 }
 
 /// `ops::Mul` の単位元を持つトレイトです。
-pub trait One: Sized + ops::Mul<Output = Self> + ops::MulAssign {
+pub trait One: Sized + ops::Mul<Output = Self> + ops::MulAssign + PartialEq {
     /// `ops::Mul` の単位元を返します。
     fn one() -> Self;
 
@@ -61,6 +61,10 @@ pub trait One: Sized + ops::Mul<Output = Self> + ops::MulAssign {
         self == &Self::one()
     }
 }
+
+/// 単位元を持つ結合的な積を持つ環です。
+pub trait Ring: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign {}
+impl<T: Zero + One + ops::Neg + ops::Sub<Output = Self> + ops::SubAssign> Ring for T {}
 
 /// [`Constant`] トレイトを簡単に定義できます。
 ///
