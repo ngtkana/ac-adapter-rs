@@ -7,7 +7,7 @@
 //! [`new`] は trailing zeros を消去することに注意です。
 //!
 //! ```
-//! use polynominal::*;
+//! use polynomial::*;
 //! let mut f = Poly::new(vec![1, 0, 2]);
 //! let mut a = f.into_inner();
 //! a.sort_by_key(|&x| std::cmp::Reverse(x));
@@ -27,7 +27,7 @@
 //! [`fp`] に対応しています。
 //!
 //! ```
-//! use polynominal::*;
+//! use polynomial::*;
 //! type Fp = fp::F998244353;
 //! assert_eq!(
 //!     Poly::new(vec![Fp::new(1), Fp::new(1)]).pow(2),
