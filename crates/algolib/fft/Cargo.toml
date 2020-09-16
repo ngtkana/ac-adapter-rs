@@ -1,0 +1,16 @@
+[package]
+name = "fft"
+version = "0.1.0"
+authors = ["ngtkana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+type_traits = { path = "../../utils/type_traits" }
+polynomial = { path = "../../utils/polynomial" }
+
+[dev-dependencies]
+fp = { path = "../../utils/fp" }
+test-case = "1.0.0"
+rand = "0.7.3"
