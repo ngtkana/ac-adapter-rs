@@ -99,7 +99,7 @@ mod arith;
 #[macro_export]
 macro_rules! fp_vec {
     () => (
-        $crate::vec::Vec::<$crate::Fp<_>>::new()
+        Vec::<$crate::Fp<_>>::new()
     );
     ($elem:expr; $n:expr) => (
         vec![$crate::Fp::new($elem); $n]
