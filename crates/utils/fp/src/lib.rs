@@ -196,6 +196,12 @@ where
     fn zero() -> Fp<Mod> {
         Fp::new(Mod::Output::zero())
     }
+    fn times(self, n: u64) -> Fp<Mod> {
+        self * Fp::new(n as i64)
+    }
+    fn from_u64(n: u64) -> Fp<Mod> {
+        Fp::new(n as i64)
+    }
 }
 
 impl<Mod: Modable> One for Fp<Mod>

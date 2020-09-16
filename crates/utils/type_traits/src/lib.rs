@@ -37,6 +37,12 @@ pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign {
     {
         self == &Self::zero()
     }
+
+    /// 自然数倍です。
+    fn times(self, n: u64) -> Self;
+
+    /// 自然数の埋め込みです。
+    fn from_u64(x: u64) -> Self;
 }
 
 /// `ops::Mul` の単位元を持つトレイトです。
