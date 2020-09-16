@@ -95,6 +95,20 @@ use type_traits::*;
 
 mod arith;
 
+/// `Vec<Fp<_>>` を作ります。
+#[macro_export]
+macro_rules! fp_vec {
+    () => (
+        $crate::vec::Vec::<$crate::Fp<_>>::new()
+    );
+    ($elem:expr; $n:expr) => (
+        vec![$crate::Fp::new($elem); $n]
+    );
+    ($($x:expr),+ $(,)?) => (
+        vec![$($crate::Fp::new($x),)+];
+    );
+}
+
 /// 有限体ライブラリ本体です。
 ///
 /// 詳しくは[モジュールレベルドキュメント](index.html)をご覧ください。
@@ -334,6 +348,8 @@ mod aliases {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use assert_impl::assert_impl;
+    use test_case::test_case;
     use type_traits::define_constant;
 
     define_constant! { type Mod97: i16 = 97; }
@@ -341,17 +357,18 @@ mod tests {
 
     #[test]
     fn test_trait_implementations() {
-        fn impl_debug<T: fmt::Debug>(_: T) {}
-        fn impl_clone<T: Clone>(_: T) {}
-        fn impl_copy<T: Copy>(_: T) {}
-        fn impl_partial_eq<T: cmp::PartialEq>(_: T) {}
-        fn impl_eq<T: cmp::Eq>(_: T) {}
-
-        impl_debug(F97::zero());
-        impl_clone(F97::zero());
-        impl_copy(F97::zero());
-        impl_partial_eq(F97::zero());
-        impl_eq(F97::zero());
+        assert_impl!(fmt::Debug: F97);
+        assert_impl!(fmt::Display: F97);
+        assert_impl!(Clone: F97);
+        assert_impl!(Copy: F97);
+        assert_impl!(PartialEq: F97);
+        assert_impl!(cmp::PartialEq: F97);
+        assert_impl!(cmp::Eq: F97);
+        assert_impl!(!cmp::PartialOrd: F97);
+        assert_impl!(!cmp::Ord: F97);
+        assert_impl!(Zero: F97);
+        assert_impl!(One: F97);
+        assert_impl!(Ring: F97);
     }
 
     #[test]
@@ -427,29 +444,22 @@ mod tests {
         assert_eq!(-&F97::new(1), F97::new(96));
     }
 
-    #[test]
-    fn test_pow() {
-        // pow
-        assert_eq!(F97::new(7).pow(0), F97::new(1));
-        assert_eq!(F97::new(7).pow(1), F97::new(7));
-        assert_eq!(F97::new(7).pow(2), F97::new(49));
-        assert_eq!(F97::new(7).pow(3), F97::new(343 % 97));
-        assert_eq!(F97::new(7).pow(4), F97::new(2401 % 97));
+    #[test_case(7, 0 => 1)]
+    #[test_case(7, 1 => 7)]
+    #[test_case(7, 2 => 49)]
+    #[test_case(7, 3 => 343 % 97)]
+    #[test_case(7, 4 => 2401 % 97)]
+    fn test_pow(a: i16, b: u64) -> i16 {
+        F97::new(a).pow(b).into_inner()
     }
 
     #[test]
     fn test_sum() {
         // Sum<Fp<_>>
-        assert_eq!(
-            vec![F97::new(2), F97::new(3)].into_iter().sum::<F97>(),
-            F97::new(5)
-        );
+        assert_eq!(fp_vec![2, 3].into_iter().sum::<F97>(), F97::new(5));
 
         // Sum<&Fp<_>>
-        assert_eq!(
-            vec![F97::new(2), F97::new(3)].iter().sum::<F97>(),
-            F97::new(5)
-        );
+        assert_eq!(fp_vec![2, 3].iter().sum::<F97>(), F97::new(5));
     }
 
     #[test]
