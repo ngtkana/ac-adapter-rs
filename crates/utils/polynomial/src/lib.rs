@@ -66,10 +66,10 @@ pub struct Poly<T>(Vec<T>);
 
 /// [`Poly`](std.Poly.html) に入れられる最低限の条件をまとめました。
 pub trait Poliable:
-    std::fmt::Debug + Clone + Zero + One + ops::Sub + ops::SubAssign + PartialEq
+    std::fmt::Debug + Copy + Zero + One + ops::Sub + ops::SubAssign + PartialEq
 {
 }
-impl<T: std::fmt::Debug + Clone + Zero + One + ops::Sub + ops::SubAssign + PartialEq> Poliable
+impl<T: std::fmt::Debug + Copy + Zero + One + ops::Sub + ops::SubAssign + PartialEq> Poliable
     for T
 {
 }
@@ -116,6 +116,17 @@ impl<T: Poliable> Default for Poly<T> {
 impl<T: Poliable> Zero for Poly<T> {
     fn zero() -> Poly<T> {
         Poly(Vec::new())
+    }
+    fn times(mut self, n: u64) -> Poly<T> {
+        self.0.iter_mut().for_each(|x| *x = x.times(n));
+        self
+    }
+    fn from_u64(n: u64) -> Poly<T> {
+        if n == 0 {
+            Poly::new(Vec::new())
+        } else {
+            Poly(vec![T::from_u64(n)])
+        }
     }
 }
 
