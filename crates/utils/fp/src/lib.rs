@@ -280,26 +280,21 @@ impl<Mod: Constant + Clone + fmt::Debug + cmp::PartialEq + cmp::Eq> Modable for 
 
 /// `<Mod as Constant>::Output` が満たすべき性質をまとめた型です。
 ///
-/// TODO: [`type_traits`](../type_traits/index.html) に移動移動します。
+/// TODO: 共通トレイトを全列挙して `Int` のようなお名前にて、
+/// [`type_traits`](../type_traits/index.html) に移動したいです。
 pub trait Value:
     Sized
     + Clone
     + Copy
-    + Zero
-    + One
+    + Ring
     + fmt::Debug
     + fmt::Display
     + cmp::PartialOrd
-    + cmp::PartialEq
     + cmp::Ord
     + cmp::Eq
-    + Sub<Output = Self>
-    + Mul<Output = Self>
     + Div<Output = Self>
     + Rem<Output = Self>
     + Neg<Output = Self>
-    + SubAssign
-    + MulAssign
     + DivAssign
     + RemAssign
 {
