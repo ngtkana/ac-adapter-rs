@@ -21,7 +21,7 @@ macro_rules! lg {
 #[macro_export]
 macro_rules! lg_nl {
     () => {
-        $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
+        eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
     };
     ($val:expr) => {
         match $val {
