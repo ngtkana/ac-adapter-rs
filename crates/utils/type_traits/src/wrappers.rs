@@ -1,4 +1,4 @@
-use super::{Assoc, Identity, One, Zero};
+use super::{Assoc, Element, Identity, One, Zero};
 use std::ops;
 
 /// `ops::Add` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
@@ -9,7 +9,7 @@ use std::ops;
 pub struct Add<T>(pub T);
 impl<T> Assoc for Add<T>
 where
-    T: ops::Add<Output = T>,
+    T: ops::Add<Output = T> + Element,
 {
     #[inline]
     fn op(self, rhs: Self) -> Self {
@@ -35,7 +35,7 @@ pub struct Mul<T>(pub T);
 
 impl<T> Assoc for Mul<T>
 where
-    T: ops::Mul<Output = T>,
+    T: ops::Mul<Output = T> + Element,
 {
     #[inline]
     fn op(self, rhs: Self) -> Self {

@@ -11,8 +11,16 @@ mod primitive;
 /// [`Identity`]: traits.Identity.html
 pub mod wrappers;
 
+/// [`Sized`] + [`Clone`] + [`PartialEq`] です。
+///
+/// [`Sized`]: https://doc.rust-lang.org/std/marker/traits.Sized.html
+/// [`Clone`]: https://doc.rust-lang.org/std/marker/traits.Clone.html
+/// [`PartialEq`]: https://doc.rust-lang.org/std/cmp/traits.PartialEq.html
+pub trait Element: Sized + Clone + PartialEq {}
+impl<T: Sized + Clone + PartialEq> Element for T {}
+
 /// 結合的な演算を持つトレイトです。
-pub trait Assoc: Sized {
+pub trait Assoc: Element {
     /// 結合的な演算です。
     fn op(self, rhs: Self) -> Self;
 }
@@ -26,7 +34,7 @@ pub trait Identity: Assoc {
 }
 
 /// `ops::Add` の単位元（零元）を持つトレイトです。
-pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign + PartialEq {
+pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     /// `ops::Add` の単位元（零元）を返します。
     fn zero() -> Self;
 
@@ -49,7 +57,7 @@ pub trait Zero: Sized + ops::Add<Output = Self> + ops::AddAssign + PartialEq {
 }
 
 /// `ops::Mul` の単位元を持つトレイトです。
-pub trait One: Sized + ops::Mul<Output = Self> + ops::MulAssign + PartialEq {
+pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     /// `ops::Mul` の単位元を返します。
     fn one() -> Self;
 
