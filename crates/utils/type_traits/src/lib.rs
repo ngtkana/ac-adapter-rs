@@ -23,6 +23,16 @@ impl<T: Sized + Clone + PartialEq> Element for T {}
 pub trait Assoc: Element {
     /// 結合的な演算です。
     fn op(self, rhs: Self) -> Self;
+
+    /// 左から掛け算をします。
+    fn op_from_left(&mut self, left: &Self) {
+        *self = Self::op(left.clone(), self.clone());
+    }
+
+    /// 左から掛け算をします。
+    fn op_from_right(&mut self, right: &Self) {
+        *self = Self::op(self.clone(), right.clone());
+    }
 }
 
 /// 単位元を持つ [`Assoc`] です。
