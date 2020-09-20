@@ -240,13 +240,11 @@
 /// For only internal use
 #[macro_export]
 macro_rules! print_query {
-    ($instance:ident, $name:ident, $expected:ident, $result:ident,  ($($query:ident),*)) => {
+    ($instance:ident, $name:ident, ($($query:ident),*)) => {
         println!(
-            "Query = ({} {:?}), expected = {:?}, result = {:?}",
+            "Query = ({} {:?})",
             stringify!($name),
             ($(&$query),*),
-            &$expected,
-            &$result,
         );
     };
 }
@@ -318,9 +316,9 @@ macro_rules! query {
     ($name:ident) => {
         |instance| {
             let $arg = instance.query.$name();
+            $crate::print_query!(instance, $name, ());
             let expected = instance.brute.$name().clone();
             let result = instance.fast.$name().clone();
-            $crate::print_query!(instance, $name, expected, result, ());
             $crate::query_assert!(instance, $name, expected, result, ($arg));
         };
     };
@@ -328,9 +326,9 @@ macro_rules! query {
     ($name:ident, $arg:ident) => {
         |instance| {
             let $arg = instance.query.$name();
+            $crate::print_query!(instance, $name, ($arg));
             let expected = instance.brute.$name($arg.clone()).clone();
             let result = instance.fast.$name($arg.clone()).clone();
-            $crate::print_query!(instance, $name, expected, result, ($arg));
             $crate::query_assert!(instance, $name, expected, result, ($arg));
         };
     };
@@ -338,10 +336,20 @@ macro_rules! query {
     ($name:ident, $head:ident, $($tails:ident),*) => {
         |instance| {
             let ($head, $($tails),*) = instance.query.$name();
+            $crate::print_query!(instance, $name, ($head, $($tails),*));
             let expected = instance.brute.$name($head.clone(), $($tails.clone()),*).clone();
             let result = instance.fast.$name($head.clone(), $($tails.clone()),*).clone();
-            $crate::print_query!(instance, $name, expected, result, ($head, $($tails),*));
             $crate::query_assert!(instance, $name, expected, result, ($head, $($tails),*));
+        };
+    };
+    // 引数の数が 2 つで、(value, ref) な場合です。（アドホックをやめませんか？）
+    ($name:ident, $head:ident, ref $tail:ident) => {
+        |instance| {
+            let ($head, $tail) = instance.query.$name();
+            $crate::print_query!(instance, $name, ($head, $tail));
+            let expected = instance.brute.$name($head.clone(), &$tail.clone()).clone();
+            let result = instance.fast.$name($head.clone(), &$tail).clone();
+            $crate::query_assert!(instance, $name, expected, result, ($head, $tail));
         };
     };
 }
