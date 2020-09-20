@@ -3,7 +3,6 @@ use type_traits::*;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segtree<T> {
-    head: usize,
     len: usize,
     table: Vec<T>,
 }
@@ -12,18 +11,15 @@ impl<T: Assoc> Segtree<T> {
     pub fn from_slice(src: &[T]) -> Self {
         if src.is_empty() {
             Self {
-                head: 0,
                 len: 0,
                 table: Vec::new(),
             }
         } else {
-            let head = src.len() - 1;
             let mut me = Self {
-                head,
                 len: src.len(),
-                table: src[1..].iter().chain(src).cloned().collect::<Vec<_>>(),
+                table: src.iter().chain(src).cloned().collect::<Vec<_>>(),
             };
-            for i in (0..head).rev() {
+            for i in (0..src.len()).rev() {
                 me.update(i);
             }
             me
@@ -37,20 +33,14 @@ impl<T: Assoc> Segtree<T> {
 
     pub fn get(&mut self, i: usize) -> &T {
         assert!(i < self.len);
-        &self.table[self.head + i]
+        &self.table[self.len + i]
     }
 
     pub fn modify(&mut self, mut i: usize, f: impl Fn(&mut T)) {
         assert!(i < self.len);
-        i += self.head;
+        i += self.len;
         f(&mut self.table[i]);
-        for i in iter::successors(Some((i - 1) / 2), |&x| {
-            if x == 0 {
-                None
-            } else {
-                Some((x - 1) / 2)
-            }
-        }) {
+        for i in iter::successors(Some(i / 2), |&x| if x == 0 { None } else { Some(x / 2) }) {
             self.update(i);
         }
     }
@@ -59,8 +49,8 @@ impl<T: Assoc> Segtree<T> {
         let (mut start, mut end) = open(self.len, range);
         assert!(start <= end, "変な区間を渡すのをやめませんか？");
         assert!(end <= self.len, "範囲外です！");
-        start += self.head;
-        end += self.head;
+        start += self.len;
+        end += self.len;
 
         if start == end {
             None
@@ -72,23 +62,23 @@ impl<T: Assoc> Segtree<T> {
             end -= 1;
             let mut right = self.table[end].clone();
             while start != end {
-                if start % 2 == 0 {
+                if start % 2 == 1 {
                     left.op_from_right(&self.table[start]);
                     start += 1;
                 }
-                if end % 2 == 0 {
+                if end % 2 == 1 {
                     end -= 1;
                     right.op_from_left(&self.table[end]);
                 }
-                start = (start - 1) / 2;
-                end = (end - 1) / 2;
+                start /= 2;
+                end /= 2;
             }
             Some(T::op(left, right))
         }
     }
 
     fn update(&mut self, i: usize) {
-        let x = T::op(self.table[2 * i + 1].clone(), self.table[2 * i + 2].clone());
+        let x = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone());
         self.table[i] = x;
     }
 }
