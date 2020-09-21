@@ -1,6 +1,17 @@
+#![warn(missing_docs)]
+
+//! 任意始点双方向二分探索機能付き非再帰セグメントツリーです。
+//!
+//! え、[`Segtree`] さんにこちらを参照してくださいと言われて来たですって！？ 困りましたね……
+//!
+//! [`Segtree`]: struct.Segtree.html
+
 use std::{iter, ops};
 use type_traits::*;
 
+/// セグツリー本体です。
+///
+/// 詳しくは[モジュールレベルドキュメント](index.html)までです。
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segtree<T> {
     len: usize,
@@ -28,18 +39,22 @@ impl<T: Assoc> iter::FromIterator<T> for Segtree<T> {
 }
 
 impl<T: Assoc> Segtree<T> {
+    /// 中身をクローンして構築します。
     pub fn from_slice(src: &[T]) -> Self {
         src.iter().cloned().collect::<Self>()
     }
 
+    /// `a[i]` を `x` に書き換えます。
     pub fn set(&mut self, i: usize, x: T) {
         assert!(i < self.len);
         self.modify(i, |y| y.clone_from(&x));
     }
+    /// `a[i]` を取得します。
     pub fn get(&mut self, i: usize) -> &T {
         assert!(i < self.len);
         &self.table[self.len + i]
     }
+    /// `a[i]` を編集します。
     pub fn modify(&mut self, mut i: usize, f: impl Fn(&mut T)) {
         assert!(i < self.len);
         i += self.len;
@@ -48,6 +63,7 @@ impl<T: Assoc> Segtree<T> {
             self.update(i);
         }
     }
+    /// `a[range]` を `T::op` で畳み込みます。
     pub fn fold(&self, range: impl ops::RangeBounds<usize>) -> Option<T> {
         let (mut start, mut end) = open(self.len, range);
         assert!(start <= end, "変な区間を渡すのをやめませんか？");
@@ -80,10 +96,16 @@ impl<T: Assoc> Segtree<T> {
         }
     }
 
+    /// `a` への参照を返します。
     pub fn as_slice(&self) -> &[T] {
         &self.table[self.len..]
     }
 
+    /// `self.fold(start..end).unwrap_or(true)` が `true` となる最大の `end` を返します。
+    ///
+    /// # 計算量
+    ///
+    /// `O(log(range.len()))` 回の `T::op` 呼び出しをします。
     pub fn forward_partition_point(&self, start: usize, mut f: impl FnMut(&T) -> bool) -> usize {
         assert!(start <= self.len, "範囲外は禁止です！");
         let mut i = self.len + start;
@@ -120,6 +142,11 @@ impl<T: Assoc> Segtree<T> {
         }
     }
 
+    /// `self.fold(start..end).unwrap_or(true)` が `true` となる最小の `start` を返します。
+    ///
+    /// # 計算量
+    ///
+    /// `O(log(range.len()))` 回の `T::op` 呼び出しをします。
     pub fn backward_partition_point(&self, end: usize, mut f: impl FnMut(&T) -> bool) -> usize {
         assert!(end <= self.len, "範囲外は禁止です！");
         let mut i = self.len + end;
@@ -155,6 +182,8 @@ impl<T: Assoc> Segtree<T> {
             }
         }
     }
+    /// `self.fold(start..end).map(|x| &project(x) < value).unwrap_or(true)` が `true` となる最大の
+    /// `end` を返します。
     pub fn forward_lower_bound_by_key<U: Ord>(
         &self,
         start: usize,
@@ -163,6 +192,8 @@ impl<T: Assoc> Segtree<T> {
     ) -> usize {
         self.forward_partition_point(start, |x| &project(x) < value)
     }
+    /// `self.fold(start..end).map(|x| &project(x) <= value).unwrap_or(true)` が `true` となる最大の
+    /// `end` を返します。
     pub fn forward_upper_bound_by_key<U: Ord>(
         &self,
         start: usize,
@@ -171,6 +202,8 @@ impl<T: Assoc> Segtree<T> {
     ) -> usize {
         self.forward_partition_point(start, |x| &project(x) <= value)
     }
+    /// `self.fold(start..end).map(|x| &project(x) < value).unwrap_or(true)` が `true` となる最小の
+    /// `start` を返します。
     pub fn backward_lower_bound_by_key<U: Ord>(
         &self,
         end: usize,
@@ -179,6 +212,8 @@ impl<T: Assoc> Segtree<T> {
     ) -> usize {
         self.backward_partition_point(end, |x| &project(x) < value)
     }
+    /// `self.fold(start..end).map(|x| &project(x) <= value).unwrap_or(true)` が `true` となる最小の
+    /// `start` を返します。
     pub fn backward_upper_bound_by_key<U: Ord>(
         &self,
         end: usize,
@@ -195,15 +230,23 @@ impl<T: Assoc> Segtree<T> {
 }
 
 impl<T: Assoc + Ord> Segtree<T> {
+    /// `self.fold(start..end).map(|x| &x < value).unwrap_or(true)` が `true` となる最大の `end`
+    /// を返します。
     pub fn forward_lower_bound(&self, start: usize, value: &T) -> usize {
         self.forward_partition_point(start, |x| x < value)
     }
+    /// `self.fold(start..end).map(|x| &x <= value).unwrap_or(true)` が `true` となる最大の `end`
+    /// を返します。
     pub fn forward_upper_bound(&self, start: usize, value: &T) -> usize {
         self.forward_partition_point(start, |x| x <= value)
     }
+    /// `self.fold(start..end).map(|x| &x < value).unwrap_or(true)` が `true` となる最小の `start`
+    /// を返します。
     pub fn backward_lower_bound(&self, end: usize, value: &T) -> usize {
         self.backward_partition_point(end, |x| x < value)
     }
+    /// `self.fold(start..end).map(|x| &x <= value).unwrap_or(true)` が `true` となる最小の `start`
+    /// を返します。
     pub fn backward_upper_bound(&self, end: usize, value: &T) -> usize {
         self.backward_partition_point(end, |x| x <= value)
     }
