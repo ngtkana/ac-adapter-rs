@@ -149,6 +149,38 @@ impl<T: Assoc> Segtree<T> {
             }
         }
     }
+    pub fn forward_lower_bound_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.forward_partition_point(start, |x| &project(x) < value)
+    }
+    pub fn forward_upper_bound_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.forward_partition_point(start, |x| &project(x) <= value)
+    }
+    pub fn backward_lower_bound_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.backward_partition_point(end, |x| &project(x) < value)
+    }
+    pub fn backward_upper_bound_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.backward_partition_point(end, |x| &project(x) <= value)
+    }
 
     fn update(&mut self, i: usize) {
         let x = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone());
