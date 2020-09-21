@@ -239,13 +239,21 @@
 
 /// For only internal use
 #[macro_export]
-macro_rules! print_query {
+macro_rules! print_query_without_nl {
     ($instance:ident, $name:ident, ($($query:ident),*)) => {
-        println!(
-            "Query = ({} {:?})",
+        print!(
+            "Query = ({} {:?}),\t",
             stringify!($name),
             ($(&$query),*),
         );
+    };
+}
+
+/// For only internal use
+#[macro_export]
+macro_rules! print_results {
+    ($result:expr, $expected:expr) => {
+        println!("Result = {:?}, Expected = {:?}", $result, $expected);
     };
 }
 
@@ -315,20 +323,22 @@ macro_rules! query {
     // 引数の数が 0 つの場合
     ($name:ident) => {
         |instance| {
-            let $arg = instance.query.$name();
-            $crate::print_query!(instance, $name, ());
+            let () = instance.query.$name();
+            $crate::print_query_without_nl!(instance, $name, ());
             let expected = instance.brute.$name().clone();
             let result = instance.fast.$name().clone();
-            $crate::query_assert!(instance, $name, expected, result, ($arg));
+            $crate::print_results!(result, expected);
+            $crate::query_assert!(instance, $name, expected, result, ());
         };
     };
     // 引数の数が 1 つの場合
     ($name:ident, $arg:ident) => {
         |instance| {
             let $arg = instance.query.$name();
-            $crate::print_query!(instance, $name, ($arg));
+            $crate::print_query_without_nl!(instance, $name, ($arg));
             let expected = instance.brute.$name($arg.clone()).clone();
             let result = instance.fast.$name($arg.clone()).clone();
+            $crate::print_results!(result, expected);
             $crate::query_assert!(instance, $name, expected, result, ($arg));
         };
     };
@@ -336,9 +346,10 @@ macro_rules! query {
     ($name:ident, $head:ident, $($tails:ident),*) => {
         |instance| {
             let ($head, $($tails),*) = instance.query.$name();
-            $crate::print_query!(instance, $name, ($head, $($tails),*));
+            $crate::print_query_without_nl!(instance, $name, ($head, $($tails),*));
             let expected = instance.brute.$name($head.clone(), $($tails.clone()),*).clone();
             let result = instance.fast.$name($head.clone(), $($tails.clone()),*).clone();
+            $crate::print_results!(result, expected);
             $crate::query_assert!(instance, $name, expected, result, ($head, $($tails),*));
         };
     };
@@ -346,9 +357,21 @@ macro_rules! query {
     ($name:ident, $head:ident, ref $tail:ident) => {
         |instance| {
             let ($head, $tail) = instance.query.$name();
-            $crate::print_query!(instance, $name, ($head, $tail));
+            $crate::print_query_without_nl!(instance, $name, ($head, $tail));
             let expected = instance.brute.$name($head.clone(), &$tail.clone()).clone();
             let result = instance.fast.$name($head.clone(), &$tail).clone();
+            $crate::print_results!(result, expected);
+            $crate::query_assert!(instance, $name, expected, result, ($head, $tail));
+        };
+    };
+    // 引数の数が 2 つ + 3 つめが定数な場合です。（アドホックをやめませんか？）
+    ($name:ident, $head:ident, $tail:ident, @bind $bind:expr) => {
+        |instance| {
+            let ($head, $tail) = instance.query.$name();
+            $crate::print_query_without_nl!(instance, $name, ($head, $tail));
+            let expected = instance.brute.$name($head.clone(), &$tail.clone(), $bind).clone();
+            let result = instance.fast.$name($head.clone(), &$tail, $bind).clone();
+            $crate::print_results!(result, expected);
             $crate::query_assert!(instance, $name, expected, result, ($head, $tail));
         };
     };
