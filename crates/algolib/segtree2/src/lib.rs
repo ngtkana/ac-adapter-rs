@@ -124,7 +124,7 @@ impl<T: Assoc> Segtree<T> {
         } else {
             i -= 1;
             let mut current = self.table[i].clone();
-            let mut next = current.clone().op(self.table[i - 1].clone());
+            let mut next = self.table[i - 1].clone().op(current.clone());
 
             while f(&next) {
                 if i % 2 == 0 {
