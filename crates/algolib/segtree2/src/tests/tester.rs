@@ -32,16 +32,13 @@ impl<T: Assoc> Brute<T> {
     pub fn set(&mut self, i: usize, x: T) {
         self.0[i] = x;
     }
-
     pub fn get(&mut self, i: usize) -> &T {
         &self.0[i]
     }
-
     #[allow(dead_code)]
     pub fn modify(&mut self, i: usize, f: impl Fn(&mut T)) {
         f(&mut self.0[i])
     }
-
     pub fn fold(&self, range: impl ops::RangeBounds<usize>) -> Option<T> {
         let (start, end) = open(self.0.len(), range);
         if start == end {
@@ -55,6 +52,10 @@ impl<T: Assoc> Brute<T> {
             )
         }
     }
+    pub fn as_slice(&self) -> &[T] {
+        &self.0
+    }
+
     pub fn forward_partition_point(&self, start: usize, mut pred: impl FnMut(&T) -> bool) -> usize {
         if !pred(&self.0[start]) {
             start
@@ -85,6 +86,38 @@ impl<T: Assoc> Brute<T> {
                 })
                 .unwrap_or(0)
         }
+    }
+    pub fn forward_lower_bound_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.forward_partition_point(start, |x| &project(x) < value)
+    }
+    pub fn forward_upper_bound_by_key<U: Ord>(
+        &self,
+        start: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.forward_partition_point(start, |x| &project(x) <= value)
+    }
+    pub fn backward_lower_bound_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.backward_partition_point(end, |x| &project(x) < value)
+    }
+    pub fn backward_upper_bound_by_key<U: Ord>(
+        &self,
+        end: usize,
+        value: &U,
+        mut project: impl FnMut(&T) -> U,
+    ) -> usize {
+        self.backward_partition_point(end, |x| &project(x) <= value)
     }
 }
 
@@ -140,24 +173,47 @@ pub(super) trait SegQuery<'a> {
     fn fold(&mut self) -> ops::Range<usize> {
         self.gen_range()
     }
+    fn as_slice(&mut self) {}
 }
 
 pub(super) trait SegBinSearchQuery<'a>: SegQuery<'a> {
     // Required methods
-    fn gen_ge_nonempty_folded_value(&mut self) -> Self::Value;
-    fn gen_gt_nonempty_folded_value(&mut self) -> Self::Value;
+    fn gen_ge_folded_value(&mut self) -> Self::Value;
+    fn gen_gt_folded_value(&mut self) -> Self::Value;
 
     // Useful methods
     fn forward_lower_bound(&mut self) -> (usize, Self::Value) {
-        (self.gen_index(), self.gen_gt_nonempty_folded_value())
+        (self.gen_index(), self.gen_gt_folded_value())
     }
     fn forward_upper_bound(&mut self) -> (usize, Self::Value) {
-        (self.gen_index(), self.gen_ge_nonempty_folded_value())
+        (self.gen_index(), self.gen_ge_folded_value())
     }
     fn backward_lower_bound(&mut self) -> (usize, Self::Value) {
-        (self.gen_index() + 1, self.gen_gt_nonempty_folded_value())
+        (self.gen_index() + 1, self.gen_gt_folded_value())
     }
     fn backward_upper_bound(&mut self) -> (usize, Self::Value) {
-        (self.gen_index() + 1, self.gen_ge_nonempty_folded_value())
+        (self.gen_index() + 1, self.gen_ge_folded_value())
+    }
+}
+
+pub(super) trait SegBinSearchByKeyQuery<'a>: SegQuery<'a> {
+    type Key: Ord;
+
+    // Required methods
+    fn gen_ge_folded_key(&mut self) -> Self::Key;
+    fn gen_gt_folded_key(&mut self) -> Self::Key;
+
+    // Useful methods
+    fn forward_lower_bound_by_key(&mut self) -> (usize, Self::Key) {
+        (self.gen_index(), self.gen_gt_folded_key())
+    }
+    fn forward_upper_bound_by_key(&mut self) -> (usize, Self::Key) {
+        (self.gen_index(), self.gen_ge_folded_key())
+    }
+    fn backward_lower_bound_by_key(&mut self) -> (usize, Self::Key) {
+        (self.gen_index() + 1, self.gen_gt_folded_key())
+    }
+    fn backward_upper_bound_by_key(&mut self) -> (usize, Self::Key) {
+        (self.gen_index() + 1, self.gen_ge_folded_key())
     }
 }

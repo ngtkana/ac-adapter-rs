@@ -227,8 +227,8 @@ mod tests {
     use query_test::query;
     use rand::prelude::*;
     use std::marker::PhantomData;
-    use tester::{gen_instance, SegBinSearchQuery, SegQuery};
-    use type_traits::wrappers::{Add, Affine, Cat};
+    use tester::{gen_instance, SegBinSearchByKeyQuery, SegBinSearchQuery, SegQuery};
+    use type_traits::wrappers::{Add, Affine, Cat, InvertionNumber};
 
     fn gen_fp<Mod>(rng: &mut impl Rng) -> fp::Fp<Mod>
     where
@@ -273,11 +273,11 @@ mod tests {
             }
         }
         impl<'a> SegBinSearchQuery<'a> for Query<'a> {
-            fn gen_ge_nonempty_folded_value(&mut self) -> Self::Value {
+            fn gen_ge_folded_value(&mut self) -> Self::Value {
                 let lim = self.len() as u32 * 10 / 2;
                 Add(self.rng().gen_range(0, lim))
             }
-            fn gen_gt_nonempty_folded_value(&mut self) -> Self::Value {
+            fn gen_gt_folded_value(&mut self) -> Self::Value {
                 let lim = self.len() as u32 * 10 / 2;
                 Add(self.rng().gen_range(1, lim))
             }
@@ -318,9 +318,10 @@ mod tests {
             let mut instance = gen_instance(1..30, &mut rng, PhantomData::<Query>);
             for _ in 0..50 {
                 match instance.query.rng().gen_range(0, 100) {
-                    0..=29 => instance.apply(query!(set, i, x)),
+                    0..=19 => instance.apply(query!(set, i, x)),
                     20..=39 => instance.apply(query!(get, i)),
-                    40..=99 => instance.apply(query!(fold, range)),
+                    40..=90 => instance.apply(query!(fold, range)),
+                    91..=99 => instance.apply(query!(as_slice)),
                     _ => panic!(),
                 }
             }
@@ -349,9 +350,50 @@ mod tests {
             let mut instance = gen_instance(1..30, &mut rng, PhantomData::<Query>);
             for _ in 0..50 {
                 match instance.query.rng().gen_range(0, 100) {
-                    0..=29 => instance.apply(query!(set, i, x)),
+                    0..=19 => instance.apply(query!(set, i, x)),
                     20..=39 => instance.apply(query!(get, i)),
                     40..=99 => instance.apply(query!(fold, range)),
+                    _ => panic!(),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_inversion_number_binsearch_by_key() {
+        use rand::prelude::*;
+
+        query_struct! { struct Query; }
+        impl<'a> SegQuery<'a> for Query<'a> {
+            type Value = InvertionNumber;
+            triv_mtds! {self: Self}
+            fn gen_value(&mut self) -> Self::Value {
+                InvertionNumber::from_bool(self.rng().gen_ratio(1, 2))
+            }
+        }
+        impl<'a> SegBinSearchByKeyQuery<'a> for Query<'a> {
+            type Key = u64;
+            fn gen_gt_folded_key(&mut self) -> u64 {
+                let n = self.len() as u64;
+                self.rng().gen_range(1, n * (n + 1) / 2)
+            }
+            fn gen_ge_folded_key(&mut self) -> u64 {
+                let n = self.len() as u64;
+                self.rng().gen_range(0, n * (n + 1) / 2)
+            }
+        }
+
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let mut instance = gen_instance(1..30, &mut rng, PhantomData::<Query>);
+            for _ in 0..20 {
+                match instance.query.rng().gen_range(0, 100) {
+                    0..=19 => instance.apply(query!(set, i, x)),
+                    20..=39 => instance.apply(query!(fold, range)),
+                    40..=54 => instance.apply(query!(forward_lower_bound_by_key, start, key, @bind |inv| inv.inversion_number())),
+                    55..=69 => instance.apply(query!(forward_upper_bound_by_key, start, key, @bind |inv| inv.inversion_number())),
+                    70..=84 => instance.apply(query!(backward_lower_bound_by_key, start, key, @bind |inv| inv.inversion_number())),
+                    85..=99 => instance.apply(query!(backward_upper_bound_by_key, start, key, @bind |inv| inv.inversion_number())),
                     _ => panic!(),
                 }
             }
@@ -380,7 +422,7 @@ mod tests {
             let mut instance = gen_instance(1..30, &mut rng, PhantomData::<Query>);
             for _ in 0..20 {
                 match instance.query.rng().gen_range(0, 100) {
-                    0..=29 => instance.apply(query!(set, i, x)),
+                    0..=19 => instance.apply(query!(set, i, x)),
                     20..=39 => instance.apply(query!(get, i)),
                     40..=99 => instance.apply(query!(fold, range)),
                     _ => panic!(),
