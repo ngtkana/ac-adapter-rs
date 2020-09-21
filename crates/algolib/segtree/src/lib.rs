@@ -277,7 +277,7 @@ mod tests {
     use rand::prelude::*;
     use std::marker::PhantomData;
     use tester::{gen_instance, SegBinSearchByKeyQuery, SegBinSearchQuery, SegQuery};
-    use type_traits::wrappers::{Add, Affine, Cat, InvertionNumber};
+    use type_traits::binary::{Add, Affine, Cat, InvertionNumber};
 
     #[test]
     fn test_hand() {

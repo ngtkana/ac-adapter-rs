@@ -1,5 +1,19 @@
-use super::{Assoc, Element, Identity, One, Zero};
+use super::{Assoc, Element, Identity, One, Peek, Zero};
 use std::ops;
+
+macro_rules! triv_wrapper {
+    ($name:ident<$T:ident>) => {
+        impl<$T> Peek for $name<$T>
+        where
+            $T: Element,
+        {
+            type Inner = $T;
+            fn peek(&self) -> $T {
+                self.0.clone()
+            }
+        }
+    };
+}
 
 /// `ops::Add` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
 ///
@@ -7,6 +21,7 @@ use std::ops;
 /// [`Identity`]: traits.Identity.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Add<T>(pub T);
+triv_wrapper! { Add<T> }
 impl<T> Assoc for Add<T>
 where
     T: ops::Add<Output = T> + Element,
@@ -30,7 +45,7 @@ where
 /// [`Identity`]: traits.Identity.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Mul<T>(pub T);
-
+triv_wrapper! { Mul<T> }
 impl<T> Assoc for Mul<T>
 where
     T: ops::Mul<Output = T> + Element,
@@ -57,6 +72,13 @@ pub struct InvertionNumber {
     zero: u64,
     one: u64,
     invertion: u64,
+}
+impl Peek for InvertionNumber {
+    type Inner = bool;
+    fn peek(&self) -> bool {
+        self.try_get_bool()
+            .expect("ビットでないものを peek するのはいけません！")
+    }
 }
 impl Assoc for InvertionNumber {
     fn op(self, rhs: Self) -> Self {
@@ -159,7 +181,12 @@ pub struct Affine<T> {
     /// 0 次の係数です。
     pub b: T,
 }
-
+impl<T: Element> Peek for Affine<T> {
+    type Inner = (T, T);
+    fn peek(&self) -> (T, T) {
+        (self.a.clone(), self.b.clone())
+    }
+}
 impl<T> Assoc for Affine<T>
 where
     T: ops::Add<Output = T> + Element,
@@ -191,7 +218,12 @@ where
 /// [`Identity`]: traits.Identity.html
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Cat(pub String);
-
+impl Peek for Cat {
+    type Inner = String;
+    fn peek(&self) -> String {
+        self.0.clone()
+    }
+}
 impl Assoc for Cat {
     fn op(self, rhs: Self) -> Self {
         Cat(self.0.chars().chain(rhs.0.chars()).collect())

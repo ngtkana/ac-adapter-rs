@@ -9,7 +9,7 @@ mod primitive;
 ///
 /// [`Assoc`]: traits.Assoc.html
 /// [`Identity`]: traits.Identity.html
-pub mod wrappers;
+pub mod binary;
 
 /// [`Sized`] + [`Clone`] + [`PartialEq`] です。
 ///
@@ -109,6 +109,29 @@ macro_rules! define_constant {
     };
 }
 
+/// 大きくなりがちなラッパー型のデバッグ出力を小さくするために本質パートを抽出するためのトレイトです。
+///
+/// # 目的
+///
+/// 外部クレートでがデバッグ用ユーティルを作るための便利なトレイトです。
+///
+/// # 注意
+///
+/// 参照型でなく値型で帰ってきます。典型的には、ただのラッパーの場合は中身をクローンして、そうでない場合には頑張って構成します。
+///
+/// デバッグ目的ですから、[`Inner`](trait.Peek.html#associatedtype.Inner) に仮定しているのは
+/// [`Sized`] と [`Debug`] のみです。
+///
+/// [`Sized`]: http://doc.rust-lang.org/std/marker/trait.Sized.html
+/// [`Debug`]: http://doc.rust-lang.org/std/fmt/trait.Debug.html
+pub trait Peek {
+    /// 本質パートの型です。
+    type Inner: fmt::Debug;
+
+    /// 本質パート抽出関数です。
+    fn peek(&self) -> Self::Inner;
+}
+
 /// [`Output`] 型の関連定数 [`VALUE`] を持つトレイトです。[`Output`] には `Copy` トレイトを実装した任意の型が使えます。
 ///
 /// [`Output`]: trait.Constant.html#associatedtype.Output
@@ -132,26 +155,26 @@ mod tests {
 
     #[test]
     fn test_impl_assoc() {
-        assert_impl! {Assoc: wrappers::Add<u32>,  wrappers::Mul<u32>}
-        assert_impl! {!Assoc: u32, wrappers::Add<()>}
+        assert_impl! {Assoc: binary::Add<u32>,  binary::Mul<u32>}
+        assert_impl! {!Assoc: u32, binary::Add<()>}
     }
 
     #[test]
     fn test_impl_identity() {
-        assert_impl! {Identity: wrappers::Add<u32>,  wrappers::Mul<u32>}
-        assert_impl! {!Identity: u32, wrappers::Add<()>}
+        assert_impl! {Identity: binary::Add<u32>,  binary::Mul<u32>}
+        assert_impl! {!Identity: u32, binary::Add<()>}
     }
 
     #[test]
     fn test_impl_zero() {
         assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: wrappers::Add<u32>, wrappers::Mul<u32> }
+        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
     }
 
     #[test]
     fn test_impl_one() {
         assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: wrappers::Add<u32>, wrappers::Mul<u32> }
+        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
     }
 
     #[test]
