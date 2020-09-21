@@ -7,23 +7,29 @@ pub struct Segtree<T> {
     table: Vec<T>,
 }
 
+impl<T: Assoc, I: std::slice::SliceIndex<[T]>> std::ops::Index<I> for Segtree<T> {
+    type Output = I::Output;
+    fn index(&self, index: I) -> &Self::Output {
+        std::ops::Index::index(self.as_slice(), index)
+    }
+}
+
+impl<T: Assoc> iter::FromIterator<T> for Segtree<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Segtree<T> {
+        let mut table = iter.into_iter().collect::<Vec<_>>();
+        let okawari = table.to_vec();
+        table.extend(okawari.into_iter());
+        let len = table.len() / 2;
+        for i in (0..len).rev() {
+            table[i] = table[2 * i].clone().op(table[2 * i + 1].clone());
+        }
+        Self { len, table }
+    }
+}
+
 impl<T: Assoc> Segtree<T> {
     pub fn from_slice(src: &[T]) -> Self {
-        if src.is_empty() {
-            Self {
-                len: 0,
-                table: Vec::new(),
-            }
-        } else {
-            let mut me = Self {
-                len: src.len(),
-                table: src.iter().chain(src).cloned().collect::<Vec<_>>(),
-            };
-            for i in (0..src.len()).rev() {
-                me.update(i);
-            }
-            me
-        }
+        src.iter().cloned().collect::<Self>()
     }
 
     pub fn set(&mut self, i: usize, x: T) {
@@ -229,6 +235,37 @@ mod tests {
     use std::marker::PhantomData;
     use tester::{gen_instance, SegBinSearchByKeyQuery, SegBinSearchQuery, SegQuery};
     use type_traits::wrappers::{Add, Affine, Cat, InvertionNumber};
+
+    #[test]
+    fn test_hand() {
+        let seg = (0..10).map(Add).collect::<Segtree<_>>();
+        assert_eq!(seg[2], Add(2));
+
+        assert_eq!(seg.fold(2..4), Some(Add(5)));
+        assert_eq!(seg.fold(..), Some(Add(45)));
+        assert_eq!(seg.fold(..2), Some(Add(1)));
+        assert_eq!(seg.fold(9..), Some(Add(9)));
+        assert_eq!(seg.fold(2..=4), Some(Add(9)));
+        assert_eq!(seg.fold(1..1), None);
+        assert_eq!(seg.fold(1..=0), None);
+
+        assert_eq!(seg.forward_lower_bound(0, &Add(3)), 2); // 0 + 1            < 3 <= 0 + 1 + 2
+        assert_eq!(seg.forward_lower_bound(0, &Add(4)), 3); // 0 + 1 + 2        < 4 <= 0 + 1 + 2 + 3
+        assert_eq!(seg.forward_lower_bound(0, &Add(6)), 3); // 0 + 1 + 2        < 6 <= 0 + 1 + 2 + 3
+        assert_eq!(seg.forward_lower_bound(0, &Add(7)), 4); // 0 + 1 + 2 + 3    < 6 <= 0 + 1 + 2 + 3 + 4
+
+        assert_eq!(seg.forward_upper_bound(0, &Add(3)), 3); // 0 + 1 + 2        <= 3 < 0 + 1 + 2 + 3
+        assert_eq!(seg.forward_upper_bound(0, &Add(4)), 3); // 0 + 1 + 2        <= 4 < 0 + 1 + 2 + 3
+        assert_eq!(seg.forward_upper_bound(0, &Add(6)), 4); // 0 + 1 + 2 + 3    <= 6 < 0 + 1 + 2 + 3 + 4
+        assert_eq!(seg.forward_upper_bound(0, &Add(7)), 4); // 0 + 1 + 2 + 3    <= 7 < 0 + 1 + 2 + 3 + 4
+    }
+
+    #[test]
+    #[should_panic]
+    fn test_should_panic_illegal_range() {
+        let seg = (0..10).map(Add).collect::<Segtree<_>>();
+        seg.fold(4..3);
+    }
 
     fn gen_fp<Mod>(rng: &mut impl Rng) -> fp::Fp<Mod>
     where
