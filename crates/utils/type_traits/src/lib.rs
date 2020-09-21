@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 //! トレイト定義のクレートです。
 
-use std::{cmp, ops};
+use std::{cmp, fmt, ops};
 
 mod primitive;
 
@@ -16,8 +16,8 @@ pub mod wrappers;
 /// [`Sized`]: https://doc.rust-lang.org/std/marker/traits.Sized.html
 /// [`Clone`]: https://doc.rust-lang.org/std/marker/traits.Clone.html
 /// [`PartialEq`]: https://doc.rust-lang.org/std/cmp/traits.PartialEq.html
-pub trait Element: Sized + Clone + PartialEq {}
-impl<T: Sized + Clone + PartialEq> Element for T {}
+pub trait Element: Sized + Clone + PartialEq + fmt::Debug {}
+impl<T: Sized + Clone + PartialEq + fmt::Debug> Element for T {}
 
 /// 結合的な演算を持つトレイトです。
 pub trait Assoc: Element {
