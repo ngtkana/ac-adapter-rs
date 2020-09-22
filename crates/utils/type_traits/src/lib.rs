@@ -1,15 +1,48 @@
 #![warn(missing_docs)]
-//! トレイト定義のクレートです。
+//! 基本的なトレイトを定義します。
+//!
+//! TODO: 代数関連を分離します。
+//!
+//! # 代数関連
+//!
+//! すべて基本トレイト [`Element`] を継承しています。
+//!
+//! ## 二項演算
+//!
+//! 結合的な演算 [`op`] を備えた [`Assoc`] を継承します。
+//!
+//! - [`Identity`] : 単位元を返す写像 [`identity`] を備えています。
+//! - [`Commut`] : 可換性を表すマーカートレイトです。
+//! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
+//!
+//! 各種ラッパーも [`binary`] に定義されています。
+//!
+//!
+//! ## 作用
+//!
+//! [`Action`] は [`op`] と可換になるように [`Assoc`] に作用します。
+//!
+//!
+//! [`op`]: traits.Assoc.html#method.op
+//! [`identity`]: traits.Assoc.html#method.identity
+//! [`deg`]: traits.Assoc.html#method.deg
+//! [`op_n`]: traits.Assoc.html#method.op_n
+//! [`Element`]: traits.Element.html
+//! [`Assoc`]: traits.Assoc.html
+//! [`Identity`]: traits.Identity.html
+//! [`Commut`]: traits.Commut.html
+//! [`OpN`]: traits.OpN.html
+//! [`Action`]: traits.Action.html
 
 use std::{cmp, fmt, ops};
 
 mod primitive;
 
-/// `ops::{Add, Mul}` を用いて [`Assoc`], [`Identity`] を定義するラッパーを定義しています。
-///
-/// [`Assoc`]: traits.Assoc.html
-/// [`Identity`]: traits.Identity.html
+/// [`Assoc`](traits.Assoc.html) を実装した各種ラッパーさんです。
 pub mod binary;
+
+/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
+pub mod actions;
 
 /// [`Sized`] + [`Clone`] + [`PartialEq`] です。
 ///
@@ -20,6 +53,10 @@ pub trait Element: Sized + Clone + PartialEq + fmt::Debug {}
 impl<T: Sized + Clone + PartialEq + fmt::Debug> Element for T {}
 
 /// 結合的な演算を持つトレイトです。
+///
+/// # 要件
+///
+/// `x.op(y.op(z)) == x.op(y).op(z)`
 pub trait Assoc: Element {
     /// 結合的な演算です。
     fn op(self, rhs: Self) -> Self;
@@ -35,12 +72,59 @@ pub trait Assoc: Element {
     }
 }
 
-/// 単位元を持つ [`Assoc`] です。
+/// 単位元を持つ [`Assoc`](trait.Assoc.html) です。
 ///
-/// [`Assoc`]: trait.Assoc.html
+/// # 要件
+///
+/// `T::identity().op(x) == x && x.op(T::identity() == x`
 pub trait Identity: Assoc {
     /// 単位元です。
     fn identity() -> Self;
+}
+
+/// [`Assoc`](trait.Assoc.html) が可換なことを表すマーカートレイトです。
+///
+/// # 要件
+///
+/// `x.op(y) == y.op(x)`
+pub trait Commut: Assoc {}
+
+/// [`Assoc`](trait.Assoc.html) の n 乗が高速に計算できるときに使います。
+pub trait OpN: Assoc {
+    /// n 乗です。
+    fn op_n(self, n: u64) -> Self;
+}
+
+/// 同質的に字数付けをします。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Grade<T> {
+    /// 中身です。
+    pub base: T,
+    /// 次数です。
+    pub deg: usize,
+}
+impl<T: Assoc> Assoc for Grade<T> {
+    fn op(self, rhs: Self) -> Self {
+        Grade {
+            deg: self.deg + rhs.deg,
+            base: self.base.op(rhs.base),
+        }
+    }
+}
+
+/// 作用をします。
+///
+/// # 要件
+///
+/// `A: Action`, `a: A`, `x, y: Action::Space` に対して、次が成り立つことです。
+///
+/// `a.acted(x.op(y)) == a.acted(x).op(a.acted(y))`
+///
+pub trait Action {
+    /// 作用される空間です。
+    type Space: Assoc;
+    /// 作用関数です。
+    fn acted(self, x: Self::Space) -> Self::Space;
 }
 
 /// `ops::Add` の単位元（零元）を持つトレイトです。
@@ -55,15 +139,6 @@ pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     {
         self == &Self::zero()
     }
-
-    /// 自然数倍です。
-    fn times(self, n: u64) -> Self;
-
-    /// [`times`](trait.Zero.html#method.times) の複合代入版です。
-    fn times_assign(&mut self, n: u64);
-
-    /// 自然数の埋め込みです。
-    fn from_u64(x: u64) -> Self;
 }
 
 /// `ops::Mul` の単位元を持つトレイトです。
@@ -146,46 +221,4 @@ pub trait Constant: Copy {
 
     /// 主役です。
     const VALUE: Self::Output;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use assert_impl::assert_impl;
-
-    #[test]
-    fn test_impl_assoc() {
-        assert_impl! {Assoc: binary::Add<u32>,  binary::Mul<u32>}
-        assert_impl! {!Assoc: u32, binary::Add<()>}
-    }
-
-    #[test]
-    fn test_impl_identity() {
-        assert_impl! {Identity: binary::Add<u32>,  binary::Mul<u32>}
-        assert_impl! {!Identity: u32, binary::Add<()>}
-    }
-
-    #[test]
-    fn test_impl_zero() {
-        assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
-    }
-
-    #[test]
-    fn test_impl_one() {
-        assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
-    }
-
-    #[test]
-    fn test_zero() {
-        assert_eq!(<u32 as Zero>::zero(), 0);
-        assert_eq!(<i32 as Zero>::zero(), 0);
-    }
-
-    #[test]
-    fn test_one() {
-        assert_eq!(<u32 as One>::one(), 1);
-        assert_eq!(<i32 as One>::one(), 1);
-    }
 }
