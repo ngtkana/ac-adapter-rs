@@ -59,6 +59,40 @@ impl<T: OpN, U: OpN> OpN for Pair<T, U> {
     }
 }
 
+/// `ops::BitXor` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
+///
+/// [`Assoc`]: traits.Assoc.html
+/// [`Identity`]: traits.Identity.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct BitXor<T>(pub T);
+triv_wrapper! { BitXor<T> }
+impl<T> Assoc for BitXor<T>
+where
+    T: ops::BitXor<Output = T> + Element,
+{
+    fn op(self, rhs: Self) -> Self {
+        BitXor(self.0 ^ rhs.0)
+    }
+}
+impl<T> Identity for BitXor<T>
+where
+    T: ops::BitXor<Output = T> + Zero,
+{
+    fn identity() -> Self {
+        BitXor(T::zero())
+    }
+}
+impl<T: ops::BitXor<Output = T> + Element> Commut for BitXor<T> {}
+impl<T: ops::BitXor<Output = T> + Zero> OpN for BitXor<T> {
+    fn op_n(self, n: u64) -> Self {
+        if n % 2 == 0 {
+            Self::identity()
+        } else {
+            self
+        }
+    }
+}
+
 /// `ops::Add` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
 ///
 /// [`Assoc`]: traits.Assoc.html

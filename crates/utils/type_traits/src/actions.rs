@@ -32,7 +32,7 @@ impl<T: OpN + Commut> Action for Adjoint<T> {
 mod tests {
     use super::*;
 
-    use crate::binary::Add;
+    use crate::binary::{Add, BitXor};
 
     #[test]
     fn test_update() {
@@ -49,6 +49,17 @@ mod tests {
             Len {
                 len: 2,
                 base: Add(6)
+            }
+        );
+
+        assert_eq!(
+            Update(BitXor(3)).acted(Len {
+                len: 2,
+                base: BitXor(2)
+            }),
+            Len {
+                len: 2,
+                base: BitXor(0)
             }
         );
     }
@@ -68,6 +79,17 @@ mod tests {
             Len {
                 len: 2,
                 base: Add(8)
+            }
+        );
+
+        assert_eq!(
+            Adjoint(BitXor(3)).acted(Len {
+                len: 2,
+                base: BitXor(2)
+            }),
+            Len {
+                len: 2,
+                base: BitXor(2)
             }
         );
     }
