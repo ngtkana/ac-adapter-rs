@@ -210,15 +210,6 @@ where
     fn zero() -> Fp<Mod> {
         Fp::new(Mod::Output::zero())
     }
-    fn times(self, n: u64) -> Fp<Mod> {
-        self * Fp::from_u64(n)
-    }
-    fn times_assign(&mut self, n: u64) {
-        *self *= Fp::from_u64(n)
-    }
-    fn from_u64(n: u64) -> Fp<Mod> {
-        Fp::new(Mod::Output::from_u64(n))
-    }
 }
 
 impl<Mod: Modable> One for Fp<Mod>
