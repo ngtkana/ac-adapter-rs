@@ -1,5 +1,37 @@
 #![warn(missing_docs)]
-//! トレイト定義のクレートです。
+//! 基本的なトレイトを定義します。
+//!
+//! TODO: 代数関連を分離します。
+//!
+//! # 代数関連
+//!
+//! すべて基本トレイト [`Element`] を継承しています。
+//!
+//! ## 二項演算
+//!
+//! 結合的な演算 [`op`] を備えた [`Assoc`] を継承します。
+//!
+//! - [`Identity`] : 単位元を返す写像 [`identity`] を備えています。
+//! - [`Commut`] : 可換性を表すマーカートレイトです。
+//! - [`Deg`] : 次数を返す写像 [`deg`] を備えています。
+//! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
+//! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
+//!
+//!
+//! ## 作用
+//!
+//! [`Action`] は [`Assoc`] に [`op`] と可換になるように作用します。
+//!
+//! [`op`]: traits.Assoc.html#method.op
+//! [`identity`]: traits.Assoc.html#method.identity
+//! [`deg`]: traits.Assoc.html#method.deg
+//! [`op_n`]: traits.Assoc.html#method.op_n
+//! [`Element`]: traits.Element.html
+//! [`Assoc`]: traits.Assoc.html
+//! [`Identity`]: traits.Identity.html
+//! [`Commut`]: traits.Commut.html
+//! [`Deg`]: traits.Deg.html
+//! [`OpN`]: traits.OpN.html
 
 use std::{cmp, fmt, ops};
 
@@ -20,6 +52,10 @@ pub trait Element: Sized + Clone + PartialEq + fmt::Debug {}
 impl<T: Sized + Clone + PartialEq + fmt::Debug> Element for T {}
 
 /// 結合的な演算を持つトレイトです。
+///
+/// # 要件
+///
+/// `x.op(y.op(z)) == x.op(y).op(z)`
 pub trait Assoc: Element {
     /// 結合的な演算です。
     fn op(self, rhs: Self) -> Self;
@@ -35,12 +71,69 @@ pub trait Assoc: Element {
     }
 }
 
-/// 単位元を持つ [`Assoc`] です。
+/// 単位元を持つ [`Assoc`](trait.Assoc.html) です。
 ///
-/// [`Assoc`]: trait.Assoc.html
+/// # 要件
+///
+/// `T::identity().op(x) == x && x.op(T::identity() == x`
 pub trait Identity: Assoc {
     /// 単位元です。
     fn identity() -> Self;
+}
+
+/// [`Assoc`](trait.Assoc.html) が可換なことを表すマーカートレイトです。
+///
+/// # 要件
+///
+/// `x.op(y) == y.op(x)`
+pub trait Commut: Assoc {}
+
+/// [`Assoc`](trait.Assoc.html) の n 乗が高速に計算できるときに使います。
+pub trait OpN: Assoc {
+    /// n 乗です。
+    fn op_n(self) -> Self;
+}
+
+/// 自然数で字数付けられた [`Assoc`](trait.Assoc.html) です。
+///
+/// # 要件
+///
+/// `x.op(y).deg() == x.deg() + y.deg()`
+pub trait Deg: Assoc {
+    /// 字数を返します。
+    fn deg(&self) -> usize;
+}
+
+/// 同質的に字数付けをします。
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Grade<T> {
+    /// 中身です。
+    pub base: T,
+    /// 次数です。
+    pub deg: usize,
+}
+impl<T: Assoc> Assoc for Grade<T> {
+    fn op(self, rhs: Self) -> Self {
+        Grade {
+            deg: self.deg + rhs.deg,
+            base: self.base.op(rhs.base),
+        }
+    }
+}
+
+/// 作用をします。
+///
+/// # 要件
+///
+/// `A: Action`, `a: A`, `x, y: Action::Space` に対して、次が成り立つことです。
+///
+/// `a.acted(x.op(y)) == a.acted(x).op(a.acted(y))`
+///
+pub trait Action {
+    /// 作用される空間です。
+    type Space: Assoc;
+    /// 作用関数です。
+    fn acted(self, x: Self::Space) -> Self::Space;
 }
 
 /// `ops::Add` の単位元（零元）を持つトレイトです。
