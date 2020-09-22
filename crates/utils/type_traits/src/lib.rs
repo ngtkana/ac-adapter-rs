@@ -13,14 +13,15 @@
 //!
 //! - [`Identity`] : 単位元を返す写像 [`identity`] を備えています。
 //! - [`Commut`] : 可換性を表すマーカートレイトです。
-//! - [`Deg`] : 次数を返す写像 [`deg`] を備えています。
 //! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
-//! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
+//!
+//! 各種ラッパーも [`binary`] に定義されています。
 //!
 //!
 //! ## 作用
 //!
-//! [`Action`] は [`Assoc`] に [`op`] と可換になるように作用します。
+//! [`Action`] は [`op`] と可換になるように [`Assoc`] に作用します。
+//!
 //!
 //! [`op`]: traits.Assoc.html#method.op
 //! [`identity`]: traits.Assoc.html#method.identity
@@ -30,18 +31,18 @@
 //! [`Assoc`]: traits.Assoc.html
 //! [`Identity`]: traits.Identity.html
 //! [`Commut`]: traits.Commut.html
-//! [`Deg`]: traits.Deg.html
 //! [`OpN`]: traits.OpN.html
+//! [`Action`]: traits.Action.html
 
 use std::{cmp, fmt, ops};
 
 mod primitive;
 
-/// `ops::{Add, Mul}` を用いて [`Assoc`], [`Identity`] を定義するラッパーを定義しています。
-///
-/// [`Assoc`]: traits.Assoc.html
-/// [`Identity`]: traits.Identity.html
+/// [`Assoc`](traits.Assoc.html) を実装した各種ラッパーさんです。
 pub mod binary;
+
+/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
+pub mod actions;
 
 /// [`Sized`] + [`Clone`] + [`PartialEq`] です。
 ///
@@ -91,17 +92,7 @@ pub trait Commut: Assoc {}
 /// [`Assoc`](trait.Assoc.html) の n 乗が高速に計算できるときに使います。
 pub trait OpN: Assoc {
     /// n 乗です。
-    fn op_n(self) -> Self;
-}
-
-/// 自然数で字数付けられた [`Assoc`](trait.Assoc.html) です。
-///
-/// # 要件
-///
-/// `x.op(y).deg() == x.deg() + y.deg()`
-pub trait Deg: Assoc {
-    /// 字数を返します。
-    fn deg(&self) -> usize;
+    fn op_n(self, n: u64) -> Self;
 }
 
 /// 同質的に字数付けをします。
@@ -148,15 +139,6 @@ pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     {
         self == &Self::zero()
     }
-
-    /// 自然数倍です。
-    fn times(self, n: u64) -> Self;
-
-    /// [`times`](trait.Zero.html#method.times) の複合代入版です。
-    fn times_assign(&mut self, n: u64);
-
-    /// 自然数の埋め込みです。
-    fn from_u64(x: u64) -> Self;
 }
 
 /// `ops::Mul` の単位元を持つトレイトです。
@@ -239,46 +221,4 @@ pub trait Constant: Copy {
 
     /// 主役です。
     const VALUE: Self::Output;
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use assert_impl::assert_impl;
-
-    #[test]
-    fn test_impl_assoc() {
-        assert_impl! {Assoc: binary::Add<u32>,  binary::Mul<u32>}
-        assert_impl! {!Assoc: u32, binary::Add<()>}
-    }
-
-    #[test]
-    fn test_impl_identity() {
-        assert_impl! {Identity: binary::Add<u32>,  binary::Mul<u32>}
-        assert_impl! {!Identity: u32, binary::Add<()>}
-    }
-
-    #[test]
-    fn test_impl_zero() {
-        assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
-    }
-
-    #[test]
-    fn test_impl_one() {
-        assert_impl! {Zero: u32, i32 }
-        assert_impl! {!Zero: binary::Add<u32>, binary::Mul<u32> }
-    }
-
-    #[test]
-    fn test_zero() {
-        assert_eq!(<u32 as Zero>::zero(), 0);
-        assert_eq!(<i32 as Zero>::zero(), 0);
-    }
-
-    #[test]
-    fn test_one() {
-        assert_eq!(<u32 as One>::one(), 1);
-        assert_eq!(<i32 as One>::one(), 1);
-    }
 }

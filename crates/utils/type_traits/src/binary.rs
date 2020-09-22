@@ -1,4 +1,4 @@
-use super::{Assoc, Element, Identity, One, Peek, Zero};
+use super::{Assoc, Commut, Element, Identity, One, OpN, Peek, Zero};
 use std::ops;
 
 macro_rules! triv_wrapper {
@@ -13,6 +13,50 @@ macro_rules! triv_wrapper {
             }
         }
     };
+}
+
+/// 長さの情報を追加するラッパーです。
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Len<T> {
+    /// 元の長さです。
+    pub len: u64,
+    /// 中身です。
+    pub base: T,
+}
+impl<T> Len<T> {
+    /// 長さ 1 を付与します。
+    pub fn single(base: T) -> Self {
+        Len { len: 1, base }
+    }
+}
+impl<T: Assoc> Assoc for Len<T> {
+    fn op(self, rhs: Self) -> Self {
+        Len {
+            len: self.len + rhs.len,
+            base: self.base.op(rhs.base),
+        }
+    }
+}
+
+/// 直積です。
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Pair<T, U>(pub T, pub U);
+impl<T: Assoc, U: Assoc> Assoc for Pair<T, U> {
+    fn op(self, rhs: Self) -> Self {
+        Pair(self.0.op(rhs.0), self.1.op(rhs.1))
+    }
+}
+impl<T: Identity, U: Identity> Identity for Pair<T, U> {
+    fn identity() -> Self {
+        Pair(T::identity(), U::identity())
+    }
+}
+impl<T: Commut, U: Commut> Commut for Pair<T, U> {}
+impl<T: OpN, U: OpN> OpN for Pair<T, U> {
+    fn op_n(self, n: u64) -> Self {
+        let Pair(t, u) = self;
+        Self(t.op_n(n), u.op_n(n))
+    }
 }
 
 /// `ops::Add` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
@@ -69,9 +113,12 @@ where
 /// [`Identity`]: traits.Identity.html
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct InvertionNumber {
-    zero: u64,
-    one: u64,
-    invertion: u64,
+    /// 0 の数
+    pub zero: u64,
+    /// 1 の数
+    pub one: u64,
+    /// 転倒数
+    pub invertion: u64,
 }
 impl Peek for InvertionNumber {
     type Inner = bool;
@@ -80,6 +127,7 @@ impl Peek for InvertionNumber {
             .expect("ビットでないものを peek するのはいけません！")
     }
 }
+
 impl Assoc for InvertionNumber {
     fn op(self, rhs: Self) -> Self {
         InvertionNumber {
@@ -174,7 +222,7 @@ impl InvertionNumber {
 /// [`ops::Mul`]: http://doc.rust-lang.org/std/ops/trait.Mul.html
 /// [`Assoc`]: traits.Assoc.html
 /// [`Identity`]: traits.Identity.html
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct Affine<T> {
     /// 1 次の係数です。
     pub a: T,
@@ -232,5 +280,119 @@ impl Assoc for Cat {
 impl Identity for Cat {
     fn identity() -> Self {
         Cat(String::new())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_impl::assert_impl;
+
+    #[test]
+    fn test_pair() {
+        assert_eq!(
+            Pair(Add(3), Mul(5.)).op(Pair(Add(5), Mul(2.))),
+            Pair(Add(8), Mul(10.))
+        );
+        assert_eq!(
+            Pair::<Add<u32>, Mul<f64>>::identity(),
+            Pair(Add(0), Mul(1.))
+        );
+    }
+
+    #[test]
+    fn test_add() {
+        assert_impl!(Assoc: Add<i64>, Add<f64>);
+        assert_impl!(!Assoc: Add<()>, Add<std::cmp::Reverse<i64>>);
+
+        assert_impl!(Identity: Add<i64>, Add<f64>);
+        assert_impl!(Commut: Add<i64>, Add<f64>);
+        assert_impl!(OpN: Add<i64>, Add<f64>);
+
+        assert_impl!(Ord: Add<i64>);
+        assert_impl!(!Ord: Add<f64>);
+
+        assert_eq!(Add(2).op(Add(3)), Add(5));
+        assert_eq!(Add(2.).op(Add(3.)), Add(5.));
+        assert_eq!(Add::<u8>::identity(), Add(0));
+        assert_eq!(Add::<f32>::identity(), Add(0.));
+        assert_eq!(Add(42).op_n(3), Add(126));
+        assert_eq!(Add(3.).op_n(6), Add(18.));
+    }
+
+    #[test]
+    fn test_mul() {
+        assert_impl!(Assoc: Mul<i64>, Mul<f64>);
+        assert_impl!(!Assoc: Mul<()>, Mul<std::cmp::Reverse<i64>>);
+
+        assert_impl!(Identity: Mul<i64>, Mul<f64>);
+        assert_impl!(Commut: Mul<i64>, Mul<f64>);
+        assert_impl!(!OpN: Mul<i64>, Mul<f64>);
+
+        assert_impl!(Ord: Mul<i64>);
+        assert_impl!(!Ord: Mul<f64>);
+
+        assert_eq!(Mul(2).op(Mul(3)), Mul(6));
+        assert_eq!(Mul(2.).op(Mul(3.)), Mul(6.));
+        assert_eq!(Mul::<u8>::identity(), Mul(1));
+        assert_eq!(Mul::<f32>::identity(), Mul(1.));
+    }
+
+    #[test]
+    fn test_inversion_number() {
+        assert_impl!(Assoc: InvertionNumber);
+        assert_impl!(Identity: InvertionNumber);
+        assert_impl!(!Commut: InvertionNumber);
+        assert_impl!(!OpN: InvertionNumber);
+        assert_impl!(!Ord: InvertionNumber);
+
+        assert_eq!(
+            InvertionNumber::identity(),
+            InvertionNumber {
+                zero: 0,
+                one: 0,
+                invertion: 0
+            }
+        );
+        assert_eq!(
+            InvertionNumber {
+                zero: 1,
+                one: 2,
+                invertion: 1
+            }
+            .op(InvertionNumber {
+                zero: 3,
+                one: 4,
+                invertion: 1
+            }),
+            InvertionNumber {
+                zero: 4,
+                one: 6,
+                invertion: 8
+            }
+        );
+    }
+
+    #[test]
+    fn test_affine() {
+        assert_impl!(Assoc: Affine<i64>, Affine<f64>);
+        assert_impl!(!Assoc: Affine<()>, Affine<std::cmp::Reverse<i64>>);
+
+        assert_impl!(Identity: Affine<i64>, Affine<f64>);
+        assert_impl!(!Commut: Affine<i64>, Affine<f64>);
+        assert_impl!(!OpN: Affine<i64>, Affine<f64>);
+
+        assert_impl!(!Ord: Affine<i64>, Affine<f64>);
+
+        assert_eq!(
+            Affine { a: 2, b: 3 }.op(Affine { a: 10, b: 20 }),
+            Affine { a: 20, b: 43 }
+        );
+        assert_eq!(
+            Affine { a: 2., b: 3. }.op(Affine { a: 10., b: 20. }),
+            Affine { a: 20., b: 43. }
+        );
+        assert_eq!(Affine::<u8>::identity(), Affine { a: 1, b: 0 });
+        assert_eq!(Affine::<f32>::identity(), Affine { a: 1., b: 0. });
     }
 }
