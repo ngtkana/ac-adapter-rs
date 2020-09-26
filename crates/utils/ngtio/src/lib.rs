@@ -13,6 +13,8 @@
 /// 入力を司ります。
 pub mod i;
 
+mod lazy;
+
 /// たいせつ〜な〜も〜の〜は〜〜〜 ぜんぶこ〜こ〜に〜あ〜る〜〜〜
 pub mod prelude {
     pub use super::i::{

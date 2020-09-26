@@ -142,6 +142,8 @@ use std::{io, iter};
 pub use multi_token::{Leaf, Parser, ParserTuple, RawTuple, Tuple, VecLen};
 pub use token::{Token, Usize1};
 
+use super::lazy::Lazy;
+
 /// [`Scanner`](traits.Scanner.html) トレイトを実装した型をラップして、トークンサーバーをします。
 pub struct Tokenizer<S: Scanner> {
     queue: Vec<String>, // FIXME: String のみにすると速そうです。
@@ -448,9 +450,7 @@ impl Scanner for LockDisposing {
     }
 }
 
-lazy_static::lazy_static! {
-    static ref STDIN: io::Stdin = io::stdin();
-}
+static STDIN: Lazy<io::Stdin> = Lazy::INIT;
 
 /// 標準入力のロックを保持して、1 行ずつ読み込みます。
 pub struct LockKeeping<'a> {
@@ -459,7 +459,9 @@ pub struct LockKeeping<'a> {
 impl<'a> LockKeeping<'a> {
     /// 標準入力のロックを新たに取得して構築します。
     pub fn new() -> Self {
-        Self { lock: STDIN.lock() }
+        Self {
+            lock: STDIN.get(|| io::stdin()).lock(),
+        }
     }
 }
 impl<'a> Default for LockKeeping<'a> {
