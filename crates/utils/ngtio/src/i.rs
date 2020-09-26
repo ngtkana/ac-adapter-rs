@@ -1,5 +1,6 @@
 //! 標準入出力を支援します。
 //!
+//! TODO: `doctest!` マクロをバンドラで展開したいです。
 //! # 基本的な使い方
 //!
 //! 必要なものは次の 2 つです。
@@ -149,12 +150,10 @@ pub struct Tokenizer<S: BufRead> {
 }
 macro_rules! prim_method {
     ($name:ident: $T:ty) => {
-        doc_comment!(
-            concat!("`", stringify!($T), "` 型にパースします。"),
-            pub fn $name(&mut self) -> $T {
-                <$T>::leaf().parse(self)
-            }
-        );
+        #[allow(missing_docs)]
+        pub fn $name(&mut self) -> $T {
+            <$T>::leaf().parse(self)
+        }
     };
     ($name:ident) => {
         prim_method!($name: $name);
