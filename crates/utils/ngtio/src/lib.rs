@@ -13,11 +13,10 @@
 /// 入力を司ります。
 pub mod i;
 
-mod lazy;
+#[macro_use]
+extern crate doc_comment;
 
 /// たいせつ〜な〜も〜の〜は〜〜〜 ぜんぶこ〜こ〜に〜あ〜る〜〜〜
 pub mod prelude {
-    pub use super::i::{
-        LockDisposing, LockKeeping, Parser, ParserTuple, RawTuple, Scanner, Token, Usize1,
-    };
+    pub use super::i::{reader, Parser, ParserTuple, RawTuple, Token, Usize1};
 }
