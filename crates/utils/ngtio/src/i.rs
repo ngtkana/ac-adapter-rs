@@ -1,13 +1,10 @@
 //! 標準入出力を支援します。
 //!
-//! TODO: lazy_static から自由になります。
-//!
 //! # 基本的な使い方
 //!
 //! 必要なものは次の 2 つです。
 //!
-//! - [`Scanner`] を実装した型 ([`LockDisposing`], [`LockKeeping`], [`StringBuf`]) のオブジェクト（を
-//! [`Tokenizer`] で包んだもの）
+//! - [`BufRead`] を実装した型
 //! - [`Parser`] を実装した型の ([`Leaf`], [`VecLen`], [`Tuple`]) のオブジェクト
 //!
 //! TODO: `Vec` の代わりに [`FromIterator`] を実装した任意の型のオブジェクトにパースしたいです。
@@ -20,9 +17,6 @@
 //! 前者は冗長ですが、すべての機能を使えます。後者は短いですが、より限定的な機能しか使えません。
 //!
 //! 汎用性の観点から、最初の例ではすべて前者の方式で紹介していこうと思います。
-//! また doc tests の都合上、すべて [`StringBuf`]
-//! を使用しているため、見た目上やや長そうなのですが、実際には [`LockKeeping`]
-//! 等を使うと、コードは短くなるかとです。
 //!
 //! # Examples
 //!
@@ -128,28 +122,56 @@
 //! [`Parser::parse`]: i/trait.Parser.html#method.parse
 //!
 //! [`Parser`]: i/trait.Parser.html
-//! [`Scanner`]: i/trait.Scanner.html
-//! [`LockDisposing`]: i/struct.LockDisposing.html
-//! [`LockKeeping`]: i/struct.LockKeeping.html
 //! [`Leaf`]: i/struct.Leaf.html
 //! [`VecLen`]: i/struct.VecLen.html
 //! [`Tuple`]: i/struct.Tuple.html
 //! [`Tokenizer`]: i/struct.Tokenizer.html
 //! [`Usize1`]: i/struct.Usize1.html
-//! [`StringBuf`]: i/struct.StringBuf.html
-use std::{io, iter};
+use std::{
+    io::{self, BufRead},
+    iter,
+};
 
 pub use multi_token::{Leaf, Parser, ParserTuple, RawTuple, Tuple, VecLen};
 pub use token::{Token, Usize1};
 
-use super::lazy::Lazy;
+/// 標準入力を受け取る [`Tokenizer`] を構築します。
+///
+/// [`Tokenizer`]: i/struct.Tokenizer.html
+pub fn reader() -> Tokenizer<io::BufReader<io::Stdin>> {
+    io::BufReader::new(io::stdin()).tokenizer()
+}
 
 /// [`Scanner`](traits.Scanner.html) トレイトを実装した型をラップして、トークンサーバーをします。
-pub struct Tokenizer<S: Scanner> {
+pub struct Tokenizer<S: BufRead> {
     queue: Vec<String>, // FIXME: String のみにすると速そうです。
     scanner: S,
 }
-impl<S: Scanner> Tokenizer<S> {
+macro_rules! prim_method {
+    ($name:ident: $T:ty) => {
+        doc_comment!(
+            concat!("`", stringify!($T), "` 型にパースします。"),
+            pub fn $name(&mut self) -> $T {
+                <$T>::leaf().parse(self)
+            }
+        );
+    };
+    ($name:ident) => {
+        prim_method!($name: $name);
+    };
+}
+macro_rules! prim_methods {
+    ($name:ident: $T:ty; $($rest:tt)*) => {
+        prim_method!($name:$T);
+        prim_methods!($($rest)*);
+    };
+    ($name:ident; $($rest:tt)*) => {
+        prim_method!($name);
+        prim_methods!($($rest)*);
+    };
+    () => ()
+}
+impl<S: BufRead> Tokenizer<S> {
     ///
     /// # Panics
     ///
@@ -168,7 +190,7 @@ impl<S: Scanner> Tokenizer<S> {
     fn load(&mut self) {
         while self.queue.is_empty() {
             let mut s = String::new();
-            let length = self.scanner.read_line(&mut s);
+            let length = self.scanner.read_line(&mut s).unwrap(); // 入力が UTF-8 でないときにエラーだそうです。
             if length == 0 {
                 break;
             }
@@ -246,6 +268,11 @@ impl<S: Scanner> Tokenizer<S> {
     {
         T::leaf_tuple().vec(width).vec(height).parse(self)
     }
+    prim_methods! {
+        u8; u16; u32; u64; u128; usize;
+        i8; i16; i32; i64; i128; isize;
+        char; string: String;
+    }
 }
 
 mod token {
@@ -294,15 +321,15 @@ mod token {
 }
 
 mod multi_token {
-    use super::{Scanner, Token, Tokenizer};
-    use std::{iter, marker};
+    use super::{Token, Tokenizer};
+    use std::{io::BufRead, iter, marker};
 
     /// 複合型を含め、いろいろとパースをします。
     pub trait Parser: Sized {
         /// パース結果の型です。
         type Output;
         /// パースをします。
-        fn parse<S: Scanner + ?Sized>(&self, server: &mut Tokenizer<S>) -> Self::Output;
+        fn parse<S: BufRead>(&self, server: &mut Tokenizer<S>) -> Self::Output;
         /// `Vec` のパースのために、[`VecLen`](i/struct.VecLen.html) に包みます。
         fn vec(self, len: usize) -> VecLen<Self> {
             VecLen { len, elem: self }
@@ -313,7 +340,7 @@ mod multi_token {
     pub struct Leaf<T>(pub(super) marker::PhantomData<T>);
     impl<T: Token> Parser for Leaf<T> {
         type Output = T::Output;
-        fn parse<S: Scanner + ?Sized>(&self, server: &mut Tokenizer<S>) -> T::Output {
+        fn parse<S: BufRead>(&self, server: &mut Tokenizer<S>) -> T::Output {
             server.parse::<T>()
         }
     }
@@ -327,7 +354,7 @@ mod multi_token {
     }
     impl<T: Parser> Parser for VecLen<T> {
         type Output = Vec<T::Output>;
-        fn parse<S: Scanner + ?Sized>(&self, server: &mut Tokenizer<S>) -> Self::Output {
+        fn parse<S: BufRead>(&self, server: &mut Tokenizer<S>) -> Self::Output {
             iter::repeat_with(|| self.elem.parse(server))
                 .take(self.len)
                 .collect()
@@ -387,7 +414,7 @@ mod multi_token {
             {
                 type Output = ($($T::Output,)*);
                 #[allow(unused_variables)]
-                fn parse<S: Scanner + ?Sized>(&self, server: &mut Tokenizer<S>) -> Self::Output {
+                fn parse<S: BufRead >(&self, server: &mut Tokenizer<S>) -> Self::Output {
                     match self {
                         Tuple(($($t,)*)) => {
                             ($($t.parse(server),)*)
@@ -429,81 +456,19 @@ mod multi_token {
     );
 }
 
-/// 一行補充する関数 [`read_line`](trait.Scanner.html#method.read_line) を持つ型の抽象化です。
-pub trait Scanner: Sized {
-    /// 一行補充します。
-    fn read_line(&mut self, s: &mut String) -> usize;
-    /// [`Tokenizer`](struct.Tokenizer.html) に包みます。
+trait Scanner: BufRead + Sized {
     fn tokenizer(self) -> Tokenizer<Self> {
         Tokenizer::new(self)
     }
 }
-
-/// 標準入力を 1 行ずつ読み込み、毎回ロックを取得・破棄します。
-pub struct LockDisposing {}
-
-impl Scanner for LockDisposing {
-    fn read_line(&mut self, s: &mut String) -> usize {
-        io::stdin()
-            .read_line(s)
-            .expect("標準入力の読み取りに失敗です。")
-    }
-}
-
-static STDIN: Lazy<io::Stdin> = Lazy::INIT;
-
-/// 標準入力のロックを保持して、1 行ずつ読み込みます。
-pub struct LockKeeping<'a> {
-    lock: io::StdinLock<'a>,
-}
-impl<'a> LockKeeping<'a> {
-    /// 標準入力のロックを新たに取得して構築します。
-    pub fn new() -> Self {
-        Self {
-            lock: STDIN.get(|| io::stdin()).lock(),
-        }
-    }
-}
-impl<'a> Default for LockKeeping<'a> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-impl<'a> Scanner for LockKeeping<'a> {
-    fn read_line(&mut self, s: &mut String) -> usize {
-        use io::BufRead;
-        self.lock
-            .read_line(s)
-            .expect("標準入力の読み取りに失敗です。")
-    }
-}
-
-/// 全文を [`String`](https://doc.rust-lang.org/std/string/struct.String.html) 型で保持します。
-pub struct StringBuf(pub String);
-impl StringBuf {
-    /// 構築します。
-    pub fn new(s: &str) -> Self {
-        StringBuf(s.to_owned())
-    }
-}
-impl Scanner for StringBuf {
-    fn read_line(&mut self, s: &mut String) -> usize {
-        if let Some(length) = self.0.find('\n') {
-            *s = self.0.drain(..length).collect();
-            self.0.drain(0..1);
-            s.len()
-        } else {
-            0
-        }
-    }
-}
+impl<R: BufRead> Scanner for R {}
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    fn make_buf(s: &str) -> Tokenizer<StringBuf> {
-        StringBuf(s.to_owned()).tokenizer()
+    fn make_buf(s: &'static str) -> Tokenizer<&'static [u8]> {
+        s.as_bytes().tokenizer()
     }
 
     #[test]
