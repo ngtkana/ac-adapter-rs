@@ -1,7 +1,5 @@
-use ngtio::prelude::*;
-
 fn main() {
-    let mut buf = reader();
+    let mut buf = ngtio::with_stdin();
     loop {
         let x = buf.u32();
         let y = buf.u32();

@@ -24,24 +24,24 @@
 //! まずはプリミティブ型です。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
+//! use ngtio::prelude::*;
 //!
-//! assert_eq!(u8::leaf().parse(&mut StringBuf::new("4\n").tokenizer()), 4);
+//! assert_eq!(u8::leaf().parse(&mut ngtio::with_str("4\n")), 4);
 //! ```
 //!
 //! タプルは [`<(T, U, ..)>::tuple()`](i/trait.ParserTuple.html#method.tuple) か
 //! [`<(T, U, ..)>::leaf_tuple()`](i/trait.RawTuple.html#medhot.leaf_tuple) を使いましょう。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
+//! use ngtio::prelude::*;
 //! assert_eq!(
 //!     (u8::leaf(), char::leaf())
 //!         .tuple()
-//!         .parse(&mut StringBuf::new("4 c\n").tokenizer()),
+//!         .parse(&mut ngtio::with_str("4 c\n")),
 //!     (4, 'c')
 //! );
 //! assert_eq!(
-//!     <(u8, char)>::leaf_tuple().parse(&mut StringBuf::new("4 c\n").tokenizer()),
+//!     <(u8, char)>::leaf_tuple().parse(&mut ngtio::with_str("4 c\n")),
 //!     (4, 'c')
 //! );
 //! ```
@@ -49,11 +49,11 @@
 //! ベクターは [`Parser::vec(len)`](i/trait.Parser.html#method.vec) を使うと良いです。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
+//! use ngtio::prelude::*;
 //! assert_eq!(
 //!     u8::leaf()
 //!         .vec(3)
-//!         .parse(&mut StringBuf::new("0 1 2\n").tokenizer()),
+//!         .parse(&mut ngtio::with_str("0 1 2\n")),
 //!     vec![0, 1, 2]
 //! );
 //! ```
@@ -61,7 +61,7 @@
 //! これらを組み合わせると、任意の順番でネストすることができます。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
+//! use ngtio::prelude::*;
 //! assert_eq!(
 //!     (
 //!         (
@@ -75,7 +75,7 @@
 //!         char::leaf(),
 //!     )
 //!         .tuple()
-//!         .parse(&mut StringBuf::new("10 20 30 40 50 60 c\n").tokenizer()),
+//!         .parse(&mut ngtio::with_str("10 20 30 40 50 60 c\n")),
 //!     (
 //!         vec![
 //!             (9, vec![20, 30], (), vec![vec![((),), ((),)]],),
@@ -91,29 +91,29 @@
 //! もちろんプリミティブはパースできます。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
-//! assert_eq!(StringBuf::new("42\n").tokenizer().parse::<u8>(), 42);
+//! use ngtio::prelude::*;
+//! assert_eq!(ngtio::with_str("42\n").parse::<u8>(), 42);
 //! ```
 //!
 //! 各種複合型はこうのように、パーサの構造ごとに専用のメソッドがあります。
 //!
 //! ```
-//! use ngtio::{prelude::*, i::StringBuf};
+//! use ngtio::prelude::*;
 //!
 //! // タプル
-//! assert_eq!(StringBuf::new("42 c\n").tokenizer().tuple::<(u8, char)>(), (42, 'c'));
+//! assert_eq!(ngtio::with_str("42 c\n").tuple::<(u8, char)>(), (42, 'c'));
 //!
 //! // ベクター
-//! assert_eq!(StringBuf::new("10 20\n").tokenizer().vec::<u8>(2), vec![10, 20]);
+//! assert_eq!(ngtio::with_str("10 20\n").vec::<u8>(2), vec![10, 20]);
 //!
 //! // 複雑
-//! assert_eq!(StringBuf::new("42 c\n").tokenizer().vec_tuple::<(u8, char)>(1), vec![(42, 'c')]);
+//! assert_eq!(ngtio::with_str("42 c\n").vec_tuple::<(u8, char)>(1), vec![(42, 'c')]);
 //! assert_eq!(
-//!     StringBuf::new("0 1 2 3\n").tokenizer().vec2::<u8>(2, 2),
+//!     ngtio::with_str("0 1 2 3\n").vec2::<u8>(2, 2),
 //!     vec![vec![0, 1], vec![2, 3]]
 //! );
 //! assert_eq!(
-//!     StringBuf::new("0 1 2 3\n").tokenizer().vec2_tuple::<(u8,)>(2, 2),
+//!     ngtio::with_str("0 1 2 3\n").vec2_tuple::<(u8,)>(2, 2),
 //!     vec![vec![(0,), (1,)], vec![(2,), (3,)]]
 //! );
 //! ```
@@ -139,8 +139,15 @@ pub use token::{Token, Usize1};
 /// 標準入力を受け取る [`Tokenizer`] を構築します。
 ///
 /// [`Tokenizer`]: i/struct.Tokenizer.html
-pub fn reader() -> Tokenizer<io::BufReader<io::Stdin>> {
+pub fn with_stdin() -> Tokenizer<io::BufReader<io::Stdin>> {
     io::BufReader::new(io::stdin()).tokenizer()
+}
+
+/// 文字列スライスを管理する [`Tokenizer`] を構築します。
+///
+/// [`Tokenizer`]: i/struct.Tokenizer.html
+pub fn with_str(src: &str) -> Tokenizer<&[u8]> {
+    src.as_bytes().tokenizer()
 }
 
 /// [`Scanner`](traits.Scanner.html) トレイトを実装した型をラップして、トークンサーバーをします。
@@ -491,8 +498,7 @@ GHI
     }
 
     #[test]
-    #[should_panic]
-    fn test_require_endl() {
+    fn test_not_require_endl() {
         let mut s = make_buf("0");
         s.token();
     }

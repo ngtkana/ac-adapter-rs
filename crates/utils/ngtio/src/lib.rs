@@ -11,9 +11,11 @@
 //! [`o`]: o.html
 
 /// 入力を司ります。
-pub mod i;
+mod i;
+
+pub use i::{with_stdin, with_str};
 
 /// たいせつ〜な〜も〜の〜は〜〜〜 ぜんぶこ〜こ〜に〜あ〜る〜〜〜
 pub mod prelude {
-    pub use super::i::{reader, Parser, ParserTuple, RawTuple, Token, Usize1};
+    pub use super::i::{Parser, ParserTuple, RawTuple, Token, Usize1};
 }
