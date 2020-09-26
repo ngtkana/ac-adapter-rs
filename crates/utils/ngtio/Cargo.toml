@@ -3,6 +3,3 @@ name = "ngtio"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
-
-[dependencies]
-doc-comment = "0.3.3"
