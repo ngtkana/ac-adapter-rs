@@ -1,2 +1,2 @@
-/// 配列データ構造があります。
-pub mod array;
+/// `Vec` による実装があります。
+pub mod vector;
