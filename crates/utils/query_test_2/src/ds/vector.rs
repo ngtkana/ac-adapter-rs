@@ -12,9 +12,6 @@ use std::{
     ops::DerefMut,
 };
 
-/// 配列データ構造です。
-pub trait Array<T>: SolveGet<Get<T>> + SolveMut<Set<T>> {}
-
 /// 配列データ構造の愚直です。
 pub type Brute<T> = Vec<T>;
 impl<T> SolveGet<Get<T>> for Brute<T> {
