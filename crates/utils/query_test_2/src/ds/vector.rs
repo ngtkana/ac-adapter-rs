@@ -12,24 +12,27 @@ use std::{
     ops::DerefMut,
 };
 
-/// 配列データ構造の愚直です。
-pub type Brute<T> = Vec<T>;
+/// `Vec` による各種クエリの実装をしていきます。
+#[derive(Debug, Clone, PartialEq)]
+pub struct Brute<T>(Vec<T>);
 impl<T> SolveGet<Get<T>> for Brute<T> {
     fn solve_get(&self, i: usize) -> &T {
-        &self[i]
+        &self.0[i]
     }
 }
 impl<T> SolveMut<Set<T>> for Brute<T> {
     fn solve_mut(&mut self, (i, x): (usize, T)) {
-        self[i] = x;
+        self.0[i] = x;
     }
 }
 impl<T, G: GenLen + GenValue<T>> RandNew<G> for Brute<T> {
     fn rand_new<R: Rng>(rng: &mut R, _marker: PhantomData<G>) -> Self {
         let len = G::gen_len(rng);
-        std::iter::repeat_with(|| G::gen_value(rng))
-            .take(len)
-            .collect()
+        Brute(
+            std::iter::repeat_with(|| G::gen_value(rng))
+                .take(len)
+                .collect(),
+        )
     }
 }
 
@@ -71,7 +74,7 @@ where
 }
 impl<R: Rng, T, G> Tester<R, T, G> {
     fn gen_index(&self) -> usize {
-        self.rng.borrow_mut().gen_range(0, self.brute.len())
+        self.rng.borrow_mut().gen_range(0, self.brute.0.len())
     }
 }
 impl<R: Rng, T, G> Gen<Get<T>> for Tester<R, T, G> {
@@ -96,7 +99,7 @@ mod tests {
     struct Reverse<T>(Vec<T>);
     impl<T: Clone> Reverse<T> {
         pub fn from_brute(brute: &Brute<T>) -> Self {
-            let mut res = brute.to_vec();
+            let mut res = brute.0.to_vec();
             res.reverse();
             Reverse(res)
         }
