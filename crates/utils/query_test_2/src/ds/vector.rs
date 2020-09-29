@@ -38,6 +38,22 @@ impl<T: Assoc> solve::Solve<query::FoldFirst<T>> for Vector<T> {
             .fold(None, |x, y| Some(x.map(|x| x.op(y.clone())).unwrap_or(y)))
     }
 }
+impl<T, U, P> solve::Solve<query::ForwardUpperBoundByKey<T, U, P>> for Vector<T>
+where
+    T: Identity,
+    U: Ord,
+    P: query::Project<T, U>,
+{
+    fn solve(&self, (i, value): (usize, U)) -> usize {
+        assert!(P::project(T::identity()) <= value);
+        (i..=self.0.len())
+            .take_while(|&j| {
+                P::project(<Self as solve::Solve<query::Fold<T>>>::solve(self, i..j)) <= value
+            })
+            .last()
+            .unwrap()
+    }
+}
 
 impl<T> Vector<T> {
     fn gen_index<R: Rng, G>(&self, rng: &mut R) -> usize {
@@ -71,6 +87,17 @@ impl<T: Identity, G> Gen<query::Fold<T>, G> for Vector<T> {
 impl<T: Identity, G> Gen<query::FoldFirst<T>, G> for Vector<T> {
     fn gen<R: Rng>(&self, rng: &mut R) -> Range<usize> {
         <Self as Gen<query::Fold<T>, G>>::gen(self, rng)
+    }
+}
+impl<T, U, P, G> Gen<query::ForwardUpperBoundByKey<T, U, P>, G> for Vector<T>
+where
+    T: Identity,
+    U: Ord,
+    P: query::Project<T, U>,
+    G: gen::GenFoldedKey<U>,
+{
+    fn gen<R: Rng>(&self, rng: &mut R) -> (usize, U) {
+        (self.gen_index::<R, G>(rng), G::gen_folded_key(rng))
     }
 }
 
