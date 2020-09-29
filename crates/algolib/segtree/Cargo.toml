@@ -11,5 +11,5 @@ type_traits = { path = "../../utils/type_traits" }
 
 [dev-dependencies]
 fp = { path = "../../utils/fp" }
-query_test = { path = "../../utils/query_test" }
+query_test_2 = { path = "../../utils/query_test_2" }
 rand = "0.7.3"
