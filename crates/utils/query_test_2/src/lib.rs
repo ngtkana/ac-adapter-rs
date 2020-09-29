@@ -12,18 +12,18 @@ pub mod query;
 mod solve;
 mod test_tools;
 pub use solve::*;
-mod gen;
+pub mod gen;
 
-use config::{Checked, Config, Unchecked};
 pub use ds::vector::Vector;
 /// 愚直と比較をしてテストをするためのツールです。
 pub use test_tools::{config, Tester};
 
-pub const CONFIG: Config = Config {
+pub const CONFIG: config::Config = config::Config {
+    initialize: config::Initizlize::Short,
     pre: None,
-    failing: Checked::Verbose,
-    passing: Checked::Short,
-    unchecked: Unchecked::Short,
+    failing: config::Checked::Verbose,
+    passing: config::Checked::Short,
+    unchecked: config::Unchecked::Short,
 };
 
 /// クエリです。

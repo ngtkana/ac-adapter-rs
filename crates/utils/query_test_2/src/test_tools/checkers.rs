@@ -2,6 +2,7 @@ use crate::config;
 use std::fmt::{Debug, Display};
 use yansi::{Color, Paint};
 
+const INIT_FG_COLOR: Color = Color::Green;
 const PRE_FG_COLOR: Color = Color::Black;
 const UNCHECKED_FG_COLOR: Color = Color::Black;
 const FAILING_FG_COLOR: Color = Color::Red;
@@ -12,6 +13,11 @@ const QUERY_FG_COLOR: Color = Color::Magenta;
 const EXPECTED_FG_COLOR: Color = Color::Blue;
 const RESULT_FG_COLOR: Color = Color::Yellow;
 
+fn paint_init() -> Paint<&'static str> {
+    Paint::new("Initialized an instance")
+        .fg(INIT_FG_COLOR)
+        .bold()
+}
 fn paint_pre() -> Paint<&'static str> {
     Paint::new("Preparing for").fg(PRE_FG_COLOR).bold()
 }
@@ -52,6 +58,30 @@ impl<T: Display> Colon for Paint<T> {
 enum Status {
     Failing,
     Passing,
+}
+
+pub(super) struct InitPrinter<B, F> {
+    pub(super) brute: B,
+    pub(super) fast: F,
+}
+impl<B, F> InitPrinter<B, F>
+where
+    B: Debug,
+    F: Debug,
+{
+    pub fn print(&self, unchecked: config::Initizlize) {
+        use config::Initizlize::*;
+        match unchecked {
+            Short => self.short(),
+        }
+    }
+    fn short(&self) {
+        println!();
+        println!("{}", paint_init());
+        println!("\t{brute}", brute = paint_brute().colon(&self.brute));
+        println!("\t{fast}", fast = paint_fast().colon(&self.fast),);
+        println!();
+    }
 }
 
 #[allow(dead_code)]
@@ -149,23 +179,26 @@ where
     F: Debug,
     Q: Debug,
 {
-    pub fn uncheck(&self, config: config::Config) {
+    pub fn uncheck(&self, unchecked: config::Unchecked) {
         use config::Unchecked::*;
-        match config.unchecked {
+        match unchecked {
             Verbose => self.verbose(),
             Short => self.short(),
         }
     }
     fn short(&self) {
         println!(
+            "{query}",
+            query = paint_query().colon((self.query_name, &self.param)),
+        );
+    }
+    fn verbose(&self) {
+        print!("{}\t", paint_unchecked());
+        println!(
             "{query}\t{brute}\t{fast}",
             query = paint_query().colon((self.query_name, &self.param)),
             brute = paint_brute().colon(&self.brute),
             fast = paint_fast().colon(&self.fast),
         );
-    }
-    fn verbose(&self) {
-        print!("{}\t", paint_unchecked());
-        self.short();
     }
 }

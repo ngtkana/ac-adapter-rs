@@ -9,25 +9,30 @@ use std::{
 
 mod checkers;
 pub mod config;
-use checkers::{Checker, Preprinter, UnChecker};
+use checkers::{Checker, InitPrinter, Preprinter, UnChecker};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Tester<R, B, F, G> {
     rng: RefCell<R>,
     brute: B,
     fast: F,
-    config: Config,
+    config: config::Config,
     marker: std::marker::PhantomData<G>,
 }
 impl<R, B, F, G> Tester<R, B, F, G>
 where
     R: Rng,
-    B: RandNew<G>,
-    F: FromBrute<Brute = B>,
+    B: RandNew<G> + Debug,
+    F: FromBrute<Brute = B> + Debug,
 {
-    pub fn new(mut rng: R, config: Config) -> Self {
+    pub fn new(mut rng: R, config: config::Config) -> Self {
         let brute = B::rand_new(&mut rng, PhantomData::<G>);
         let fast = F::from_brute(&brute);
+        InitPrinter {
+            brute: &brute,
+            fast: &fast,
+        }
+        .print(config.initialize);
         Self {
             rng: RefCell::new(rng),
             brute,
@@ -35,6 +40,17 @@ where
             config,
             marker: PhantomData::<G>,
         }
+    }
+    pub fn initialize(&mut self) {
+        let brute = B::rand_new(self.rng_mut().deref_mut(), PhantomData::<G>);
+        let fast = F::from_brute(&brute);
+        InitPrinter {
+            brute: &brute,
+            fast: &fast,
+        }
+        .print(self.config.initialize);
+        self.brute = brute;
+        self.fast = fast;
     }
     pub fn rng_mut(&self) -> RefMut<R> {
         self.rng.borrow_mut()
@@ -71,7 +87,7 @@ macro_rules! method_block_uncheck {
             query_name: Q::NAME,
             param,
         }
-        .uncheck($self.config)
+        .uncheck($self.config.unchecked);
     }};
 }
 
