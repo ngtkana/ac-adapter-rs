@@ -37,3 +37,14 @@ impl<T> Query for FoldFirst<T> {
     type Output = Option<T>;
     const NAME: &'static str = "fold_first";
 }
+/// `fold(start..end) <= value` なる最大の `end` を返します。
+pub struct ForwardUpperBoundByKey<T, U, P>(PhantomData<(T, U, P)>);
+impl<T, U, P: Project<T, U>> Query for ForwardUpperBoundByKey<T, U, P> {
+    type Param = (usize, U);
+    type Output = usize;
+    const NAME: &'static str = "forward_upper_bound_by_key";
+}
+
+pub trait Project<T, U> {
+    fn project(t: T) -> U;
+}
