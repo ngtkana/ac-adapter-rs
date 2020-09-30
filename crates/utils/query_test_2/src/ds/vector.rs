@@ -1,13 +1,14 @@
-use crate::{gen, query, solve, Gen, RandNew};
+mod impl_gen;
+mod impl_query;
+use crate::{gen, query, solve, RandNew};
 use rand::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, ops::Range};
-use type_traits::{Assoc, Identity};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T>(pub Vec<T>);
-impl<T> solve::SolveGet<query::Get<T>> for Vector<T> {
-    fn solve_get(&self, i: usize) -> &T {
-        &self.0[i]
+impl<T: Clone> solve::Solve<query::Get<T>> for Vector<T> {
+    fn solve(&self, i: usize) -> T {
+        self.0[i].clone()
     }
 }
 impl<T, G: gen::GenLen + gen::GenValue<T>> RandNew<G> for Vector<T> {
@@ -18,40 +19,6 @@ impl<T, G: gen::GenLen + gen::GenValue<T>> RandNew<G> for Vector<T> {
                 .take(len)
                 .collect(),
         )
-    }
-}
-impl<T> solve::SolveMut<query::Set<T>> for Vector<T> {
-    fn solve_mut(&mut self, (i, x): (usize, T)) {
-        self.0[i] = x;
-    }
-}
-impl<T: Identity> solve::Solve<query::Fold<T>> for Vector<T> {
-    fn solve(&self, range: Range<usize>) -> T {
-        self.0[range].iter().cloned().fold(T::identity(), T::op)
-    }
-}
-impl<T: Assoc> solve::Solve<query::FoldFirst<T>> for Vector<T> {
-    fn solve(&self, range: Range<usize>) -> Option<T> {
-        self.0[range]
-            .iter()
-            .cloned()
-            .fold(None, |x, y| Some(x.map(|x| x.op(y.clone())).unwrap_or(y)))
-    }
-}
-impl<T, U, P> solve::Solve<query::ForwardUpperBoundByKey<T, U, P>> for Vector<T>
-where
-    T: Identity,
-    U: Ord,
-    P: query::Project<T, U>,
-{
-    fn solve(&self, (i, value): (usize, U)) -> usize {
-        assert!(P::project(T::identity()) <= value);
-        (i..=self.0.len())
-            .take_while(|&j| {
-                P::project(<Self as solve::Solve<query::Fold<T>>>::solve(self, i..j)) <= value
-            })
-            .last()
-            .unwrap()
     }
 }
 
@@ -67,37 +34,6 @@ impl<T> Vector<T> {
             v -= 1;
         }
         u..v
-    }
-}
-impl<T, G> Gen<query::Get<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> usize {
-        self.gen_index::<R, G>(rng)
-    }
-}
-impl<T, G: gen::GenValue<T>> Gen<query::Set<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> (usize, T) {
-        (self.gen_index::<R, G>(rng), G::gen_value(rng))
-    }
-}
-impl<T: Identity, G> Gen<query::Fold<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> Range<usize> {
-        self.gen_range::<R, G>(rng)
-    }
-}
-impl<T: Identity, G> Gen<query::FoldFirst<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> Range<usize> {
-        <Self as Gen<query::Fold<T>, G>>::gen(self, rng)
-    }
-}
-impl<T, U, P, G> Gen<query::ForwardUpperBoundByKey<T, U, P>, G> for Vector<T>
-where
-    T: Identity,
-    U: Ord,
-    P: query::Project<T, U>,
-    G: gen::GenFoldedKey<U>,
-{
-    fn gen<R: Rng>(&self, rng: &mut R) -> (usize, U) {
-        (self.gen_index::<R, G>(rng), G::gen_folded_key(rng))
     }
 }
 
@@ -132,13 +68,13 @@ mod tests {
             self.table[i] = self.table[i * 2].clone().op(self.table[i * 2 + 1].clone());
         }
     }
-    impl<T: Identity> solve::SolveGet<query::Get<T>> for Segtree<T> {
-        fn solve_get(&self, i: usize) -> &T {
-            &self.table[i + self.table.len() / 2]
+    impl<T: Identity> solve::Solve<query::Get<T>> for Segtree<T> {
+        fn solve(&self, i: usize) -> T {
+            self.table[i + self.table.len() / 2].clone()
         }
     }
-    impl<T: Identity> solve::SolveMut<query::Set<T>> for Segtree<T> {
-        fn solve_mut(&mut self, (mut i, x): (usize, T)) {
+    impl<T: Identity> solve::Mutate<query::Set<T>> for Segtree<T> {
+        fn mutate(&mut self, (mut i, x): (usize, T)) {
             i += self.len;
             self.table[i] = x;
             (1..=self.lg)
@@ -194,9 +130,9 @@ mod tests {
         for _ in 0..100 {
             let command = tester.rng_mut().gen_range(0, 3);
             match command {
-                0 => tester.test_get::<query::Get<_>>(),
-                1 => tester.test_mut::<query::Set<_>>(),
-                2 => tester.test::<query::Fold<_>>(),
+                0 => tester.compare::<query::Get<_>>(),
+                1 => tester.mutate::<query::Set<_>>(),
+                2 => tester.compare::<query::Fold<_>>(),
                 _ => unreachable!(),
             }
         }

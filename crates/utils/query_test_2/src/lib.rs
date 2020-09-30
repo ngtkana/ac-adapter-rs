@@ -7,16 +7,16 @@ use rand::prelude::*;
 use std::marker::PhantomData;
 
 mod ds;
+pub mod gen;
 /// 具体的なクエリ型定義の倉庫です。
 pub mod query;
-mod solve;
-mod test_tools;
-pub use solve::*;
-pub mod gen;
+pub mod solve;
+mod testing;
+pub mod utils;
 
 pub use ds::vector::Vector;
 /// 愚直と比較をしてテストをするためのツールです。
-pub use test_tools::{config, Tester};
+pub use testing::{config, Tester};
 
 pub const CONFIG: config::Config = config::Config {
     initialize: config::Initizlize::Short,
