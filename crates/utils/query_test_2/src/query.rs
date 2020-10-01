@@ -22,10 +22,19 @@ impl<T> Query for Fold<T> {
     type Output = T;
     const NAME: &'static str = "fold";
 }
-/// `fold(start..end) <= value` なる最大の `end` を返します。
+/// `f(i) = (fold(start..i) <= value)` としたときに、`range.contains(i) && f(i) && !f(i + 1)` となる `i`
+/// を一つ探します。
 pub struct ForwardUpperBoundByKey<T, U, P>(PhantomData<(T, U, P)>);
 impl<T, U, P: utils::Project<T, U>> Query for ForwardUpperBoundByKey<T, U, P> {
     type Param = (Range<usize>, U);
     type Output = usize;
     const NAME: &'static str = "forward_upper_bound_by_key";
+}
+/// `f(i) = (fold(i..end) <= value)` としたときに、`range.contains(i) && f(i) && !f(i + 1)` となる `i`
+/// を一つ探します。
+pub struct BackwardUpperBoundByKey<T, U, P>(PhantomData<(T, U, P)>);
+impl<T, U, P: utils::Project<T, U>> Query for BackwardUpperBoundByKey<T, U, P> {
+    type Param = (Range<usize>, U);
+    type Output = usize;
+    const NAME: &'static str = "backward_upper_bound_by_key";
 }
