@@ -56,7 +56,7 @@ where
         let expected = self.brute.solve(param.clone());
         let output = self.fast.solve(param.clone());
 
-        let verdict = &expected == &output;
+        let verdict = expected == output;
         let logger = logger::Logger {
             tester: self,
             param,

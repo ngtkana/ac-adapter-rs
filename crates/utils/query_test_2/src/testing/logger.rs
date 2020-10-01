@@ -86,10 +86,10 @@ where
             FailingMsg => items::failing_msg(),
             Failing => items::failing(),
             Passing => items::passing(),
-            Query => items::query::<Q>(self.param.clone()).to_string(),
-            Output => items::output(self.output.as_ref().unwrap().clone()).to_string(),
-            Brute => items::brute(self.tester.brute().clone()).to_string(),
-            Fast => items::fast(self.tester.fast().clone()).to_string(),
+            Query => items::query::<Q>(self.param.clone()),
+            Output => items::output(self.output.as_ref().unwrap().clone()),
+            Brute => items::brute(self.tester.brute().clone()),
+            Fast => items::fast(self.tester.fast().clone()),
             OutputWithExpected => match self.expected {
                 Some(ref expected) => format!(
                     "{} ({})",
