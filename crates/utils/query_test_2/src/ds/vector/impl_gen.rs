@@ -29,3 +29,14 @@ where
         (self.gen_range::<R, G>(rng), G::gen_folded_key(rng))
     }
 }
+impl<T, U, P, G> Gen<query::BackwardUpperBoundByKey<T, U, P>, G> for Vector<T>
+where
+    T: Identity,
+    U: Ord,
+    P: utils::Project<T, U>,
+    G: gen::GenFoldedKey<U>,
+{
+    fn gen<R: Rng>(&self, rng: &mut R) -> (Range<usize>, U) {
+        (self.gen_range::<R, G>(rng), G::gen_folded_key(rng))
+    }
+}
