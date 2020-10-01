@@ -133,11 +133,7 @@ impl<T: Identity> Segtree<T> {
         left.op(right)
     }
 
-    /// `pred(fold(start..end))` が `true` となる細大の `end` を返します。
-    ///
-    /// # Panics
-    ///
-    /// `fold(T::Identity())` が `false` なとき、パニックです。
+    #[allow(missing_docs)]
     pub fn search_forward(
         &self,
         range: impl RangeBounds<usize>,
@@ -179,6 +175,48 @@ impl<T: Identity> Segtree<T> {
         orig_end - self.len
     }
 
+    #[allow(missing_docs)]
+    pub fn search_backward(
+        &self,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&T) -> bool,
+    ) -> usize {
+        let Range { mut start, mut end } = open(self.len, range);
+        assert!(start <= end && end <= self.len);
+        start += self.len;
+        end += self.len;
+        let orig_start = start;
+
+        let mut crr = T::identity();
+        let mut shift = 0;
+        while start != end {
+            if end % 2 == 1 {
+                end -= 1;
+                let nxt = self.table[end].clone().op(crr.clone());
+                if !pred(&nxt) {
+                    return self.search_subtree_backward(crr, end, pred);
+                }
+                crr = nxt;
+            }
+            start += 1;
+            start >>= 1;
+            end >>= 1;
+            shift += 1;
+        }
+        while shift != 0 {
+            shift -= 1;
+            start = (orig_start - 1 >> shift) + 1;
+            if start % 2 == 1 {
+                let nxt = self.table[start].clone().op(crr.clone());
+                if !pred(&nxt) {
+                    return self.search_subtree_backward(crr, start, pred);
+                }
+                crr = nxt;
+            }
+        }
+        orig_start - self.len
+    }
+
     fn search_subtree_forward(
         &self,
         mut crr: T,
@@ -196,6 +234,24 @@ impl<T: Identity> Segtree<T> {
             };
         }
         root - self.len
+    }
+    fn search_subtree_backward(
+        &self,
+        mut crr: T,
+        mut root: usize,
+        mut pred: impl FnMut(&T) -> bool,
+    ) -> usize {
+        while root < self.len {
+            let nxt = self.table[root * 2 + 1].clone().op(crr.clone());
+            root = match pred(&nxt) {
+                true => {
+                    crr = nxt;
+                    root * 2
+                }
+                false => root * 2 + 1,
+            };
+        }
+        root + 1 - self.len
     }
 }
 
@@ -283,12 +339,13 @@ mod tests {
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 4);
+                let command = tester.rng_mut().gen_range(0, 5);
                 match command {
                     0 => tester.compare::<query::Get<_>>(),
                     1 => tester.mutate::<query::Set<_>>(),
                     2 => tester.compare::<query::Fold<_>>(),
                     3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
+                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, u32, P>>(),
                     _ => unreachable!(),
                 }
             }

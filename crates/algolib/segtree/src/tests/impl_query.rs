@@ -34,3 +34,13 @@ where
         self.search_forward(range, |x| P::project(x.clone()) <= key)
     }
 }
+impl<T, U, P> solve::Solve<query::BackwardUpperBoundByKey<T, U, P>> for Segtree<T>
+where
+    T: Identity,
+    U: Ord,
+    P: utils::Project<T, U>,
+{
+    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
+        self.search_backward(range, |x| P::project(x.clone()) <= key)
+    }
+}
