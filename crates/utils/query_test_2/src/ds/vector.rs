@@ -39,7 +39,7 @@ impl<T> Vector<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{gen, query, solve, FromBrute, Vector};
+    use crate::{gen, query, solve, utils, FromBrute, Vector};
     use rand::prelude::*;
     use std::ops::Range;
     use type_traits::Identity;
@@ -105,6 +105,35 @@ mod tests {
             left.op(right)
         }
     }
+    impl<T, U, P> solve::Solve<query::ForwardUpperBoundByKey<T, U, P>> for Segtree<T>
+    where
+        T: Identity,
+        U: Ord,
+        P: utils::Project<T, U>,
+    {
+        fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
+            let yes = |i: usize| {
+                P::project(<Self as solve::Solve<query::Fold<T>>>::solve(
+                    self,
+                    range.start..i,
+                )) <= key
+            };
+            let Range { mut start, mut end } = range;
+            if yes(end) {
+                end
+            } else {
+                while start + 1 < end {
+                    let mid = (start + end) / 2;
+                    if yes(mid) {
+                        start = mid;
+                    } else {
+                        end = mid;
+                    }
+                }
+                start
+            }
+        }
+    }
 
     #[test]
     fn test_add_u32() {
@@ -121,6 +150,18 @@ mod tests {
                 Add(rng.gen_range(0, 256))
             }
         }
+        impl gen::GenFoldedKey<u32> for G {
+            fn gen_folded_key<R: Rng>(rng: &mut R) -> u32 {
+                rng.gen_range(0, 256)
+            }
+        }
+
+        struct P {}
+        impl utils::Project<Add<u32>, u32> for P {
+            fn project(src: Add<u32>) -> u32 {
+                src.0
+            }
+        }
 
         let mut tester =
             crate::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
@@ -128,11 +169,12 @@ mod tests {
                 crate::CONFIG,
             );
         for _ in 0..100 {
-            let command = tester.rng_mut().gen_range(0, 3);
+            let command = tester.rng_mut().gen_range(0, 4);
             match command {
                 0 => tester.compare::<query::Get<_>>(),
                 1 => tester.mutate::<query::Set<_>>(),
                 2 => tester.compare::<query::Fold<_>>(),
+                3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
                 _ => unreachable!(),
             }
         }

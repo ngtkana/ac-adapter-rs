@@ -19,11 +19,7 @@ pub use ds::vector::Vector;
 pub use testing::{config, Tester};
 
 pub const CONFIG: config::Config = config::Config {
-    initialize: config::Initizlize::Short,
-    pre: None,
-    failing: config::Checked::Verbose,
-    passing: config::Checked::Short,
-    unchecked: config::Unchecked::Short,
+    passing: config::Passing::Short,
 };
 
 /// クエリです。

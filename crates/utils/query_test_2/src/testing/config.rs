@@ -1,26 +1,9 @@
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Config {
-    pub pre: Option<Pre>,
-    pub initialize: Initizlize,
-    pub passing: Checked,
-    pub failing: Checked,
-    pub unchecked: Unchecked,
+    pub passing: Passing,
 }
 #[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Initizlize {
-    Short,
-}
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Pre {
-    Short,
-}
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Checked {
-    Verbose,
-    Short,
-}
-#[derive(Debug, Clone, Copy, PartialEq)]
-pub enum Unchecked {
+pub enum Passing {
     Verbose,
     Short,
 }
