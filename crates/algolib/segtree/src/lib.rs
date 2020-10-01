@@ -6,7 +6,10 @@
 //!
 //! [`Segtree`]: struct.Segtree.html
 
-use std::{iter, ops};
+use std::{
+    iter,
+    ops::{self, Range, RangeBounds},
+};
 use type_traits::*;
 
 /// セグツリー本体です。
@@ -64,8 +67,8 @@ impl<T: Assoc> Segtree<T> {
         }
     }
     /// `a[range]` を `T::op` で畳み込みます。
-    pub fn fold_first(&self, range: impl ops::RangeBounds<usize>) -> Option<T> {
-        let (mut start, mut end) = open(self.len, range);
+    pub fn fold_first(&self, range: impl RangeBounds<usize>) -> Option<T> {
+        let Range { mut start, mut end } = open(self.len, range);
         assert!(start <= end, "変な区間を渡すのをやめませんか？");
         assert!(end <= self.len, "範囲外は禁止です！");
         start += self.len;
@@ -101,136 +104,6 @@ impl<T: Assoc> Segtree<T> {
         &self.table[self.len..]
     }
 
-    /// `self.fold(start..end).unwrap_or(true)` が `true` となる最大の `end` を返します。
-    ///
-    /// # 計算量
-    ///
-    /// `O(log(range.len()))` 回の `T::op` 呼び出しをします。
-    pub fn forward_partition_point_first(
-        &self,
-        start: usize,
-        mut f: impl FnMut(&T) -> bool,
-    ) -> usize {
-        assert!(start <= self.len, "範囲外は禁止です！");
-        let mut i = self.len + start;
-        if self.fold_first(start..).map(|x| f(&x)).unwrap_or(true) {
-            self.len
-        } else if !f(&self.table[i]) {
-            start
-        } else {
-            let mut current = self.table[i].clone();
-            i += 1;
-            let mut next = current.clone().op(self.table[i].clone());
-
-            while f(&next) {
-                if i % 2 == 0 {
-                    i /= 2;
-                } else {
-                    current = next.clone();
-                    i += 1;
-                }
-                next = current.clone().op(self.table[i].clone());
-            }
-            loop {
-                if f(&next) {
-                    current = next.clone();
-                    i += 1;
-                } else {
-                    if self.len < i {
-                        return i - self.len;
-                    }
-                    i *= 2;
-                }
-                next = current.clone().op(self.table[i].clone());
-            }
-        }
-    }
-
-    /// `self.fold(start..end).unwrap_or(true)` が `true` となる最小の `start` を返します。
-    ///
-    /// # 計算量
-    ///
-    /// `O(log(range.len()))` 回の `T::op` 呼び出しをします。
-    pub fn backward_partition_point_first(
-        &self,
-        end: usize,
-        mut f: impl FnMut(&T) -> bool,
-    ) -> usize {
-        assert!(end <= self.len, "範囲外は禁止です！");
-        let mut i = self.len + end;
-        if self.fold_first(..end).map(|x| f(&x)).unwrap_or(true) {
-            0
-        } else if !f(&self.table[i - 1]) {
-            end
-        } else {
-            i -= 1;
-            let mut current = self.table[i].clone();
-            let mut next = self.table[i - 1].clone().op(current.clone());
-
-            while f(&next) {
-                if i % 2 == 0 {
-                    i /= 2;
-                } else {
-                    i -= 1;
-                    current = next.clone();
-                }
-                next = self.table[i - 1].clone().op(current.clone());
-            }
-            loop {
-                if f(&next) {
-                    i -= 1;
-                    current = next.clone();
-                } else {
-                    if self.len < i {
-                        return i - self.len;
-                    }
-                    i *= 2;
-                }
-                next = self.table[i - 1].clone().op(current.clone());
-            }
-        }
-    }
-    /// `self.fold(start..end).map(|x| &project(x) < value).unwrap_or(true)` が `true` となる最大の
-    /// `end` を返します。
-    pub fn forward_lower_bound_by_key_first<U: Ord>(
-        &self,
-        start: usize,
-        value: &U,
-        mut project: impl FnMut(&T) -> U,
-    ) -> usize {
-        self.forward_partition_point_first(start, |x| &project(x) < value)
-    }
-    /// `self.fold(start..end).map(|x| &project(x) <= value).unwrap_or(true)` が `true` となる最大の
-    /// `end` を返します。
-    pub fn forward_upper_bound_by_key_first<U: Ord>(
-        &self,
-        start: usize,
-        value: &U,
-        mut project: impl FnMut(&T) -> U,
-    ) -> usize {
-        self.forward_partition_point_first(start, |x| &project(x) <= value)
-    }
-    /// `self.fold(start..end).map(|x| &project(x) < value).unwrap_or(true)` が `true` となる最小の
-    /// `start` を返します。
-    pub fn backward_lower_bound_by_key_first<U: Ord>(
-        &self,
-        end: usize,
-        value: &U,
-        mut project: impl FnMut(&T) -> U,
-    ) -> usize {
-        self.backward_partition_point_first(end, |x| &project(x) < value)
-    }
-    /// `self.fold(start..end).map(|x| &project(x) <= value).unwrap_or(true)` が `true` となる最小の
-    /// `start` を返します。
-    pub fn backward_upper_bound_by_key_first<U: Ord>(
-        &self,
-        end: usize,
-        value: &U,
-        mut project: impl FnMut(&T) -> U,
-    ) -> usize {
-        self.backward_partition_point_first(end, |x| &project(x) <= value)
-    }
-
     fn update(&mut self, i: usize) {
         let x = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone());
         self.table[i] = x;
@@ -239,8 +112,8 @@ impl<T: Assoc> Segtree<T> {
 
 impl<T: Identity> Segtree<T> {
     /// 単位元のある結合的な演算で畳み込みます。
-    pub fn fold(&self, range: impl ops::RangeBounds<usize>) -> T {
-        let (mut start, mut end) = open(self.len, range);
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> T {
+        let Range { mut start, mut end } = open(self.len, range);
         start += self.len;
         end += self.len;
         let mut left = T::identity();
@@ -265,119 +138,100 @@ impl<T: Identity> Segtree<T> {
     /// # Panics
     ///
     /// `fold(T::Identity())` が `false` なとき、パニックです。
-    pub fn forward_partition_point(&self, start: usize, mut pred: impl FnMut(&T) -> bool) -> usize {
-        assert!(pred(&T::identity()));
-        let mut i = start + self.len;
+    pub fn search_forward(
+        &self,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&T) -> bool,
+    ) -> usize {
+        let Range { mut start, mut end } = open(self.len, range);
+        assert!(start <= end && end <= self.len);
+        start += self.len;
+        end += self.len;
+        let orig_end = end;
+
         let mut crr = T::identity();
-        if pred(&self.fold(start..)) {
-            self.len
-        } else if !pred(&self.table[i]) {
-            start
-        } else {
-            loop {
-                i >>= i.trailing_zeros();
-                let nxt = crr.clone().op(self.table[i].clone());
+        let mut shift = 0;
+        while start != end {
+            if start % 2 == 1 {
+                let nxt = crr.clone().op(self.table[start].clone());
                 if !pred(&nxt) {
-                    break;
+                    return self.search_subtree_forward(crr, start, pred);
                 }
                 crr = nxt;
-                i += 1;
+                start += 1;
             }
-            loop {
-                let nxt = crr.clone().op(self.table[i].clone());
-                if pred(&nxt) {
-                    crr = nxt;
-                    i += 1;
+            start >>= 1;
+            end >>= 1;
+            shift += 1;
+        }
+        while shift != 0 {
+            shift -= 1;
+            end = orig_end >> shift;
+            if end % 2 == 1 {
+                end -= 1;
+                let nxt = crr.clone().op(self.table[end].clone());
+                if !pred(&nxt) {
+                    return self.search_subtree_forward(crr, end, pred);
                 }
-                if self.len <= i {
-                    break i - self.len;
-                }
-                i <<= 1;
+                crr = nxt;
             }
         }
+        orig_end - self.len
     }
-    /// TODO
-    pub fn forward_upper_bound_by_key<U: Ord>(
+
+    fn search_subtree_forward(
         &self,
-        start: usize,
-        value: &U,
-        mut project: impl FnMut(&T) -> U,
+        mut crr: T,
+        mut root: usize,
+        mut pred: impl FnMut(&T) -> bool,
     ) -> usize {
-        self.forward_partition_point(start, |x| &project(x) <= value)
+        while root < self.len {
+            let nxt = crr.clone().op(self.table[root * 2].clone());
+            root = match pred(&nxt) {
+                false => root * 2,
+                true => {
+                    crr = nxt;
+                    root * 2 + 1
+                }
+            };
+        }
+        root - self.len
     }
 }
 
-impl<T: Assoc + Ord> Segtree<T> {
-    /// `self.fold(start..end).map(|x| &x < value).unwrap_or(true)` が `true` となる最大の `end`
-    /// を返します。
-    pub fn forward_lower_bound_first(&self, start: usize, value: &T) -> usize {
-        self.forward_partition_point_first(start, |x| x < value)
-    }
-    /// `self.fold(start..end).map(|x| &x <= value).unwrap_or(true)` が `true` となる最大の `end`
-    /// を返します。
-    pub fn forward_upper_bound_first(&self, start: usize, value: &T) -> usize {
-        self.forward_partition_point_first(start, |x| x <= value)
-    }
-    /// `self.fold(start..end).map(|x| &x < value).unwrap_or(true)` が `true` となる最小の `start`
-    /// を返します。
-    pub fn backward_lower_bound_first(&self, end: usize, value: &T) -> usize {
-        self.backward_partition_point_first(end, |x| x < value)
-    }
-    /// `self.fold(start..end).map(|x| &x <= value).unwrap_or(true)` が `true` となる最小の `start`
-    /// を返します。
-    pub fn backward_upper_bound_first(&self, end: usize, value: &T) -> usize {
-        self.backward_partition_point_first(end, |x| x <= value)
-    }
-}
-
-fn open(len: usize, range: impl ops::RangeBounds<usize>) -> (usize, usize) {
+fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     use ops::Bound::*;
-    (
-        match range.start_bound() {
-            Unbounded => 0,
-            Included(&x) => x,
-            Excluded(&x) => x + 1,
-        },
-        match range.end_bound() {
-            Excluded(&x) => x,
-            Included(&x) => x + 1,
-            Unbounded => len,
-        },
-    )
+    (match range.start_bound() {
+        Unbounded => 0,
+        Included(&x) => x,
+        Excluded(&x) => x + 1,
+    })..(match range.end_bound() {
+        Excluded(&x) => x,
+        Included(&x) => x + 1,
+        Unbounded => len,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use query_test_2::{
-        config,
-        gen::{GenFoldedKey, GenLen, GenValue},
-        query::{Fold, ForwardUpperBoundByKey, Get, Project, Set},
-        Vector,
-    };
+    use query_test_2::{gen, query, utils, Vector, CONFIG};
     use rand::prelude::*;
     use type_traits::{binary::Add, Constant};
 
     type Fp = fp::F998244353;
     type Tester<T, G> = query_test_2::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
-    const CONFIG: config::Config = config::Config {
-        initialize: config::Initizlize::Short,
-        pre: None,
-        passing: config::Checked::Short,
-        failing: config::Checked::Verbose,
-        unchecked: config::Unchecked::Short,
-    };
 
     #[test]
     fn test_add_fp() {
         type Node = Add<Fp>;
         struct G {}
-        impl GenLen for G {
+        impl gen::GenLen for G {
             fn gen_len<R: Rng>(rng: &mut R) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl GenValue<Node> for G {
+        impl gen::GenValue<Node> for G {
             fn gen_value<R: Rng>(rng: &mut R) -> Node {
                 Add(Fp::new(rng.gen_range(0, fp::Mod998244353::VALUE)))
             }
@@ -388,9 +242,9 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 3);
                 match command {
-                    0 => tester.test_get::<Get<_>>(),
-                    1 => tester.test_mut::<Set<_>>(),
-                    2 => tester.test::<Fold<_>>(),
+                    0 => tester.compare::<query::Get<_>>(),
+                    1 => tester.mutate::<query::Set<_>>(),
+                    2 => tester.compare::<query::Fold<_>>(),
                     _ => unreachable!(),
                 }
             }
@@ -400,38 +254,41 @@ mod tests {
     #[test]
     fn test_add_u32() {
         type Node = Add<u32>;
+
         struct G {}
-        impl GenLen for G {
+        impl gen::GenLen for G {
             fn gen_len<R: Rng>(rng: &mut R) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl GenValue<Node> for G {
+        impl gen::GenValue<Node> for G {
             fn gen_value<R: Rng>(rng: &mut R) -> Node {
                 Add(rng.gen_range(0, 10))
             }
         }
-        impl GenFoldedKey<u32> for G {
+        impl gen::GenFoldedKey<u32> for G {
             fn gen_folded_key<R: Rng>(rng: &mut R) -> u32 {
                 rng.gen_range(0, 50)
             }
         }
+
         struct P {}
-        impl Project<Add<u32>, u32> for P {
-            fn project(Add(x): Add<u32>) -> u32 {
-                x
+        impl utils::Project<Add<u32>, u32> for P {
+            fn project(x: Add<u32>) -> u32 {
+                x.0
             }
         }
+
         let mut tester = Tester::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
         for _ in 0..4 {
             tester.initialize();
-            for _ in 0..1000 {
+            for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 4);
                 match command {
-                    0 => tester.test_get::<Get<_>>(),
-                    1 => tester.test_mut::<Set<_>>(),
-                    2 => tester.test::<Fold<_>>(),
-                    3 => tester.test::<ForwardUpperBoundByKey<_, _, P>>(),
+                    0 => tester.compare::<query::Get<_>>(),
+                    1 => tester.mutate::<query::Set<_>>(),
+                    2 => tester.compare::<query::Fold<_>>(),
+                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
                     _ => unreachable!(),
                 }
             }
