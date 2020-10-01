@@ -19,9 +19,8 @@ where
     P: utils::Project<T, U>,
 {
     fn judge(&self, (range, value): (Range<usize>, U), i: usize) -> bool {
-        let Range { start: _, end } = range;
-        range.contains(&i)
-            && P::project(self.0[i].clone()) <= value
-            && (i == end || value < P::project(self.0[i + 1].clone()))
+        let fold = |range| P::project(<Self as solve::Solve<query::Fold<T>>>::solve(self, range));
+        let Range { start, end } = range;
+        i == end || range.contains(&i) && (fold(start..i)..fold(start..i + 1)).contains(&value)
     }
 }
