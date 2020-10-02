@@ -34,6 +34,20 @@
 //! [`OpN`]: traits.OpN.html
 //! [`RangeAction`]: traits.RangeAction.html
 
+macro_rules! triv_wrapper {
+    ($name:ident<$T:ident>) => {
+        impl<$T> crate::Peek for $name<$T>
+        where
+            $T: crate::Element,
+        {
+            type Inner = $T;
+            fn peek(&self) -> $T {
+                self.0.clone()
+            }
+        }
+    };
+}
+
 use std::{cmp, fmt, ops};
 
 mod primitive;
