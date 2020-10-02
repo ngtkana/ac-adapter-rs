@@ -199,7 +199,7 @@ impl<T: Identity> Segtree<T> {
         }
         while shift != 0 {
             shift -= 1;
-            start = (orig_start - 1 >> shift) + 1;
+            start = ((orig_start - 1) >> shift) + 1;
             if start % 2 == 1 {
                 let nxt = self.table[start].clone().op(crr.clone());
                 if !pred(&nxt) {

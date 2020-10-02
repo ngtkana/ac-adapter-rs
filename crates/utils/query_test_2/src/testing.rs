@@ -72,6 +72,33 @@ where
             }
         }
     }
+    pub fn compare_mut<Q: Query>(&mut self)
+    where
+        Q::Param: Clone + Debug + Clone,
+        Q::Output: Clone + Debug + Clone + PartialEq,
+        B: Gen<Q, G> + solve::SolveMut<Q>,
+        F: solve::SolveMut<Q>,
+    {
+        let param = self.brute.gen::<R>(self.rng_mut().deref_mut());
+        let expected = self.brute.solve_mut(param.clone());
+        let output = self.fast.solve_mut(param.clone());
+
+        let verdict = expected == output;
+        let logger = logger::Logger {
+            tester: self,
+            param,
+            output: Some(output),
+            expected: Some(expected),
+            marker: PhantomData::<Q>,
+        };
+        match verdict {
+            true => logger.passing(),
+            false => {
+                logger.failing();
+                panic!("Failed in a test.");
+            }
+        }
+    }
     pub fn judge<Q: Query>(&self)
     where
         Q::Param: Clone + Debug,
@@ -97,7 +124,7 @@ where
             }
         }
     }
-    pub fn mutate<Q: Query>(&mut self)
+    pub fn mutate<Q: Query<Output = ()>>(&mut self)
     where
         Q::Param: Clone + Debug,
         Q::Output: Clone + Debug + PartialEq,

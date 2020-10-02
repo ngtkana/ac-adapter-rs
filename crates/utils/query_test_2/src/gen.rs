@@ -18,6 +18,12 @@ pub trait GenKey<T> {
     fn gen_key<R: Rng>(rng: &mut R) -> T;
 }
 
+/// 作用素を生成します。
+pub trait GenAction<T> {
+    #[allow(missing_docs)]
+    fn gen_action<R: Rng>(rng: &mut R) -> T;
+}
+
 /// 畳み込まれた値を生成します。
 pub trait GenFoldedValue<T> {
     #[allow(missing_docs)]

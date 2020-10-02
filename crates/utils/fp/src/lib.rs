@@ -91,7 +91,7 @@
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 pub use aliases::*;
 use std::{cmp, fmt, iter, mem, ops::*};
-use type_traits::*;
+use type_traits::{Constant, NTimes, One, PowN, Ring, Zero};
 
 mod arith;
 
@@ -120,19 +120,16 @@ where
     Mod::Output: Value,
 {
     /// 整数から構築します。
-    #[inline]
     pub fn new(src: Mod::Output) -> Self {
         Self(Self::normalize(src))
     }
 
     /// 分数から構築します。
-    #[inline]
     pub fn frac(num: Mod::Output, den: Mod::Output) -> Self {
         Self::new(num) / Self::new(den)
     }
 
     /// 中身にキャストします。
-    #[inline]
     pub fn into_inner(self) -> Mod::Output {
         self.0
     }
@@ -178,12 +175,10 @@ where
         ans
     }
 
-    #[inline]
     fn normalize(src: Mod::Output) -> Mod::Output {
         Self::normalize_from_the_top(src % Mod::VALUE)
     }
 
-    #[inline]
     fn normalize_from_the_bottom(src: Mod::Output) -> Mod::Output {
         if Mod::VALUE <= src {
             src - Mod::VALUE
@@ -192,7 +187,6 @@ where
         }
     }
 
-    #[inline]
     fn normalize_from_the_top(src: Mod::Output) -> Mod::Output {
         if src < Mod::Output::zero() {
             src + Mod::VALUE
@@ -206,19 +200,33 @@ impl<Mod: Modable> Zero for Fp<Mod>
 where
     Mod::Output: Value,
 {
-    #[inline]
     fn zero() -> Fp<Mod> {
         Fp::new(Mod::Output::zero())
     }
 }
-
 impl<Mod: Modable> One for Fp<Mod>
 where
     Mod::Output: Value,
 {
-    #[inline]
     fn one() -> Fp<Mod> {
         Fp::new(Mod::Output::one())
+    }
+}
+// TODO: Mod の型と u64 の間の変換が厄介です。https://github.com/ngtkana/ac-adapter-rs/issues/53
+impl<Mod: Modable<Output = i64>> NTimes for Fp<Mod>
+where
+    Mod::Output: Value,
+{
+    fn n_times(self, n: u64) -> Fp<Mod> {
+        self * Fp::new(n as i64)
+    }
+}
+impl<Mod: Modable> PowN for Fp<Mod>
+where
+    Mod::Output: Value,
+{
+    fn pow_n(self, n: u64) -> Fp<Mod> {
+        self.pow(n)
     }
 }
 

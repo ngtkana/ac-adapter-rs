@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 //! 基本的なトレイトを定義します。
 //!
-//! TODO: 代数関連を分離します。
+//! TODO: [ac-adapter-rs#50](https://github.com/ngtkana/ac-adapter-rs/issues/50)
 //!
 //! # 代数関連
 //!
@@ -9,20 +9,20 @@
 //!
 //! ## 二項演算
 //!
-//! 結合的な演算 [`op`] を備えた [`Assoc`] を継承します。
+//! 二項演算は結合的であるもののみを扱います。基本トレイトは [`Assoc`] であり、追加で性質を課すときには、
+//! この次のようなトレイトを実装すると良いです。これらはすべて、[`Assoc`]
+//! を継承します。具体的な演算は [`binary`] モジュールに入れてあります。
 //!
 //! - [`Identity`] : 単位元を返す写像 [`identity`] を備えています。
 //! - [`Commut`] : 可換性を表すマーカートレイトです。
 //! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
 //!
-//! 各種ラッパーも [`binary`] に定義されています。
+//! ## 範囲作用（「作用」に組み込むべき？）
+//!
+//! [`RangeAction`] は [`op`] と可換になるように [`Assoc`] に作用します。
 //!
 //!
-//! ## 作用
-//!
-//! [`Action`] は [`op`] と可換になるように [`Assoc`] に作用します。
-//!
-//!
+//! [`binary`]: binary/index.html
 //! [`op`]: traits.Assoc.html#method.op
 //! [`identity`]: traits.Assoc.html#method.identity
 //! [`deg`]: traits.Assoc.html#method.deg
@@ -32,17 +32,33 @@
 //! [`Identity`]: traits.Identity.html
 //! [`Commut`]: traits.Commut.html
 //! [`OpN`]: traits.OpN.html
-//! [`Action`]: traits.Action.html
+//! [`RangeAction`]: traits.RangeAction.html
+
+macro_rules! triv_wrapper {
+    ($name:ident<$T:ident>) => {
+        impl<$T> crate::Peek for $name<$T>
+        where
+            $T: crate::Element,
+        {
+            type Inner = $T;
+            fn peek(&self) -> $T {
+                self.0.clone()
+            }
+        }
+    };
+}
 
 use std::{cmp, fmt, ops};
 
 mod primitive;
 
+/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
+pub mod actions;
 /// [`Assoc`](traits.Assoc.html) を実装した各種ラッパーさんです。
 pub mod binary;
 
-/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
-pub mod actions;
+/// [`RangeAction`](traits.RangeAction.html) を実装した各種ラッパーさんです。
+pub mod range_actions;
 
 /// [`Sized`] + [`Clone`] + [`PartialEq`] です。
 ///
@@ -112,22 +128,45 @@ impl<T: Assoc> Assoc for Grade<T> {
     }
 }
 
+/// 作用します。
+pub trait Action: Assoc {
+    /// 作用される空間です。
+    type Space: Element;
+    /// 作用関数です。
+    fn acted(self, x: Self::Space) -> Self::Space;
+    /// 作用します。
+    fn act_mut(self, x: &mut Self::Space) {
+        *x = self.acted(x.clone());
+    }
+}
+
 /// 作用をします。
 ///
 /// # 要件
 ///
-/// `A: Action`, `a: A`, `x, y: Action::Space` に対して、次が成り立つことです。
+/// `A: RangeAction`, `a: A`, `x, y: RangeAction::Space` に対して、次が成り立つことです。
 ///
 /// `a.acted(x.op(y)) == a.acted(x).op(a.acted(y))`
 ///
-pub trait Action {
+pub trait RangeAction {
     /// 作用される空間です。
     type Space: Assoc;
     /// 作用関数です。
     fn acted(self, x: Self::Space) -> Self::Space;
 }
 
-/// `ops::Add` の単位元（零元）を持つトレイトです。
+/// `cmp::min` の単位元トレイトです。
+pub trait MaxValue: Ord + Element {
+    #[allow(missing_docs)]
+    fn max_value() -> Self;
+}
+/// `cmp::max` の単位元トレイトです。
+pub trait MinValue: Ord + Element {
+    #[allow(missing_docs)]
+    fn min_value() -> Self;
+}
+
+/// 加法の単位元（零元）を持つトレイトです。
 pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     /// `ops::Add` の単位元（零元）を返します。
     fn zero() -> Self;
@@ -140,8 +179,13 @@ pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
         self == &Self::zero()
     }
 }
+/// `x + x + ... + x` を計算します。
+pub trait NTimes: Zero {
+    /// `x + x + ... + x` を計算します。
+    fn n_times(self, n: u64) -> Self;
+}
 
-/// `ops::Mul` の単位元を持つトレイトです。
+/// 乗法の単位元を持つトレイトです。
 pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     /// `ops::Mul` の単位元を返します。
     fn one() -> Self;
@@ -153,6 +197,11 @@ pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     {
         self == &Self::one()
     }
+}
+/// `x * x * ... * x` を計算します。
+pub trait PowN: One {
+    /// `x + x + ... + x` を計算します。
+    fn pow_n(self, n: u64) -> Self;
 }
 
 /// 単位元を持つ結合的な積を持つ環です。
