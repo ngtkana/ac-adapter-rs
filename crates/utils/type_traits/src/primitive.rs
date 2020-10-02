@@ -65,11 +65,27 @@ macro_rules! impl_commut_mul {
         impl Commut for Mul<$T> {}
     };
 }
-macro_rules! impl_op_n {
+macro_rules! impl_op_n_add {
     ($T:ident) => {
         impl OpN for Add<$T> {
             fn op_n(self, n: u64) -> Self {
                 Add(self.0 * n as $T)
+            }
+        }
+    };
+}
+macro_rules! impl_op_n_mul {
+    (@kind int @type $T:ident) => {
+        impl OpN for Mul<$T> {
+            fn op_n(self, n: u64) -> Self {
+                Mul(self.0.pow(n as u32))
+            }
+        }
+    };
+    (@kind float @type $T:ident) => {
+        impl OpN for Mul<$T> {
+            fn op_n(self, n: u64) -> Self {
+                Mul(self.0.powi(n as i32))
             }
         }
     };
@@ -83,7 +99,8 @@ macro_rules! int {
         impl_max_value! { $T }
         impl_commut_add! { $T }
         impl_commut_mul! { $T }
-        impl_op_n! { $T }
+        impl_op_n_add! { $T }
+        impl_op_n_mul! { @kind int @type $T }
         int! { $($rest,)* }
     };
     () => ()
@@ -95,7 +112,8 @@ macro_rules! float {
         impl_one! { @kind float @type $T }
         impl_commut_add! { $T }
         impl_commut_mul! { $T }
-        impl_op_n! { $T }
+        impl_op_n_add! { $T }
+        impl_op_n_mul! { @kind float @type $T }
         float! { $($rest,)* }
     };
     () => ()
@@ -126,6 +144,6 @@ mod tests {
         assert_impl!(Commut: Add<u32>, Add<f32>);
         assert_impl!(Commut: Mul<u32>, Mul<f32>);
         assert_impl!(OpN: Add<u32>, Add<f32>);
-        assert_impl!(!OpN: Mul<u32>, Mul<f32>); // TODO: pow を呼んでも良いかもです。
+        assert_impl!(OpN: Mul<u32>, Mul<f32>);
     }
 }
