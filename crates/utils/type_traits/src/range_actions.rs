@@ -1,10 +1,10 @@
-use super::{binary::Len, Action, Commut, OpN};
+use super::{binary::Len, Commut, OpN, RangeAction};
 
 /// アップデート作用です。
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Update<T>(pub T);
 
-impl<T: OpN> Action for Update<T> {
+impl<T: OpN> RangeAction for Update<T> {
     type Space = Len<T>;
     fn acted(self, x: Self::Space) -> Self::Space {
         Len {
@@ -18,7 +18,7 @@ impl<T: OpN> Action for Update<T> {
 #[derive(Debug, Clone, PartialEq, Copy)]
 pub struct Adjoint<T>(pub T);
 
-impl<T: OpN + Commut> Action for Adjoint<T> {
+impl<T: OpN + Commut> RangeAction for Adjoint<T> {
     type Space = Len<T>;
     fn acted(self, x: Self::Space) -> Self::Space {
         Len {
