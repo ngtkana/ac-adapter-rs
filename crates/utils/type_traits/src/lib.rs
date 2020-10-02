@@ -52,6 +52,8 @@ use std::{cmp, fmt, ops};
 
 mod primitive;
 
+/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
+pub mod actions;
 /// [`Assoc`](traits.Assoc.html) を実装した各種ラッパーさんです。
 pub mod binary;
 
@@ -124,6 +126,14 @@ impl<T: Assoc> Assoc for Grade<T> {
             base: self.base.op(rhs.base),
         }
     }
+}
+
+/// 作用します。
+pub trait Action: Assoc {
+    /// 作用される空間です。
+    type Space;
+    /// 作用関数です。
+    fn acted(self, x: Self::Space) -> Self::Space;
 }
 
 /// 作用をします。
