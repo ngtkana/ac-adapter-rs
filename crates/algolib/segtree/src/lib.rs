@@ -288,15 +288,30 @@ mod tests {
                 Add(Fp::new(rng.gen_range(0, fp::Mod998244353::VALUE)))
             }
         }
+        impl gen::GenFoldedKey<i64> for G {
+            fn gen_folded_key<R: Rng>(rng: &mut R) -> i64 {
+                rng.gen_range(0, fp::Mod998244353::VALUE)
+            }
+        }
+
+        struct P {}
+        impl utils::Project<Node, i64> for P {
+            fn project(x: Node) -> i64 {
+                x.0.into_inner()
+            }
+        }
+
         let mut tester = Tester::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 3);
+                let command = tester.rng_mut().gen_range(0, 5);
                 match command {
                     0 => tester.compare::<query::Get<_>>(),
                     1 => tester.mutate::<query::Set<_>>(),
                     2 => tester.compare::<query::Fold<_>>(),
+                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, i64, P>>(),
+                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, i64, P>>(),
                     _ => unreachable!(),
                 }
             }
