@@ -1,4 +1,4 @@
-use super::{Assoc, Commut, Element, Identity, One, OpN, Peek, Zero};
+use super::{Assoc, Commut, Element, Identity, MaxValue, MinValue, One, OpN, Peek, Zero};
 use std::ops;
 
 macro_rules! triv_wrapper {
@@ -93,7 +93,55 @@ impl<T: ops::BitXor<Output = T> + Zero> OpN for BitXor<T> {
     }
 }
 
-/// `ops::Add` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
+/// Min を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
+///
+/// [`Assoc`]: traits.Assoc.html
+/// [`Identity`]: traits.Identity.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Min<T>(pub T);
+triv_wrapper! { Min<T> }
+impl<T> Assoc for Min<T>
+where
+    T: Ord + Element,
+{
+    fn op(self, rhs: Self) -> Self {
+        Min(self.0.min(rhs.0))
+    }
+}
+impl<T> Identity for Min<T>
+where
+    T: MaxValue,
+{
+    fn identity() -> Self {
+        Min(T::max_value())
+    }
+}
+
+/// Max を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
+///
+/// [`Assoc`]: traits.Assoc.html
+/// [`Identity`]: traits.Identity.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Max<T>(pub T);
+triv_wrapper! { Max<T> }
+impl<T> Assoc for Max<T>
+where
+    T: Ord + Element,
+{
+    fn op(self, rhs: Self) -> Self {
+        Max(self.0.max(rhs.0))
+    }
+}
+impl<T> Identity for Max<T>
+where
+    T: MinValue,
+{
+    fn identity() -> Self {
+        Max(T::min_value())
+    }
+}
+
+/// 加法を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
 ///
 /// [`Assoc`]: traits.Assoc.html
 /// [`Identity`]: traits.Identity.html
@@ -117,7 +165,7 @@ where
     }
 }
 
-/// `ops::Mul` を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
+/// 乗法を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
 ///
 /// [`Assoc`]: traits.Assoc.html
 /// [`Identity`]: traits.Identity.html
