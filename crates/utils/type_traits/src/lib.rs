@@ -131,9 +131,13 @@ impl<T: Assoc> Assoc for Grade<T> {
 /// 作用します。
 pub trait Action: Assoc {
     /// 作用される空間です。
-    type Space;
+    type Space: Element;
     /// 作用関数です。
     fn acted(self, x: Self::Space) -> Self::Space;
+    /// 作用します。
+    fn act_mut(self, x: &mut Self::Space) {
+        *x = self.acted(x.clone());
+    }
 }
 
 /// 作用をします。
