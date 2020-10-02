@@ -127,6 +127,17 @@ pub trait RangeAction {
     fn acted(self, x: Self::Space) -> Self::Space;
 }
 
+/// `cmp::min` の単位元トレイトです。
+pub trait MaxValue: Ord + Element {
+    #[allow(missing_docs)]
+    fn max_value() -> Self;
+}
+/// `cmp::max` の単位元トレイトです。
+pub trait MinValue: Ord + Element {
+    #[allow(missing_docs)]
+    fn min_value() -> Self;
+}
+
 /// `ops::Add` の単位元（零元）を持つトレイトです。
 pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     /// `ops::Add` の単位元（零元）を返します。

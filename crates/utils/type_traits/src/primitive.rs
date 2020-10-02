@@ -1,6 +1,6 @@
 use super::{
     binary::{Add, Mul},
-    Commut, One, OpN, Zero,
+    Commut, MaxValue, MinValue, One, OpN, Zero,
 };
 
 macro_rules! zero {
@@ -19,38 +19,86 @@ macro_rules! one {
         1.
     };
 }
-macro_rules! num {
-    (@kind $kind:ident @type $T:ty) => {
+macro_rules! impl_zero {
+    (@kind $kind:ident @type $T:ident) => {
         impl Zero for $T {
             fn zero() -> $T {
                 zero!($kind)
             }
         }
+    };
+}
+macro_rules! impl_one {
+    (@kind $kind:ident @type $T:ident) => {
         impl One for $T {
             fn one() -> $T {
                 one!($kind)
             }
         }
+    };
+}
+macro_rules! impl_min_value {
+    ($T:ident) => {
+        impl MinValue for $T {
+            fn min_value() -> Self {
+                std::$T::MIN
+            }
+        }
+    };
+}
+macro_rules! impl_max_value {
+    ($T:ident) => {
+        impl MaxValue for $T {
+            fn max_value() -> Self {
+                std::$T::MAX
+            }
+        }
+    };
+}
+macro_rules! impl_commut_add {
+    ($T:ident) => {
         impl Commut for Add<$T> {}
+    };
+}
+macro_rules! impl_commut_mul {
+    ($T:ident) => {
+        impl Commut for Mul<$T> {}
+    };
+}
+macro_rules! impl_op_n {
+    ($T:ident) => {
         impl OpN for Add<$T> {
             fn op_n(self, n: u64) -> Self {
                 Add(self.0 * n as $T)
             }
         }
-        impl Commut for Mul<$T> {}
     };
 }
 
 macro_rules! int {
-    ($($T:ty,)*) => {
-        $( num! { @kind int @type $T } )*
+    ($T:ident, $($rest:ident,)*) => {
+        impl_zero! { @kind int @type $T }
+        impl_one! { @kind int @type $T }
+        impl_min_value! { $T }
+        impl_max_value! { $T }
+        impl_commut_add! { $T }
+        impl_commut_mul! { $T }
+        impl_op_n! { $T }
+        int! { $($rest,)* }
     };
+    () => ()
 }
 
 macro_rules! float {
-    ($($T:ty,)*) => {
-        $( num! { @kind float @type $T } )*
+    ($T:ident, $($rest:ident,)*) => {
+        impl_zero! { @kind float @type $T }
+        impl_one! { @kind float @type $T }
+        impl_commut_add! { $T }
+        impl_commut_mul! { $T }
+        impl_op_n! { $T }
+        float! { $($rest,)* }
     };
+    () => ()
 }
 
 int! {
@@ -60,4 +108,24 @@ int! {
 
 float! {
     f32, f64,
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use assert_impl::assert_impl;
+
+    #[test]
+    fn test_impl() {
+        assert_impl!(Zero: u32, f32);
+        assert_impl!(One: u32, f32);
+        assert_impl!(MinValue: u32);
+        assert_impl!(MaxValue: u32);
+        assert_impl!(!MinValue: f32);
+        assert_impl!(!MaxValue: f32);
+        assert_impl!(Commut: Add<u32>, Add<f32>);
+        assert_impl!(Commut: Mul<u32>, Mul<f32>);
+        assert_impl!(OpN: Add<u32>, Add<f32>);
+        assert_impl!(!OpN: Mul<u32>, Mul<f32>); // TODO: pow を呼んでも良いかもです。
+    }
 }
