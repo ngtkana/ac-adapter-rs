@@ -1,7 +1,7 @@
 #![warn(missing_docs)]
 //! 基本的なトレイトを定義します。
 //!
-//! TODO: 代数関連を分離します。
+//! TODO: [ac-adapter-rs#50](https://github.com/ngtkana/ac-adapter-rs/issues/50)
 //!
 //! # 代数関連
 //!
@@ -9,20 +9,20 @@
 //!
 //! ## 二項演算
 //!
-//! 結合的な演算 [`op`] を備えた [`Assoc`] を継承します。
+//! 二項演算は結合的であるもののみを扱います。基本トレイトは [`Assoc`] であり、追加で性質を課すときには、
+//! この次のようなトレイトを実装すると良いです。これらはすべて、[`Assoc`]
+//! を継承します。具体的な演算は [`binary`] モジュールに入れてあります。
 //!
 //! - [`Identity`] : 単位元を返す写像 [`identity`] を備えています。
 //! - [`Commut`] : 可換性を表すマーカートレイトです。
 //! - [`OpN`] : N 乗を高速に計算する写像 [`op_n`] を備えています。
 //!
-//! 各種ラッパーも [`binary`] に定義されています。
+//! ## 範囲作用（「作用」に組み込むべき？）
+//!
+//! [`RangeAction`] は [`op`] と可換になるように [`Assoc`] に作用します。
 //!
 //!
-//! ## 作用
-//!
-//! [`Action`] は [`op`] と可換になるように [`Assoc`] に作用します。
-//!
-//!
+//! [`binary`]: binary/index.html
 //! [`op`]: traits.Assoc.html#method.op
 //! [`identity`]: traits.Assoc.html#method.identity
 //! [`deg`]: traits.Assoc.html#method.deg
@@ -32,7 +32,7 @@
 //! [`Identity`]: traits.Identity.html
 //! [`Commut`]: traits.Commut.html
 //! [`OpN`]: traits.OpN.html
-//! [`Action`]: traits.Action.html
+//! [`RangeAction`]: traits.RangeAction.html
 
 use std::{cmp, fmt, ops};
 
@@ -41,8 +41,8 @@ mod primitive;
 /// [`Assoc`](traits.Assoc.html) を実装した各種ラッパーさんです。
 pub mod binary;
 
-/// [`Action`](traits.Action.html) を実装した各種ラッパーさんです。
-pub mod actions;
+/// [`RangeAction`](traits.RangeAction.html) を実装した各種ラッパーさんです。
+pub mod range_actions;
 
 /// [`Sized`] + [`Clone`] + [`PartialEq`] です。
 ///
@@ -116,11 +116,11 @@ impl<T: Assoc> Assoc for Grade<T> {
 ///
 /// # 要件
 ///
-/// `A: Action`, `a: A`, `x, y: Action::Space` に対して、次が成り立つことです。
+/// `A: RangeAction`, `a: A`, `x, y: RangeAction::Space` に対して、次が成り立つことです。
 ///
 /// `a.acted(x.op(y)) == a.acted(x).op(a.acted(y))`
 ///
-pub trait Action {
+pub trait RangeAction {
     /// 作用される空間です。
     type Space: Assoc;
     /// 作用関数です。
