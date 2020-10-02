@@ -240,4 +240,41 @@ mod tests {
             }
         }
     }
+
+    #[test]
+    fn test_pow_fp() {
+        use type_traits::{actions::Pow, binary::Mul};
+        type Node = Mul<Fp>;
+        type Action = Pow<Mul<Fp>>;
+
+        struct G {}
+        impl gen::GenLen for G {
+            fn gen_len<R: Rng>(rng: &mut R) -> usize {
+                rng.gen_range(1, 20)
+            }
+        }
+        impl gen::GenValue<Node> for G {
+            fn gen_value<R: Rng>(rng: &mut R) -> Node {
+                Mul(Fp::new(rng.gen_range(2, 5)))
+            }
+        }
+        impl gen::GenAction<Action> for G {
+            fn gen_action<R: Rng>(rng: &mut R) -> Action {
+                Pow::new(rng.gen_range(1, 3))
+            }
+        }
+
+        let mut tester = TesterDualSegtreeWith::<Action, G>::new(StdRng::seed_from_u64(42), CONFIG);
+        for _ in 0..4 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 2);
+                match command {
+                    0 => tester.compare_mut::<query::Get<_>>(),
+                    1 => tester.mutate::<query::RangeApply<_>>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
 }
