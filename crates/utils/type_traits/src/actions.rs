@@ -67,7 +67,7 @@ impl<T: OpN> Assoc for Pow<T> {
 }
 impl<T: OpN> Identity for Pow<T> {
     fn identity() -> Self {
-        Pow(0, PhantomData)
+        Pow(1, PhantomData)
     }
 }
 impl<T: OpN> Action for Pow<T> {
