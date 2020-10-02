@@ -1,4 +1,5 @@
-use super::{Action, Assoc, Element, Identity};
+use super::{Action, Assoc, Element, Identity, OpN};
+use std::marker::PhantomData;
 
 /// 1 付加です。
 impl<T: Action> Action for Option<T> {
@@ -48,6 +49,34 @@ impl<T: Assoc> Action for Adj<T> {
     }
 }
 
+/// N 乗作用（`x (y) = x * x * .... * x)` です。記法に反して左作用なので注意です！
+///
+/// TODO: https://github.com/ngtkana/ac-adapter-rs/issues/52
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Pow<T>(u64, PhantomData<T>);
+impl<T> Pow<T> {
+    /// Workaround of `PhantomData<T>`
+    pub fn new(x: u64) -> Self {
+        Pow(x, PhantomData)
+    }
+}
+impl<T: OpN> Assoc for Pow<T> {
+    fn op(self, rhs: Self) -> Self {
+        Pow(self.0 * rhs.0, PhantomData)
+    }
+}
+impl<T: OpN> Identity for Pow<T> {
+    fn identity() -> Self {
+        Pow(0, PhantomData)
+    }
+}
+impl<T: OpN> Action for Pow<T> {
+    type Space = T;
+    fn acted(self, rhs: T) -> T {
+        rhs.op_n(self.0)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -94,5 +123,24 @@ mod tests {
         assert_eq!(None::<Adj<Add<u32>>>.acted(Add(2)), Add(2));
         assert_eq!(<Adj<Add<u32>> as Identity>::identity(), Adj(Add(0)));
         assert_eq!(<Option<Adj<Add<u32>>> as Identity>::identity(), None);
+    }
+
+    #[test]
+    fn test_pow() {
+        use crate::binary::{Add, Mul};
+        assert_impl!(!Assoc: Pow<()>);
+        assert_impl!(!Identity: Pow<()>);
+        assert_impl!(!Action: Pow<()>);
+
+        assert_impl!(Assoc: Pow<Add<u32>>);
+        assert_impl!(Identity: Pow<Add<u32>>);
+        assert_impl!(Action<Space = Add<u32>>: Pow<Add<u32>>);
+
+        assert_impl!(!Assoc: Option<Pow<()>>);
+        assert_impl!(!Identity: Option<Pow<()>>);
+        assert_impl!(!Action<Space = ()>: Option<Pow<()>>);
+
+        assert_eq!(Pow::new(3).acted(Add(4)), Add(12));
+        assert_eq!(Pow::new(3).acted(Mul(4)), Mul(64));
     }
 }

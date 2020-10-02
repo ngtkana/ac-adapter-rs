@@ -456,7 +456,7 @@ mod tests {
 
         assert_impl!(Identity: Mul<i64>, Mul<f64>);
         assert_impl!(Commut: Mul<i64>, Mul<f64>);
-        assert_impl!(!OpN: Mul<i64>, Mul<f64>);
+        assert_impl!(OpN: Mul<i64>, Mul<f64>);
 
         assert_impl!(Ord: Mul<i64>);
         assert_impl!(!Ord: Mul<f64>);
