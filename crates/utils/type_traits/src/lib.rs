@@ -179,6 +179,11 @@ pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
         self == &Self::zero()
     }
 }
+/// `x + x + ... + x` を計算します。
+pub trait NTimes: Zero {
+    /// `x + x + ... + x` を計算します。
+    fn n_times(self, n: u64) -> Self;
+}
 
 /// 乗法の単位元を持つトレイトです。
 pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
@@ -192,6 +197,11 @@ pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     {
         self == &Self::one()
     }
+}
+/// `x * x * ... * x` を計算します。
+pub trait PowN: One {
+    /// `x + x + ... + x` を計算します。
+    fn pow_n(self, n: u64) -> Self;
 }
 
 /// 単位元を持つ結合的な積を持つ環です。
