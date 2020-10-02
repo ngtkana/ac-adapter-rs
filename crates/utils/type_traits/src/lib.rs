@@ -36,9 +36,9 @@
 
 macro_rules! triv_wrapper {
     ($name:ident<$T:ident>) => {
-        impl<$T> crate::Peek for $name<$T>
+        impl<$T> Peek for $name<$T>
         where
-            $T: crate::Element,
+            $T: Element,
         {
             type Inner = $T;
             fn peek(&self) -> $T {
