@@ -1,7 +1,7 @@
 use crate::{gen, query, utils, Gen, Vector};
 use rand::Rng;
 use std::ops::Range;
-use type_traits::Identity;
+use type_traits::{Action, Identity};
 
 impl<T, G> Gen<query::Get<T>, G> for Vector<T> {
     fn gen<R: Rng>(&self, rng: &mut R) -> usize {
@@ -38,5 +38,14 @@ where
 {
     fn gen<R: Rng>(&self, rng: &mut R) -> (Range<usize>, U) {
         (self.gen_range::<R, G>(rng), G::gen_folded_key(rng))
+    }
+}
+impl<T, G> Gen<query::RangeApply<T>, G> for Vector<T::Space>
+where
+    T: Action,
+    G: gen::GenAction<T>,
+{
+    fn gen<R: Rng>(&self, rng: &mut R) -> (Range<usize>, T) {
+        (self.gen_range::<R, G>(rng), G::gen_action(rng))
     }
 }

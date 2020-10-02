@@ -1,6 +1,6 @@
 use crate::{query, solve, utils, Vector};
 use std::ops::Range;
-use type_traits::Identity;
+use type_traits::{Action, Identity};
 
 impl<T> solve::Mutate<query::Set<T>> for Vector<T> {
     fn mutate(&mut self, (i, x): (usize, T)) {
@@ -34,5 +34,12 @@ where
         let fold = |range| P::project(<Self as solve::Solve<query::Fold<T>>>::solve(self, range));
         let Range { start, end } = range;
         i == start || range.contains(&(i - 1)) && (fold(i..end)..fold(i - 1..end)).contains(&value)
+    }
+}
+impl<T: Action> solve::Mutate<query::RangeApply<T>> for Vector<T::Space> {
+    fn mutate(&mut self, (range, action): (Range<usize>, T)) {
+        self.0[range]
+            .iter_mut()
+            .for_each(|x| action.clone().act_mut(x));
     }
 }

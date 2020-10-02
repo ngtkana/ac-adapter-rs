@@ -1,0 +1,15 @@
+[package]
+name = "dual_segtree"
+version = "0.1.0"
+authors = ["ngtkana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+type_traits =  { path = "../../utils/type_traits" }
+
+[dev-dependencies]
+query_test_2 = { path = "../../utils/query_test_2" }
+rand = "0.7.3"
+fp = { path = "../../utils/fp" }
