@@ -1,4 +1,6 @@
-use super::{Assoc, Commut, Element, Identity, MaxValue, MinValue, One, OpN, Peek, Zero};
+use super::{
+    Assoc, Commut, Element, Identity, MaxValue, MinValue, NTimes, One, OpN, Peek, PowN, Zero,
+};
 use std::ops;
 
 /// 長さの情報を追加するラッパーです。
@@ -199,6 +201,14 @@ where
         Add(T::zero())
     }
 }
+impl<T> OpN for Add<T>
+where
+    T: NTimes,
+{
+    fn op_n(self, n: u64) -> Self {
+        Add(self.0.n_times(n))
+    }
+}
 
 /// 乗法を演算として [`Assoc`], [`Identity`] を実装するラッパーです。
 ///
@@ -221,6 +231,14 @@ where
 {
     fn identity() -> Self {
         Mul(T::one())
+    }
+}
+impl<T> OpN for Mul<T>
+where
+    T: PowN,
+{
+    fn op_n(self, n: u64) -> Self {
+        Mul(self.0.pow_n(n))
     }
 }
 
