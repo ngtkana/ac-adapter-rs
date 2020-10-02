@@ -1,4 +1,7 @@
-use std::ops::{self, Range, RangeBounds};
+use std::{
+    iter,
+    ops::{self, Range, RangeBounds},
+};
 use type_traits::{Action, Identity};
 
 #[derive(Debug, Clone, PartialEq)]
@@ -6,15 +9,26 @@ pub struct DualSegtreeWith<T: Action> {
     dual: DualSegtree<T>,
     table: Vec<T::Space>,
 }
-impl<T: Action> DualSegtreeWith<T> {
-    pub fn from_slice(_src: &[T], _table: &[T::Space]) -> Self {
-        todo!()
+impl<T: Action + Identity> DualSegtreeWith<T> {
+    pub fn from_slice(table: &[T::Space]) -> Self {
+        DualSegtreeWith {
+            // TODO: FromIterator を使います。
+            dual: DualSegtree::from_slice(
+                iter::repeat_with(T::identity)
+                    .take(table.len())
+                    .collect::<Vec<_>>()
+                    .as_slice(),
+            ),
+            table: table.to_vec(),
+        }
     }
-    pub fn apply(&mut self, _range: impl RangeBounds<usize>, _x: T) {
-        todo!()
+    pub fn apply(&mut self, range: impl RangeBounds<usize>, x: T) {
+        self.dual.apply(range, x);
     }
-    pub fn get(&mut self, _i: usize) -> &T::Space {
-        todo!()
+    pub fn get(&mut self, i: usize) -> &T::Space {
+        let x = self.dual.get(i).clone();
+        x.act_mut(&mut self.table[i]);
+        &self.table[i]
     }
 }
 
@@ -148,7 +162,7 @@ mod tests {
         struct G {}
         impl gen::GenLen for G {
             fn gen_len<R: Rng>(rng: &mut R) -> usize {
-                rng.gen_range(1, 100)
+                rng.gen_range(1, 20)
             }
         }
         impl gen::GenValue<Node> for G {
