@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 type_traits =  { path = "../../utils/type_traits" }
+query_test_2 = { path = "../../utils/query_test_2" }

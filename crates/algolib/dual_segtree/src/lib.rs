@@ -31,15 +31,12 @@ impl<T: Identity> DualSegtree<T> {
     pub fn apply(&mut self, _range: impl RangeBounds<usize>, _x: T) {
         todo!()
     }
-    pub fn get(&mut self, _i: usize) -> T {
+    pub fn get(&mut self, _i: usize) -> &T {
         todo!()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+    mod impl_query;
 }
