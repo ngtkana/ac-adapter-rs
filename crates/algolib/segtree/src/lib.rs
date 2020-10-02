@@ -1,10 +1,6 @@
 #![warn(missing_docs)]
 
-//! 任意始点双方向二分探索機能付き非再帰セグメントツリーです。
-//!
-//! え、[`Segtree`] さんにこちらを参照してくださいと言われて来たですって！？ 困りましたね……
-//!
-//! [`Segtree`]: struct.Segtree.html
+//! 二分探索機能付きセグメントツリーです。
 
 use std::{
     iter,
@@ -13,8 +9,6 @@ use std::{
 use type_traits::*;
 
 /// セグツリー本体です。
-///
-/// 詳しくは[モジュールレベルドキュメント](index.html)までです。
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segtree<T> {
     len: usize,
