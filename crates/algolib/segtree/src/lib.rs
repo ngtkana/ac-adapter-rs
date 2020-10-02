@@ -267,18 +267,20 @@ mod tests {
     mod impl_query;
     use query_test_2::{gen, query, utils, Vector, CONFIG};
     use rand::prelude::*;
-    use type_traits::{binary::Add, Constant};
+    use type_traits::Constant;
 
     type Fp = fp::F998244353;
     type Tester<T, G> = query_test_2::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
 
     #[test]
     fn test_add_fp() {
+        use type_traits::binary::Add;
+
         type Node = Add<Fp>;
         struct G {}
         impl gen::GenLen for G {
             fn gen_len<R: Rng>(rng: &mut R) -> usize {
-                rng.gen_range(1, 20)
+                rng.gen_range(1, 100)
             }
         }
         impl gen::GenValue<Node> for G {
@@ -303,12 +305,13 @@ mod tests {
 
     #[test]
     fn test_add_u32() {
+        use type_traits::binary::Add;
         type Node = Add<u32>;
 
         struct G {}
         impl gen::GenLen for G {
             fn gen_len<R: Rng>(rng: &mut R) -> usize {
-                rng.gen_range(1, 20)
+                rng.gen_range(1, 100)
             }
         }
         impl gen::GenValue<Node> for G {
@@ -340,6 +343,84 @@ mod tests {
                     2 => tester.compare::<query::Fold<_>>(),
                     3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
                     4 => tester.judge::<query::BackwardUpperBoundByKey<_, u32, P>>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_cat() {
+        use type_traits::binary::Cat;
+        type Node = Cat;
+
+        struct G {}
+        impl gen::GenLen for G {
+            fn gen_len<R: Rng>(rng: &mut R) -> usize {
+                rng.gen_range(1, 100)
+            }
+        }
+        impl gen::GenValue<Node> for G {
+            fn gen_value<R: Rng>(rng: &mut R) -> Node {
+                Cat(rng.sample(rand::distributions::Alphanumeric).to_string())
+            }
+        }
+
+        let mut tester = Tester::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
+        for _ in 0..4 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 3);
+                match command {
+                    0 => tester.compare::<query::Get<_>>(),
+                    1 => tester.mutate::<query::Set<_>>(),
+                    2 => tester.compare::<query::Fold<_>>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_inversion() {
+        use type_traits::binary::InvertionNumber;
+        type Node = InvertionNumber;
+
+        struct G {}
+        impl gen::GenLen for G {
+            fn gen_len<R: Rng>(rng: &mut R) -> usize {
+                rng.gen_range(1, 100)
+            }
+        }
+        impl gen::GenValue<Node> for G {
+            fn gen_value<R: Rng>(rng: &mut R) -> Node {
+                InvertionNumber::from_bool(rng.gen_ratio(1, 2))
+            }
+        }
+        impl gen::GenFoldedKey<u64> for G {
+            fn gen_folded_key<R: Rng>(rng: &mut R) -> u64 {
+                rng.gen_range(0, 50)
+            }
+        }
+
+        struct P {}
+        impl utils::Project<InvertionNumber, u64> for P {
+            fn project(x: InvertionNumber) -> u64 {
+                x.invertion
+            }
+        }
+
+        let mut tester = Tester::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
+        for _ in 0..4 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 5);
+                match command {
+                    0 => tester.compare::<query::Get<_>>(),
+                    1 => tester.mutate::<query::Set<_>>(),
+                    2 => tester.compare::<query::Fold<_>>(),
+                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, u64, P>>(),
+                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, u64, P>>(),
                     _ => unreachable!(),
                 }
             }
