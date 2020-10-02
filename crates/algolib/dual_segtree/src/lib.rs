@@ -94,9 +94,13 @@ mod tests {
     mod impl_query;
     use query_test_2::{gen, query, Vector, CONFIG};
     use rand::prelude::*;
+    use type_traits::Action;
 
     type Fp = fp::F998244353;
-    type Tester<T, G> = query_test_2::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
+    type TesterDualSegtree<T, G> =
+        query_test_2::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
+    type TesterDualSegtreeWith<T, G> =
+        query_test_2::Tester<StdRng, Vector<<T as Action>::Space>, crate::DualSegtreeWith<T>, G>;
 
     #[test]
     fn test_add_fp() {
@@ -121,7 +125,44 @@ mod tests {
             }
         }
 
-        let mut tester = Tester::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
+        let mut tester = TesterDualSegtree::<Node, G>::new(StdRng::seed_from_u64(42), CONFIG);
+        for _ in 0..4 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 2);
+                match command {
+                    0 => tester.compare_mut::<query::Get<_>>(),
+                    1 => tester.mutate::<query::RangeApply<_>>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_update_u32() {
+        use type_traits::actions::Update;
+        type Node = u32;
+        type Action = Option<Update<u32>>;
+
+        struct G {}
+        impl gen::GenLen for G {
+            fn gen_len<R: Rng>(rng: &mut R) -> usize {
+                rng.gen_range(1, 100)
+            }
+        }
+        impl gen::GenValue<Node> for G {
+            fn gen_value<R: Rng>(_rng: &mut R) -> Node {
+                0
+            }
+        }
+        impl gen::GenAction<Action> for G {
+            fn gen_action<R: Rng>(rng: &mut R) -> Action {
+                Some(Update(rng.gen_range(0, 100)))
+            }
+        }
+
+        let mut tester = TesterDualSegtreeWith::<Action, G>::new(StdRng::seed_from_u64(42), CONFIG);
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {

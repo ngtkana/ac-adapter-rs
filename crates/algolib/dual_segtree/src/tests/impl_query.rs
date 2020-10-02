@@ -31,7 +31,7 @@ impl<T: Action + Identity> solve::SolveMut<query::Get<T::Space>> for DualSegtree
         todo!()
     }
 }
-impl<T: Action + Identity> solve::Mutate<query::RangeApply<T>> for DualSegtree<T> {
+impl<T: Action + Identity> solve::Mutate<query::RangeApply<T>> for DualSegtreeWith<T> {
     fn mutate(&mut self, (_range, _action): (Range<usize>, T)) {
         todo!()
     }
