@@ -1,4 +1,4 @@
-use super::{Action, Assoc, Element, Identity, OpN};
+use super::{Action, Assoc, Element, Identity, OpN, Peek};
 use std::marker::PhantomData;
 
 /// 1 付加です。
