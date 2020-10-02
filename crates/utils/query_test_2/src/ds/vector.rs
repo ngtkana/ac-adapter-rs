@@ -41,7 +41,7 @@ mod tests {
     use crate::{gen, query, solve, utils, FromBrute, Vector};
     use rand::prelude::*;
     use std::ops::Range;
-    use type_traits::Identity;
+    use type_traits::{Action, Identity};
 
     #[derive(Debug, Clone, PartialEq)]
     struct Segtree<T> {
@@ -130,10 +130,24 @@ mod tests {
             }
         }
     }
+    impl<T> solve::Mutate<query::RangeApply<T>> for Segtree<T::Space>
+    where
+        T: Action,
+        T::Space: Identity,
+    {
+        fn mutate(&mut self, (range, action): (Range<usize>, T)) {
+            range.for_each(|i| {
+                let x = action
+                    .clone()
+                    .acted(<Self as solve::Solve<query::Get<T::Space>>>::solve(self, i));
+                <Self as solve::Mutate<query::Set<T::Space>>>::mutate(self, (i, x));
+            });
+        }
+    }
 
     #[test]
     fn test_add_u32() {
-        use type_traits::binary::Add;
+        use type_traits::{actions::Adj, binary::Add};
 
         struct G {}
         impl gen::GenLen for G {
@@ -151,6 +165,11 @@ mod tests {
                 rng.gen_range(0, 256)
             }
         }
+        impl gen::GenAction<Adj<Add<u32>>> for G {
+            fn gen_action<R: Rng>(rng: &mut R) -> Adj<Add<u32>> {
+                Adj(<G as gen::GenValue<_>>::gen_value(rng))
+            }
+        }
 
         struct P {}
         impl utils::Project<Add<u32>, u32> for P {
@@ -165,12 +184,13 @@ mod tests {
                 crate::CONFIG,
             );
         for _ in 0..100 {
-            let command = tester.rng_mut().gen_range(0, 4);
+            let command = tester.rng_mut().gen_range(0, 5);
             match command {
                 0 => tester.compare::<query::Get<_>>(),
                 1 => tester.mutate::<query::Set<_>>(),
                 2 => tester.compare::<query::Fold<_>>(),
                 3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
+                4 => tester.mutate::<query::RangeApply<_>>(),
                 _ => unreachable!(),
             }
         }
