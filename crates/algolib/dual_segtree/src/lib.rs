@@ -22,16 +22,28 @@ impl<T: Action> DualSegtreeWith<T> {
 pub struct DualSegtree<T> {
     len: usize,
     lg: u32,
-    lazy: Vec<T>,
+    table: Vec<T>,
 }
 impl<T: Identity> DualSegtree<T> {
-    pub fn from_slice(_src: &[T]) -> Self {
-        todo!()
+    pub fn from_slice(src: &[T]) -> Self {
+        Self {
+            len: src.len(),
+            lg: src.len().next_power_of_two().trailing_zeros(),
+            table: std::iter::repeat_with(T::identity)
+                .take(src.len())
+                .chain(src.to_vec())
+                .collect::<Vec<_>>(),
+        }
     }
     pub fn apply(&mut self, _range: impl RangeBounds<usize>, _x: T) {
         todo!()
     }
-    pub fn get(&mut self, _i: usize) -> &T {
+    pub fn get(&mut self, mut i: usize) -> &T {
+        i += self.len;
+        self.thrust(i);
+        &self.table[i]
+    }
+    fn thrust(&mut self, _i: usize) {
         todo!()
     }
 }
