@@ -16,7 +16,10 @@ where
     T::Brute: Debug + Clone,
     T::Fast: Debug + Clone,
 {
-    pub fn mutate(&self) {
+    pub fn mutate(&self)
+    where
+        Q: Query<Output = ()>,
+    {
         use config::Passing;
         match self.tester.config().passing {
             Passing::Short => self.mutate_short(),

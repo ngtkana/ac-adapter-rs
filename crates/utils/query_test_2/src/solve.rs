@@ -6,7 +6,7 @@ pub trait Solve<Q: Query> {
     fn solve(&self, param: Q::Param) -> Q::Output;
 }
 /// 自分を書き換えます。
-pub trait Mutate<Q: Query> {
+pub trait Mutate<Q: Query<Output = ()>> {
     #[allow(missing_docs)]
     fn mutate(&mut self, param: Q::Param);
 }
