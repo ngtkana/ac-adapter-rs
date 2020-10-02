@@ -91,7 +91,7 @@
 //! [`Display`]: https://doc.rust-lang.org/std/fmt/trait.Display.html
 pub use aliases::*;
 use std::{cmp, fmt, iter, mem, ops::*};
-use type_traits::*;
+use type_traits::{Constant, NTimes, One, PowN, Ring, Zero};
 
 mod arith;
 
@@ -210,6 +210,23 @@ where
 {
     fn one() -> Fp<Mod> {
         Fp::new(Mod::Output::one())
+    }
+}
+// TODO: Mod の型と u64 の間の変換が厄介です。https://github.com/ngtkana/ac-adapter-rs/issues/53
+impl<Mod: Modable<Output = i64>> NTimes for Fp<Mod>
+where
+    Mod::Output: Value,
+{
+    fn n_times(self, n: u64) -> Fp<Mod> {
+        self * Fp::new(n as i64)
+    }
+}
+impl<Mod: Modable> PowN for Fp<Mod>
+where
+    Mod::Output: Value,
+{
+    fn pow_n(self, n: u64) -> Fp<Mod> {
+        self.pow(n)
     }
 }
 
