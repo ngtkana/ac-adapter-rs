@@ -1,20 +1,6 @@
 use super::{Assoc, Commut, Element, Identity, MaxValue, MinValue, One, OpN, Peek, Zero};
 use std::ops;
 
-macro_rules! triv_wrapper {
-    ($name:ident<$T:ident>) => {
-        impl<$T> Peek for $name<$T>
-        where
-            $T: Element,
-        {
-            type Inner = $T;
-            fn peek(&self) -> $T {
-                self.0.clone()
-            }
-        }
-    };
-}
-
 /// 長さの情報を追加するラッパーです。
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct Len<T> {
@@ -35,6 +21,29 @@ impl<T: Assoc> Assoc for Len<T> {
             len: self.len + rhs.len,
             base: self.base.op(rhs.base),
         }
+    }
+}
+
+/// 1 付加です。
+impl<T: Peek> Peek for Option<T> {
+    type Inner = Option<T::Inner>;
+    fn peek(&self) -> Self::Inner {
+        self.as_ref().map(T::peek)
+    }
+}
+impl<T: Assoc> Assoc for Option<T> {
+    fn op(self, rhs: Self) -> Self {
+        match (self, rhs) {
+            (Some(x), Some(y)) => Some(x.op(y)),
+            (Some(x), None) => Some(x),
+            (None, Some(y)) => Some(y),
+            (None, None) => None,
+        }
+    }
+}
+impl<T: Assoc> Identity for Option<T> {
+    fn identity() -> Self {
+        None
     }
 }
 
@@ -90,6 +99,32 @@ impl<T: ops::BitXor<Output = T> + Zero> OpN for BitXor<T> {
         } else {
             self
         }
+    }
+}
+
+/// 常に左側を返すを演算で [`Assoc`] を実装するラッパーです。
+///
+/// [`Assoc`]: traits.Assoc.html
+/// [`Identity`]: traits.Identity.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Left<T>(pub T);
+triv_wrapper! { Left<T> }
+impl<T: Element> Assoc for Left<T> {
+    fn op(self, _rhs: Self) -> Self {
+        self
+    }
+}
+
+/// 常に右側を返すを演算で [`Assoc`] を実装するラッパーです。
+///
+/// [`Assoc`]: traits.Assoc.html
+/// [`Identity`]: traits.Identity.html
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub struct Right<T>(pub T);
+triv_wrapper! { Right<T> }
+impl<T: Element> Assoc for Right<T> {
+    fn op(self, rhs: Self) -> Self {
+        rhs
     }
 }
 
@@ -369,6 +404,18 @@ impl Identity for Cat {
 mod tests {
     use super::*;
     use assert_impl::assert_impl;
+
+    #[test]
+    fn test_option_left() {
+        assert_impl!(Assoc: Left<u32>, Option<Left<u32>>);
+        assert_impl!(!Identity: Left<u32>);
+        assert_impl!(Identity: Option<Left<u32>>);
+
+        assert_eq!(Left(3).op(Left(2)), Left(3));
+        assert_eq!(Some(Left(3)).op(Some(Left(2))), Some(Left(3)));
+        assert_eq!(None.op(Some(Left(2))), Some(Left(2)));
+        assert_eq!(<Option::<Left<u32>> as Identity>::identity(), None);
+    }
 
     #[test]
     fn test_pair() {
