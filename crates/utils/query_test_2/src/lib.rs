@@ -7,23 +7,19 @@ use rand::prelude::*;
 use std::marker::PhantomData;
 
 mod ds;
+pub mod gen;
 /// 具体的なクエリ型定義の倉庫です。
 pub mod query;
-mod solve;
-mod test_tools;
-pub use solve::*;
-mod gen;
+pub mod solve;
+mod testing;
+pub mod utils;
 
-use config::{Checked, Config, Unchecked};
 pub use ds::vector::Vector;
 /// 愚直と比較をしてテストをするためのツールです。
-pub use test_tools::{config, Tester};
+pub use testing::{config, Tester};
 
-pub const CONFIG: Config = Config {
-    pre: None,
-    failing: Checked::Verbose,
-    passing: Checked::Short,
-    unchecked: Unchecked::Short,
+pub const CONFIG: config::Config = config::Config {
+    passing: config::Passing::Short,
 };
 
 /// クエリです。

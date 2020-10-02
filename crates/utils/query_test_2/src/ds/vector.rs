@@ -1,13 +1,14 @@
-use crate::{gen, query, solve, Gen, RandNew};
+mod impl_gen;
+mod impl_query;
+use crate::{gen, query, solve, RandNew};
 use rand::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, ops::Range};
-use type_traits::{Assoc, Identity};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T>(pub Vec<T>);
-impl<T> solve::SolveGet<query::Get<T>> for Vector<T> {
-    fn solve_get(&self, i: usize) -> &T {
-        &self.0[i]
+impl<T: Clone> solve::Solve<query::Get<T>> for Vector<T> {
+    fn solve(&self, i: usize) -> T {
+        self.0[i].clone()
     }
 }
 impl<T, G: gen::GenLen + gen::GenValue<T>> RandNew<G> for Vector<T> {
@@ -18,24 +19,6 @@ impl<T, G: gen::GenLen + gen::GenValue<T>> RandNew<G> for Vector<T> {
                 .take(len)
                 .collect(),
         )
-    }
-}
-impl<T> solve::SolveMut<query::Set<T>> for Vector<T> {
-    fn solve_mut(&mut self, (i, x): (usize, T)) {
-        self.0[i] = x;
-    }
-}
-impl<T: Identity> solve::Solve<query::Fold<T>> for Vector<T> {
-    fn solve(&self, range: Range<usize>) -> T {
-        self.0[range].iter().cloned().fold(T::identity(), T::op)
-    }
-}
-impl<T: Assoc> solve::Solve<query::FoldFirst<T>> for Vector<T> {
-    fn solve(&self, range: Range<usize>) -> Option<T> {
-        self.0[range]
-            .iter()
-            .cloned()
-            .fold(None, |x, y| Some(x.map(|x| x.op(y.clone())).unwrap_or(y)))
     }
 }
 
@@ -53,30 +36,10 @@ impl<T> Vector<T> {
         u..v
     }
 }
-impl<T, G> Gen<query::Get<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> usize {
-        self.gen_index::<R, G>(rng)
-    }
-}
-impl<T, G: gen::GenValue<T>> Gen<query::Set<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> (usize, T) {
-        (self.gen_index::<R, G>(rng), G::gen_value(rng))
-    }
-}
-impl<T: Identity, G> Gen<query::Fold<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> Range<usize> {
-        self.gen_range::<R, G>(rng)
-    }
-}
-impl<T: Identity, G> Gen<query::FoldFirst<T>, G> for Vector<T> {
-    fn gen<R: Rng>(&self, rng: &mut R) -> Range<usize> {
-        <Self as Gen<query::Fold<T>, G>>::gen(self, rng)
-    }
-}
 
 #[cfg(test)]
 mod tests {
-    use crate::{gen, query, solve, FromBrute, Vector};
+    use crate::{gen, query, solve, utils, FromBrute, Vector};
     use rand::prelude::*;
     use std::ops::Range;
     use type_traits::Identity;
@@ -105,13 +68,13 @@ mod tests {
             self.table[i] = self.table[i * 2].clone().op(self.table[i * 2 + 1].clone());
         }
     }
-    impl<T: Identity> solve::SolveGet<query::Get<T>> for Segtree<T> {
-        fn solve_get(&self, i: usize) -> &T {
-            &self.table[i + self.table.len() / 2]
+    impl<T: Identity> solve::Solve<query::Get<T>> for Segtree<T> {
+        fn solve(&self, i: usize) -> T {
+            self.table[i + self.table.len() / 2].clone()
         }
     }
-    impl<T: Identity> solve::SolveMut<query::Set<T>> for Segtree<T> {
-        fn solve_mut(&mut self, (mut i, x): (usize, T)) {
+    impl<T: Identity> solve::Mutate<query::Set<T>> for Segtree<T> {
+        fn mutate(&mut self, (mut i, x): (usize, T)) {
             i += self.len;
             self.table[i] = x;
             (1..=self.lg)
@@ -142,6 +105,35 @@ mod tests {
             left.op(right)
         }
     }
+    impl<T, U, P> solve::Solve<query::ForwardUpperBoundByKey<T, U, P>> for Segtree<T>
+    where
+        T: Identity,
+        U: Ord,
+        P: utils::Project<T, U>,
+    {
+        fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
+            let yes = |i: usize| {
+                P::project(<Self as solve::Solve<query::Fold<T>>>::solve(
+                    self,
+                    range.start..i,
+                )) <= key
+            };
+            let Range { mut start, mut end } = range;
+            if yes(end) {
+                end
+            } else {
+                while start + 1 < end {
+                    let mid = (start + end) / 2;
+                    if yes(mid) {
+                        start = mid;
+                    } else {
+                        end = mid;
+                    }
+                }
+                start
+            }
+        }
+    }
 
     #[test]
     fn test_add_u32() {
@@ -158,6 +150,18 @@ mod tests {
                 Add(rng.gen_range(0, 256))
             }
         }
+        impl gen::GenFoldedKey<u32> for G {
+            fn gen_folded_key<R: Rng>(rng: &mut R) -> u32 {
+                rng.gen_range(0, 256)
+            }
+        }
+
+        struct P {}
+        impl utils::Project<Add<u32>, u32> for P {
+            fn project(src: Add<u32>) -> u32 {
+                src.0
+            }
+        }
 
         let mut tester =
             crate::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
@@ -165,11 +169,12 @@ mod tests {
                 crate::CONFIG,
             );
         for _ in 0..100 {
-            let command = tester.rng_mut().gen_range(0, 3);
+            let command = tester.rng_mut().gen_range(0, 4);
             match command {
-                0 => tester.test_get::<query::Get<_>>(),
-                1 => tester.test_mut::<query::Set<_>>(),
-                2 => tester.test::<query::Fold<_>>(),
+                0 => tester.compare::<query::Get<_>>(),
+                1 => tester.mutate::<query::Set<_>>(),
+                2 => tester.compare::<query::Fold<_>>(),
+                3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
                 _ => unreachable!(),
             }
         }
