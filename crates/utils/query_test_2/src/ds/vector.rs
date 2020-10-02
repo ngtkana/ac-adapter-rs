@@ -76,10 +76,7 @@ mod tests {
         fn mutate(&mut self, (mut i, x): (usize, T)) {
             i += self.len;
             self.table[i] = x;
-            (1..=self.lg)
-                .rev()
-                .map(|p| i >> p)
-                .for_each(|j| self.update(j));
+            (1..=self.lg).map(|p| i >> p).for_each(|j| self.update(j));
         }
     }
     impl<T: Identity> solve::Solve<query::Fold<T>> for Segtree<T> {
