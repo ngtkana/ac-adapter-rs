@@ -28,10 +28,9 @@ impl<T> Vector<T> {
     }
     fn gen_range<R: Rng, G>(&self, rng: &mut R) -> Range<usize> {
         let mut u = rng.gen_range(0, self.0.len() + 1);
-        let mut v = rng.gen_range(0, self.0.len());
+        let mut v = rng.gen_range(0, self.0.len() + 1);
         if v < u {
             std::mem::swap(&mut u, &mut v);
-            v -= 1;
         }
         u..v
     }
