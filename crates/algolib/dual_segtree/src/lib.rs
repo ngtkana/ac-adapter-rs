@@ -1,15 +1,54 @@
+//! 双対セグメントツリーです。
+//!
+//!
+//! # 抽象データ構造としての双対セグメントツリー
+//!
+//! 半群の要素の列 `a` を管理します。できる操作はこちらです。
+//!
+//! - `build(a)`:
+//!     - 列 `a` に対応する双対セグメントツリーを構築します。
+//!     - 時間計算量 O ( N )
+//!
+//! - `apply_range(l, r, x)`
+//!     - `l` 以上 `r` 未満のすべての項に、（左から）`x` をかけます。
+//!     - 時間計算量 O ( lg ( r - l ) )
+//!
+//! - `get(i)`
+//!     - `i` 番目の要素を取得します。
+//!     - 時間計算量 O ( lg N )
+//!
+//!
+//! # 双対セグメントツリーと作用
+//!
+//! 半群 A が集合 X に作用するとして、集合 X の要素の列 a を管理します。できる操作はこちらです。
+//!
+//! - `build(a)`:
+//!     - （空間側が）列 `a` に対応するデータ構造を構築です。
+//!     - 時間計算量 O ( N )
+//!
+//! - `apply_range(l, r, x)`
+//!     - `l` 以上 `r` 未満のすべての項に、作用素半群 A の要素 `x` を作用します。
+//!     - 時間計算量 O ( lg ( r - l ) )
+//!
+//! - `get(i)`
+//!     - `a` の `i` 番目の要素を取得します。
+//!     - 時間計算量 O ( lg N )
+//!
+//!
 use std::{
     iter,
     ops::{self, Range, RangeBounds},
 };
 use type_traits::{Action, Identity};
 
+/// 双対セグメントツリーを使って作用を管理します。
 #[derive(Debug, Clone, PartialEq)]
 pub struct DualSegtreeWith<T: Action> {
     dual: DualSegtree<T>,
     table: Vec<T::Space>,
 }
 impl<T: Action + Identity> DualSegtreeWith<T> {
+    /// `build(a)` をします。
     pub fn from_slice(table: &[T::Space]) -> Self {
         DualSegtreeWith {
             // TODO: FromIterator を使います。
@@ -32,6 +71,7 @@ impl<T: Action + Identity> DualSegtreeWith<T> {
     }
 }
 
+/// 双対セグメントツリーを実現します。
 #[derive(Debug, Clone, PartialEq)]
 pub struct DualSegtree<T> {
     len: usize,
@@ -39,6 +79,7 @@ pub struct DualSegtree<T> {
     table: Vec<T>,
 }
 impl<T: Identity> DualSegtree<T> {
+    /// `build(a)` をします。
     pub fn from_slice(src: &[T]) -> Self {
         Self {
             len: src.len(),
@@ -49,6 +90,7 @@ impl<T: Identity> DualSegtree<T> {
                 .collect::<Vec<_>>(),
         }
     }
+    /// `apply_range(start, end, x)` をします。
     pub fn apply(&mut self, range: impl RangeBounds<usize>, x: T) {
         let Range { mut start, mut end } = open(self.len, range);
         if start < end {
@@ -70,6 +112,7 @@ impl<T: Identity> DualSegtree<T> {
             }
         }
     }
+    /// `get(i)` をします。
     pub fn get(&mut self, mut i: usize) -> &T {
         i += self.len;
         self.thrust(i);
