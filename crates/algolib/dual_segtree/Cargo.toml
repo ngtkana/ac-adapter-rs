@@ -6,6 +6,6 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
+[dev-dependencies]
 type_traits =  { path = "../../utils/type_traits" }
 query_test_2 = { path = "../../utils/query_test_2" }
