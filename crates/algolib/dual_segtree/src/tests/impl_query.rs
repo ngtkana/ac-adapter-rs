@@ -22,17 +22,17 @@ impl<T: Identity> solve::Mutate<query::RangeApply<Adj<T>>> for DualSegtree<T> {
 
 impl<T: Action + Identity> FromBrute for DualSegtreeWith<T> {
     type Brute = Vector<T::Space>;
-    fn from_brute(_brute: &Self::Brute) -> Self {
-        todo!()
+    fn from_brute(brute: &Self::Brute) -> Self {
+        Self::from_slice(&brute.0)
     }
 }
 impl<T: Action + Identity> solve::SolveMut<query::Get<T::Space>> for DualSegtreeWith<T> {
-    fn solve_mut(&mut self, _i: usize) -> T::Space {
-        todo!()
+    fn solve_mut(&mut self, i: usize) -> T::Space {
+        self.get(i).clone()
     }
 }
 impl<T: Action + Identity> solve::Mutate<query::RangeApply<T>> for DualSegtreeWith<T> {
-    fn mutate(&mut self, (_range, _action): (Range<usize>, T)) {
-        todo!()
+    fn mutate(&mut self, (range, action): (Range<usize>, T)) {
+        self.apply(range, action)
     }
 }
