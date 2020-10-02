@@ -97,7 +97,7 @@ where
             }
         }
     }
-    pub fn mutate<Q: Query>(&mut self)
+    pub fn mutate<Q: Query<Output = ()>>(&mut self)
     where
         Q::Param: Clone + Debug,
         Q::Output: Clone + Debug + PartialEq,
