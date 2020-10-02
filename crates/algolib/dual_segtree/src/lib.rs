@@ -65,8 +65,10 @@ impl<T: Action + Identity> DualSegtreeWith<T> {
         self.dual.apply(range, x);
     }
     pub fn get(&mut self, i: usize) -> &T::Space {
-        let x = self.dual.get(i).clone();
-        x.act_mut(&mut self.table[i]);
+        let x = self.dual.take(i);
+        if x != T::identity() {
+            x.act_mut(&mut self.table[i]);
+        }
         &self.table[i]
     }
 }
@@ -117,6 +119,12 @@ impl<T: Identity> DualSegtree<T> {
         i += self.len;
         self.thrust(i);
         &self.table[i]
+    }
+    /// `i` 番目を `1` にして、もともとの値を返します。
+    pub fn take(&mut self, mut i: usize) -> T {
+        i += self.len;
+        self.thrust(i);
+        std::mem::replace(&mut self.table[i], T::identity())
     }
     fn thrust(&mut self, i: usize) {
         let lg = self.lg;
