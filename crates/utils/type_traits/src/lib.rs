@@ -138,7 +138,7 @@ pub trait MinValue: Ord + Element {
     fn min_value() -> Self;
 }
 
-/// `ops::Add` の単位元（零元）を持つトレイトです。
+/// 加法の単位元（零元）を持つトレイトです。
 pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     /// `ops::Add` の単位元（零元）を返します。
     fn zero() -> Self;
@@ -152,7 +152,7 @@ pub trait Zero: ops::Add<Output = Self> + ops::AddAssign + Element {
     }
 }
 
-/// `ops::Mul` の単位元を持つトレイトです。
+/// 乗法の単位元を持つトレイトです。
 pub trait One: ops::Mul<Output = Self> + ops::MulAssign + Element {
     /// `ops::Mul` の単位元を返します。
     fn one() -> Self;
