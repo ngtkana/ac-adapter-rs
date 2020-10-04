@@ -265,8 +265,9 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use query_test_2::{gen, query, utils, Vector, CONFIG};
+    use query_test_2::{gen, query, utils, CONFIG};
     use rand::prelude::*;
+    use test_vector::Vector;
     use type_traits::Constant;
 
     type Fp = fp::F998244353;
