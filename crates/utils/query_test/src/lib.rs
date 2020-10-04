@@ -6,12 +6,8 @@
 use rand::prelude::*;
 use std::marker::PhantomData;
 
-pub mod gen;
-/// 具体的なクエリ型定義の倉庫です。
-pub mod query;
 pub mod solve;
 mod testing;
-pub mod utils;
 
 /// 愚直と比較をしてテストをするためのツールです。
 pub use testing::{config, Tester};

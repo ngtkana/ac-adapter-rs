@@ -1,4 +1,7 @@
-use crate::{utils, Query};
+pub mod gen;
+pub mod utils;
+
+use query_test::Query;
 use std::{marker::PhantomData, ops::Range};
 
 /// 特定のインデックスの要素を取得するクエリです。
