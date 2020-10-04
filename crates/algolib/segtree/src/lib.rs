@@ -265,12 +265,14 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use query_test_2::{gen, query, utils, Vector, CONFIG};
+    use queries::{gen, utils};
+    use query_test::CONFIG;
     use rand::prelude::*;
+    use test_vector::Vector;
     use type_traits::Constant;
 
     type Fp = fp::F998244353;
-    type Tester<T, G> = query_test_2::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
+    type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
 
     #[test]
     fn test_add_fp() {
@@ -307,11 +309,11 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 5);
                 match command {
-                    0 => tester.compare::<query::Get<_>>(),
-                    1 => tester.mutate::<query::Set<_>>(),
-                    2 => tester.compare::<query::Fold<_>>(),
-                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, i64, P>>(),
-                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, i64, P>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
+                    3 => tester.judge::<queries::ForwardUpperBoundByKey<_, i64, P>>(),
+                    4 => tester.judge::<queries::BackwardUpperBoundByKey<_, i64, P>>(),
                     _ => unreachable!(),
                 }
             }
@@ -353,11 +355,11 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 5);
                 match command {
-                    0 => tester.compare::<query::Get<_>>(),
-                    1 => tester.mutate::<query::Set<_>>(),
-                    2 => tester.compare::<query::Fold<_>>(),
-                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
-                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, u32, P>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
+                    3 => tester.judge::<queries::ForwardUpperBoundByKey<_, u32, P>>(),
+                    4 => tester.judge::<queries::BackwardUpperBoundByKey<_, u32, P>>(),
                     _ => unreachable!(),
                 }
             }
@@ -387,9 +389,9 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 3);
                 match command {
-                    0 => tester.compare::<query::Get<_>>(),
-                    1 => tester.mutate::<query::Set<_>>(),
-                    2 => tester.compare::<query::Fold<_>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
                     _ => unreachable!(),
                 }
             }
@@ -431,11 +433,11 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 5);
                 match command {
-                    0 => tester.compare::<query::Get<_>>(),
-                    1 => tester.mutate::<query::Set<_>>(),
-                    2 => tester.compare::<query::Fold<_>>(),
-                    3 => tester.judge::<query::ForwardUpperBoundByKey<_, u64, P>>(),
-                    4 => tester.judge::<query::BackwardUpperBoundByKey<_, u64, P>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
+                    3 => tester.judge::<queries::ForwardUpperBoundByKey<_, u64, P>>(),
+                    4 => tester.judge::<queries::BackwardUpperBoundByKey<_, u64, P>>(),
                     _ => unreachable!(),
                 }
             }
