@@ -6,7 +6,6 @@
 use rand::prelude::*;
 use std::marker::PhantomData;
 
-mod ds;
 pub mod gen;
 /// 具体的なクエリ型定義の倉庫です。
 pub mod query;
@@ -14,7 +13,6 @@ pub mod solve;
 mod testing;
 pub mod utils;
 
-pub use ds::vector::Vector;
 /// 愚直と比較をしてテストをするためのツールです。
 pub use testing::{config, Tester};
 
