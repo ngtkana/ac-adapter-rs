@@ -1,6 +1,7 @@
 use crate::Segtree;
-use query_test_2::{query, solve, utils, FromBrute, Vector};
+use query_test_2::{query, solve, utils, FromBrute};
 use std::ops::Range;
+use test_vector::Vector;
 use type_traits::{Assoc, Identity};
 
 impl<T: Assoc> FromBrute for Segtree<T> {
