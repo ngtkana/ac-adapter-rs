@@ -1,5 +1,5 @@
 use super::Vector;
-use query_test_2::{gen, query, utils, Gen};
+use query_test::{gen, query, utils, Gen};
 use rand::Rng;
 use std::ops::Range;
 use type_traits::{Action, Identity};

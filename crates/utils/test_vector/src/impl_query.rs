@@ -1,5 +1,5 @@
 use super::Vector;
-use query_test_2::{query, solve, utils};
+use query_test::{query, solve, utils};
 use std::ops::Range;
 use type_traits::{Action, Identity};
 

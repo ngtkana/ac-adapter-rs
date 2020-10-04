@@ -157,16 +157,15 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use query_test_2::{gen, query, CONFIG};
+    use query_test::{gen, query, CONFIG};
     use rand::prelude::*;
     use test_vector::Vector;
     use type_traits::Action;
 
     type Fp = fp::F998244353;
-    type TesterDualSegtree<T, G> =
-        query_test_2::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
+    type TesterDualSegtree<T, G> = query_test::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
     type TesterDualSegtreeWith<T, G> =
-        query_test_2::Tester<StdRng, Vector<<T as Action>::Space>, crate::DualSegtreeWith<T>, G>;
+        query_test::Tester<StdRng, Vector<<T as Action>::Space>, crate::DualSegtreeWith<T>, G>;
 
     #[test]
     fn test_add_fp() {

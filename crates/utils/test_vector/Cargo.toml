@@ -8,5 +8,5 @@ edition = "2018"
 
 [dependencies]
 rand = "0.7.3"
-query_test_2 = { path = "../query_test_2" }
+query_test = { path = "../query_test" }
 type_traits = { path = "../type_traits" }
