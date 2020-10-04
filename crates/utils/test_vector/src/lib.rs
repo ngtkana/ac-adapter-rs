@@ -1,6 +1,6 @@
 mod impl_gen;
 mod impl_query;
-use query_test_2::{gen, query, solve, RandNew};
+use query_test::{gen, query, solve, RandNew};
 use rand::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, ops::Range};
 
@@ -39,7 +39,7 @@ impl<T> Vector<T> {
 #[cfg(test)]
 mod tests {
     use super::Vector;
-    use query_test_2::{gen, query, solve, utils, FromBrute};
+    use query_test::{gen, query, solve, utils, FromBrute};
     use rand::prelude::*;
     use std::ops::Range;
     use type_traits::{Action, Identity};
@@ -180,9 +180,9 @@ mod tests {
         }
 
         let mut tester =
-            query_test_2::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
+            query_test::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
                 StdRng::seed_from_u64(42),
-                query_test_2::CONFIG,
+                query_test::CONFIG,
             );
         for _ in 0..100 {
             let command = tester.rng_mut().gen_range(0, 5);

@@ -1,5 +1,5 @@
 use crate::{DualSegtree, DualSegtreeWith};
-use query_test_2::{query, solve, FromBrute};
+use query_test::{query, solve, FromBrute};
 use std::ops::Range;
 use test_vector::Vector;
 use type_traits::{actions::Adj, Action, Identity};

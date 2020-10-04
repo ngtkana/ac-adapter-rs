@@ -1,5 +1,5 @@
 use crate::Segtree;
-use query_test_2::{query, solve, utils, FromBrute};
+use query_test::{query, solve, utils, FromBrute};
 use std::ops::Range;
 use test_vector::Vector;
 use type_traits::{Assoc, Identity};
