@@ -1,12 +1,14 @@
 mod impl_gen;
 mod impl_query;
-use crate::{gen, query, solve, RandNew};
+
+use queries::gen;
+use query_test::{solve, RandNew};
 use rand::prelude::*;
 use std::{fmt::Debug, marker::PhantomData, ops::Range};
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T>(pub Vec<T>);
-impl<T: Clone> solve::Solve<query::Get<T>> for Vector<T> {
+impl<T: Clone> solve::Solve<queries::Get<T>> for Vector<T> {
     fn solve(&self, i: usize) -> T {
         self.0[i].clone()
     }
@@ -38,7 +40,9 @@ impl<T> Vector<T> {
 
 #[cfg(test)]
 mod tests {
-    use crate::{gen, query, solve, utils, FromBrute, Vector};
+    use super::Vector;
+    use queries::{gen, utils};
+    use query_test::{solve, FromBrute};
     use rand::prelude::*;
     use std::ops::Range;
     use type_traits::{Action, Identity};
@@ -67,19 +71,19 @@ mod tests {
             self.table[i] = self.table[i * 2].clone().op(self.table[i * 2 + 1].clone());
         }
     }
-    impl<T: Identity> solve::Solve<query::Get<T>> for Segtree<T> {
+    impl<T: Identity> solve::Solve<queries::Get<T>> for Segtree<T> {
         fn solve(&self, i: usize) -> T {
             self.table[i + self.table.len() / 2].clone()
         }
     }
-    impl<T: Identity> solve::Mutate<query::Set<T>> for Segtree<T> {
+    impl<T: Identity> solve::Mutate<queries::Set<T>> for Segtree<T> {
         fn mutate(&mut self, (mut i, x): (usize, T)) {
             i += self.len;
             self.table[i] = x;
             (1..=self.lg).map(|p| i >> p).for_each(|j| self.update(j));
         }
     }
-    impl<T: Identity> solve::Solve<query::Fold<T>> for Segtree<T> {
+    impl<T: Identity> solve::Solve<queries::Fold<T>> for Segtree<T> {
         fn solve(&self, range: Range<usize>) -> T {
             let Range { mut start, mut end } = range;
             start += self.len;
@@ -101,7 +105,7 @@ mod tests {
             left.op(right)
         }
     }
-    impl<T, U, P> solve::Solve<query::ForwardUpperBoundByKey<T, U, P>> for Segtree<T>
+    impl<T, U, P> solve::Solve<queries::ForwardUpperBoundByKey<T, U, P>> for Segtree<T>
     where
         T: Identity,
         U: Ord,
@@ -109,7 +113,7 @@ mod tests {
     {
         fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
             let yes = |i: usize| {
-                P::project(<Self as solve::Solve<query::Fold<T>>>::solve(
+                P::project(<Self as solve::Solve<queries::Fold<T>>>::solve(
                     self,
                     range.start..i,
                 )) <= key
@@ -130,17 +134,20 @@ mod tests {
             }
         }
     }
-    impl<T> solve::Mutate<query::RangeApply<T>> for Segtree<T::Space>
+    impl<T> solve::Mutate<queries::RangeApply<T>> for Segtree<T::Space>
     where
         T: Action,
         T::Space: Identity,
     {
         fn mutate(&mut self, (range, action): (Range<usize>, T)) {
             range.for_each(|i| {
-                let x = action
-                    .clone()
-                    .acted(<Self as solve::Solve<query::Get<T::Space>>>::solve(self, i));
-                <Self as solve::Mutate<query::Set<T::Space>>>::mutate(self, (i, x));
+                let x =
+                    action
+                        .clone()
+                        .acted(<Self as solve::Solve<queries::Get<T::Space>>>::solve(
+                            self, i,
+                        ));
+                <Self as solve::Mutate<queries::Set<T::Space>>>::mutate(self, (i, x));
             });
         }
     }
@@ -179,18 +186,18 @@ mod tests {
         }
 
         let mut tester =
-            crate::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
+            query_test::Tester::<StdRng, crate::Vector<Add<u32>>, Segtree<Add<u32>>, G>::new(
                 StdRng::seed_from_u64(42),
-                crate::CONFIG,
+                query_test::CONFIG,
             );
         for _ in 0..100 {
             let command = tester.rng_mut().gen_range(0, 5);
             match command {
-                0 => tester.compare::<query::Get<_>>(),
-                1 => tester.mutate::<query::Set<_>>(),
-                2 => tester.compare::<query::Fold<_>>(),
-                3 => tester.judge::<query::ForwardUpperBoundByKey<_, u32, P>>(),
-                4 => tester.mutate::<query::RangeApply<_>>(),
+                0 => tester.compare::<queries::Get<_>>(),
+                1 => tester.mutate::<queries::Set<_>>(),
+                2 => tester.compare::<queries::Fold<_>>(),
+                3 => tester.judge::<queries::ForwardUpperBoundByKey<_, u32, P>>(),
+                4 => tester.mutate::<queries::RangeApply<_>>(),
                 _ => unreachable!(),
             }
         }

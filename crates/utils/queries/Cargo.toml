@@ -1,5 +1,5 @@
 [package]
-name = "query_test_2"
+name = "queries"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
@@ -7,6 +7,5 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-type_traits = { path = "../type_traits" }
+query_test = { path = "../query_test" }
 rand = "0.7.3"
-yansi = "0.5.0"

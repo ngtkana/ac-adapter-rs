@@ -157,15 +157,16 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use query_test_2::{gen, query, Vector, CONFIG};
+    use queries::gen;
+    use query_test::CONFIG;
     use rand::prelude::*;
+    use test_vector::Vector;
     use type_traits::Action;
 
     type Fp = fp::F998244353;
-    type TesterDualSegtree<T, G> =
-        query_test_2::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
+    type TesterDualSegtree<T, G> = query_test::Tester<StdRng, Vector<T>, crate::DualSegtree<T>, G>;
     type TesterDualSegtreeWith<T, G> =
-        query_test_2::Tester<StdRng, Vector<<T as Action>::Space>, crate::DualSegtreeWith<T>, G>;
+        query_test::Tester<StdRng, Vector<<T as Action>::Space>, crate::DualSegtreeWith<T>, G>;
 
     #[test]
     fn test_add_fp() {
@@ -196,8 +197,8 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 2);
                 match command {
-                    0 => tester.compare_mut::<query::Get<_>>(),
-                    1 => tester.mutate::<query::RangeApply<_>>(),
+                    0 => tester.compare_mut::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::RangeApply<_>>(),
                     _ => unreachable!(),
                 }
             }
@@ -233,8 +234,8 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 2);
                 match command {
-                    0 => tester.compare_mut::<query::Get<_>>(),
-                    1 => tester.mutate::<query::RangeApply<_>>(),
+                    0 => tester.compare_mut::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::RangeApply<_>>(),
                     _ => unreachable!(),
                 }
             }
@@ -270,8 +271,8 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 2);
                 match command {
-                    0 => tester.compare_mut::<query::Get<_>>(),
-                    1 => tester.mutate::<query::RangeApply<_>>(),
+                    0 => tester.compare_mut::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::RangeApply<_>>(),
                     _ => unreachable!(),
                 }
             }
