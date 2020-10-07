@@ -246,15 +246,28 @@ mod tests {
                 InversionValue::from_bool(rng.gen_ratio(1, 2))
             }
         }
+        impl test_vector2::GenKey<u64> for G {
+            fn gen_key(rng: &mut impl Rng) -> u64 {
+                rng.gen_range(0, 20)
+            }
+        }
+        struct P {}
+        impl queries::Pred<Value, u64> for P {
+            fn pred(x: &Value, y: &u64) -> bool {
+                x.inversion < *y
+            }
+        }
 
         let mut tester = Tester::<InversionMerge, G>::new(StdRng::seed_from_u64(42));
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 2);
+                let command = tester.rng_mut().gen_range(0, 4);
                 match command {
                     0 => tester.mutate::<queries::Set<_>>(),
                     1 => tester.compare::<queries::Fold<_>>(),
+                    2 => tester.judge::<queries::SearchForward<_, _, P>>(),
+                    3 => tester.judge::<queries::SearchBackward<_, _, P>>(),
                     _ => unreachable!(),
                 }
             }
