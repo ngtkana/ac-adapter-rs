@@ -1,5 +1,5 @@
+use alg_traits::Identity;
 use std::ops::{Range, RangeBounds};
-use type_traits2::Identity;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segtree<T: Identity> {
@@ -65,9 +65,9 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
+    use alg_traits::{Assoc, Identity};
     use rand::prelude::*;
     use test_vector2::{queries, Vector};
-    use type_traits2::{Assoc, Identity};
 
     type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
 

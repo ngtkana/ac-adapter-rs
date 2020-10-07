@@ -1,9 +1,9 @@
 pub use queries2 as queries;
 
+use alg_traits::Identity;
 use query_test::{solve, Gen, Init};
 use rand::prelude::*;
 use std::ops::Range;
-use type_traits2::Identity;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T: Identity>(pub Vec<T::Value>);
