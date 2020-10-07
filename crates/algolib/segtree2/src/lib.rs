@@ -72,16 +72,45 @@ mod tests {
     type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
 
     #[test]
-    fn test_inversion_value() {
-        type Node = InversionValue;
+    fn test_add_u32() {
+        use alg_traits::arith::Add;
         struct G {}
         impl test_vector2::GenLen for G {
             fn gen_len(rng: &mut impl Rng) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl test_vector2::GenValue<Node> for G {
-            fn gen_value(rng: &mut impl Rng) -> Node {
+        impl test_vector2::GenValue<u32> for G {
+            fn gen_value(rng: &mut impl Rng) -> u32 {
+                rng.gen_range(0, 20)
+            }
+        }
+
+        let mut tester = Tester::<Add<u32>, G>::new(StdRng::seed_from_u64(42));
+        for _ in 0..4 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 2);
+                match command {
+                    0 => tester.mutate::<queries::Set<_>>(),
+                    1 => tester.compare::<queries::Fold<_>>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+
+    #[test]
+    fn test_inversion_value() {
+        type Value = InversionValue;
+        struct G {}
+        impl test_vector2::GenLen for G {
+            fn gen_len(rng: &mut impl Rng) -> usize {
+                rng.gen_range(1, 20)
+            }
+        }
+        impl test_vector2::GenValue<Value> for G {
+            fn gen_value(rng: &mut impl Rng) -> Value {
                 InversionValue::from_bool(rng.gen_ratio(1, 2))
             }
         }
