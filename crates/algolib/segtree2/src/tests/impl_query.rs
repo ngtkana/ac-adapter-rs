@@ -1,8 +1,8 @@
 use crate::Segtree;
+use alg_traits::Identity;
 use query_test::{solve, FromBrute};
 use std::ops::Range;
 use test_vector2::{queries, Vector};
-use type_traits2::Identity;
 
 impl<T: Identity> FromBrute for Segtree<T> {
     type Brute = Vector<T>;

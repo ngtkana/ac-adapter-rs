@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-type_traits2 = { path = "../../utils/type_traits2" }
+alg_traits = { path = "../../algebra/alg_traits" }
 rand = "0.7.3"
 
 [dev-dependencies.query_test]
@@ -16,5 +16,5 @@ branch = "main"
 package = "query_test"
 
 [dev-dependencies]
-test_vector2 = { path = "../../utils/test_vector2" }
+test_vector2 = { path = "../../test_tools/test_vector2" }
 assert-impl = "0.1.3"
