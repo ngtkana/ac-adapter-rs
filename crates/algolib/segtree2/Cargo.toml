@@ -16,6 +16,7 @@ branch = "main"
 package = "query_test"
 
 [dev-dependencies]
+fp = { path = "../../utils/fp" }
 test_vector2 = { path = "../../test_tools/test_vector2" }
 alg_inversion_number = { path = "../../algebra/alg_inversion_number" }
 assert-impl = "0.1.3"
