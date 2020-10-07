@@ -32,12 +32,12 @@ impl<T: Identity> Segtree<T> {
         let mut right = T::identity();
         while start != end {
             if start % 2 == 1 {
-                T::op_left(&mut left, &self.table[start]);
+                T::op_left(&mut left, self.table[start].clone());
                 start += 1;
             }
             if end % 2 == 1 {
                 end -= 1;
-                T::op_right(&self.table[end], &mut right);
+                T::op_right(self.table[end].clone(), &mut right);
             }
             start >>= 1;
             end >>= 1;
@@ -65,56 +65,11 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
-    use alg_traits::{Assoc, Identity};
+    use alg_inversion_number::{InversionMerge, InversionValue};
     use rand::prelude::*;
     use test_vector2::{queries, Vector};
 
     type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct InversionValue {
-        pub zeros: usize,
-        pub ones: usize,
-        pub inversion: usize,
-    }
-    impl InversionValue {
-        fn from_bool(src: bool) -> Self {
-            match src {
-                false => InversionValue {
-                    zeros: 1,
-                    ones: 0,
-                    inversion: 0,
-                },
-                true => InversionValue {
-                    zeros: 0,
-                    ones: 1,
-                    inversion: 0,
-                },
-            }
-        }
-    }
-
-    #[derive(Debug, Clone, PartialEq)]
-    pub struct InversionMerge {}
-    impl Assoc for InversionMerge {
-        type Value = InversionValue;
-        fn op(lhs: InversionValue, rhs: InversionValue) -> InversionValue {
-            InversionValue {
-                zeros: lhs.zeros + rhs.zeros,
-                ones: lhs.ones + rhs.ones,
-                inversion: lhs.inversion + rhs.inversion + lhs.ones * rhs.zeros,
-            }
-        }
-    }
-    impl Identity for InversionMerge {
-        fn identity() -> InversionValue {
-            InversionValue {
-                zeros: 0,
-                ones: 0,
-                inversion: 0,
-            }
-        }
-    }
 
     #[test]
     fn test_inversion_value() {

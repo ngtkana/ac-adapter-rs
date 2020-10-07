@@ -1,0 +1,11 @@
+[package]
+name = "alg_inversion_number"
+version = "0.1.0"
+authors = ["ngtkana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+alg_traits = { path = "../alg_traits" }
+test-case = "1.0.0"
