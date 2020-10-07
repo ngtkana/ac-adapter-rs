@@ -24,6 +24,7 @@ impl<T: Identity> Segtree<T> {
             i >>= 1;
         }
     }
+
     pub fn fold(&self, range: impl RangeBounds<usize>) -> T::Value {
         let Range { mut start, mut end } = open(self.len, range);
         start += self.len;
@@ -44,6 +45,23 @@ impl<T: Identity> Segtree<T> {
         }
         T::op(left, right)
     }
+
+    pub fn search_forward(
+        &self,
+        _range: impl RangeBounds<usize>,
+        _pred: impl FnMut(&T::Value) -> bool,
+    ) -> usize {
+        todo!()
+    }
+
+    pub fn search_backward(
+        &self,
+        _range: impl RangeBounds<usize>,
+        _pred: impl FnMut(&T::Value) -> bool,
+    ) -> usize {
+        todo!()
+    }
+
     fn update(&mut self, i: usize) {
         self.table[i] = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone())
     }
@@ -85,15 +103,29 @@ mod tests {
                 rng.gen_range(0, 20)
             }
         }
+        impl test_vector2::GenKey<u32> for G {
+            fn gen_key(rng: &mut impl Rng) -> u32 {
+                rng.gen_range(0, 100)
+            }
+        }
+
+        struct P {}
+        impl queries::Pred<u32, u32> for P {
+            fn pred(x: &u32, y: &u32) -> bool {
+                x <= y
+            }
+        }
 
         let mut tester = Tester::<Add<u32>, G>::new(StdRng::seed_from_u64(42));
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 2);
+                let command = tester.rng_mut().gen_range(0, 4);
                 match command {
                     0 => tester.mutate::<queries::Set<_>>(),
                     1 => tester.compare::<queries::Fold<_>>(),
+                    2 => tester.judge::<queries::SearchForward<_, _, P>>(),
+                    3 => tester.judge::<queries::SearchBackward<_, _, P>>(),
                     _ => unreachable!(),
                 }
             }

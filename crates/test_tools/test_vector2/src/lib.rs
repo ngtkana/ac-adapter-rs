@@ -28,17 +28,29 @@ where
     P: queries::Pred<T::Value, U>,
 {
     fn judge(&self, (range, key): (Range<usize>, U), output: usize) -> bool {
-        P::pred(
-            &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, range.start..output),
-            &key,
-        ) && (range.end == self.0.len()
-            || P::pred(
-                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(
-                    self,
-                    range.start..output + 1,
-                ),
+        let pred = |end: usize| {
+            P::pred(
+                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, range.start..end),
                 &key,
-            ))
+            )
+        };
+        (range.start == output || pred(output)) && (range.end == output || !pred(output + 1))
+    }
+}
+
+impl<T, U, P> solve::Judge<queries::SearchBackward<T::Value, U, P>> for Vector<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+{
+    fn judge(&self, (range, key): (Range<usize>, U), output: usize) -> bool {
+        let pred = |start: usize| {
+            P::pred(
+                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, start..range.end),
+                &key,
+            )
+        };
+        (range.start == output || !pred(output - 1)) && (range.end == output || pred(output))
     }
 }
 
