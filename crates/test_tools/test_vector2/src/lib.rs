@@ -34,7 +34,8 @@ where
                 &key,
             )
         };
-        (range.start == output || pred(output)) && (range.end == output || !pred(output + 1))
+        (range.start <= output && output <= range.end && range.start == output || pred(output))
+            && (range.end == output || !pred(output + 1))
     }
 }
 
@@ -50,7 +51,10 @@ where
                 &key,
             )
         };
-        (range.start == output || !pred(output - 1)) && (range.end == output || pred(output))
+        (range.start <= output
+            && output <= range.end
+            && (range.start == output || !pred(output - 1)))
+            && (range.end == output || pred(output))
     }
 }
 

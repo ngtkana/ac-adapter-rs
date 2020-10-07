@@ -48,22 +48,122 @@ impl<T: Identity> Segtree<T> {
 
     pub fn search_forward(
         &self,
-        _range: impl RangeBounds<usize>,
-        _pred: impl FnMut(&T::Value) -> bool,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&T::Value) -> bool,
     ) -> usize {
-        todo!()
+        let Range { mut start, mut end } = open(self.len, range);
+        if start == end {
+            start
+        } else {
+            start += self.len;
+            end += self.len;
+            let orig_end = end;
+            let mut crr = T::identity();
+            let mut shift = 0;
+            while start != end {
+                if start % 2 == 1 {
+                    let nxt = T::op(crr.clone(), self.table[start].clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_forward(crr, start, pred);
+                    }
+                    crr = nxt;
+                    start += 1;
+                }
+                start >>= 1;
+                end >>= 1;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let end = (orig_end >> p) - 1;
+                if end % 2 == 0 {
+                    let nxt = T::op(crr.clone(), self.table[end].clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_forward(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_end - self.len
+        }
     }
 
     pub fn search_backward(
         &self,
-        _range: impl RangeBounds<usize>,
-        _pred: impl FnMut(&T::Value) -> bool,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&T::Value) -> bool,
     ) -> usize {
-        todo!()
+        let Range { mut start, mut end } = open(self.len, range);
+        if start == end {
+            start
+        } else {
+            start += self.len;
+            end += self.len;
+            let orig_start_m1 = start - 1;
+            let mut crr = T::identity();
+            let mut shift = 0;
+            while start != end {
+                if end % 2 == 1 {
+                    end -= 1;
+                    let nxt = T::op(self.table[end].clone(), crr.clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_backward(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+                start = (start + 1) >> 1;
+                end >>= 1;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let start = (orig_start_m1 >> p) + 1;
+                if start % 2 == 1 {
+                    let nxt = T::op(self.table[start].clone(), crr.clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_backward(crr, start, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_start_m1 + 1 - self.len
+        }
     }
 
     fn update(&mut self, i: usize) {
         self.table[i] = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone())
+    }
+    fn search_subtree_forward(
+        &self,
+        mut crr: T::Value,
+        mut root: usize,
+        mut pred: impl FnMut(&T::Value) -> bool,
+    ) -> usize {
+        while root < self.len {
+            let nxt = T::op(crr.clone(), self.table[root * 2].clone());
+            root = if pred(&nxt) {
+                crr = nxt;
+                root * 2 + 1
+            } else {
+                root * 2
+            };
+        }
+        root - self.len
+    }
+    fn search_subtree_backward(
+        &self,
+        mut crr: T::Value,
+        mut root: usize,
+        mut pred: impl FnMut(&T::Value) -> bool,
+    ) -> usize {
+        while root < self.len {
+            let nxt = T::op(self.table[root * 2 + 1].clone(), crr.clone());
+            root = if pred(&nxt) {
+                crr = nxt;
+                root * 2
+            } else {
+                root * 2 + 1
+            };
+        }
+        root + 1 - self.len
     }
 }
 
