@@ -22,12 +22,36 @@ impl<T: Identity> solve::Solve<queries::Fold<T::Value>> for Vector<T> {
     }
 }
 
+impl<T, U, P> solve::Judge<queries::SearchForward<T::Value, U, P>> for Vector<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+{
+    fn judge(&self, (range, key): (Range<usize>, U), output: usize) -> bool {
+        P::pred(
+            &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, range.start..output),
+            &key,
+        ) && (range.end == self.0.len()
+            || P::pred(
+                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(
+                    self,
+                    range.start..output + 1,
+                ),
+                &key,
+            ))
+    }
+}
+
 pub trait GenLen {
     fn gen_len(rng: &mut impl Rng) -> usize;
 }
 
 pub trait GenValue<T> {
     fn gen_value(rng: &mut impl Rng) -> T;
+}
+
+pub trait GenKey<T> {
+    fn gen_key(rng: &mut impl Rng) -> T;
 }
 
 impl<T: Identity, G: GenLen + GenValue<T::Value>> Init<G> for Vector<T> {
@@ -64,5 +88,27 @@ impl<T: Identity, G: GenValue<T::Value>> Gen<queries::Set<T::Value>, G> for Vect
 impl<T: Identity, G> Gen<queries::Fold<T::Value>, G> for Vector<T> {
     fn gen(&self, rng: &mut impl Rng) -> Range<usize> {
         self.gen_range(rng)
+    }
+}
+
+impl<T, U, P, G> Gen<queries::SearchForward<T::Value, U, P>, G> for Vector<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+    G: GenKey<U>,
+{
+    fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
+        (self.gen_range(rng), G::gen_key(rng))
+    }
+}
+
+impl<T, U, P, G> Gen<queries::SearchBackward<T::Value, U, P>, G> for Vector<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+    G: GenKey<U>,
+{
+    fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
+        (self.gen_range(rng), G::gen_key(rng))
     }
 }

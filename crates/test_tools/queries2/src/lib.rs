@@ -7,6 +7,16 @@ pub struct Set<T>(PhantomData<T>);
 #[query_test::query(fn(Range<usize>) -> T)]
 pub struct Fold<T>(PhantomData<T>);
 
+#[query_test::query(fn(Range<usize>, U) -> usize)]
+pub struct SearchForward<T, U, P>(PhantomData<(T, U, P)>);
+
+#[query_test::query(fn(Range<usize>, U) -> usize)]
+pub struct SearchBackward<T, U, P>(PhantomData<(T, U, P)>);
+
+pub trait Pred<T, U> {
+    fn pred(t: &T, u: &U) -> bool;
+}
+
 #[cfg(test)]
 mod test {
     use super::{Fold, Set};
