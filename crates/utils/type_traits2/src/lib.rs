@@ -16,21 +16,3 @@ pub trait Assoc {
 pub trait Identity: Assoc {
     fn identity() -> Self::Value;
 }
-
-#[derive(Debug, Clone, PartialEq)]
-pub struct InversionValue {
-    pub zeros: usize,
-    pub ones: usize,
-    pub inversion: usize,
-}
-pub struct InversionMerge {}
-impl Assoc for InversionMerge {
-    type Value = InversionValue;
-    fn op(lhs: InversionValue, rhs: InversionValue) -> InversionValue {
-        InversionValue {
-            zeros: lhs.zeros + rhs.zeros,
-            ones: lhs.ones + rhs.ones,
-            inversion: lhs.inversion + rhs.inversion + lhs.ones * rhs.zeros,
-        }
-    }
-}

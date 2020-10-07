@@ -1,20 +1,15 @@
 [package]
-name = "segtree2"
+name = "queries2"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies]
-type_traits2 = { path = "../../utils/type_traits2" }
-rand = "0.7.3"
-
-[dev-dependencies.query_test]
+[dependencies.query_test]
 git = "https://github.com/ngtkana/query_test.git"
 branch = "main"
 package = "query_test"
 
-[dev-dependencies]
-test_vector2 = { path = "../../utils/test_vector2" }
+[dependencies]
 assert-impl = "0.1.3"

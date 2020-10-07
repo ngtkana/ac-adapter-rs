@@ -1,10 +1,5 @@
-mod impl_query;
-mod queries;
-pub mod traits;
-mod vector;
-
 use std::ops::{Range, RangeBounds};
-use traits::Identity;
+use type_traits2::Identity;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Segtree<T: Identity> {
@@ -69,11 +64,12 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    mod impl_query;
     use rand::prelude::*;
-    use traits::{Assoc, Identity};
+    use test_vector2::{queries, Vector};
+    use type_traits2::{Assoc, Identity};
 
-    type Tester<T, G> = query_test::Tester<StdRng, vector::Vector<T>, crate::Segtree<T>, G>;
+    type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
 
     #[derive(Debug, Clone, PartialEq)]
     pub struct InversionValue {
@@ -124,12 +120,12 @@ mod tests {
     fn test_inversion_value() {
         type Node = InversionValue;
         struct G {}
-        impl vector::GenLen for G {
+        impl test_vector2::GenLen for G {
             fn gen_len(rng: &mut impl Rng) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl vector::GenValue<Node> for G {
+        impl test_vector2::GenValue<Node> for G {
             fn gen_value(rng: &mut impl Rng) -> Node {
                 InversionValue::from_bool(rng.gen_ratio(1, 2))
             }

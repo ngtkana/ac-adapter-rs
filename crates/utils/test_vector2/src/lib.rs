@@ -1,7 +1,9 @@
-use crate::{queries, traits::Identity};
+pub use queries2 as queries;
+
 use query_test::{solve, Gen, Init};
 use rand::prelude::*;
 use std::ops::Range;
+use type_traits2::Identity;
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T: Identity>(pub Vec<T::Value>);
