@@ -22,3 +22,23 @@ impl<T: Identity> solve::Solve<queries::Fold<T::Value>> for Segtree<T> {
         self.fold(range)
     }
 }
+
+impl<T, U, P> solve::Solve<queries::SearchForward<T::Value, U, P>> for Segtree<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+{
+    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
+        self.search_forward(range, |t| P::pred(t, &key))
+    }
+}
+
+impl<T, U, P> solve::Solve<queries::SearchBackward<T::Value, U, P>> for Segtree<T>
+where
+    T: Identity,
+    P: queries::Pred<T::Value, U>,
+{
+    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
+        self.search_backward(range, |t| P::pred(t, &key))
+    }
+}
