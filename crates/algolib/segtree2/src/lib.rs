@@ -183,6 +183,7 @@ fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     mod impl_query;
+    mod point_add_range_sum;
     use alg_inversion_number::{InversionMerge, InversionValue};
     use rand::prelude::*;
     use test_vector2::{queries, Vector};
