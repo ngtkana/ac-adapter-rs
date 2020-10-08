@@ -117,7 +117,7 @@ where
         &self
     }
     fn run_one(&self, name: &str) {
-        echo_green("Yosping", &format!("{}/{}", &self.problem_name, name));
+        echo_green("Yospoing", &format!("{}/{}", &self.problem_name, name));
         let read = |kind: &str| -> String {
             let path = Path::new(&self.problem_path)
                 .join(PathBuf::from(kind))
