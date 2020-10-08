@@ -29,7 +29,7 @@ fn main(in_str: &str, out_str: &mut String) {
             1 => {
                 let l = buf.usize();
                 let r = buf.usize();
-                let ans = 1 + seg.fold(l..r);
+                let ans = seg.fold(l..r);
                 out_str.push_str(&format!("{}\n", ans));
             }
             _ => panic!(),
@@ -117,7 +117,7 @@ where
         &self
     }
     fn run_one(&self, name: &str) {
-        echo_green("Yosping", &format!("{}/{}", &self.problem_name, name));
+        echo_green("Yospoing", &format!("{}/{}", &self.problem_name, name));
         let read = |kind: &str| -> String {
             let path = Path::new(&self.problem_path)
                 .join(PathBuf::from(kind))
@@ -146,7 +146,6 @@ where
             println!("{}", &in_string);
             println!();
             println!("{}", Paint::green("out"));
-            println!("{}", &in_string);
             println!("{}", prettydiff::diff_lines(&result, &out_string));
             println!();
             std::process::abort();
