@@ -17,7 +17,7 @@ branch = "main"
 package = "query_test"
 
 [dev-dependencies]
-fp = { path = "../../utils/fp" }
+fp2 = { path = "../../utils/fp2" }
 test_vector2 = { path = "../../test_tools/test_vector2" }
 yosupo = { path = "../../test_tools/yosupo" }
 alg_inversion_number = { path = "../../algebra/alg_inversion_number" }
