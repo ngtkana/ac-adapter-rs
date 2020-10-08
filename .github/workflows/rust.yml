@@ -34,10 +34,16 @@ jobs:
   run-ignored-tests:
     runs-on: ubuntu-latest
     steps:
+
     - uses: actions/checkout@v2
       with:
           submodules: true
+
+    - name: Install python libraries
+      run: pip3 install -r library-checker-problems/requirements.txt
+
     - name: Generate point_add_range_sum
       run: python3 library-checker-problems/generate.py -p point_add_range_sum
+
     - name: Run ignored tests
       run: cargo test -- --nocapture --ignored
