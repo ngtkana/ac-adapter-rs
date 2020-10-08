@@ -11,14 +11,36 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
     steps:
     - uses: actions/checkout@v2
     - name: Build
-      run: cargo build --verbose
+      run: cargo build
+
+  clippy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Clippy
-      run: cargo clippy --verbose
+      run: cargo clippy
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
     - name: Run tests
-      run: cargo test --verbose
+      run: cargo test
+
+  run-ignored-tests:
+    runs-on: ubuntu-latest
+    steps:
+
+    - uses: actions/checkout@v2
+      with:
+          submodules: true
+
+    - name: Install python libraries
+      run: pip3 install -r library-checker-problems/requirements.txt
+
+    - name: Run ignored tests
+      run: cargo test -- --nocapture --ignored
