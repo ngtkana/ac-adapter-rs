@@ -46,3 +46,9 @@ where
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    mod impl_query;
+    use super::LazySegtree;
+}
