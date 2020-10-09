@@ -1,3 +1,4 @@
+use alg_traits::Assoc;
 use query_test::Query;
 use std::{marker::PhantomData, ops::Range};
 
@@ -12,6 +13,9 @@ pub struct SearchForward<T, U, P>(PhantomData<(T, U, P)>);
 
 #[query_test::query(fn(Range<usize>, U) -> usize)]
 pub struct SearchBackward<T, U, P>(PhantomData<(T, U, P)>);
+
+#[query_test::query(fn(Range<usize>, <A as Assoc>::Value))]
+pub struct RangeApply<A: Assoc>(PhantomData<A>);
 
 pub trait Pred<T, U> {
     fn pred(t: &T, u: &U) -> bool;
