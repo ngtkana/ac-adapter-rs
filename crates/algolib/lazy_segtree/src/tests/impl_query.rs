@@ -6,7 +6,7 @@ use test_vector2::{queries, Vector};
 
 impl<A, T> FromBrute for LazySegtree<A, T>
 where
-    A: Action<Point = T::Value>,
+    A: Action<Point = T::Value> + Identity,
     T: Identity,
 {
     type Brute = Vector<T>;
@@ -17,7 +17,7 @@ where
 
 impl<A, T> solve::Mutate<queries::Set<T::Value>> for LazySegtree<A, T>
 where
-    A: Action<Point = T::Value>,
+    A: Action<Point = T::Value> + Identity,
     T: Identity,
 {
     fn mutate(&mut self, (i, x): (usize, T::Value)) {
@@ -27,7 +27,7 @@ where
 
 impl<A, T> solve::Solve<queries::Fold<T::Value>> for LazySegtree<A, T>
 where
-    A: Action<Point = T::Value>,
+    A: Action<Point = T::Value> + Identity,
     T: Identity,
 {
     fn solve(&self, range: Range<usize>) -> T::Value {
@@ -37,7 +37,7 @@ where
 
 impl<A, T, U, P> solve::Solve<queries::SearchForward<T::Value, U, P>> for LazySegtree<A, T>
 where
-    A: Action<Point = T::Value>,
+    A: Action<Point = T::Value> + Identity,
     T: Identity,
     P: queries::Pred<T::Value, U>,
 {
@@ -48,11 +48,21 @@ where
 
 impl<A, T, U, P> solve::Solve<queries::SearchBackward<T::Value, U, P>> for LazySegtree<A, T>
 where
-    A: Action<Point = T::Value>,
+    A: Action<Point = T::Value> + Identity,
     T: Identity,
     P: queries::Pred<T::Value, U>,
 {
     fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
         self.search_backward(range, |t| P::pred(t, &key))
+    }
+}
+
+impl<A, T> solve::Mutate<queries::RangeApply<A>> for LazySegtree<A, T>
+where
+    A: Action<Point = T::Value> + Identity,
+    T: Identity,
+{
+    fn mutate(&mut self, (range, a): (Range<usize>, A::Value)) {
+        self.apply(range, a);
     }
 }
