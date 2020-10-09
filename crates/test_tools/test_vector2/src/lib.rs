@@ -83,6 +83,10 @@ pub trait GenKey<T> {
     fn gen_key(rng: &mut impl Rng) -> T;
 }
 
+pub trait GenActor<A: Action> {
+    fn gen_actor(rng: &mut impl Rng) -> A::Value;
+}
+
 impl<T: Identity, G: GenLen + GenValue<T::Value>> Init<G> for Vector<T> {
     fn init(rng: &mut impl Rng) -> Self {
         let len = G::gen_len(rng);
@@ -139,5 +143,16 @@ where
 {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
         (self.gen_range(rng), G::gen_key(rng))
+    }
+}
+
+impl<A, T, G> Gen<queries::RangeApply<A>, G> for Vector<T>
+where
+    A: Action<Point = T::Value>,
+    T: Identity,
+    G: GenActor<A>,
+{
+    fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, A::Value) {
+        (self.gen_range(rng), G::gen_actor(rng))
     }
 }
