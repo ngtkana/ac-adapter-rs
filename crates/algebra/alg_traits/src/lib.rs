@@ -7,7 +7,7 @@ use std::fmt::Debug;
 pub trait Element: Debug + Clone + PartialEq {}
 impl<T: Debug + Clone + PartialEq> Element for T {}
 
-pub trait Assoc {
+pub trait Assoc: std::fmt::Debug {
     type Value: Element;
     fn op(lhs: Self::Value, rhs: Self::Value) -> Self::Value;
     fn op_left(lhs: &mut Self::Value, rhs: Self::Value) {
