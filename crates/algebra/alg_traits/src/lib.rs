@@ -20,3 +20,11 @@ pub trait Assoc {
 pub trait Identity: Assoc {
     fn identity() -> Self::Value;
 }
+pub trait Action {
+    type Operator: Element;
+    type Point: Element;
+    fn op(operator: Self::Operator, point: Self::Point) -> Self::Point;
+    fn op_assign(operator: Self::Operator, point: &mut Self::Point) {
+        *point = Self::op(operator, point.clone())
+    }
+}
