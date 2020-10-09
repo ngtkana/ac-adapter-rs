@@ -8,8 +8,7 @@ edition = "2018"
 
 [dependencies]
 alg_traits = { path = "../../algebra/alg_traits" }
-rand = "0.7.3"
-prettydiff = "0.3.1"
+open = { path = "../../utils/open" }
 
 [dev-dependencies.query_test]
 git = "https://github.com/ngtkana/query_test.git"
@@ -22,4 +21,4 @@ test_vector2 = { path = "../../test_tools/test_vector2" }
 yosupo = { path = "../../test_tools/yosupo" }
 alg_inversion_number = { path = "../../algebra/alg_inversion_number" }
 ngtio = { path = "../../utils/ngtio" }
-assert-impl = "0.1.3"
+rand = "0.7.3"

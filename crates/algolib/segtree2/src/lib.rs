@@ -26,7 +26,7 @@ impl<T: Identity> Segtree<T> {
     }
 
     pub fn fold(&self, range: impl RangeBounds<usize>) -> T::Value {
-        let Range { mut start, mut end } = open(self.len, range);
+        let Range { mut start, mut end } = open::open(self.len, range);
         start += self.len;
         end += self.len;
         let mut left = T::identity();
@@ -51,7 +51,7 @@ impl<T: Identity> Segtree<T> {
         range: impl RangeBounds<usize>,
         mut pred: impl FnMut(&T::Value) -> bool,
     ) -> usize {
-        let Range { mut start, mut end } = open(self.len, range);
+        let Range { mut start, mut end } = open::open(self.len, range);
         if start == end {
             start
         } else {
@@ -92,7 +92,7 @@ impl<T: Identity> Segtree<T> {
         range: impl RangeBounds<usize>,
         mut pred: impl FnMut(&T::Value) -> bool,
     ) -> usize {
-        let Range { mut start, mut end } = open(self.len, range);
+        let Range { mut start, mut end } = open::open(self.len, range);
         if start == end {
             start
         } else {
@@ -165,19 +165,6 @@ impl<T: Identity> Segtree<T> {
         }
         root + 1 - self.len
     }
-}
-
-fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
-    use std::ops::Bound::*;
-    (match range.start_bound() {
-        Unbounded => 0,
-        Included(&x) => x,
-        Excluded(&x) => x + 1,
-    })..(match range.end_bound() {
-        Excluded(&x) => x,
-        Included(&x) => x + 1,
-        Unbounded => len,
-    })
 }
 
 #[cfg(test)]
