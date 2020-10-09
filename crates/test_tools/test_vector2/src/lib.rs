@@ -1,10 +1,11 @@
 pub use queries2 as queries;
 
-use alg_traits::Identity;
+use alg_traits::{Action, Identity};
 use query_test::{solve, Gen, Init};
 use rand::prelude::*;
 use std::ops::Range;
 
+// TODO: うーんでもやっぱり Vec<T> にできる気がします。
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T: Identity>(pub Vec<T::Value>);
 
@@ -55,6 +56,18 @@ where
             && output <= range.end
             && (range.start == output || !pred(output - 1)))
             && (range.end == output || pred(output))
+    }
+}
+
+impl<A, T> solve::Mutate<queries::RangeApply<A>> for Vector<T>
+where
+    A: Action<Point = T::Value>,
+    T: Identity,
+{
+    fn mutate(&mut self, (range, a): (Range<usize>, A::Value)) {
+        self.0[range]
+            .iter_mut()
+            .for_each(|x| A::act_assign(a.clone(), x));
     }
 }
 
