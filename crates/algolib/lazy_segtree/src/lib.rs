@@ -172,6 +172,7 @@ where
 #[cfg(test)]
 mod tests {
     mod impl_query;
+    mod range_affine_range_sum;
     use super::LazySegtree;
 
     use alg_traits::{Action, Assoc, Identity};
