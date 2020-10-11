@@ -1,104 +1,31 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
+//! Union Find のアルゴリズムで Disjoint Set Datastructure をします。
+use std::cell::Cell;
 
-//! union-find です。
-
-#[derive(Clone, Copy, Debug)]
-enum ParentOrSize {
-    Parent(usize),
-    Size(usize),
-}
-
-/// union-find です。
 #[derive(Clone, Debug)]
-pub struct UnionFind(Vec<ParentOrSize>);
-
+pub struct UnionFind(Vec<Cell<ParentOrSize>>);
 impl UnionFind {
     /// 構築です。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let uf = union_find::UnionFind::with_len(3);
-    /// ```
-    pub fn with_len(len: usize) -> Self {
-        Self(vec![ParentOrSize::Size(1); len])
+    pub fn new(len: usize) -> Self {
+        Self(vec![Cell::new(ParentOrSize::Size(1)); len])
     }
-
-    /// 空かどうかです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// assert!(!union_find::UnionFind::with_len(3).is_empty());
-    /// assert!(union_find::UnionFind::with_len(0).is_empty());
-    /// ```
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-
-    /// 長さです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// assert_eq!(union_find::UnionFind::with_len(3).len(), 3);
-    /// ```
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-
     /// 親を探します。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut uf = union_find::UnionFind::with_len(3);
-    /// assert_ne!(uf.find(0), uf.find(1));
-    /// uf.unite(0, 1);
-    /// assert_eq!(uf.find(0), uf.find(1));
-    /// ```
-    pub fn find(&mut self, i: usize) -> usize {
-        self.find_and_size(i).0
+    pub fn find(&self, i: usize) -> usize {
+        self.find_and_size(i).root
     }
-
     /// 属する成分のサイズです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut uf = union_find::UnionFind::with_len(3);
-    /// assert_eq!(uf.size(0), 1);
-    /// uf.unite(0, 1);
-    /// assert_eq!(uf.size(0), 2);
-    /// ```
-    pub fn size(&mut self, i: usize) -> usize {
-        self.find_and_size(i).1
+    pub fn size(&self, i: usize) -> usize {
+        self.find_and_size(i).size
     }
-
-    fn find_and_size(&mut self, i: usize) -> (usize, usize) {
-        assert!(i < self.len());
-        match self.0[i] {
-            ParentOrSize::Parent(p) => {
-                let ret = self.find_and_size(p);
-                self.0[i] = ParentOrSize::Parent(ret.0);
-                ret
-            }
-            ParentOrSize::Size(si) => (i, si),
-        }
-    }
-
     /// くっつけます。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut uf = union_find::UnionFind::with_len(3);
-    /// uf.unite(0, 1);
-    /// ```
     pub fn unite(&mut self, u: usize, v: usize) {
-        let (mut u, su) = self.find_and_size(u);
-        let (mut v, sv) = self.find_and_size(v);
+        let RootAndSize {
+            root: mut u,
+            size: su,
+        } = self.find_and_size(u);
+        let RootAndSize {
+            root: mut v,
+            size: sv,
+        } = self.find_and_size(v);
         if u == v {
             return;
         }
@@ -106,29 +33,57 @@ impl UnionFind {
             std::mem::swap(&mut u, &mut v);
             std::mem::swap(&mut v, &mut u);
         }
-        self.0[v] = ParentOrSize::Size(su + sv);
-        self.0[u] = ParentOrSize::Parent(v);
+        self.0[v].set(ParentOrSize::Size(su + sv));
+        self.0[u].set(ParentOrSize::Parent(v));
     }
-
-    /// 同じ連結成分に入っているかどうかです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// let mut uf = union_find::UnionFind::with_len(3);
-    /// assert!(!uf.same(0, 1));
-    /// uf.unite(0, 1);
-    /// assert!(uf.same(0, 1));
-    /// ```
-    pub fn same(&mut self, u: usize, v: usize) -> bool {
+    /// 同じ連結成分に入っていれば `true` です。
+    pub fn same(&self, u: usize, v: usize) -> bool {
         self.find(u) == self.find(v)
     }
+    /// 根ならば `true` です。
+    pub fn is_root(&self, u: usize) -> bool {
+        self.find(u) == u
+    }
+    fn find_and_size(&self, i: usize) -> RootAndSize {
+        assert!(i < self.0.len());
+        match self.0[i].get() {
+            ParentOrSize::Parent(p) => {
+                let ret = self.find_and_size(p);
+                self.0[i].set(ParentOrSize::Parent(ret.root));
+                ret
+            }
+            ParentOrSize::Size(size) => RootAndSize { root: i, size },
+        }
+    }
+}
+#[derive(Clone, Copy, Debug)]
+enum ParentOrSize {
+    Parent(usize),
+    Size(usize),
+}
+#[derive(Clone, Copy, Debug)]
+struct RootAndSize {
+    root: usize,
+    size: usize,
 }
 
 #[cfg(test)]
 mod tests {
+    use super::UnionFind;
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn test_hand() {
+        let mut uf = UnionFind::new(5);
+        assert!((0..5).all(|i| uf.is_root(i) && uf.size(i) == 1));
+        assert!((0..5).all(|i| (0..5).all(|j| i == j || !uf.same(i, j))));
+
+        uf.unite(0, 2);
+        assert!(uf.size(0) == 2);
+        assert!(uf.size(1) == 1);
+        assert!(uf.size(2) == 2);
+        assert!(uf.size(3) == 1);
+        assert!(uf.size(4) == 1);
+        assert!((0..5)
+            .all(|i| (0..5).all(|j| i == j || uf.same(i, j) == matches!((i, j), (0, 2) | (2, 0)))));
     }
 }
