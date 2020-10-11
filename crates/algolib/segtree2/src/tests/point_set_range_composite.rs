@@ -5,6 +5,7 @@ use yosupo::YosupoTest;
 
 type Fp = fp2::F998244353;
 
+#[derive(Debug, Clone, PartialEq)]
 struct X {}
 impl Assoc for X {
     type Value = (Fp, Fp);
