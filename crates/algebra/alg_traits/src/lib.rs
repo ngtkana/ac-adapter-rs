@@ -28,6 +28,7 @@ pub trait Action: Assoc {
     }
 }
 
+// Option
 impl<T: Assoc> Assoc for Option<T> {
     type Value = Option<T::Value>;
     fn op(lhs: Option<T::Value>, rhs: Option<T::Value>) -> Self::Value {
@@ -51,5 +52,18 @@ impl<A: Action> Action for Option<A> {
         } else {
             x
         }
+    }
+}
+
+// Tuple of two types
+impl<T: Assoc, U: Assoc> Assoc for (T, U) {
+    type Value = (T::Value, U::Value);
+    fn op(lhs: Self::Value, rhs: Self::Value) -> Self::Value {
+        (T::op(lhs.0, rhs.0), U::op(lhs.1, rhs.1))
+    }
+}
+impl<T: Identity, U: Identity> Identity for (T, U) {
+    fn identity() -> <Self as Assoc>::Value {
+        (T::identity(), U::identity())
     }
 }
