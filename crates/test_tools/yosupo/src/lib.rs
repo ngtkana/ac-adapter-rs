@@ -98,7 +98,7 @@ where
         let mut result = String::new();
         (self.main)(&in_string, &mut result);
 
-        if &result != &out_string {
+        if result != out_string {
             println!();
             println!("{}: test failed!", Paint::red("error").bold());
             println!();
