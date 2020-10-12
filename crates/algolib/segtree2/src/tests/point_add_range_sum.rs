@@ -1,7 +1,5 @@
 use crate::Segtree;
 use alg_traits::arith::Add;
-use std::path::PathBuf;
-use yosupo::YosupoTest;
 
 const PROBLEM_DIR: &'static str =
     "../../../library-checker-problems/datastructure/point_add_range_sum";
@@ -35,7 +33,5 @@ fn main(in_str: &str, out_str: &mut String) {
 #[test]
 #[ignore]
 fn point_add_range_sum() {
-    YosupoTest::new(main, PathBuf::from(PROBLEM_DIR))
-        .generate()
-        .run_all();
+    yosupo::run_all(&PROBLEM_DIR, main);
 }
