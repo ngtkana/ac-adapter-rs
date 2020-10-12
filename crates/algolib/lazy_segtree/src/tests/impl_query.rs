@@ -15,6 +15,15 @@ where
     }
 }
 
+impl<A, T> solve::Solve<queries::Get<T::Value>> for LazySegtree<A, T>
+where
+    A: Action<Point = T::Value> + Identity,
+    T: Identity,
+{
+    fn solve(&self, i: usize) -> T::Value {
+        self.get(i)
+    }
+}
 impl<A, T> solve::Mutate<queries::Set<T::Value>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,

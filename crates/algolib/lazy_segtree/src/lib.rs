@@ -33,6 +33,14 @@ where
         }
     }
 
+    fn get(&self, mut i: usize) -> T::Value {
+        i += self.len;
+        for p in (1..=self.lg).rev() {
+            self.push(i >> p);
+        }
+        self.table.borrow()[i].clone()
+    }
+
     fn set(&mut self, mut i: usize, x: T::Value) {
         i += self.len;
         for p in (1..=self.lg).rev() {
@@ -357,9 +365,10 @@ mod tests {
             for _ in 0..1000 {
                 let command = tester.rng_mut().gen_range(0, 10);
                 match command {
-                    0 => tester.mutate::<queries::Set<_>>(),
-                    1 => tester.compare::<queries::Fold<_>>(),
-                    2..=7 => tester.mutate::<queries::RangeApply<_>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
+                    3..=7 => tester.mutate::<queries::RangeApply<_>>(),
                     8 => tester.judge::<queries::SearchForward<_, u32, P>>(),
                     9 => tester.judge::<queries::SearchBackward<_, u32, P>>(),
                     _ => unreachable!(),
