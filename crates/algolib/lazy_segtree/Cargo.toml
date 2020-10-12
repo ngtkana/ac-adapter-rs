@@ -1,5 +1,5 @@
 [package]
-name = "segtree2"
+name = "lazy_segtree"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
@@ -16,9 +16,8 @@ tag = "v0.1.0"
 package = "query_test"
 
 [dev-dependencies]
-fp2 = { path = "../../utils/fp2" }
+rand = "0.7.3"
 test_vector2 = { path = "../../test_tools/test_vector2" }
 yosupo = { path = "../../test_tools/yosupo" }
-alg_inversion_number = { path = "../../algebra/alg_inversion_number" }
 ngtio = { path = "../../utils/ngtio" }
-rand = "0.7.3"
+fp2 = { path = "../../utils/fp2" }

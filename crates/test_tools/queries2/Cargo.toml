@@ -8,8 +8,9 @@ edition = "2018"
 
 [dependencies.query_test]
 git = "https://github.com/ngtkana/query_test.git"
-branch = "main"
+tag = "v0.1.0"
 package = "query_test"
 
 [dependencies]
+alg_traits = { path = "../../algebra/alg_traits" }
 assert-impl = "0.1.3"

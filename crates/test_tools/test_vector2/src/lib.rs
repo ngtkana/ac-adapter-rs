@@ -1,10 +1,11 @@
 pub use queries2 as queries;
 
-use alg_traits::Identity;
+use alg_traits::{Action, Identity};
 use query_test::{solve, Gen, Init};
 use rand::prelude::*;
 use std::ops::Range;
 
+// TODO: うーんでもやっぱり Vec<T> にできる気がします。
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T: Identity>(pub Vec<T::Value>);
 
@@ -58,6 +59,18 @@ where
     }
 }
 
+impl<A, T> solve::Mutate<queries::RangeApply<A>> for Vector<T>
+where
+    A: Action<Point = T::Value>,
+    T: Identity,
+{
+    fn mutate(&mut self, (range, a): (Range<usize>, A::Value)) {
+        self.0[range]
+            .iter_mut()
+            .for_each(|x| A::act_assign(a.clone(), x));
+    }
+}
+
 pub trait GenLen {
     fn gen_len(rng: &mut impl Rng) -> usize;
 }
@@ -68,6 +81,10 @@ pub trait GenValue<T> {
 
 pub trait GenKey<T> {
     fn gen_key(rng: &mut impl Rng) -> T;
+}
+
+pub trait GenActor<A: Action> {
+    fn gen_actor(rng: &mut impl Rng) -> A::Value;
 }
 
 impl<T: Identity, G: GenLen + GenValue<T::Value>> Init<G> for Vector<T> {
@@ -126,5 +143,16 @@ where
 {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
         (self.gen_range(rng), G::gen_key(rng))
+    }
+}
+
+impl<A, T, G> Gen<queries::RangeApply<A>, G> for Vector<T>
+where
+    A: Action<Point = T::Value>,
+    T: Identity,
+    G: GenActor<A>,
+{
+    fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, A::Value) {
+        (self.gen_range(rng), G::gen_actor(rng))
     }
 }
