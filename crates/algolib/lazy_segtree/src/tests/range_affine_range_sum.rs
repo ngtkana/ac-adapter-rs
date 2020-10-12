@@ -1,7 +1,5 @@
 use crate::LazySegtree;
 use alg_traits::{arith::Add, Action, Assoc, Identity};
-use std::path::PathBuf;
-use yosupo::YosupoTest;
 
 const PROBLEM_DIR: &'static str =
     "../../../library-checker-problems/datastructure/range_affine_range_sum";
@@ -60,7 +58,5 @@ fn main(in_str: &str, out_str: &mut String) {
 #[test]
 #[ignore]
 fn range_affine_range_sum() {
-    YosupoTest::new(main, PathBuf::from(PROBLEM_DIR))
-        .generate()
-        .run_all();
+    yosupo::run_all(&PROBLEM_DIR, main);
 }
