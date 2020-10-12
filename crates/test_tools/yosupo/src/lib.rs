@@ -110,5 +110,6 @@ where
             println!();
             std::process::abort();
         }
+        echo_green("Succeeded", &format!("{}/{}", &self.problem_name, name));
     }
 }
