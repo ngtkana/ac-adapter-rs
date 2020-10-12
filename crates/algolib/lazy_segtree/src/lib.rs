@@ -33,6 +33,14 @@ where
         }
     }
 
+    fn get(&self, mut i: usize) -> T::Value {
+        i += self.len;
+        for p in (1..=self.lg).rev() {
+            self.push(i >> p);
+        }
+        self.table.borrow()[i].clone()
+    }
+
     fn set(&mut self, mut i: usize, x: T::Value) {
         i += self.len;
         for p in (1..=self.lg).rev() {
@@ -85,14 +93,7 @@ where
         if start != end {
             start += self.len;
             end += self.len;
-            for p in (1..=self.lg).rev() {
-                if ((start >> p) << p) != start {
-                    self.push(start >> p);
-                }
-                if ((end >> p) << p) != end {
-                    self.push((end - 1) >> p);
-                }
-            }
+            self.level_range(start..end);
             {
                 let orig_start = start;
                 let orig_end = end;
@@ -122,20 +123,92 @@ where
         }
     }
 
-    fn search_forward<R, F>(&self, range: R, pred: F) -> usize
+    fn search_forward<R, F>(&self, range: R, mut pred: F) -> usize
     where
         R: RangeBounds<usize>,
         F: FnMut(&T::Value) -> bool,
     {
-        todo!()
+        let Range { mut start, mut end } = open::open(self.len, range);
+        if start == end {
+            start
+        } else {
+            start += self.len;
+            end += self.len;
+            self.level_range(start..end);
+
+            let mut crr = T::identity();
+            let mut shift = 0;
+            let orig_start = start;
+            let orig_end = end;
+            while start != end {
+                if start % 2 == 1 {
+                    let nxt = T::op(crr.clone(), self.table.borrow()[start].clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_forward(crr, start, pred);
+                    }
+                    crr = nxt;
+                    start += 1;
+                }
+                start >>= 1;
+                end >>= 1;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let end = (orig_end >> p) - 1;
+                if end % 2 == 0 {
+                    let nxt = T::op(crr.clone(), self.table.borrow()[end].clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_forward(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_end - self.len
+        }
     }
 
-    fn search_backward<R, F>(&self, range: R, pred: F) -> usize
+    fn search_backward<R, F>(&self, range: R, mut pred: F) -> usize
     where
         R: RangeBounds<usize>,
         F: FnMut(&T::Value) -> bool,
     {
-        todo!()
+        let Range { mut start, mut end } = open::open(self.len, range);
+        if start == end {
+            start
+        } else {
+            start += self.len;
+            end += self.len;
+            self.level_range(start..end);
+
+            let mut crr = T::identity();
+            let mut shift = 0;
+            let orig_start = start;
+            let orig_end = end;
+            while start != end {
+                if end % 2 == 1 {
+                    end -= 1;
+                    let nxt = T::op(self.table.borrow()[end].clone(), crr.clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_backward(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+                start = (start + 1) >> 1;
+                end >>= 1;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let start = ((orig_start - 1) >> p) + 1;
+                if start % 2 == 1 {
+                    let nxt = T::op(self.table.borrow()[start].clone(), crr.clone());
+                    if !pred(&nxt) {
+                        return self.search_subtree_backward(crr, start, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_start - self.len
+        }
     }
 
     fn peek_one(&self, mut i: usize) -> T::Value {
@@ -148,6 +221,50 @@ where
     }
     fn peek(&self) -> Vec<T::Value> {
         (0..self.len).map(|i| self.peek_one(i)).collect::<Vec<_>>()
+    }
+    fn search_subtree_forward<F>(&self, mut crr: T::Value, mut root: usize, mut pred: F) -> usize
+    where
+        F: FnMut(&T::Value) -> bool,
+    {
+        while root < self.len {
+            self.push(root);
+            let nxt = T::op(crr.clone(), self.table.borrow()[root * 2].clone());
+            root = match pred(&nxt) {
+                false => 2 * root,
+                true => {
+                    crr = nxt;
+                    2 * root + 1
+                }
+            };
+        }
+        root - self.len
+    }
+    fn search_subtree_backward<F>(&self, mut crr: T::Value, mut root: usize, mut pred: F) -> usize
+    where
+        F: FnMut(&T::Value) -> bool,
+    {
+        while root < self.len {
+            self.push(root);
+            let nxt = T::op(self.table.borrow()[root * 2 + 1].clone(), crr.clone());
+            root = match pred(&nxt) {
+                false => 2 * root + 1,
+                true => {
+                    crr = nxt;
+                    2 * root
+                }
+            };
+        }
+        root - self.len + 1
+    }
+    fn level_range(&self, Range { start, end }: Range<usize>) {
+        for p in (1..=self.lg).rev() {
+            if ((start >> p) << p) != start {
+                self.push(start >> p);
+            }
+            if ((end >> p) << p) != end {
+                self.push((end - 1) >> p);
+            }
+        }
     }
     fn update(&self, i: usize) {
         let x = T::op(
@@ -216,7 +333,7 @@ mod tests {
         struct G {}
         impl test_vector2::GenLen for G {
             fn gen_len(rng: &mut impl Rng) -> usize {
-                rng.gen_range(1, 20)
+                rng.gen_range(1, 50)
             }
         }
         impl test_vector2::GenValue<(u32, u32)> for G {
@@ -243,14 +360,17 @@ mod tests {
         }
 
         let mut tester = Tester::<Option<A>, X, G>::new(StdRng::seed_from_u64(42));
-        for _ in 0..4 {
+        for _ in 0..10 {
             tester.initialize();
-            for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 3);
+            for _ in 0..1000 {
+                let command = tester.rng_mut().gen_range(0, 10);
                 match command {
-                    0 => tester.mutate::<queries::Set<_>>(),
-                    1 => tester.compare::<queries::Fold<_>>(),
-                    2 => tester.mutate::<queries::RangeApply<_>>(),
+                    0 => tester.compare::<queries::Get<_>>(),
+                    1 => tester.mutate::<queries::Set<_>>(),
+                    2 => tester.compare::<queries::Fold<_>>(),
+                    3..=7 => tester.mutate::<queries::RangeApply<_>>(),
+                    8 => tester.judge::<queries::SearchForward<_, u32, P>>(),
+                    9 => tester.judge::<queries::SearchBackward<_, u32, P>>(),
                     _ => unreachable!(),
                 }
             }
