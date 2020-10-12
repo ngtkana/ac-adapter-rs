@@ -246,11 +246,13 @@ mod tests {
         for _ in 0..4 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 3);
+                let command = tester.rng_mut().gen_range(0, 5);
                 match command {
                     0 => tester.mutate::<queries::Set<_>>(),
                     1 => tester.compare::<queries::Fold<_>>(),
                     2 => tester.mutate::<queries::RangeApply<_>>(),
+                    3 => tester.judge::<queries::SearchForward<_, u32, P>>(),
+                    4 => tester.judge::<queries::SearchBackward<_, u32, P>>(),
                     _ => unreachable!(),
                 }
             }
