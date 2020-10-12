@@ -1,7 +1,5 @@
 use crate::Segtree;
 use alg_traits::{Assoc, Identity};
-use std::path::PathBuf;
-use yosupo::YosupoTest;
 
 type Fp = fp2::F998244353;
 
@@ -55,7 +53,5 @@ fn main(in_str: &str, out_str: &mut String) {
 #[test]
 #[ignore]
 fn point_set_range_composite() {
-    YosupoTest::new(main, PathBuf::from(PROBLEM_DIR))
-        .generate()
-        .run_all();
+    yosupo::run_all(&PROBLEM_DIR, main);
 }
