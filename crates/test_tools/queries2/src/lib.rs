@@ -2,6 +2,9 @@ use alg_traits::Assoc;
 use query_test::Query;
 use std::{marker::PhantomData, ops::Range};
 
+#[query_test::query(fn(usize) -> T)]
+pub struct Get<T>(PhantomData<T>);
+
 #[query_test::query(fn(usize, T))]
 pub struct Set<T>(PhantomData<T>);
 
