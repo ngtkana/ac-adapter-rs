@@ -9,6 +9,12 @@ use std::ops::Range;
 #[derive(Debug, Clone, PartialEq)]
 pub struct Vector<T: Identity>(pub Vec<T::Value>);
 
+impl<T: Identity> solve::Solve<queries::Get<T::Value>> for Vector<T> {
+    fn solve(&self, i: usize) -> T::Value {
+        self.0[i].clone()
+    }
+}
+
 impl<T: Identity> solve::Mutate<queries::Set<T::Value>> for Vector<T> {
     fn mutate(&mut self, (i, x): (usize, T::Value)) {
         self.0[i] = x;
@@ -109,6 +115,12 @@ impl<T: Identity> Vector<T> {
             std::mem::swap(&mut u, &mut v);
         }
         u..v
+    }
+}
+
+impl<T: Identity, G: GenValue<T::Value>> Gen<queries::Get<T::Value>, G> for Vector<T> {
+    fn gen(&self, rng: &mut impl Rng) -> usize {
+        self.gen_index(rng)
     }
 }
 
