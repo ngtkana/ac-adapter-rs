@@ -294,8 +294,9 @@ mod tests {
 
     use alg_traits::{Action, Assoc, Identity};
     use queries::{preds::Lt, Proj};
+    use query_test::impl_help;
     use rand::prelude::*;
-    use test_vector::{helpers, queries, Help, Vector};
+    use test_vector::{helpers, queries, Vector};
 
     type Tester<A, T, G> =
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::LazySegtree<A, T>, G>;
@@ -333,25 +334,11 @@ mod tests {
         }
 
         struct G {}
-        impl Help<helpers::Len> for G {
-            fn help(rng: &mut impl Rng) -> usize {
-                rng.gen_range(1, 50)
-            }
-        }
-        impl Help<helpers::Value<(u32, u32)>> for G {
-            fn help(rng: &mut impl Rng) -> (u32, u32) {
-                (rng.gen_range(0, 20), 1)
-            }
-        }
-        impl Help<helpers::Key<u32>> for G {
-            fn help(rng: &mut impl Rng) -> u32 {
-                rng.gen_range(0, 100)
-            }
-        }
-        impl Help<helpers::Actor<Option<A>>> for G {
-            fn help(rng: &mut impl Rng) -> Option<u32> {
-                Some(rng.gen_range(0, 100))
-            }
+        impl_help! {
+            helpers::Len, |rng| rng.gen_range(1, 50);
+            helpers::Value<(u32, u32)>, |rng| (rng.gen_range(1, 20), 1);
+            helpers::Key<u32>, |rng| rng.gen_range(1, 100);
+            helpers::Actor<Option<A>>, |rng| Some(rng.gen_range(1, 100));
         }
 
         struct P {}
