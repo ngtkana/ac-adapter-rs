@@ -103,7 +103,7 @@ impl<T, G: GenLen + GenValue<T>> Init<G> for Vector<T> {
     }
 }
 
-impl<T: Identity> Vector<T> {
+impl<T> Vector<T> {
     fn gen_index(&self, rng: &mut impl Rng) -> usize {
         rng.gen_range(0, self.0.len())
     }
@@ -117,25 +117,25 @@ impl<T: Identity> Vector<T> {
     }
 }
 
-impl<T: Identity, G: GenValue<T::Value>> Gen<queries::Get<T::Value>, G> for Vector<T> {
+impl<T, G: GenValue<T>> Gen<queries::Get<T>, G> for Vector<T> {
     fn gen(&self, rng: &mut impl Rng) -> usize {
         self.gen_index(rng)
     }
 }
 
-impl<T: Identity, G: GenValue<T::Value>> Gen<queries::Set<T::Value>, G> for Vector<T> {
-    fn gen(&self, rng: &mut impl Rng) -> (usize, T::Value) {
+impl<T, G: GenValue<T>> Gen<queries::Set<T>, G> for Vector<T> {
+    fn gen(&self, rng: &mut impl Rng) -> (usize, T) {
         (self.gen_index(rng), G::gen_value(rng))
     }
 }
 
-impl<T: Identity, G> Gen<queries::Fold<T>, G> for Vector<T> {
+impl<T: Identity, G> Gen<queries::Fold<T>, G> for Vector<T::Value> {
     fn gen(&self, rng: &mut impl Rng) -> Range<usize> {
         self.gen_range(rng)
     }
 }
 
-impl<T, U, P, G> Gen<queries::SearchForward<T, U, P>, G> for Vector<T>
+impl<T, U, P, G> Gen<queries::SearchForward<T, U, P>, G> for Vector<T::Value>
 where
     T: Identity,
     P: queries::Map<T::Value, U>,
@@ -146,7 +146,7 @@ where
     }
 }
 
-impl<T, U, P, G> Gen<queries::SearchBackward<T, U, P>, G> for Vector<T>
+impl<T, U, P, G> Gen<queries::SearchBackward<T, U, P>, G> for Vector<T::Value>
 where
     T: Identity,
     P: queries::Map<T::Value, U>,
@@ -157,10 +157,9 @@ where
     }
 }
 
-impl<A, T, G> Gen<queries::RangeApply<A>, G> for Vector<T>
+impl<A, G> Gen<queries::RangeApply<A>, G> for Vector<A::Point>
 where
-    A: Action<Point = T::Value>,
-    T: Identity,
+    A: Action,
     G: GenActor<A>,
 {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, A::Value) {
