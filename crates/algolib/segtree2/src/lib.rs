@@ -175,9 +175,9 @@ mod tests {
 
     use alg_inversion_number::{InversionMerge, InversionValue};
     use alg_traits::Assoc;
-    use queries::{Fold, SearchBackward, SearchForward, Set};
+    use queries::{preds::Le, projs, Fold, SearchBackward, SearchForward, Set};
     use rand::prelude::*;
-    use test_vector2::{queries, Vector};
+    use test_vector2::{helpers, queries, Help, Vector};
 
     type Tester<T, G> =
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::Segtree<T>, G>;
@@ -186,26 +186,19 @@ mod tests {
     fn test_add_u32() {
         use alg_traits::arith::Add;
         struct G {}
-        impl test_vector2::GenLen for G {
-            fn gen_len(rng: &mut impl Rng) -> usize {
+        impl Help<helpers::Len> for G {
+            fn help(rng: &mut impl Rng) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl test_vector2::GenValue<u32> for G {
-            fn gen_value(rng: &mut impl Rng) -> u32 {
+        impl Help<helpers::Value<u32>> for G {
+            fn help(rng: &mut impl Rng) -> u32 {
                 rng.gen_range(0, 20)
             }
         }
-        impl test_vector2::GenKey<u32> for G {
-            fn gen_key(rng: &mut impl Rng) -> u32 {
+        impl Help<helpers::Key<u32>> for G {
+            fn help(rng: &mut impl Rng) -> u32 {
                 rng.gen_range(0, 100)
-            }
-        }
-
-        struct P {}
-        impl queries::Map<u32, u32> for P {
-            fn map(x: &u32, y: &u32) -> bool {
-                x <= y
             }
         }
 
@@ -217,8 +210,8 @@ mod tests {
                 match command {
                     0 => tester.mutate::<Set<_>>(),
                     1 => tester.compare::<Fold<_>>(),
-                    2 => tester.judge::<SearchForward<_, _, P>>(),
-                    3 => tester.judge::<SearchBackward<_, _, P>>(),
+                    2 => tester.judge::<SearchForward<_, Le<projs::Copy<_>>>>(),
+                    3 => tester.judge::<SearchBackward<_, Le<projs::Copy<_>>>>(),
                     _ => unreachable!(),
                 }
             }
@@ -227,27 +220,28 @@ mod tests {
 
     #[test]
     fn test_inversion_value() {
-        type Value = InversionValue;
         struct G {}
-        impl test_vector2::GenLen for G {
-            fn gen_len(rng: &mut impl Rng) -> usize {
+        impl Help<helpers::Len> for G {
+            fn help(rng: &mut impl Rng) -> usize {
                 rng.gen_range(1, 20)
             }
         }
-        impl test_vector2::GenValue<Value> for G {
-            fn gen_value(rng: &mut impl Rng) -> Value {
+        impl Help<helpers::Value<InversionValue>> for G {
+            fn help(rng: &mut impl Rng) -> InversionValue {
                 InversionValue::from_bool(rng.gen_ratio(1, 2))
             }
         }
-        impl test_vector2::GenKey<u64> for G {
-            fn gen_key(rng: &mut impl Rng) -> u64 {
-                rng.gen_range(0, 20)
+        impl Help<helpers::Key<u64>> for G {
+            fn help(rng: &mut impl Rng) -> u64 {
+                rng.gen_range(0, 100)
             }
         }
         struct P {}
-        impl queries::Map<Value, u64> for P {
-            fn map(x: &Value, y: &u64) -> bool {
-                x.inversion < *y
+        impl queries::Proj for P {
+            type From = InversionValue;
+            type To = u64;
+            fn proj(x: &InversionValue) -> u64 {
+                x.inversion
             }
         }
 
@@ -259,8 +253,8 @@ mod tests {
                 match command {
                     0 => tester.mutate::<Set<_>>(),
                     1 => tester.compare::<Fold<_>>(),
-                    2 => tester.judge::<SearchForward<_, _, P>>(),
-                    3 => tester.judge::<SearchBackward<_, _, P>>(),
+                    2 => tester.judge::<SearchForward<_, Le<P>>>(),
+                    3 => tester.judge::<SearchBackward<_, Le<P>>>(),
                     _ => unreachable!(),
                 }
             }

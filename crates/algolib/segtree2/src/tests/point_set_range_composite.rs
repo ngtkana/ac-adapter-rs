@@ -1,3 +1,4 @@
+#![allow(clippy::many_single_char_names)]
 use crate::Segtree;
 use alg_traits::{Assoc, Identity};
 
@@ -17,7 +18,7 @@ impl Identity for X {
     }
 }
 
-const PROBLEM_DIR: &'static str =
+const PROBLEM_DIR: &str =
     "../../../library-checker-problems/datastructure/point_set_range_composite";
 
 fn main(in_str: &str, out_str: &mut String) {
