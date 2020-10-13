@@ -1,5 +1,5 @@
 [package]
-name = "segtree2"
+name = "segtree"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
@@ -17,7 +17,7 @@ package = "query_test"
 
 [dev-dependencies]
 fp2 = { path = "../../utils/fp2" }
-test_vector2 = { path = "../../test_tools/test_vector2" }
+test_vector = { path = "../../test_tools/test_vector" }
 yosupo = { path = "../../test_tools/yosupo" }
 alg_inversion_number = { path = "../../algebra/alg_inversion_number" }
 ngtio = { path = "../../utils/ngtio" }

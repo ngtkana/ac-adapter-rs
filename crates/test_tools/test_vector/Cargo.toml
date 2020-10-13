@@ -1,5 +1,5 @@
 [package]
-name = "test_vector2"
+name = "test_vector"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
@@ -13,5 +13,5 @@ package = "query_test"
 
 [dependencies]
 alg_traits = { path = "../../algebra/alg_traits" }
-queries2 = { path = "../queries2" }
+queries = { path = "../queries" }
 rand = "0.7.3"

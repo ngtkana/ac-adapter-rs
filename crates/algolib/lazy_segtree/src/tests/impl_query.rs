@@ -2,7 +2,7 @@ use crate::LazySegtree;
 use alg_traits::{Action, Identity};
 use query_test::{solve, FromBrute};
 use std::ops::Range;
-use test_vector2::{queries, Vector};
+use test_vector::{queries, Vector};
 
 impl<A, T> FromBrute for LazySegtree<A, T>
 where

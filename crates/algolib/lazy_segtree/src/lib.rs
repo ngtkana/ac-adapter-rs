@@ -295,7 +295,7 @@ mod tests {
     use alg_traits::{Action, Assoc, Identity};
     use queries::{preds::Lt, Proj};
     use rand::prelude::*;
-    use test_vector2::{helpers, queries, Help, Vector};
+    use test_vector::{helpers, queries, Help, Vector};
 
     type Tester<A, T, G> =
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::LazySegtree<A, T>, G>;
