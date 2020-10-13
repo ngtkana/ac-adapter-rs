@@ -296,7 +296,8 @@ mod tests {
     use rand::prelude::*;
     use test_vector2::{queries, Vector};
 
-    type Tester<A, T, G> = query_test::Tester<StdRng, Vector<T>, crate::LazySegtree<A, T>, G>;
+    type Tester<A, T, G> =
+        query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::LazySegtree<A, T>, G>;
 
     #[test]
     fn test_update_add_u32() {
@@ -353,8 +354,8 @@ mod tests {
         }
 
         struct P {}
-        impl queries::Pred<(u32, u32), u32> for P {
-            fn pred(&(x, _): &(u32, u32), &y: &u32) -> bool {
+        impl queries::Map<(u32, u32), u32> for P {
+            fn map(&(x, _): &(u32, u32), &y: &u32) -> bool {
                 x <= y
             }
         }

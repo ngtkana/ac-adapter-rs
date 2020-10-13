@@ -9,8 +9,8 @@ where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
 {
-    type Brute = Vector<T>;
-    fn from_brute(brute: &Vector<T>) -> Self {
+    type Brute = Vector<T::Value>;
+    fn from_brute(brute: &Vector<T::Value>) -> Self {
         Self::from_slice(&brute.0)
     }
 }
@@ -34,7 +34,7 @@ where
     }
 }
 
-impl<A, T> solve::Solve<queries::Fold<T::Value>> for LazySegtree<A, T>
+impl<A, T> solve::Solve<queries::Fold<T>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
@@ -44,25 +44,25 @@ where
     }
 }
 
-impl<A, T, U, P> solve::Solve<queries::SearchForward<T::Value, U, P>> for LazySegtree<A, T>
+impl<A, T, U, P> solve::Solve<queries::SearchForward<T, U, P>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
 {
     fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_forward(range, |t| P::pred(t, &key))
+        self.search_forward(range, |t| P::map(t, &key))
     }
 }
 
-impl<A, T, U, P> solve::Solve<queries::SearchBackward<T::Value, U, P>> for LazySegtree<A, T>
+impl<A, T, U, P> solve::Solve<queries::SearchBackward<T, U, P>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
 {
     fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_backward(range, |t| P::pred(t, &key))
+        self.search_backward(range, |t| P::map(t, &key))
     }
 }
 

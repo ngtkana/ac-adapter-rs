@@ -172,11 +172,15 @@ mod tests {
     mod impl_query;
     mod point_add_range_sum;
     mod point_set_range_composite;
+
     use alg_inversion_number::{InversionMerge, InversionValue};
+    use alg_traits::Assoc;
+    use queries::{Fold, SearchBackward, SearchForward, Set};
     use rand::prelude::*;
     use test_vector2::{queries, Vector};
 
-    type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, crate::Segtree<T>, G>;
+    type Tester<T, G> =
+        query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::Segtree<T>, G>;
 
     #[test]
     fn test_add_u32() {
@@ -199,8 +203,8 @@ mod tests {
         }
 
         struct P {}
-        impl queries::Pred<u32, u32> for P {
-            fn pred(x: &u32, y: &u32) -> bool {
+        impl queries::Map<u32, u32> for P {
+            fn map(x: &u32, y: &u32) -> bool {
                 x <= y
             }
         }
@@ -211,10 +215,10 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 4);
                 match command {
-                    0 => tester.mutate::<queries::Set<_>>(),
-                    1 => tester.compare::<queries::Fold<_>>(),
-                    2 => tester.judge::<queries::SearchForward<_, _, P>>(),
-                    3 => tester.judge::<queries::SearchBackward<_, _, P>>(),
+                    0 => tester.mutate::<Set<_>>(),
+                    1 => tester.compare::<Fold<_>>(),
+                    2 => tester.judge::<SearchForward<_, _, P>>(),
+                    3 => tester.judge::<SearchBackward<_, _, P>>(),
                     _ => unreachable!(),
                 }
             }
@@ -241,8 +245,8 @@ mod tests {
             }
         }
         struct P {}
-        impl queries::Pred<Value, u64> for P {
-            fn pred(x: &Value, y: &u64) -> bool {
+        impl queries::Map<Value, u64> for P {
+            fn map(x: &Value, y: &u64) -> bool {
                 x.inversion < *y
             }
         }
@@ -253,10 +257,10 @@ mod tests {
             for _ in 0..100 {
                 let command = tester.rng_mut().gen_range(0, 4);
                 match command {
-                    0 => tester.mutate::<queries::Set<_>>(),
-                    1 => tester.compare::<queries::Fold<_>>(),
-                    2 => tester.judge::<queries::SearchForward<_, _, P>>(),
-                    3 => tester.judge::<queries::SearchBackward<_, _, P>>(),
+                    0 => tester.mutate::<Set<_>>(),
+                    1 => tester.compare::<Fold<_>>(),
+                    2 => tester.judge::<SearchForward<_, _, P>>(),
+                    3 => tester.judge::<SearchBackward<_, _, P>>(),
                     _ => unreachable!(),
                 }
             }

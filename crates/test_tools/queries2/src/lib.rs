@@ -26,17 +26,13 @@ pub trait Map<T, U> {
 
 #[cfg(test)]
 mod test {
-    use super::{Fold, Set};
+    use super::Set;
     use assert_impl::assert_impl;
     use query_test::Query;
-    use std::ops::Range;
 
     #[test]
     fn test_impl() {
         assert_impl!(Query<Param = (usize, u32), Output = ()>: Set<u32>);
         assert_impl!(!Query<Param = ((usize, u32),), Output = ()>: Set<u32>);
-
-        assert_impl!(Query<Param = Range<usize>, Output = u32>: Fold<u32>);
-        assert_impl!(!Query<Param = (Range<usize>,), Output = u32>: Fold<u32>);
     }
 }
