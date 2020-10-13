@@ -1,4 +1,4 @@
-use alg_traits::Assoc;
+use alg_traits::{Action, Assoc, Identity};
 use query_test::Query;
 use std::{marker::PhantomData, ops::Range};
 
@@ -8,20 +8,20 @@ pub struct Get<T>(PhantomData<T>);
 #[query_test::query(fn(usize, T))]
 pub struct Set<T>(PhantomData<T>);
 
-#[query_test::query(fn(Range<usize>) -> T)]
-pub struct Fold<T>(PhantomData<T>);
+#[query_test::query(fn(Range<usize>) -> T::Value)]
+pub struct Fold<T: Identity>(PhantomData<T>);
 
 #[query_test::query(fn(Range<usize>, U) -> usize)]
-pub struct SearchForward<T, U, P>(PhantomData<(T, U, P)>);
+pub struct SearchForward<T: Identity, U, P: Map<T::Value, U>>(PhantomData<(T, U, P)>);
 
 #[query_test::query(fn(Range<usize>, U) -> usize)]
-pub struct SearchBackward<T, U, P>(PhantomData<(T, U, P)>);
+pub struct SearchBackward<T: Identity, U, P: Map<T::Value, U>>(PhantomData<(T, U, P)>);
 
 #[query_test::query(fn(Range<usize>, <A as Assoc>::Value))]
-pub struct RangeApply<A: Assoc>(PhantomData<A>);
+pub struct RangeApply<A: Action>(PhantomData<A>);
 
-pub trait Pred<T, U> {
-    fn pred(t: &T, u: &U) -> bool;
+pub trait Map<T, U> {
+    fn map(t: &T, u: &U) -> bool;
 }
 
 #[cfg(test)]

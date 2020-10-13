@@ -1,27 +1,30 @@
 pub use queries2 as queries;
 
 use alg_traits::{Action, Identity};
-use query_test::{solve, Gen, Init};
+use query_test::{
+    solve::{Judge, Mutate, Solve},
+    Gen, Init,
+};
 use rand::prelude::*;
 use std::ops::Range;
 
-// TODO: うーんでもやっぱり Vec<T> にできる気がします。
 #[derive(Debug, Clone, PartialEq)]
-pub struct Vector<T: Identity>(pub Vec<T::Value>);
+pub struct Vector<T>(pub Vec<T>);
 
-impl<T: Identity> solve::Solve<queries::Get<T::Value>> for Vector<T> {
-    fn solve(&self, i: usize) -> T::Value {
+// TODO: 参照型への対応を検討しても良いかもです。
+impl<T: Clone> Solve<queries::Get<T>> for Vector<T> {
+    fn solve(&self, i: usize) -> T {
         self.0[i].clone()
     }
 }
 
-impl<T: Identity> solve::Mutate<queries::Set<T::Value>> for Vector<T> {
-    fn mutate(&mut self, (i, x): (usize, T::Value)) {
+impl<T> Mutate<queries::Set<T>> for Vector<T> {
+    fn mutate(&mut self, (i, x): (usize, T)) {
         self.0[i] = x;
     }
 }
 
-impl<T: Identity> solve::Solve<queries::Fold<T::Value>> for Vector<T> {
+impl<T: Identity> Solve<queries::Fold<T>> for Vector<T::Value> {
     fn solve(&self, range: Range<usize>) -> T::Value {
         self.0[range]
             .iter()
@@ -29,15 +32,15 @@ impl<T: Identity> solve::Solve<queries::Fold<T::Value>> for Vector<T> {
     }
 }
 
-impl<T, U, P> solve::Judge<queries::SearchForward<T::Value, U, P>> for Vector<T>
+impl<T, U, P> Judge<queries::SearchForward<T, U, P>> for Vector<T::Value>
 where
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
 {
     fn judge(&self, (range, key): (Range<usize>, U), output: usize) -> bool {
-        let pred = |end: usize| {
-            P::pred(
-                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, range.start..end),
+        let pred = |end| {
+            P::map(
+                &<Self as Solve<queries::Fold<T>>>::solve(self, range.start..end),
                 &key,
             )
         };
@@ -46,15 +49,15 @@ where
     }
 }
 
-impl<T, U, P> solve::Judge<queries::SearchBackward<T::Value, U, P>> for Vector<T>
+impl<T, U, P> Judge<queries::SearchBackward<T, U, P>> for Vector<T::Value>
 where
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
 {
     fn judge(&self, (range, key): (Range<usize>, U), output: usize) -> bool {
         let pred = |start: usize| {
-            P::pred(
-                &<Vector<_> as solve::Solve<queries::Fold<_>>>::solve(self, start..range.end),
+            P::map(
+                &<Vector<_> as Solve<queries::Fold<T>>>::solve(self, start..range.end),
                 &key,
             )
         };
@@ -65,11 +68,7 @@ where
     }
 }
 
-impl<A, T> solve::Mutate<queries::RangeApply<A>> for Vector<T>
-where
-    A: Action<Point = T::Value>,
-    T: Identity,
-{
+impl<A: Action> Mutate<queries::RangeApply<A>> for Vector<A::Point> {
     fn mutate(&mut self, (range, a): (Range<usize>, A::Value)) {
         self.0[range]
             .iter_mut()
@@ -93,7 +92,7 @@ pub trait GenActor<A: Action> {
     fn gen_actor(rng: &mut impl Rng) -> A::Value;
 }
 
-impl<T: Identity, G: GenLen + GenValue<T::Value>> Init<G> for Vector<T> {
+impl<T, G: GenLen + GenValue<T>> Init<G> for Vector<T> {
     fn init(rng: &mut impl Rng) -> Self {
         let len = G::gen_len(rng);
         Vector(
@@ -130,16 +129,16 @@ impl<T: Identity, G: GenValue<T::Value>> Gen<queries::Set<T::Value>, G> for Vect
     }
 }
 
-impl<T: Identity, G> Gen<queries::Fold<T::Value>, G> for Vector<T> {
+impl<T: Identity, G> Gen<queries::Fold<T>, G> for Vector<T> {
     fn gen(&self, rng: &mut impl Rng) -> Range<usize> {
         self.gen_range(rng)
     }
 }
 
-impl<T, U, P, G> Gen<queries::SearchForward<T::Value, U, P>, G> for Vector<T>
+impl<T, U, P, G> Gen<queries::SearchForward<T, U, P>, G> for Vector<T>
 where
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
     G: GenKey<U>,
 {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
@@ -147,10 +146,10 @@ where
     }
 }
 
-impl<T, U, P, G> Gen<queries::SearchBackward<T::Value, U, P>, G> for Vector<T>
+impl<T, U, P, G> Gen<queries::SearchBackward<T, U, P>, G> for Vector<T>
 where
     T: Identity,
-    P: queries::Pred<T::Value, U>,
+    P: queries::Map<T::Value, U>,
     G: GenKey<U>,
 {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, U) {
