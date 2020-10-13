@@ -5,7 +5,7 @@ use alg_traits::{Action, Identity};
 use helpers::{Actor, Key, Len, Value};
 use query_test::{
     solve::{Judge, Mutate, Solve},
-    Gen, Init,
+    Gen, Help, HelpMaterial, Init,
 };
 use rand::prelude::*;
 use std::ops::Range;
@@ -153,33 +153,22 @@ where
     }
 }
 
-pub trait HelpMaterial {
-    type Value;
-}
-pub trait Help<H: HelpMaterial> {
-    fn help(rng: &mut impl Rng) -> H::Value;
-}
-
 pub mod helpers {
     use super::HelpMaterial;
+    use alg_traits::Action;
     pub use queries;
+    use query_test::help_material;
     use std::marker::PhantomData;
 
-    use alg_traits::Action;
+    #[help_material(usize)]
     pub struct Len();
-    impl HelpMaterial for Len {
-        type Value = usize;
-    }
+
+    #[help_material(T)]
     pub struct Value<T>(PhantomData<T>);
-    impl<T> HelpMaterial for Value<T> {
-        type Value = T;
-    }
+
+    #[help_material(T)]
     pub struct Key<T>(PhantomData<T>);
-    impl<T> HelpMaterial for Key<T> {
-        type Value = T;
-    }
+
+    #[help_material(A::Value)]
     pub struct Actor<A: Action>(PhantomData<A>);
-    impl<A: Action> HelpMaterial for Actor<A> {
-        type Value = A::Value;
-    }
 }
