@@ -293,8 +293,9 @@ mod tests {
     use super::LazySegtree;
 
     use alg_traits::{Action, Assoc, Identity};
+    use queries::{preds::Lt, Proj};
     use rand::prelude::*;
-    use test_vector2::{queries, Vector};
+    use test_vector2::{helpers, queries, Help, Vector};
 
     type Tester<A, T, G> =
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::LazySegtree<A, T>, G>;
@@ -332,31 +333,33 @@ mod tests {
         }
 
         struct G {}
-        impl test_vector2::GenLen for G {
-            fn gen_len(rng: &mut impl Rng) -> usize {
+        impl Help<helpers::Len> for G {
+            fn help(rng: &mut impl Rng) -> usize {
                 rng.gen_range(1, 50)
             }
         }
-        impl test_vector2::GenValue<(u32, u32)> for G {
-            fn gen_value(rng: &mut impl Rng) -> (u32, u32) {
+        impl Help<helpers::Value<(u32, u32)>> for G {
+            fn help(rng: &mut impl Rng) -> (u32, u32) {
                 (rng.gen_range(0, 20), 1)
             }
         }
-        impl test_vector2::GenKey<u32> for G {
-            fn gen_key(rng: &mut impl Rng) -> u32 {
+        impl Help<helpers::Key<u32>> for G {
+            fn help(rng: &mut impl Rng) -> u32 {
                 rng.gen_range(0, 100)
             }
         }
-        impl test_vector2::GenActor<Option<A>> for G {
-            fn gen_actor(rng: &mut impl Rng) -> Option<u32> {
+        impl Help<helpers::Actor<Option<A>>> for G {
+            fn help(rng: &mut impl Rng) -> Option<u32> {
                 Some(rng.gen_range(0, 100))
             }
         }
 
         struct P {}
-        impl queries::Map<(u32, u32), u32> for P {
-            fn map(&(x, _): &(u32, u32), &y: &u32) -> bool {
-                x <= y
+        impl Proj for P {
+            type From = (u32, u32);
+            type To = u32;
+            fn proj(&(value, _len): &(u32, u32)) -> u32 {
+                value
             }
         }
 
@@ -370,8 +373,8 @@ mod tests {
                     1 => tester.mutate::<queries::Set<_>>(),
                     2 => tester.compare::<queries::Fold<_>>(),
                     3..=7 => tester.mutate::<queries::RangeApply<_>>(),
-                    8 => tester.judge::<queries::SearchForward<_, u32, P>>(),
-                    9 => tester.judge::<queries::SearchBackward<_, u32, P>>(),
+                    8 => tester.judge::<queries::SearchForward<_, Lt<P>>>(),
+                    9 => tester.judge::<queries::SearchBackward<_, Lt<P>>>(),
                     _ => unreachable!(),
                 }
             }

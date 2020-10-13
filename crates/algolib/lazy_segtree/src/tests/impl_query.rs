@@ -44,25 +44,25 @@ where
     }
 }
 
-impl<A, T, U, P> solve::Solve<queries::SearchForward<T, U, P>> for LazySegtree<A, T>
+impl<A, T, P> solve::Solve<queries::SearchForward<T, P>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
-    P: queries::Map<T::Value, U>,
+    P: queries::Pred<Value = T::Value>,
 {
-    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_forward(range, |t| P::map(t, &key))
+    fn solve(&self, (range, key): (Range<usize>, P::Key)) -> usize {
+        self.search_forward(range, |t| P::pred(t, &key))
     }
 }
 
-impl<A, T, U, P> solve::Solve<queries::SearchBackward<T, U, P>> for LazySegtree<A, T>
+impl<A, T, P> solve::Solve<queries::SearchBackward<T, P>> for LazySegtree<A, T>
 where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
-    P: queries::Map<T::Value, U>,
+    P: queries::Pred<Value = T::Value>,
 {
-    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_backward(range, |t| P::map(t, &key))
+    fn solve(&self, (range, key): (Range<usize>, P::Key)) -> usize {
+        self.search_backward(range, |t| P::pred(t, &key))
     }
 }
 
