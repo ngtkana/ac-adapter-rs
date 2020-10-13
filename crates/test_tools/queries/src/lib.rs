@@ -2,6 +2,41 @@ use alg_traits::{Action, Assoc, Identity};
 use query_test::Query;
 use std::{marker::PhantomData, ops::Range};
 
+#[doc(hidden)]
+pub use apply;
+
+#[macro_export]
+macro_rules! impl_proj {
+    (impl $P:ty { $(($from:ty) -> $to:ty, $closure:expr;)* }) => {
+        $(
+            impl $crate::Proj for $P {
+                type From = $from;
+                type To = $to;
+                fn proj(from: &Self::From) -> Self::To {
+                    use $crate::apply::Apply;
+                    from.apply($closure)
+                }
+            }
+        )*
+    };
+}
+
+#[macro_export]
+macro_rules! impl_pred {
+    (impl $P:ty { $(($value:ty) -> $key:ty, $closure:expr;)* }) => {
+        $(
+            impl $crate::Pred for $P {
+                type Value = $value;
+                type Key = $key;
+                fn pred(value: &Self::Value, key: &Self::Key) -> bool {
+                    use $crate::apply::Apply;
+                    (value, key).apply($closure)
+                }
+            }
+        )*
+    };
+}
+
 #[query_test::query(fn(usize) -> T)]
 pub struct Get<T>(PhantomData<T>);
 

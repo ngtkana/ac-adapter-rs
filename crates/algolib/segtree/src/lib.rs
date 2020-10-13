@@ -175,7 +175,7 @@ mod tests {
 
     use alg_inversion_number::{InversionMerge, InversionValue};
     use alg_traits::Assoc;
-    use queries::{preds::Le, projs, Fold, SearchBackward, SearchForward, Set};
+    use queries::{impl_proj, preds::Le, projs, Fold, SearchBackward, SearchForward, Set};
     use query_test::impl_help;
     use rand::prelude::*;
     use test_vector::{helpers, queries, Vector};
@@ -219,11 +219,9 @@ mod tests {
         }
 
         struct P {}
-        impl queries::Proj for P {
-            type From = InversionValue;
-            type To = u64;
-            fn proj(x: &InversionValue) -> u64 {
-                x.inversion
+        impl_proj! {
+            impl P {
+                (InversionValue) -> u64, |x| x.inversion;
             }
         }
 
