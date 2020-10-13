@@ -177,7 +177,7 @@ mod tests {
     use alg_traits::Assoc;
     use queries::{preds::Le, projs, Fold, SearchBackward, SearchForward, Set};
     use rand::prelude::*;
-    use test_vector2::{helpers, queries, Help, Vector};
+    use test_vector::{helpers, queries, Help, Vector};
 
     type Tester<T, G> =
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::Segtree<T>, G>;

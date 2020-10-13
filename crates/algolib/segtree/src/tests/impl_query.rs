@@ -3,7 +3,7 @@ use alg_traits::Identity;
 use queries::{Fold, Pred, SearchBackward, SearchForward, Set};
 use query_test::{solve, FromBrute};
 use std::ops::Range;
-use test_vector2::{queries, Vector};
+use test_vector::{queries, Vector};
 
 impl<T: Identity> FromBrute for Segtree<T> {
     type Brute = Vector<T::Value>;

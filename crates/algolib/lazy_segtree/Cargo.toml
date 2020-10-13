@@ -17,7 +17,7 @@ package = "query_test"
 
 [dev-dependencies]
 rand = "0.7.3"
-test_vector2 = { path = "../../test_tools/test_vector2" }
+test_vector = { path = "../../test_tools/test_vector" }
 yosupo = { path = "../../test_tools/yosupo" }
 ngtio = { path = "../../utils/ngtio" }
 fp2 = { path = "../../utils/fp2" }

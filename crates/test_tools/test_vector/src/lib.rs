@@ -1,5 +1,5 @@
+pub use queries;
 use queries::{Fold, Get, Pred, RangeApply, SearchBackward, SearchForward, Set};
-pub use queries2 as queries;
 
 use alg_traits::{Action, Identity};
 use helpers::{Actor, Key, Len, Value};
@@ -162,7 +162,7 @@ pub trait Help<H: HelpMaterial> {
 
 pub mod helpers {
     use super::HelpMaterial;
-    pub use queries2 as queries;
+    pub use queries;
     use std::marker::PhantomData;
 
     use alg_traits::Action;
