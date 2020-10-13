@@ -8,7 +8,7 @@ edition = "2018"
 
 [dependencies.query_test]
 git = "https://github.com/ngtkana/query_test.git"
-tag = "v0.2.0"
+tag = "v0.2.1"
 package = "query_test"
 
 [dependencies]
