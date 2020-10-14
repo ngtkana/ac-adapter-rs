@@ -1,8 +1,8 @@
+#![allow(clippy::many_single_char_names)]
 use crate::LazySegtree;
 use alg_traits::{arith::Add, Action, Assoc, Identity};
 
-const PROBLEM_DIR: &'static str =
-    "../../../library-checker-problems/datastructure/range_affine_range_sum";
+const PROBLEM_DIR: &str = "../../../library-checker-problems/datastructure/range_affine_range_sum";
 
 type Fp = fp2::F998244353;
 
