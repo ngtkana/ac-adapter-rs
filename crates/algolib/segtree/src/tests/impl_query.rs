@@ -1,48 +1,47 @@
 use crate::Segtree;
-use queries::utils;
+use alg_traits::Identity;
+use queries::{Fold, Pred, SearchBackward, SearchForward, Set};
 use query_test::{solve, FromBrute};
 use std::ops::Range;
-use test_vector::Vector;
-use type_traits::{Assoc, Identity};
+use test_vector::{queries, Vector};
 
-impl<T: Assoc> FromBrute for Segtree<T> {
-    type Brute = Vector<T>;
-    fn from_brute(brute: &Self::Brute) -> Self {
-        Segtree::from_slice(&brute.0)
+impl<T: Identity> FromBrute for Segtree<T> {
+    type Brute = Vector<T::Value>;
+    fn from_brute(brute: &Vector<T::Value>) -> Self {
+        Self::from_slice(&brute.0)
     }
 }
-impl<T: Assoc> solve::Solve<queries::Get<T>> for Segtree<T> {
-    fn solve(&self, i: usize) -> T {
-        self.get(i).clone()
-    }
-}
-impl<T: Assoc> solve::Mutate<queries::Set<T>> for Segtree<T> {
-    fn mutate(&mut self, (i, x): (usize, T)) {
+
+impl<T: Identity> solve::Mutate<Set<T::Value>> for Segtree<T> {
+    fn mutate(&mut self, (i, x): (usize, T::Value)) {
         self.set(i, x);
     }
 }
-impl<T: Identity> solve::Solve<queries::Fold<T>> for Segtree<T> {
-    fn solve(&self, range: Range<usize>) -> T {
+
+impl<T: Identity> solve::Solve<Fold<T>> for Segtree<T> {
+    fn solve(&self, range: Range<usize>) -> T::Value {
         self.fold(range)
     }
 }
-impl<T, U, P> solve::Solve<queries::ForwardUpperBoundByKey<T, U, P>> for Segtree<T>
+
+impl<T, P> solve::Solve<SearchForward<T, P>> for Segtree<T>
 where
     T: Identity,
-    U: Ord,
-    P: utils::Project<T, U>,
+    P: Pred<Value = T::Value>,
+    P::Key: PartialEq,
 {
-    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_forward(range, |x| P::project(x.clone()) <= key)
+    fn solve(&self, (range, key): (Range<usize>, P::Key)) -> usize {
+        self.search_forward(range, |t| P::pred(t, &key))
     }
 }
-impl<T, U, P> solve::Solve<queries::BackwardUpperBoundByKey<T, U, P>> for Segtree<T>
+
+impl<T, P> solve::Solve<SearchBackward<T, P>> for Segtree<T>
 where
     T: Identity,
-    U: Ord,
-    P: utils::Project<T, U>,
+    P: Pred<Value = T::Value>,
+    P::Key: PartialEq,
 {
-    fn solve(&self, (range, key): (Range<usize>, U)) -> usize {
-        self.search_backward(range, |x| P::project(x.clone()) <= key)
+    fn solve(&self, (range, key): (Range<usize>, P::Key)) -> usize {
+        self.search_backward(range, |t| P::pred(t, &key))
     }
 }

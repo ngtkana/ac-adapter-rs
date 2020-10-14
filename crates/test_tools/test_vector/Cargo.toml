@@ -1,5 +1,5 @@
 [package]
-name = "queries2"
+name = "test_vector"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
@@ -8,9 +8,10 @@ edition = "2018"
 
 [dependencies.query_test]
 git = "https://github.com/ngtkana/query_test.git"
-tag = "v0.1.0"
+tag = "v0.2.2"
 package = "query_test"
 
 [dependencies]
 alg_traits = { path = "../../algebra/alg_traits" }
-assert-impl = "0.1.3"
+queries = { path = "../queries" }
+rand = "0.7.3"

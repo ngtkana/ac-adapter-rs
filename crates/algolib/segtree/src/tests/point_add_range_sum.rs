@@ -1,8 +1,8 @@
+#![allow(clippy::many_single_char_names)]
 use crate::Segtree;
 use alg_traits::arith::Add;
 
-const PROBLEM_DIR: &'static str =
-    "../../../library-checker-problems/datastructure/point_add_range_sum";
+const PROBLEM_DIR: &str = "../../../library-checker-problems/datastructure/point_add_range_sum";
 
 fn main(in_str: &str, out_str: &mut String) {
     let mut buf = ngtio::with_str(in_str);
