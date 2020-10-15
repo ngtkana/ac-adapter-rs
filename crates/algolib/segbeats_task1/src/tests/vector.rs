@@ -14,17 +14,24 @@ pub struct Vector<T>(pub Vec<T>);
 // -- solve
 impl<T: Elm> Mutate<ChangeMin<T>> for Vector<T> {
     fn mutate(&mut self, (range, x): (Range<usize>, T)) {
-        todo!()
+        self.0[range].iter_mut().for_each(|y| *y = (*y).min(x));
     }
 }
 impl<T: Elm> Solve<QueryMax<T>> for Vector<T> {
     fn solve(&self, range: Range<usize>) -> T {
-        todo!()
+        self.0[range]
+            .iter()
+            .max()
+            .copied()
+            .unwrap_or_else(T::min_value)
     }
 }
 impl<T: Elm> Solve<QuerySum<T>> for Vector<T> {
     fn solve(&self, range: Range<usize>) -> T {
-        todo!()
+        self.0[range]
+            .iter()
+            .copied()
+            .fold(T::zero(), std::ops::Add::add)
     }
 }
 
