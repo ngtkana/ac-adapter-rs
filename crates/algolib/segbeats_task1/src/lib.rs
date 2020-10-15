@@ -3,12 +3,23 @@ use std::ops::{Add, AddAssign, RangeBounds};
 
 #[derive(Debug, Clone, PartialEq)]
 struct SegbeatsTask1<T> {
+    len: usize,
+    lg: u32,
     table: Vec<Node<T>>,
 }
 
 impl<T: Elm> SegbeatsTask1<T> {
     fn new(src: &[T]) -> Self {
-        todo!()
+        let len = src.len();
+        let lg = len.next_power_of_two().trailing_zeros();
+        let table = src
+            .iter()
+            .copied()
+            .map(Node::new)
+            .cycle()
+            .take(2 * len)
+            .collect::<Vec<_>>();
+        Self { len, lg, table }
     }
     fn change_min(&mut self, range: impl RangeBounds<usize>, x: T) {
         todo!()
