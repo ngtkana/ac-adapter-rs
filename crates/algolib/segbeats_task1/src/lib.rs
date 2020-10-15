@@ -1,11 +1,10 @@
 #![allow(dead_code, unused_variables)]
-use std::{
-    marker::PhantomData,
-    ops::{Add, AddAssign, RangeBounds},
-};
+use std::ops::{Add, AddAssign, RangeBounds};
 
 #[derive(Debug, Clone, PartialEq)]
-struct SegbeatsTask1<T>(PhantomData<T>);
+struct SegbeatsTask1<T> {
+    table: Vec<Node<T>>,
+}
 
 impl<T: Elm> SegbeatsTask1<T> {
     fn new(src: &[T]) -> Self {
@@ -22,8 +21,53 @@ impl<T: Elm> SegbeatsTask1<T> {
     }
 }
 
-pub trait Elm: Sized + Ord + Add<Output = Self> + AddAssign {}
-impl<T: Sized + Ord + Add<Output = Self> + AddAssign> Elm for T {}
+#[derive(Debug, Clone, PartialEq, Copy, Eq)]
+struct Node<T> {
+    max: [T; 2],
+    c_max: usize,
+    sum: T,
+}
+impl<T: Elm> Node<T> {
+    fn new(x: T) -> Self {
+        Node {
+            max: [x, T::min_value()],
+            c_max: 1,
+            sum: x,
+        }
+    }
+    fn merge(left: Node<T>, right: Node<T>) -> Self {
+        use std::cmp::Ordering;
+        let [a, b] = left.max;
+        let [c, d] = right.max;
+        let sum = left.sum + right.sum;
+        match a.cmp(&c) {
+            Ordering::Equal => Node {
+                max: [a, b.max(d)],
+                c_max: left.c_max + right.c_max,
+                sum,
+            },
+            Ordering::Greater => Node {
+                max: [a, c.max(d)],
+                c_max: left.c_max,
+                sum,
+            },
+            Ordering::Less => Node {
+                max: [c, a.max(b)],
+                c_max: right.c_max,
+                sum,
+            },
+        }
+    }
+}
+
+pub trait Elm: Sized + std::fmt::Debug + Copy + Ord + Add<Output = Self> + AddAssign {
+    fn min_value() -> Self;
+}
+impl Elm for i32 {
+    fn min_value() -> Self {
+        std::i32::MAX
+    }
+}
 
 #[cfg(test)]
 mod tests {
