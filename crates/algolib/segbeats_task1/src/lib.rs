@@ -37,6 +37,10 @@ impl<T: Elm> SegbeatsTask1<T> {
         let range = open(self.len, range);
         self.dfs::<ChangeMax<T>>(range, x)
     }
+    pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {
+        let range = open(self.len, range);
+        self.dfs::<QueryMin<T>>(range, ())
+    }
     pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
@@ -142,6 +146,21 @@ impl<T: Elm> Dfs for ChangeMax<T> {
     }
     fn merge(_: (), _: ()) {}
     fn extract(_node: Node<T>) {}
+}
+struct QueryMin<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for QueryMin<T> {
+    type Value = T;
+    type Param = ();
+    type Output = T;
+    fn identity() -> Self::Output {
+        T::max_value()
+    }
+    fn merge(left: T, right: T) -> T {
+        left.min(right)
+    }
+    fn extract(node: Node<T>) -> T {
+        node.min[0]
+    }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QueryMax<T> {
