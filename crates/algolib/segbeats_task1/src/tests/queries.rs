@@ -11,6 +11,9 @@ pub struct ChangeMin<T: Ord>(PhantomData<T>);
 pub struct ChangeMax<T: Ord>(PhantomData<T>);
 
 #[query(fn(Range<usize>) -> T)]
+pub struct QueryMin<T: Ord>(PhantomData<T>);
+
+#[query(fn(Range<usize>) -> T)]
 pub struct QueryMax<T: Ord>(PhantomData<T>);
 
 #[query(fn(Range<usize>) -> T)]

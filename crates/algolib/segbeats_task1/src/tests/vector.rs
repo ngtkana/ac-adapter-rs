@@ -1,4 +1,4 @@
-use super::queries::{ChangeMax, ChangeMin, QueryMax, QuerySum};
+use super::queries::{ChangeMax, ChangeMin, QueryMax, QueryMin, QuerySum};
 use crate::Elm;
 use query_test::{
     help_material,
@@ -20,6 +20,15 @@ impl<T: Elm> Mutate<ChangeMin<T>> for Vector<T> {
 impl<T: Elm> Mutate<ChangeMax<T>> for Vector<T> {
     fn mutate(&mut self, (range, x): (Range<usize>, T)) {
         self.0[range].iter_mut().for_each(|y| *y = (*y).max(x));
+    }
+}
+impl<T: Elm> Solve<QueryMin<T>> for Vector<T> {
+    fn solve(&self, range: Range<usize>) -> T {
+        self.0[range]
+            .iter()
+            .min()
+            .copied()
+            .unwrap_or_else(T::max_value)
     }
 }
 impl<T: Elm> Solve<QueryMax<T>> for Vector<T> {
@@ -77,6 +86,11 @@ impl<T: Elm, G: Help<Value<T>>> Gen<ChangeMin<T>, G> for Vector<T> {
 impl<T: Elm, G: Help<Value<T>>> Gen<ChangeMax<T>, G> for Vector<T> {
     fn gen(&self, rng: &mut impl Rng) -> (Range<usize>, T) {
         (self.gen_range(rng), G::help(rng))
+    }
+}
+impl<T: Elm, G> Gen<QueryMin<T>, G> for Vector<T> {
+    fn gen(&self, rng: &mut impl Rng) -> Range<usize> {
+        self.gen_range(rng)
     }
 }
 impl<T: Elm, G> Gen<QueryMax<T>, G> for Vector<T> {
