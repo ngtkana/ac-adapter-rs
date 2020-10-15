@@ -16,9 +16,9 @@ impl<T: Elm> SegbeatsTask1<T> {
     pub fn new(src: &[T]) -> Self {
         let len = src.len().next_power_of_two();
         let lg = len.trailing_zeros();
-        let mut table = vec![Node::foo(); 2 * len];
+        let mut table = vec![Node::new(); 2 * len];
         for (i, &x) in src.iter().enumerate() {
-            table[len + i] = Node::new(x);
+            table[len + i] = Node::single(x);
         }
         (1..len)
             .rev()
@@ -33,6 +33,10 @@ impl<T: Elm> SegbeatsTask1<T> {
         let range = open(self.len, range);
         self.dfs::<ChangeMin<T>>(range, x)
     }
+    pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
+        let range = open(self.len, range);
+        self.dfs::<ChangeMax<T>>(range, x)
+    }
     pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
@@ -45,9 +49,15 @@ impl<T: Elm> SegbeatsTask1<T> {
         let x = self.table.borrow()[i].max[0];
         for j in 2 * i..2 * i + 2 {
             let node = self.table.borrow()[j];
-            if node.max[0] <= x {
-            } else if node.max[1] < x {
+            if node.max[1] < x && x < node.max[0] {
                 self.table.borrow_mut()[j].change_min(x);
+            }
+        }
+        let x = self.table.borrow()[i].min[0];
+        for j in 2 * i..2 * i + 2 {
+            let node = self.table.borrow()[j];
+            if node.min[0] < x && x < node.min[1] {
+                self.table.borrow_mut()[j].change_max(x);
             }
         }
     }
@@ -115,6 +125,24 @@ impl<T: Elm> Dfs for ChangeMin<T> {
     fn merge(_: (), _: ()) {}
     fn extract(_node: Node<T>) {}
 }
+struct ChangeMax<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for ChangeMax<T> {
+    type Value = T;
+    type Param = T;
+    type Output = ();
+    fn identity() -> Self::Output {}
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
+        x <= node.min[0]
+    }
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
+        x < node.min[1]
+    }
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
+        node.change_max(x);
+    }
+    fn merge(_: (), _: ()) {}
+    fn extract(_node: Node<T>) {}
+}
 struct QueryMax<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QueryMax<T> {
     type Value = T;
@@ -150,49 +178,75 @@ impl<T: Elm> Dfs for QuerySum<T> {
 struct Node<T> {
     max: [T; 2],
     c_max: u32,
+    min: [T; 2],
+    c_min: u32,
     sum: T,
 }
 impl<T: Elm> Node<T> {
-    fn foo() -> Self {
+    fn new() -> Self {
         Node {
             max: [T::min_value(), T::min_value()],
             c_max: 0,
+            min: [T::max_value(), T::max_value()],
+            c_min: 0,
             sum: T::zero(),
         }
     }
-    fn new(x: T) -> Self {
+    fn single(x: T) -> Self {
         Node {
             max: [x, T::min_value()],
             c_max: 1,
+            min: [x, T::max_value()],
+            c_min: 1,
             sum: x,
         }
     }
     fn change_min(&mut self, x: T) {
         assert!(self.max[1] < x && x < self.max[0]);
         self.sum += (x - self.max[0]).mul_u32(self.c_max);
+        for i in 0..2 {
+            if self.min[i] == self.max[0] {
+                self.min[i] = x;
+            }
+        }
         self.max[0] = x;
+    }
+    fn change_max(&mut self, x: T) {
+        assert!(self.min[0] < x && x < self.min[1]);
+        self.sum += (x - self.min[0]).mul_u32(self.c_min);
+        for i in 0..2 {
+            if self.max[i] == self.min[0] {
+                self.max[i] = x;
+            }
+        }
+        self.min[0] = x;
     }
     fn merge(left: Node<T>, right: Node<T>) -> Self {
         use std::cmp::Ordering;
-        let [a, b] = left.max;
-        let [c, d] = right.max;
-        let sum = left.sum + right.sum;
-        match a.cmp(&c) {
-            Ordering::Equal => Node {
-                max: [a, c.max(d)],
-                c_max: left.c_max + right.c_max,
-                sum,
-            },
-            Ordering::Greater => Node {
-                max: [a, b.max(c)],
-                c_max: left.c_max,
-                sum,
-            },
-            Ordering::Less => Node {
-                max: [c, a.max(d)],
-                c_max: right.c_max,
-                sum,
-            },
+        let (max, c_max) = {
+            let [a, b] = left.max;
+            let [c, d] = right.max;
+            match a.cmp(&c) {
+                Ordering::Equal => ([a, c.max(d)], left.c_max + right.c_max),
+                Ordering::Greater => ([a, b.max(c)], left.c_max),
+                Ordering::Less => ([c, a.max(d)], right.c_max),
+            }
+        };
+        let (min, c_min) = {
+            let [a, b] = left.min;
+            let [c, d] = right.min;
+            match a.cmp(&c) {
+                Ordering::Equal => ([a, c.min(d)], left.c_min + right.c_min),
+                Ordering::Less => ([a, b.min(c)], left.c_min),
+                Ordering::Greater => ([c, a.min(d)], right.c_min),
+            }
+        };
+        Self {
+            max,
+            c_max,
+            min,
+            c_min,
+            sum: left.sum + right.sum,
         }
     }
 }
@@ -251,7 +305,7 @@ mod tests {
     mod vector;
 
     use super::SegbeatsTask1;
-    use queries::{ChangeMin, QueryMax, QuerySum};
+    use queries::{ChangeMax, ChangeMin, QueryMax, QuerySum};
     use query_test::{impl_help, Config};
     use rand::prelude::*;
     use vector::{Len, Value, Vector};
@@ -269,11 +323,12 @@ mod tests {
         for _ in 0..10 {
             tester.initialize();
             for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 3);
+                let command = tester.rng_mut().gen_range(0, 4);
                 match command {
                     0 => tester.mutate::<ChangeMin<_>>(),
-                    1 => tester.compare::<QueryMax<_>>(),
-                    2 => tester.compare::<QuerySum<_>>(),
+                    1 => tester.mutate::<ChangeMax<_>>(),
+                    2 => tester.compare::<QueryMax<_>>(),
+                    3 => tester.compare::<QuerySum<_>>(),
                     _ => unreachable!(),
                 }
             }
