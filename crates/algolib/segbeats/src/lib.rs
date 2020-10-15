@@ -6,13 +6,13 @@ use std::{
 };
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct SegbeatsTask1<T> {
+pub struct Segbeats<T> {
     len: usize,
     lg: u32,
     table: RefCell<Vec<Node<T>>>,
 }
 
-impl<T: Elm> SegbeatsTask1<T> {
+impl<T: Elm> Segbeats<T> {
     pub fn new(src: &[T]) -> Self {
         let len = src.len().next_power_of_two();
         let lg = len.trailing_zeros();
@@ -323,13 +323,13 @@ mod tests {
     mod queries;
     mod vector;
 
-    use super::SegbeatsTask1;
+    use super::Segbeats;
     use queries::{ChangeMax, ChangeMin, QueryMax, QuerySum};
     use query_test::{impl_help, Config};
     use rand::prelude::*;
     use vector::{Len, Value, Vector};
 
-    type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, SegbeatsTask1<T>, G>;
+    type Tester<T, G> = query_test::Tester<StdRng, Vector<T>, Segbeats<T>, G>;
 
     #[test]
     fn test_i64() {

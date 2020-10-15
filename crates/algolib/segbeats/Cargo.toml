@@ -1,5 +1,5 @@
 [package]
-name = "segbeats_task1"
+name = "segbeats"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
