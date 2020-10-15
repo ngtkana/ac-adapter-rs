@@ -12,5 +12,6 @@ tag = "v0.2.2"
 package = "query_test"
 
 [dependencies]
+open = { path = "../../utils/open" }
 rand = "0.7.3"
 

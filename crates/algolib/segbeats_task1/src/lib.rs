@@ -1,5 +1,6 @@
 #![allow(dead_code, unused_variables)]
-use std::ops::{Add, AddAssign, RangeBounds};
+use open::open;
+use std::ops::{Add, AddAssign, Range, RangeBounds};
 
 #[derive(Debug, Clone, PartialEq)]
 struct SegbeatsTask1<T> {
@@ -25,10 +26,40 @@ impl<T: Elm> SegbeatsTask1<T> {
         todo!()
     }
     fn query_max(&self, range: impl RangeBounds<usize>) -> T {
-        todo!()
+        let Range { mut start, mut end } = open(self.len, range);
+        start += self.len;
+        end += self.len;
+        let mut left = T::min_value();
+        let mut right = T::min_value();
+        while start != end {
+            if start % 2 == 1 {
+                left = left.max(self.table[start].max[0]);
+                start += 1;
+            }
+            if end % 2 == 1 {
+                end -= 1;
+                right = right.max(self.table[end].max[0]);
+            }
+        }
+        left.max(right)
     }
     fn query_sum(&self, range: impl RangeBounds<usize>) -> T {
-        todo!()
+        let Range { mut start, mut end } = open(self.len, range);
+        start += self.len;
+        end += self.len;
+        let mut left = T::zero();
+        let mut right = T::zero();
+        while start != end {
+            if start % 2 == 1 {
+                left += self.table[start].sum;
+                start += 1;
+            }
+            if end % 2 == 1 {
+                end -= 1;
+                right += self.table[start].sum;
+            }
+        }
+        left + right
     }
 }
 
@@ -73,10 +104,14 @@ impl<T: Elm> Node<T> {
 
 pub trait Elm: Sized + std::fmt::Debug + Copy + Ord + Add<Output = Self> + AddAssign {
     fn min_value() -> Self;
+    fn zero() -> Self;
 }
 impl Elm for i32 {
     fn min_value() -> Self {
         std::i32::MAX
+    }
+    fn zero() -> Self {
+        0
     }
 }
 
