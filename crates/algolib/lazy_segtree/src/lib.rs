@@ -302,17 +302,17 @@ mod tests {
         query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::LazySegtree<A, T>, G>;
 
     #[test]
-    fn test_update_add_u32() {
+    fn test_update_add_u64() {
         #[derive(Debug, Clone, PartialEq, Copy, Eq)]
         struct X {}
         impl Assoc for X {
-            type Value = (u32, u32);
-            fn op((x0, y0): (u32, u32), (x1, y1): (u32, u32)) -> (u32, u32) {
+            type Value = (u64, u32);
+            fn op((x0, y0): (u64, u32), (x1, y1): (u64, u32)) -> (u64, u32) {
                 (x0 + x1, y0 + y1)
             }
         }
         impl Identity for X {
-            fn identity() -> (u32, u32) {
+            fn identity() -> (u64, u32) {
                 (0, 0)
             }
         }
@@ -320,32 +320,32 @@ mod tests {
         #[derive(Debug, Clone, PartialEq, Copy, Eq)]
         struct A {}
         impl Assoc for A {
-            type Value = u32;
-            fn op(a: u32, _b: u32) -> u32 {
+            type Value = u64;
+            fn op(a: u64, _b: u64) -> u64 {
                 a
             }
         }
         impl Action for A {
-            type Point = (u32, u32);
-            fn act(a: u32, x: (u32, u32)) -> (u32, u32) {
+            type Point = (u64, u32);
+            fn act(a: u64, x: (u64, u32)) -> (u64, u32) {
                 let len = x.1;
-                (a * len, len)
+                (a * len as u64, len)
             }
         }
 
         struct G {}
         impl_help! {
-            helpers::Len, |rng| rng.gen_range(1, 50);
-            helpers::Value<(u32, u32)>, |rng| (rng.gen_range(1, 20), 1);
-            helpers::Key<u32>, |rng| rng.gen_range(1, 100);
-            helpers::Actor<Option<A>>, |rng| Some(rng.gen_range(1, 100));
+            helpers::Len, |rng| rng.gen_range(20, 50);
+            helpers::Value<(u64, u32)>, |rng| (rng.gen_range(0, 1_000_000), 1);
+            helpers::Key<u64>, |rng| rng.gen_range(1, std::u64::MAX);
+            helpers::Actor<Option<A>>, |rng| Some(rng.gen_range(1, 1_000_000));
         }
 
         struct P {}
         impl Proj for P {
-            type From = (u32, u32);
-            type To = u32;
-            fn proj(&(value, _len): &(u32, u32)) -> u32 {
+            type From = (u64, u32);
+            type To = u64;
+            fn proj(&(value, _len): &(u64, u32)) -> u64 {
                 value
             }
         }
