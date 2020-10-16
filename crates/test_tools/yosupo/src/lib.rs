@@ -10,24 +10,14 @@ pub fn run_all<F>(problem_path: &str, main: F)
 where
     F: 'static + Fn(&str, &mut String) + Clone + Send,
 {
-    use std::thread::spawn;
-
     let problem_info = ProblemInfo::new(problem_path);
     generate(problem_info.path());
 
     let names = ls(problem_info.path());
-    let mut handles = Vec::new();
-
     for name in names {
         let problem_info = problem_info.clone();
         let main = main.clone();
-        let handle = spawn(move || {
-            run_one(&TestcaseInfo { problem_info, name }, main);
-        });
-        handles.push(handle);
-    }
-    for handle in handles {
-        handle.join().unwrap();
+        run_one(&TestcaseInfo { problem_info, name }, main);
     }
 }
 
@@ -40,7 +30,9 @@ where
     let out_string = testcase_info.read(Kind::Out);
 
     let mut result = String::new();
+    let start = std::time::Instant::now();
     main(&in_string, &mut result);
+    let end = start.elapsed();
 
     if result != out_string {
         println!();
@@ -54,7 +46,18 @@ where
         println!();
         std::process::abort();
     }
-    echo_green("Succeeded", &testcase_info.pretty());
+    echo_green(
+        "Succeeded",
+        &format!(
+            "{} {}",
+            Paint::yellow(&format!(
+                "{}.{:01} ms",
+                end.as_secs() * 1_000 + end.subsec_nanos() as u64 / 1_000_000,
+                end.subsec_nanos() % 1_000_000 / 100_000,
+            )),
+            testcase_info.pretty()
+        ),
+    );
 }
 
 #[derive(Debug, Clone, PartialEq)]
