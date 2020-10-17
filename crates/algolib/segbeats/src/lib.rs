@@ -246,7 +246,7 @@ impl<T: Elm> Node<T> {
             let [a, b] = left.max;
             let [c, d] = right.max;
             match a.cmp(&c) {
-                Ordering::Equal => ([a, c.max(d)], left.c_max + right.c_max),
+                Ordering::Equal => ([a, b.max(d)], left.c_max + right.c_max),
                 Ordering::Greater => ([a, b.max(c)], left.c_max),
                 Ordering::Less => ([c, a.max(d)], right.c_max),
             }
@@ -255,7 +255,7 @@ impl<T: Elm> Node<T> {
             let [a, b] = left.min;
             let [c, d] = right.min;
             match a.cmp(&c) {
-                Ordering::Equal => ([a, c.min(d)], left.c_min + right.c_min),
+                Ordering::Equal => ([a, b.min(d)], left.c_min + right.c_min),
                 Ordering::Less => ([a, b.min(c)], left.c_min),
                 Ordering::Greater => ([c, a.min(d)], right.c_min),
             }
