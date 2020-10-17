@@ -1,0 +1,298 @@
+use open::open;
+use std::{
+    cell::RefCell,
+    fmt::Debug,
+    mem::replace,
+    ops::{Add, AddAssign, Range, RangeBounds, Sub, SubAssign},
+};
+
+#[derive(Clone, PartialEq)]
+pub struct Segbeats<T> {
+    len: usize,
+    lg: u32,
+    table: RefCell<Vec<Node<T>>>,
+}
+
+impl<T: Elm> Debug for Segbeats<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Segbeats")?;
+        self.table
+            .borrow_mut()
+            .iter()
+            .map(|node| writeln!(f, "{:?}", &node))
+            .collect()
+    }
+}
+
+impl<T: Elm> Segbeats<T> {
+    pub fn new(src: &[T]) -> Self {
+        let len = src.len().next_power_of_two();
+        let lg = len.trailing_zeros();
+        let mut table = vec![Node::new(); 2 * len];
+        for (i, &x) in src.iter().enumerate() {
+            table[len + i] = Node::single(x);
+        }
+        (1..len).rev().for_each(|i| {
+            let x = table[2 * i];
+            let y = table[2 * i + 1];
+            Node::merge(&mut table[i], x, y);
+        });
+        Self {
+            len,
+            lg,
+            table: RefCell::new(table),
+        }
+    }
+    pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
+        let range = open(self.len, range);
+        self.dfs::<ChangeMin<T>>(range, x)
+    }
+    pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
+        let range = open(self.len, range);
+        self.dfs::<QueryMax<T>>(range, ())
+    }
+    pub fn count_changes(&self, range: impl RangeBounds<usize>) -> u64 {
+        let range = open(self.len, range);
+        self.dfs::<CountChanges<T>>(range, ())
+    }
+    fn push(&self, i: usize) {
+        let max = self.table.borrow()[i].max[0];
+        let lazy_change_min_count =
+            replace(&mut self.table.borrow_mut()[i].lazy_change_min_count, 0);
+        for j in 2 * i..2 * i + 2 {
+            let node = self.table.borrow()[j];
+            if node.max[1] < max && max < node.max[0] {
+                self.table.borrow_mut()[j].change_min(max, lazy_change_min_count);
+            }
+        }
+    }
+    fn dfs<D: Dfs<Value = T>>(&self, range: Range<usize>, x: D::Param) -> D::Output {
+        self.dfs_impl::<D>(1, 0..self.len, range, x)
+    }
+    fn dfs_impl<D: Dfs<Value = T>>(
+        &self,
+        root: usize,
+        subtree: Range<usize>,
+        range: Range<usize>,
+        x: D::Param,
+    ) -> D::Output {
+        if disjoint(&range, &subtree) || D::break_condition(self.table.borrow()[root], x) {
+            D::identity()
+        } else if contains(&range, &subtree) && D::tag_condition(self.table.borrow()[root], x) {
+            D::tag(&mut self.table.borrow_mut()[root], x);
+            D::extract(self.table.borrow()[root])
+        } else {
+            let Range { start, end } = subtree;
+            let mid = (start + end) / 2;
+            self.push(root);
+            let l = self.dfs_impl::<D>(root * 2, start..mid, range.clone(), x);
+            let r = self.dfs_impl::<D>(root * 2 + 1, mid..end, range, x);
+            self.update(root);
+            D::merge(l, r)
+        }
+    }
+    fn update(&self, i: usize) {
+        let x = self.table.borrow()[2 * i];
+        let y = self.table.borrow()[2 * i + 1];
+        Node::merge(&mut self.table.borrow_mut()[i], x, y);
+    }
+}
+
+trait Dfs {
+    type Value: Elm;
+    type Param: Copy + Debug;
+    type Output: Debug;
+    fn identity() -> Self::Output;
+    fn break_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
+        false
+    }
+    fn tag_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
+        true
+    }
+    fn tag(_node: &mut Node<Self::Value>, _x: Self::Param) {}
+    fn merge(left: Self::Output, right: Self::Output) -> Self::Output;
+    fn extract(node: Node<Self::Value>) -> Self::Output;
+}
+struct ChangeMin<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for ChangeMin<T> {
+    type Value = T;
+    type Param = T;
+    type Output = ();
+    fn identity() -> Self::Output {}
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
+        node.max[0] <= x
+    }
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
+        node.max[1] < x
+    }
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
+        node.change_min(x, 1);
+    }
+    fn merge(_: (), _: ()) {}
+    fn extract(_node: Node<T>) {}
+}
+struct QueryMax<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for QueryMax<T> {
+    type Value = T;
+    type Param = ();
+    type Output = T;
+    fn identity() -> Self::Output {
+        T::min_value()
+    }
+    fn merge(left: T, right: T) -> T {
+        left.max(right)
+    }
+    fn extract(node: Node<T>) -> T {
+        node.max[0]
+    }
+}
+struct CountChanges<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for CountChanges<T> {
+    type Value = T;
+    type Param = ();
+    type Output = u64;
+    fn identity() -> Self::Output {
+        0
+    }
+    fn merge(left: u64, right: u64) -> u64 {
+        left + right
+    }
+    fn extract(node: Node<T>) -> u64 {
+        node.change_count
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Copy, Eq)]
+struct Node<T> {
+    max: [T; 2],
+    c_max: u32,
+    change_count: u64,
+    lazy_change_min_count: u32,
+}
+impl<T: Elm> Node<T> {
+    fn new() -> Self {
+        Node {
+            max: [T::min_value(), T::min_value()],
+            c_max: 0,
+            change_count: 0,
+            lazy_change_min_count: 0,
+        }
+    }
+    fn single(x: T) -> Self {
+        Node {
+            max: [x, T::min_value()],
+            c_max: 1,
+            change_count: 0,
+            lazy_change_min_count: 0,
+        }
+    }
+    fn change_min(&mut self, x: T, lazy_change_min_count: u32) {
+        assert!(self.max[1] < x && x < self.max[0]);
+        self.max[0] = x;
+        self.change_count += self.c_max as u64 * lazy_change_min_count as u64;
+        self.lazy_change_min_count += lazy_change_min_count;
+    }
+    fn merge(node: &mut Node<T>, left: Node<T>, right: Node<T>) {
+        assert_eq!(node.lazy_change_min_count, 0);
+        use std::cmp::Ordering;
+        let (max, c_max) = {
+            let [a, b] = left.max;
+            let [c, d] = right.max;
+            match a.cmp(&c) {
+                Ordering::Equal => ([a, b.max(d)], left.c_max + right.c_max),
+                Ordering::Greater => ([a, b.max(c)], left.c_max),
+                Ordering::Less => ([c, a.max(d)], right.c_max),
+            }
+        };
+        *node = Self {
+            max,
+            c_max,
+            change_count: left.change_count + right.change_count,
+            lazy_change_min_count: 0,
+        };
+    }
+}
+
+fn contains(i: &Range<usize>, j: &Range<usize>) -> bool {
+    i.start <= j.start && j.end <= i.end
+}
+fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
+    i.end <= j.start || j.end <= i.start
+}
+
+pub trait Elm:
+    Sized
+    + std::fmt::Debug
+    + Copy
+    + Ord
+    + Add<Output = Self>
+    + AddAssign
+    + Sub<Output = Self>
+    + SubAssign
+{
+    fn max_value() -> Self;
+    fn min_value() -> Self;
+    fn zero() -> Self;
+    fn mul_u32(&self, x: u32) -> Self;
+}
+macro_rules! impl_elm {
+    {$($ty:ident;)*} => {
+        $(
+            impl Elm for $ty {
+                fn min_value() -> Self {
+                    std::$ty::MIN
+                }
+                fn max_value() -> Self {
+                    std::$ty::MAX
+                }
+                fn zero() -> Self {
+                    0
+                }
+                fn mul_u32(&self, x: u32) -> Self {
+                    self * (x as $ty)
+                }
+            }
+        )*
+    }
+}
+impl_elm! {
+    u8; u16; u32; u64; u128; usize;
+    i8; i16; i32; i64; i128; isize;
+}
+
+#[cfg(test)]
+mod tests {
+    mod impl_query;
+    mod queries;
+    mod vector;
+
+    use super::Segbeats;
+    use queries::{ChangeMin, CountChanges, QueryMax};
+    use query_test::{impl_help, Config};
+    use rand::prelude::*;
+    use vector::{Len, Value, Vector};
+
+    type Tester<T, G> = query_test::Tester<StdRng, Vector<(T, u64)>, Segbeats<T>, G>;
+
+    #[test]
+    fn test_i64() {
+        #[derive(Debug, Clone, PartialEq, Copy, Eq)]
+        struct G {}
+        impl_help! {Len, |rng| rng.gen_range(1, 1000); }
+        impl_help! {Value<i64>, |rng| rng.gen_range(-1_000_000, 1_000_000); }
+
+        let mut tester = Tester::<i64, G>::new(StdRng::seed_from_u64(42), Config::Short);
+        for _ in 0..10 {
+            tester.initialize();
+            for _ in 0..100 {
+                let command = tester.rng_mut().gen_range(0, 3);
+                match command {
+                    0 => tester.mutate::<ChangeMin<_>>(),
+                    1 => tester.compare::<QueryMax<_>>(),
+                    2 => tester.compare::<CountChanges>(),
+                    _ => unreachable!(),
+                }
+            }
+        }
+    }
+}
