@@ -1,5 +1,5 @@
 use super::{
-    queries::{ChangeMin, CountChanges, QueryMax},
+    queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin},
     vector::Vector,
 };
 use crate::{Elm, Segbeats};
@@ -13,6 +13,16 @@ use std::ops::Range;
 impl<T: Elm> Mutate<ChangeMin<T>> for Segbeats<T> {
     fn mutate(&mut self, (range, x): (Range<usize>, T)) {
         self.change_min(range, x);
+    }
+}
+impl<T: Elm> Mutate<ChangeMax<T>> for Segbeats<T> {
+    fn mutate(&mut self, (range, x): (Range<usize>, T)) {
+        self.change_max(range, x);
+    }
+}
+impl<T: Elm> Solve<QueryMin<T>> for Segbeats<T> {
+    fn solve(&self, range: Range<usize>) -> T {
+        self.query_min(range)
     }
 }
 impl<T: Elm> Solve<QueryMax<T>> for Segbeats<T> {
