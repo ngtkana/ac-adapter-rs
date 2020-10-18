@@ -1,5 +1,5 @@
 use super::{
-    queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, RangeAdd},
+    queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, QuerySum, RangeAdd},
     vector::Vector,
 };
 use crate::{Elm, Segbeats};
@@ -33,6 +33,11 @@ impl<T: Elm> Solve<QueryMin<T>> for Segbeats<T> {
 impl<T: Elm> Solve<QueryMax<T>> for Segbeats<T> {
     fn solve(&self, range: Range<usize>) -> T {
         self.query_max(range)
+    }
+}
+impl<T: Elm> Solve<QuerySum<T>> for Segbeats<T> {
+    fn solve(&self, range: Range<usize>) -> T {
+        self.query_sum(range)
     }
 }
 impl<T: Elm> Solve<CountChanges> for Segbeats<T> {
