@@ -63,6 +63,10 @@ impl<T: Elm> Segbeats<T> {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
     }
+    pub fn query_sum(&self, range: impl RangeBounds<usize>) -> T {
+        let range = open(self.len, range);
+        self.dfs::<QuerySum<T>>(range, ())
+    }
     pub fn count_changes(&self, range: impl RangeBounds<usize>) -> u64 {
         let range = open(self.len, range);
         self.dfs::<CountChanges<T>>(range, ())
@@ -233,6 +237,21 @@ impl<T: Elm> Dfs for QueryMax<T> {
         node.max[0]
     }
 }
+struct QuerySum<T>(std::marker::PhantomData<T>);
+impl<T: Elm> Dfs for QuerySum<T> {
+    type Value = T;
+    type Param = ();
+    type Output = T;
+    fn identity() -> Self::Output {
+        T::zero()
+    }
+    fn merge(left: T, right: T) -> T {
+        left + right
+    }
+    fn extract(node: Node<T>) -> T {
+        node.sum
+    }
+}
 struct CountChanges<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for CountChanges<T> {
     type Value = T;
@@ -255,6 +274,7 @@ struct Node<T> {
     c_max: u32,
     min: [T; 2],
     c_min: u32,
+    sum: T,
     len: u32,
     lazy_add: T,
     change_count: u64,
@@ -269,6 +289,7 @@ impl<T: Elm> Node<T> {
             c_max: 0,
             min: [T::max_value(); 2],
             c_min: 0,
+            sum: T::zero(),
             len: 0,
             lazy_add: T::zero(),
             change_count: 0,
@@ -283,6 +304,7 @@ impl<T: Elm> Node<T> {
             c_max: 1,
             min: [x, T::max_value()],
             c_min: 1,
+            sum: x,
             len: 1,
             lazy_add: T::zero(),
             change_count: 0,
@@ -293,6 +315,7 @@ impl<T: Elm> Node<T> {
     }
     fn change_min(&mut self, x: T, weight: u32) {
         assert!(self.max[1] < x && x < self.max[0]);
+        self.sum += (x - self.max[0]).mul_u32(self.c_max);
         let orig_max = replace(&mut self.max[0], x);
         self.change_count += self.c_max as u64 * weight as u64;
         if orig_max == self.min[0] {
@@ -305,6 +328,7 @@ impl<T: Elm> Node<T> {
     }
     fn change_max(&mut self, x: T, weight: u32) {
         assert!(self.min[0] < x && x < self.min[1]);
+        self.sum += (x - self.min[0]).mul_u32(self.c_min);
         let orig_min = replace(&mut self.min[0], x);
         self.change_count += self.c_min as u64 * weight as u64;
         if orig_min == self.max[0] {
@@ -324,6 +348,7 @@ impl<T: Elm> Node<T> {
             .iter_mut()
             .filter(|y| **y != T::max_value())
             .for_each(|y| *y += x);
+        self.sum += x.mul_u32(self.len);
         self.change_count += self.len as u64 * weight as u64;
         self.lazy_add += x;
         self.lazy_add_count += weight;
@@ -332,6 +357,7 @@ impl<T: Elm> Node<T> {
         assert!(self.min[0] == self.max[0]);
         self.min[0] = x;
         self.max[0] = x;
+        self.sum = x.mul_u32(self.len);
         self.change_count += self.c_min as u64 * weight as u64;
         self.lazy_change_min_count += weight; // weigt には和が渡ってきますから、片方に寄せておくと良いです。
     }
@@ -366,6 +392,7 @@ impl<T: Elm> Node<T> {
             c_min,
             change_count: left.change_count + right.change_count,
             len: left.len + right.len,
+            sum: left.sum + right.sum,
             lazy_add: T::zero(),
             lazy_add_count: 0,
             lazy_change_min_count: 0,
@@ -428,7 +455,7 @@ mod tests {
     mod vector;
 
     use super::Segbeats;
-    use queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, RangeAdd};
+    use queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, QuerySum, RangeAdd};
     use query_test::{impl_help, Config};
     use rand::prelude::*;
     use vector::{Len, Value, Vector};
@@ -446,14 +473,15 @@ mod tests {
         for _ in 0..20 {
             tester.initialize();
             for _ in 0..1000 {
-                let command = tester.rng_mut().gen_range(0, 6);
+                let command = tester.rng_mut().gen_range(0, 7);
                 match command {
                     0 => tester.mutate::<ChangeMin<_>>(),
                     1 => tester.mutate::<ChangeMax<_>>(),
                     2 => tester.mutate::<RangeAdd<_>>(),
                     3 => tester.compare::<QueryMin<_>>(),
                     4 => tester.compare::<QueryMax<_>>(),
-                    5 => tester.compare::<CountChanges>(),
+                    5 => tester.compare::<QuerySum<_>>(),
+                    6 => tester.compare::<CountChanges>(),
                     _ => unreachable!(),
                 }
             }
