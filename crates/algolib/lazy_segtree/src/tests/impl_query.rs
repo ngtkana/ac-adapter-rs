@@ -11,7 +11,7 @@ where
 {
     type Brute = Vector<T::Value>;
     fn from_brute(brute: &Vector<T::Value>) -> Self {
-        Self::from_slice(&brute.0)
+        Self::new(&brute.0)
     }
 }
 

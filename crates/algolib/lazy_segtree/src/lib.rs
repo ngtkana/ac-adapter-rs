@@ -18,7 +18,7 @@ where
     A: Action<Point = T::Value> + Identity,
     T: Identity,
 {
-    fn from_slice(src: &[T::Value]) -> Self {
+    pub fn new(src: &[T::Value]) -> Self {
         let len = src.len();
         let mut table = vec![T::identity(); 2 * len];
         table[len..].clone_from_slice(src);
@@ -33,7 +33,7 @@ where
         }
     }
 
-    fn get(&self, mut i: usize) -> T::Value {
+    pub fn get(&self, mut i: usize) -> T::Value {
         i += self.len;
         for p in (1..=self.lg).rev() {
             self.push(i >> p);
@@ -41,7 +41,7 @@ where
         self.table.borrow()[i].clone()
     }
 
-    fn set(&mut self, mut i: usize, x: T::Value) {
+    pub fn set(&mut self, mut i: usize, x: T::Value) {
         i += self.len;
         for p in (1..=self.lg).rev() {
             self.push(i >> p);
@@ -52,7 +52,7 @@ where
         }
     }
 
-    fn fold(&self, range: impl RangeBounds<usize>) -> T::Value {
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> T::Value {
         let Range { mut start, mut end } = open::open(self.len, range);
         assert!(start <= end, "変な区間");
         assert!(end <= self.len, "範囲外");
@@ -88,7 +88,7 @@ where
         }
     }
 
-    fn apply(&mut self, range: impl RangeBounds<usize>, a: A::Value) {
+    pub fn apply(&mut self, range: impl RangeBounds<usize>, a: A::Value) {
         let Range { mut start, mut end } = open::open(self.len, range);
         if start != end {
             start += self.len;
@@ -123,7 +123,7 @@ where
         }
     }
 
-    fn search_forward<R, F>(&self, range: R, mut pred: F) -> usize
+    pub fn search_forward<R, F>(&self, range: R, mut pred: F) -> usize
     where
         R: RangeBounds<usize>,
         F: FnMut(&T::Value) -> bool,
@@ -167,7 +167,7 @@ where
         }
     }
 
-    fn search_backward<R, F>(&self, range: R, mut pred: F) -> usize
+    pub fn search_backward<R, F>(&self, range: R, mut pred: F) -> usize
     where
         R: RangeBounds<usize>,
         F: FnMut(&T::Value) -> bool,
@@ -211,7 +211,7 @@ where
         }
     }
 
-    fn peek_one(&self, mut i: usize) -> T::Value {
+    pub fn peek_one(&self, mut i: usize) -> T::Value {
         i += self.len;
         let mut x = self.table.borrow()[i].clone();
         for p in (1..=self.lg).rev() {
@@ -219,10 +219,15 @@ where
         }
         x
     }
-    fn peek(&self) -> Vec<T::Value> {
+    pub fn peek(&self) -> Vec<T::Value> {
         (0..self.len).map(|i| self.peek_one(i)).collect::<Vec<_>>()
     }
-    fn search_subtree_forward<F>(&self, mut crr: T::Value, mut root: usize, mut pred: F) -> usize
+    pub fn search_subtree_forward<F>(
+        &self,
+        mut crr: T::Value,
+        mut root: usize,
+        mut pred: F,
+    ) -> usize
     where
         F: FnMut(&T::Value) -> bool,
     {
@@ -239,7 +244,12 @@ where
         }
         root - self.len
     }
-    fn search_subtree_backward<F>(&self, mut crr: T::Value, mut root: usize, mut pred: F) -> usize
+    pub fn search_subtree_backward<F>(
+        &self,
+        mut crr: T::Value,
+        mut root: usize,
+        mut pred: F,
+    ) -> usize
     where
         F: FnMut(&T::Value) -> bool,
     {
