@@ -33,7 +33,7 @@ fn main(in_str: &str, out_str: &mut String) {
     let a = std::iter::repeat_with(|| (Fp::new(buf.i64()), 1))
         .take(n)
         .collect::<Vec<_>>();
-    let mut seg = LazySegtree::<A, (Add<Fp>, Add<usize>)>::from_slice(&a);
+    let mut seg = LazySegtree::<A, (Add<Fp>, Add<usize>)>::new(&a);
     for _ in 0..q {
         let command = buf.usize();
         match command {
