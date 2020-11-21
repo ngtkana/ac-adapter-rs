@@ -169,7 +169,7 @@ mod tests {
                 assert_eq!(&path_v, &path_e);
 
                 // vs bfs
-                let mut expected = bfs::psp_path(&g, s, t).unwrap();
+                let mut expected = bfs::find_path(s, t, &g).unwrap();
                 expected.sort();
                 assert_eq!(&path_v, &expected);
 
@@ -204,8 +204,8 @@ mod tests {
     }
 
     fn lca_brute(g: &[Vec<usize>], u: usize, v: usize, root: usize) -> usize {
-        let a = bfs::psp_path(&g, root, u).unwrap();
-        let b = bfs::psp_path(&g, root, v).unwrap();
+        let a = bfs::find_path(root, u, &g).unwrap();
+        let b = bfs::find_path(root, v, &g).unwrap();
         a.into_iter()
             .zip(b.into_iter())
             .take_while(|(x, y)| x == y)
