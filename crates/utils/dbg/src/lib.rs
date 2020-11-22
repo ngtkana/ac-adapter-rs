@@ -59,21 +59,21 @@ macro_rules! msg {
 #[macro_export]
 macro_rules! tabular {
     ($val:expr) => {
-        $crate::lg_nl!(crate::dbg::Tabular($val))
+        $crate::lg_nl!($crate::Tabular($val))
     };
 }
 
 #[macro_export]
 macro_rules! boolean_table {
     ($val:expr) => {
-        $crate::lg_nl!(crate::dbg::BooleanTable($val));
+        $crate::lg_nl!($crate::BooleanTable($val));
     };
 }
 
 #[macro_export]
 macro_rules! boolean_slice {
     ($val:expr) => {
-        $crate::lg!(crate::dbg::BooleanSlice($val));
+        $crate::lg!($crate::BooleanSlice($val));
     };
 }
 

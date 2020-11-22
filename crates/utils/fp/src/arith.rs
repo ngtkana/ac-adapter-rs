@@ -1,88 +1,55 @@
-use super::{Fp, Modable, Value};
+use super::{Fp, Mod};
 use std::ops::*;
-use type_traits::*;
 
-impl<Mod: Modable> Add for Fp<Mod>
-where
-    Mod::Output: Value,
-{
+impl<T: Mod> Add for Fp<T> {
     type Output = Self;
-
-    #[inline]
     fn add(self, rhs: Self) -> Self {
-        Self(Self::normalize_from_the_bottom(
-            self.into_inner() + rhs.into_inner(),
-        ))
+        let res = self.0 + rhs.0;
+        Self::unchecked(if T::MOD <= res { res - T::MOD } else { res })
     }
 }
 
-impl<Mod: Modable> Sub for Fp<Mod>
-where
-    Mod::Output: Value,
-{
+impl<T: Mod> Sub for Fp<T> {
     type Output = Self;
-
-    #[inline]
     fn sub(self, rhs: Self) -> Self {
-        Self(Self::normalize_from_the_top(
-            self.into_inner() - rhs.into_inner(),
-        ))
+        let res = self.0 - rhs.0;
+        Self::unchecked(if res < 0 { res + T::MOD } else { res })
     }
 }
 
-impl<Mod: Modable> Mul for Fp<Mod>
-where
-    Mod::Output: Value,
-{
+impl<T: Mod> Mul for Fp<T> {
     type Output = Self;
-
-    #[inline]
     fn mul(self, rhs: Self) -> Self {
-        Self::new(self.into_inner() * rhs.into_inner())
+        Self::new(self.0 * rhs.0)
     }
 }
 
 #[allow(clippy::suspicious_arithmetic_impl)]
-impl<Mod: Modable> Div for Fp<Mod>
-where
-    Mod::Output: Value,
-{
+impl<T: Mod> Div for Fp<T> {
     type Output = Self;
-
-    #[inline]
     fn div(self, rhs: Self) -> Self {
         self * rhs.inv()
     }
 }
 
-impl<Mod: Modable> Neg for Fp<Mod>
-where
-    Mod::Output: Value,
-{
+impl<M: Mod> Neg for Fp<M> {
     type Output = Self;
-
-    #[inline]
     fn neg(self) -> Self {
-        if self.into_inner().is_zero() {
-            Self::zero()
+        if self.0 == 0 {
+            Self::unchecked(0)
         } else {
-            Self(Mod::VALUE - self.into_inner())
+            Self::unchecked(M::MOD - self.0)
         }
     }
 }
 
-impl<Mod: Modable> Neg for &Fp<Mod>
-where
-    Mod::Output: Value,
-{
-    type Output = Fp<Mod>;
-
-    #[inline]
-    fn neg(self) -> Fp<Mod> {
-        if self.into_inner().is_zero() {
-            Fp::zero()
+impl<M: Mod> Neg for &Fp<M> {
+    type Output = Fp<M>;
+    fn neg(self) -> Self::Output {
+        if self.0 == 0 {
+            Fp::unchecked(0)
         } else {
-            Fp(Mod::VALUE - self.into_inner())
+            Fp::unchecked(M::MOD - self.0)
         }
     }
 }
@@ -90,11 +57,7 @@ where
 macro_rules! forward_assign_biop {
     ($(impl $trait:ident, $fn_assign:ident, $fn:ident)*) => {
         $(
-            impl<Mod: Modable> $trait for Fp<Mod>
-            where
-                Mod::Output: Value
-            {
-                #[inline]
+            impl<M: Mod> $trait for Fp<M> {
                 fn $fn_assign(&mut self, rhs: Self) {
                     *self = self.$fn(rhs);
                 }
@@ -112,38 +75,23 @@ forward_assign_biop! {
 macro_rules! forward_ref_binop {
     ($(impl $imp:ident, $method:ident)*) => {
         $(
-            impl<'a, Mod: Modable> $imp<Fp<Mod>> for &'a Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: Fp<Mod>) -> Self::Output {
+            impl<'a, T: Mod> $imp<Fp<T>> for &'a Fp<T> {
+                type Output = Fp<T>;
+                fn $method(self, other: Fp<T>) -> Self::Output {
                     $imp::$method(*self, other)
                 }
             }
 
-            impl<'a, Mod: Modable> $imp<&'a Fp<Mod>> for Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: &Fp<Mod>) -> Self::Output {
+            impl<'a, T: Mod> $imp<&'a Fp<T>> for Fp<T> {
+                type Output = Fp<T>;
+                fn $method(self, other: &Fp<T>) -> Self::Output {
                     $imp::$method(self, *other)
                 }
             }
 
-            impl<'a, Mod: Modable> $imp<&'a Fp<Mod>> for &'a Fp<Mod>
-            where
-                Mod::Output:Value
-            {
-                type Output = Fp<Mod>;
-
-                #[inline]
-                fn $method(self, other: &Fp<Mod>) -> Self::Output {
+            impl<'a, T: Mod> $imp<&'a Fp<T>> for &'a Fp<T> {
+                type Output = Fp<T>;
+                fn $method(self, other: &Fp<T>) -> Self::Output {
                     $imp::$method(*self, *other)
                 }
             }
