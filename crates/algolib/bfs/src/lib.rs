@@ -1,5 +1,38 @@
 use std::collections::VecDeque;
 
+/// 木の直径を一つ探し、その両端点とその間の距離を返します。
+pub fn tree_diamter(g: &[Vec<usize>]) -> ([usize; 2], u32) {
+    assert_eq!(g.iter().flatten().count(), (g.len() - 1) * 2);
+    let dist = calc_dist(0, &g);
+    let &diam = dist.iter().max().unwrap();
+    let x = dist.iter().position(|&d| d == diam).unwrap();
+    let dist = calc_dist(x, &g);
+    let &diam = dist.iter().max().unwrap();
+    let y = dist.iter().position(|&d| d == diam).unwrap();
+    ([x, y], diam)
+}
+
+/// 木の直径を一つ探し、頂点列とパスの長さ（辺の個数）を返します。
+pub fn tree_diamter_restore(g: &[Vec<usize>]) -> (Vec<usize>, u32) {
+    assert_eq!(g.iter().flatten().count(), (g.len() - 1) * 2);
+    let dist = calc_dist(0, &g);
+    let &diam = dist.iter().max().unwrap();
+    let x = dist.iter().position(|&d| d == diam).unwrap();
+    let (dist, prv) = calc_dist_restore(x, &g);
+    let &diam = dist.iter().max().unwrap();
+    let mut res = Vec::new();
+    res.push(dist.iter().position(|&d| d == diam).unwrap());
+    loop {
+        let x = *res.last().unwrap();
+        if dist[x] == 0 {
+            break;
+        }
+        res.push(prv[x]);
+    }
+    (res, diam)
+}
+
+/// 一点からの距離配列を作ります。
 pub fn calc_dist(s: usize, g: &[Vec<usize>]) -> Vec<u32> {
     let mut dist = vec![std::u32::MAX; g.len()];
     dist[s] = 0;
@@ -15,17 +48,7 @@ pub fn calc_dist(s: usize, g: &[Vec<usize>]) -> Vec<u32> {
     dist
 }
 
-pub fn tree_diamter(g: &[Vec<usize>]) -> ([usize; 2], u32) {
-    assert_eq!(g.iter().flatten().count(), (g.len() - 1) * 2);
-    let dist = calc_dist(0, &g);
-    let &diam = dist.iter().max().unwrap();
-    let x = dist.iter().position(|&d| d == diam).unwrap();
-    let dist = calc_dist(x, &g);
-    let &diam = dist.iter().max().unwrap();
-    let y = dist.iter().position(|&d| d == diam).unwrap();
-    ([x, y], diam)
-}
-
+/// 一点からの距離配列と、前者配列を作ります。始点の前者は自分自身です。
 pub fn calc_dist_restore(s: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
     let mut dist = vec![std::u32::MAX; g.len()];
     let mut prv = vec![std::usize::MAX; g.len()];
@@ -44,6 +67,7 @@ pub fn calc_dist_restore(s: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
     (dist, prv)
 }
 
+/// s から t が到達可能ならば最短経路の頂点列を返し、不能ならば `None` を返します。
 pub fn find_path(s: usize, t: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
     let (dist, prv) = calc_dist_restore(s, &g);
     if dist[t] == std::u32::MAX {
@@ -63,9 +87,12 @@ pub fn find_path(s: usize, t: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
 
 #[cfg(test)]
 mod tests {
-    use super::{calc_dist, calc_dist_restore, find_path};
-    use rand::prelude::*;
-    use randtools::{LogUniform, SimpleGraph, Tree};
+    use {
+        super::{calc_dist, calc_dist_restore, find_path},
+        rand::prelude::*,
+        randtools::{LogUniform, SimpleGraph, Tree},
+        std::collections::HashSet,
+    };
 
     // -- graph
     #[test]
@@ -136,9 +163,22 @@ mod tests {
             let n = rng.sample(LogUniform(2, 20));
             println!("Test {}, n = {}", test_id, n);
             let g = rng.sample(Tree(n));
-            let (_, result) = super::tree_diamter(&g);
+
+            // 直径
+            let (_, diam) = super::tree_diamter(&g);
             let (_, expected) = brute_tree_diameter(&g);
-            assert_eq!(result, expected);
+            assert_eq!(diam, expected);
+
+            // 復元
+            let (path, _) = super::tree_diamter_restore(&g);
+            assert_eq!(path.len(), diam as usize + 1);
+            let edges = g
+                .iter()
+                .enumerate()
+                .map(|(i, v)| v.iter().map(move |&j| (i, j)))
+                .flatten()
+                .collect::<HashSet<_>>();
+            accum::for_each(&path, |&u, &v| assert!(edges.contains(&(u, v))));
         }
     }
 
