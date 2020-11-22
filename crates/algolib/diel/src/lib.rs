@@ -37,7 +37,7 @@ pub fn calc_dist_restore(s: usize, g: &[Vec<(usize, u32)>]) -> (Vec<u32>, Vec<us
     let mut chain = VecDeque::from(vec![vec![s]]);
     while let Some(mut stack) = chain.pop_front() {
         while let Some(x) = stack.pop() {
-            let dx = dist[x];
+            let dx = dist[x]; // TODO: ここで適宜 continue; をしないと壊れる気がします。
             for &(y, w) in &g[x] {
                 let dy = dx + w;
                 if dy < dist[y] {
