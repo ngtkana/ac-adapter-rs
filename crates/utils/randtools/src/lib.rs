@@ -63,6 +63,19 @@ impl Distribution<Vec<Vec<usize>>> for SimpleGraph {
 }
 
 #[derive(Debug)]
+pub struct SimpleDigraph(pub usize, pub usize);
+impl Distribution<Vec<Vec<usize>>> for SimpleDigraph {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<Vec<usize>> {
+        let &Self(n, m) = self;
+        let mut g = vec![Vec::new(); n];
+        for (u, v) in rng.sample(SimpleGraphEdges(n, m)) {
+            g[u].push(v);
+        }
+        g
+    }
+}
+
+#[derive(Debug)]
 pub struct SimpleGraphEdges(pub usize, pub usize);
 impl Distribution<Vec<(usize, usize)>> for SimpleGraphEdges {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<(usize, usize)> {
@@ -75,6 +88,25 @@ impl Distribution<Vec<(usize, usize)>> for SimpleGraphEdges {
                 let found = set.contains(&(u, v));
                 set.insert((u, v));
                 set.insert((v, u));
+                !found
+            })
+            .take(m)
+            .collect()
+    }
+}
+
+#[derive(Debug)]
+pub struct SimpleDigraphEdges(pub usize, pub usize);
+impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<(usize, usize)> {
+        let &Self(n, m) = self;
+        assert!(m <= n * (n - 1) / 2);
+        let mut set = HashSet::new();
+        Open(0, n)
+            .sample_iter(rng)
+            .filter(|&(u, v)| {
+                let found = set.contains(&(u, v));
+                set.insert((u, v));
                 !found
             })
             .take(m)
