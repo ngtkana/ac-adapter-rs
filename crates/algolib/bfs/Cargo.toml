@@ -10,3 +10,4 @@ edition = "2018"
 randtools = { path = "../../utils/randtools" }
 dbg = { path = "../../utils/dbg" }
 rand = "0.7.3"
+accum = { path = "../../utils/accum" }
