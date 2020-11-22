@@ -3,38 +3,55 @@ use std::{
     ops::{AddAssign, BitAndAssign, BitOrAssign, BitXorAssign, DivAssign, MulAssign, SubAssign},
 };
 pub fn add<T: Copy + AddAssign>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y += x);
+    for_each_mut(a, |&mut x, y| *y += x);
 }
 pub fn add_inv<T: Copy + SubAssign>(a: &mut [T]) {
-    rfor_each(a, |&mut x, y| *y -= x);
+    rfor_each_mut(a, |&mut x, y| *y -= x);
 }
 pub fn mul<T: Copy + MulAssign>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y *= x);
+    for_each_mut(a, |&mut x, y| *y *= x);
 }
 pub fn mul_inv<T: Copy + DivAssign>(a: &mut [T]) {
-    rfor_each(a, |&mut x, y| *y /= x);
+    rfor_each_mut(a, |&mut x, y| *y /= x);
 }
 // -- ord
 pub fn min<T: Copy + Ord>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y = x.min(*y));
+    for_each_mut(a, |&mut x, y| *y = x.min(*y));
 }
 pub fn max<T: Copy + Ord>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y = x.max(*y));
+    for_each_mut(a, |&mut x, y| *y = x.max(*y));
 }
 // --  bit
 pub fn xor<T: Copy + BitXorAssign>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y ^= x);
+    for_each_mut(a, |&mut x, y| *y ^= x);
 }
 pub fn xor_inv<T: Copy + BitXorAssign>(a: &mut [T]) {
-    rfor_each(a, |&mut x, y| *y ^= x);
+    rfor_each_mut(a, |&mut x, y| *y ^= x);
 }
 pub fn or<T: Copy + BitOrAssign>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y |= x);
+    for_each_mut(a, |&mut x, y| *y |= x);
 }
 pub fn and<T: Copy + BitAndAssign>(a: &mut [T]) {
-    for_each(a, |&mut x, y| *y &= x);
+    for_each_mut(a, |&mut x, y| *y &= x);
 }
-pub fn for_each<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
+// -- for_each
+pub fn for_each<T>(a: &[T], mut f: impl FnMut(&T, &T)) {
+    if !a.is_empty() {
+        for i in 1..a.len() {
+            let (left, right) = a.split_at(i);
+            f(left.last().unwrap(), right.first().unwrap());
+        }
+    }
+}
+pub fn rfor_each<T>(a: &[T], mut f: impl FnMut(&T, &T)) {
+    if !a.is_empty() {
+        for i in (1..a.len()).rev() {
+            let (left, right) = a.split_at(i);
+            f(left.last().unwrap(), right.first().unwrap());
+        }
+    }
+}
+pub fn for_each_mut<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
     if !a.is_empty() {
         for i in 1..a.len() {
             let (left, right) = a.split_at_mut(i);
@@ -42,7 +59,7 @@ pub fn for_each<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
         }
     }
 }
-pub fn rfor_each<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
+pub fn rfor_each_mut<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
     if !a.is_empty() {
         for i in (1..a.len()).rev() {
             let (left, right) = a.split_at_mut(i);
@@ -53,12 +70,21 @@ pub fn rfor_each<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
 
 #[cfg(test)]
 mod tests {
-
     #[test]
-    fn test() {
+    fn test_for_each() {
+        let a = vec![0, 1, 2, 3];
+        let mut b = Vec::new();
+        super::for_each(&a, |&x, &y| {
+            b.push((x, y));
+        });
+        let b_expected = vec![(0, 1), (1, 2), (2, 3)];
+        assert_eq!(&b, &b_expected);
+    }
+    #[test]
+    fn test_for_each_mut() {
         let mut a = vec![0, 1, 2, 3];
         let mut b = Vec::new();
-        super::for_each(&mut a, |&mut x, y| {
+        super::for_each_mut(&mut a, |&mut x, y| {
             *y += x;
             b.push((x, *y));
         });
