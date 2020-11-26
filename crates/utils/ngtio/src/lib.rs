@@ -13,7 +13,7 @@
 /// 入力を司ります。
 mod i;
 
-pub use i::{with_stdin, with_str};
+pub use self::i::{with_stdin, with_str};
 
 /// たいせつ〜な〜も〜の〜は〜〜〜 ぜんぶこ〜こ〜に〜あ〜る〜〜〜
 pub mod prelude {

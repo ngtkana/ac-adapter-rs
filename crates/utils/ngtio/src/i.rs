@@ -133,8 +133,10 @@ use std::{
     iter,
 };
 
-pub use multi_token::{Leaf, Parser, ParserTuple, RawTuple, Tuple, VecLen};
-pub use token::{Token, Usize1};
+pub use self::{
+    multi_token::{Leaf, Parser, ParserTuple, RawTuple, Tuple, VecLen},
+    token::{Token, Usize1},
+};
 
 /// 標準入力を受け取る [`Tokenizer`] を構築します。
 ///
