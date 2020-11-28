@@ -96,7 +96,17 @@ impl<'a, T: 'a + Mod> iter::Product<&'a Fp<T>> for Fp<T> {
 }
 impl<T: Mod> Debug for Fp<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}", self.0)
+        let (x, y, _z) = reduce(self.0, T::MOD);
+        let (x, y) = match y.signum() {
+            1 => (x, y),
+            -1 => (-x, -y),
+            _ => unreachable!(),
+        };
+        if y == 1 {
+            write!(f, "{}", x)
+        } else {
+            write!(f, "{}/{}", x, y)
+        }
     }
 }
 impl<T: Mod> Display for Fp<T> {
@@ -127,6 +137,21 @@ fn ext_gcd(x: i64, y: i64) -> (i64, i64, i64) {
     assert_eq!((g - b * y) % x, 0);
     let a = (g - b * y) / x;
     (g, a, b)
+}
+
+fn reduce(a: i64, m: i64) -> (i64, i64, i64) {
+    if a.abs() < 10_000 {
+        (a, 1, 0)
+    } else {
+        let mut q = m.div_euclid(a);
+        let mut r = m.rem_euclid(a);
+        if a <= 2 * r {
+            q += 1;
+            r -= a;
+        }
+        let (x, z, y) = reduce(r, a);
+        (x, y - q * z, z)
+    }
 }
 
 #[macro_export]
