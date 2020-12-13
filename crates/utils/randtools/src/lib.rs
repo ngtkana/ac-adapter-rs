@@ -1,26 +1,74 @@
 mod algo;
 
 use rand::prelude::*;
-use std::{collections::HashSet, iter, mem};
+use std::{collections::HashSet, iter, mem, ops::Range};
 
 #[derive(Debug)]
-pub struct LogUniform(pub usize, pub usize);
+pub struct LogUniform(pub Range<usize>);
 impl Distribution<usize> for LogUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
-        let &Self(l, r) = self;
-        assert!(l < r);
-        assert!(l != 0);
-        let ln = rng.gen_range((l as f64).ln(), (r as f64).ln());
-        (ln.exp().floor() as usize).max(l).min(r - 1)
+        let Range { start, end } = self.0;
+        assert!(start <= end);
+        let ln = rng.gen_range((start as f64).ln(), (end as f64).ln());
+        (ln.exp().floor() as usize).max(start).min(end - 1)
     }
 }
 
 #[derive(Debug)]
+pub struct DistinctTwo(pub Range<usize>);
+impl Distribution<(usize, usize)> for DistinctTwo {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (usize, usize) {
+        let Range { start, end } = self.0;
+        assert!(start + 2 <= end);
+        let mut i = rng.gen_range(start, end - 1);
+        let j = rng.gen_range(start, end);
+        if i > j {
+            i += 1;
+        }
+        (i, j)
+    }
+}
+
+#[derive(Debug)]
+pub struct SubRange(pub Range<usize>);
+impl Distribution<Range<usize>> for SubRange {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Range<usize> {
+        let Range { start, end } = self.0;
+        assert!(start <= end);
+        let mut l = rng.gen_range(start, end + 2);
+        let mut r = rng.gen_range(start, end + 1);
+        if l > r {
+            mem::swap(&mut l, &mut r);
+            r -= 1;
+        }
+        l..r
+    }
+}
+
+#[derive(Debug)]
+pub struct NonEmptySubRange(pub Range<usize>);
+impl Distribution<Range<usize>> for NonEmptySubRange {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Range<usize> {
+        let Range { start, end } = self.0;
+        assert!(start < end);
+        let mut l = rng.gen_range(start, end);
+        let mut r = rng.gen_range(start, end + 1);
+        if l >= r {
+            mem::swap(&mut l, &mut r);
+            r += 1;
+        }
+        l..r
+    }
+}
+
+#[derive(Debug)]
+#[deprecated(since = "", note = "use SubRange")]
 pub struct Open(pub usize, pub usize);
+#[allow(deprecated)]
 impl Distribution<(usize, usize)> for Open {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (usize, usize) {
         let &Self(l, r) = self;
-        assert!(l + 1 < r);
+        assert!(l <= r);
         let mut x = rng.gen_range(l, r - 1);
         let mut y = rng.gen_range(l, r);
         if x >= y {
@@ -82,8 +130,9 @@ impl Distribution<Vec<(usize, usize)>> for SimpleGraphEdges {
         let &Self(n, m) = self;
         assert!(m <= n * (n - 1) / 2);
         let mut set = HashSet::new();
-        Open(0, n)
+        NonEmptySubRange(0..n)
             .sample_iter(rng)
+            .map(|Range { start, end }| (start, end))
             .filter(|&(u, v)| {
                 let found = set.contains(&(u, v));
                 set.insert((u, v));
@@ -102,8 +151,9 @@ impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
         let &Self(n, m) = self;
         assert!(m <= n * (n - 1) / 2);
         let mut set = HashSet::new();
-        Open(0, n)
+        NonEmptySubRange(0..n)
             .sample_iter(rng)
+            .map(|Range { start, end }| (start, end))
             .filter(|&(u, v)| {
                 let found = set.contains(&(u, v));
                 set.insert((u, v));
@@ -116,17 +166,20 @@ impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
 
 #[cfg(test)]
 mod tests {
-    use super::{LogUniform, Open, Tree};
-    use rand::prelude::*;
+    use {
+        super::{LogUniform, NonEmptySubRange, SubRange, Tree},
+        rand::prelude::*,
+        std::ops::Range,
+    };
     mod algo;
 
     #[test]
     fn test_log_uniform() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
-            let (l, r) = rng.sample(Open(1, 20));
-            let x = rng.sample(LogUniform(l, r));
-            assert!((l..r).contains(&x));
+            let range = rng.sample(NonEmptySubRange(1..20));
+            let x = rng.sample(LogUniform(range.clone()));
+            assert!(range.contains(&x));
         }
     }
 
@@ -137,10 +190,134 @@ mod tests {
             let d = rng.gen_range(2, 8);
             let l = rng.gen_range(0, 40);
             let r = l + d;
-            let (x, y) = rng.sample(Open(l, r));
-            assert!(l <= x && x < y && y < r);
+            let Range { start, end } = rng.sample(SubRange(l..r));
+
+            assert!(l <= start && start <= end && end <= r);
         }
     }
+    // dbg {{{
+    #[allow(dead_code)]
+    mod dbg {
+        #[macro_export]
+        macro_rules! lg {
+        () => {
+            $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
+        };
+        ($val:expr) => {
+            match $val {
+                tmp => {
+                    eprintln!("[{}:{}] {} = {:?}",
+                        file!(), line!(), stringify!($val), &tmp);
+                    tmp
+                }
+            }
+        };
+        ($val:expr,) => { $crate::lg!($val) };
+        ($($val:expr),+ $(,)?) => {
+            ($($crate::lg!($val)),+,)
+        };
+    }
+
+        #[macro_export]
+        macro_rules! lg_nl {
+            () => {
+                eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
+            };
+            ($val:expr) => {
+                match $val {
+                    tmp => {
+                        eprintln!("[{}:{}] {}:\n{:?}", file!(), line!(), stringify!($val), tmp);
+                        tmp
+                    }
+                };
+            };
+        }
+
+        #[macro_export]
+        macro_rules! msg {
+        () => {
+            compile_error!();
+        };
+        ($msg:expr) => {
+            $crate::eprintln!("[{}:{}][{}]", $crate::file!(), $crate::line!(), $msg);
+        };
+        ($msg:expr, $val:expr) => {
+            match $val {
+                tmp => {
+                    eprintln!("[{}:{}][{}] {} = {:?}",
+                        file!(), line!(), $msg, stringify!($val), &tmp);
+                    tmp
+                }
+            }
+        };
+        ($msg:expr, $val:expr,) => { msg!($msg, $val) };
+        ($msg:expr, $($val:expr),+ $(,)?) => {
+            ($(msg!($msg, $val)),+,)
+        };
+    }
+
+        #[macro_export]
+        macro_rules! tabular {
+            ($val:expr) => {
+                $crate::lg_nl!($crate::Tabular($val))
+            };
+        }
+
+        #[macro_export]
+        macro_rules! boolean_table {
+            ($val:expr) => {
+                $crate::lg_nl!($crate::BooleanTable($val));
+            };
+        }
+
+        #[macro_export]
+        macro_rules! boolean_slice {
+            ($val:expr) => {
+                $crate::lg!($crate::BooleanSlice($val));
+            };
+        }
+
+        use std::fmt::{Debug, Formatter};
+
+        #[derive(Clone)]
+        pub struct Tabular<'a, T: Debug>(pub &'a [T]);
+        impl<'a, T: Debug> Debug for Tabular<'a, T> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                for i in 0..self.0.len() {
+                    writeln!(f, "{:2} | {:?}", i, &self.0[i])?;
+                }
+                Ok(())
+            }
+        }
+
+        #[derive(Clone)]
+        pub struct BooleanTable<'a>(pub &'a [Vec<bool>]);
+        impl<'a> Debug for BooleanTable<'a> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                for i in 0..self.0.len() {
+                    writeln!(f, "{:2} | {:?}", i, BooleanSlice(&self.0[i]))?;
+                }
+                Ok(())
+            }
+        }
+
+        #[derive(Clone)]
+        pub struct BooleanSlice<'a>(pub &'a [bool]);
+        impl<'a> Debug for BooleanSlice<'a> {
+            fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
+                write!(
+                    f,
+                    "{}",
+                    self.0
+                        .iter()
+                        .map(|&b| if b { "1 " } else { "0 " })
+                        .collect::<String>()
+                )?;
+                Ok(())
+            }
+        }
+    }
+    // }}}
 
     #[test]
     fn test_tree() {
