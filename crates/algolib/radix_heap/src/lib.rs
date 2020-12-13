@@ -46,6 +46,13 @@ impl<T> RadixHeap<T> {
         RADIX_HEAP_LEN - x.leading_zeros() as usize
     }
 }
+
+impl<T: Debug> Default for RadixHeap<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Debug> Debug for RadixHeap<T> {
     fn fmt(&self, w: &mut fmt::Formatter) -> fmt::Result {
         w.debug_list()

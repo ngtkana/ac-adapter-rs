@@ -535,7 +535,7 @@ GHI
         let mut s = make_buf("0 1 2 3 4 5 6 7 8 9\n");
         assert_eq!(s.tuple::<(u8, char)>(), (0, '1'));
         assert_eq!(s.tuple::<(u8,)>(), (2,));
-        assert_eq!(s.tuple::<()>(), ());
+        let _: () = s.tuple::<()>();
         assert_eq!(
             s.tuple::<(u8, u8, u8, u8, u8, u8, u8,)>(),
             (3, 4, 5, 6, 7, 8, 9)
