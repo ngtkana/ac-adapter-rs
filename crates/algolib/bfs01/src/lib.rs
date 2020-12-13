@@ -68,8 +68,8 @@ mod tests {
     fn test_graph() {
         let mut rng = StdRng::seed_from_u64(42);
         for test_id in 0..100 {
-            let n = rng.sample(LogUniform(2, 3000));
-            let m = rng.sample(LogUniform(n - 1, (n * (n - 1) / 2 + 1).min(3000)));
+            let n = rng.sample(LogUniform(2..3000));
+            let m = rng.sample(LogUniform(n - 1..(n * (n - 1) / 2 + 1).min(3000)));
             println!("Test {}, n = {}, m = {}", test_id, n, m);
             // 重みなしの木を生成して……
             let g = rng.sample(SimpleDigraph(n, m));

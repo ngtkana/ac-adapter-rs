@@ -62,24 +62,6 @@ impl Distribution<Range<usize>> for NonEmptySubRange {
 }
 
 #[derive(Debug)]
-#[deprecated(since = "", note = "use SubRange")]
-pub struct Open(pub usize, pub usize);
-#[allow(deprecated)]
-impl Distribution<(usize, usize)> for Open {
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (usize, usize) {
-        let &Self(l, r) = self;
-        assert!(l <= r);
-        let mut x = rng.gen_range(l, r - 1);
-        let mut y = rng.gen_range(l, r);
-        if x >= y {
-            mem::swap(&mut x, &mut y);
-            y += 1;
-        }
-        (x, y)
-    }
-}
-
-#[derive(Debug)]
 pub struct Tree(pub usize);
 impl Distribution<Vec<Vec<usize>>> for Tree {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<Vec<usize>> {
@@ -130,9 +112,8 @@ impl Distribution<Vec<(usize, usize)>> for SimpleGraphEdges {
         let &Self(n, m) = self;
         assert!(m <= n * (n - 1) / 2);
         let mut set = HashSet::new();
-        NonEmptySubRange(0..n)
+        DistinctTwo(0..n)
             .sample_iter(rng)
-            .map(|Range { start, end }| (start, end))
             .filter(|&(u, v)| {
                 let found = set.contains(&(u, v));
                 set.insert((u, v));
@@ -151,9 +132,8 @@ impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
         let &Self(n, m) = self;
         assert!(m <= n * (n - 1) / 2);
         let mut set = HashSet::new();
-        NonEmptySubRange(0..n)
+        DistinctTwo(0..n)
             .sample_iter(rng)
-            .map(|Range { start, end }| (start, end))
             .filter(|&(u, v)| {
                 let found = set.contains(&(u, v));
                 set.insert((u, v));
