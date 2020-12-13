@@ -91,15 +91,15 @@ mod tests {
     #[test]
     fn test_smallest_prime_factor() {
         let sp = SmallestPrimeFactors::new(20);
-        assert_eq!(sp.get(01), 1);
-        assert_eq!(sp.get(02), 2);
-        assert_eq!(sp.get(03), 3);
-        assert_eq!(sp.get(04), 2);
-        assert_eq!(sp.get(05), 5);
-        assert_eq!(sp.get(06), 2);
-        assert_eq!(sp.get(07), 7);
-        assert_eq!(sp.get(08), 2);
-        assert_eq!(sp.get(09), 3);
+        assert_eq!(sp.get(1), 1);
+        assert_eq!(sp.get(2), 2);
+        assert_eq!(sp.get(3), 3);
+        assert_eq!(sp.get(4), 2);
+        assert_eq!(sp.get(5), 5);
+        assert_eq!(sp.get(6), 2);
+        assert_eq!(sp.get(7), 7);
+        assert_eq!(sp.get(8), 2);
+        assert_eq!(sp.get(9), 3);
         assert_eq!(sp.get(10), 2);
         assert_eq!(sp.get(11), 11);
         assert_eq!(sp.get(12), 2);
@@ -115,15 +115,15 @@ mod tests {
     #[test]
     fn test_factorize() {
         let sp = SmallestPrimeFactors::new(20);
-        assert_eq!(sp.factorize(01), Vec::new());
-        assert_eq!(sp.factorize(02), vec![(2, 1)]);
-        assert_eq!(sp.factorize(03), vec![(3, 1)]);
-        assert_eq!(sp.factorize(04), vec![(2, 2)]);
-        assert_eq!(sp.factorize(05), vec![(5, 1)]);
-        assert_eq!(sp.factorize(06), vec![(2, 1), (3, 1)]);
-        assert_eq!(sp.factorize(07), vec![(7, 1)]);
-        assert_eq!(sp.factorize(08), vec![(2, 3)]);
-        assert_eq!(sp.factorize(09), vec![(3, 2)]);
+        assert_eq!(sp.factorize(1), Vec::new());
+        assert_eq!(sp.factorize(2), vec![(2, 1)]);
+        assert_eq!(sp.factorize(3), vec![(3, 1)]);
+        assert_eq!(sp.factorize(4), vec![(2, 2)]);
+        assert_eq!(sp.factorize(5), vec![(5, 1)]);
+        assert_eq!(sp.factorize(6), vec![(2, 1), (3, 1)]);
+        assert_eq!(sp.factorize(7), vec![(7, 1)]);
+        assert_eq!(sp.factorize(8), vec![(2, 3)]);
+        assert_eq!(sp.factorize(9), vec![(3, 2)]);
         assert_eq!(sp.factorize(10), vec![(2, 1), (5, 1)]);
         assert_eq!(sp.factorize(11), vec![(11, 1)]);
         assert_eq!(sp.factorize(12), vec![(2, 2), (3, 1)]);
