@@ -119,6 +119,7 @@ impl<T: Mod> Display for Fp<T> {
 //
 // | 0  -x |   | y  -x | | x  0 |
 // | 1   b | = | a   b | | y  1 |
+#[allow(clippy::many_single_char_names)]
 fn ext_gcd(x: i64, y: i64) -> (i64, i64, i64) {
     let (b, g) = {
         let mut x = x;
@@ -139,6 +140,7 @@ fn ext_gcd(x: i64, y: i64) -> (i64, i64, i64) {
     (g, a, b)
 }
 
+#[allow(clippy::many_single_char_names)]
 fn reduce(a: i64, m: i64) -> (i64, i64, i64) {
     if a.abs() < 10_000 {
         (a, 1, 0)
