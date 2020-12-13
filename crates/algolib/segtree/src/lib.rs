@@ -1,68 +1,80 @@
-use alg_traits::Identity;
-use std::ops::{Range, RangeBounds};
+use std::{
+    fmt::{self, Debug, Formatter},
+    ops::{Bound, Deref, DerefMut, Drop, Index, Range, RangeBounds},
+    slice::SliceIndex,
+};
 
-#[derive(Debug, Clone, PartialEq)]
-pub struct Segtree<T: Identity> {
+pub struct Segtree<T, Op, Ideneity> {
     len: usize,
-    table: Vec<T::Value>,
+    table: Box<[T]>,
+    op: Op,
+    identity: Ideneity,
 }
-impl<T: Identity> Segtree<T> {
-    pub fn from_slice(src: &[T::Value]) -> Self {
-        let mut table = src.iter().chain(src.iter()).cloned().collect::<Vec<_>>();
-        let len = src.len();
-        for i in (1..len).rev() {
-            table[i] = T::op(table[2 * i].clone(), table[2 * i + 1].clone())
+impl<T, Op, Identity> Segtree<T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    pub fn new(slice: &[T], op: Op, identity: Identity) -> Self {
+        let len = slice.len();
+        let mut table = slice.to_vec();
+        table.extend(slice.iter().cloned());
+        let mut table = table.into_boxed_slice();
+        (1..len)
+            .rev()
+            .for_each(|i| table[i] = op(table[2 * i].clone(), table[2 * i + 1].clone()));
+        Self {
+            len,
+            table,
+            op,
+            identity,
         }
-        Segtree { len, table }
     }
-    pub fn set(&mut self, mut i: usize, x: T::Value) {
-        i += self.len;
-        self.table[i] = x;
-        i >>= 1;
-        while 0 != i {
-            self.update(i);
-            i >>= 1;
-        }
+    pub fn as_slice(&self) -> &[T] {
+        &self.table[self.len..]
     }
-
-    pub fn fold(&self, range: impl RangeBounds<usize>) -> T::Value {
-        let Range { mut start, mut end } = open::open(self.len, range);
+    pub fn entry(&mut self, index: usize) -> Entry<'_, T, Op, Identity> {
+        Entry { seg: self, index }
+    }
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> T {
+        let Range { mut start, mut end } = open(range, self.len);
         start += self.len;
         end += self.len;
-        let mut left = T::identity();
-        let mut right = T::identity();
+        let mut fl = (self.identity)();
+        let mut fr = (self.identity)();
         while start != end {
             if start % 2 == 1 {
-                T::op_left(&mut left, self.table[start].clone());
+                fl = (self.op)(fl, self.table[start].clone());
                 start += 1;
             }
             if end % 2 == 1 {
                 end -= 1;
-                T::op_right(self.table[end].clone(), &mut right);
+                fr = (self.op)(self.table[end].clone(), fr);
             }
-            start >>= 1;
-            end >>= 1;
+            start /= 2;
+            end /= 2;
         }
-        T::op(left, right)
+        (self.op)(fl, fr)
     }
 
     pub fn search_forward(
         &self,
         range: impl RangeBounds<usize>,
-        mut pred: impl FnMut(&T::Value) -> bool,
+        mut pred: impl FnMut(&T) -> bool,
     ) -> usize {
-        let Range { mut start, mut end } = open::open(self.len, range);
+        let Range { mut start, mut end } = open(range, self.len);
         if start == end {
             start
         } else {
             start += self.len;
             end += self.len;
             let orig_end = end;
-            let mut crr = T::identity();
+            let mut crr = (self.identity)();
             let mut shift = 0;
             while start != end {
                 if start % 2 == 1 {
-                    let nxt = T::op(crr.clone(), self.table[start].clone());
+                    let nxt = (self.op)(crr.clone(), self.table[start].clone());
                     if !pred(&nxt) {
                         return self.search_subtree_forward(crr, start, pred);
                     }
@@ -76,7 +88,7 @@ impl<T: Identity> Segtree<T> {
             for p in (0..shift).rev() {
                 let end = (orig_end >> p) - 1;
                 if end % 2 == 0 {
-                    let nxt = T::op(crr.clone(), self.table[end].clone());
+                    let nxt = (self.op)(crr.clone(), self.table[end].clone());
                     if !pred(&nxt) {
                         return self.search_subtree_forward(crr, end, pred);
                     }
@@ -86,25 +98,24 @@ impl<T: Identity> Segtree<T> {
             orig_end - self.len
         }
     }
-
     pub fn search_backward(
         &self,
         range: impl RangeBounds<usize>,
-        mut pred: impl FnMut(&T::Value) -> bool,
+        mut pred: impl FnMut(&T) -> bool,
     ) -> usize {
-        let Range { mut start, mut end } = open::open(self.len, range);
+        let Range { mut start, mut end } = open(range, self.len);
         if start == end {
             start
         } else {
             start += self.len;
             end += self.len;
             let orig_start_m1 = start - 1;
-            let mut crr = T::identity();
+            let mut crr = (self.identity)();
             let mut shift = 0;
             while start != end {
                 if end % 2 == 1 {
                     end -= 1;
-                    let nxt = T::op(self.table[end].clone(), crr.clone());
+                    let nxt = (self.op)(self.table[end].clone(), crr.clone());
                     if !pred(&nxt) {
                         return self.search_subtree_backward(crr, end, pred);
                     }
@@ -117,7 +128,7 @@ impl<T: Identity> Segtree<T> {
             for p in (0..shift).rev() {
                 let start = (orig_start_m1 >> p) + 1;
                 if start % 2 == 1 {
-                    let nxt = T::op(self.table[start].clone(), crr.clone());
+                    let nxt = (self.op)(self.table[start].clone(), crr.clone());
                     if !pred(&nxt) {
                         return self.search_subtree_backward(crr, start, pred);
                     }
@@ -127,18 +138,14 @@ impl<T: Identity> Segtree<T> {
             orig_start_m1 + 1 - self.len
         }
     }
-
-    fn update(&mut self, i: usize) {
-        self.table[i] = T::op(self.table[2 * i].clone(), self.table[2 * i + 1].clone())
-    }
     fn search_subtree_forward(
         &self,
-        mut crr: T::Value,
+        mut crr: T,
         mut root: usize,
-        mut pred: impl FnMut(&T::Value) -> bool,
+        mut pred: impl FnMut(&T) -> bool,
     ) -> usize {
         while root < self.len {
-            let nxt = T::op(crr.clone(), self.table[root * 2].clone());
+            let nxt = (self.op)(crr.clone(), self.table[root * 2].clone());
             root = if pred(&nxt) {
                 crr = nxt;
                 root * 2 + 1
@@ -150,12 +157,12 @@ impl<T: Identity> Segtree<T> {
     }
     fn search_subtree_backward(
         &self,
-        mut crr: T::Value,
+        mut crr: T,
         mut root: usize,
-        mut pred: impl FnMut(&T::Value) -> bool,
+        mut pred: impl FnMut(&T) -> bool,
     ) -> usize {
         while root < self.len {
-            let nxt = T::op(self.table[root * 2 + 1].clone(), crr.clone());
+            let nxt = (self.op)(self.table[root * 2 + 1].clone(), crr.clone());
             root = if pred(&nxt) {
                 crr = nxt;
                 root * 2
@@ -167,77 +174,175 @@ impl<T: Identity> Segtree<T> {
     }
 }
 
+fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
+    (match range.start_bound() {
+        Bound::Unbounded => 0,
+        Bound::Included(&x) => x,
+        Bound::Excluded(&x) => x + 1,
+    })..match range.end_bound() {
+        Bound::Excluded(&x) => x,
+        Bound::Included(&x) => x + 1,
+        Bound::Unbounded => len,
+    }
+}
+
+impl<T: Debug, Op, Identity> Debug for Segtree<T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
+        w.debug_tuple("Segtree")
+            .field(&&self.table[self.len..])
+            .finish()
+    }
+}
+
+impl<I: SliceIndex<[T]>, T, Op, Identity> Index<I> for Segtree<T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    type Output = I::Output;
+    fn index(&self, index: I) -> &I::Output {
+        &self.as_slice()[index]
+    }
+}
+
+pub struct Entry<'a, T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    seg: &'a mut Segtree<T, Op, Identity>,
+    index: usize,
+}
+
+impl<'a, T, Op, Identity> Drop for Entry<'a, T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    fn drop(&mut self) {
+        let mut index = self.index + self.seg.len;
+        while index != 0 {
+            index /= 2;
+            self.seg.table[index] = (self.seg.op)(
+                self.seg.table[index * 2].clone(),
+                self.seg.table[index * 2 + 1].clone(),
+            );
+        }
+    }
+}
+
+impl<'a, T, Op, Identity> Deref for Entry<'a, T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    type Target = T;
+    fn deref(&self) -> &Self::Target {
+        &self.seg[self.index]
+    }
+}
+
+impl<'a, T, Op, Identity> DerefMut for Entry<'a, T, Op, Identity>
+where
+    T: Clone,
+    Op: Fn(T, T) -> T,
+    Identity: Fn() -> T,
+{
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        let index = self.index;
+        let len = self.seg.len;
+        &mut (self.seg.table[len..])[index]
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    mod impl_query;
-    mod point_add_range_sum;
-    mod point_set_range_composite;
-
-    use alg_inversion_number::{InversionMerge, InversionValue};
-    use alg_traits::Assoc;
-    use queries::{impl_proj, preds::Le, projs, Fold, SearchBackward, SearchForward, Set};
-    use query_test::impl_help;
-    use rand::prelude::*;
-    use test_vector::{helpers, queries, Vector};
-
-    type Tester<T, G> =
-        query_test::Tester<StdRng, Vector<<T as Assoc>::Value>, crate::Segtree<T>, G>;
+    use {
+        super::Segtree,
+        rand::{distributions::Alphanumeric, prelude::*},
+        randtools::SubRange,
+        std::iter,
+    };
 
     #[test]
-    fn test_add_u32() {
-        use alg_traits::arith::Add;
-        struct G {}
-        impl_help! {
-            helpers::Len, |rng| rng.gen_range(1, 20);
-            helpers::Value<u32>, |rng| rng.gen_range(1, 20);
-            helpers::Key<u32>, |rng| rng.gen_range(1, 100);
-        }
-
-        let mut tester = Tester::<Add<u32>, G>::new(StdRng::seed_from_u64(42));
-        for _ in 0..4 {
-            tester.initialize();
-            for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 4);
-                match command {
-                    0 => tester.mutate::<Set<_>>(),
-                    1 => tester.compare::<Fold<_>>(),
-                    2 => tester.judge::<SearchForward<_, Le<projs::Copy<_>>>>(),
-                    3 => tester.judge::<SearchBackward<_, Le<projs::Copy<_>>>>(),
-                    _ => unreachable!(),
-                }
-            }
-        }
+    fn test_index() {
+        let seg = Segtree::new(&[0, 1], |x, _y| x, || 0);
+        assert_eq!(seg[0], 0);
+        assert_eq!(seg[1], 1);
+        assert_eq!(&seg[..], &[0, 1]);
     }
 
     #[test]
-    fn test_inversion_value() {
-        struct G {}
-        impl_help! {
-            helpers::Len, |rng| rng.gen_range(1, 20);
-            helpers::Value<InversionValue>, |rng| InversionValue::from_bool(rng.gen_ratio(1, 20));
-            helpers::Key<u64>, |rng| rng.gen_range(1, 100);
-        }
+    fn test_as_slice() {
+        let seg = Segtree::new(&[0, 1], |x, _y| x, || 0);
+        assert_eq!(seg.as_slice(), &[0, 1]);
+    }
 
-        struct P {}
-        impl_proj! {
-            impl P {
-                (InversionValue) -> u64, |x| x.inversion;
-            }
-        }
+    #[test]
+    fn test_entry() {
+        let mut seg = Segtree::new(&[0, 1], |x, _y| x, || 0);
+        *seg.entry(0) = 10;
+        *seg.entry(1) = 11;
+        assert_eq!(seg.as_slice(), &[10, 11]);
+        *seg.entry(0) = 20;
+        *seg.entry(1) = 21;
+        assert_eq!(seg.as_slice(), &[20, 21]);
+    }
 
-        let mut tester = Tester::<InversionMerge, G>::new(StdRng::seed_from_u64(42));
-        for _ in 0..4 {
-            tester.initialize();
-            for _ in 0..100 {
-                let command = tester.rng_mut().gen_range(0, 4);
-                match command {
-                    0 => tester.mutate::<Set<_>>(),
-                    1 => tester.compare::<Fold<_>>(),
-                    2 => tester.judge::<SearchForward<_, Le<P>>>(),
-                    3 => tester.judge::<SearchBackward<_, Le<P>>>(),
-                    _ => unreachable!(),
+    #[test]
+    fn test_strcat() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(1, 40);
+            let mut a = iter::repeat_with(|| iter::once(rng.sample(Alphanumeric)).collect())
+                .take(n)
+                .collect::<Vec<_>>();
+            let mut seg = Segtree::new(&a, strcat, String::new);
+            println!("a = {:?}", &a);
+            println!("seg = {:?}", &seg);
+            for _ in 0..200 {
+                match rng.gen_range(0, 4) {
+                    0 => {
+                        let i = rng.gen_range(0, n);
+                        let s = iter::once(rng.sample(Alphanumeric)).collect::<String>();
+                        a[i] = s.clone();
+                        *seg.entry(i) = s;
+                    }
+                    1 => {
+                        let range = rng.sample(SubRange(0..n));
+                        let result = seg.fold(range.clone());
+                        let expected = a[range].iter().cloned().fold(String::new(), strcat);
+                        assert_eq!(result, expected);
+                    }
+                    2 => {
+                        let range = rng.sample(SubRange(0..n));
+                        let d = rng.gen_range(0, n);
+                        let result = seg.search_forward(range.clone(), |s| s.len() <= d);
+                        let expected = (range.start + d).min(range.end);
+                        assert_eq!(result, expected);
+                    }
+                    3 => {
+                        let range = rng.sample(SubRange(0..n));
+                        let d = rng.gen_range(0, n);
+                        let result = seg.search_backward(range.clone(), |s| s.len() <= d);
+                        let expected = (range.end.saturating_sub(d)).max(range.start);
+                        assert_eq!(result, expected);
+                    }
+                    _ => panic!(),
                 }
             }
+        }
+        fn strcat(s: String, t: String) -> String {
+            s.chars().chain(t.chars()).collect::<String>()
         }
     }
 }
