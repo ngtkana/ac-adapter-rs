@@ -62,7 +62,7 @@ impl HLD {
     pub fn lca(&self, u: usize, v: usize) -> usize {
         self.ord[self.iter_vtx(u, v).last().unwrap().0]
     }
-    pub fn iter_vtx<'a>(&'a self, u: usize, v: usize) -> Iter<'a> {
+    pub fn iter_vtx(&self, u: usize, v: usize) -> Iter {
         Iter {
             hld: self,
             u,
@@ -71,7 +71,7 @@ impl HLD {
             finished: false,
         }
     }
-    pub fn iter_edge<'a>(&'a self, u: usize, v: usize) -> Iter<'a> {
+    pub fn iter_edge(&self, u: usize, v: usize) -> Iter {
         Iter {
             hld: self,
             u,
@@ -125,7 +125,7 @@ enum IncludeLca {
 mod tests {
     use super::HLD;
     use rand::prelude::*;
-    use randtools::{LogUniform, Open, Tree};
+    use randtools::{DistinctTwo, LogUniform, Tree};
 
     #[test]
     fn test_singleton() {
@@ -147,13 +147,13 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
 
         for test_id in 0..100 {
-            let n = rng.sample(LogUniform(2, size_lim));
+            let n = rng.sample(LogUniform(2..size_lim));
             println!("Test {}, n = {}", test_id, n);
             let root = rng.gen_range(0, n);
             let g = rng.sample(Tree(n));
             let hld = HLD::new(g.clone(), root);
             for _ in 0..20 {
-                let (s, t) = rng.sample(Open(0, n));
+                let (s, t) = rng.sample(DistinctTwo(0..n));
 
                 // lca
                 let lca = hld.lca(s, t);
@@ -164,13 +164,13 @@ mod tests {
                 let mut path_v = psp_path_unsorted(&hld, s, t);
                 let mut path_e = psp_path_unsorted_without_lca(&hld, s, t);
                 path_e.push(lca);
-                path_v.sort();
-                path_e.sort();
+                path_v.sort_unstable();
+                path_e.sort_unstable();
                 assert_eq!(&path_v, &path_e);
 
                 // vs bfs
                 let mut expected = bfs::find_path(s, t, &g).unwrap();
-                expected.sort();
+                expected.sort_unstable();
                 assert_eq!(&path_v, &expected);
 
                 // call count
@@ -204,10 +204,11 @@ mod tests {
     }
 
     fn lca_brute(g: &[Vec<usize>], u: usize, v: usize, root: usize) -> usize {
-        let a = bfs::find_path(root, u, &g).unwrap();
-        let b = bfs::find_path(root, v, &g).unwrap();
-        a.into_iter()
-            .zip(b.into_iter())
+        let path_a = bfs::find_path(root, u, &g).unwrap();
+        let path_b = bfs::find_path(root, v, &g).unwrap();
+        path_a
+            .into_iter()
+            .zip(path_b.into_iter())
             .take_while(|(x, y)| x == y)
             .last()
             .unwrap()
