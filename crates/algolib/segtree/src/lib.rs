@@ -247,7 +247,7 @@ where
 {
     type Target = T;
     fn deref(&self) -> &Self::Target {
-        &self.seg[self.index.clone()]
+        &self.seg[self.index]
     }
 }
 
