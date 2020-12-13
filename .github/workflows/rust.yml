@@ -24,6 +24,13 @@ jobs:
     - name: Clippy
       run: cargo clippy
 
+  clippy_on_tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Clippy on tests
+      run: cargo clippy --tests
+
   test:
     runs-on: ubuntu-latest
     steps:
