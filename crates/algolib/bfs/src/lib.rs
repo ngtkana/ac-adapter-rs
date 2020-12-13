@@ -33,10 +33,10 @@ pub fn tree_diamter_restore(g: &[Vec<usize>]) -> (Vec<usize>, u32) {
 }
 
 /// 一点からの距離配列を作ります。
-pub fn calc_dist(s: usize, g: &[Vec<usize>]) -> Vec<u32> {
+pub fn calc_dist(start: usize, g: &[Vec<usize>]) -> Vec<u32> {
     let mut dist = vec![std::u32::MAX; g.len()];
-    dist[s] = 0;
-    let mut queue = VecDeque::from(vec![s]);
+    dist[start] = 0;
+    let mut queue = VecDeque::from(vec![start]);
     while let Some(x) = queue.pop_front() {
         for &y in &g[x] {
             if dist[y] == std::u32::MAX {
@@ -49,12 +49,12 @@ pub fn calc_dist(s: usize, g: &[Vec<usize>]) -> Vec<u32> {
 }
 
 /// 一点からの距離配列と、前者配列を作ります。始点の前者は自分自身です。
-pub fn calc_dist_restore(s: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
+pub fn calc_dist_restore(start: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
     let mut dist = vec![std::u32::MAX; g.len()];
     let mut prv = vec![std::usize::MAX; g.len()];
-    dist[s] = 0;
-    prv[s] = s;
-    let mut queue = VecDeque::from(vec![s]);
+    dist[start] = 0;
+    prv[start] = start;
+    let mut queue = VecDeque::from(vec![start]);
     while let Some(x) = queue.pop_front() {
         for &y in &g[x] {
             if dist[y] == std::u32::MAX {
@@ -67,16 +67,16 @@ pub fn calc_dist_restore(s: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
     (dist, prv)
 }
 
-/// s から t が到達可能ならば最短経路の頂点列を返し、不能ならば `None` を返します。
-pub fn find_path(s: usize, t: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
-    let (dist, prv) = calc_dist_restore(s, &g);
-    if dist[t] == std::u32::MAX {
+/// start から end が到達可能ならば最短経路の頂点列を返し、不能ならば `None` を返します。
+pub fn find_path(start: usize, end: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
+    let (dist, prv) = calc_dist_restore(start, &g);
+    if dist[end] == std::u32::MAX {
         None
     } else {
-        let mut res = vec![t];
+        let mut res = vec![end];
         loop {
             let x = *res.last().unwrap();
-            if x == s {
+            if x == start {
                 res.reverse();
                 return Some(res);
             }
@@ -99,37 +99,37 @@ mod tests {
     fn test_graph() {
         let mut rng = StdRng::seed_from_u64(42);
         for test_id in 0..100 {
-            let n = rng.sample(LogUniform(2, 3000));
-            let m = rng.sample(LogUniform(n - 1, (n * (n - 1) / 2 + 1).min(3000)));
+            let n = rng.sample(LogUniform(2..3000));
+            let m = rng.sample(LogUniform(n - 1..(n * (n - 1) / 2 + 1).min(3000)));
             println!("Test {}, n = {}, m = {}", test_id, n, m);
             let g = rng.sample(SimpleGraph(n, m));
-            let s = rng.gen_range(0, n);
-            let t = rng.gen_range(0, n);
+            let start = rng.gen_range(0, n);
+            let end = rng.gen_range(0, n);
 
             // calc_dist
-            let dist = calc_dist(s, &g);
-            validate_dist(&g, &dist, s);
+            let dist = calc_dist(start, &g);
+            validate_dist(&g, &dist, start);
 
             // calc_dist_restore
             let prv = {
-                let (dist1, prv) = calc_dist_restore(s, &g);
+                let (dist1, prv) = calc_dist_restore(start, &g);
                 assert_eq!(dist, dist1);
                 prv
             };
-            validate_prv(&dist, &prv, s);
+            validate_prv(&dist, &prv, start);
 
             // find_path
-            let path = find_path(s, t, &g);
+            let path = find_path(start, end, &g);
             if let Some(path) = path {
-                validate_path(&dist, &path, s, t);
+                validate_path(&dist, &path, start, end);
             } else {
-                assert_eq!(dist[t], std::u32::MAX);
+                assert_eq!(dist[end], std::u32::MAX);
             }
         }
     }
 
-    fn validate_dist(g: &[Vec<usize>], dist: &[u32], s: usize) {
-        assert_eq!(dist[s], 0);
+    fn validate_dist(g: &[Vec<usize>], dist: &[u32], start: usize) {
+        assert_eq!(dist[start], 0);
         for (u, v) in g
             .iter()
             .enumerate()
@@ -140,16 +140,16 @@ mod tests {
         }
     }
 
-    fn validate_prv(dist: &[u32], prv: &[usize], s: usize) {
-        assert_eq!(prv[s], s);
+    fn validate_prv(dist: &[u32], prv: &[usize], start: usize) {
+        assert_eq!(prv[start], start);
         (0..dist.len())
-            .filter(|&i| i != s && prv[i] != std::usize::MAX)
+            .filter(|&i| i != start && prv[i] != std::usize::MAX)
             .for_each(|i| assert_eq!(dist[prv[i]] + 1, dist[i]))
     }
 
-    fn validate_path(dist: &[u32], path: &[usize], s: usize, t: usize) {
-        assert_eq!(*path.first().unwrap(), s);
-        assert_eq!(*path.last().unwrap(), t);
+    fn validate_path(dist: &[u32], path: &[usize], start: usize, end: usize) {
+        assert_eq!(*path.first().unwrap(), start);
+        assert_eq!(*path.last().unwrap(), end);
         path.iter()
             .enumerate()
             .for_each(|(i, &x)| assert_eq!(dist[x], i as u32));
@@ -160,7 +160,7 @@ mod tests {
     fn test_tree() {
         let mut rng = StdRng::seed_from_u64(42);
         for test_id in 0..100 {
-            let n = rng.sample(LogUniform(2, 20));
+            let n = rng.sample(LogUniform(2..20));
             println!("Test {}, n = {}", test_id, n);
             let g = rng.sample(Tree(n));
 

@@ -51,15 +51,15 @@ mod tests {
     fn test_add() {
         assert_eq!(Add::<u32>::op(2, 4), 6);
         assert_eq!(Add::<u32>::identity(), 0);
-        assert_eq!(Add::<f32>::op(2., 4.), 6.);
-        assert_eq!(Add::<f32>::identity(), 0.);
+        assert!((Add::<f32>::op(2., 4.) - 6.).abs() < std::f32::EPSILON);
+        assert!((Add::<f32>::identity() - 0.).abs() < std::f32::EPSILON);
     }
 
     #[test]
     fn test_mul() {
         assert_eq!(Mul::<u32>::op(2, 4), 8);
         assert_eq!(Mul::<u32>::identity(), 1);
-        assert_eq!(Mul::<f32>::op(2., 4.), 8.);
-        assert_eq!(Mul::<f32>::identity(), 1.);
+        assert!((Mul::<f32>::op(2., 4.) - 8.).abs() < std::f32::EPSILON);
+        assert!((Mul::<f32>::identity() - 1.).abs() < std::f32::EPSILON);
     }
 }
