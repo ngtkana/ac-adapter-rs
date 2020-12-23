@@ -4,5 +4,6 @@ members = [
     'crates/algolib/*',
     'crates/algebra/*',
     'crates/numbers/*',
+    'crates/geometry/*',
     'crates/test_tools/*',
 ]
