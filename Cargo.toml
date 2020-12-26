@@ -1,5 +1,6 @@
 [workspace]
 members = [
+    'crates/ac-adapter-rs',
     'crates/utils/*',
     'crates/algolib/*',
     'crates/algebra/*',
