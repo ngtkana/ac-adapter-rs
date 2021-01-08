@@ -60,6 +60,30 @@ impl Trie {
     pub fn count_prefix(&self, iter: impl Iterator<Item = usize>) -> usize {
         self.__get(iter).map_or(0, |node| node.len)
     }
+    /// 要素を順番に訪問します。
+    pub fn traversal(&self, mut callback: impl FnMut(&[usize])) {
+        let mut prefix = Vec::new();
+        self.traversal_impl(&mut prefix, &mut callback);
+        assert!(prefix.is_empty());
+    }
+    /// 要素を集めます。
+    pub fn collect_vec(&self) -> Vec<Vec<usize>> {
+        let mut ans = Vec::new();
+        self.traversal(|prefix| ans.push(prefix.to_vec()));
+        ans
+    }
+    fn traversal_impl(&self, prefix: &mut Vec<usize>, callback: &mut impl FnMut(&[usize])) {
+        if let Some(node) = self.0.as_deref() {
+            for _ in 0..node.cnt {
+                callback(&prefix);
+            }
+            for (i, child) in node.child.iter().enumerate() {
+                prefix.push(i);
+                child.traversal_impl(prefix, callback);
+                prefix.pop();
+            }
+        }
+    }
     fn __get(&self, mut iter: impl Iterator<Item = usize>) -> Option<&Node> {
         let next = iter.next();
         if let Some(next) = next {
@@ -97,7 +121,35 @@ impl Node {
 
 #[cfg(test)]
 mod tests {
-    use super::Trie;
+    use {super::Trie, rand::prelude::*, std::collections::BTreeMap, test_case::test_case};
 
-    // TODO
+    #[test_case(200, 2; "short")]
+    #[test_case(200, 10; "mid")]
+    #[test_case(20, 100; "long")]
+    fn test_rand_insert(iter: usize, len_max: usize) {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut trie = Trie::new();
+        let mut btree_map = BTreeMap::new();
+        for _ in 0..iter {
+            let n = rng.gen_range(1..=len_max);
+            let s = rand::distributions::Uniform::new(0, 26)
+                .sample_iter(&mut rng)
+                .take(n)
+                .collect::<Vec<_>>();
+            trie.insert(s.iter().copied());
+            *btree_map.entry(s.clone()).or_insert(0) += 1;
+
+            let trie_collect = trie.collect_vec();
+            let btree_map_collect = btree_map
+                .iter()
+                .map(|(v, &cnt)| std::iter::repeat_with(move || v.clone()).take(cnt))
+                .flatten()
+                .collect::<Vec<_>>();
+
+            println!("s = {:?}", &s);
+            println!("trie = {:?}", &trie_collect);
+            println!("btree_map = {:?}", &btree_map_collect);
+            assert_eq!(&trie_collect, &btree_map_collect);
+        }
+    }
 }
