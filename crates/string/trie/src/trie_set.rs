@@ -12,7 +12,7 @@ pub struct TrieSet {
 impl Debug for TrieSet {
     fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
         let mut f = w.debug_set();
-        self.for_each_keys(|k| {
+        self.for_each(|k| {
             f.entry(&k.to_vec());
         });
         f.finish()
@@ -42,6 +42,28 @@ impl TrieSet {
             map: TrieMap::new(),
         }
     }
+
+    /// Returns `true` if the set contains a value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use trie::TrieSet;
+    /// use std::iter::once;
+    ///
+    /// let mut set = TrieSet::new();
+    /// set.insert(once(1));
+    /// set.insert(once(2));
+    /// set.insert(once(3));
+    ///
+    /// // let set: TrieSet<_> = [1, 2, 3].iter().cloned().collect(); TODO: unimplemented
+    /// assert_eq!(set.contains(once(1)), true);
+    /// assert_eq!(set.contains(once(4)), false);
+    /// ```
+    pub fn contains(&self, value: impl IntoIterator<Item = usize>) -> bool {
+        self.map.get(value).is_some()
+    }
+
     /// Adds a value to the set.
     ///
     /// If the set did not have this value present, `true` is returned.
@@ -65,7 +87,26 @@ impl TrieSet {
         self.map.insert(iter, ()).is_none()
     }
 
-    /// Visits all the "existing" nodes corresponding to the preficies of the key.
+    /// Removes a value from the set. Returns whether the value was
+    /// present in the set.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use std::iter::once;
+    /// use trie::TrieSet;
+    ///
+    /// let mut set = TrieSet::new();
+    ///
+    /// set.insert(once(2));
+    /// assert_eq!(set.remove(once(2)), true);
+    /// assert_eq!(set.remove(once(2)), false);
+    /// ```
+    pub fn remove(&mut self, value: impl IntoIterator<Item = usize>) -> bool {
+        self.map.remove(value).is_some()
+    }
+
+    /// Visits all the "existing" nodes corresponding to the preficies of the value.
     ///
     /// # Examples
     ///
@@ -79,7 +120,7 @@ impl TrieSet {
     /// set.insert(vec![1]);
     /// set.insert(vec![1, 1, 1]);
     ///
-    /// // Corresponding an existing key.
+    /// // Corresponding an existing value.
     /// let mut expected = [false, true, false, true].iter();
     /// set.for_each_prefix(vec![1, 1, 1].into_iter(), |trie| {
     ///     let expected = *expected.next().unwrap();
@@ -102,13 +143,13 @@ impl TrieSet {
     /// ```
     pub fn for_each_prefix(
         &self,
-        key: impl IntoIterator<Item = usize>,
+        value: impl IntoIterator<Item = usize>,
         visit: impl FnMut(&TrieMap<()>), // TODO: なんとかしたいですね。
     ) {
-        self.map.for_each_prefix(key, visit);
+        self.map.for_each_prefix(value, visit);
     }
 
-    /// Visits all the keys of a values in the trie, in lexicographic order.
+    /// Visits all the values of a values in the trie, in lexicographic order.
     ///
     /// # Examples
     ///
@@ -130,12 +171,12 @@ impl TrieSet {
     ///     vec![1, 2, 2],
     ///     vec![2],
     /// ].into_iter();
-    /// set.for_each_keys(|k| {
+    /// set.for_each(|k| {
     ///     let ek = expected.next().unwrap();
     ///     assert_eq!(k, ek);
     /// });
     /// ```
-    pub fn for_each_keys(&self, mut visit: impl FnMut(&[usize])) {
+    pub fn for_each(&self, mut visit: impl FnMut(&[usize])) {
         self.map.for_each_kv(|k, ()| visit(k));
     }
 }
@@ -147,7 +188,7 @@ mod tests {
     #[test_case(200, 2; "short")]
     #[test_case(200, 10; "mid")]
     #[test_case(200, 100; "long")]
-    fn test_trie_set_rand_insert(iter: usize, len_max: usize) {
+    fn test_trie_set_rand(iter: usize, len_max: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         let mut trie = TrieSet::new();
         let mut btree_set = BTreeSet::new();
@@ -158,9 +199,27 @@ mod tests {
                 .take(n)
                 .collect::<Vec<_>>();
 
-            let trie_exist = trie.insert(s.iter().copied());
-            let btree_set_exist = btree_set.insert(s.clone());
-            assert_eq!(trie_exist, btree_set_exist);
+            match rng.gen_range(0..3) {
+                // insert
+                0 => {
+                    let trie_exist = trie.insert(s.iter().copied());
+                    let btree_set_exist = btree_set.insert(s.clone());
+                    assert_eq!(trie_exist, btree_set_exist);
+                }
+                // remove
+                1 => {
+                    let trie_exist = trie.remove(s.iter().copied());
+                    let btree_set_exist = btree_set.remove(&s);
+                    assert_eq!(trie_exist, btree_set_exist);
+                }
+                // contians
+                2 => {
+                    let trie_exist = trie.contains(s.iter().copied());
+                    let btree_set_exist = btree_set.contains(&s);
+                    assert_eq!(trie_exist, btree_set_exist);
+                }
+                _ => unreachable!(),
+            }
 
             println!("trie = {:?}", trie);
             println!("btree_set = {:?}", btree_set);
