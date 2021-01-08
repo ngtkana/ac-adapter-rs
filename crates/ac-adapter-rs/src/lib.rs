@@ -3,5 +3,5 @@ pub use {
     dijkstra_radix_heap, fact, factorize, fp, gcd, gridtools, hld, lazy_segbeats, lazy_segtree,
     max_flow, newton, next_permutation, ngtio, not_nan, open, ordtools, prefix_sum, query_test,
     radix_heap, randtools, reverse, scc, segbeats, segbeats_task3, segtree, seq, small_fp, span,
-    sparse_table, suffix_array, type_traits, union_find, z_algorithm,
+    sparse_table, suffix_array, trie, type_traits, union_find, z_algorithm,
 };
