@@ -79,6 +79,35 @@ impl<V> TrieMap<V> {
         }
     }
 
+    /// Removes a key from the map, returning the stored key and value if the key
+    /// was previously in the map.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage:
+    ///
+    /// ```
+    /// use trie::TrieMap;
+    /// use std::iter::once;
+    ///
+    /// let mut map = TrieMap::new();
+    /// map.insert(once(1), "a");
+    /// assert_eq!(map.remove(once(1)), Some("a"));
+    /// assert_eq!(map.remove(once(1)), None);
+    /// ```
+    pub fn remove(&mut self, key: impl IntoIterator<Item = usize>) -> Option<V> {
+        let mut key = key.into_iter();
+        let me = self.0.as_deref_mut()?;
+        let next = key.next();
+        if let Some(next) = next {
+            me.child[next].remove(key)
+        } else {
+            // TODO:
+            // 不要になったノードを削除したいです。しかし、サイズを管理しておかないと実現できません。
+            me.value.take()
+        }
+    }
+
     /// Returns a reference to the value corresponding to the key.
     ///
     /// # Examples
@@ -317,5 +346,61 @@ impl<V> Node<V> {
 impl<V> Default for Node<V> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use {super::TrieMap, rand::prelude::*, std::collections::BTreeMap, test_case::test_case};
+
+    #[test_case(200, 2; "short")]
+    #[test_case(200, 10; "mid")]
+    #[test_case(200, 100; "long")]
+    fn test_trie_map_rand(iter: usize, len_max: usize) {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut trie = TrieMap::new();
+        let mut btree_map = BTreeMap::new();
+        for _ in 0..iter {
+            let n = rng.gen_range(1..=len_max);
+            let s = rand::distributions::Uniform::new(0, 26)
+                .sample_iter(&mut rng)
+                .take(n)
+                .collect::<Vec<_>>();
+
+            match rng.gen_range(0..4) {
+                // insert
+                0 => {
+                    let init_value = 0;
+                    let trie_exist = trie.insert(s.iter().copied(), init_value);
+                    let btree_map_exist = btree_map.insert(s.clone(), init_value);
+                    assert_eq!(trie_exist, btree_map_exist);
+                }
+                // remove
+                1 => {
+                    let trie_exist = trie.remove(s.iter().copied());
+                    let btree_map_exist = btree_map.remove(&s);
+                    assert_eq!(trie_exist, btree_map_exist);
+                }
+                // get
+                2 => {
+                    let trie_exist = trie.get(s.iter().copied());
+                    let btree_map_exist = btree_map.get(&s);
+                    assert_eq!(trie_exist, btree_map_exist);
+                }
+                // get_mut
+                3 => {
+                    let trie_value = trie.get_mut(s.iter().copied());
+                    let btree_map_value = btree_map.get_mut(&s);
+                    assert_eq!(trie_value, btree_map_value);
+                    trie_value.into_iter().for_each(|x| *x += 1);
+                    btree_map_value.into_iter().for_each(|x| *x += 1);
+                }
+                _ => unreachable!(),
+            }
+
+            println!("trie = {:?}", trie);
+            println!("btree_map = {:?}", btree_map);
+            println!();
+        }
     }
 }

@@ -1,6 +1,9 @@
-//! ASCII 文字列を格納します。
+//! A set and map data structure on trie.
+//!
+//! They are set and map datastructure with an extra operation `for_each_prefix`. We can visit all
+//! the preficies of a key, receiving the corresponding node again as a trie.
 
-/// `TrieSet`, `TrieMap` の分岐数は 26 固定です。
+/// Tries here have the fixed branching number 26.
 pub const DEGREE: usize = 26;
 
 mod trie_map;
