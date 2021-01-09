@@ -47,6 +47,7 @@ small_fp = { path = "../algolib/small_fp" }
 span = { path = "../utils/span" }
 sparse_table = { path = "../algolib/sparse_table" }
 suffix_array = { path = "../algolib/suffix_array" }
+trie = { path = "../string/trie/" }
 type_traits = { path = "../utils/type_traits" }
 union_find = { path = "../algolib/union_find" }
 z_algorithm = { path = "../algolib/z_algorithm" }

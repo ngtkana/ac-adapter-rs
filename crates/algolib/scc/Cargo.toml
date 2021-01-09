@@ -10,6 +10,6 @@ edition = "2018"
 dbg = { path = "../../utils/dbg" }
 
 [dev-dependencies]
-test-case = "1.0.0"
+test-case = { git = "https://github.com/frondeus/test-case.git", branch = "master" }
 rand = "0.7.3"
 
