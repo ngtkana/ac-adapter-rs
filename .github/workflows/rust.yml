@@ -31,6 +31,13 @@ jobs:
     - name: Run tests
       run: cargo test
 
+  doc:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run cargo-doc
+      run: cargo doc
+
   run-ignored-tests:
     runs-on: ubuntu-latest
     steps:
