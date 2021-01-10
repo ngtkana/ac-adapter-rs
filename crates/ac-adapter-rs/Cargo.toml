@@ -16,7 +16,7 @@ convex_hull = { path = "../geometry/convex_hull" }
 crt = { path = "../numbers/crt" }
 dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
-diel = { path = "../algolib/diel" }
+dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 fact = { path = "../utils/fact" }
 factorize = { path = "../numbers/factorize" }
