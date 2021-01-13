@@ -8,8 +8,6 @@ edition = "2018"
 
 [dependencies]
 accum = { path = "../utils/accum" }
-alg_inversion_number = { path = "../algebra/alg_inversion_number" }
-alg_traits = { path = "../algebra/alg_traits" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
 convex_hull = { path = "../geometry/convex_hull" }
@@ -24,8 +22,8 @@ fp = { path = "../utils/fp" }
 gcd = { path = "../numbers/gcd" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
-lazy_segbeats = { path = "../algolib/lazy_segbeats" }
-lazy_segtree = { path = "../algolib/lazy_segtree" }
+lazy_segbeats = { path = "../range-query/lazy_segbeats" }
+lazy_segtree = { path = "../range-query/lazy_segtree" }
 max_flow = { path = "../algolib/max_flow" }
 newton = { path = "../numbers/newton" }
 next_permutation = { path = "../utils/next_permutation" }
@@ -39,16 +37,15 @@ radix_heap = { path = "../algolib/radix_heap" }
 randtools = { path = "../utils/randtools" }
 reverse = { path = "../utils/reverse" }
 scc = { path = "../algolib/scc" }
-segbeats = { path = "../algolib/segbeats" }
-segbeats_task3 = { path = "../algolib/segbeats_task3" }
-segtree = { path = "../algolib/segtree" }
+segbeats = { path = "../range-query/segbeats" }
+segbeats_task3 = { path = "../range-query/segbeats_task3" }
+segtree = { path = "../range-query/segtree" }
 seq = { path = "../utils/seq" }
 small_fp = { path = "../algolib/small_fp" }
 span = { path = "../utils/span" }
-sparse_table = { path = "../algolib/sparse_table" }
+sparse_table = { path = "../range-query/sparse_table" }
 suffix_array = { path = "../algolib/suffix_array" }
-trie = { path = "../string/trie/" }
+trie = { path = "../string/trie" }
 type_traits = { path = "../utils/type_traits" }
 union_find = { path = "../algolib/union_find" }
 z_algorithm = { path = "../algolib/z_algorithm" }
-
