@@ -19,6 +19,12 @@ impl Debug for TrieSet {
     }
 }
 
+impl Default for TrieSet {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl TrieSet {
     /// Makes a new empty TrieMap.
     ///

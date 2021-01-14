@@ -42,7 +42,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
         }
     } else {
         let mut a = a.to_vec();
-        a.sort();
+        a.sort_unstable();
         a.dedup();
         let mut hull = Vec::new();
         for &p in &a {
@@ -53,9 +53,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
         }
         let mid_len = hull.len();
         for &p in a.iter().rev().skip(1) {
-            while mid_len + 1 <= hull.len()
-                && 0 <= ccw(hull[hull.len() - 2], hull[hull.len() - 1], p)
-            {
+            while mid_len < hull.len() && 0 <= ccw(hull[hull.len() - 2], hull[hull.len() - 1], p) {
                 hull.pop();
             }
             hull.push(p);
@@ -70,6 +68,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
 /// 凸包を求めます。
 /// 具体的には、辞書順最小の頂点から始めて、時計回りの凸包を作ります。
 /// a が空のときには空配列を返します。
+#[allow(clippy::many_single_char_names)]
 pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
     assert!(!a.is_empty());
     let a = convex_hull(&a);

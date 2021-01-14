@@ -2,7 +2,7 @@ pub fn triangular_root(y: u64) -> u64 {
     if y == 0 {
         0
     } else {
-        let mut x = 1 << (y.next_power_of_two().trailing_zeros() + 2) / 2;
+        let mut x = 1 << ((y.next_power_of_two().trailing_zeros() + 2) / 2);
         loop {
             let next_x = (x - 1 + 2 * y / x) / 2;
             if x <= next_x {
@@ -17,7 +17,7 @@ pub fn sqrt(y: u64) -> u64 {
     if y == 0 {
         0
     } else {
-        let mut x = 1 << (y.next_power_of_two().trailing_zeros() + 1) / 2;
+        let mut x = 1 << ((y.next_power_of_two().trailing_zeros() + 1) / 2);
         loop {
             let next_x = (x + y / x) / 2;
             if x <= next_x {
