@@ -76,7 +76,7 @@ where
     ///
     /// # Panics
     ///
-    /// - if `range.start > range.end` (illegal range)
+    /// - if `range.start > range.end` (reversed empty range)
     /// - or if `len <= range.end` (out of range)
     /// - or if query is not monotone.
     ///
@@ -101,7 +101,7 @@ where
         let Range { start, end } = open(range, self.slice.len());
         assert!(
             start <= end,
-            "Attempted to fold a swag by a range {:?}.",
+            "Attempted to fold a swag by a reversed empty range {:?}.",
             start..end
         );
         assert!(
@@ -207,6 +207,7 @@ mod tests {
     #[should_panic]
     fn test_panics_if_illegal_range() {
         let mut swag = SwagSpan::new(&[0], Add::add, || 0);
+        #[allow(clippy::reversed_empty_ranges)]
         swag.fold(1..0);
     }
 
