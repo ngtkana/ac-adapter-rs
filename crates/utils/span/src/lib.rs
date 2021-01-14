@@ -74,7 +74,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
         self.__span_internal_sort_by_key(|x| cmp::Reverse(f(x)))
     }
 
-    fn lower_bound<'a>(&'a self, x: &Self::Output) -> usize
+    fn lower_bound(&self, x: &Self::Output) -> usize
     where
         T: Ord,
     {
@@ -96,7 +96,7 @@ pub trait Span<T>: ops::Index<usize, Output = T> {
         self.partition_point(|x| f(x) == cmp::Ordering::Less)
     }
 
-    fn upper_bound<'a>(&'a self, x: &Self::Output) -> usize
+    fn upper_bound(&self, x: &Self::Output) -> usize
     where
         Self::Output: Ord,
     {
