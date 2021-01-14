@@ -6,12 +6,12 @@
 //! [`Seq`]: trait.Seq.html
 //!
 
+pub use self::__intersperse::{Intersperse, __intersperse};
 pub use self::accumulate::{accumulate, Accumulate};
 pub use self::adjacent::{adjacent, Adjacent};
 pub use self::cartesian_product::{cartesian_product, CartesianProduct};
 pub use self::format_intersparse::format_intersparse;
 pub use self::grid_next::{grid_next, GridNext};
-pub use self::intersperse::{intersperse, Intersperse};
 pub use self::mul_step::{mul_step, MulStep};
 pub use self::repeat_with::{repeat_with, RepeatWith};
 pub use self::step::{step, Step};
@@ -99,8 +99,8 @@ pub trait Seq: Iterator + Sized {
     }
 
     /// `itertools` の同名のメソッドと同じです。
-    fn intersperse(self, elt: Self::Item) -> Intersperse<Self> {
-        intersperse::intersperse(self, elt)
+    fn __intersperse(self, elt: Self::Item) -> Intersperse<Self> {
+        __intersperse::__intersperse(self, elt)
     }
 
     /// アイテムをフォーマットして、間に `separator` をはさみます。
@@ -110,7 +110,7 @@ pub trait Seq: Iterator + Sized {
         T: fmt::Display,
     {
         self.map(|x| format!("{}", x))
-            .intersperse(format!("{}", separator))
+            .__intersperse(format!("{}", separator))
             .collect::<String>()
     }
 }
@@ -437,7 +437,7 @@ mod cartesian_product {
 }
 
 #[allow(missing_docs)]
-mod intersperse {
+mod __intersperse {
     use super::size_hint;
     use std::iter;
 
@@ -452,7 +452,7 @@ mod intersperse {
         peek: Option<I::Item>,
     }
 
-    pub fn intersperse<I>(iter: I, elt: I::Item) -> Intersperse<I>
+    pub fn __intersperse<I>(iter: I, elt: I::Item) -> Intersperse<I>
     where
         I: Iterator,
     {
@@ -524,7 +524,7 @@ mod format_intersparse {
         T: fmt::Display,
     {
         iter.map(|x| format!("{}", x))
-            .intersperse(format!("{}", separator))
+            .__intersperse(format!("{}", separator))
             .collect::<String>()
     }
 }

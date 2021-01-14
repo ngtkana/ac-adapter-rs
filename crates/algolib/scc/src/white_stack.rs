@@ -1,4 +1,4 @@
-/// [`on_stack`] が線形でできるスタックができます。
+/// `on_stack` が線形でできるスタックができます。
 #[derive(Debug, Clone)]
 pub struct WhiteStack {
     pub on_stack: Vec<bool>,
