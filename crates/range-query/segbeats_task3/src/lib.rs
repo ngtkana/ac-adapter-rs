@@ -19,8 +19,7 @@ impl<T: Elm> Debug for Segbeats<T> {
         self.table
             .borrow_mut()
             .iter()
-            .map(|node| writeln!(f, "{:?}", &node))
-            .collect()
+            .try_for_each(|node| writeln!(f, "{:?}", &node))
     }
 }
 

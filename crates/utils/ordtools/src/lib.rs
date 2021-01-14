@@ -105,11 +105,3 @@ pub trait Ordtools: PartialOrd + Sized {
 }
 
 impl<T: PartialOrd + Sized> Ordtools for T {}
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}

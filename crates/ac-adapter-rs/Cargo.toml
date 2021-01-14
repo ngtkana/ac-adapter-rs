@@ -32,7 +32,6 @@ not_nan = { path = "../utils/not_nan" }
 open = { path = "../utils/open" }
 ordtools = { path = "../utils/ordtools" }
 prefix_sum = { path = "../utils/prefix_sum" }
-query_test = { path = "../utils/query_test" }
 radix_heap = { path = "../algolib/radix_heap" }
 randtools = { path = "../utils/randtools" }
 reverse = { path = "../utils/reverse" }
@@ -45,7 +44,7 @@ small_fp = { path = "../algolib/small_fp" }
 span = { path = "../utils/span" }
 sparse_table = { path = "../range-query/sparse_table" }
 suffix_array = { path = "../algolib/suffix_array" }
+swag = { path = "../range-query/swag" }
 trie = { path = "../string/trie" }
-type_traits = { path = "../utils/type_traits" }
 union_find = { path = "../algolib/union_find" }
 z_algorithm = { path = "../algolib/z_algorithm" }
