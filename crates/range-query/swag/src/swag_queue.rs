@@ -2,7 +2,7 @@ use std::fmt::{self, Debug, Formatter};
 
 /// A foldable queue data structure by SWAG algorithm.
 ///
-/// You can use push, pop, and fold operation on a sequence.
+/// You can use [`push`](SwagQueue::push), [`pop`](SwagQueue::pop), and [`fold`](SwagQueue::fold) operation on a sequence.
 ///
 #[derive(Clone, PartialEq)]
 pub struct SwagQueue<T, Op, Identity> {
