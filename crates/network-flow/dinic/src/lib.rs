@@ -317,9 +317,9 @@ mod tests {
         let mut cap = vec![vec![0; n]; n];
         network.iter().for_each(|&(u, v, c)| cap[u][v] = c);
         print!("cap = ");
-        for i in 0..n {
+        for (i, cap) in cap.iter().enumerate() {
             print!("\t{} |", i);
-            cap[i].iter().for_each(|x| print!(" {}", x));
+            cap.iter().for_each(|x| print!(" {}", x));
             println!();
         }
 
@@ -337,6 +337,7 @@ mod tests {
     }
 
     // https://misawa.github.io/others/flow/dinic_time_complexity.html
+    #[allow(clippy::many_single_char_names)]
     fn generate_hack(n: usize) -> (usize, usize, Vec<(usize, usize, u32)>) {
         let s = 0;
         let a = 1;

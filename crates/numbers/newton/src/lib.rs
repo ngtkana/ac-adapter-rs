@@ -46,7 +46,7 @@ mod tests {
             assert!(square(x) <= y);
             assert!(y < square(x + 1));
         }
-        for y in (0..100).map(|x| square(x)) {
+        for y in (0..100).map(square) {
             let x = sqrt(y);
             assert!(square(x) <= y);
             assert!(y < square(x + 1));
@@ -85,7 +85,7 @@ mod tests {
             assert!(triangular(x) <= y);
             assert!(y < triangular(x + 1));
         }
-        for y in (0..100).map(|x| triangular(x)) {
+        for y in (0..100).map(triangular) {
             let x = triangular_root(y);
             assert!(triangular(x) <= y);
             assert!(y < triangular(x + 1));
