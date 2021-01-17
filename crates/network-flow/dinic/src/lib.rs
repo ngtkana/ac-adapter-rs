@@ -65,7 +65,7 @@ where
     ///
     /// ```
     /// use dinic::Dinic;
-    /// let dinic = Dinic::new(3);
+    /// let dinic = Dinic::<u32>::new(3);
     /// ```
     pub fn new(n: usize) -> Self {
         Self {
@@ -108,7 +108,7 @@ where
     /// dinic.insert(1, 2, 15);
     /// dinic.insert(0, 2, 20);
     ///
-    /// let _: DinicResult = dinic.build(0, 2);
+    /// let _: DinicResult<u32> = dinic.build(0, 2);
     /// ```
     pub fn build(self, s: usize, t: usize) -> DinicResult<T> {
         dinic_impl(s, t, self.res)

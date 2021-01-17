@@ -1,3 +1,7 @@
+//! CAUTION: [`RadixHeap`] fails in testst!
+#![allow(deprecated)]
+
+#[deprecated]
 /// 一点からの距離配列を作ります。
 pub fn calc_dist(s: usize, g: &[Vec<(usize, u32)>]) -> Vec<u32> {
     let mut dist = vec![std::u32::MAX; g.len()];
