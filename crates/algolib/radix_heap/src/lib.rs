@@ -74,11 +74,11 @@ mod tests {
         let mut binary = BinaryHeap::new();
         let mut radix = super::RadixHeap::new();
         for _ in 0..30 {
-            match rng.gen_range(0, 2) {
+            match rng.gen_range(0..2) {
                 0 => {
                     let key =
-                        binary.peek().map_or(0, |&(Reverse(key), _)| key) + rng.gen_range(0, 128);
-                    let value = rng.gen_range(0, 30);
+                        binary.peek().map_or(0, |&(Reverse(key), _)| key) + rng.gen_range(0..128);
+                    let value = rng.gen_range(0..30);
                     binary.push((Reverse(key), value));
                     radix.push(key, value);
                 }

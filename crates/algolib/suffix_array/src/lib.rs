@@ -153,8 +153,9 @@ mod tests {
     fn test_random() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(10, 40);
+            let n = rng.gen_range(10..40);
             let s = iter::repeat_with(|| rng.sample(rand::distributions::Alphanumeric))
+                .map(|c| c as char)
                 .take(n)
                 .collect::<String>();
             println!("s = {}", s);

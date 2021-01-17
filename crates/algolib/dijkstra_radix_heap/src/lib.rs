@@ -64,12 +64,12 @@ mod tests {
                 .iter()
                 .map(|v| {
                     v.iter()
-                        .map(|&j| (j, rng.gen_range(0, 30)))
+                        .map(|&j| (j, rng.gen_range(0..30)))
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();
             tabular!(&g);
-            let s = rng.gen_range(0, n);
+            let s = rng.gen_range(0..n);
 
             // calc_dist
             let dist = super::calc_dist(s, &g);

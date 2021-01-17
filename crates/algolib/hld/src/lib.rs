@@ -149,7 +149,7 @@ mod tests {
         for test_id in 0..100 {
             let n = rng.sample(LogUniform(2..size_lim));
             println!("Test {}, n = {}", test_id, n);
-            let root = rng.gen_range(0, n);
+            let root = rng.gen_range(0..n);
             let g = rng.sample(Tree(n));
             let hld = HLD::new(g.clone(), root);
             for _ in 0..20 {

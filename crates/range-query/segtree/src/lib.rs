@@ -302,18 +302,24 @@ mod tests {
     fn test_strcat() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(1, 40);
-            let mut a = iter::repeat_with(|| iter::once(rng.sample(Alphanumeric)).collect())
-                .take(n)
-                .collect::<Vec<_>>();
+            let n = rng.gen_range(1..40);
+            let mut a = iter::repeat_with(|| {
+                iter::once(rng.sample(Alphanumeric))
+                    .map(|c| c as char)
+                    .collect()
+            })
+            .take(n)
+            .collect::<Vec<_>>();
             let mut seg = Segtree::new(&a, strcat, String::new);
             println!("a = {:?}", &a);
             println!("seg = {:?}", &seg);
             for _ in 0..200 {
-                match rng.gen_range(0, 4) {
+                match rng.gen_range(0..4) {
                     0 => {
-                        let i = rng.gen_range(0, n);
-                        let s = iter::once(rng.sample(Alphanumeric)).collect::<String>();
+                        let i = rng.gen_range(0..n);
+                        let s = iter::once(rng.sample(Alphanumeric))
+                            .map(|c| c as char)
+                            .collect::<String>();
                         a[i] = s.clone();
                         *seg.entry(i) = s;
                     }
@@ -325,14 +331,14 @@ mod tests {
                     }
                     2 => {
                         let range = rng.sample(SubRange(0..n));
-                        let d = rng.gen_range(0, n);
+                        let d = rng.gen_range(0..n);
                         let result = seg.search_forward(range.clone(), |s| s.len() <= d);
                         let expected = (range.start + d).min(range.end);
                         assert_eq!(result, expected);
                     }
                     3 => {
                         let range = rng.sample(SubRange(0..n));
-                        let d = rng.gen_range(0, n);
+                        let d = rng.gen_range(0..n);
                         let result = seg.search_backward(range.clone(), |s| s.len() <= d);
                         let expected = (range.end.saturating_sub(d)).max(range.start);
                         assert_eq!(result, expected);

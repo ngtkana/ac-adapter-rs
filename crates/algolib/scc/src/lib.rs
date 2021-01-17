@@ -200,12 +200,12 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
 
         for _ in 0..20 {
-            let n = rng.gen_range(4, 15);
+            let n = rng.gen_range(4..15);
             let mut graph = vec![Vec::new(); n];
             let mut scc = Scc::new(n);
             for _ in 0..2 * n {
-                let u = rng.gen_range(0, n);
-                let v = rng.gen_range(0, n);
+                let u = rng.gen_range(0..n);
+                let v = rng.gen_range(0..n);
                 graph[u].push(v);
                 scc.add_edge(u, v);
             }
@@ -259,13 +259,13 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
 
         for _ in 0..40 {
-            let n = rng.gen_range(4, 15);
-            let m = rng.gen_range(0, 4 * n);
+            let n = rng.gen_range(4..15);
+            let m = rng.gen_range(0..4 * n);
             let conditions = iter::repeat_with(|| {
                 (
-                    rng.gen_range(0, n),
+                    rng.gen_range(0..n),
                     rng.gen_ratio(1, 2),
-                    rng.gen_range(0, n),
+                    rng.gen_range(0..n),
                     rng.gen_ratio(1, 2),
                 )
             })

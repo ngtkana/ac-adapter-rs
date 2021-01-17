@@ -91,7 +91,7 @@ mod tests {
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();
-            let s = rng.gen_range(0, n);
+            let s = rng.gen_range(0..n);
 
             // calc_dist
             let dist = super::calc_dist(s, &g);
