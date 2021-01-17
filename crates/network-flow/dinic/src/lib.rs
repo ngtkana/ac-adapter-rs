@@ -64,6 +64,9 @@ where
     pub fn flow(&self) -> T {
         self.flow
     }
+    pub fn minimum_cut(&self) -> &[bool] {
+        &self.minimum_cut
+    }
 }
 
 fn dinic_impl<T>(s: usize, t: usize, mut res: Vec<Vec<Edge<T>>>) -> DinicResult<T>
@@ -183,28 +186,30 @@ mod tests {
     fn test_rand(n: usize, m: usize, iter: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iter {
-            let mut dinic = Dinic::new(n);
             let network = rng
                 .sample(SimpleGraphEdges(n, m))
                 .into_iter()
                 .map(|(u, v)| (u, v, rng.gen_range(0..1u32 << 16)))
                 .collect::<Vec<_>>();
-            network
-                .iter()
-                .for_each(|&(u, v, cap)| dinic.insert(u, v, cap));
             let (s, t) = rng.sample(DistinctTwo(0..n));
-            let result = dinic.build(s, t);
-            validate_dinic(n, s, t, network, result);
+            test_impl(n, s, t, network);
         }
     }
 
-    fn validate_dinic(
-        n: usize,
-        s: usize,
-        t: usize,
-        network: Vec<(usize, usize, u32)>,
-        result: DinicResult<u32>,
-    ) {
+    #[test_case(10; "small hack")]
+    #[test_case(100; "large hack")]
+    fn test_hack(n: usize) {
+        let (s, t, network) = generate_hack(n);
+        test_impl(n, s, t, network);
+    }
+
+    fn test_impl(n: usize, s: usize, t: usize, network: Vec<(usize, usize, u32)>) {
+        let mut dinic = Dinic::new(n);
+        network
+            .iter()
+            .for_each(|&(u, v, cap)| dinic.insert(u, v, cap));
+        let result = dinic.build(s, t);
+
         let DinicResult {
             flow,
             minimum_cut,
@@ -237,5 +242,29 @@ mod tests {
         assert_eq!(minimum_cut_cap, flow);
 
         println!()
+    }
+
+    // https://misawa.github.io/others/flow/dinic_time_complexity.html
+    fn generate_hack(n: usize) -> (usize, usize, Vec<(usize, usize, u32)>) {
+        let s = 0;
+        let a = 1;
+        let b = 2;
+        let c = 3;
+        let t = 4;
+        let mut uv = [5, 6];
+
+        let mut edges = Vec::new();
+        edges.extend(vec![(s, a, 1), (s, b, 2), (b, a, 2), (c, t, 2)]);
+        edges.extend(uv.iter().map(|&x| (a, x, 3)));
+        loop {
+            let next_uv = [uv[0] + 2, uv[1] + 2];
+            if n <= next_uv[1] {
+                break;
+            }
+            edges.extend(uv.iter().zip(next_uv.iter()).map(|(&x, &y)| (x, y, 3)));
+            uv = next_uv;
+        }
+        edges.extend(uv.iter().map(|&x| (x, c, 3)));
+        (s, t, edges)
     }
 }
