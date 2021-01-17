@@ -61,8 +61,8 @@ pub struct Len();
 pub struct Value<T: Elm>(PhantomData<T>);
 impl<T: Elm> Vector<T> {
     fn gen_range(&self, rng: &mut impl Rng) -> Range<usize> {
-        let mut u = rng.gen_range(0, self.0.len());
-        let mut v = rng.gen_range(0, 1 + self.0.len());
+        let mut u = rng.gen_range(0..self.0.len());
+        let mut v = rng.gen_range(0..1 + self.0.len());
         if u > v {
             swap(&mut u, &mut v);
         }

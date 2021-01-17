@@ -280,8 +280,8 @@ mod tests {
     fn test_min_add() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(1, 40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0u32, 30))
+            let n = rng.gen_range(1..40);
+            let mut a = iter::repeat_with(|| rng.gen_range(0u32..30))
                 .take(n)
                 .collect::<Vec<_>>()
                 .into_boxed_slice();
@@ -297,10 +297,10 @@ mod tests {
             println!("a = {:?}", &a);
             println!("seg = {:?}", debug_collect(&seg));
             for _ in 0..20 {
-                match rng.gen_range(0, 3) {
+                match rng.gen_range(0..3) {
                     0 => {
-                        let i = rng.gen_range(0, n);
-                        let x = rng.gen_range(0, 30);
+                        let i = rng.gen_range(0..n);
+                        let x = rng.gen_range(0..30);
                         println!("Set via modify {} {}", &i, x);
                         seg.modify(i, |y| *y = x);
                         a[i] = x;
@@ -318,7 +318,7 @@ mod tests {
                     }
                     2 => {
                         let range = rng.sample(SubRange(0..n));
-                        let f = rng.gen_range(0, 30);
+                        let f = rng.gen_range(0..30);
                         println!("Apply {:?} {}", &range, f);
                         seg.apply(range.clone(), f);
                         a[range].iter_mut().for_each(|x| *x += f);
@@ -338,8 +338,8 @@ mod tests {
     fn test_to_vec() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
-            let n = rng.gen_range(1, 40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0u32, 30))
+            let n = rng.gen_range(1..40);
+            let mut a = iter::repeat_with(|| rng.gen_range(0u32..30))
                 .take(n)
                 .collect::<Vec<_>>()
                 .into_boxed_slice();
@@ -356,7 +356,7 @@ mod tests {
             println!("seg = {:?}", debug_collect(&seg));
             for _ in 0..20 {
                 let range = rng.sample(SubRange(0..n));
-                let f = rng.gen_range(0, 30);
+                let f = rng.gen_range(0..30);
                 println!("Apply {:?} {}", &range, f);
                 seg.apply(range.clone(), f);
                 a[range].iter_mut().for_each(|x| *x += f);
