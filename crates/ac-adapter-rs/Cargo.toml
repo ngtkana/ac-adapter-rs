@@ -16,6 +16,7 @@ dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
 dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
+dinic = { path = "../network-flow/dinic" }
 fact = { path = "../utils/fact" }
 factorize = { path = "../numbers/factorize" }
 fp = { path = "../utils/fp" }
