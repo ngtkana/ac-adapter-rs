@@ -167,6 +167,7 @@ mod tests {
         test_caliper_base(1_000_000_000, 400, 20);
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iteration {
