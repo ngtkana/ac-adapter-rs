@@ -135,11 +135,11 @@ mod tests {
     fn test_convex_hull_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iteration {
-            let n = rng.gen_range(0, vertex_number);
+            let n = rng.gen_range(0..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max, coord_max + 1),
-                    rng.gen_range(-coord_max, coord_max + 1),
+                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..coord_max + 1),
                 ]
             })
             .take(n)
@@ -167,14 +167,15 @@ mod tests {
         test_caliper_base(1_000_000_000, 400, 20);
     }
 
+    #[allow(clippy::many_single_char_names)]
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iteration {
-            let n = rng.gen_range(1, vertex_number);
+            let n = rng.gen_range(1..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max, coord_max + 1),
-                    rng.gen_range(-coord_max, coord_max + 1),
+                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..coord_max + 1),
                 ]
             })
             .take(n)

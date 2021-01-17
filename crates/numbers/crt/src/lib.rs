@@ -82,10 +82,10 @@ mod tests {
     fn test_crt_impl_rand() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..120 {
-            let m0 = rng.gen_range(2, 30);
-            let x0 = rng.gen_range(0, m0);
-            let m1 = rng.gen_range(2, 30);
-            let x1 = rng.gen_range(0, m1);
+            let m0 = rng.gen_range(2..30);
+            let x0 = rng.gen_range(0..m0);
+            let m1 = rng.gen_range(2..30);
+            let x1 = rng.gen_range(0..m1);
             let expected = crt_impl_brute(x0, m0, x1, m1);
             println!(
                 "x0 = {}, m0 = {}, x1 = {}, m1 = {}, expected = {:?}",
@@ -113,10 +113,10 @@ mod tests {
     fn test_crt_rand() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..50 {
-            let n = rng.gen_range(0, 6);
+            let n = rng.gen_range(0..6);
             let a = std::iter::repeat_with(|| {
-                let m = rng.gen_range(2, 10);
-                let x = rng.gen_range(0, m);
+                let m = rng.gen_range(2..10);
+                let x = rng.gen_range(0..m);
                 (x, m)
             })
             .take(n)

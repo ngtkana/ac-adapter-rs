@@ -8,4 +8,4 @@ edition = "2018"
 
 [dev-dependencies]
 test-case = { git = "https://github.com/frondeus/test-case.git", branch = "master" }
-rand = "0.7.3"
+rand = "0.8.2"

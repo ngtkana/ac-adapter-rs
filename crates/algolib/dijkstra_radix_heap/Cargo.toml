@@ -10,6 +10,6 @@ edition = "2018"
 radix_heap = { path = "../radix_heap" }
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8.2"
 dbg = { path = "../../utils/dbg" }
 randtools = { path = "../../utils/randtools" }

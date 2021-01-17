@@ -5,7 +5,7 @@ authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8.2"
 bfs = { path = "../bfs/" }
 randtools = { path = "../../utils/randtools" }
 dbg = { path = "../../utils/dbg" }

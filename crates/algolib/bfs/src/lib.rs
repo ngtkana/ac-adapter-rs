@@ -103,8 +103,8 @@ mod tests {
             let m = rng.sample(LogUniform(n - 1..(n * (n - 1) / 2 + 1).min(3000)));
             println!("Test {}, n = {}, m = {}", test_id, n, m);
             let g = rng.sample(SimpleGraph(n, m));
-            let start = rng.gen_range(0, n);
-            let end = rng.gen_range(0, n);
+            let start = rng.gen_range(0..n);
+            let end = rng.gen_range(0..n);
 
             // calc_dist
             let dist = calc_dist(start, &g);
