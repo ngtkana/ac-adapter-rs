@@ -7,4 +7,5 @@ members = [
     'crates/range-query/*',
     'crates/numbers/*',
     'crates/geometry/*',
+    'crates/network-flow/*',
 ]

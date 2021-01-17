@@ -9,7 +9,7 @@ impl Distribution<usize> for LogUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
         let Range { start, end } = self.0;
         assert!(start <= end);
-        let ln = rng.gen_range((start as f64).ln(), (end as f64).ln());
+        let ln = rng.gen_range((start as f64).ln()..(end as f64).ln());
         (ln.exp().floor() as usize).max(start).min(end - 1)
     }
 }
@@ -20,8 +20,8 @@ impl Distribution<(usize, usize)> for DistinctTwo {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> (usize, usize) {
         let Range { start, end } = self.0;
         assert!(start + 2 <= end);
-        let mut i = rng.gen_range(start, end - 1);
-        let j = rng.gen_range(start, end);
+        let mut i = rng.gen_range(start..end - 1);
+        let j = rng.gen_range(start..end);
         if i > j {
             i += 1;
         }
@@ -35,8 +35,8 @@ impl Distribution<Range<usize>> for SubRange {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Range<usize> {
         let Range { start, end } = self.0;
         assert!(start <= end);
-        let mut l = rng.gen_range(start, end + 2);
-        let mut r = rng.gen_range(start, end + 1);
+        let mut l = rng.gen_range(start..end + 2);
+        let mut r = rng.gen_range(start..end + 1);
         if l > r {
             mem::swap(&mut l, &mut r);
             r -= 1;
@@ -51,8 +51,8 @@ impl Distribution<Range<usize>> for NonEmptySubRange {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Range<usize> {
         let Range { start, end } = self.0;
         assert!(start < end);
-        let mut l = rng.gen_range(start, end);
-        let mut r = rng.gen_range(start, end + 1);
+        let mut l = rng.gen_range(start..end);
+        let mut r = rng.gen_range(start..end + 1);
         if l >= r {
             mem::swap(&mut l, &mut r);
             r += 1;
@@ -70,7 +70,7 @@ impl Distribution<Vec<Vec<usize>>> for Tree {
         if n == 1 {
             vec![Vec::new()]
         } else {
-            let prufer = iter::repeat_with(|| rng.gen_range(0, n))
+            let prufer = iter::repeat_with(|| rng.gen_range(0..n))
                 .take(n - 2)
                 .collect::<Vec<_>>();
             algo::prufer2tree(&prufer)
@@ -167,8 +167,8 @@ mod tests {
     fn test_open() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
-            let d = rng.gen_range(2, 8);
-            let l = rng.gen_range(0, 40);
+            let d = rng.gen_range(2..8);
+            let l = rng.gen_range(0..40);
             let r = l + d;
             let Range { start, end } = rng.sample(SubRange(l..r));
 
@@ -180,7 +180,7 @@ mod tests {
     fn test_tree() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(1, 1_000);
+            let n = rng.gen_range(1..1_000);
             let g = rng.sample(Tree(n));
             println!("g = {:?}", &g);
             assert!(algo::is_tree(&g));

@@ -15,5 +15,5 @@ package = "query_test"
 open = { path = "../../utils/open" }
 
 [dev-dependencies]
-rand = "0.7.3"
+rand = "0.8.2"
 
