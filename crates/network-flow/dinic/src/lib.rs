@@ -1,3 +1,5 @@
+//! Solve a maximum flow problem with Dinic's algorithm. [See the struct level reference](Dinic)
+
 use std::{
     collections::VecDeque,
     iter::Sum,
@@ -5,16 +7,51 @@ use std::{
 };
 
 #[derive(Debug, Clone, PartialEq, Copy)]
-pub struct Edge<T> {
+struct Edge<T> {
     to: usize,
     cap: T,
     rev: usize,
 }
 
+/// An adapter trait of the capacity.
+///
+/// This trait is implementated for all the integer types.
+///
 pub trait Value: Copy + Ord + AddAssign + SubAssign + Sum {
+    /// Returns the zero.
     fn zero() -> Self;
 }
 
+/// Solve a maximum flow problem with Dinic's algorithm.
+///
+/// # Basic usage
+///
+/// 1. First, initialize [`Dinic`] with the number of verticies.
+/// 1. Insert edges with a method [`insert`](Dinic::insert).
+/// 1. Execute the algorithm by calling a method [`build`](Dinic::build) with the source `s` and sink `t`.
+///    It will return a new object of [`DinicResult`].
+/// 1. Now, you can use methods of it to observe the results.
+///
+/// ```
+/// use dinic::Dinic;
+///
+/// let mut dinic = Dinic::new(3);
+/// dinic.insert(0, 1, 10);
+/// dinic.insert(1, 2, 15);
+/// dinic.insert(0, 2, 20);
+///
+/// let result = dinic.build(0, 2);
+/// assert_eq!(result.flow(), 30);
+/// assert_eq!(result.minimum_cut(), &[false, true, true]);
+/// ```
+///
+///
+/// # How to observe the results
+///
+/// 1. A method [`flow`](DinicResult:;flow) will tell you the value of the maximum flow.
+/// 2. A method [`minimum_cut`](DinicResult::minimum_cut) will tell you the minimu cut, where
+///    `false` is filled if reachable from `s`, while `true` if unreachable.
+///
 #[derive(Debug, Clone, PartialEq)]
 pub struct Dinic<T> {
     res: Vec<Vec<Edge<T>>>,
@@ -24,12 +61,28 @@ impl<T> Dinic<T>
 where
     T: Value,
 {
+    /// Creates a new instance of [`Dinic`]
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    /// let dinic = Dinic::new(3);
+    /// ```
     pub fn new(n: usize) -> Self {
         Self {
             res: vec![Vec::new(); n],
         }
     }
 
+    /// Inserts a new edge to the network.
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.insert(0, 1, 10);
+    /// dinic.insert(1, 2, 15);
+    /// dinic.insert(0, 2, 20);
+    /// ```
     pub fn insert(&mut self, from: usize, to: usize, cap: T) {
         let size_from = self.res[from].len();
         let size_to = self.res[to].len();
@@ -45,11 +98,24 @@ where
         });
     }
 
+    /// Excecutes Dinic's algorithm and returns the result in [`DinicResult`]
+    ///
+    /// ```
+    /// use dinic::{Dinic, DinicResult};
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.insert(0, 1, 10);
+    /// dinic.insert(1, 2, 15);
+    /// dinic.insert(0, 2, 20);
+    ///
+    /// let _: DinicResult = dinic.build(0, 2);
+    /// ```
     pub fn build(self, s: usize, t: usize) -> DinicResult<T> {
         dinic_impl(s, t, self.res)
     }
 }
 
+/// A struct to store the result of the algorithm. [See the struct level reference](Dinic)
 #[derive(Debug, Clone, PartialEq)]
 pub struct DinicResult<T> {
     res: Vec<Vec<Edge<T>>>, // residual network
@@ -61,9 +127,40 @@ impl<T> DinicResult<T>
 where
     T: Value,
 {
+    /// Returns the value of the maximum flow.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.insert(0, 1, 10);
+    /// dinic.insert(1, 2, 15);
+    /// dinic.insert(0, 2, 20);
+    ///
+    /// let result = dinic.build(0, 2);
+    /// assert_eq!(result.flow(), 30);
+    /// ```
     pub fn flow(&self) -> T {
         self.flow
     }
+
+    /// Returns the minimum cut, where `false` is filled if reachable from `s`, while `true` if unreachable.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.insert(0, 1, 10);
+    /// dinic.insert(1, 2, 15);
+    /// dinic.insert(0, 2, 20);
+    ///
+    /// let result = dinic.build(0, 2);
+    /// assert_eq!(result.minimum_cut(), &[false, true, true]);
+    /// ```
     pub fn minimum_cut(&self) -> &[bool] {
         &self.minimum_cut
     }
@@ -111,7 +208,6 @@ where
 
         // find augumenting paths
         'PRIMAL_STEP: loop {
-            // 1. let i = 0, v0 = s;
             let mut path = Vec::<(usize, usize)>::new();
             // depth-first search
             'FIND_AUGUMENTING_PATH: loop {
@@ -137,14 +233,6 @@ where
                 }
             }
 
-            path.push((t, std::usize::MAX)); // DEBUG
-            path.windows(2).for_each(|v| {
-                let (from, i) = v[0];
-                let to = v[1].0;
-                assert_eq!(res[from][i].to, to);
-            });
-            path.pop().unwrap();
-
             // augument the flow
             let aug = path.iter().map(|&(x, i)| res[x][i].cap).min().unwrap();
             flow += aug;
@@ -157,15 +245,19 @@ where
     }
 }
 
-impl Value for u32 {
-    fn zero() -> Self {
-        0
-    }
+macro_rules! impl_value {
+    ($($T:ty),* $(,)?) => {$(
+        impl Value for $T {
+            fn zero() -> Self {
+                0
+            }
+        }
+    )*}
 }
-impl Value for u64 {
-    fn zero() -> Self {
-        0
-    }
+
+impl_value! {
+    u8, u16, u32, u64, u128, usize,
+    i8, i16, i32, i64, i128, isize,
 }
 
 #[cfg(test)]
