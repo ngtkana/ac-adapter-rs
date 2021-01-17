@@ -22,7 +22,7 @@ impl Distribution<(usize, usize)> for DistinctTwo {
         assert!(start + 2 <= end);
         let mut i = rng.gen_range(start..end - 1);
         let j = rng.gen_range(start..end);
-        if i > j {
+        if i >= j {
             i += 1;
         }
         (i, j)
