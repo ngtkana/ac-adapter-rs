@@ -1,3 +1,6 @@
+//! Solves maximum flow problem.
+//!
+//! TODO: tutorial
 //!
 //! # Basic usage
 //!
@@ -17,7 +20,6 @@
 //! assert_eq!(flow, 30);
 //! ```
 //!
-//! TODO: more APIs
 
 use std::{
     collections::VecDeque,
@@ -44,7 +46,7 @@ pub struct Edge<T> {
 /// This is returned by [`Dinic::add_edge`] and be used in
 /// [`Dinic::get_edge`]
 #[derive(Debug, Clone, PartialEq, Copy, Eq)]
-pub struct EdgeId(usize);
+pub struct EdgeKey(usize);
 
 /// An adapter trait of the capacity.
 ///
@@ -118,7 +120,7 @@ where
     /// let flow = dinic.flow(0, 2);
     /// assert_eq!(flow, 30);
     /// ```
-    pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeId {
+    pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeKey {
         assert!(
             from < self.res.len() || to < self.res.len(),
             "`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is {}",
@@ -136,7 +138,7 @@ where
         } else {
             self.res[to].len()
         };
-        let edge_id = self.pos.len();
+        let edge_key = self.pos.len();
         self.pos.push(__EdgeIndexer {
             from,
             index: size_from,
@@ -151,7 +153,7 @@ where
             cap: T::zero(),
             rev: size_from,
         });
-        EdgeId(edge_id)
+        EdgeKey(edge_key)
     }
 
     /// Auguments the flow from `s` to `t` as much as possible. It returns the amount of the
@@ -184,7 +186,6 @@ where
     /// let flow = dinic.flow(0, 2);
     /// assert_eq!(flow, 30);
     /// ```
-    // TODO: flow_limit
     pub fn flow(&mut self, s: usize, t: usize) -> T {
         assert!(
             s < self.res.len() && t < self.res.len(),
@@ -194,6 +195,47 @@ where
             self.res.len()
         );
         dinic_impl(&mut self.res, s, t, T::infinity())
+    }
+
+    /// Auguments the flow from `s` to `t` as much as possible as long as not exceeding
+    /// `flow_limit`. It returns the amount of the flow augmented.
+    ///
+    /// You may call it multiple times. [See the module level documentation](self)
+    ///
+    ///
+    /// # Constraints
+    ///
+    /// - `s != t`,
+    /// - The answer should be in `T`.
+    ///
+    ///
+    /// # Complexity
+    ///
+    /// - O ( min ( n^{2/3} m, m^{3/2} ) ) if all the capacities are 1
+    /// - O ( n^2 m )
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.add_edge(0, 1, 10);
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.add_edge(0, 2, 20);
+    ///
+    /// let flow = dinic.flow_with_limit(0, 2, 28);
+    /// assert_eq!(flow, 28);
+    /// ```
+    pub fn flow_with_limit(&mut self, s: usize, t: usize, flow_with_limit: T) -> T {
+        assert!(
+            s < self.res.len() && t < self.res.len(),
+            "`Dinic::flow_with_limit` is called with `s` = {}, `t` = {}, while the number of vertices is {}",
+            s,
+            t,
+            self.res.len()
+        );
+        dinic_impl(&mut self.res, s, t, flow_with_limit)
     }
 
     /// Returns a vector of length `n`, such that the `i`-th element is `true` if and only if there
@@ -255,15 +297,15 @@ where
     /// assert_eq!(dinic.get_edge(edge_2).flow, 20);
     /// assert_eq!(flow, 30);
     /// ```
-    pub fn get_edge(&self, edge_id: EdgeId) -> Edge<T> {
-        let EdgeId(edge_id) = edge_id;
+    pub fn get_edge(&self, edge_key: EdgeKey) -> Edge<T> {
+        let EdgeKey(edge_key) = edge_key;
         assert!(
-            edge_id < self.pos.len(),
-            "Called `Dinic::get_edge` with `edge_id` = {:?}, but the length of `Dinic::pos` is {}",
-            edge_id,
+            edge_key < self.pos.len(),
+            "Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}",
+            edge_key,
             self.pos.len()
         );
-        let __EdgeIndexer { from, index } = self.pos[edge_id];
+        let __EdgeIndexer { from, index } = self.pos[edge_key];
         let __ResidualEdge { to, cap, rev } = self.res[from][index];
         let rev = self.res[to][rev];
         Edge {
@@ -274,7 +316,7 @@ where
         }
     }
 
-    /// Changes the capacity and the amount of the edge corresponding to `edge_id` to `new_cap` and
+    /// Changes the capacity and the amount of the edge corresponding to `edge_key` to `new_cap` and
     /// `new_flow`, respectively. It does not change the capacity or the flow amount of other
     /// edges. [See the module level documentation](self)
     ///
@@ -369,12 +411,12 @@ where
     /// ```
     ///
     ///
-    pub fn change_edge(&mut self, edge_id: EdgeId, new_cap: T, new_flow: T) {
-        let EdgeId(edge_id) = edge_id;
+    pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
+        let EdgeKey(edge_key) = edge_key;
         assert!(
-            edge_id < self.pos.len(),
-            "Called `Dinic::get_edge` with `edge_id` = {:?}, but the length of `Dinic::pos` is {}",
-            edge_id,
+            edge_key < self.pos.len(),
+            "Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}",
+            edge_key,
             self.pos.len()
         );
         assert!(
@@ -383,7 +425,7 @@ where
             new_flow,
             new_cap
         );
-        let __EdgeIndexer { from, index } = self.pos[edge_id];
+        let __EdgeIndexer { from, index } = self.pos[edge_key];
         let __ResidualEdge { to, rev, cap } = &mut self.res[from][index];
         *cap = new_cap - new_flow;
         let to = *to;
@@ -452,25 +494,20 @@ where
             }
 
             // augment the flow
-            let mut aug = path
+            let aug = path
                 .iter()
                 .map(|&(x, i)| res[x][i].cap)
                 .min()
                 .unwrap()
                 .min(flow_limit - flow);
-            let non_saturated = flow_limit - flow < aug;
-            if non_saturated {
-                aug = flow_limit - flow;
+            if aug == T::zero() {
+                return flow;
             }
             flow += aug;
             for (from, i) in path {
                 let __ResidualEdge { to, rev, .. } = res[from][i];
                 res[from][i].cap -= aug;
                 res[to][rev].cap += aug;
-            }
-            // non-saturated
-            if non_saturated {
-                return flow;
             }
         }
     }
@@ -510,7 +547,7 @@ struct __EdgeIndexer {
 #[cfg(test)]
 mod tests {
     use {
-        super::{Dinic, Edge},
+        super::{Dinic, Edge, EdgeKey},
         rand::prelude::*,
         randtools::DistinctTwo,
         test_case::test_case,
@@ -535,7 +572,7 @@ mod tests {
             .take(m)
             .collect::<Vec<_>>();
             let (s, t) = rng.sample(DistinctTwo(0..n));
-            test_impl(n, s, t, network);
+            test_impl(n, s, t, &network);
         }
     }
 
@@ -543,32 +580,84 @@ mod tests {
     #[test_case(100; "large hack")]
     fn test_hack(n: usize) {
         let (s, t, network) = generate_hack(n);
-        test_impl(n, s, t, network);
+        test_impl(n, s, t, &network);
     }
 
-    fn test_impl(n: usize, s: usize, t: usize, network: Vec<(usize, usize, u32)>) {
+    #[test_case(5, 8, 10, 10; "small sparse graph")]
+    #[test_case(50, 80, 10, 10; "medium sparse graph")]
+    fn test_bipartite_matching_change_edge(
+        n: usize,
+        m: usize,
+        iter: usize,
+        change_edge_count: usize,
+    ) {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..iter {
+            // Initialize
+            let mut dinic = Dinic::new(2 * n + 2);
+            let s = 2 * n;
+            let t = 2 * n + 1;
+            let edge_ids = (0..2 * n)
+                .map(|i| if i < n { (s, i, 1) } else { (i, t, 1) })
+                .chain(
+                    std::iter::repeat_with(|| (rng.gen_range(0..n), rng.gen_range(n..2 * n), 1))
+                        .take(m),
+                )
+                .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
+                .collect::<Vec<_>>();
+            let mut flow_of_network = dinic.flow(s, t);
+            validate(2 * n + 2, s, t, &dinic, flow_of_network, &edge_ids);
+
+            // Forbid or remove the ban of the edge.
+            for _ in 0..change_edge_count {
+                let edge_id = edge_ids[rng.gen_range(2 * n..2 * n + m)];
+                let Edge {
+                    from,
+                    to,
+                    cap,
+                    flow,
+                } = dinic.get_edge(edge_id);
+                if cap == 0 {
+                    println!("Remove the ban of {:?}", &dinic.get_edge(edge_id));
+                    dinic.change_edge(edge_id, 1, 0);
+                } else if flow == 1 {
+                    println!("Forbid {:?}", &dinic.get_edge(edge_id));
+                    dinic.change_edge(edge_ids[from], 1, 0);
+                    dinic.change_edge(edge_ids[to], 1, 0);
+                    dinic.change_edge(edge_id, 0, 0);
+                    flow_of_network -= 1;
+                }
+                flow_of_network += dinic.flow(s, t);
+                validate(2 * n + 2, s, t, &dinic, flow_of_network, &edge_ids);
+            }
+        }
+    }
+
+    fn test_impl(n: usize, s: usize, t: usize, network: &[(usize, usize, u32)]) {
         let mut dinic = Dinic::new(n);
-        let edge_ids = network
+        let edge_keys = network
             .iter()
-            .map(|&(u, v, cap)| (dinic.add_edge(u, v, cap), cap))
+            .map(|&(u, v, cap)| dinic.add_edge(u, v, cap))
             .collect::<Vec<_>>();
         let flow = dinic.flow(s, t);
+        validate(n, s, t, &dinic, flow, &edge_keys);
+    }
+
+    fn validate(
+        n: usize,
+        s: usize,
+        t: usize,
+        dinic: &Dinic<u32>,
+        flow: u32,
+        edge_keys: &[EdgeKey],
+    ) {
         let min_cut = dinic.min_cut(s);
 
         // print
         println!("Validating dinic..");
         println!("flow = {}", flow);
         println!("min_cut = {:?}", min_cut);
-        println!();
         println!("s = {}, t = {}", s, t);
-        let mut cap = vec![vec![0; n]; n];
-        network.iter().for_each(|&(u, v, c)| cap[u][v] = c);
-        print!("cap = ");
-        for (i, cap) in cap.iter().enumerate() {
-            print!("\t{} |", i);
-            cap.iter().for_each(|x| print!(" {}", x));
-            println!();
-        }
         println!();
 
         // cut is feasible
@@ -577,22 +666,16 @@ mod tests {
 
         // flow is feasible
         let mut excess = vec![0; n];
-        for (
-            Edge {
-                from,
-                to,
-                cap,
-                flow,
-            },
-            orig_cap,
-        ) in edge_ids
-            .iter()
-            .map(|&(edge_id, cap)| (dinic.get_edge(edge_id), cap))
+        for Edge {
+            from,
+            to,
+            cap,
+            flow,
+        } in edge_keys.iter().map(|&edge| dinic.get_edge(edge))
         {
             excess[from] -= flow as i64;
             excess[to] += flow as i64;
             assert!(flow <= cap);
-            assert_eq!(cap, orig_cap);
         }
         let mut excess_expected = vec![0; n];
         excess_expected[s] -= flow as i64;
@@ -600,13 +683,11 @@ mod tests {
         assert_eq!(excess, excess_expected);
 
         // max-flow min-cut theorem
-        let min_cut_cap = cap
+        let min_cut_cap = edge_keys
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().enumerate().map(move |(j, &c)| (i, j, c)))
-            .flatten()
-            .filter(|&(u, v, _)| min_cut[u] && !min_cut[v])
-            .map(|(_, _, c)| c)
+            .map(|&edge_key| dinic.get_edge(edge_key))
+            .filter(|&edge| min_cut[edge.from] && !min_cut[edge.to])
+            .map(|edge| edge.flow)
             .sum::<u32>();
         assert_eq!(min_cut_cap, flow);
     }
