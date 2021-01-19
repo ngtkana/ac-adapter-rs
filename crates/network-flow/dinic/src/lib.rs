@@ -1,7 +1,5 @@
 //! Solves maximum flow problem.
 //!
-//! TODO: tutorial
-//!
 //! # Basic usage
 //!
 //! 1. First, initialize [`Dinic`] with the number of vertices.
@@ -20,40 +18,137 @@
 //! assert_eq!(flow, 30);
 //! ```
 //!
+//! # Restore the minimum cut
+//!
+//! If [`flow`](Dinic::flow) has called exactly once before, [`min_cut`](Dinic::min_cut) will
+//! return the minimum cut. [See the API document to detailed specs.](Dinic::min_cut)
+//!
+//! ```
+//! use dinic::Dinic;
+//!
+//! let mut dinic = Dinic::new(3);
+//! dinic.add_edge(0, 1, 10);
+//! dinic.add_edge(1, 2, 15);
+//! dinic.add_edge(0, 2, 20);
+//! dinic.flow(0, 2);
+//!
+//! assert_eq!(dinic.min_cut(0).as_slice(), &[true, false, false]);
+//! ```
+//!
+//!
+//! # Get the state of an edge or a vertex
+//!
+//! You can query the state of an edge via [`get_edge`](`Dinic::get_edge`). An [`EdgeKey`] object returned
+//! by [`add_edge`](Dinic::add_edge`) is necessary to query it.
+//!
+//! ```
+//! use dinic::{Edge, Dinic};
+//!
+//! let mut dinic = Dinic::new(3);
+//! dinic.add_edge(0, 1, 10);
+//! let key = dinic.add_edge(1, 2, 15);
+//! dinic.add_edge(0, 2, 20);
+//! dinic.flow(0, 2);
+//!
+//! assert_eq!(dinic.get_edge(key), Edge { from: 1, to: 2, cap: 15, flow: 10 });
+//! ```
+//!
+//! Moreover [`get_edges`](Dinic::get_edges), [`get_network`](Dinic::get_network) will summarize the
+//! whole network.
+//!
+//! ```
+//! use dinic::{Edge, Dinic};
+//!
+//! let mut dinic = Dinic::new(3);
+//! dinic.add_edge(0, 1, 10);
+//! let key = dinic.add_edge(1, 2, 15);
+//! dinic.add_edge(0, 2, 20);
+//! dinic.flow(0, 2);
+//!
+//! let edges = dinic.get_edges();
+//! let network = dinic.get_network();
+//!
+//! // 0th edge
+//! assert_eq!(network[0][0], edges[0]);
+//! assert_eq!(edges[0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
+//!
+//! // 1st edge
+//! assert_eq!(network[1][0], edges[1]);
+//! assert_eq!(edges[1], Edge { from: 1, to: 2, cap: 15, flow: 10 });
+//!
+//! // 2nd edge
+//! assert_eq!(network[0][1], edges[2]);
+//! assert_eq!(edges[2], Edge { from: 0, to: 2, cap: 20, flow: 20 });
+//! ```
+//!
+//! You also can get the excess of vertices, but we do not provide an interface to get the excess of *a vertex* because
+//! it will take O ( m ) time.
+//!
+//! ```
+//! use dinic::{Edge, Dinic};
+//!
+//! let mut dinic = Dinic::new(3);
+//! dinic.add_edge(0, 1, 10);
+//! let key = dinic.add_edge(1, 2, 15);
+//! dinic.add_edge(0, 2, 20);
+//! dinic.flow(0, 2);
+//!
+//! assert_eq!(dinic.get_excess().as_slice(), &[-30, 0, 30]);
+//! ```
+//!
+//! If you use an unsigned type, [`get_excess`](Dinic::get_excess) will surely overflow because the
+//! excess of the source is almost always negative.
+//!
+//! ```should_panic
+//! use dinic::{Edge, Dinic};
+//!
+//! let mut dinic = Dinic::<u32>::new(2); // Force to use `u32` instead of `i32`.
+//! dinic.add_edge(0, 1, 10);
+//! dinic.flow(0, 1);
+//!
+//! dinic.get_excess(); // panics
+//! ```
+//!
+//! # Call `flow` more than once
+//!
+//! You can call [`flow`](Dinic::flow) more than once. `flow(s, t)` will augment the flow from `s`
+//! to `t` as much as possible. If [`flow`](Dinic::flow) is called with different `s` or `t` from
+//! the previous ones, it may yield non-zero excess at more than two points.
+//!
+//! ```
+//! use dinic::Dinic;
+//!
+//! let mut dinic = Dinic::new(3);
+//! dinic.add_edge(0, 1, 10);
+//! dinic.add_edge(1, 2, 15);
+//! dinic.add_edge(0, 2, 20);
+//!
+//! dinic.flow(0, 2);
+//! let aug = dinic.flow(1, 2);
+//! assert_eq!(aug, 5);
+//! assert_eq!(dinic.get_excess().as_slice(), &[-30, -5, 35]);
+//! ```
+//!
+//! # Change the capacity or the amount of flow. (dangerous operation)
+//!
+//! [`change_edge`](Dinic::change_edge) changes the capacity and the amount of flow of an edge.
+//! While it is so dangerous operation (safe variant wanted!), it is sometimes useful, for example,
+//! when solve a *maximum flow problem with lower limit*. [See the API document for detailed
+//! specs.](Dinic::change_edge)
 
 use std::{
     collections::VecDeque,
+    fmt::{self, Debug, Formatter},
     iter::Sum,
     ops::{Add, AddAssign, Sub, SubAssign},
 };
-
-/// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].
-#[derive(Debug, Clone, PartialEq, Copy, Eq)]
-pub struct Edge<T> {
-    /// The vertex-index of the source of an edge.
-    pub from: usize,
-    /// The vertex-index of the target of an edge.
-    pub to: usize,
-    /// The capacity of an edge.
-    pub cap: T,
-    /// The value of the flow of the network at this edge.
-    pub flow: T,
-}
-
-/// A key object to query an edge.
-///
-/// Factually, this is a simple wrapper of `usize`.
-/// This is returned by [`Dinic::add_edge`] and be used in
-/// [`Dinic::get_edge`]
-#[derive(Debug, Clone, PartialEq, Copy, Eq)]
-pub struct EdgeKey(usize);
 
 /// An adapter trait of the capacity.
 ///
 /// This trait is implemented for all the integer types.
 ///
 pub trait Value:
-    Copy + Ord + std::fmt::Debug + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum
+    Copy + Ord + Debug + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum
 {
     /// Returns the zero.
     fn zero() -> Self;
@@ -64,7 +159,7 @@ pub trait Value:
 /// A struct to execute Dinic's algorithm.
 ///
 /// [See the module level documentation.](self)
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Clone, PartialEq)]
 pub struct Dinic<T> {
     res: Vec<Vec<__ResidualEdge<T>>>,
     pos: Vec<__EdgeIndexer>,
@@ -305,7 +400,115 @@ where
             edge_key,
             self.pos.len()
         );
-        let __EdgeIndexer { from, index } = self.pos[edge_key];
+        self.restore_edge(self.pos[edge_key])
+    }
+
+    /// Collects all the edges.
+    ///
+    /// Edges are sorted in order of addition.
+    ///
+    /// # Complexity
+    ///
+    /// O ( m )
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::{Dinic, Edge};
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.add_edge(0, 1, 10);
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.add_edge(0, 2, 20);
+    /// dinic.flow(0, 2);
+    ///
+    /// let edges = dinic.get_edges();
+    /// assert_eq!(edges[0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
+    /// assert_eq!(edges[1], Edge { from: 1, to: 2, cap: 15, flow: 10 });
+    /// assert_eq!(edges[2], Edge { from: 0, to: 2, cap: 20, flow: 20 });
+    /// ```
+    pub fn get_edges(&self) -> Vec<Edge<T>> {
+        self.pos
+            .iter()
+            .map(|&edge_indexer| self.restore_edge(edge_indexer))
+            .collect::<Vec<_>>()
+    }
+
+    /// Collects all the edges and arrange it in adjacent-list style.
+    ///
+    /// In each row, edges are sorted in order of addition.
+    ///
+    /// # Complexity
+    ///
+    /// O ( n + m )
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::{Dinic, Edge};
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.add_edge(0, 1, 10);
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.add_edge(0, 2, 20);
+    /// dinic.flow(0, 2);
+    ///
+    /// let network = dinic.get_network();
+    /// assert_eq!(network[0][0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
+    /// assert_eq!(network[0][1], Edge { from: 0, to: 2, cap: 20, flow: 20 });
+    /// assert_eq!(network[1][0], Edge { from: 1, to: 2, cap: 15, flow: 10 });
+    /// ```
+    pub fn get_network(&self) -> Vec<Vec<Edge<T>>> {
+        let mut network = vec![Vec::new(); self.res.len()];
+        self.pos
+            .iter()
+            .map(|&edge_indexer| self.restore_edge(edge_indexer))
+            .for_each(|edge| network[edge.from].push(edge));
+        network
+    }
+
+    /// Returens the `Vec` of excess of all the vertices.
+    ///
+    /// `i`-th entry is the excess of vertex `i`.
+    ///
+    /// # Complexity
+    ///
+    /// O ( n + m )
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use dinic::Dinic;
+    ///
+    /// let mut dinic = Dinic::new(3);
+    /// dinic.add_edge(0, 1, 10);
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.add_edge(0, 2, 20);
+    /// dinic.flow(0, 2);
+    ///
+    /// let excess = dinic.get_excess();
+    /// assert_eq!(excess.as_slice(), &[-30, 0, 30]);
+    /// ```
+    pub fn get_excess(&self) -> Vec<T> {
+        let mut excess = vec![T::zero(); self.res.len()];
+        self.pos
+            .iter()
+            .map(|&edge_indexer| self.restore_edge(edge_indexer))
+            .for_each(|Edge { to, flow, .. }| excess[to] += flow);
+        self.pos
+            .iter()
+            .map(|&edge_indexer| self.restore_edge(edge_indexer))
+            .for_each(|Edge { from, flow, .. }| excess[from] -= flow);
+        excess
+    }
+
+    /// For internal use.
+    ///
+    /// # Constraints
+    ///
+    /// `edge_indexer` is taken from `self.pos`
+    fn restore_edge(&self, edge_indexer: __EdgeIndexer) -> Edge<T> {
+        let __EdgeIndexer { from, index } = edge_indexer;
         let __ResidualEdge { to, cap, rev } = self.res[from][index];
         let rev = self.res[to][rev];
         Edge {
@@ -433,6 +636,48 @@ where
         self.res[to][rev].cap = new_flow;
     }
 }
+impl<T: Value> Debug for Dinic<T> {
+    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
+        write!(w, "{:?}", self.get_network())
+    }
+}
+
+/// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].
+#[derive(Clone, PartialEq, Copy, Eq)]
+pub struct Edge<T> {
+    /// The vertex-index of the source of an edge.
+    pub from: usize,
+    /// The vertex-index of the target of an edge.
+    pub to: usize,
+    /// The capacity of an edge.
+    pub cap: T,
+    /// The value of the flow of the network at this edge.
+    pub flow: T,
+}
+impl<T: Debug> Debug for Edge<T> {
+    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
+        let Self {
+            from,
+            to,
+            cap,
+            flow,
+        } = self;
+        write!(
+            w,
+            // \x1b[1m: bold, \1b[m: cancel
+            "{}->{}(\x1b[01m{:?}\x1b[m/\x1b[01m{:?}\x1b[m)",
+            from, to, flow, cap,
+        )
+    }
+}
+
+/// A key object to query an edge.
+///
+/// Factually, this is a simple wrapper of `usize`.
+/// This is returned by [`Dinic::add_edge`] and be used in
+/// [`Dinic::get_edge`]
+#[derive(Debug, Clone, PartialEq, Copy, Eq)]
+pub struct EdgeKey(usize);
 
 fn dinic_impl<T>(res: &mut [Vec<__ResidualEdge<T>>], s: usize, t: usize, flow_limit: T) -> T
 where
@@ -729,12 +974,14 @@ mod tests {
 
     fn validate_konig(n: usize, cnt: u32, dinic: &Dinic<u32>, edge_keys: &[EdgeKey]) {
         let s = 2 * n;
+
+        println!("dinic: {:?}", &dinic);
+        println!("dinic:");
         dinic
-            .res
+            .get_network()
             .iter()
             .enumerate()
-            .for_each(|(i, res)| println!("{} {:?}", i, &res));
-
+            .for_each(|(i, v)| println!("{} {:?}", i, &v));
         println!("n = {}, cnt = {}", n, cnt);
         let edges = edge_keys
             .iter()
