@@ -63,7 +63,7 @@ pub trait Value:
 
 /// A struct to execute Dinic's algorithm.
 ///
-/// [See the module level documentation](self)
+/// [See the module level documentation.](self)
 #[derive(Debug, Clone, PartialEq)]
 pub struct Dinic<T> {
     res: Vec<Vec<__ResidualEdge<T>>>,
@@ -159,7 +159,7 @@ where
     /// Auguments the flow from `s` to `t` as much as possible. It returns the amount of the
     /// flow augmented.
     ///
-    /// You may call it multiple times. [See the module level documentation](self)
+    /// You may call it multiple times. [See the module level documentation.](self)
     ///
     ///
     /// # Constraints
@@ -200,7 +200,7 @@ where
     /// Auguments the flow from `s` to `t` as much as possible as long as not exceeding
     /// `flow_limit`. It returns the amount of the flow augmented.
     ///
-    /// You may call it multiple times. [See the module level documentation](self)
+    /// You may call it multiple times. [See the module level documentation.](self)
     ///
     ///
     /// # Constraints
@@ -318,7 +318,7 @@ where
 
     /// Changes the capacity and the amount of the edge corresponding to `edge_key` to `new_cap` and
     /// `new_flow`, respectively. It does not change the capacity or the flow amount of other
-    /// edges. [See the module level documentation](self)
+    /// edges. [See the module level documentation.](self)
     ///
     /// # Constraints
     ///
@@ -550,16 +550,20 @@ mod tests {
         super::{Dinic, Edge, EdgeKey},
         rand::prelude::*,
         randtools::DistinctTwo,
+        std::collections::HashSet,
         test_case::test_case,
     };
 
+    ////////////////////////////////////////////////////////////////////////////////
+    // Max-flow min-cut theorem test
+    ////////////////////////////////////////////////////////////////////////////////
+
     #[test_case(2, 1, 10; "trivially small graph")]
     #[test_case(5, 8, 1000; "small sparse graph")]
-    #[test_case(50, 30, 100; "very sparse graph")]
-    #[test_case(50, 200, 100; "sparse graph")]
-    #[test_case(50, 1000, 50; "dense graph")]
-    #[test_case(200, 1000, 10; "large graph")]
-    fn test_rand(n: usize, m: usize, iter: usize) {
+    #[test_case(10, 8, 100; "very sparse graph")]
+    #[test_case(10, 20, 100; "sparse graph")]
+    #[test_case(10, 80, 50; "dense graph")]
+    fn test_max_flow_min_cut(n: usize, m: usize, iter: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iter {
             let network = std::iter::repeat_with(|| {
@@ -572,7 +576,7 @@ mod tests {
             .take(m)
             .collect::<Vec<_>>();
             let (s, t) = rng.sample(DistinctTwo(0..n));
-            test_impl(n, s, t, &network);
+            test_max_flow_min_cut_impl(n, s, t, &network);
         }
     }
 
@@ -580,70 +584,20 @@ mod tests {
     #[test_case(100; "large hack")]
     fn test_hack(n: usize) {
         let (s, t, network) = generate_hack(n);
-        test_impl(n, s, t, &network);
+        test_max_flow_min_cut_impl(n, s, t, &network);
     }
 
-    #[test_case(5, 8, 10, 10; "small sparse graph")]
-    #[test_case(50, 80, 10, 10; "medium sparse graph")]
-    fn test_bipartite_matching_change_edge(
-        n: usize,
-        m: usize,
-        iter: usize,
-        change_edge_count: usize,
-    ) {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..iter {
-            // Initialize
-            let mut dinic = Dinic::new(2 * n + 2);
-            let s = 2 * n;
-            let t = 2 * n + 1;
-            let edge_ids = (0..2 * n)
-                .map(|i| if i < n { (s, i, 1) } else { (i, t, 1) })
-                .chain(
-                    std::iter::repeat_with(|| (rng.gen_range(0..n), rng.gen_range(n..2 * n), 1))
-                        .take(m),
-                )
-                .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
-                .collect::<Vec<_>>();
-            let mut flow_of_network = dinic.flow(s, t);
-            validate(2 * n + 2, s, t, &dinic, flow_of_network, &edge_ids);
-
-            // Forbid or remove the ban of the edge.
-            for _ in 0..change_edge_count {
-                let edge_id = edge_ids[rng.gen_range(2 * n..2 * n + m)];
-                let Edge {
-                    from,
-                    to,
-                    cap,
-                    flow,
-                } = dinic.get_edge(edge_id);
-                if cap == 0 {
-                    println!("Remove the ban of {:?}", &dinic.get_edge(edge_id));
-                    dinic.change_edge(edge_id, 1, 0);
-                } else if flow == 1 {
-                    println!("Forbid {:?}", &dinic.get_edge(edge_id));
-                    dinic.change_edge(edge_ids[from], 1, 0);
-                    dinic.change_edge(edge_ids[to], 1, 0);
-                    dinic.change_edge(edge_id, 0, 0);
-                    flow_of_network -= 1;
-                }
-                flow_of_network += dinic.flow(s, t);
-                validate(2 * n + 2, s, t, &dinic, flow_of_network, &edge_ids);
-            }
-        }
-    }
-
-    fn test_impl(n: usize, s: usize, t: usize, network: &[(usize, usize, u32)]) {
+    fn test_max_flow_min_cut_impl(n: usize, s: usize, t: usize, network: &[(usize, usize, u32)]) {
         let mut dinic = Dinic::new(n);
         let edge_keys = network
             .iter()
             .map(|&(u, v, cap)| dinic.add_edge(u, v, cap))
             .collect::<Vec<_>>();
         let flow = dinic.flow(s, t);
-        validate(n, s, t, &dinic, flow, &edge_keys);
+        validate_max_flow_min_cut(n, s, t, &dinic, flow, &edge_keys);
     }
 
-    fn validate(
+    fn validate_max_flow_min_cut(
         n: usize,
         s: usize,
         t: usize,
@@ -715,5 +669,114 @@ mod tests {
         }
         edges.extend(uv.iter().map(|&x| (x, c, 3)));
         (s, t, edges)
+    }
+
+    ////////////////////////////////////////////////////////////////////////////////
+    // Kőnig's theorem test
+    ////////////////////////////////////////////////////////////////////////////////
+
+    #[test_case(3, 5, 10, 10; "small graph")]
+    #[test_case(5, 8, 10, 10; "medium graph")]
+    #[test_case(10, 20, 10, 10; "large graph")]
+    fn test_konig(n: usize, m: usize, iter: usize, change_edge_count: usize) {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..iter {
+            // Initialize
+            let mut dinic = Dinic::new(2 * n + 2);
+            let s = 2 * n;
+            let t = 2 * n + 1;
+            let mut edges = HashSet::new();
+            while edges.len() < m {
+                edges.insert([rng.gen_range(0..n), rng.gen_range(n..2 * n)]);
+            }
+            let edge_keys = (0..2 * n)
+                .map(|i| if i < n { (s, i, 1) } else { (i, t, 1) })
+                .chain(edges.iter().map(|&[from, to]| (from, to, 0)))
+                .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
+                .collect::<Vec<_>>();
+            let mut cnt = dinic.flow(s, t);
+            println!("Initial flow = {}", cnt);
+            validate_konig(n, cnt, &dinic, &edge_keys);
+
+            for _ in 0..change_edge_count {
+                let edge_key = edge_keys[rng.gen_range(2 * n..2 * n + m)];
+                let Edge {
+                    from,
+                    to,
+                    flow,
+                    cap,
+                    ..
+                } = dinic.get_edge(edge_key);
+                if cap == 1 {
+                    println!("Forbid ({}, {})", from, to);
+                    // Forbid this match.
+                    dinic.change_edge(edge_key, 0, 0);
+                    if flow == 1 {
+                        dinic.change_edge(edge_keys[from], 1, 0);
+                        dinic.change_edge(edge_keys[to], 1, 0);
+                        cnt -= 1;
+                    }
+                } else if cap == 0 {
+                    println!("Remove the ban of ({}, {})", from, to);
+                    // Remove the ban of this edge.
+                    dinic.change_edge(edge_key, 1, 0);
+                }
+                cnt += dinic.flow(s, t);
+                validate_konig(n, cnt, &dinic, &edge_keys);
+            }
+        }
+    }
+
+    fn validate_konig(n: usize, cnt: u32, dinic: &Dinic<u32>, edge_keys: &[EdgeKey]) {
+        let s = 2 * n;
+        dinic
+            .res
+            .iter()
+            .enumerate()
+            .for_each(|(i, res)| println!("{} {:?}", i, &res));
+
+        println!("n = {}, cnt = {}", n, cnt);
+        let edges = edge_keys
+            .iter()
+            .map(|&edge_key| dinic.get_edge(edge_key))
+            .filter(|&Edge { from, to, cap, .. }| {
+                cap == 1 && (0..n).contains(&from) && (n..2 * n).contains(&to)
+            })
+            .map(|Edge { from, to, .. }| (from, to))
+            .collect::<Vec<_>>();
+        println!("edges = {:?}", &edges);
+
+        // matching is feasible
+        let matching = edge_keys
+            .iter()
+            .map(|&edge_key| dinic.get_edge(edge_key))
+            .filter(|&Edge { flow, from, to, .. }| {
+                flow == 1 && (0..n).contains(&from) && (n..2 * n).contains(&to)
+            })
+            .map(|edge| [edge.from, edge.to])
+            .collect::<Vec<_>>();
+        println!("matching = {} ({:?})", matching.len(), &matching);
+        assert_eq!(matching.len() as u32, cnt);
+        let mut ckd = vec![false; 2 * n];
+        matching.iter().flatten().for_each(|&x| {
+            assert!(!ckd[x]);
+            ckd[x] = true;
+        });
+
+        // maximum stable set is feasible
+        let mut max_stable_set = dinic.min_cut(s);
+        max_stable_set.truncate(2 * n);
+        max_stable_set[n..].iter_mut().for_each(|x| *x = !*x);
+        let max_stable_set_size = max_stable_set.iter().filter(|&&b| b).count();
+        println!(
+            "max_stable_set = {} ({:?})",
+            max_stable_set_size, &max_stable_set
+        );
+        for &(from, to) in &edges {
+            assert!(!max_stable_set[from] || !max_stable_set[to])
+        }
+        assert_eq!(max_stable_set_size, 2 * n - cnt as usize);
+
+        println!();
     }
 }
