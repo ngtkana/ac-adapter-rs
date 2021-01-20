@@ -1,6 +1,3 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
-
 //! グリッドに関する操作を提供します。
 //!
 //! # 鏡映・回転

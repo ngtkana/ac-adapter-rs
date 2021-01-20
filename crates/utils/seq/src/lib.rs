@@ -1,4 +1,3 @@
-#![warn(missing_docs, missing_doc_code_examples)]
 //! イテレータのユーティルです。
 //!
 //! 詳しくは [`Seq`] までです。
@@ -116,7 +115,7 @@ pub trait Seq: Iterator + Sized {
 }
 
 mod adjacent {
-    #[allow(missing_docs)]
+
     pub fn adjacent<I, T>(mut iter: I) -> Adjacent<I, T>
     where
         I: Iterator<Item = T>,
@@ -132,7 +131,6 @@ mod adjacent {
         }
     }
 
-    #[allow(missing_docs)]
     pub struct Adjacent<I, T>
     where
         I: Iterator<Item = T>,
@@ -160,7 +158,7 @@ mod adjacent {
 }
 
 mod grid_next {
-    #[allow(missing_docs)]
+
     pub fn grid_next<T>(difference: T, ij: (usize, usize), h: usize, w: usize) -> GridNext<T>
     where
         T: Iterator<Item = (i64, i64)>,
@@ -174,7 +172,6 @@ mod grid_next {
         }
     }
 
-    #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct GridNext<T> {
         i: i64,
@@ -204,7 +201,7 @@ mod grid_next {
 }
 
 mod step {
-    #[allow(missing_docs)]
+
     pub fn step<T, U>(init: T, step: U) -> Step<T, U>
     where
         T: Copy,
@@ -214,14 +211,12 @@ mod step {
         Step { now: init, step }
     }
 
-    #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct Step<T, U> {
         now: T,
         step: U,
     }
 
-    #[allow(missing_docs)]
     impl<T, U> Iterator for Step<T, U>
     where
         T: Copy,
@@ -238,7 +233,7 @@ mod step {
 }
 
 mod mul_step {
-    #[allow(missing_docs)]
+
     pub fn mul_step<T, U>(init: T, step: U) -> MulStep<T, U>
     where
         T: Copy,
@@ -248,14 +243,12 @@ mod mul_step {
         MulStep { now: init, step }
     }
 
-    #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct MulStep<T, U> {
         now: T,
         step: U,
     }
 
-    #[allow(missing_docs)]
     impl<T, U> Iterator for MulStep<T, U>
     where
         T: Copy,
@@ -272,12 +265,11 @@ mod mul_step {
 }
 
 mod repeat_with {
-    #[allow(missing_docs)]
+
     pub fn repeat_with<A, F: FnMut() -> A>(repeater: F) -> RepeatWith<F> {
         RepeatWith { repeater }
     }
 
-    #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct RepeatWith<F> {
         repeater: F,
@@ -301,14 +293,12 @@ mod repeat_with {
 mod accumulate {
     use super::*;
 
-    #[allow(missing_docs)]
     #[derive(Debug, Clone)]
     pub struct Accumulate<I, T> {
         prev: Option<T>,
         iter: I,
     }
 
-    #[allow(missing_docs)]
     pub fn accumulate<I, T>(iter: I, init: T) -> Accumulate<I, T>
     where
         I: Iterator,
@@ -346,7 +336,7 @@ mod accumulate {
 }
 
 mod cartesian_product {
-    #[allow(missing_docs)]
+
     #[derive(Debug, Clone)]
     pub struct CartesianProduct<I, J>
     where
@@ -358,7 +348,6 @@ mod cartesian_product {
         b_orig: J,
     }
 
-    #[allow(missing_docs)]
     pub fn cartesian_product<I, J>(mut i: I, j: J) -> CartesianProduct<I, J>
     where
         I: Iterator,
@@ -436,7 +425,6 @@ mod cartesian_product {
     }
 }
 
-#[allow(missing_docs)]
 mod __intersperse {
     use super::size_hint;
     use std::iter;
@@ -512,7 +500,6 @@ mod __intersperse {
     }
 }
 
-#[allow(missing_docs)]
 mod format_intersparse {
     use super::Seq;
     use std::fmt;
