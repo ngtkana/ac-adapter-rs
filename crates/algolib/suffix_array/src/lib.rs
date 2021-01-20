@@ -1,6 +1,3 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
-
 //! Suffix Array を計算します。
 
 /// Surrix Array を計算します。

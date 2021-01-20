@@ -1,6 +1,3 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
-
 //! [`change_min`], [`change_max`] を提供します。
 //!
 //! # Note

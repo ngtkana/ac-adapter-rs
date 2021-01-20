@@ -1,4 +1,3 @@
-#![warn(missing_docs)]
 //! 中国剰余定理をします。
 
 use std::mem;
