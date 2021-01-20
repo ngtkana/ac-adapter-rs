@@ -29,7 +29,6 @@ pub struct Tokenizer<S: BufRead> {
 }
 macro_rules! prim_method {
     ($name:ident: $T:ty) => {
-        #[allow(missing_docs)]
         pub fn $name(&mut self) -> $T {
             <$T>::leaf().parse(self)
         }
