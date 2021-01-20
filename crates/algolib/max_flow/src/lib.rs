@@ -1,5 +1,3 @@
-#![warn(missing_docs)]
-#![warn(missing_doc_code_examples)]
 //! Dinic 法で最大流を求めます。
 //!
 //! # Flow Type

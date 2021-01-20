@@ -1,4 +1,4 @@
-//! CAUTION: [`RadixHeap`] fails in testst!
+//! CAUTION: `RadixHeap` fails in testst!
 #![allow(deprecated)]
 
 #[deprecated]
