@@ -4,6 +4,7 @@ pub use dfs;
 pub use dial;
 pub use dijkstra_radix_heap;
 pub use hld;
+pub use hungarian;
 pub use max_flow;
 pub use radix_heap;
 pub use scc;
