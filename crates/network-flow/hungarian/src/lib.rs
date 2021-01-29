@@ -1,7 +1,7 @@
 pub fn hungarian(cost_table: &[Vec<i64>]) -> HungarianResult {
     let h = cost_table.len();
     let w = cost_table[0].len();
-    let mut right2left = vec![None; w + 1];
+    let mut right2left = vec![std::usize::MAX; w + 1];
     let mut phi = Potential {
         left: cost_table
             .iter()
@@ -17,37 +17,43 @@ pub fn hungarian(cost_table: &[Vec<i64>]) -> HungarianResult {
             let mut in_tree = vec![false; w + 1];
             in_tree[w] = true;
             let mut pi = vec![w; w];
-            right2left[w] = Some(s);
+            let mut mininum_reduced_cost = (0..w)
+                .map(|y| phi.reduced_cost(s, y))
+                .collect::<Vec<_>>()
+                .into_boxed_slice();
+            right2left[w] = s;
             loop {
-                let (y0, delta) = (0..w)
+                let y0 = (0..w)
                     .filter(|&y| !in_tree[y])
-                    .map(|y| (y, phi.reduced_cost(right2left[pi[y]].unwrap(), y)))
-                    .min_by_key(|&(_, d)| d)
+                    .min_by_key(|&y| mininum_reduced_cost[y])
                     .unwrap();
+                let delta = mininum_reduced_cost[y0];
                 phi.left[s] -= delta;
-                for y in (0..w).filter(|&y| in_tree[y]) {
-                    phi.left[right2left[y].unwrap()] -= delta;
-                    phi.right[y] -= delta;
+                for y in 0..w {
+                    if in_tree[y] {
+                        phi.left[right2left[y]] -= delta;
+                        phi.right[y] -= delta;
+                    } else {
+                        mininum_reduced_cost[y0] -= delta;
+                    }
                 }
-                if right2left[y0].is_none() {
+                if right2left[y0] == std::usize::MAX {
                     break (pi, y0);
                 }
                 in_tree[y0] = true;
-                (0..w).filter(|&y| !in_tree[y]).for_each(|y| {
-                    pi[y] = [pi[y], y0]
-                        .iter()
-                        .copied()
-                        .min_by_key(|&_y| phi.reduced_cost(right2left[_y].unwrap(), y))
-                        .unwrap()
-                });
+                for y in (0..w).filter(|&y| !in_tree[y]) {
+                    let new_cost = phi.reduced_cost(right2left[y0], y);
+                    if !in_tree[y] && new_cost < mininum_reduced_cost[y] {
+                        pi[y] = y0;
+                        mininum_reduced_cost[y] = new_cost;
+                    }
+                }
             }
         };
         // augmentation
         while y != w {
-            let next_y = pi[y];
-            let x = right2left[next_y].unwrap();
-            right2left[y] = Some(x);
-            y = next_y;
+            right2left[y] = right2left[pi[y]];
+            y = pi[y];
         }
     }
     right2left.pop();
@@ -57,13 +63,17 @@ pub fn hungarian(cost_table: &[Vec<i64>]) -> HungarianResult {
         right,
         cost_table,
     } = phi;
-    let right2left = right2left.into_boxed_slice();
     let mut left2right = vec![std::usize::MAX; h].into_boxed_slice();
     let mut value = 0;
-    for (x, y) in right2left.iter().enumerate().map(|(y, x)| (x.unwrap(), y)) {
+    for (y, &x) in right2left.iter().enumerate() {
         left2right[x] = y;
         value += cost_table[x][y];
     }
+    let right2left = right2left
+        .into_iter()
+        .map(|x| if x == std::usize::MAX { None } else { Some(x) })
+        .collect::<Vec<_>>()
+        .into_boxed_slice();
     HungarianResult {
         left2right,
         right2left,
