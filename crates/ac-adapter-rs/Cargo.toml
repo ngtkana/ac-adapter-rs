@@ -24,6 +24,7 @@ gcd = { path = "../numbers/gcd" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
 hungarian = { path = "../network-flow/hungarian" }
+inversion_number = { path = "../algolib/inversion_number" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
 max_flow = { path = "../algolib/max_flow" }
