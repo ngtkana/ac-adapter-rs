@@ -28,12 +28,24 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let h = cost_matrix.len();
     let w = cost_matrix[0].len();
     let mut m = vec![std::usize::MAX; w + 1];
-    let all_min = *cost_matrix.iter().flatten().min().unwrap();
-    let mut left = cost_matrix
+
+    // initialize a feasible potential
+    let mut all_min = T::infinity();
+    let mut left = vec![T::infinity(); h].into_boxed_slice();
+    for (i, x) in cost_matrix
         .iter()
-        .map(|v| *v.iter().min().unwrap() - all_min)
-        .collect::<Vec<_>>()
-        .into_boxed_slice();
+        .enumerate()
+        .map(|(i, v)| v.iter().map(move |&x| (i, x)))
+        .flatten()
+    {
+        if x < all_min {
+            all_min = x;
+        }
+        if x < left[i] {
+            left[i] = x;
+        }
+    }
+    left.iter_mut().for_each(|x| *x -= all_min);
     let mut right = vec![T::zero(); w].into_boxed_slice();
 
     for s in 0..h {
@@ -132,13 +144,13 @@ pub struct HungarianResult<T: Value> {
 ///
 /// This trait is already implemented for all the signed and unsigned integer types.
 pub trait Value:
-    Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + Ord
+    Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + PartialOrd
 {
     fn zero() -> Self;
     fn infinity() -> Self;
 }
 
-macro_rules! impl_value {
+macro_rules! impl_value_int {
     ($($T:ident),* $(,)?) => {$(
         impl Value for $T {
             fn zero() -> Self {
@@ -150,19 +162,34 @@ macro_rules! impl_value {
         }
     )*}
 }
-
-impl_value! {
+impl_value_int! {
     u8, u16, u32, u64, u128, usize,
     i8, i16, i32, i64, i128, isize,
 }
 
+macro_rules! impl_value_float {
+    ($($T:ident),* $(,)?) => {$(
+        impl Value for $T {
+            fn zero() -> Self {
+                0.
+            }
+            fn infinity() -> Self {
+                std::$T::INFINITY
+            }
+        }
+    )*}
+}
+impl_value_float!(f32, f64);
+
 #[cfg(test)]
 mod tests {
+    use approx::{assert_abs_diff_eq, AbsDiffEq};
+    use next_permutation::permutations_for_each;
+
     use {
         super::{hungarian, HungarianResult, Value},
         dbg::{lg, tabular},
         itertools::Itertools,
-        next_permutation::permutations_map,
         rand::distributions::uniform::SampleUniform,
         rand::{
             prelude::{Rng, StdRng},
@@ -187,14 +214,17 @@ mod tests {
         test_rand_impl::<i32>(h, w, iter, brute, 0..=100);
     }
 
-    #[test_case(5, 5, 100, true)]
     #[test_case(5, 5, 1000, false)]
-    #[test_case(30, 500, 30, false)]
     fn test_rand_i32(h: usize, w: usize, iter: usize, brute: bool) {
         test_rand_impl::<i32>(h, w, iter, brute, -100..=100);
     }
 
-    fn test_rand_impl<T: Value + Debug + SampleUniform>(
+    #[test_case(5, 5, 1000, false)]
+    fn test_rand_f64(h: usize, w: usize, iter: usize, brute: bool) {
+        test_rand_impl::<f64>(h, w, iter, brute, -100.0..=100.);
+    }
+
+    fn test_rand_impl<T: Value + Debug + Epsilon + SampleUniform>(
         h: usize,
         w: usize,
         iter: usize,
@@ -224,7 +254,7 @@ mod tests {
         }
     }
 
-    fn validate<T: Value + Debug>(cost_matrix: &[Vec<T>], result: &HungarianResult<T>) {
+    fn validate<T: Value + Debug + Epsilon>(cost_matrix: &[Vec<T>], result: &HungarianResult<T>) {
         let h = cost_matrix.len();
         let w = cost_matrix[0].len();
         let HungarianResult {
@@ -256,7 +286,7 @@ mod tests {
             .flatten()
         {
             assert!(
-                right[j] <= x + left[i],
+                right[j] <= x + left[i] + T::epsilon(),
                 "left[{i}] = {left:?}, right[{j}] = {right:?}, cost_matrix[{i}][{j}] = {cost:?}",
                 i = i,
                 left = left[i],
@@ -268,29 +298,36 @@ mod tests {
 
         // saturation
         for (i, &j) in forward.iter().enumerate() {
-            assert_eq!(cost_matrix[i][j], right[j] - left[i]);
+            assert_abs_diff_eq!(
+                cost_matrix[i][j],
+                right[j] - left[i],
+                epsilon = T::epsilon()
+            );
         }
 
         // value is correct
-        assert_eq!(
+        assert_abs_diff_eq!(
             *value,
             forward
                 .iter()
                 .enumerate()
                 .map(|(i, &j)| cost_matrix[i][j])
-                .sum::<T>()
+                .sum::<T>(),
+            epsilon = T::epsilon()
         );
     }
 
     fn compare_with_brute<T: Value + Debug>(cost_matrix: &[Vec<T>], result: &HungarianResult<T>) {
         let h = cost_matrix.len();
         let w = cost_matrix[0].len();
-        let brute_value = permutations_map((0..w).collect_vec(), |v| {
-            calculate_score(cost_matrix, v[..h].iter().copied())
-        })
-        .min()
-        .unwrap();
-        assert_eq!(brute_value, result.value);
+        let mut value = T::infinity();
+        permutations_for_each((0..w).collect_vec(), |v| {
+            let now = calculate_score(cost_matrix, v[..h].iter().copied());
+            if now < value {
+                value = now;
+            }
+        });
+        assert_eq!(value, result.value);
     }
 
     fn calculate_score<T: Value + Debug>(
@@ -302,4 +339,31 @@ mod tests {
             .map(|(i, j)| cost_matrix[i][j])
             .sum::<T>()
     }
+
+    trait Epsilon: AbsDiffEq<Epsilon = Self> {
+        fn epsilon() -> Self;
+    }
+    macro_rules! impl_epsilon_int {
+        ($($T:ident),* $(,)?) => {$(
+            impl Epsilon for $T {
+                fn epsilon() -> Self {
+                    0
+                }
+            }
+        )*}
+    }
+    impl_epsilon_int! {
+        u8, u16, u32, u64, usize,
+        i8, i16, i32, i64, isize,
+    }
+    macro_rules! impl_epsilon_float {
+        ($($T:ident),* $(,)?) => {$(
+            impl Epsilon for $T {
+                fn epsilon() -> Self {
+                    1e-5
+                }
+            }
+        )*}
+    }
+    impl_epsilon_float!(f32, f64);
 }
