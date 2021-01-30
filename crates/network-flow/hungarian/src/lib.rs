@@ -1,8 +1,29 @@
+//! Solve an assignment problem by Hungarian algorithm.
+//!
+//! # Example
+//!
+//! Basic usage:
+//!
+//! ```
+//! use hungarian::hungarian;
+//!
+//! let result = hungarian(&[
+//!     vec![2, 100, 10],
+//!     vec![10, 100, 15],
+//! ]);
+//!
+//! assert_eq!(result.value, 17);
+//! assert_eq!(&*result.forward, vec![0, 2].as_slice());
+//! assert_eq!(&*result.backward, vec![Some(0), None, Some(1)].as_slice());
+//! ```
+//!
+
 use std::{
     iter::Sum,
     ops::{Add, AddAssign, Sub, SubAssign},
 };
 
+/// [See the crate level documentation](crate)
 pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let h = cost_matrix.len();
     let w = cost_matrix[0].len();
@@ -92,15 +113,24 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     }
 }
 
+/// A value object to represent the optimal solution of an assignment problem.
 #[derive(Debug, Clone, PartialEq)]
 pub struct HungarianResult<T: Value> {
+    /// Takes the first component of a match and returns the second one.
     pub forward: Box<[usize]>,
+    /// Takes the second component of a match and returns the first one.
     pub backward: Box<[Option<usize>]>,
+    /// A left half of an optimal potential.
     pub left: Box<[T]>,
+    /// A right half of an optimal potential.
     pub right: Box<[T]>,
+    /// The value of an optimal solution.
     pub value: T,
 }
 
+/// A trait to adapt a value type to [`hungarian`]
+///
+/// This trait is already implemented for all the signed and unsigned integer types.
 pub trait Value:
     Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + Ord
 {
@@ -128,20 +158,18 @@ impl_value! {
 
 #[cfg(test)]
 mod tests {
-    use std::{assert_eq, fmt::Debug, mem::swap, ops::RangeInclusive};
-
-    use rand::distributions::uniform::SampleUniform;
-
     use {
         super::{hungarian, HungarianResult, Value},
         dbg::{lg, tabular},
         itertools::Itertools,
         next_permutation::permutations_map,
+        rand::distributions::uniform::SampleUniform,
         rand::{
             prelude::{Rng, StdRng},
             SeedableRng,
         },
         std::iter::repeat_with,
+        std::{assert_eq, fmt::Debug, mem::swap, ops::RangeInclusive},
         test_case::test_case,
     };
 
