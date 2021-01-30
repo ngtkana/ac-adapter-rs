@@ -9,6 +9,10 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
+approx = "0.4.0"
 assert_that = "0.1.2"
-rand = "0.8.2"
+dbg = { path = "../../utils/dbg" }
+itertools = "0.10.0"
+next_permutation = { path = "../../utils/next_permutation/" }
+rand = "0.8.3"
 test-case = "1.1.0"

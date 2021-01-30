@@ -1,7 +1,7 @@
 [package]
 name = "ac-adapter-rs"
 version = "0.1.0"
-authors = ["ngtkana <ngtkana@gmail.com>"]
+authors = ["Kana <ngtkana@gmail.com>"]
 edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
@@ -23,7 +23,7 @@ fp = { path = "../utils/fp" }
 gcd = { path = "../numbers/gcd" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
-hungarian = { path = "../algolib/hungarian" }
+hungarian = { path = "../network-flow/hungarian" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
 max_flow = { path = "../algolib/max_flow" }
