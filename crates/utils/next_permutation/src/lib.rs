@@ -30,70 +30,114 @@ where
     next_permutation_by(a, |x, y| f(x).cmp(&f(y)))
 }
 
+#[derive(Debug, Clone, PartialEq)]
+pub struct PermutationsMap<T, U, F>
+where
+    T: Ord,
+    F: FnMut(&[T]) -> U,
+{
+    state: Box<[T]>,
+    f: F,
+    exhausted: bool,
+}
+
+impl<T, U, F> Iterator for PermutationsMap<T, U, F>
+where
+    T: Ord,
+    F: FnMut(&[T]) -> U,
+{
+    type Item = U;
+    fn next(&mut self) -> Option<U> {
+        if self.exhausted {
+            None
+        } else {
+            let res = (self.f)(&self.state);
+            self.exhausted |= !next_permutation(&mut self.state);
+            Some(res)
+        }
+    }
+}
+
+/// Takes an initial state of a slice and closure and creates an iterator which calls that closure
+/// on each succeeding permutations of it.
+///
+/// # Examples
+/// Basic usage:
+/// ```
+/// use next_permutation::permutations_map;
+///
+/// let mut iter = permutations_map(vec![0, 1, 2], |v| v[1]);
+///
+/// assert_eq!(iter.next(), Some(1));
+/// assert_eq!(iter.next(), Some(2));
+/// assert_eq!(iter.next(), Some(0));
+/// assert_eq!(iter.next(), Some(2));
+/// assert_eq!(iter.next(), Some(0));
+/// assert_eq!(iter.next(), Some(1));
+/// assert_eq!(iter.next(), None);
+/// ```
+pub fn permutations_map<T, U, F>(state: impl Into<Box<[T]>>, f: F) -> PermutationsMap<T, U, F>
+where
+    T: Ord,
+    F: FnMut(&[T]) -> U,
+{
+    let state = state.into();
+    let exhausted = state.is_empty();
+    PermutationsMap {
+        state,
+        f,
+        exhausted,
+    }
+}
+
+/// Takes an initial state of a slice and calls a closure on each permutations of an slice.
+///
+/// # Examples
+/// Basic usage:
+/// ```
+/// use next_permutation::permutations_for_each;
+///
+/// let mut vec = Vec::new();
+/// permutations_for_each(vec![0, 1, 2], |v| vec.push(v[1]));
+/// assert_eq!(vec, vec![1, 2, 0, 2, 0, 1]);
+/// ```
+pub fn permutations_for_each<T, F>(state: impl Into<Box<[T]>>, mut f: F)
+where
+    T: Ord,
+    F: FnMut(&[T]) -> (),
+{
+    let mut state = state.into();
+    while {
+        f(&state);
+        next_permutation(&mut state)
+    } {}
+}
+
 #[cfg(test)]
 mod tests {
-    use super::{next_permutation, next_permutation_by_key};
-    use std::cmp::Reverse;
-
-    fn collect_permutations<T: Ord + Clone>(a: &[T]) -> Vec<Vec<T>> {
-        let mut a = a.to_vec();
-        let mut res = Vec::new();
-        while {
-            res.push(a.clone());
-            next_permutation(&mut a)
-        } {}
-        res
-    }
-
-    fn collect_permutations_reverse<T: Ord + Clone>(a: &[T]) -> Vec<Vec<T>> {
-        let mut a = a.to_vec();
-        let mut res = Vec::new();
-        while {
-            res.push(a.clone());
-            next_permutation_by_key(&mut a, |x| Reverse(x.clone()))
-        } {}
-        res
-    }
+    use crate::permutations_map;
+    use itertools::assert_equal;
 
     #[test]
-    fn test_perm() {
-        let result = collect_permutations(&[0, 1, 2]);
-        let expected = vec![
-            vec![0, 1, 2],
-            vec![0, 2, 1],
-            vec![1, 0, 2],
-            vec![1, 2, 0],
-            vec![2, 0, 1],
-            vec![2, 1, 0],
-        ];
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_with_repetition() {
-        let result = collect_permutations(&[0, 0, 1, 1]);
-        let expected = vec![
-            vec![0, 0, 1, 1],
-            vec![0, 1, 0, 1],
-            vec![0, 1, 1, 0],
-            vec![1, 0, 0, 1],
-            vec![1, 0, 1, 0],
-            vec![1, 1, 0, 0],
-        ];
-        assert_eq!(result, expected);
-    }
-
-    #[test]
-    fn test_pred_permutation() {
-        let result = collect_permutations_reverse(&[2, 1, 0]);
-        let expected = vec![
-            vec![2, 1, 0],
-            vec![2, 0, 1],
-            vec![1, 2, 0],
-            vec![1, 0, 2],
-            vec![0, 2, 1],
-            vec![0, 1, 2],
-        ];
-        assert_eq!(result, expected);
+    fn test_permutations_map() {
+        assert_equal(
+            permutations_map(vec![0, 0, 0], <[u32]>::to_vec),
+            vec![vec![0, 0, 0]],
+        );
+        assert_equal(
+            permutations_map(vec![0, 0, 1], <[u32]>::to_vec),
+            vec![vec![0, 0, 1], vec![0, 1, 0], vec![1, 0, 0]],
+        );
+        assert_equal(
+            permutations_map(vec![0, 1, 2], <[u32]>::to_vec),
+            vec![
+                vec![0, 1, 2],
+                vec![0, 2, 1],
+                vec![1, 0, 2],
+                vec![1, 2, 0],
+                vec![2, 0, 1],
+                vec![2, 1, 0],
+            ],
+        );
     }
 }
