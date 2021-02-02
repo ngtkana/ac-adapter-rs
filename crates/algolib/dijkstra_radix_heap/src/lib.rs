@@ -48,7 +48,6 @@ pub fn calc_dist_restore(s: usize, g: &[Vec<(usize, u32)>]) -> (Vec<u32>, Vec<us
 #[cfg(test)]
 mod tests {
     use {
-        dbg::tabular,
         rand::prelude::*,
         randtools::{LogUniform, SimpleDigraph},
         std::collections::HashMap,
@@ -72,7 +71,6 @@ mod tests {
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();
-            tabular!(&g);
             let s = rng.gen_range(0..n);
 
             // calc_dist

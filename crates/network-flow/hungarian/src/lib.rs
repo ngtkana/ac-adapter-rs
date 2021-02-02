@@ -188,7 +188,6 @@ mod tests {
 
     use {
         super::{hungarian, HungarianResult, Value},
-        dbg::{lg, tabular},
         itertools::Itertools,
         rand::distributions::uniform::SampleUniform,
         rand::{
@@ -245,7 +244,6 @@ mod tests {
             })
             .take(h)
             .collect_vec();
-            tabular!(&cost_matrix);
             let result = hungarian(&cost_matrix);
             if brute {
                 compare_with_brute(&cost_matrix, &result);
@@ -264,8 +262,6 @@ mod tests {
             backward,
             value,
         } = result;
-        lg!(&left);
-        lg!(&right);
 
         // partial 1 on 1 correspondence
         assert_eq!(backward.iter().filter(|&x| x.is_some()).count(), h);
