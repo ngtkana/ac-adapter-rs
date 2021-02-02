@@ -29,43 +29,31 @@ pub use {
 
 #[macro_export]
 macro_rules! lg {
-    () => {
-        $crate::eprintln!("[{}:{}]", $crate::file!(), $crate::line!());
-    };
-    ($val:expr) => {
-        match $val {
-            tmp => {
-                eprintln!("[{}:{}] {} = {:?}",
-                    file!(), line!(), stringify!($val), &tmp);
-                tmp
+    (@nl $value:expr) => {
+        eprintln!("[{}:{}]", file!(), line!());
+        match $value {
+            value => {
+                eprint!("{:?}", &value);
             }
         }
     };
-    ($val:expr,) => { $crate::lg!($val) };
-    ($($val:expr),+ $(,)?) => {
-        ($($crate::lg!($val)),+,)
-    };
-}
-
-#[macro_export]
-macro_rules! msg {
-    () => {
-        compile_error!();
-    };
-    ($msg:expr) => {
-        $crate::eprintln!("[{}:{}][{}]", $crate::file!(), $crate::line!(), $msg);
-    };
-    ($msg:expr, $val:expr) => {
-        match $val {
-            tmp => {
-                eprintln!("[{}:{}][{}] {} = {:?}",
-                    file!(), line!(), $msg, stringify!($val), &tmp);
-                tmp
+    (@contents $head:expr $(,)?) => {
+        match $head {
+            head => {
+                eprintln!(" {} = {:?}", stringify!($head), &head);
             }
         }
     };
-    ($msg:expr, $val:expr,) => { msg!($msg, $val) };
-    ($msg:expr, $($val:expr),+ $(,)?) => {
-        ($(msg!($msg, $val)),+,)
+    (@contents $head:expr $(,$tail:expr)+ $(,)?) => {
+        match $head {
+            head => {
+                eprint!(" {} = {:?},", stringify!($head), &head);
+            }
+        }
+        $crate::lg!(@contents $($tail),*);
+    };
+    ($($expr:expr),* $(,)?) => {
+        eprint!("[{}:{}]", file!(), line!());
+        $crate::lg!(@contents $($expr),*)
     };
 }
