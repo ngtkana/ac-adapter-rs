@@ -103,7 +103,7 @@ where
         self.table
             .iter()
             .enumerate()
-            .map(|(row_index, row)| {
+            .try_for_each(|(row_index, row)| {
                 writeln!(
                     w,
                     "{:02}|{}",
@@ -114,7 +114,6 @@ where
                         .collect::<String>()
                 )
             })
-            .collect()
     }
 }
 
