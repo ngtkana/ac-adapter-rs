@@ -8,15 +8,24 @@
 //! - [`msg`]
 //!
 //!
-//! # Wrappers
+//! # Structs
 //!
-//! Provides various formats via `Display` trait.
+//! * [`BitSlice`] to format a slice of Boolean vales. Implements both `Debug` and `Display`.
 //!
-//! - [`BitSlice`]
+//!
+//! # Functions
+//!
+//! * [`table()`] to format a two-dimensional table. Returns [`Table`], which implements `Debug`, and
+//! allows customization of formats via [`by`](Table::by) method.
+//!
 
 mod bitslice;
+mod table;
 
-pub use bitslice::BitSlice;
+pub use {
+    bitslice::BitSlice,
+    table::{table, Table},
+};
 
 #[macro_export]
 macro_rules! lg {
