@@ -1,4 +1,4 @@
-use std::fmt::{self, Display, Formatter};
+use std::fmt::{self, Debug, Display, Formatter};
 
 /// Formats `&[bool]` bitwise to `0` or `1`.
 ///
@@ -20,6 +20,11 @@ impl<'a> Display for BitSlice<'a> {
                 .map(|&b| if b { '1' } else { '0' })
                 .collect::<String>()
         )
+    }
+}
+impl<'a> Debug for BitSlice<'a> {
+    fn fmt(&self, w: &mut Formatter) -> fmt::Result {
+        write!(w, "{}", self)
     }
 }
 
