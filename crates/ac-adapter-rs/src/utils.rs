@@ -12,4 +12,5 @@ pub use prefix_sum;
 pub use randtools;
 pub use reverse;
 pub use seq;
+pub use space;
 pub use span;
