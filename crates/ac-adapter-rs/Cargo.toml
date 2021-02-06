@@ -11,16 +11,14 @@ accum = { path = "../utils/accum" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
 convex_hull = { path = "../geometry/convex_hull" }
-crt = { path = "../math/crt" }
 dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
 dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 dinic = { path = "../network-flow/dinic" }
+euclid = { path = "../math/euclid" }
 fact = { path = "../utils/fact" }
-factorize = { path = "../math/factorize" }
 fp = { path = "../utils/fp" }
-gcd = { path = "../math/gcd" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
 hungarian = { path = "../network-flow/hungarian" }
