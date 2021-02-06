@@ -1,4 +1,4 @@
-use crate::Signed;
+use super::Signed;
 
 /// Returns an integer `z, n` such that (x + lℤ) ∩(y + mℤ) = z + nℤ
 ///
