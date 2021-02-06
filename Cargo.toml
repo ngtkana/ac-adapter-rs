@@ -5,7 +5,7 @@ members = [
     'crates/string/*',
     'crates/algolib/*',
     'crates/range-query/*',
-    'crates/numbers/*',
+    'crates/math/*',
     'crates/geometry/*',
     'crates/network-flow/*',
 ]
