@@ -1,7 +1,8 @@
+mod crt;
 mod ext_gcd;
 mod gcd;
 
-pub use {ext_gcd::ext_gcd, gcd::gcd};
+pub use {crt::crt, ext_gcd::ext_gcd, gcd::gcd};
 
 use std::{
     fmt::Debug,

@@ -26,7 +26,6 @@ pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
             (v, y)
         }
     };
-    dbg!(x, y, a, g);
     assert_eq!((g - a * x) % y, T::zero());
     let b = (g - a * x) / y;
     (a, b, g)
