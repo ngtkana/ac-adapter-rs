@@ -29,7 +29,7 @@ impl SieveKind for Usize {
         Vec::new()
     }
     fn construct(len: usize) -> Vec<Self::SieveValue> {
-        construct_least_prime_divisor_table(len)
+        construct_lpd_table(len)
     }
     fn is_prime(index: usize, b: Self::SieveValue) -> bool {
         index == b
@@ -52,7 +52,7 @@ pub fn construct_is_prime_table(n: usize) -> Vec<bool> {
     is_prime
 }
 
-pub fn construct_least_prime_divisor_table(n: usize) -> Vec<usize> {
+fn construct_lpd_table(n: usize) -> Vec<usize> {
     let mut lpd = vec![std::usize::MAX; n];
     for p in 2..n {
         if lpd[p] != std::usize::MAX {
@@ -70,7 +70,10 @@ pub fn construct_least_prime_divisor_table(n: usize) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
-    use {super::construct_is_prime_table, test_case::test_case};
+    use {
+        super::{construct_is_prime_table, construct_lpd_table},
+        test_case::test_case,
+    };
 
     #[test_case(0 => Vec::<bool>::new())]
     #[test_case(1 => vec![false])]
@@ -80,5 +83,15 @@ mod tests {
     #[test_case(5 => vec![false, false, true, true, false])]
     fn test_construct_is_prime_table(n: usize) -> Vec<bool> {
         construct_is_prime_table(n)
+    }
+
+    #[test_case(0 => Vec::<usize>::new())]
+    #[test_case(1 => vec![std::usize::MAX])]
+    #[test_case(2 => vec![std::usize::MAX, std::usize::MAX])]
+    #[test_case(3 => vec![std::usize::MAX, std::usize::MAX, 2])]
+    #[test_case(4 => vec![std::usize::MAX, std::usize::MAX, 2, 3])]
+    #[test_case(5 => vec![std::usize::MAX, std::usize::MAX, 2, 3, 2])]
+    fn test_construct_lpd_table(n: usize) -> Vec<usize> {
+        construct_lpd_table(n)
     }
 }
