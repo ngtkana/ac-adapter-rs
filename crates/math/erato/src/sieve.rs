@@ -134,12 +134,9 @@ impl Sieve {
     /// use erato::Sieve;
     ///
     /// let mut sieve = Sieve::new();
-    /// itertools::assert_equal(sieve.prime_factors_by_trial_division(84), vec![2, 2, 3, 7]);
+    /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
-    pub fn prime_factors_by_trial_division<T: Int>(
-        &mut self,
-        n: T,
-    ) -> PrimeFactorsByTrialDivision<T> {
+    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByTrialDivision<T> {
         self.base.prime_factors_by_trial_division(n)
     }
 }
@@ -189,6 +186,26 @@ mod tests {
     #[test_case(84 => vec![2, 2, 3, 7])]
     fn test_prime_divisors(n: i32) -> Vec<i32> {
         let mut sieve = Sieve::new();
-        sieve.prime_factors_by_trial_division(n).collect()
+        sieve.prime_factors(n).collect()
+    }
+
+    #[test_case(1 => Vec::<i32>::new())]
+    #[test_case(2 => vec![2])]
+    #[test_case(15 => vec![3, 5])]
+    #[test_case(84 => vec![2, 3, 7])]
+    #[test_case(648 => vec![2, 3])]
+    fn test_prime_divisors_unique(n: i32) -> Vec<i32> {
+        let mut sieve = Sieve::new();
+        sieve.prime_factors(n).unique().collect()
+    }
+
+    #[test_case(1 => Vec::<(i32, usize)>::new())]
+    #[test_case(2 => vec![(2, 1)])]
+    #[test_case(15 => vec![(3, 1), (5, 1)])]
+    #[test_case(84 => vec![(2, 2), (3, 1), (7, 1)])]
+    #[test_case(648 => vec![(2, 3), (3, 4)])]
+    fn test_prime_divisors_rle(n: i32) -> Vec<(i32, usize)> {
+        let mut sieve = Sieve::new();
+        sieve.prime_factors(n).rle().collect()
     }
 }

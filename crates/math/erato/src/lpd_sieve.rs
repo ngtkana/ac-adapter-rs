@@ -14,19 +14,19 @@ use super::{
 /// multiple divisors counted repeatedly.
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct SieveUsize {
+pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
 }
 
-impl SieveUsize {
+impl LpdSieve {
     /// Construct a new empty sieve. No heap allocations is run via this method.
     ///
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
+    /// use erato::LpdSieve;
     ///
-    /// let sieve = SieveUsize::new();
+    /// let sieve = LpdSieve::new();
     /// assert_eq!(sieve.len(), 0);
     /// ```
     pub fn new() -> Self {
@@ -40,8 +40,8 @@ impl SieveUsize {
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
-    /// let sieve = SieveUsize::with_len(42);
+    /// use erato::LpdSieve;
+    /// let sieve = LpdSieve::with_len(42);
     /// assert_eq!(sieve.len(), 42);
     /// ```
     pub fn len(&self) -> usize {
@@ -53,9 +53,9 @@ impl SieveUsize {
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
+    /// use erato::LpdSieve;
     ///
-    /// let sieve = SieveUsize::with_len(10);
+    /// let sieve = LpdSieve::with_len(10);
     /// assert_eq!(sieve.len(), 10);
     /// ```
     pub fn with_len(n: usize) -> Self {
@@ -79,14 +79,39 @@ impl SieveUsize {
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
+    /// use erato::LpdSieve;
     ///
-    /// let mut sieve = SieveUsize::new();
+    /// let mut sieve = LpdSieve::new();
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
         self.base.is_prime(x)
+    }
+
+    /// Returns the least prime divisor of `x`.
+    ///
+    /// # Panics
+    ///
+    /// if `x <= 1`.
+    ///
+    ///
+    /// # Note
+    ///
+    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use erato::LpdSieve;
+    ///
+    /// let mut sieve = LpdSieve::new();
+    /// assert!(sieve.is_prime(2));
+    /// assert!(!sieve.is_prime(6));
+    /// ```
+    pub fn lpd<T: Int>(&mut self, x: T) -> T {
+        self.base.lpd(x)
     }
 
     /// Returns an iterator to generate all the prime numbers in ascending order, extending
@@ -102,9 +127,9 @@ impl SieveUsize {
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
+    /// use erato::LpdSieve;
     ///
-    /// let mut sieve = SieveUsize::new();
+    /// let mut sieve = LpdSieve::new();
     /// let mut prime_numbers = sieve.prime_numbers();
     /// assert_eq!(prime_numbers.next(), Some(2));
     /// assert_eq!(prime_numbers.next(), Some(3));
@@ -125,23 +150,23 @@ impl SieveUsize {
     /// # Examples
     ///
     /// ```
-    /// use erato::SieveUsize;
+    /// use erato::LpdSieve;
     ///
-    /// let mut sieve = SieveUsize::new();
-    /// itertools::assert_equal(sieve.prime_factors_by_lookup(84), vec![2, 2, 3, 7]);
+    /// let mut sieve = LpdSieve::new();
+    /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
-    pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
+    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
         self.base.prime_factors_by_lookup(n)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use {super::SieveUsize, test_case::test_case};
+    use {super::LpdSieve, test_case::test_case};
 
     #[test]
     fn test_is_prime_via_new() {
-        let mut sieve = SieveUsize::new();
+        let mut sieve = LpdSieve::new();
         assert!(sieve.is_prime(2));
         assert!(sieve.is_prime(3));
         assert!(!sieve.is_prime(9));
@@ -154,7 +179,7 @@ mod tests {
 
     #[test]
     fn test_is_prime_via_with_capacity() {
-        let mut sieve = SieveUsize::with_len(10);
+        let mut sieve = LpdSieve::with_len(10);
         assert!(sieve.is_prime(2));
         assert!(sieve.is_prime(3));
         assert!(!sieve.is_prime(9));
@@ -170,7 +195,7 @@ mod tests {
     #[test_case(2 => vec![2, 3])]
     #[test_case(5 => vec![2, 3, 5, 7, 11])]
     fn test_prime_numbers(len: usize) -> Vec<i32> {
-        let mut sieve = SieveUsize::new();
+        let mut sieve = LpdSieve::new();
         sieve.prime_numbers().take(len).collect()
     }
 
@@ -179,7 +204,27 @@ mod tests {
     #[test_case(15 => vec![3, 5])]
     #[test_case(84 => vec![2, 2, 3, 7])]
     fn test_prime_divisors(n: i32) -> Vec<i32> {
-        let mut sieve = SieveUsize::new();
-        sieve.prime_factors_by_lookup(n).collect()
+        let mut sieve = LpdSieve::new();
+        sieve.prime_factors(n).collect()
+    }
+
+    #[test_case(1 => Vec::<i32>::new())]
+    #[test_case(2 => vec![2])]
+    #[test_case(15 => vec![3, 5])]
+    #[test_case(84 => vec![2, 3, 7])]
+    #[test_case(648 => vec![2, 3])]
+    fn test_prime_divisors_unique(n: i32) -> Vec<i32> {
+        let mut sieve = LpdSieve::new();
+        sieve.prime_factors(n).unique().collect()
+    }
+
+    #[test_case(1 => Vec::<(i32, usize)>::new())]
+    #[test_case(2 => vec![(2, 1)])]
+    #[test_case(15 => vec![(3, 1), (5, 1)])]
+    #[test_case(84 => vec![(2, 2), (3, 1), (7, 1)])]
+    #[test_case(648 => vec![(2, 3), (3, 4)])]
+    fn test_prime_divisors_rle(n: i32) -> Vec<(i32, usize)> {
+        let mut sieve = LpdSieve::new();
+        sieve.prime_factors(n).rle().collect()
     }
 }
