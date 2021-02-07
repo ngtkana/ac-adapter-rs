@@ -1,8 +1,9 @@
-mod is_prime;
 mod least;
+mod sieve_base;
+mod sieve_kind;
 
-pub use is_prime::{Sieve, SieveWithList};
 pub use least::Least;
+pub use sieve_base::{Sieve, SieveBase, SieveUsize};
 
 use std::{
     fmt::Debug,
