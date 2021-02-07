@@ -5,7 +5,6 @@
 //! Prints arguments to STDERR with code position information.
 //!
 //! - [`lg`]
-//! - [`msg`]
 //!
 //!
 //! # Structs
