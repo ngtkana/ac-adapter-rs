@@ -23,11 +23,6 @@ impl<S: SieveKind> SieveBase<S> {
     pub fn len(&self) -> usize {
         self.sieve.len()
     }
-    pub fn extend(&mut self, len: usize) {
-        if self.len() <= len {
-            *self = Self::with_len(len);
-        }
-    }
     pub fn with_len(n: usize) -> Self {
         let sieve = S::construct(n);
         let list = sieve
@@ -52,6 +47,10 @@ impl<S: SieveKind> SieveBase<S> {
             index: 0,
             _marker: PhantomData,
         }
+    }
+    fn extend(&mut self, len: usize) {
+        assert!(2 * self.len() <= len);
+        *self = Self::with_len(len);
     }
 }
 
@@ -91,8 +90,7 @@ impl<'a, S: SieveKind, T: Int> Iterator for PrimeNumbers<'a, S, T> {
     }
 }
 
-/// [See the document of
-/// `Sieve::prime_factors_by_trial_division`](crate::Sieve::prime_factors_by_trial_division)
+/// See the document of [`crate::Sieve::prime_factors_by_trial_division`]
 pub struct PrimeFactorsByTrialDivision<'a, T: Int> {
     prime_numbers: PrimeNumbers<'a, sieve_kind::Boolean, T>,
     p: T,
@@ -114,6 +112,38 @@ impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
             }
             *n /= *p;
             Some(*p)
+        }
+    }
+}
+
+impl SieveBase<sieve_kind::Usize> {
+    pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
+        assert!(T::zero() < n);
+        PrimeFactorsByLookup { sieve: self, n }
+    }
+    pub fn lpd<T: Int>(&mut self, n: T) -> T {
+        let n = n.as_usize();
+        if self.sieve.len() <= n {
+            self.extend(2 * (n + 1));
+        }
+        T::from_usize(self.sieve[n])
+    }
+}
+/// See the document of [`crate::SieveUsize::prime_factors_by_lookup`]
+pub struct PrimeFactorsByLookup<'a, T: Int> {
+    sieve: &'a mut SieveBase<sieve_kind::Usize>,
+    n: T,
+}
+impl<'a, T: Int> Iterator for PrimeFactorsByLookup<'a, T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let Self { sieve, n } = self;
+        if *n == T::one() {
+            None
+        } else {
+            let p = sieve.lpd(*n);
+            *n /= p;
+            Some(p)
         }
     }
 }
