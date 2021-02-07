@@ -1,7 +1,7 @@
 use {
     super::{
         sieve_kind::{self, SieveKind},
-        Int,
+        Int, PrimeFactors, Rle, Unique,
     },
     std::marker::PhantomData,
 };
@@ -75,6 +75,13 @@ pub struct PrimeNumbers<'a, S: SieveKind, T: Int> {
     index: usize,
     _marker: PhantomData<T>,
 }
+
+/// See the document of [`crate::Sieve::prime_factors`]
+pub struct PrimeFactorsByTrialDivision<'a, T: Int> {
+    prime_numbers: PrimeNumbers<'a, sieve_kind::Boolean, T>,
+    p: T,
+    n: T,
+}
 impl<'a, S: SieveKind, T: Int> Iterator for PrimeNumbers<'a, S, T> {
     type Item = T;
     fn next(&mut self) -> Option<Self::Item> {
@@ -89,12 +96,13 @@ impl<'a, S: SieveKind, T: Int> Iterator for PrimeNumbers<'a, S, T> {
         Some(p)
     }
 }
-
-/// See the document of [`crate::Sieve::prime_factors_by_trial_division`]
-pub struct PrimeFactorsByTrialDivision<'a, T: Int> {
-    prime_numbers: PrimeNumbers<'a, sieve_kind::Boolean, T>,
-    p: T,
-    n: T,
+impl<T: Int> PrimeFactorsByTrialDivision<'_, T> {
+    pub fn unique(self) -> Unique<T, Self> {
+        PrimeFactors::unique(self)
+    }
+    pub fn rle(self) -> Rle<T, Self> {
+        PrimeFactors::rle(self)
+    }
 }
 impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
     type Item = T;
@@ -108,6 +116,10 @@ impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
             None
         } else {
             while *n % *p != T::zero() {
+                if *n <= *p * *p {
+                    *p = *n;
+                    break;
+                }
                 *p = prime_numbers.next().unwrap();
             }
             *n /= *p;
@@ -116,6 +128,11 @@ impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
     }
 }
 
+/// See the document of [`crate::LpdSieve::prime_factors`]
+pub struct PrimeFactorsByLookup<'a, T: Int> {
+    sieve: &'a mut SieveBase<sieve_kind::Usize>,
+    n: T,
+}
 impl SieveBase<sieve_kind::Usize> {
     pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
         assert!(T::zero() < n);
@@ -129,10 +146,15 @@ impl SieveBase<sieve_kind::Usize> {
         T::from_usize(self.sieve[n])
     }
 }
-/// See the document of [`crate::SieveUsize::prime_factors_by_lookup`]
-pub struct PrimeFactorsByLookup<'a, T: Int> {
-    sieve: &'a mut SieveBase<sieve_kind::Usize>,
-    n: T,
+impl<T: Int> PrimeFactorsByLookup<'_, T> {
+    /// Forward [`crate::PrimeFactors::unique`].
+    pub fn unique(self) -> Unique<T, Self> {
+        PrimeFactors::unique(self)
+    }
+    /// Forward [`crate::PrimeFactors::rle`].
+    pub fn rle(self) -> Rle<T, Self> {
+        PrimeFactors::rle(self)
+    }
 }
 impl<'a, T: Int> Iterator for PrimeFactorsByLookup<'a, T> {
     type Item = T;

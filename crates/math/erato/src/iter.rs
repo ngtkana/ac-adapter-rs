@@ -1,4 +1,8 @@
-use super::{sieve_kind, Int, SieveBase, SieveKind};
+use super::{
+    sieve_kind,
+    sieve_kind::{self, SieveKind},
+    Int, SieveBase, SieveKind,
+};
 
 /// [See the document of `SieveBase::prime_numbers`](SieveBase::prime_numbers)
 pub struct PrimeNumbers<'a, S: SieveKind, T: Int> {
