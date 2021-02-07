@@ -1,32 +1,32 @@
 use super::{
-    sieve_base::{PrimeFactorsByTrialDivision, PrimeNumbers},
+    sieve_base::{PrimeFactorsByLookup, PrimeNumbers},
     sieve_kind, Int, SieveBase,
 };
 
-/// Is-prime table.
+/// Least-prime-divisor table.
 ///
 /// # Complexity
 ///
 /// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
 ///
-/// - Construction: Θ ( n / lg lg n )
-/// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than
-/// n.
+/// - Construction: O ( n lg n )
+/// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
+/// multiple divisors counted repeatedly.
 ///
 #[derive(Debug, Clone, PartialEq)]
-pub struct Sieve {
-    base: SieveBase<sieve_kind::Boolean>,
+pub struct SieveUsize {
+    base: SieveBase<sieve_kind::Usize>,
 }
 
-impl Sieve {
+impl SieveUsize {
     /// Construct a new empty sieve. No heap allocations is run via this method.
     ///
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
+    /// use erato::SieveUsize;
     ///
-    /// let sieve = Sieve::new();
+    /// let sieve = SieveUsize::new();
     /// assert_eq!(sieve.len(), 0);
     /// ```
     pub fn new() -> Self {
@@ -40,8 +40,8 @@ impl Sieve {
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
-    /// let sieve = Sieve::with_len(42);
+    /// use erato::SieveUsize;
+    /// let sieve = SieveUsize::with_len(42);
     /// assert_eq!(sieve.len(), 42);
     /// ```
     pub fn len(&self) -> usize {
@@ -50,18 +50,12 @@ impl Sieve {
 
     /// Construct a sieve of given length.
     ///
-    ///
-    /// # Complexity
-    ///
-    /// Θ ( n / lg lg n )
-    ///
-    ///
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
+    /// use erato::SieveUsize;
     ///
-    /// let sieve = Sieve::with_len(10);
+    /// let sieve = SieveUsize::with_len(10);
     /// assert_eq!(sieve.len(), 10);
     /// ```
     pub fn with_len(n: usize) -> Self {
@@ -85,9 +79,9 @@ impl Sieve {
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
+    /// use erato::SieveUsize;
     ///
-    /// let mut sieve = Sieve::new();
+    /// let mut sieve = SieveUsize::new();
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
@@ -108,16 +102,16 @@ impl Sieve {
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
+    /// use erato::SieveUsize;
     ///
-    /// let mut sieve = Sieve::new();
+    /// let mut sieve = SieveUsize::new();
     /// let mut prime_numbers = sieve.prime_numbers();
     /// assert_eq!(prime_numbers.next(), Some(2));
     /// assert_eq!(prime_numbers.next(), Some(3));
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
-    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Boolean, T> {
+    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Usize, T> {
         self.base.prime_numbers()
     }
 
@@ -125,32 +119,29 @@ impl Sieve {
     ///
     /// # Complexity
     ///
-    /// Beside the incremental building, it takes Θ ( π ( √n ) ),  where π ( n ) is the number of prime numbers less than n.
+    /// Beside the incremental building, it takes Θ ( ω ( n ) ),  where ω ( n ) is the number of prime numbers less than n.
     ///
     ///
     /// # Examples
     ///
     /// ```
-    /// use erato::Sieve;
+    /// use erato::SieveUsize;
     ///
-    /// let mut sieve = Sieve::new();
-    /// itertools::assert_equal(sieve.prime_factors_by_trial_division(84), vec![2, 2, 3, 7]);
+    /// let mut sieve = SieveUsize::new();
+    /// itertools::assert_equal(sieve.prime_factors_by_lookup(84), vec![2, 2, 3, 7]);
     /// ```
-    pub fn prime_factors_by_trial_division<T: Int>(
-        &mut self,
-        n: T,
-    ) -> PrimeFactorsByTrialDivision<T> {
-        self.base.prime_factors_by_trial_division(n)
+    pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
+        self.base.prime_factors_by_lookup(n)
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use {super::Sieve, test_case::test_case};
+    use {super::SieveUsize, test_case::test_case};
 
     #[test]
     fn test_is_prime_via_new() {
-        let mut sieve = Sieve::new();
+        let mut sieve = SieveUsize::new();
         assert!(sieve.is_prime(2));
         assert!(sieve.is_prime(3));
         assert!(!sieve.is_prime(9));
@@ -163,7 +154,7 @@ mod tests {
 
     #[test]
     fn test_is_prime_via_with_capacity() {
-        let mut sieve = Sieve::with_len(10);
+        let mut sieve = SieveUsize::with_len(10);
         assert!(sieve.is_prime(2));
         assert!(sieve.is_prime(3));
         assert!(!sieve.is_prime(9));
@@ -179,7 +170,7 @@ mod tests {
     #[test_case(2 => vec![2, 3])]
     #[test_case(5 => vec![2, 3, 5, 7, 11])]
     fn test_prime_numbers(len: usize) -> Vec<i32> {
-        let mut sieve = Sieve::new();
+        let mut sieve = SieveUsize::new();
         sieve.prime_numbers().take(len).collect()
     }
 
@@ -188,7 +179,7 @@ mod tests {
     #[test_case(15 => vec![3, 5])]
     #[test_case(84 => vec![2, 2, 3, 7])]
     fn test_prime_divisors(n: i32) -> Vec<i32> {
-        let mut sieve = Sieve::new();
-        sieve.prime_factors_by_trial_division(n).collect()
+        let mut sieve = SieveUsize::new();
+        sieve.prime_factors_by_lookup(n).collect()
     }
 }

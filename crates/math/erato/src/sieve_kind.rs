@@ -61,7 +61,9 @@ fn construct_lpd_table(n: usize) -> Vec<usize> {
         lpd[p] = p;
         let mut i = p * p;
         while i < n {
-            lpd[i] = p;
+            if lpd[i] == std::usize::MAX {
+                lpd[i] = p;
+            }
             i += p;
         }
     }
