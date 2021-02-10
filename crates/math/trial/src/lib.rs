@@ -13,8 +13,8 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
 };
 pub use {
-    divisors::{divisors, Divisors},
-    prime_factors::{prime_factors, PrimeFactors},
+    divisors::{divisors, divisors_unordered, Divisors},
+    prime_factors::{prime_factors, prime_factors_rle, PrimeFactors, PrimeFactorsRle},
 };
 
 /// Abstraction of unsigned integers.
