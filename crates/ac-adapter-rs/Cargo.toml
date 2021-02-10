@@ -16,6 +16,7 @@ dfs = { path = "../algolib/dfs" }
 dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 dinic = { path = "../network-flow/dinic" }
+erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
 fact = { path = "../utils/fact" }
 fp = { path = "../utils/fp" }
@@ -47,7 +48,7 @@ span = { path = "../utils/span" }
 sparse_table = { path = "../range-query/sparse_table" }
 suffix_array = { path = "../algolib/suffix_array" }
 swag = { path = "../range-query/swag" }
-trial_division = { path = "../math/trial_division" }
+trial = { path = "../math/trial" }
 trie = { path = "../string/trie" }
 union_find = { path = "../algolib/union_find" }
 z_algorithm = { path = "../algolib/z_algorithm" }
