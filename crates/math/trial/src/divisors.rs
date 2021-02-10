@@ -11,7 +11,7 @@ use super::Value;
 ///
 /// Basic usage:
 /// ```
-/// use trial_division::divisors;
+/// use trial::divisors;
 ///
 /// let mut iter = divisors(12u32);
 /// assert_eq!(iter.next(), Some(1));

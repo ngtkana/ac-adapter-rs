@@ -12,7 +12,7 @@ use {super::Value, std::mem::replace};
 ///
 /// Basic usage:
 /// ```
-/// use trial_division::prime_factors;
+/// use trial::prime_factors;
 ///
 /// let mut iter = prime_factors(60u32);
 /// assert_eq!(iter.next(), Some((2, 2)));
