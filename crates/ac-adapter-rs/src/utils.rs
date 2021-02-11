@@ -2,6 +2,7 @@ pub use accum;
 pub use dbg;
 pub use fact;
 pub use fp;
+pub use grid;
 pub use gridtools;
 pub use next_permutation;
 pub use ngtio;
