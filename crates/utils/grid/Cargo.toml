@@ -9,4 +9,6 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
+dbg = { path = "../dbg/" }
+itertools = "0.10.0"
 test-case = "1.1.0"
