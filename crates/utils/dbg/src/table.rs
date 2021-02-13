@@ -19,7 +19,7 @@ use std::{
 ///      01| 2 3333 4\n"
 /// );
 /// ```
-pub fn table<'a, T, U>(table: &'a [U]) -> Table<'a, T, U> {
+pub fn table<T, U>(table: &[U]) -> Table<'_, T, U> {
     Table {
         _marker: PhantomData,
         table,

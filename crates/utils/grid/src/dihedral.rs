@@ -49,17 +49,18 @@ impl TryFrom<u8> for Dihedral {
         })
     }
 }
-impl Into<u8> for Dihedral {
-    fn into(self) -> u8 {
-        match self {
-            Self::R0 => 0,
-            Self::R1 => 1,
-            Self::R2 => 2,
-            Self::R3 => 3,
-            Self::R0S => 4,
-            Self::R1S => 5,
-            Self::R2S => 6,
-            Self::R3S => 7,
+impl From<Dihedral> for u8 {
+    fn from(src: Dihedral) -> Self {
+        use Dihedral::*;
+        match src {
+            R0 => 0,
+            R1 => 1,
+            R2 => 2,
+            R3 => 3,
+            R0S => 4,
+            R1S => 5,
+            R2S => 6,
+            R3S => 7,
         }
     }
 }
