@@ -15,7 +15,7 @@ dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
 dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
-dinic = { path = "../network-flow/dinic" }
+dinic = { path = "../flow/dinic" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
 fact = { path = "../utils/fact" }
@@ -23,7 +23,7 @@ fp = { path = "../utils/fp" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
-hungarian = { path = "../network-flow/hungarian" }
+hungarian = { path = "../flow/hungarian" }
 inversion_number = { path = "../algolib/inversion_number" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
