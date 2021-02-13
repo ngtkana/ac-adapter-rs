@@ -1,6 +1,6 @@
 use super::Signed;
 
-/// Returns an integer `z, n` such that (x + lℤ) ∩(y + mℤ) = z + nℤ
+/// Returns an integer `res2, mod2` such that (res0 + mod0 ℤ) ∩(res1 + mod1ℤ) = res2 + mod2ℤ
 ///
 /// # Examples
 ///
@@ -10,16 +10,16 @@ use super::Signed;
 ///
 /// assert_eq!(crt(5, 6, 3, 8), Some((11, 24)));
 /// ```
-pub fn crt<T: Signed>(x: T, l: T, y: T, m: T) -> Option<(T, T)> {
-    assert!(T::zero() < l);
-    assert!(T::zero() < m);
-    let (a, _b, g) = super::ext_gcd(l, m);
-    if g.divides(y - x) {
-        let mdivg = m / g;
-        let a = ((y - x) / g * a) % mdivg;
-        let a = if a < T::zero() { a + mdivg } else { a };
-        assert!(T::zero() <= a && a < mdivg);
-        Some((x + a * l, l * mdivg))
+pub fn crt<T: Signed>(res0: T, mod0: T, res1: T, mod1: T) -> Option<(T, T)> {
+    assert!(T::zero() < mod0);
+    assert!(T::zero() < mod1);
+    let (a, _b, g) = super::ext_gcd(mod0, mod1);
+    if g.divides(res1 - res0) {
+        let quot = mod1 / g;
+        let a = ((res1 - res0) / g * a) % quot;
+        let a = if a < T::zero() { a + quot } else { a };
+        assert!(T::zero() <= a && a < quot);
+        Some((res0 + a * mod0, mod0 * quot))
     } else {
         None
     }

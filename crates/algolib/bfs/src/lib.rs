@@ -20,8 +20,7 @@ pub fn tree_diamter_restore(g: &[Vec<usize>]) -> (Vec<usize>, u32) {
     let x = dist.iter().position(|&d| d == diam).unwrap();
     let (dist, prv) = calc_dist_restore(x, &g);
     let &diam = dist.iter().max().unwrap();
-    let mut res = Vec::new();
-    res.push(dist.iter().position(|&d| d == diam).unwrap());
+    let mut res = vec![dist.iter().position(|&d| d == diam).unwrap()];
     loop {
         let x = *res.last().unwrap();
         if dist[x] == 0 {

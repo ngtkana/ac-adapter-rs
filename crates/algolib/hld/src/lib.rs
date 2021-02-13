@@ -1,7 +1,7 @@
 use std::iter::Iterator;
 
 #[derive(Debug, Clone, PartialEq)]
-pub struct HLD {
+pub struct Hld {
     root: usize,
     g: Vec<Vec<usize>>,
     head: Vec<usize>,
@@ -9,7 +9,7 @@ pub struct HLD {
     pub ord: Vec<usize>,
     pub vid: Vec<usize>,
 }
-impl HLD {
+impl Hld {
     pub fn new(mut g: Vec<Vec<usize>>, root: usize) -> Self {
         let n = g.len();
 
@@ -84,7 +84,7 @@ impl HLD {
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Iter<'a> {
-    hld: &'a HLD,
+    hld: &'a Hld,
     u: usize,
     v: usize,
     include_lca: IncludeLca,
@@ -123,14 +123,14 @@ enum IncludeLca {
 
 #[cfg(test)]
 mod tests {
-    use super::HLD;
+    use super::Hld;
     use rand::prelude::*;
     use randtools::{DistinctTwo, LogUniform, Tree};
 
     #[test]
     fn test_singleton() {
         let g = vec![Vec::new()];
-        let _ = HLD::new(g, 0);
+        let _ = Hld::new(g, 0);
     }
 
     #[test]
@@ -151,7 +151,7 @@ mod tests {
             println!("Test {}, n = {}", test_id, n);
             let root = rng.gen_range(0..n);
             let g = rng.sample(Tree(n));
-            let hld = HLD::new(g.clone(), root);
+            let hld = Hld::new(g.clone(), root);
             for _ in 0..20 {
                 let (s, t) = rng.sample(DistinctTwo(0..n));
 
@@ -180,14 +180,14 @@ mod tests {
         }
     }
 
-    fn psp_path_unsorted(hld: &HLD, s: usize, t: usize) -> Vec<usize> {
+    fn psp_path_unsorted(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
         hld.iter_vtx(s, t)
             .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .flatten()
             .collect()
     }
 
-    fn psp_path_unsorted_without_lca(hld: &HLD, s: usize, t: usize) -> Vec<usize> {
+    fn psp_path_unsorted_without_lca(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
         hld.iter_edge(s, t)
             .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .flatten()
@@ -199,7 +199,7 @@ mod tests {
         2 * lg + 1
     }
 
-    fn count_call_count(hld: &HLD, s: usize, t: usize) -> u32 {
+    fn count_call_count(hld: &Hld, s: usize, t: usize) -> u32 {
         hld.iter_vtx(s, t).count() as u32
     }
 
