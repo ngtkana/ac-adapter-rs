@@ -13,7 +13,7 @@ use super::{
 /// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
 /// multiple divisors counted repeatedly.
 ///
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
 }
@@ -34,7 +34,18 @@ impl LpdSieve {
             base: SieveBase::new(),
         }
     }
-
+    /// Returns `true` if a sieve is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use erato::LpdSieve;
+    /// assert!(LpdSieve::with_len(0).is_empty());
+    /// assert!(!LpdSieve::with_len(1).is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.base.is_empty()
+    }
     /// Returns the length of a sieve.
     ///
     /// # Examples
@@ -47,7 +58,6 @@ impl LpdSieve {
     pub fn len(&self) -> usize {
         self.base.len()
     }
-
     /// Construct a sieve of given length.
     ///
     /// # Examples
@@ -63,7 +73,6 @@ impl LpdSieve {
             base: SieveBase::with_len(n),
         }
     }
-
     /// Returns `true` if `x` is a prime number.
     ///
     /// # Panics
@@ -88,7 +97,6 @@ impl LpdSieve {
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
         self.base.is_prime(x)
     }
-
     /// Returns the least prime divisor of `x`.
     ///
     /// # Panics
@@ -113,7 +121,6 @@ impl LpdSieve {
     pub fn lpd<T: Int>(&mut self, x: T) -> T {
         self.base.lpd(x)
     }
-
     /// Returns an iterator to generate all the prime numbers in ascending order, extending
     /// itself repeatedly.
     ///
@@ -139,7 +146,6 @@ impl LpdSieve {
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Usize, T> {
         self.base.prime_numbers()
     }
-
     /// Use trial-division algorithm to iterate over all the prime divisors of `x`, extending itself repeatedly.
     ///
     /// # Complexity

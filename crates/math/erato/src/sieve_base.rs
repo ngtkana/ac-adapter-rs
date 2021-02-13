@@ -20,6 +20,9 @@ impl<S: SieveKind> SieveBase<S> {
             list: Vec::new(),
         }
     }
+    pub fn is_empty(&self) -> bool {
+        self.sieve.is_empty()
+    }
     pub fn len(&self) -> usize {
         self.sieve.len()
     }
@@ -51,6 +54,12 @@ impl<S: SieveKind> SieveBase<S> {
     fn extend(&mut self, len: usize) {
         assert!(2 * self.len() <= len);
         *self = Self::with_len(len);
+    }
+}
+
+impl<S: SieveKind> Default for SieveBase<S> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 

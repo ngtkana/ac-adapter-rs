@@ -24,6 +24,6 @@ mod tests {
     #[test_case(&[42, 43] => "42 43")]
     #[test_case(&[42, 43, 44] => "42 43 44")]
     fn test_space(slice: &[i32]) -> String {
-        format!("{}", space(slice.iter()))
+        space(slice.iter())
     }
 }
