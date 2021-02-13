@@ -5,6 +5,7 @@ use {super::Signed, std::mem::swap};
 /// # Panics
 ///
 /// Panics if `x == 0 || y == 0`
+#[allow(clippy::many_single_char_names)]
 pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
     assert_ne!(x, T::zero());
     assert_ne!(y, T::zero());
@@ -42,11 +43,11 @@ mod tests {
     #[test_case(55, 89)]
     #[test_case(420, 1200)]
     fn test_gcd(x: i32, y: i32) {
-        let g = gcd(x, y);
+        let gcd = gcd(x, y);
         for (x, y) in [x, -x].iter().copied().zip([y, -y].iter().copied()) {
-            let (a, b, d) = ext_gcd(x, y);
-            assert_eq!(d, g);
-            assert_eq!(a * x + b * y, g);
+            let (a, b, ext_gcd) = ext_gcd(x, y);
+            assert_eq!(ext_gcd, gcd);
+            assert_eq!(a * x + b * y, gcd);
         }
     }
 }

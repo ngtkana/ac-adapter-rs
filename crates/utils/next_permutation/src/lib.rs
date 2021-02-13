@@ -104,7 +104,7 @@ where
 pub fn permutations_for_each<T, F>(state: impl Into<Box<[T]>>, mut f: F)
 where
     T: Ord,
-    F: FnMut(&[T]) -> (),
+    F: FnMut(&[T]),
 {
     let mut state = state.into();
     while {
