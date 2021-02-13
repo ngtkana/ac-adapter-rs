@@ -23,6 +23,7 @@ fp = { path = "../utils/fp" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
+hopkarp = { path = "../flow/hopkarp" }
 hungarian = { path = "../flow/hungarian" }
 inversion_number = { path = "../algolib/inversion_number" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
