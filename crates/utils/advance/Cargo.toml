@@ -1,0 +1,16 @@
+[package]
+name = "advance"
+version = "0.1.0"
+authors = ["Kana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+ga = "0.1.4"
+galvanic-assert = "0.8.7"
+itertools = "0.10.0"
+rand = "0.8.3"
+test-case = "1.1.0"

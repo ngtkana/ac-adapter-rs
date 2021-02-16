@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 accum = { path = "../utils/accum" }
+advance = { path = "../utils/advance" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
 convex_hull = { path = "../geometry/convex_hull" }
