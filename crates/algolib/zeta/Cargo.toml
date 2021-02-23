@@ -1,0 +1,14 @@
+[package]
+name = "zeta"
+version = "0.1.0"
+authors = ["Kana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+itertools = "0.10.0"
+rand = "0.8.3"
+test-case = "1.1.0"
