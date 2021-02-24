@@ -1,5 +1,6 @@
 pub use accum;
 pub use advance;
+pub use bitset;
 pub use dbg;
 pub use fact;
 pub use fp;
