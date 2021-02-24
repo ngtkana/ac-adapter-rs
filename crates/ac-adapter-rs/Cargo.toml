@@ -11,6 +11,7 @@ accum = { path = "../utils/accum" }
 advance = { path = "../utils/advance" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
+bitset = { path = "../utils/bitset" }
 convex_hull = { path = "../geometry/convex_hull" }
 dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
@@ -55,3 +56,4 @@ trial = { path = "../math/trial" }
 trie = { path = "../string/trie" }
 union_find = { path = "../algolib/union_find" }
 z_algorithm = { path = "../algolib/z_algorithm" }
+zeta = { path = "../algolib/zeta" }
