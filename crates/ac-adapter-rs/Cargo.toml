@@ -22,6 +22,7 @@ erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
 fact = { path = "../utils/fact" }
 fp = { path = "../utils/fp" }
+gco = { path = "../flow/gco" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
 hld = { path = "../algolib/hld" }
