@@ -227,7 +227,7 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
     };
     let end = match range.end_bound() {
         Excluded(&x) => x,
-        Included(&x) => x - 1,
+        Included(&x) => x + 1,
         Unbounded => len,
     };
     start..end
