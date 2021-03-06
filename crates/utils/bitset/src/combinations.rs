@@ -39,7 +39,7 @@ impl<T: Unsigned> Iterator for Combinations<T> {
         } else {
             let x = self.bs & self.bs.wrapping_neg();
             let y = self.bs + x;
-            ((self.bs & !y) / x >> 1) | y
+            (((self.bs & !y) / x) >> 1) | y
         };
         res
     }

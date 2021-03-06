@@ -261,7 +261,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// let lines = lines.iter_copied().map(Line::into_coeff).collect::<Vec<_>>();
     /// assert_eq!(lines, vec![[1, 0], [0, 10], [-1, 30]]);
     /// ```
-    pub fn iter_copied<'a>(&'a self) -> impl 'a + Iterator<Item = Line<T>> {
+    pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> {
         self.lines.iter().copied()
     }
 }

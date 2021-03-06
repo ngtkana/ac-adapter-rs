@@ -232,17 +232,17 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..=5);
-            let a = repeat_with(|| rng.gen_range(0..=20))
+            let elms = repeat_with(|| rng.gen_range(0..=20))
                 .take(1 << n)
                 .collect_vec();
             let result = {
-                let mut a = a.clone();
-                g(&mut a);
-                a
+                let mut elms = elms.clone();
+                g(&mut elms);
+                elms
             };
             let expected = (0..1 << n)
                 .map(|bs| {
-                    a.iter()
+                    elms.iter()
                         .enumerate()
                         .filter(|&(cs, _)| match dir {
                             Dir::Sub => !bs & cs == 0,
@@ -266,11 +266,11 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..=5);
-            let a = repeat_with(|| rng.gen_range(0..=20)).take(n).collect_vec();
-            let result = aggr(&a, f, e);
+            let elms = repeat_with(|| rng.gen_range(0..=20)).take(n).collect_vec();
+            let result = aggr(&elms, f, e);
             let expected = (0..1 << n)
                 .map(|bs| {
-                    a.iter()
+                    elms.iter()
                         .enumerate()
                         .filter(|&(i, _)| bs >> i & 1 == 1)
                         .map(|(_, &x)| x)
