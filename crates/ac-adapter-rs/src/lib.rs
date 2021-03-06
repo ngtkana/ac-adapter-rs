@@ -1,4 +1,5 @@
 pub mod algolib;
+pub mod disjoint_set;
 pub mod flow;
 pub mod geometry;
 pub mod math;
