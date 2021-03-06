@@ -74,6 +74,14 @@ use std::{mem::swap, usize::MAX};
 /// // 適用後を参照
 /// assert!( uf.same(0, 1, MAX));
 /// ```
+///
+///
+/// # 速度面
+///
+/// * [`size`](PartiallyPersistentUnionFind::size) を実現するために n
+/// 回程度の動的メモリ確保の必要なフィールド `size_history` を管理しているため、
+/// 定数倍が重くなっています。
+///
 #[derive(Clone, Debug)]
 pub struct PartiallyPersistentUnionFind {
     parent: Vec<isize>,
@@ -156,18 +164,18 @@ impl PartiallyPersistentUnionFind {
     /// ```
     pub fn time(&self, mut i: usize, mut j: usize) -> Option<usize> {
         let mut time = 0;
-        while i != j {
+        while self.time_stamp[i] != self.time_stamp[j] {
             if self.time_stamp[i] > self.time_stamp[j] {
                 swap(&mut i, &mut j);
             }
             time = self.time_stamp[i];
-            let p = self.parent[i];
-            if p < 0 {
-                return None;
-            }
-            i = p as usize;
+            i = self.parent[i] as usize;
         }
-        Some(time)
+        if i == j {
+            Some(time)
+        } else {
+            None
+        }
     }
     /// 時刻 time の i の属する成分の要素数を返します。
     ///
