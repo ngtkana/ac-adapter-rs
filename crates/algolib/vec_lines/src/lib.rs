@@ -355,6 +355,12 @@ macro_rules! impl_signed {
 }
 impl_signed! { i8, i16, i32, i64, i128, isize }
 
+impl<T: Signed, C: Constraint> Default for VecLines<T, C> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use {
@@ -390,10 +396,10 @@ mod tests {
             for x in 0..3 * n as i64 {
                 let x = x / 3;
                 let y = rng.gen_range(0..(n * n) as i64);
-                let a = -2 * x;
-                let b = x * x + y;
-                raw_lines.push([a, b]);
-                lines.push([a, b]);
+                let one = -2 * x;
+                let zero = x * x + y;
+                raw_lines.push([one, zero]);
+                lines.push([one, zero]);
             }
             let mut i = 0;
             for x in 0..n {
@@ -428,10 +434,10 @@ mod tests {
             for x in 0..3 * n as i64 {
                 let x = x / 3;
                 let y = rng.gen_range(0..(n * n) as i64);
-                let a = 2 * x;
-                let b = x * x + y;
-                raw_lines.push([a, b]);
-                lines.push([a, b]);
+                let one = 2 * x;
+                let zero = x * x + y;
+                raw_lines.push([one, zero]);
+                lines.push([one, zero]);
             }
             let mut i = 0;
             for x in 0..n {
