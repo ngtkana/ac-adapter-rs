@@ -1,6 +1,6 @@
 //! 2 次以下の劣モジュラー Graph cut 最適化問題を解きます。
 //!
-//! [詳細なインターフェースは `GCO` 構造体の各メソッドへどうぞ](GCO)
+//! [詳細なインターフェースは `Gco` 構造体の各メソッドへどうぞ](Gco)
 //!
 //! # 依存ライブラリ
 //!
@@ -23,13 +23,13 @@
 //!
 //! # 使い方
 //!
-//! [`unary`](`GCO::unary), [`binary`](GCO::binary)
+//! [`unary`](`Gco::unary), [`binary`](Gco::binary)
 //! メソッドで項を足していきます。
 //!
 //! ```
-//! use gco::GCO;
+//! use gco::Gco;
 //!
-//! let mut gco = gco::GCO::new(2);
+//! let mut gco = gco::Gco::new(2);
 //! gco.unary(0, [10, 20]);
 //! gco.unary(1, [40, 10]);
 //! gco.binary([0, 1], [[0, 99], [99,  0]]);
@@ -58,12 +58,12 @@ use std::cmp::Ordering;
 ///
 /// [概論は `gco` クレートのドキュメントへどうぞ](`self`)
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct GCO {
+pub struct Gco {
     vars: usize,
     unary: Vec<Unary>,
     binary: Vec<Binary>,
 }
-impl GCO {
+impl Gco {
     /// 変数 `n` 個からなる、制約のないインスタンスを作ります。
     pub fn new(n: usize) -> Self {
         Self {
@@ -81,9 +81,9 @@ impl GCO {
     /// # Examples
     ///
     /// ```
-    /// use gco::GCO;
+    /// use gco::Gco;
     ///
-    /// let mut gco = gco::GCO::new(2);
+    /// let mut gco = gco::Gco::new(2);
     /// gco.unary(0, [0, 10]); // x _ 0 = 1 のときコスト 10
     /// gco.unary(0, [-40, 0]); // x _ 1 = 0 のときコスト -40
     /// ```
@@ -106,9 +106,9 @@ impl GCO {
     /// # Examples
     ///
     /// ```
-    /// use gco::GCO;
+    /// use gco::Gco;
     ///
-    /// let mut gco = gco::GCO::new(2);
+    /// let mut gco = gco::Gco::new(2);
     /// gco.binary([0, 1], [[0, 10], [0, 0]]); // x _ 0 = 0, x _ 1 = 1 のときコスト 10
     /// ```
     ///
@@ -120,14 +120,14 @@ impl GCO {
         );
         self.binary.push(Binary { ij, cost });
     }
-    pub fn solve(&self) -> GCOResult {
+    pub fn solve(&self) -> GcoResult {
         solve(&self)
     }
 }
 
-/// [`GCO::solve`] の返すオブジェクトです。
+/// [`Gco::solve`] の返すオブジェクトです。
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct GCOResult {
+pub struct GcoResult {
     /// 最小値
     pub value: i64,
     /// 最小を達成する割当
@@ -137,8 +137,8 @@ pub struct GCOResult {
     pub args: Vec<bool>,
 }
 
-fn solve(gco: &GCO) -> GCOResult {
-    let GCO {
+fn solve(gco: &Gco) -> GcoResult {
+    let Gco {
         vars,
         unary,
         binary,
@@ -203,7 +203,7 @@ fn solve(gco: &GCO) -> GCOResult {
         .iter()
         .map(|&b| !b)
         .collect::<Vec<_>>();
-    GCOResult { value, args }
+    GcoResult { value, args }
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
@@ -235,11 +235,11 @@ mod tests {
     use randtools::DistinctTwo;
 
     use {
-        super::{is_submodular, Binary, GCOResult, Unary, GCO},
+        super::{is_submodular, Binary, Gco, GcoResult, Unary},
         rand::{prelude::StdRng, Rng, SeedableRng},
     };
 
-    fn brute(gco: &GCO) -> i64 {
+    fn brute(gco: &Gco) -> i64 {
         (0..1 << gco.vars)
             .map(|bs| {
                 gco.unary
@@ -261,7 +261,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = 3;
-            let mut gco = GCO::new(n);
+            let mut gco = Gco::new(n);
             let unary_count = 0;
             let binary_count = 1;
             for _ in 0..unary_count {
@@ -286,7 +286,7 @@ mod tests {
             }
 
             let expected = brute(&gco);
-            let GCOResult { value, args } = gco.clone().solve();
+            let GcoResult { value, args } = gco.clone().solve();
             assert_eq!(expected, value);
             assert_eq!(
                 value,
