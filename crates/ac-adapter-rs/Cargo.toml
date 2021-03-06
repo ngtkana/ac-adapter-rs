@@ -38,6 +38,7 @@ ngtio = { path = "../utils/ngtio" }
 not_nan = { path = "../utils/not_nan" }
 open = { path = "../utils/open" }
 ordtools = { path = "../utils/ordtools" }
+partially_persistent_union_find = { path = "../disjoint_set/partially_persistent_union_find" }
 prefix_sum = { path = "../utils/prefix_sum" }
 radix_heap = { path = "../algolib/radix_heap" }
 randtools = { path = "../utils/randtools" }
