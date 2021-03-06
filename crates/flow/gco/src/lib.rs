@@ -159,15 +159,15 @@ fn solve(gco: &GCO) -> GCOResult {
             }
             Ordering::Equal => (),
         }
-        for p in 0..2 {
+        for (p, &ij) in ij.iter().enumerate() {
             let d = diff(cost, p);
             match d.cmp(&0) {
                 Ordering::Less => {
                     constant += d;
-                    dinic.add_edge(ij[p], t, -d);
+                    dinic.add_edge(ij, t, -d);
                 }
                 Ordering::Greater => {
-                    dinic.add_edge(s, ij[p], d);
+                    dinic.add_edge(s, ij, d);
                 }
                 Ordering::Equal => (),
             }

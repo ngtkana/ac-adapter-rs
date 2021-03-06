@@ -304,23 +304,23 @@ mod tests {
     }
 
     fn time_brute(uf: &PartiallyPersistentUnionFind, u: usize, v: usize) -> Option<usize> {
-        let mut l = 0;
-        let mut r = MAX;
+        let mut left = 0;
+        let mut right = MAX;
         if uf.find(u, MAX) != uf.find(v, MAX) {
             return None;
         }
         if u == v {
             return Some(0);
         }
-        while 1 < r - l {
-            let c = l + (r - l) / 2;
-            *if uf.find(u, c) == uf.find(v, c) {
-                &mut r
+        while 1 < right - left {
+            let center = left + (right - left) / 2;
+            *if uf.find(u, center) == uf.find(v, center) {
+                &mut right
             } else {
-                &mut l
-            } = c;
+                &mut left
+            } = center;
         }
-        Some(r)
+        Some(right)
     }
 
     fn retake(n: usize, t: usize, history: &[[usize; 3]]) -> Vec<usize> {
