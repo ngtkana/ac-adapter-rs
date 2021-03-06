@@ -11,5 +11,6 @@ pub use scc;
 pub use small_fp;
 pub use suffix_array;
 pub use union_find;
+pub use vec_lines;
 pub use z_algorithm;
 pub use zeta;
