@@ -57,5 +57,6 @@ swag = { path = "../range-query/swag" }
 trial = { path = "../math/trial" }
 trie = { path = "../string/trie" }
 union_find = { path = "../algolib/union_find" }
+vec_lines = { path = "../algolib/vec_lines" }
 z_algorithm = { path = "../algolib/z_algorithm" }
 zeta = { path = "../algolib/zeta" }

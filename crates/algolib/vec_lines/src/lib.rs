@@ -1,104 +1,377 @@
 //! 傾き単調な直線の列を `Vec` で管理します。
-use std::{convert::TryFrom, fmt::Debug, hash::Hash, marker::PhantomData};
+//!
+//! [基本的な使い方は `VecLines` をご覧ください。](VecLines)
+//!
+use std::{
+    convert::TryFrom,
+    fmt::Debug,
+    hash::Hash,
+    marker::PhantomData,
+    ops::{Add, Mul, Sub},
+};
 
-pub type VecLinesDecreasing = VecLines<DecreasingTilt>;
-pub type VecLinesIncreasing = VecLines<IncreasingTilt>;
+/// 傾きが単調減少な直線の列を管理します。
+pub type VecLinesDecreasing<T> = VecLines<T, DecreasingTilt>;
+/// 傾きが単調増加な直線の列を管理します。
+pub type VecLinesIncreasing<T> = VecLines<T, IncreasingTilt>;
 
 /// 傾き単調な直線の列を `Vec` で管理します。
 ///
 /// # 使い方
 ///
 /// ```
-/// # use vec_lines::VecLinesIncreasing;
-/// // 傾きが単調増加な直線の列を管理します。
-/// let mut lines = VecLinesIncreasing::new();
+/// # use vec_lines::VecLinesDecreasing;
+/// // 傾きが単調減少な直線の列を管理します。
+/// let mut lines = VecLinesDecreasing::<i32>::new();
+///
+/// // 直線を挿入していきます。
+/// lines.push([1, 0]);
+/// lines.push([0, 10]);
+/// lines.push([-1, 30]);
+/// assert_eq!(lines.len(), 3);
+///
+/// // 黄金分割探索で最適値を計算できます。
+/// assert_eq!(lines.eval_gcc(-10), Some(-10));     // x
+/// assert_eq!(lines.eval_gcc(15), Some(10));       // 10
+/// assert_eq!(lines.eval_gcc(40), Some(-10));      // -x + 30
+///
+/// // 直線番号指定でも評価します。（しゃくとり法などのため）
+/// assert_eq!(lines.get(0).unwrap().eval(100), 100);
+/// assert_eq!(lines.get(1).unwrap().eval(100), 10);
+/// assert_eq!(lines.get(2).unwrap().eval(100), -70);
 /// ```
 ///
-/// # `VecLinesDecreasing` と `VecLinesIncreasing` の違いについて
 ///
-/// * 不要直線除去のロジックは完全に同じ。
-/// * 今の所、違うのは直線をは挿入するときの assertion のみ。
+/// # 傾きの等しい直線を入れたときの挙動
+///
+/// 定数項を比較して、真に改善している場合は直前のものを消して挿入し、
+/// そこから改めて通常の不要直線除去のアルゴリズムを実行します。
+/// 一方改善していない場合は挿入せず処理を終了します。
+///
+/// ただし改善しているというのは、
+///
+/// * 制約が [`DecreasingTilt`] のときには、定数項が小さいことを、
+/// * 制約が [`IncreasingTilt`] のときには、定数項が大きいこと
+///
+/// を意味します。
+///
+/// ```
+/// # use vec_lines::{VecLinesDecreasing, Line};
+/// // 前よりも良いものがくると置き換えます。
+/// let mut lines = VecLinesDecreasing::<i32>::new();
+/// lines.push([0, 10]);
+/// lines.push([0, 0]);
+/// let expected = vec![Line([0, 0])];
+/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
+///
+/// // 前よりも良くないものは無視します。
+/// let mut lines = VecLinesDecreasing::<i32>::new();
+/// lines.push([0, 0]);
+/// lines.push([0, 10]);
+/// let expected = vec![Line([0, 0])];
+/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
+///
+/// // 置き換えたあとは通常の不要直線除去アルゴリズムが走ります。
+/// let mut lines = VecLinesDecreasing::<i32>::new();
+/// lines.push([1, 0]);
+/// lines.push([0, 10]);
+/// lines.push([-1, 1000]);
+/// lines.push([-1, 0]);
+/// let expected = vec![Line([1, 0]), Line([-1, 0])];
+/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
+/// ```
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub struct VecLines<C: Constraint> {
-    lines: Vec<Line>,
+pub struct VecLines<T, C> {
+    lines: Vec<Line<T>>,
     _marker: PhantomData<fn(C) -> C>,
 }
-impl<C: Constraint> VecLines<C> {
+impl<T: Signed, C: Constraint> VecLines<T, C> {
+    /// 傾き単調な直線の列を `Vec` で管理します。
+    ///
+    /// # 使い方
+    ///
+    /// ```
+    /// # use vec_lines::{VecLinesDecreasing, VecLinesIncreasing, VecLines, DecreasingTilt,
+    /// # IncreasingTilt};
+    /// // 傾きが単調減少な直線の列を管理します。
+    /// let lines = VecLinesDecreasing::<i32>::new();
+    ///
+    /// // 傾きが単調減少な直線の列を管理します。
+    /// let lines = VecLinesDecreasing::<i32>::new();
+    ///
+    /// // それぞれ、別名を使わずに構築する方法です。
+    /// let lines = VecLines::<i32, DecreasingTilt>::new();
+    /// let lines = VecLines::<i32, IncreasingTilt>::new();
+    /// ```
     pub fn new() -> Self {
         Self {
             lines: Vec::new(),
             _marker: PhantomData,
         }
     }
+    /// 管理している直線が 0 本のとき `true`、さもなくば `false` を返します。
+    ///
+    /// # 使い方
+    /// ```
+    /// # use vec_lines::VecLinesDecreasing;
+    /// let lines = VecLinesDecreasing::<i32>::new();
+    /// assert!(lines.is_empty());
+    /// ```
+    ///
     pub fn is_empty(&self) -> bool {
         self.lines.is_empty()
     }
+    /// 管理している直線の本数を返します。
+    ///
+    /// 不要な直線が自動的に削除されると、このメソッドの返す値も減少します。
+    ///
+    /// # 使い方
+    /// ```
+    /// # use vec_lines::VecLinesDecreasing;
+    /// let mut lines = VecLinesDecreasing::<i32>::new();
+    /// assert_eq!(lines.len(), 0);
+    ///
+    /// lines.push([0, 0]);
+    /// ```
+    ///
     pub fn len(&self) -> usize {
         self.lines.len()
     }
-    pub fn get(&self, index: usize) -> Option<Line> {
+    /// index 番目の直線を返します。
+    ///
+    /// # 使い方
+    ///
+    /// ```
+    /// # use vec_lines::VecLinesDecreasing;
+    /// let mut lines = VecLinesDecreasing::<i32>::new();
+    /// lines.push([1, 0]);
+    /// lines.push([0, 10]);
+    /// lines.push([-1, 30]);
+    ///
+    /// // 直線を手に入れたら、次は `Line::eval` で評価です。
+    /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
+    /// ```
+    pub fn get(&self, index: usize) -> Option<Line<T>> {
         self.lines.get(index).copied()
     }
-    pub fn push(&mut self, line: [i64; 2]) {
+    /// 後ろに直線を挿入します。
+    ///
+    /// # Panics
+    ///
+    /// * マーカー `C` の定める傾きの単調性に反するとき。
+    ///
+    ///
+    /// # 計算量
+    ///
+    /// 償却定数時間。
+    ///
+    ///
+    /// # 使い方
+    ///
+    /// ```
+    /// # use vec_lines::VecLinesDecreasing;
+    /// let mut lines = VecLinesDecreasing::<i32>::new();
+    /// lines.push([1, 0]);
+    /// lines.push([0, 10]);
+    /// lines.push([-1, 30]);
+    ///
+    /// // 直線を手に入れたら、次は `Line::eval` で評価です。
+    /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
+    /// ```
+    pub fn push(&mut self, line: [T; 2]) {
         assert!(
             self.lines
                 .last()
                 .map_or(true, |prv| C::ok(*prv, Line(line))),
             "傾きの単調性に違反しています。"
         );
+        if let Some(&Line(prv)) = self.lines.last() {
+            if prv[0] == line[0] {
+                if C::strictly_better(line[1], prv[1]) {
+                    self.lines.pop();
+                } else {
+                    return;
+                }
+            }
+        }
         self.lines.push(Line(line));
         while 3 <= self.lines.len()
-            && weakly_convex(*<&[Line; 3]>::try_from(&self.lines[self.lines.len() - 3..]).unwrap())
+            && weakly_convex(
+                *<&[Line<_>; 3]>::try_from(&self.lines[self.lines.len() - 3..]).unwrap(),
+            )
         {
             let p = self.lines.pop().unwrap();
             self.lines.pop().unwrap();
             self.lines.push(p);
         }
     }
-    pub fn iter<'a>(&'a self) -> impl 'a + Iterator<Item = Line> {
+    /// 黄金分割探索で最適値を計算します。
+    ///
+    /// # 計算量
+    ///
+    /// 管理している直線の本数を n として、Θ( lg n )。
+    ///
+    ///
+    /// # 使い方
+    ///
+    /// ```
+    /// # use vec_lines::VecLinesDecreasing;
+    /// let mut lines = VecLinesDecreasing::<i32>::new();
+    /// lines.push([1, 0]);
+    /// lines.push([0, 10]);
+    /// lines.push([-1, 30]);
+    ///
+    /// assert_eq!(lines.eval_gcc(-10), Some(-10));     // x
+    /// assert_eq!(lines.eval_gcc(15), Some(10));       // 10
+    /// assert_eq!(lines.eval_gcc(40), Some(-10));      // -x + 30
+    /// ```
+    pub fn eval_gcc(&self, x: T) -> Option<T> {
+        if self.lines.is_empty() {
+            return None;
+        }
+        let mut i0 = -1;
+        let mut i3 = self.len() as isize;
+        while 3 <= i3 - i0 {
+            let [i1, i2] = golden_section([i0, i3]);
+            if C::strictly_better(
+                self.lines[i1 as usize].eval(x),
+                self.lines[i2 as usize].eval(x),
+            ) {
+                i3 = i2;
+            } else {
+                i0 = i1;
+            }
+        }
+        assert!((2..=3).contains(&(i3 - i0)));
+        let y1 = self.lines[(i0 + 1) as usize].eval(x);
+        let y2 = self.lines[(i3 - 1) as usize].eval(x);
+        Some(if C::strictly_better(y1, y2) { y1 } else { y2 })
+    }
+    /// 管理している直線を順番に返すイテレータを返します。
+    ///
+    /// # 使い方
+    ///
+    /// ```
+    /// # use vec_lines::{VecLinesDecreasing, Line};
+    /// let mut lines = VecLinesDecreasing::<i32>::new();
+    /// lines.push([1, 0]);
+    /// lines.push([0, 10]);
+    /// lines.push([-1, 30]);
+    ///
+    /// let lines = lines.iter_copied().map(Line::into_coeff).collect::<Vec<_>>();
+    /// assert_eq!(lines, vec![[1, 0], [0, 10], [-1, 30]]);
+    /// ```
+    pub fn iter_copied<'a>(&'a self) -> impl 'a + Iterator<Item = Line<T>> {
         self.lines.iter().copied()
     }
 }
 
+/// 一次関数 ax + b を、`[a, b]` の形で管理します。
+///
+/// 中身は `.0` でも `into_coeff` でもとれます。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-pub struct Line([i64; 2]);
-impl Line {
-    pub fn eval(self, x: i64) -> i64 {
+pub struct Line<T>(pub [T; 2]);
+impl<T: Signed> Line<T> {
+    /// 特定の x 座標における値を計算します。
+    ///
+    /// # 使い方
+    /// ```
+    /// # use vec_lines::Line;
+    /// let line = Line([2, 10]);
+    /// assert_eq!(line.eval(2), 14);
+    /// ```
+    pub fn eval(self, x: T) -> T {
         self.0[0] * x + self.0[1]
     }
-    pub fn into_coeff(self) -> [i64; 2] {
+    /// 係数を返します。
+    ///
+    /// # 使い方
+    /// ```
+    /// # use vec_lines::Line;
+    /// let line = Line([2, 10]);
+    /// assert_eq!(line.into_coeff(), [2, 10]);
+    /// ```
+    pub fn into_coeff(self) -> [T; 2] {
         self.0
     }
 }
 
-fn weakly_convex([Line([a0, b0]), Line([a1, b1]), Line([a2, b2])]: [Line; 3]) -> bool {
+fn weakly_convex<T: Signed>(
+    [Line([a0, b0]), Line([a1, b1]), Line([a2, b2])]: [Line<T>; 3],
+) -> bool {
     (a2 - a1) * (b1 - b0) <= (a1 - a0) * (b2 - b1)
 }
 
-pub trait Constraint: Clone + Debug + Hash + PartialEq {
-    fn ok(prv: Line, crr: Line) -> bool;
+fn golden_section([i0, i3]: [isize; 2]) -> [isize; 2] {
+    let d = ((i3 - i0) as f64 * (5f64.sqrt() - 1.0) / 2.0).ceil() as isize;
+    [i3 - d, i0 + d]
 }
+
+/// 傾きがどちら向きに単調かをあらわすマーカー
+pub trait Constraint: Clone + Debug + Hash + PartialEq {
+    fn ok<T: Signed>(prv: Line<T>, crr: Line<T>) -> bool;
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool;
+}
+/// 傾き単調減少を意味するマーカー
 #[derive(Clone, Debug, Hash, PartialEq)]
 pub enum DecreasingTilt {}
 #[derive(Clone, Debug, Hash, PartialEq)]
+/// 傾き単調増加を意味するマーカー
 pub enum IncreasingTilt {}
 impl Constraint for DecreasingTilt {
-    fn ok(Line([a0, _]): Line, Line([a1, _]): Line) -> bool {
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
         a0 >= a1
+    }
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
+        x < y
     }
 }
 impl Constraint for IncreasingTilt {
-    fn ok(Line([a0, _]): Line, Line([a1, _]): Line) -> bool {
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
         a0 <= a1
     }
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
+        x > y
+    }
 }
+
+/// 符号つき整数
+pub trait Signed:
+    Debug
+    + Clone
+    + Copy
+    + Default
+    + Hash
+    + PartialOrd
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+{
+}
+macro_rules! impl_signed {
+    ($($T:ty),* $(,)?) => {$(
+        impl Signed for $T {}
+    )*}
+}
+impl_signed! { i8, i16, i32, i64, i128, isize }
 
 #[cfg(test)]
 mod tests {
     use {
+        super::golden_section,
         super::{VecLinesDecreasing, VecLinesIncreasing},
         rand::{prelude::StdRng, Rng, SeedableRng},
+        test_case::test_case,
     };
+
+    #[test_case([0, 3] => [1, 2])]
+    #[test_case([0, 4] => [1, 3])]
+    #[test_case([0, 5] => [1, 4])]
+    #[test_case([0, 6] => [2, 4])]
+    #[test_case([0, 7] => [2, 5])]
+    fn test_golden_section(x: [isize; 2]) -> [isize; 2] {
+        golden_section(x)
+    }
 
     /*
     こちらの問題の本質部分です。
@@ -114,7 +387,8 @@ mod tests {
             let mut lines = VecLinesDecreasing::new();
             let mut raw_lines = Vec::new();
             let n = rng.gen_range(1..20);
-            for x in 0..n as i64 {
+            for x in 0..3 * n as i64 {
+                let x = x / 3;
                 let y = rng.gen_range(0..(n * n) as i64);
                 let a = -2 * x;
                 let b = x * x + y;
@@ -123,7 +397,10 @@ mod tests {
             }
             let mut i = 0;
             for x in 0..n {
-                let expected = lines.iter().map(|line| line.eval(x)).min().unwrap();
+                // 全探索
+                let expected = lines.iter_copied().map(|line| line.eval(x)).min().unwrap();
+
+                // しゃくとり法
                 let mut result = lines.get(i).unwrap().eval(x);
                 while let Some(swp) = lines.get(i + 1).map(|line| line.eval(x)) {
                     if result <= swp {
@@ -132,6 +409,10 @@ mod tests {
                     result = swp;
                     i += 1;
                 }
+                assert_eq!(result, expected);
+
+                // 黄金分割探索
+                let result = lines.eval_gcc(x).unwrap();
                 assert_eq!(result, expected);
             }
         }
@@ -144,17 +425,20 @@ mod tests {
             let mut lines = VecLinesIncreasing::new();
             let mut raw_lines = Vec::new();
             let n = rng.gen_range(1..20);
-            for x in 0..n as i64 {
+            for x in 0..3 * n as i64 {
+                let x = x / 3;
                 let y = rng.gen_range(0..(n * n) as i64);
                 let a = 2 * x;
                 let b = x * x + y;
                 raw_lines.push([a, b]);
                 lines.push([a, b]);
             }
-            crate::lg!(&lines);
             let mut i = 0;
             for x in 0..n {
-                let expected = lines.iter().map(|line| line.eval(x)).max().unwrap();
+                // 全探索
+                let expected = lines.iter_copied().map(|line| line.eval(x)).max().unwrap();
+
+                // しゃくとり法
                 let mut result = lines.get(i).unwrap().eval(x);
                 while let Some(swp) = lines.get(i + 1).map(|line| line.eval(x)) {
                     if swp <= result {
@@ -163,164 +447,12 @@ mod tests {
                     result = swp;
                     i += 1;
                 }
-                crate::lg!(i, x, result);
+                assert_eq!(result, expected);
+
+                // 黄金分割探索
+                let result = lines.eval_gcc(x).unwrap();
                 assert_eq!(result, expected);
             }
         }
     }
 }
-
-// dbg {{{
-#[allow(dead_code)]
-mod dbg {
-
-    mod bitslice {
-        use std::fmt::{self, Debug, Display, Formatter};
-
-        pub struct BitSlice<'a>(pub &'a [bool]);
-
-        impl<'a> Display for BitSlice<'a> {
-            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
-                write!(
-                    w,
-                    "{}",
-                    self.0
-                        .iter()
-                        .map(|&b| if b { '1' } else { '0' })
-                        .collect::<String>()
-                )
-            }
-        }
-        impl<'a> Debug for BitSlice<'a> {
-            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
-                write!(w, "{}", self)
-            }
-        }
-    }
-    mod table {
-        use std::{
-            fmt::{self, Debug, Formatter},
-            marker::PhantomData,
-        };
-
-        pub fn table<T, U>(table: &[U]) -> Table<'_, T, U> {
-            Table {
-                _marker: PhantomData,
-                table,
-            }
-        }
-
-        pub struct Table<'a, T, U> {
-            table: &'a [U],
-            _marker: PhantomData<T>,
-        }
-        impl<'a, T, U> Clone for Table<'a, T, U> {
-            fn clone(&self) -> Self {
-                Self {
-                    table: self.table,
-                    _marker: PhantomData,
-                }
-            }
-        }
-        impl<'a, T, U> Copy for Table<'a, T, U> {}
-        impl<'a, T, U> Debug for Table<'a, T, U>
-        where
-            T: Debug,
-            U: AsRef<[T]>,
-        {
-            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
-                write!(w, "{:?}", self.by(|cell| format!("{:?}", cell)))
-            }
-        }
-        impl<'a, T, U> Table<'a, T, U> {
-            pub fn by<F>(self, f: F) -> TableF<'a, T, U, F>
-            where
-                T: Debug,
-                U: AsRef<[T]>,
-                F: Fn(&T) -> String,
-            {
-                TableF {
-                    _marker: PhantomData,
-                    table: self.table,
-                    f,
-                }
-            }
-        }
-
-        pub struct TableF<'a, T, U, F> {
-            pub _marker: PhantomData<T>,
-            pub table: &'a [U],
-            pub f: F,
-        }
-        impl<'a, T, U, F: Clone> Clone for TableF<'a, T, U, F> {
-            fn clone(&self) -> Self {
-                Self {
-                    table: self.table,
-                    _marker: PhantomData,
-                    f: self.f.clone(),
-                }
-            }
-        }
-        impl<'a, T, U, F: Copy> Copy for TableF<'a, T, U, F> {}
-        impl<'a, T, U, F> Debug for TableF<'a, T, U, F>
-        where
-            T: Debug,
-            U: AsRef<[T]>,
-            F: Fn(&T) -> String,
-        {
-            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
-                self.table
-                    .iter()
-                    .enumerate()
-                    .try_for_each(|(row_index, row)| {
-                        writeln!(
-                            w,
-                            "{:02}|{}",
-                            row_index,
-                            row.as_ref()
-                                .iter()
-                                .map(|cell| format!(" {}", (&self.f)(cell)))
-                                .collect::<String>()
-                        )
-                    })
-            }
-        }
-    }
-
-    pub use {
-        bitslice::BitSlice,
-        table::{table, Table},
-    };
-
-    #[macro_export]
-    macro_rules! lg {
-        (@nl $value:expr) => {
-            eprintln!("[{}:{}]", file!(), line!());
-            match $value {
-                value => {
-                    eprint!("{:?}", &value);
-                }
-            }
-        };
-        (@contents $head:expr $(,)?) => {
-            match $head {
-                head => {
-                    eprintln!(" {} = {:?}", stringify!($head), &head);
-                }
-            }
-        };
-        (@contents $head:expr $(,$tail:expr)+ $(,)?) => {
-            match $head {
-                head => {
-                    eprint!(" {} = {:?},", stringify!($head), &head);
-                }
-            }
-            $crate::lg!(@contents $($tail),*);
-        };
-        ($($expr:expr),* $(,)?) => {
-            eprint!("[{}:{}]", file!(), line!());
-            $crate::lg!(@contents $($expr),*)
-        };
-    }
-}
-// }}}
