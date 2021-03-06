@@ -1,0 +1,12 @@
+[package]
+name = "vec_lines"
+version = "0.1.0"
+authors = ["Kana <ngtkana@gmail.com>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+rand = "0.8.3"
