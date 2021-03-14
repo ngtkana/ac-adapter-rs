@@ -2,6 +2,7 @@
 members = [
     'crates/ac-adapter-rs',
     'crates/disjoint_set/*',
+    'crates/fp/*',
     'crates/utils/*',
     'crates/string/*',
     'crates/algolib/*',
