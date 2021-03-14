@@ -21,6 +21,7 @@ dinic = { path = "../flow/dinic" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
 fp = { path = "../fp/fp" }
+fps = { path = "../fp/fps" }
 gco = { path = "../flow/gco" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
