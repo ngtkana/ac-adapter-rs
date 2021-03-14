@@ -20,7 +20,6 @@ dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 dinic = { path = "../flow/dinic" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
-fact = { path = "../utils/fact" }
 fp = { path = "../utils/fp" }
 gco = { path = "../flow/gco" }
 grid = { path = "../utils/grid" }
@@ -48,7 +47,6 @@ segbeats = { path = "../range-query/segbeats" }
 segbeats_task3 = { path = "../range-query/segbeats_task3" }
 segtree = { path = "../range-query/segtree" }
 seq = { path = "../utils/seq" }
-small_fp = { path = "../algolib/small_fp" }
 space = { path = "../utils/space" }
 span = { path = "../utils/span" }
 sparse_table = { path = "../range-query/sparse_table" }

@@ -8,7 +8,6 @@ pub use inversion_number;
 pub use max_flow;
 pub use radix_heap;
 pub use scc;
-pub use small_fp;
 pub use suffix_array;
 pub use union_find;
 pub use vec_lines;
