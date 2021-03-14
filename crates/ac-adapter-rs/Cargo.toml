@@ -20,7 +20,7 @@ dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 dinic = { path = "../flow/dinic" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
-fp = { path = "../utils/fp" }
+fp = { path = "../fp/fp" }
 gco = { path = "../flow/gco" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
