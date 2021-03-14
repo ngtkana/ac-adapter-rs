@@ -57,7 +57,8 @@ fn reduce<M: Mod>(x: u64) -> u32 {
 /// # 例
 ///
 /// ```
-/// # use fp::define_mod;
+/// use fp::{Fp, Mod, define_mod}; // Fp を use する必要あり。(procon-bundler 都合で $crate:: できず）
+///
 /// define_mod! {
 ///     (F998244353, Mod998244353, 998_244_353, 998_244_351),
 ///     (F1000000007, Mod1000000007, 1_000_000_007, 2_226_617_417),
@@ -71,12 +72,12 @@ macro_rules! define_mod {
         /// Mod 型
         #[derive(Clone, Debug, Default, Hash, Copy)]
         pub struct $Mod {}
-        impl $crate::Mod for $Mod {
+        impl Mod for $Mod {
             const P: u32 = $mod;
             const K: u32 = $k;
         }
         /// 有限体
-        pub type $Fp = $crate::Fp<$Mod>;
+        pub type $Fp = Fp<$Mod>;
     )*}
 }
 define_mod! {
