@@ -3,6 +3,7 @@ pub mod disjoint_set;
 pub mod flow;
 pub mod fp;
 pub mod geometry;
+pub mod heaps;
 pub mod math;
 pub mod range_query;
 pub mod string;

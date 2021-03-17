@@ -48,6 +48,7 @@ segbeats = { path = "../range-query/segbeats" }
 segbeats_task3 = { path = "../range-query/segbeats_task3" }
 segtree = { path = "../range-query/segtree" }
 seq = { path = "../utils/seq" }
+skew-heap = { path = "../heaps/skew-heap" }
 space = { path = "../utils/space" }
 span = { path = "../utils/span" }
 sparse_table = { path = "../range-query/sparse_table" }
