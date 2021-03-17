@@ -5,7 +5,7 @@
 //! ```
 //! use fp::F998244353 as Fp;
 //! use fps::Convolution; // 畳み込みはここにあります。
-//! use fps::polynomial_inverse;
+//! use fps::fps_inverse;
 //!
 //! // 畳み込み（掛け算）
 //! let a = vec![Fp::new(1), Fp::new(2)];
@@ -14,7 +14,7 @@
 //!
 //! // 乗法逆元（一般に無限になるので、第二引数で精度を指定）
 //! let a = vec![Fp::new(1), Fp::new(2)];
-//! assert_eq!(polynomial_inverse(a, 4), vec![Fp::from(1), Fp::from(-2), Fp::from(4), Fp::from(-8)]);
+//! assert_eq!(fps_inverse(a, 4), vec![Fp::from(1), Fp::from(-2), Fp::from(4), Fp::from(-8)]);
 //! ```
 //!
 //! # 整数、任意 mod
@@ -24,9 +24,9 @@
 //! | [`integer_convolution`] | [`integer_convolution`] |
 
 use fp::{Fp, Mod, F1012924417, F924844033, F998244353};
+mod arith;
 mod fourier;
-mod polynominal;
-pub use polynominal::polynomial_inverse;
+pub use arith::{fps_exp, fps_inverse, fps_log, fps_sqrt};
 
 /// 高速フーリエ変換
 pub trait Fourier: Sized {

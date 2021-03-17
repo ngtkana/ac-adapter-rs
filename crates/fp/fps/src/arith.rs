@@ -37,6 +37,8 @@ where
 /// # 制約
 ///
 /// * `a[0]` が 1 。
+///
+///
 pub fn fps_log<M: Mod>(a: Vec<Fp<M>>, precision: usize) -> Vec<Fp<M>>
 where
     Fp<M>: Convolution,
@@ -89,39 +91,211 @@ where
     b
 }
 
-/// FPS の sqrt を mod x ^ `precision` で返します。
+/// FPS の sqrt のひとつを mod x ^ `precision` で返します。
 ///
-/// # 制約
+/// 存在しない場合は `None` を返します。
 ///
-/// * `a[0]` が 1 。（Fp の平方根計算機能がないため）
-pub fn fps_sqrt<M: Mod>(a: Vec<Fp<M>>, precision: usize) -> Vec<Fp<M>>
+pub fn fps_sqrt<M: Mod>(mut a: Vec<Fp<M>>, precision: usize) -> Option<Vec<Fp<M>>>
 where
     Fp<M>: Convolution,
 {
-    assert_eq!(a[0], Fp::new(1), "定数項が 1 でないとだめです。");
+    if a.as_slice() == &[Fp::new(0)] {
+        return Some(a);
+    }
+    let zeros = a
+        .iter()
+        .position(|&x| x != Fp::new(0))
+        .unwrap_or_else(|| panic!("0 がたくさん並んでいるのはだめです。"));
+    if zeros % 2 == 1 {
+        return None;
+    }
+    a = a[zeros..].to_vec();
     let mut b = vec![Fp::<M>::new(1)];
+    let half = Fp::new(2).recip();
     while b.len() < precision {
         let next_precision = 2 * b.len();
-        b = a
-            .iter()
-            .copied()
+        b = b
+            .clone()
+            .into_iter()
             .chain(repeat(Fp::new(0)))
-            .zip(fps_inverse(
-                b[..next_precision.min(b.len())].to_vec(),
-                next_precision,
+            .zip(Fp::convolution(
+                a.iter()
+                    .copied()
+                    .chain(repeat(Fp::new(0)))
+                    .take(next_precision)
+                    .collect::<Vec<_>>(),
+                fps_inverse(b[..next_precision.min(b.len())].to_vec(), next_precision),
             ))
-            .map(|(x, y)| (x + y) / Fp::new(2))
+            .map(|(x, y)| (x + y) * half)
             .collect::<Vec<_>>();
         b.resize(next_precision, Fp::new(0));
     }
+    b = repeat(Fp::new(0))
+        .take(zeros / 2)
+        .chain(b.into_iter())
+        .collect::<Vec<_>>();
     b.resize(precision, Fp::new(0));
-    b
+    Some(b)
 }
 
+// dbg {{{
+#[allow(dead_code)]
+mod dbg {
+
+    mod bitslice {
+        use std::fmt::{self, Debug, Display, Formatter};
+
+        pub struct BitSlice<'a>(pub &'a [bool]);
+
+        impl<'a> Display for BitSlice<'a> {
+            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
+                write!(
+                    w,
+                    "{}",
+                    self.0
+                        .iter()
+                        .map(|&b| if b { '1' } else { '0' })
+                        .collect::<String>()
+                )
+            }
+        }
+        impl<'a> Debug for BitSlice<'a> {
+            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
+                write!(w, "{}", self)
+            }
+        }
+    }
+    mod table {
+        use std::{
+            fmt::{self, Debug, Formatter},
+            marker::PhantomData,
+        };
+
+        pub fn table<T, U>(table: &[U]) -> Table<'_, T, U> {
+            Table {
+                _marker: PhantomData,
+                table,
+            }
+        }
+
+        pub struct Table<'a, T, U> {
+            table: &'a [U],
+            _marker: PhantomData<T>,
+        }
+        impl<'a, T, U> Clone for Table<'a, T, U> {
+            fn clone(&self) -> Self {
+                Self {
+                    table: self.table,
+                    _marker: PhantomData,
+                }
+            }
+        }
+        impl<'a, T, U> Copy for Table<'a, T, U> {}
+        impl<'a, T, U> Debug for Table<'a, T, U>
+        where
+            T: Debug,
+            U: AsRef<[T]>,
+        {
+            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
+                write!(w, "{:?}", self.by(|cell| format!("{:?}", cell)))
+            }
+        }
+        impl<'a, T, U> Table<'a, T, U> {
+            pub fn by<F>(self, f: F) -> TableF<'a, T, U, F>
+            where
+                T: Debug,
+                U: AsRef<[T]>,
+                F: Fn(&T) -> String,
+            {
+                TableF {
+                    _marker: PhantomData,
+                    table: self.table,
+                    f,
+                }
+            }
+        }
+
+        pub struct TableF<'a, T, U, F> {
+            pub _marker: PhantomData<T>,
+            pub table: &'a [U],
+            pub f: F,
+        }
+        impl<'a, T, U, F: Clone> Clone for TableF<'a, T, U, F> {
+            fn clone(&self) -> Self {
+                Self {
+                    table: self.table,
+                    _marker: PhantomData,
+                    f: self.f.clone(),
+                }
+            }
+        }
+        impl<'a, T, U, F: Copy> Copy for TableF<'a, T, U, F> {}
+        impl<'a, T, U, F> Debug for TableF<'a, T, U, F>
+        where
+            T: Debug,
+            U: AsRef<[T]>,
+            F: Fn(&T) -> String,
+        {
+            fn fmt(&self, w: &mut Formatter) -> fmt::Result {
+                self.table
+                    .iter()
+                    .enumerate()
+                    .try_for_each(|(row_index, row)| {
+                        writeln!(
+                            w,
+                            "{:02}|{}",
+                            row_index,
+                            row.as_ref()
+                                .iter()
+                                .map(|cell| format!(" {}", (&self.f)(cell)))
+                                .collect::<String>()
+                        )
+                    })
+            }
+        }
+    }
+
+    pub use {
+        bitslice::BitSlice,
+        table::{table, Table},
+    };
+
+    #[macro_export]
+    macro_rules! lg {
+        (@nl $value:expr) => {
+            eprintln!("[{}:{}]", file!(), line!());
+            match $value {
+                value => {
+                    eprint!("{:?}", &value);
+                }
+            }
+        };
+        (@contents $head:expr $(,)?) => {
+            match $head {
+                head => {
+                    eprintln!(" {} = {:?}", stringify!($head), &head);
+                }
+            }
+        };
+        (@contents $head:expr $(,$tail:expr)+ $(,)?) => {
+            match $head {
+                head => {
+                    eprint!(" {} = {:?},", stringify!($head), &head);
+                }
+            }
+            $crate::lg!(@contents $($tail),*);
+        };
+        ($($expr:expr),* $(,)?) => {
+            eprint!("[{}:{}]", file!(), line!());
+            $crate::lg!(@contents $($expr),*)
+        };
+    }
+}
+// }}}
 #[cfg(test)]
 mod tests {
     use {
-        super::{super::Convolution, fps_exp, polynomial_inverse, polynomial_log, polynomial_sqrt},
+        super::{super::Convolution, fps_exp, fps_inverse, fps_log, fps_sqrt},
         itertools::Itertools,
         rand::{prelude::StdRng, Rng, SeedableRng},
         std::iter::{once, repeat, repeat_with},
@@ -135,7 +309,7 @@ mod tests {
             let n = rng.gen_range(1..100);
             let precision = rng.gen_range(1..100);
             let a = once(Fp::new(rng.gen_range(1..Fp::P)))
-                .chain(repeat_with(|| Fp::new(rng.gen_range(0..Fp::P))))
+                .chain(repeat_with(|| Fp::new(rng.gen_range(0..20))))
                 .take(n)
                 .collect_vec();
             let result = fps_inverse(a.clone(), precision);
@@ -159,7 +333,7 @@ mod tests {
             let n = rng.gen_range(1..20);
             let precision = rng.gen_range(1..20);
             let a = once(Fp::new(1))
-                .chain(repeat_with(|| Fp::new(rng.gen_range(0..Fp::P))))
+                .chain(repeat_with(|| Fp::new(rng.gen_range(0..20))))
                 .take(n)
                 .collect_vec();
             let result = fps_log(a.clone(), precision);
@@ -192,7 +366,7 @@ mod tests {
             let n = rng.gen_range(1..20);
             let precision = rng.gen_range(1..20);
             let a = once(Fp::new(0))
-                .chain(repeat_with(|| Fp::new(rng.gen_range(0..Fp::P))))
+                .chain(repeat_with(|| Fp::new(rng.gen_range(0..20))))
                 .take(n)
                 .collect_vec();
             let result = fps_exp(a.clone(), precision);
@@ -220,12 +394,21 @@ mod tests {
             let n = rng.gen_range(1..20);
             let precision = rng.gen_range(1..20);
             let a = once(Fp::new(1))
-                .chain(repeat_with(|| Fp::new(rng.gen_range(0..Fp::P))))
+                .chain(repeat_with(|| Fp::new(rng.gen_range(0..20))))
                 .take(n)
                 .collect_vec();
-            let result = fps_sqrt(a.clone(), precision);
+            crate::lg!(&a);
+            let result = fps_sqrt(a.clone(), precision).unwrap();
+            crate::lg!(&result);
             let expected_to_be_a = Fp::convolution(result.clone(), result.clone());
-            assert_eq!(expected_to_be_a, a);
+            assert_eq!(
+                &expected_to_be_a[..precision],
+                &a.iter()
+                    .copied()
+                    .chain(repeat(Fp::new(0)))
+                    .take(precision)
+                    .collect::<Vec<_>>()
+            );
         }
     }
 }
