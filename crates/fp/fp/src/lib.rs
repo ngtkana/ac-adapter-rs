@@ -112,6 +112,7 @@ impl<M: Mod> Fp<M> {
     /// 逆数を返します。
     #[allow(clippy::many_single_char_names)]
     pub fn recip(self) -> Self {
+        assert_ne!(self, Fp::new(0), "0 はだめ。");
         let mut x = M::P as i32;
         let mut y = self.value() as i32;
         let mut u = 0;
