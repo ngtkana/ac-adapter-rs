@@ -29,6 +29,7 @@ hld = { path = "../algolib/hld" }
 hopkarp = { path = "../flow/hopkarp" }
 hungarian = { path = "../flow/hungarian" }
 inversion_number = { path = "../algolib/inversion_number" }
+lagrange = { path = "../fp/lagrange" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
 max_flow = { path = "../algolib/max_flow" }
