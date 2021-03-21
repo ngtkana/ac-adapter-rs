@@ -33,6 +33,7 @@ lagrange = { path = "../fp/lagrange" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
 max_flow = { path = "../algolib/max_flow" }
+montgomery = { path = "../fp/montgomery" }
 newton = { path = "../math/newton" }
 next_permutation = { path = "../utils/next_permutation" }
 ngtio = { path = "../utils/ngtio" }
