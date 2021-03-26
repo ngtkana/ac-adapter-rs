@@ -71,7 +71,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
 #[allow(clippy::many_single_char_names)]
 pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
     assert!(!a.is_empty());
-    let a = convex_hull(&a);
+    let a = convex_hull(a);
     if a.len() == 1 {
         (0, [a[0], a[0]])
     } else if a.len() == 2 {

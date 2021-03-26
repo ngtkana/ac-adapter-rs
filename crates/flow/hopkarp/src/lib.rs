@@ -53,7 +53,7 @@ pub fn hopkarp(w: usize, graph: &[Vec<usize>]) -> HopkarpResult {
     let mut backward = vec![None; w].into_boxed_slice();
     let (left, right) = loop {
         let dist = bfs(graph, &forward, &backward);
-        if !dfs(&graph, &dist, &mut forward, &mut backward) {
+        if !dfs(graph, &dist, &mut forward, &mut backward) {
             break construct_minimum_cut(graph, &dist, &backward);
         }
     };

@@ -121,7 +121,7 @@ impl Gco {
         self.binary.push(Binary { ij, cost });
     }
     pub fn solve(&self) -> GcoResult {
-        solve(&self)
+        solve(self)
     }
 }
 

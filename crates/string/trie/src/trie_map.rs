@@ -269,7 +269,7 @@ impl<V> TrieMap<V> {
     pub fn for_each_prefix(
         &self,
         key: impl IntoIterator<Item = usize>,
-        mut visit: impl FnMut(&TrieMap<V>),
+        mut visit: impl FnMut(&Self),
     ) {
         let mut key = key.into_iter();
         if let Some(me) = self.0.as_deref() {

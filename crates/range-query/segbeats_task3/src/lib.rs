@@ -283,7 +283,7 @@ struct Node<T> {
 }
 impl<T: Elm> Node<T> {
     fn new() -> Self {
-        Node {
+        Self {
             max: [T::min_value(); 2],
             c_max: 0,
             min: [T::max_value(); 2],
@@ -298,7 +298,7 @@ impl<T: Elm> Node<T> {
         }
     }
     fn single(x: T) -> Self {
-        Node {
+        Self {
             max: [x, T::min_value()],
             c_max: 1,
             min: [x, T::max_value()],
@@ -360,7 +360,7 @@ impl<T: Elm> Node<T> {
         self.change_count += self.c_min as u64 * weight as u64;
         self.lazy_change_min_count += weight; // weigt には和が渡ってきますから、片方に寄せておくと良いです。
     }
-    fn merge(node: &mut Node<T>, left: Node<T>, right: Node<T>) {
+    fn merge(node: &mut Self, left: Self, right: Self) {
         assert_eq!(node.lazy_change_min_count, 0);
         assert_eq!(node.lazy_change_max_count, 0);
         assert_eq!(node.lazy_add_count, 0);
