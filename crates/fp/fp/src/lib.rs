@@ -261,8 +261,8 @@ macro_rules! forward_ops {
         }
 
         impl<'a, T: Mod> $trait<&'a Fp<T>> for Fp<T> {
-            type Output = Fp<T>;
-            fn $method(self, other: &Fp<T>) -> Self::Output {
+            type Output = Self;
+            fn $method(self, other: &Self) -> Self::Output {
                 $trait::$method(self, *other)
             }
         }
@@ -455,7 +455,8 @@ mod tests {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
             let z = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((u128::from(x) * u128::from(y) * u128::from(z)) % u128::from(Fp::P)) as u32;
+            let expected =
+                ((u128::from(x) * u128::from(y) * u128::from(z)) % u128::from(Fp::P)) as u32;
             let result = [Fp::new(x), Fp::new(y), Fp::new(z)]
                 .iter()
                 .product::<Fp>()
