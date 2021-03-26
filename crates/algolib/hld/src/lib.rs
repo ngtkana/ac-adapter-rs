@@ -181,16 +181,12 @@ mod tests {
     }
 
     fn psp_path_unsorted(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
-        hld.iter_vtx(s, t)
-            .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
-            .flatten()
+        hld.iter_vtx(s, t).flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 
     fn psp_path_unsorted_without_lca(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
-        hld.iter_edge(s, t)
-            .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
-            .flatten()
+        hld.iter_edge(s, t).flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 
