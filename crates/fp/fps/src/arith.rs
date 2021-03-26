@@ -99,7 +99,7 @@ pub fn fps_sqrt<M: Mod>(mut a: Vec<Fp<M>>, precision: usize) -> Option<Vec<Fp<M>
 where
     Fp<M>: Convolution,
 {
-    if a.as_slice() == &[Fp::new(0)] {
+    if a.as_slice() == [Fp::new(0)] {
         return Some(a);
     }
     let zeros = a
