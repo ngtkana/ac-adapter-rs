@@ -203,9 +203,8 @@ mod step {
 
     pub fn step<T, U>(init: T, step: U) -> Step<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Add<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Add<U, Output = T>,
     {
         Step { now: init, step }
     }
@@ -218,9 +217,8 @@ mod step {
 
     impl<T, U> Iterator for Step<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Add<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Add<U, Output = T>,
     {
         type Item = T;
 
@@ -235,9 +233,8 @@ mod mul_step {
 
     pub fn mul_step<T, U>(init: T, step: U) -> MulStep<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Mul<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Mul<U, Output = T>,
     {
         MulStep { now: init, step }
     }
@@ -250,9 +247,8 @@ mod mul_step {
 
     impl<T, U> Iterator for MulStep<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Mul<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Mul<U, Output = T>,
     {
         type Item = T;
 
