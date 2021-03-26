@@ -81,7 +81,7 @@ pub fn lcp_array<T: Ord>(s: &[T], sa: &[usize]) -> Vec<usize> {
 
     let n = s.len();
     let rnk = make_rank(sa);
-    let mut h = 0usize;
+    let mut h = 0_usize;
     let mut lcp = vec![0; n - 1];
     for (i, &r) in rnk.iter().enumerate() {
         h = h.saturating_sub(1);

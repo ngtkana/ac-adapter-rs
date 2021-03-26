@@ -18,7 +18,7 @@
 /// ```
 ///
 pub fn inversion_number(value_limit: usize, a: &[usize]) -> u64 {
-    let mut inv = 0u64;
+    let mut inv = 0_u64;
     let mut used = vec![0; value_limit + 1];
     for (i, &x) in a.iter().enumerate() {
         inv += i as u64;

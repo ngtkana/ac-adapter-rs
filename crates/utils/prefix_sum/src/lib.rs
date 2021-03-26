@@ -126,7 +126,7 @@ mod tests {
 
     #[test]
     fn test_hand() {
-        let mut a = PrefixSum::with_zero(0u32);
+        let mut a = PrefixSum::with_zero(0_u32);
         a.push(1);
         assert_eq!(a.get(0), 1);
         assert_eq!(a.range(..), vec![1]);

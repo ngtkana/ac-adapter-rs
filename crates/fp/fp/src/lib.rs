@@ -46,7 +46,7 @@ pub trait Mod: Clone + Copy + Hash {
     /// -P mod 2 ^ 32（モンゴメリ乗算用）
     const K: u32;
     /// 2 ^ 64 mod P（モンゴメリ乗算用）
-    const R2: u32 = ((1u128 << 64) % Self::P as u128) as _; // 2 ^ 64 mod P
+    const R2: u32 = ((1_u128 << 64) % Self::P as u128) as _; // 2 ^ 64 mod P
 }
 fn reduce<M: Mod>(x: u64) -> u32 {
     ((x + u64::from(M::K.wrapping_mul(x as u32)) * u64::from(M::P)) >> 32) as u32
@@ -449,7 +449,7 @@ mod tests {
 
     #[test]
     fn test_product() {
-        assert_eq!(Fp::new(3).pow(4u32), Fp::new(81));
+        assert_eq!(Fp::new(3).pow(4_u32), Fp::new(81));
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
