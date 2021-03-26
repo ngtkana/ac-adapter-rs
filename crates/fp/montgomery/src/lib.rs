@@ -399,7 +399,7 @@ mod tests {
     }
 
     #[test_case(3, 50; "small")]
-    #[test_case(30, 100000; "medium")]
+    #[test_case(30, 100_000; "medium")]
     #[test_case(std::u32::MAX, std::u64::MAX; "large")]
     fn test_pow_single(lim: u32, pow_lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
