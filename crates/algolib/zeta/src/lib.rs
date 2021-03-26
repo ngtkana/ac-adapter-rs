@@ -211,6 +211,7 @@ mod tests {
         test_case::test_case,
     };
 
+    #[derive(Clone, Copy)]
     enum Dir {
         Sub,
         Super,

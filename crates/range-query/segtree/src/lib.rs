@@ -347,6 +347,7 @@ mod tests {
                 }
             }
         }
+        #[allow(clippy::needless_pass_by_value)]
         fn strcat(s: String, t: String) -> String {
             s.chars().chain(t.chars()).collect::<String>()
         }

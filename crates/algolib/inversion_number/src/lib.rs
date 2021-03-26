@@ -44,13 +44,13 @@ pub fn inversion_number(value_limit: usize, a: &[usize]) -> u64 {
 mod tests {
     use {super::inversion_number, test_case::test_case};
 
-    #[test_case(3, vec![0, 1, 2] => 0)]
-    #[test_case(3, vec![0, 2, 1] => 1)]
-    #[test_case(3, vec![1, 0, 2] => 1)]
-    #[test_case(3, vec![1, 2, 0] => 2)]
-    #[test_case(3, vec![2, 0, 1] => 2)]
-    #[test_case(3, vec![2, 1, 0] => 3)]
-    fn test_hand(n: usize, a: Vec<usize>) -> u64 {
+    #[test_case(3, &[0, 1, 2] => 0)]
+    #[test_case(3, &[0, 2, 1] => 1)]
+    #[test_case(3, &[1, 0, 2] => 1)]
+    #[test_case(3, &[1, 2, 0] => 2)]
+    #[test_case(3, &[2, 0, 1] => 2)]
+    #[test_case(3, &[2, 1, 0] => 3)]
+    fn test_hand(n: usize, a: &[usize]) -> u64 {
         inversion_number(n, &a)
     }
 }
