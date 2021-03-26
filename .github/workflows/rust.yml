@@ -24,7 +24,6 @@ jobs:
     - name: Clippy
       run: |
         cargo clippy --all-targets -- \
-        -D warnings \
         -W clippy::pedantic \
         -W clippy::nursery \
         -A clippy::must_use_candidate \
