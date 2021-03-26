@@ -22,7 +22,20 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Clippy
-      run: cargo clippy --all-targets -- -W clippy::all
+      run: |
+        cargo clippy --all-targets -- -W clippy::pedantic \
+        -A clippy::must_use_candidate \
+        -A clippy::non_ascii_literal \
+        -A clippy::cast-sign-loss \
+        -A clippy::doc_markdown \
+        -A clippy::missing_panics_doc \
+        -A clippy::cast_possible_wrap \
+        -A clippy::cast_possible_truncation \
+        -A clippy::cast_precision_loss \
+        -A clippy::module_name_repetitions \
+        -A clippy::shadow_unrelated \
+        -A clippy::maybe_infinite_iter \
+        -A clippy::similar_names
 
   test:
     runs-on: ubuntu-latest
