@@ -130,7 +130,7 @@ where
             f.len() < 2 * self.p.len(),
             "Reducer の次数( = p.len() ）の 2 倍未満でお願いします。"
         );
-        reduce(self.p.clone(), self.k.clone(), f)
+        reduce(self.p.clone(), self.k.clone(), &f)
     }
     /// 多項式 f を受け取って、MR⁻¹ ( f ) を計算します。
     ///
@@ -313,7 +313,7 @@ fn normalize<M: Mod>(f: &mut Vec<Fp<M>>) {
     }
 }
 
-fn reduce<M: Mod>(p: Vec<Fp<M>>, k: Vec<Fp<M>>, f: Vec<Fp<M>>) -> Vec<Fp<M>>
+fn reduce<M: Mod>(p: Vec<Fp<M>>, k: Vec<Fp<M>>, f: &[Fp<M>]) -> Vec<Fp<M>>
 where
     Fp<M>: Convolution,
 {
@@ -455,7 +455,7 @@ mod tests {
             let expected_to_be_f = mont.reduce_inverse(mont.reduce(f.clone()));
             assert_eq!(normal_f, expected_to_be_f);
 
-            let expected_to_be_f = mont.reduce(mont.reduce_inverse(f.clone()));
+            let expected_to_be_f = mont.reduce(mont.reduce_inverse(f));
             assert_eq!(normal_f, expected_to_be_f);
         }
     }

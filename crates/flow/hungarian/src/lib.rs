@@ -199,10 +199,10 @@ mod tests {
         test_case::test_case,
     };
 
-    #[test_case(vec![vec![4, 3, 5], vec![3, 5, 9], vec![4, 1, 4]] => (vec![2, 0, 1], 9); "yosupo sample")]
-    #[test_case(vec![vec![4, 3, 5], vec![3, 5, 0], vec![4, 1, 4]] => (vec![0, 2, 1], 5); "handmade")]
-    fn test_hand(cost_matrix: Vec<Vec<u8>>) -> (Vec<usize>, u8) {
-        let HungarianResult { forward, value, .. } = hungarian(&cost_matrix);
+    #[test_case(&[vec![4, 3, 5], vec![3, 5, 9], vec![4, 1, 4]] => (vec![2, 0, 1], 9); "yosupo sample")]
+    #[test_case(&[vec![4, 3, 5], vec![3, 5, 0], vec![4, 1, 4]] => (vec![0, 2, 1], 5); "handmade")]
+    fn test_hand(cost_matrix: &[Vec<u8>]) -> (Vec<usize>, u8) {
+        let HungarianResult { forward, value, .. } = hungarian(cost_matrix);
         (forward.into_vec(), value)
     }
 
