@@ -131,9 +131,7 @@ mod tests {
         assert_eq!(dist[start], 0);
         for (u, v) in g
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().map(move |&j| (i, j)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
         {
             assert!(dist[u] == dist[v] || dist[u] + 1 == dist[v] || dist[u] == dist[v] + 1);
         }
@@ -173,9 +171,7 @@ mod tests {
             assert_eq!(path.len(), diam as usize + 1);
             let edges = g
                 .iter()
-                .enumerate()
-                .map(|(i, v)| v.iter().map(move |&j| (i, j)))
-                .flatten()
+                .enumerate().flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
                 .collect::<HashSet<_>>();
             accum::for_each(&path, |&u, &v| assert!(edges.contains(&(u, v))));
         }
@@ -186,9 +182,7 @@ mod tests {
         let mut dist = vec![vec![std::u32::MAX; n]; n];
         (0..n).for_each(|i| dist[i][i] = 0);
         g.iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().copied().map(move |j| (i, j)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().copied().map(move |j| (i, j)))
             .for_each(|(i, j)| {
                 dist[i][j] = 1;
                 dist[j][i] = 1
@@ -203,9 +197,7 @@ mod tests {
         }
         assert!(dist.iter().flatten().all(|&x| x != u32::MAX));
         dist.iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().copied().enumerate().map(move |(j, x)| (i, j, x)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().copied().enumerate().map(move |(j, x)| (i, j, x)))
             .map(|(i, j, x)| ([i, j], x))
             .max_by_key(|&(_, x)| x)
             .unwrap()

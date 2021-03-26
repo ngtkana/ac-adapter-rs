@@ -190,9 +190,7 @@ mod tests {
 
         fn brute(a: &[[i64; 2]]) -> i64 {
             a.iter()
-                .copied()
-                .map(|p| a.iter().copied().map(move |q| [p, q]))
-                .flatten()
+                .copied().flat_map(|p| a.iter().copied().map(move |q| [p, q]))
                 .map(|[p, q]| sqmag(p, q))
                 .max()
                 .unwrap()

@@ -34,9 +34,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let mut left = vec![T::infinity(); h].into_boxed_slice();
     for (i, x) in cost_matrix
         .iter()
-        .enumerate()
-        .map(|(i, v)| v.iter().map(move |&x| (i, x)))
-        .flatten()
+        .enumerate().flat_map(|(i, v)| v.iter().map(move |&x| (i, x)))
     {
         if x < all_min {
             all_min = x;
@@ -277,9 +275,7 @@ mod tests {
         // feasibility
         for (i, j, x) in cost_matrix
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().enumerate().map(move |(j, &x)| (i, j, x)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().enumerate().map(move |(j, &x)| (i, j, x)))
         {
             assert!(
                 right[j] <= x + left[i] + T::epsilon(),

@@ -97,9 +97,7 @@ mod tests {
             dbg::lg!(&dist, &prv);
             let edges = g
                 .iter()
-                .enumerate()
-                .map(|(i, v)| v.iter().map(move |&(j, w)| ((i, j), w)))
-                .flatten()
+                .enumerate().flat_map(|(i, v)| v.iter().map(move |&(j, w)| ((i, j), w)))
                 .collect::<HashMap<_, _>>();
             dbg::lg!(&edges);
             validate_dist_prv(&prv, &dist, &edges);
@@ -110,9 +108,7 @@ mod tests {
         assert_eq!(dist[s], 0);
         for (u, v, w) in g
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().map(move |&(j, w)| (i, j, w)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().map(move |&(j, w)| (i, j, w)))
         {
             assert!(dist[u].saturating_add(w) >= dist[v]);
         }

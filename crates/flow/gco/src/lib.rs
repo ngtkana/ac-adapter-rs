@@ -171,9 +171,7 @@ fn solve(gco: &Gco) -> GcoResult {
                 }
                 Ordering::Equal => (),
             }
-            for (i, j) in (0..2)
-                .map(|i| (0..2).map(move |j| (i, j)))
-                .flatten()
+            for (i, j) in (0..2).flat_map(|i| (0..2).map(move |j| (i, j)))
                 .filter(|&(i, j)| [i, j][p] == 1)
             {
                 cost[i][j] -= d;
