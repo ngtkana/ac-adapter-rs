@@ -49,17 +49,14 @@ pub fn suffix_array<T: Ord>(s: &[T]) -> Vec<usize> {
         for i in 1..n {
             let l = ord_swp[i - 1];
             let r = ord_swp[i];
-            cmp_swp[i] = if (
-                cmp[ord_inverse[l]],
-                ord_inverse.get(l + d).map(|&ld| cmp[ld]).unwrap_or(n),
-            ) == (
-                cmp[ord_inverse[r]],
-                ord_inverse.get(r + d).map(|&rd| cmp[rd]).unwrap_or(n),
-            ) {
+            cmp_swp[i] = if cmp[ord_inverse[l]] == cmp[ord_inverse[r]]
+                && ord_inverse.get(l + d).map_or(n, |&ld| cmp[ld])
+                    == ord_inverse.get(r + d).map_or(n, |&rd| cmp[rd])
+            {
                 cmp_swp[i - 1]
             } else {
                 cmp_swp[i - 1] + 1
-            }
+            };
         }
 
         ord = ord_swp;
