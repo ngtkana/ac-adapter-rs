@@ -38,7 +38,8 @@ jobs:
         -A clippy::maybe_infinite_iter \
         -A clippy::filter_map \
         -A clippy::similar_names \
-        -A clippy::missing_const_for_fn
+        -A clippy::missing_const_for_fn \
+        -A clippy::use_self \
 
   test:
     runs-on: ubuntu-latest
