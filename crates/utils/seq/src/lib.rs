@@ -286,7 +286,7 @@ mod repeat_with {
 }
 
 mod accumulate {
-    use super::*;
+    use super::{ops, size_hint};
 
     #[derive(Debug, Clone)]
     pub struct Accumulate<I, T> {
