@@ -23,7 +23,9 @@ jobs:
     - uses: actions/checkout@v2
     - name: Clippy
       run: |
-        cargo clippy --all-targets -- -W clippy::pedantic \
+        cargo clippy --all-targets -- \
+        -W clippy::pedantic \
+        -W clippy::nursery \
         -A clippy::must_use_candidate \
         -A clippy::non_ascii_literal \
         -A clippy::cast-sign-loss \
@@ -35,7 +37,8 @@ jobs:
         -A clippy::shadow_unrelated \
         -A clippy::maybe_infinite_iter \
         -A clippy::filter_map \
-        -A clippy::similar_names
+        -A clippy::similar_names \
+        -A clippy::missing_const_fn
 
   test:
     runs-on: ubuntu-latest
