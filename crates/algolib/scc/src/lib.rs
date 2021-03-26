@@ -133,7 +133,7 @@ impl TwoSat {
             .1
             .chunks_exact(2)
             .map(|v| {
-                use cmp::Ordering::*;
+                use cmp::Ordering::{Equal, Greater, Less};
                 match v[0].cmp(&v[1]) {
                     Equal => None,
                     Less => Some(true),
