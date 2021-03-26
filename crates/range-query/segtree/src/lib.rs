@@ -300,6 +300,10 @@ mod tests {
 
     #[test]
     fn test_strcat() {
+        #[allow(clippy::needless_pass_by_value)]
+        fn strcat(s: String, t: String) -> String {
+            s.chars().chain(t.chars()).collect::<String>()
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..40);
@@ -346,10 +350,6 @@ mod tests {
                     _ => panic!(),
                 }
             }
-        }
-        #[allow(clippy::needless_pass_by_value)]
-        fn strcat(s: String, t: String) -> String {
-            s.chars().chain(t.chars()).collect::<String>()
         }
     }
 }

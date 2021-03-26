@@ -11,8 +11,6 @@ pub struct Hld {
 }
 impl Hld {
     pub fn new(mut g: Vec<Vec<usize>>, root: usize) -> Self {
-        let n = g.len();
-
         fn dfs(x: usize, p: usize, parent: &mut [usize], size: &mut [u32], g: &mut [Vec<usize>]) {
             let mut child = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
             for &c in &child {
@@ -27,11 +25,6 @@ impl Hld {
             }
             g[x] = child
         }
-        let mut size = vec![1; n];
-        let mut parent = vec![std::usize::MAX; n];
-        parent[root] = root;
-        dfs(root, root, &mut parent, &mut size, &mut g);
-
         fn efs(
             x: usize,
             head: &mut [usize],
@@ -46,6 +39,13 @@ impl Hld {
             }
             g[x].iter().for_each(|&y| efs(y, head, ord, vid, g));
         }
+
+        let n = g.len();
+        let mut size = vec![1; n];
+        let mut parent = vec![std::usize::MAX; n];
+        parent[root] = root;
+        dfs(root, root, &mut parent, &mut size, &mut g);
+
         let mut head = (0..n).collect::<Vec<_>>();
         let mut ord = Vec::new();
         let mut vid = vec![std::usize::MAX; n];
@@ -181,12 +181,14 @@ mod tests {
     }
 
     fn psp_path_unsorted(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
-        hld.iter_vtx(s, t).flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
+        hld.iter_vtx(s, t)
+            .flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 
     fn psp_path_unsorted_without_lca(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
-        hld.iter_edge(s, t).flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
+        hld.iter_edge(s, t)
+            .flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 

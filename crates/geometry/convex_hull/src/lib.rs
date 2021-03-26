@@ -169,6 +169,14 @@ mod tests {
 
     #[allow(clippy::many_single_char_names)]
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
+        fn brute(a: &[[i64; 2]]) -> i64 {
+            a.iter()
+                .copied()
+                .flat_map(|p| a.iter().copied().map(move |q| [p, q]))
+                .map(|[p, q]| sqmag(p, q))
+                .max()
+                .unwrap()
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iteration {
             let n = rng.gen_range(1..vertex_number);
@@ -186,14 +194,6 @@ mod tests {
             let (d, [p, q]) = caliper(&a);
             assert_eq!(d, sqmag(p, q));
             assert_eq!(d, brute(&a));
-        }
-
-        fn brute(a: &[[i64; 2]]) -> i64 {
-            a.iter()
-                .copied().flat_map(|p| a.iter().copied().map(move |q| [p, q]))
-                .map(|[p, q]| sqmag(p, q))
-                .max()
-                .unwrap()
         }
     }
 }
