@@ -4,7 +4,7 @@ pub fn fourier_impl<M: Mod>(a: &mut [Fp<M>], root: &[Fp<M>]) {
     let mut d = a.len() / 2;
     while d != 0 {
         let mut coeff = Fp::new(1);
-        for (i, t) in (0..a.len()).step_by(2 * d).zip(1u32..) {
+        for (i, t) in (0..a.len()).step_by(2 * d).zip(1_u32..) {
             for (i, j) in (i..i + d).zip(i + d..) {
                 let x = a[i];
                 let y = a[j] * coeff;
@@ -20,7 +20,7 @@ pub fn fourier_inverse_impl<M: Mod>(a: &mut [Fp<M>], root_recip: &[Fp<M>]) {
     let mut d = 1;
     while d != a.len() {
         let mut coeff = Fp::new(1);
-        for (i, t) in (0..a.len()).step_by(2 * d).zip(1u32..) {
+        for (i, t) in (0..a.len()).step_by(2 * d).zip(1_u32..) {
             for (i, j) in (i..i + d).zip(i + d..) {
                 let x = a[i];
                 let y = a[j];

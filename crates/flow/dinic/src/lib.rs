@@ -815,7 +815,7 @@ mod tests {
                 (
                     rng.gen_range(0..n),
                     rng.gen_range(0..n),
-                    rng.gen_range(0..1u32 << 16),
+                    rng.gen_range(0..1_u32 << 16),
                 )
             })
             .take(m)

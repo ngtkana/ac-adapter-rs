@@ -250,7 +250,7 @@ mod tests {
             apply: std::ops::Add::add,
             compose: std::ops::Add::add,
             identity: || std::u32::MAX,
-            id_action: || 0u32,
+            id_action: || 0_u32,
         }
         .finish();
         assert_eq!(seg.get(0), 0);
@@ -265,7 +265,7 @@ mod tests {
             apply: std::ops::Add::add,
             compose: std::ops::Add::add,
             identity: || std::u32::MAX,
-            id_action: || 0u32,
+            id_action: || 0_u32,
         }
         .finish();
         seg.modify(0, |x| *x = 10);
@@ -281,7 +281,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0u32..30))
+            let mut a = iter::repeat_with(|| rng.gen_range(0_u32..30))
                 .take(n)
                 .collect::<Vec<_>>()
                 .into_boxed_slice();
@@ -291,7 +291,7 @@ mod tests {
                 apply: std::ops::Add::add,
                 compose: std::ops::Add::add,
                 identity: || std::u32::MAX,
-                id_action: || 0u32,
+                id_action: || 0_u32,
             }
             .finish();
             println!("a = {:?}", &a);
@@ -339,7 +339,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = rng.gen_range(1..40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0u32..30))
+            let mut a = iter::repeat_with(|| rng.gen_range(0_u32..30))
                 .take(n)
                 .collect::<Vec<_>>()
                 .into_boxed_slice();
@@ -349,7 +349,7 @@ mod tests {
                 apply: std::ops::Add::add,
                 compose: std::ops::Add::add,
                 identity: || std::u32::MAX,
-                id_action: || 0u32,
+                id_action: || 0_u32,
             }
             .finish();
             println!("a = {:?}", &a);
