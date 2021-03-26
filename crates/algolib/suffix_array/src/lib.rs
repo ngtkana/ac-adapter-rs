@@ -49,17 +49,14 @@ pub fn suffix_array<T: Ord>(s: &[T]) -> Vec<usize> {
         for i in 1..n {
             let l = ord_swp[i - 1];
             let r = ord_swp[i];
-            cmp_swp[i] = if (
-                cmp[ord_inverse[l]],
-                ord_inverse.get(l + d).map(|&ld| cmp[ld]).unwrap_or(n),
-            ) == (
-                cmp[ord_inverse[r]],
-                ord_inverse.get(r + d).map(|&rd| cmp[rd]).unwrap_or(n),
-            ) {
+            cmp_swp[i] = if cmp[ord_inverse[l]] == cmp[ord_inverse[r]]
+                && ord_inverse.get(l + d).map_or(n, |&ld| cmp[ld])
+                    == ord_inverse.get(r + d).map_or(n, |&rd| cmp[rd])
+            {
                 cmp_swp[i - 1]
             } else {
                 cmp_swp[i - 1] + 1
-            }
+            };
         }
 
         ord = ord_swp;
@@ -80,8 +77,8 @@ pub fn lcp_array<T: Ord>(s: &[T], sa: &[usize]) -> Vec<usize> {
     assert!(!sa.is_empty());
 
     let n = s.len();
-    let rnk = make_rank(&sa);
-    let mut h = 0usize;
+    let rnk = make_rank(sa);
+    let mut h = 0_usize;
     let mut lcp = vec![0; n - 1];
     for (i, &r) in rnk.iter().enumerate() {
         h = h.saturating_sub(1);

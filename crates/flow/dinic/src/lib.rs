@@ -815,7 +815,7 @@ mod tests {
                 (
                     rng.gen_range(0..n),
                     rng.gen_range(0..n),
-                    rng.gen_range(0..1u32 << 16),
+                    rng.gen_range(0..1_u32 << 16),
                 )
             })
             .take(m)
@@ -872,13 +872,13 @@ mod tests {
             flow,
         } in edge_keys.iter().map(|&edge| dinic.get_edge(edge))
         {
-            excess[from] -= flow as i64;
-            excess[to] += flow as i64;
+            excess[from] -= i64::from(flow);
+            excess[to] += i64::from(flow);
             assert!(flow <= cap);
         }
         let mut excess_expected = vec![0; n];
-        excess_expected[s] -= flow as i64;
-        excess_expected[t] += flow as i64;
+        excess_expected[s] -= i64::from(flow);
+        excess_expected[t] += i64::from(flow);
         assert_eq!(excess, excess_expected);
 
         // max-flow min-cut theorem

@@ -37,9 +37,7 @@ mod tests {
             // calc_reachability
             let ckd = calc_reachability(s, &g);
             g.iter()
-                .enumerate()
-                .map(|(i, v)| v.iter().map(move |&j| (i, j)))
-                .flatten()
+                .enumerate().flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
                 .for_each(|(i, j)| assert_eq!(ckd[i], ckd[j]));
         }
     }

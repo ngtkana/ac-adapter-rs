@@ -121,13 +121,12 @@ mod adjacent {
         I: Iterator<Item = T>,
         T: Clone,
     {
-        if let Some(first) = iter.next() {
-            Adjacent {
+        match iter.next() {
+            Some(first) => Adjacent {
                 iter,
                 prv: Some(first),
-            }
-        } else {
-            Adjacent { iter, prv: None }
+            },
+            None => Adjacent { iter, prv: None },
         }
     }
 
@@ -204,9 +203,8 @@ mod step {
 
     pub fn step<T, U>(init: T, step: U) -> Step<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Add<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Add<U, Output = T>,
     {
         Step { now: init, step }
     }
@@ -219,9 +217,8 @@ mod step {
 
     impl<T, U> Iterator for Step<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Add<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Add<U, Output = T>,
     {
         type Item = T;
 
@@ -236,9 +233,8 @@ mod mul_step {
 
     pub fn mul_step<T, U>(init: T, step: U) -> MulStep<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Mul<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Mul<U, Output = T>,
     {
         MulStep { now: init, step }
     }
@@ -251,9 +247,8 @@ mod mul_step {
 
     impl<T, U> Iterator for MulStep<T, U>
     where
-        T: Copy,
+        T: Copy + ::std::ops::Mul<U, Output = T>,
         U: Copy,
-        T: ::std::ops::Mul<U, Output = T>,
     {
         type Item = T;
 
@@ -291,7 +286,7 @@ mod repeat_with {
 }
 
 mod accumulate {
-    use super::*;
+    use super::{ops, size_hint};
 
     #[derive(Debug, Clone)]
     pub struct Accumulate<I, T> {
@@ -384,10 +379,7 @@ mod cartesian_product {
                 }
                 Some(x) => x,
             };
-            match self.a_cur {
-                None => None,
-                Some(ref a) => Some((a.clone(), elt_b)),
-            }
+            self.a_cur.as_ref().map(|a| (a.clone(), elt_b))
         }
 
         fn size_hint(&self) -> (usize, Option<usize>) {

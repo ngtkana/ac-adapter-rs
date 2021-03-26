@@ -71,7 +71,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
 #[allow(clippy::many_single_char_names)]
 pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
     assert!(!a.is_empty());
-    let a = convex_hull(&a);
+    let a = convex_hull(a);
     if a.len() == 1 {
         (0, [a[0], a[0]])
     } else if a.len() == 2 {
@@ -138,8 +138,8 @@ mod tests {
             let n = rng.gen_range(0..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max..coord_max + 1),
-                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..=coord_max),
+                    rng.gen_range(-coord_max..=coord_max),
                 ]
             })
             .take(n)
@@ -169,13 +169,21 @@ mod tests {
 
     #[allow(clippy::many_single_char_names)]
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
+        fn brute(a: &[[i64; 2]]) -> i64 {
+            a.iter()
+                .copied()
+                .flat_map(|p| a.iter().copied().map(move |q| [p, q]))
+                .map(|[p, q]| sqmag(p, q))
+                .max()
+                .unwrap()
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..iteration {
             let n = rng.gen_range(1..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max..coord_max + 1),
-                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..=coord_max),
+                    rng.gen_range(-coord_max..=coord_max),
                 ]
             })
             .take(n)
@@ -186,16 +194,6 @@ mod tests {
             let (d, [p, q]) = caliper(&a);
             assert_eq!(d, sqmag(p, q));
             assert_eq!(d, brute(&a));
-        }
-
-        fn brute(a: &[[i64; 2]]) -> i64 {
-            a.iter()
-                .copied()
-                .map(|p| a.iter().copied().map(move |q| [p, q]))
-                .flatten()
-                .map(|[p, q]| sqmag(p, q))
-                .max()
-                .unwrap()
         }
     }
 }

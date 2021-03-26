@@ -3,10 +3,10 @@ use std::collections::VecDeque;
 /// 木の直径を一つ探し、その両端点とその間の距離を返します。
 pub fn tree_diamter(g: &[Vec<usize>]) -> ([usize; 2], u32) {
     assert_eq!(g.iter().flatten().count(), (g.len() - 1) * 2);
-    let dist = calc_dist(0, &g);
+    let dist = calc_dist(0, g);
     let &diam = dist.iter().max().unwrap();
     let x = dist.iter().position(|&d| d == diam).unwrap();
-    let dist = calc_dist(x, &g);
+    let dist = calc_dist(x, g);
     let &diam = dist.iter().max().unwrap();
     let y = dist.iter().position(|&d| d == diam).unwrap();
     ([x, y], diam)
@@ -15,10 +15,10 @@ pub fn tree_diamter(g: &[Vec<usize>]) -> ([usize; 2], u32) {
 /// 木の直径を一つ探し、頂点列とパスの長さ（辺の個数）を返します。
 pub fn tree_diamter_restore(g: &[Vec<usize>]) -> (Vec<usize>, u32) {
     assert_eq!(g.iter().flatten().count(), (g.len() - 1) * 2);
-    let dist = calc_dist(0, &g);
+    let dist = calc_dist(0, g);
     let &diam = dist.iter().max().unwrap();
     let x = dist.iter().position(|&d| d == diam).unwrap();
-    let (dist, prv) = calc_dist_restore(x, &g);
+    let (dist, prv) = calc_dist_restore(x, g);
     let &diam = dist.iter().max().unwrap();
     let mut res = vec![dist.iter().position(|&d| d == diam).unwrap()];
     loop {
@@ -68,7 +68,7 @@ pub fn calc_dist_restore(start: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize
 
 /// start から end が到達可能ならば最短経路の頂点列を返し、不能ならば `None` を返します。
 pub fn find_path(start: usize, end: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
-    let (dist, prv) = calc_dist_restore(start, &g);
+    let (dist, prv) = calc_dist_restore(start, g);
     if dist[end] == std::u32::MAX {
         None
     } else {
@@ -131,9 +131,7 @@ mod tests {
         assert_eq!(dist[start], 0);
         for (u, v) in g
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().map(move |&j| (i, j)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
         {
             assert!(dist[u] == dist[v] || dist[u] + 1 == dist[v] || dist[u] == dist[v] + 1);
         }
@@ -173,9 +171,7 @@ mod tests {
             assert_eq!(path.len(), diam as usize + 1);
             let edges = g
                 .iter()
-                .enumerate()
-                .map(|(i, v)| v.iter().map(move |&j| (i, j)))
-                .flatten()
+                .enumerate().flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
                 .collect::<HashSet<_>>();
             accum::for_each(&path, |&u, &v| assert!(edges.contains(&(u, v))));
         }
@@ -186,9 +182,7 @@ mod tests {
         let mut dist = vec![vec![std::u32::MAX; n]; n];
         (0..n).for_each(|i| dist[i][i] = 0);
         g.iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().copied().map(move |j| (i, j)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().copied().map(move |j| (i, j)))
             .for_each(|(i, j)| {
                 dist[i][j] = 1;
                 dist[j][i] = 1
@@ -203,9 +197,7 @@ mod tests {
         }
         assert!(dist.iter().flatten().all(|&x| x != u32::MAX));
         dist.iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().copied().enumerate().map(move |(j, x)| (i, j, x)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().copied().enumerate().map(move |(j, x)| (i, j, x)))
             .map(|(i, j, x)| ([i, j], x))
             .max_by_key(|&(_, x)| x)
             .unwrap()

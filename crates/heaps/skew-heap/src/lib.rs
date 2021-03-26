@@ -70,7 +70,7 @@ impl<A: Ord> Extend<A> for SkewHeap<A> {
 }
 impl<A: Ord> FromIterator<A> for SkewHeap<A> {
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
-        let mut heap = SkewHeap::new();
+        let mut heap = Self::new();
         heap.extend(iter);
         heap
     }
@@ -226,8 +226,8 @@ mod tests {
                         // collect
                         let mut expected = binary.iter().copied().collect_vec();
                         let mut result = skew.clone().into_sorted_vec();
-                        expected.sort();
-                        result.sort();
+                        expected.sort_unstable();
+                        result.sort_unstable();
                         assert_eq!(expected, result);
                     }
                     _ => unreachable!(),

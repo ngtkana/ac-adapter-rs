@@ -8,7 +8,7 @@ pub struct Traversal {
 }
 
 impl Traversal {
-    pub fn pre_order(graph: &[Vec<usize>]) -> Traversal {
+    pub fn pre_order(graph: &[Vec<usize>]) -> Self {
         fn dfs(x: usize, graph: &[Vec<usize>], res: &mut PermutationBuilder) {
             res.visit(x);
             for &y in &graph[x] {
@@ -21,13 +21,13 @@ impl Traversal {
         let mut res = PermutationBuilder::new(graph.len());
         for i in 0..graph.len() {
             if !res.on_stack(i) {
-                dfs(i, &graph, &mut res);
+                dfs(i, graph, &mut res);
             }
         }
         res.build()
     }
 
-    pub fn post_order(graph: &[Vec<usize>]) -> Traversal {
+    pub fn post_order(graph: &[Vec<usize>]) -> Self {
         fn dfs(x: usize, graph: &[Vec<usize>], ckd: &mut [bool], res: &mut PermutationBuilder) {
             for &y in &graph[x] {
                 if !mem::replace(&mut ckd[y], true) {
@@ -42,7 +42,7 @@ impl Traversal {
         let mut res = PermutationBuilder::new(graph.len());
         for i in 0..graph.len() {
             if !mem::replace(&mut ckd[i], true) {
-                dfs(i, &graph, &mut ckd, &mut res);
+                dfs(i, graph, &mut ckd, &mut res);
             }
         }
         res.build()

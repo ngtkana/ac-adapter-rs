@@ -9,7 +9,7 @@ pub struct Reverse<T>(pub T);
 
 impl<T: PartialOrd> PartialOrd for Reverse<T> {
     #[inline]
-    fn partial_cmp(&self, other: &Reverse<T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         other.0.partial_cmp(&self.0)
     }
 
@@ -33,7 +33,7 @@ impl<T: PartialOrd> PartialOrd for Reverse<T> {
 
 impl<T: Ord> Ord for Reverse<T> {
     #[inline]
-    fn cmp(&self, other: &Reverse<T>) -> Ordering {
+    fn cmp(&self, other: &Self) -> Ordering {
         other.0.cmp(&self.0)
     }
 }

@@ -1,7 +1,7 @@
 use std::ops::{Bound, Range, RangeBounds};
 
 pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
-    use Bound::*;
+    use Bound::{Excluded, Included, Unbounded};
     (match range.start_bound() {
         Unbounded => 0,
         Included(&x) => x,

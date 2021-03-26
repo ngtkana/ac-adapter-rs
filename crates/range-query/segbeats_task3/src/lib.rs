@@ -283,7 +283,7 @@ struct Node<T> {
 }
 impl<T: Elm> Node<T> {
     fn new() -> Self {
-        Node {
+        Self {
             max: [T::min_value(); 2],
             c_max: 0,
             min: [T::max_value(); 2],
@@ -298,7 +298,7 @@ impl<T: Elm> Node<T> {
         }
     }
     fn single(x: T) -> Self {
-        Node {
+        Self {
             max: [x, T::min_value()],
             c_max: 1,
             min: [x, T::max_value()],
@@ -316,7 +316,7 @@ impl<T: Elm> Node<T> {
         assert!(self.max[1] < x && x < self.max[0]);
         self.sum += (x - self.max[0]).mul_u32(self.c_max);
         let orig_max = replace(&mut self.max[0], x);
-        self.change_count += self.c_max as u64 * weight as u64;
+        self.change_count += u64::from(self.c_max) * u64::from(weight);
         if orig_max == self.min[0] {
             self.min[0] = x;
         }
@@ -329,7 +329,7 @@ impl<T: Elm> Node<T> {
         assert!(self.min[0] < x && x < self.min[1]);
         self.sum += (x - self.min[0]).mul_u32(self.c_min);
         let orig_min = replace(&mut self.min[0], x);
-        self.change_count += self.c_min as u64 * weight as u64;
+        self.change_count += u64::from(self.c_min) * u64::from(weight);
         if orig_min == self.max[0] {
             self.max[0] = x;
         }
@@ -348,7 +348,7 @@ impl<T: Elm> Node<T> {
             .filter(|y| **y != T::max_value())
             .for_each(|y| *y += x);
         self.sum += x.mul_u32(self.len);
-        self.change_count += self.len as u64 * weight as u64;
+        self.change_count += u64::from(self.len) * u64::from(weight);
         self.lazy_add += x;
         self.lazy_add_count += weight;
     }
@@ -357,15 +357,15 @@ impl<T: Elm> Node<T> {
         self.min[0] = x;
         self.max[0] = x;
         self.sum = x.mul_u32(self.len);
-        self.change_count += self.c_min as u64 * weight as u64;
+        self.change_count += u64::from(self.c_min) * u64::from(weight);
         self.lazy_change_min_count += weight; // weigt には和が渡ってきますから、片方に寄せておくと良いです。
     }
-    fn merge(node: &mut Node<T>, left: Node<T>, right: Node<T>) {
+    fn merge(node: &mut Self, left: Self, right: Self) {
+        use std::cmp::Ordering;
         assert_eq!(node.lazy_change_min_count, 0);
         assert_eq!(node.lazy_change_max_count, 0);
         assert_eq!(node.lazy_add_count, 0);
         assert_eq!(node.lazy_add, T::zero());
-        use std::cmp::Ordering;
         let (max, c_max) = {
             let [a, b] = left.max;
             let [c, d] = right.max;

@@ -46,10 +46,10 @@ pub trait Mod: Clone + Copy + Hash {
     /// -P mod 2 ^ 32（モンゴメリ乗算用）
     const K: u32;
     /// 2 ^ 64 mod P（モンゴメリ乗算用）
-    const R2: u32 = ((1u128 << 64) % Self::P as u128) as _; // 2 ^ 64 mod P
+    const R2: u32 = ((1_u128 << 64) % Self::P as u128) as _; // 2 ^ 64 mod P
 }
 fn reduce<M: Mod>(x: u64) -> u32 {
-    ((x + M::K.wrapping_mul(x as u32) as u64 * M::P as u64) >> 32) as u32
+    ((x + u64::from(M::K.wrapping_mul(x as u32)) * u64::from(M::P)) >> 32) as u32
 }
 
 /// 新しい mod を定義するためのマクロ
@@ -98,11 +98,11 @@ impl<M: Mod> Fp<M> {
     pub const P: u32 = M::P;
     /// 新しく構築します。
     pub fn new(value: u32) -> Self {
-        Fp::from_raw(reduce::<M>(value as u64 * M::R2 as u64))
+        Self::from_raw(reduce::<M>(u64::from(value) * u64::from(M::R2)))
     }
     /// オブジェクトの表す整数を返します。
     pub fn value(self) -> u32 {
-        let x = reduce::<M>(self.value as _);
+        let x = reduce::<M>(u64::from(self.value));
         if M::P <= x {
             x - M::P
         } else {
@@ -112,7 +112,7 @@ impl<M: Mod> Fp<M> {
     /// 逆数を返します。
     #[allow(clippy::many_single_char_names)]
     pub fn recip(self) -> Self {
-        assert_ne!(self, Fp::new(0), "0 はだめ。");
+        assert_ne!(self, Self::new(0), "0 はだめ。");
         let mut x = M::P as i32;
         let mut y = self.value() as i32;
         let mut u = 0;
@@ -135,10 +135,10 @@ impl<M: Mod> Fp<M> {
     pub fn pow<T: Into<u64>>(self, exp: T) -> Self {
         let mut exp = exp.into();
         if exp == 0 {
-            return Fp::new(1);
+            return Self::new(1);
         }
         let mut base = self;
-        let mut acc = Fp::new(1);
+        let mut acc = Self::new(1);
         while 1 < exp {
             if exp & 1 == 1 {
                 acc *= base;
@@ -215,7 +215,7 @@ impl<M: Mod> Hash for Fp<M> {
         self.value().hash(state);
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> AddAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> AddAssign<T> for Fp<M> {
     fn add_assign(&mut self, rhs: T) {
         self.value += rhs.into().value;
         if M::P * 2 <= self.value {
@@ -223,7 +223,7 @@ impl<M: Mod, T: Into<Fp<M>>> AddAssign<T> for Fp<M> {
         }
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> SubAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> SubAssign<T> for Fp<M> {
     fn sub_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
         if self.value < rhs.value {
@@ -232,13 +232,13 @@ impl<M: Mod, T: Into<Fp<M>>> SubAssign<T> for Fp<M> {
         self.value -= rhs.value;
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> MulAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> MulAssign<T> for Fp<M> {
     fn mul_assign(&mut self, rhs: T) {
-        self.value = reduce::<M>(self.value as u64 * rhs.into().value as u64);
+        self.value = reduce::<M>(u64::from(self.value) * u64::from(rhs.into().value));
     }
 }
 #[allow(clippy::suspicious_op_assign_impl)]
-impl<M: Mod, T: Into<Fp<M>>> DivAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> DivAssign<T> for Fp<M> {
     fn div_assign(&mut self, rhs: T) {
         *self *= rhs.into().recip();
     }
@@ -261,8 +261,8 @@ macro_rules! forward_ops {
         }
 
         impl<'a, T: Mod> $trait<&'a Fp<T>> for Fp<T> {
-            type Output = Fp<T>;
-            fn $method(self, other: &Fp<T>) -> Self::Output {
+            type Output = Self;
+            fn $method(self, other: &Self) -> Self::Output {
                 $trait::$method(self, *other)
             }
         }
@@ -284,7 +284,7 @@ forward_ops! {
 impl<M: Mod> Neg for Fp<M> {
     type Output = Self;
     fn neg(self) -> Self {
-        Fp::from_raw(M::P * 2 - self.value)
+        Self::from_raw(M::P * 2 - self.value)
     }
 }
 impl<M: Mod> Sum for Fp<M> {
@@ -298,12 +298,12 @@ impl<M: Mod> Product for Fp<M> {
     }
 }
 impl<'a, M: Mod> Sum<&'a Self> for Fp<M> {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Fp<M> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::new(0), |b, x| b + x)
     }
 }
 impl<'a, M: Mod> Product<&'a Self> for Fp<M> {
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Fp<M> {
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::new(1), |b, x| b * x)
     }
 }
@@ -354,7 +354,7 @@ mod tests {
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((x as u64 + y as u64) % Fp::P as u64) as u32;
+            let expected = ((u64::from(x) + u64::from(y)) % u64::from(Fp::P)) as u32;
             let result = (Fp::new(x) + Fp::new(y)).value();
             assert_eq!(result, expected);
         }
@@ -366,7 +366,7 @@ mod tests {
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((x as i64 - y as i64).rem_euclid(Fp::P as i64)) as u32;
+            let expected = ((i64::from(x) - i64::from(y)).rem_euclid(i64::from(Fp::P))) as u32;
             let result = (Fp::new(x) - Fp::new(y)).value();
             assert_eq!(result, expected);
         }
@@ -378,7 +378,7 @@ mod tests {
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((x as u64 * y as u64) % Fp::P as u64) as u32;
+            let expected = ((u64::from(x) * u64::from(y)) % u64::from(Fp::P)) as u32;
             let result = (Fp::new(x) * Fp::new(y)).value();
             assert_eq!(result, expected);
         }
@@ -412,8 +412,8 @@ mod tests {
             let x = rng.gen_range(0..=std::u8::MAX);
             let y = rng.gen_range(0..128 / 8);
             dbg!(x, y);
-            let expected = ((x as u128).pow(y) % Fp::P as u128) as u32;
-            let result = Fp::from(x).pow(y as u64).value();
+            let expected = (u128::from(x).pow(y) % u128::from(Fp::P)) as u32;
+            let result = Fp::from(x).pow(u64::from(y)).value();
             assert_eq!(result, expected);
         }
     }
@@ -424,8 +424,8 @@ mod tests {
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
             let x0 = Fp::new(x);
-            let x1 = Fp::from(x as u64 + Fp::P as u64);
-            let x2 = Fp::from(x as u64 + 2 * Fp::P as u64);
+            let x1 = Fp::from(u64::from(x) + u64::from(Fp::P));
+            let x2 = Fp::from(u64::from(x) + 2 * u64::from(Fp::P));
             assert_eq!(x0, x1);
             assert_eq!(x0, x2);
         }
@@ -438,7 +438,7 @@ mod tests {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
             let z = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((x as u64 + y as u64 + z as u64) % Fp::P as u64) as u32;
+            let expected = ((u64::from(x) + u64::from(y) + u64::from(z)) % u64::from(Fp::P)) as u32;
             let result = [Fp::new(x), Fp::new(y), Fp::new(z)]
                 .iter()
                 .sum::<Fp>()
@@ -449,13 +449,14 @@ mod tests {
 
     #[test]
     fn test_product() {
-        assert_eq!(Fp::new(3).pow(4u32), Fp::new(81));
+        assert_eq!(Fp::new(3).pow(4_u32), Fp::new(81));
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let x = rng.gen_range(0..=std::u32::MAX);
             let y = rng.gen_range(0..=std::u32::MAX);
             let z = rng.gen_range(0..=std::u32::MAX);
-            let expected = ((x as u128 * y as u128 * z as u128) % Fp::P as u128) as u32;
+            let expected =
+                ((u128::from(x) * u128::from(y) * u128::from(z)) % u128::from(Fp::P)) as u32;
             let result = [Fp::new(x), Fp::new(y), Fp::new(z)]
                 .iter()
                 .product::<Fp>()

@@ -303,7 +303,7 @@ fn weakly_convex<T: Signed>(
 }
 
 fn golden_section([i0, i3]: [isize; 2]) -> [isize; 2] {
-    let d = ((i3 - i0) as f64 * (5f64.sqrt() - 1.0) / 2.0).ceil() as isize;
+    let d = ((i3 - i0) as f64 * (5_f64.sqrt() - 1.0) / 2.0).ceil() as isize;
     [i3 - d, i0 + d]
 }
 

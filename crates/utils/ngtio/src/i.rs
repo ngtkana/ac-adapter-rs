@@ -173,12 +173,12 @@ mod token {
     impl<T> Token for T
     where
         T: str::FromStr,
-        <T as str::FromStr>::Err: fmt::Debug,
+        <Self as str::FromStr>::Err: fmt::Debug,
     {
-        type Output = T;
+        type Output = Self;
         fn parse(s: &str) -> Self::Output {
             s.parse()
-                .unwrap_or_else(|_| panic!("Parse error!: ({}: {})", s, any::type_name::<T>(),))
+                .unwrap_or_else(|_| panic!("Parse error!: ({}: {})", s, any::type_name::<Self>(),))
         }
     }
 
@@ -405,7 +405,7 @@ GHI
         let mut s = make_buf("0 1 2 3 4 5 6 7 8 9\n");
         assert_eq!(s.tuple::<(u8, char)>(), (0, '1'));
         assert_eq!(s.tuple::<(u8,)>(), (2,));
-        let _: () = s.tuple::<()>();
+        s.tuple::<()>();
         assert_eq!(
             s.tuple::<(u8, u8, u8, u8, u8, u8, u8,)>(),
             (3, 4, 5, 6, 7, 8, 9)

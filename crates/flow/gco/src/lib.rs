@@ -68,7 +68,7 @@ impl Gco {
     pub fn new(n: usize) -> Self {
         Self {
             vars: n,
-            ..Default::default()
+            ..Self::default()
         }
     }
     /// 1 次の項を足します。
@@ -121,7 +121,7 @@ impl Gco {
         self.binary.push(Binary { ij, cost });
     }
     pub fn solve(&self) -> GcoResult {
-        solve(&self)
+        solve(self)
     }
 }
 
@@ -172,8 +172,7 @@ fn solve(gco: &Gco) -> GcoResult {
                 Ordering::Equal => (),
             }
             for (i, j) in (0..2)
-                .map(|i| (0..2).map(move |j| (i, j)))
-                .flatten()
+                .flat_map(|i| (0..2).map(move |j| (i, j)))
                 .filter(|&(i, j)| [i, j][p] == 1)
             {
                 cost[i][j] -= d;
