@@ -138,8 +138,8 @@ mod tests {
             let n = rng.gen_range(0..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max..coord_max + 1),
-                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..=coord_max),
+                    rng.gen_range(-coord_max..=coord_max),
                 ]
             })
             .take(n)
@@ -174,8 +174,8 @@ mod tests {
             let n = rng.gen_range(1..vertex_number);
             let a = iter::repeat_with(|| {
                 [
-                    rng.gen_range(-coord_max..coord_max + 1),
-                    rng.gen_range(-coord_max..coord_max + 1),
+                    rng.gen_range(-coord_max..=coord_max),
+                    rng.gen_range(-coord_max..=coord_max),
                 ]
             })
             .take(n)
