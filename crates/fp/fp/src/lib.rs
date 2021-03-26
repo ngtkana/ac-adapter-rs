@@ -98,7 +98,7 @@ impl<M: Mod> Fp<M> {
     pub const P: u32 = M::P;
     /// 新しく構築します。
     pub fn new(value: u32) -> Self {
-        Fp::from_raw(reduce::<M>(value as u64 * M::R2 as u64))
+        Self::from_raw(reduce::<M>(value as u64 * M::R2 as u64))
     }
     /// オブジェクトの表す整数を返します。
     pub fn value(self) -> u32 {
@@ -112,7 +112,7 @@ impl<M: Mod> Fp<M> {
     /// 逆数を返します。
     #[allow(clippy::many_single_char_names)]
     pub fn recip(self) -> Self {
-        assert_ne!(self, Fp::new(0), "0 はだめ。");
+        assert_ne!(self, Self::new(0), "0 はだめ。");
         let mut x = M::P as i32;
         let mut y = self.value() as i32;
         let mut u = 0;
@@ -135,10 +135,10 @@ impl<M: Mod> Fp<M> {
     pub fn pow<T: Into<u64>>(self, exp: T) -> Self {
         let mut exp = exp.into();
         if exp == 0 {
-            return Fp::new(1);
+            return Self::new(1);
         }
         let mut base = self;
-        let mut acc = Fp::new(1);
+        let mut acc = Self::new(1);
         while 1 < exp {
             if exp & 1 == 1 {
                 acc *= base;
@@ -215,7 +215,7 @@ impl<M: Mod> Hash for Fp<M> {
         self.value().hash(state);
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> AddAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> AddAssign<T> for Fp<M> {
     fn add_assign(&mut self, rhs: T) {
         self.value += rhs.into().value;
         if M::P * 2 <= self.value {
@@ -223,7 +223,7 @@ impl<M: Mod, T: Into<Fp<M>>> AddAssign<T> for Fp<M> {
         }
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> SubAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> SubAssign<T> for Fp<M> {
     fn sub_assign(&mut self, rhs: T) {
         let rhs = rhs.into();
         if self.value < rhs.value {
@@ -232,13 +232,13 @@ impl<M: Mod, T: Into<Fp<M>>> SubAssign<T> for Fp<M> {
         self.value -= rhs.value;
     }
 }
-impl<M: Mod, T: Into<Fp<M>>> MulAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> MulAssign<T> for Fp<M> {
     fn mul_assign(&mut self, rhs: T) {
         self.value = reduce::<M>(self.value as u64 * rhs.into().value as u64);
     }
 }
 #[allow(clippy::suspicious_op_assign_impl)]
-impl<M: Mod, T: Into<Fp<M>>> DivAssign<T> for Fp<M> {
+impl<M: Mod, T: Into<Self>> DivAssign<T> for Fp<M> {
     fn div_assign(&mut self, rhs: T) {
         *self *= rhs.into().recip();
     }
@@ -284,7 +284,7 @@ forward_ops! {
 impl<M: Mod> Neg for Fp<M> {
     type Output = Self;
     fn neg(self) -> Self {
-        Fp::from_raw(M::P * 2 - self.value)
+        Self::from_raw(M::P * 2 - self.value)
     }
 }
 impl<M: Mod> Sum for Fp<M> {
@@ -298,12 +298,12 @@ impl<M: Mod> Product for Fp<M> {
     }
 }
 impl<'a, M: Mod> Sum<&'a Self> for Fp<M> {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Fp<M> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::new(0), |b, x| b + x)
     }
 }
 impl<'a, M: Mod> Product<&'a Self> for Fp<M> {
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Fp<M> {
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.fold(Self::new(1), |b, x| b * x)
     }
 }

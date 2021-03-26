@@ -64,7 +64,7 @@ pub fn exact_size_of_grid<T>(table: &[Vec<T>]) -> (usize, usize) {
 /// assert_eq!(transpose(&a), b);
 /// ```
 pub fn transpose<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
-    let (h, w) = exact_size_of_grid(&table);
+    let (h, w) = exact_size_of_grid(table);
     (0..w)
         .map(|j| (0..h).map(|i| table[i][j].clone()).collect::<Vec<_>>())
         .collect::<Vec<_>>()
@@ -80,7 +80,7 @@ pub fn transpose<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
 /// assert_eq!(anti_transpose(&a), b);
 /// ```
 pub fn anti_transpose<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
-    let (h, w) = exact_size_of_grid(&table);
+    let (h, w) = exact_size_of_grid(table);
     (0..w)
         .rev()
         .map(|j| {
@@ -131,7 +131,7 @@ pub fn reflect_horizontally<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
 /// assert_eq!(rotate_left(&a), b);
 /// ```
 pub fn rotate_right<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
-    let (h, w) = exact_size_of_grid(&table);
+    let (h, w) = exact_size_of_grid(table);
     (0..w)
         .map(|j| {
             (0..h)
@@ -152,7 +152,7 @@ pub fn rotate_right<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
 /// assert_eq!(rotate_right(&a), b);
 /// ```
 pub fn rotate_left<T: Clone>(table: &[Vec<T>]) -> Vec<Vec<T>> {
-    let (h, w) = exact_size_of_grid(&table);
+    let (h, w) = exact_size_of_grid(table);
     (0..w)
         .rev()
         .map(|j| (0..h).map(|i| table[i][j].clone()).collect::<Vec<_>>())

@@ -16,7 +16,7 @@ impl<T: Float> NotNaN<T> {
     pub fn from_float(value: T) -> Self {
         match value {
             ref value if value.float_is_nan() => panic!("これはなんですか？"),
-            value => NotNaN(value),
+            value => Self(value),
         }
     }
 
@@ -26,15 +26,15 @@ impl<T: Float> NotNaN<T> {
 }
 impl<T: Float> Eq for NotNaN<T> {}
 impl<T: Float> Ord for NotNaN<T> {
-    fn cmp(&self, other: &NotNaN<T>) -> Ordering {
-        match self.partial_cmp(&other) {
+    fn cmp(&self, other: &Self) -> Ordering {
+        match self.partial_cmp(other) {
             Some(ord) => ord,
             None => unreachable!(),
         }
     }
 }
 impl<T: Float> PartialOrd for NotNaN<T> {
-    fn partial_cmp(&self, other: &NotNaN<T>) -> Option<Ordering> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }

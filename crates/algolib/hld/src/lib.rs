@@ -197,8 +197,8 @@ mod tests {
     }
 
     fn lca_brute(g: &[Vec<usize>], u: usize, v: usize, root: usize) -> usize {
-        let path_a = bfs::find_path(root, u, &g).unwrap();
-        let path_b = bfs::find_path(root, v, &g).unwrap();
+        let path_a = bfs::find_path(root, u, g).unwrap();
+        let path_b = bfs::find_path(root, v, g).unwrap();
         path_a
             .into_iter()
             .zip(path_b.into_iter())

@@ -173,12 +173,12 @@ mod token {
     impl<T> Token for T
     where
         T: str::FromStr,
-        <T as str::FromStr>::Err: fmt::Debug,
+        <Self as str::FromStr>::Err: fmt::Debug,
     {
-        type Output = T;
+        type Output = Self;
         fn parse(s: &str) -> Self::Output {
             s.parse()
-                .unwrap_or_else(|_| panic!("Parse error!: ({}: {})", s, any::type_name::<T>(),))
+                .unwrap_or_else(|_| panic!("Parse error!: ({}: {})", s, any::type_name::<Self>(),))
         }
     }
 
