@@ -129,7 +129,7 @@ impl_fourier_and_convolution! {
 }
 
 /// 3 つの NTT-friendly 素数を用いて整数でコンボリューションします。
-pub fn integer_convolution(a: Vec<u32>, b: Vec<u32>) -> Vec<u128> {
+pub fn integer_convolution(a: &[u32], b: &[u32]) -> Vec<u128> {
     type Fp1 = F998244353;
     type Fp2 = F1012924417;
     type Fp3 = F924844033;
@@ -154,15 +154,15 @@ pub fn integer_convolution(a: Vec<u32>, b: Vec<u32>) -> Vec<u128> {
             let x3 = ((e3 - Fp3::new(x1.value())) * Fp3::new(Fp1::P).recip()
                 - Fp3::new(x2.value()))
                 * Fp3::new(Fp2::P).recip();
-            x1.value() as u128
-                + x2.value() as u128 * Fp1::P as u128
-                + x3.value() as u128 * Fp1::P as u128 * Fp2::P as u128
+            u128::from(x1.value())
+                + u128::from(x2.value()) * u128::from(Fp1::P)
+                + u128::from(x3.value()) * u128::from(Fp1::P) * u128::from(Fp2::P)
         })
         .collect::<Vec<_>>()
 }
 
 /// 3 つの NTT-friendly 素数を用いて任意 mod でコンボリューションします。
-pub fn anymod_convolution<M: Mod>(a: Vec<Fp<M>>, b: Vec<Fp<M>>) -> Vec<Fp<M>> {
+pub fn anymod_convolution<M: Mod>(a: &[Fp<M>], b: &[Fp<M>]) -> Vec<Fp<M>> {
     type Fp1 = F998244353;
     type Fp2 = F1012924417;
     type Fp3 = F924844033;
@@ -254,11 +254,11 @@ mod test {
             let b = repeat_with(|| rng.gen_range(0..std::u32::MAX))
                 .take(m)
                 .collect_vec();
-            let result = integer_convolution(a.clone(), b.clone());
+            let result = integer_convolution(&a, &b);
             let mut expected = vec![0; n + m - 1];
             for i in 0..n {
                 for j in 0..m {
-                    expected[i + j] += a[i] as u128 * b[j] as u128;
+                    expected[i + j] += u128::from(a[i]) * u128::from(b[j]);
                 }
             }
             assert_eq!(result, expected);
@@ -278,7 +278,7 @@ mod test {
             let b = repeat_with(|| Fp::new(rng.gen_range(0..Fp::P)))
                 .take(m)
                 .collect_vec();
-            let result = anymod_convolution(a.clone(), b.clone());
+            let result = anymod_convolution(&a, &b);
             let mut expected = vec![Fp::new(0); n + m - 1];
             for i in 0..n {
                 for j in 0..m {

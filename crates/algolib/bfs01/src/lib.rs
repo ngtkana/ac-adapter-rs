@@ -108,9 +108,7 @@ mod tests {
         assert_eq!(dist[s], 0);
         for (u, v, w) in g
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().map(move |&(j, w)| (i, j, w)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().map(move |&(j, w)| (i, j, w)))
         {
             match w {
                 super::Weight::Zero => {

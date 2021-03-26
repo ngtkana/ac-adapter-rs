@@ -226,7 +226,7 @@ struct Node<T> {
 }
 impl<T: Elm> Node<T> {
     fn new() -> Self {
-        Node {
+        Self {
             max: [T::min_value(), T::min_value()],
             c_max: 0,
             min: [T::max_value(), T::max_value()],
@@ -237,7 +237,7 @@ impl<T: Elm> Node<T> {
         }
     }
     fn single(x: T) -> Self {
-        Node {
+        Self {
             max: [x, T::min_value()],
             c_max: 1,
             min: [x, T::max_value()],
@@ -279,7 +279,7 @@ impl<T: Elm> Node<T> {
         }
         self.min[0] = x;
     }
-    fn merge(left: Node<T>, right: Node<T>) -> Self {
+    fn merge(left: Self, right: Self) -> Self {
         use std::cmp::Ordering;
         let (max, c_max) = {
             let [a, b] = left.max;

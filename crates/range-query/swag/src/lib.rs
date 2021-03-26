@@ -210,11 +210,7 @@ where
             .iter()
             .chain(self.v.borrow()[self.end..end].iter())
             .copied();
-        self.accum = if let Some(first) = iter.next() {
-            Some(iter.fold(first, &self.folder))
-        } else {
-            None
-        };
+        self.accum = iter.next().map(|first| iter.fold(first, &self.folder));
         self.end = end;
     }
 }
@@ -268,7 +264,7 @@ mod tests {
     #[test]
     fn test_algo_hand() {
         let mut swag = Swag::new((0..10).map(|i| (i, 1)).collect_vec(), |(x, d), (y, e)| {
-            (10u32.pow(e) * x + y, d + e)
+            (10_u32.pow(e) * x + y, d + e)
         });
         assert_eq!(swag.fold(1..3), Some((12, 2)));
         assert_eq!(swag.fold(4..4), None);

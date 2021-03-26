@@ -53,7 +53,7 @@ pub fn hopkarp(w: usize, graph: &[Vec<usize>]) -> HopkarpResult {
     let mut backward = vec![None; w].into_boxed_slice();
     let (left, right) = loop {
         let dist = bfs(graph, &forward, &backward);
-        if !dfs(&graph, &dist, &mut forward, &mut backward) {
+        if !dfs(graph, &dist, &mut forward, &mut backward) {
             break construct_minimum_cut(graph, &dist, &backward);
         }
     };
@@ -105,11 +105,9 @@ fn dfs(
     ) -> bool {
         used[x] = true;
         for &y in &graph[x] {
-            let found = if let Some(z) = backward[y] {
+            let found = backward[y].map_or(true, |z| {
                 !used[z] && dist[x] + 1 == dist[z] && rec(z, graph, dist, used, forward, backward)
-            } else {
-                true
-            };
+            });
             if found {
                 backward[y] = Some(x);
                 forward[x] = Some(y);
@@ -214,9 +212,7 @@ mod tests {
             .collect::<Vec<_>>();
         let unmach_edges = graph
             .iter()
-            .enumerate()
-            .map(|(x, v)| v.iter().map(move |&y| (x, y)))
-            .flatten()
+            .enumerate().flat_map(|(x, v)| v.iter().map(move |&y| (x, y)))
             .filter(|&(x, y)| backward[y] != Some(x))
             .collect::<Vec<_>>();
 

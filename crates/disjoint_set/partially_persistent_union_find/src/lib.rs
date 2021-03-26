@@ -284,7 +284,7 @@ mod tests {
                     // size
                     2 => {
                         let u = rng.gen_range(0..n);
-                        let t = rng.gen_range(0..history.len() + 1);
+                        let t = rng.gen_range(0..=history.len());
                         let result = uf.size(u, t);
                         let cmp = retake(n, t, &history);
                         let expected = cmp.iter().filter(|&&c| c == cmp[u]).count();

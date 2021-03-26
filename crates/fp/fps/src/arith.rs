@@ -65,7 +65,7 @@ where
 /// # 制約
 ///
 /// * `a[0]` が 1 。
-pub fn fps_exp<M: Mod>(a: Vec<Fp<M>>, precision: usize) -> Vec<Fp<M>>
+pub fn fps_exp<M: Mod>(a: &[Fp<M>], precision: usize) -> Vec<Fp<M>>
 where
     Fp<M>: Convolution,
 {
@@ -99,7 +99,7 @@ pub fn fps_sqrt<M: Mod>(mut a: Vec<Fp<M>>, precision: usize) -> Option<Vec<Fp<M>
 where
     Fp<M>: Convolution,
 {
-    if a.as_slice() == &[Fp::new(0)] {
+    if a.as_slice() == [Fp::new(0)] {
         return Some(a);
     }
     let zeros = a
@@ -215,7 +215,7 @@ mod tests {
                 .chain(repeat_with(|| Fp::new(rng.gen_range(0..20))))
                 .take(n)
                 .collect_vec();
-            let result = fps_exp(a.clone(), precision);
+            let result = fps_exp(&a, precision);
             let mut expected = vec![Fp::new(0); precision];
             expected[0] = Fp::new(1);
             let mut acc = vec![Fp::new(1)];

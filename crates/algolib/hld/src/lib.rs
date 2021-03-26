@@ -11,8 +11,6 @@ pub struct Hld {
 }
 impl Hld {
     pub fn new(mut g: Vec<Vec<usize>>, root: usize) -> Self {
-        let n = g.len();
-
         fn dfs(x: usize, p: usize, parent: &mut [usize], size: &mut [u32], g: &mut [Vec<usize>]) {
             let mut child = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
             for &c in &child {
@@ -27,11 +25,6 @@ impl Hld {
             }
             g[x] = child
         }
-        let mut size = vec![1; n];
-        let mut parent = vec![std::usize::MAX; n];
-        parent[root] = root;
-        dfs(root, root, &mut parent, &mut size, &mut g);
-
         fn efs(
             x: usize,
             head: &mut [usize],
@@ -46,6 +39,13 @@ impl Hld {
             }
             g[x].iter().for_each(|&y| efs(y, head, ord, vid, g));
         }
+
+        let n = g.len();
+        let mut size = vec![1; n];
+        let mut parent = vec![std::usize::MAX; n];
+        parent[root] = root;
+        dfs(root, root, &mut parent, &mut size, &mut g);
+
         let mut head = (0..n).collect::<Vec<_>>();
         let mut ord = Vec::new();
         let mut vid = vec![std::usize::MAX; n];
@@ -54,9 +54,9 @@ impl Hld {
             root,
             g,
             head,
+            parent,
             ord,
             vid,
-            parent,
         }
     }
     pub fn lca(&self, u: usize, v: usize) -> usize {
@@ -99,16 +99,16 @@ impl<'a> Iterator for Iter<'a> {
             if self.hld.vid[self.u] > self.hld.vid[self.v] {
                 std::mem::swap(&mut self.u, &mut self.v);
             }
-            let res = if self.hld.head[self.u] != self.hld.head[self.v] {
-                let res = (self.hld.vid[self.hld.head[self.v]], self.hld.vid[self.v]);
-                self.v = self.hld.parent[self.hld.head[self.v]];
-                res
-            } else {
+            let res = if self.hld.head[self.u] == self.hld.head[self.v] {
                 self.finished = true;
                 match self.include_lca {
                     IncludeLca::Yes => (self.hld.vid[self.u], self.hld.vid[self.v]),
                     IncludeLca::No => (self.hld.vid[self.u] + 1, self.hld.vid[self.v]),
                 }
+            } else {
+                let res = (self.hld.vid[self.hld.head[self.v]], self.hld.vid[self.v]);
+                self.v = self.hld.parent[self.hld.head[self.v]];
+                res
             };
             Some(res)
         }
@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_singleton() {
         let g = vec![Vec::new()];
-        let _ = Hld::new(g, 0);
+        Hld::new(g, 0);
     }
 
     #[test]
@@ -182,15 +182,13 @@ mod tests {
 
     fn psp_path_unsorted(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
         hld.iter_vtx(s, t)
-            .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
-            .flatten()
+            .flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 
     fn psp_path_unsorted_without_lca(hld: &Hld, s: usize, t: usize) -> Vec<usize> {
         hld.iter_edge(s, t)
-            .map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
-            .flatten()
+            .flat_map(|(l, r)| (l..=r).map(|i| hld.ord[i]))
             .collect()
     }
 
@@ -204,8 +202,8 @@ mod tests {
     }
 
     fn lca_brute(g: &[Vec<usize>], u: usize, v: usize, root: usize) -> usize {
-        let path_a = bfs::find_path(root, u, &g).unwrap();
-        let path_b = bfs::find_path(root, v, &g).unwrap();
+        let path_a = bfs::find_path(root, u, g).unwrap();
+        let path_b = bfs::find_path(root, v, g).unwrap();
         path_a
             .into_iter()
             .zip(path_b.into_iter())

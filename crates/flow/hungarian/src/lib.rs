@@ -34,9 +34,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let mut left = vec![T::infinity(); h].into_boxed_slice();
     for (i, x) in cost_matrix
         .iter()
-        .enumerate()
-        .map(|(i, v)| v.iter().map(move |&x| (i, x)))
-        .flatten()
+        .enumerate().flat_map(|(i, v)| v.iter().map(move |&x| (i, x)))
     {
         if x < all_min {
             all_min = x;
@@ -199,10 +197,10 @@ mod tests {
         test_case::test_case,
     };
 
-    #[test_case(vec![vec![4, 3, 5], vec![3, 5, 9], vec![4, 1, 4]] => (vec![2, 0, 1], 9); "yosupo sample")]
-    #[test_case(vec![vec![4, 3, 5], vec![3, 5, 0], vec![4, 1, 4]] => (vec![0, 2, 1], 5); "handmade")]
-    fn test_hand(cost_matrix: Vec<Vec<u8>>) -> (Vec<usize>, u8) {
-        let HungarianResult { forward, value, .. } = hungarian(&cost_matrix);
+    #[test_case(&[vec![4, 3, 5], vec![3, 5, 9], vec![4, 1, 4]] => (vec![2, 0, 1], 9); "yosupo sample")]
+    #[test_case(&[vec![4, 3, 5], vec![3, 5, 0], vec![4, 1, 4]] => (vec![0, 2, 1], 5); "handmade")]
+    fn test_hand(cost_matrix: &[Vec<u8>]) -> (Vec<usize>, u8) {
+        let HungarianResult { forward, value, .. } = hungarian(cost_matrix);
         (forward.into_vec(), value)
     }
 
@@ -277,9 +275,7 @@ mod tests {
         // feasibility
         for (i, j, x) in cost_matrix
             .iter()
-            .enumerate()
-            .map(|(i, v)| v.iter().enumerate().map(move |(j, &x)| (i, j, x)))
-            .flatten()
+            .enumerate().flat_map(|(i, v)| v.iter().enumerate().map(move |(j, &x)| (i, j, x)))
         {
             assert!(
                 right[j] <= x + left[i] + T::epsilon(),

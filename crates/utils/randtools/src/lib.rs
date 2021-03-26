@@ -36,7 +36,7 @@ impl Distribution<Range<usize>> for SubRange {
         let Range { start, end } = self.0;
         assert!(start <= end);
         let mut l = rng.gen_range(start..end + 2);
-        let mut r = rng.gen_range(start..end + 1);
+        let mut r = rng.gen_range(start..=end);
         if l > r {
             mem::swap(&mut l, &mut r);
             r -= 1;
@@ -52,7 +52,7 @@ impl Distribution<Range<usize>> for NonEmptySubRange {
         let Range { start, end } = self.0;
         assert!(start < end);
         let mut l = rng.gen_range(start..end);
-        let mut r = rng.gen_range(start..end + 1);
+        let mut r = rng.gen_range(start..=end);
         if l >= r {
             mem::swap(&mut l, &mut r);
             r += 1;
