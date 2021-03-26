@@ -130,7 +130,7 @@ mod tests {
     #[test]
     fn test_singleton() {
         let g = vec![Vec::new()];
-        let _ = Hld::new(g, 0);
+        Hld::new(g, 0);
     }
 
     #[test]
