@@ -105,11 +105,9 @@ fn dfs(
     ) -> bool {
         used[x] = true;
         for &y in &graph[x] {
-            let found = if let Some(z) = backward[y] {
+            let found = backward[y].map_or(true, |z| {
                 !used[z] && dist[x] + 1 == dist[z] && rec(z, graph, dist, used, forward, backward)
-            } else {
-                true
-            };
+            });
             if found {
                 backward[y] = Some(x);
                 forward[x] = Some(y);

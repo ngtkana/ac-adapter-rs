@@ -7,18 +7,20 @@ pub fn next_permutation<T: Ord>(a: &mut [T]) -> bool {
 pub fn next_permutation_by<T>(a: &mut [T], mut cmp: impl FnMut(&T, &T) -> Ordering) -> bool {
     if a.is_empty() {
         true
-    } else if let Some(i) = (0..a.len() - 1).rfind(|&i| cmp(&a[i], &a[i + 1]) == Ordering::Less) {
-        a[i + 1..].reverse();
-        let j = i
-            + 1
-            + a[i + 1..]
-                .iter()
-                .position(|x| cmp(&a[i], x) == (Ordering::Less))
-                .unwrap();
-        a.swap(i, j);
-        true
     } else {
-        false
+        (0..a.len() - 1)
+            .rfind(|&i| cmp(&a[i], &a[i + 1]) == Ordering::Less)
+            .map_or(false, |i| {
+                a[i + 1..].reverse();
+                let j = i
+                    + 1
+                    + a[i + 1..]
+                        .iter()
+                        .position(|x| cmp(&a[i], x) == (Ordering::Less))
+                        .unwrap();
+                a.swap(i, j);
+                true
+            })
     }
 }
 

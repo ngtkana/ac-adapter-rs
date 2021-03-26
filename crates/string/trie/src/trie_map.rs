@@ -71,11 +71,9 @@ impl<V> TrieMap<V> {
     pub fn insert(&mut self, key: impl IntoIterator<Item = usize>, value: V) -> Option<V> {
         let mut key = key.into_iter();
         let me = self.0.get_or_insert_with(|| Box::new(Node::new()));
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].insert(key, value)
-        } else {
-            me.value.replace(value)
+        match key.next() {
+            Some(next) => me.child[next].insert(key, value),
+            None => me.value.replace(value),
         }
     }
 
@@ -98,13 +96,11 @@ impl<V> TrieMap<V> {
     pub fn remove(&mut self, key: impl IntoIterator<Item = usize>) -> Option<V> {
         let mut key = key.into_iter();
         let me = self.0.as_deref_mut()?;
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].remove(key)
-        } else {
+        match key.next() {
+            Some(next) => me.child[next].remove(key),
             // TODO:
             // 不要になったノードを削除したいです。しかし、サイズを管理しておかないと実現できません。
-            me.value.take()
+            None => me.value.take(),
         }
     }
 
@@ -126,11 +122,9 @@ impl<V> TrieMap<V> {
     pub fn get(&self, key: impl IntoIterator<Item = usize>) -> Option<&V> {
         let mut key = key.into_iter();
         let me = self.0.as_deref()?;
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].get(key)
-        } else {
-            me.value.as_ref()
+        match key.next() {
+            Some(next) => me.child[next].get(key),
+            None => me.value.as_ref(),
         }
     }
 
@@ -155,11 +149,9 @@ impl<V> TrieMap<V> {
     pub fn get_mut(&mut self, key: impl IntoIterator<Item = usize>) -> Option<&mut V> {
         let mut key = key.into_iter();
         let me = self.0.as_deref_mut()?;
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].get_mut(key)
-        } else {
-            me.value.as_mut()
+        match key.next() {
+            Some(next) => me.child[next].get_mut(key),
+            None => me.value.as_mut(),
         }
     }
 
@@ -187,11 +179,9 @@ impl<V> TrieMap<V> {
     pub fn get_or_insert(&mut self, key: impl IntoIterator<Item = usize>, value: V) -> &mut V {
         let mut key = key.into_iter();
         let me = self.0.get_or_insert_with(|| Box::new(Node::new()));
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].get_or_insert(key, value)
-        } else {
-            me.value.get_or_insert(value)
+        match key.next() {
+            Some(next) => me.child[next].get_or_insert(key, value),
+            None => me.value.get_or_insert(value),
         }
     }
 
@@ -223,11 +213,9 @@ impl<V> TrieMap<V> {
     ) -> &mut V {
         let mut key = key.into_iter();
         let me = self.0.get_or_insert_with(|| Box::new(Node::new()));
-        let next = key.next();
-        if let Some(next) = next {
-            me.child[next].get_or_insert_with(key, f)
-        } else {
-            me.value.get_or_insert_with(f)
+        match key.next() {
+            Some(next) => me.child[next].get_or_insert_with(key, f),
+            None => me.value.get_or_insert_with(f),
         }
     }
 

@@ -210,11 +210,7 @@ where
             .iter()
             .chain(self.v.borrow()[self.end..end].iter())
             .copied();
-        self.accum = if let Some(first) = iter.next() {
-            Some(iter.fold(first, &self.folder))
-        } else {
-            None
-        };
+        self.accum = iter.next().map(|first| iter.fold(first, &self.folder));
         self.end = end;
     }
 }

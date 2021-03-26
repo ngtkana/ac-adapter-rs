@@ -121,13 +121,12 @@ mod adjacent {
         I: Iterator<Item = T>,
         T: Clone,
     {
-        if let Some(first) = iter.next() {
-            Adjacent {
+        match iter.next() {
+            Some(first) => Adjacent {
                 iter,
                 prv: Some(first),
-            }
-        } else {
-            Adjacent { iter, prv: None }
+            },
+            None => Adjacent { iter, prv: None },
         }
     }
 
