@@ -154,9 +154,9 @@ pub fn integer_convolution(a: Vec<u32>, b: Vec<u32>) -> Vec<u128> {
             let x3 = ((e3 - Fp3::new(x1.value())) * Fp3::new(Fp1::P).recip()
                 - Fp3::new(x2.value()))
                 * Fp3::new(Fp2::P).recip();
-            x1.value() as u128
-                + x2.value() as u128 * Fp1::P as u128
-                + x3.value() as u128 * Fp1::P as u128 * Fp2::P as u128
+            u128::from(x1.value())
+                + u128::from(x2.value()) * u128::from(Fp1::P)
+                + u128::from(x3.value()) * u128::from(Fp1::P) * u128::from(Fp2::P)
         })
         .collect::<Vec<_>>()
 }
@@ -258,7 +258,7 @@ mod test {
             let mut expected = vec![0; n + m - 1];
             for i in 0..n {
                 for j in 0..m {
-                    expected[i + j] += a[i] as u128 * b[j] as u128;
+                    expected[i + j] += u128::from(a[i]) * u128::from(b[j]);
                 }
             }
             assert_eq!(result, expected);
