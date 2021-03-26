@@ -11,7 +11,7 @@ pub struct Coord {
 }
 #[allow(clippy::many_single_char_names)]
 pub fn coord(h: usize, w: usize, d: Dihedral) -> Coord {
-    use Dihedral::*;
+    use Dihedral::{R0, R0S, R1, R1S, R2, R2S, R3, R3S};
     let mut h = h as isize;
     let mut w = w as isize;
     let (origin, x, y) = match d {

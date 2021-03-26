@@ -51,7 +51,7 @@ impl TryFrom<u8> for Dihedral {
 }
 impl From<Dihedral> for u8 {
     fn from(src: Dihedral) -> Self {
-        use Dihedral::*;
+        use Dihedral::{R0, R0S, R1, R1S, R2, R2S, R3, R3S};
         match src {
             R0 => 0,
             R1 => 1,

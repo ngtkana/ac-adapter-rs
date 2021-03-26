@@ -78,7 +78,7 @@ fn convert_to_range<T>(len: usize, range_bound: T) -> ops::Range<usize>
 where
     T: ops::RangeBounds<usize>,
 {
-    use ops::Bound::*;
+    use ops::Bound::{Excluded, Included, Unbounded};
     ops::Range {
         start: match range_bound.start_bound() {
             Excluded(&x) => x + 1,
