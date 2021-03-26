@@ -50,7 +50,14 @@ impl Hld {
         let mut ord = Vec::new();
         let mut vid = vec![std::usize::MAX; n];
         efs(root, &mut head, &mut ord, &mut vid, &g);
-        Self { root, g, head, parent, ord, vid }
+        Self {
+            root,
+            g,
+            head,
+            parent,
+            ord,
+            vid,
+        }
     }
     pub fn lca(&self, u: usize, v: usize) -> usize {
         self.ord[self.iter_vtx(u, v).last().unwrap().0]
@@ -92,16 +99,16 @@ impl<'a> Iterator for Iter<'a> {
             if self.hld.vid[self.u] > self.hld.vid[self.v] {
                 std::mem::swap(&mut self.u, &mut self.v);
             }
-            let res = if self.hld.head[self.u] != self.hld.head[self.v] {
-                let res = (self.hld.vid[self.hld.head[self.v]], self.hld.vid[self.v]);
-                self.v = self.hld.parent[self.hld.head[self.v]];
-                res
-            } else {
+            let res = if self.hld.head[self.u] == self.hld.head[self.v] {
                 self.finished = true;
                 match self.include_lca {
                     IncludeLca::Yes => (self.hld.vid[self.u], self.hld.vid[self.v]),
                     IncludeLca::No => (self.hld.vid[self.u] + 1, self.hld.vid[self.v]),
                 }
+            } else {
+                let res = (self.hld.vid[self.hld.head[self.v]], self.hld.vid[self.v]);
+                self.v = self.hld.parent[self.hld.head[self.v]];
+                res
             };
             Some(res)
         }
