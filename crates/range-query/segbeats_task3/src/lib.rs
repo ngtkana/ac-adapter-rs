@@ -361,11 +361,11 @@ impl<T: Elm> Node<T> {
         self.lazy_change_min_count += weight; // weigt には和が渡ってきますから、片方に寄せておくと良いです。
     }
     fn merge(node: &mut Self, left: Self, right: Self) {
+        use std::cmp::Ordering;
         assert_eq!(node.lazy_change_min_count, 0);
         assert_eq!(node.lazy_change_max_count, 0);
         assert_eq!(node.lazy_add_count, 0);
         assert_eq!(node.lazy_add, T::zero());
-        use std::cmp::Ordering;
         let (max, c_max) = {
             let [a, b] = left.max;
             let [c, d] = right.max;
