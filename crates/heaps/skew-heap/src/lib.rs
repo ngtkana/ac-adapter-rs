@@ -226,8 +226,8 @@ mod tests {
                         // collect
                         let mut expected = binary.iter().copied().collect_vec();
                         let mut result = skew.clone().into_sorted_vec();
-                        expected.sort();
-                        result.sort();
+                        expected.sort_unstable();
+                        result.sort_unstable();
                         assert_eq!(expected, result);
                     }
                     _ => unreachable!(),

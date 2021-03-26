@@ -50,14 +50,7 @@ impl Hld {
         let mut ord = Vec::new();
         let mut vid = vec![std::usize::MAX; n];
         efs(root, &mut head, &mut ord, &mut vid, &g);
-        Self {
-            root,
-            g,
-            head,
-            ord,
-            vid,
-            parent,
-        }
+        Self { root, g, head, parent, ord, vid }
     }
     pub fn lca(&self, u: usize, v: usize) -> usize {
         self.ord[self.iter_vtx(u, v).last().unwrap().0]
