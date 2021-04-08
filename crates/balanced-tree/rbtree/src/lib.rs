@@ -1,11 +1,33 @@
 mod detail;
 
-use std::{iter::FromIterator, mem::take};
+use {
+    detail::{Nil, Root},
+    std::{iter::FromIterator, marker::PhantomData, mem::take},
+};
 
 #[derive(Clone, Debug, Hash, PartialEq)]
-pub struct RbTree<T>(Option<Root<T>>);
+pub struct RbTree<T, O: Op = Nop<T>> {
+    root: Option<Root<T, O>>,
+    __marker: PhantomData<fn(O) -> O>,
+}
 
-impl<T> Default for RbTree<T> {
+pub trait Op {
+    type Value;
+    type Summary: Copy;
+    fn summarize(value: &Self::Value) -> Self::Summary;
+    fn op(lhs: Self::Summary, rhs: Self::Summary) -> Self::Summary;
+}
+pub struct Nop<T> {
+    __marker: PhantomData<fn(T) -> T>,
+}
+impl<T> Op for Nop<T> {
+    type Value = T;
+    type Summary = ();
+    fn summarize(_value: &Self::Value) -> Self::Summary {}
+    fn op(_lhs: Self::Summary, _rhs: Self::Summary) -> Self::Summary {}
+}
+
+impl<T, O: Op> Default for RbTree<T, O> {
     fn default() -> Self {
         Self::new()
     }
@@ -31,9 +53,8 @@ impl<A> FromIterator<A> for RbTree<A> {
     }
 }
 
-pub struct Iter<'a, T>(Vec<&'a Root<T>>);
-
-impl<'a, T> Iterator for Iter<'a, T> {
+pub struct Iter<'a, T, O>(Vec<&'a Root<T, O>>);
+impl<'a, T, O: Op> Iterator for Iter<'a, T, O> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -49,24 +70,24 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
-impl<T> RbTree<T> {
+impl<T, O: Op> RbTree<T, O> {
     pub fn new() -> Self {
-        Self(None)
+        Self::from_root(None)
     }
     pub fn len(&self) -> usize {
-        match &self.0 {
+        match &self.root {
             None => 0,
             Some(node) => node.len(),
         }
     }
-    pub fn iter(&self) -> Iter<'_, T> {
-        Iter(match &self.0 {
+    pub fn iter(&self) -> Iter<'_, T, O> {
+        Iter(match &self.root {
             None => Vec::new(),
             Some(node) => vec![node],
         })
     }
     pub fn singleton(x: T) -> Self {
-        Self(Some(Root::singleton(x)))
+        Self::from_root(Some(Root::singleton(x)))
     }
     pub fn push_front(&mut self, x: T) {
         *self = Self::merge(Self::singleton(x), take(self));
@@ -84,46 +105,36 @@ impl<T> RbTree<T> {
         let [l, cr] = take(self).split(i);
         let [c, r] = cr.split(1);
         *self = Self::merge(l, r);
-        match c.0 {
+        match c.root {
             Some(Root::Node(_)) | None => unreachable!(),
             Some(Root::Nil(Nil(x))) => x,
         }
     }
     pub fn merge(lhs: Self, rhs: Self) -> Self {
-        match [lhs.0, rhs.0] {
-            [None, None] => Self(None),
-            [Some(l), None] => Self(Some(l)),
-            [None, Some(r)] => Self(Some(r)),
-            [Some(l), Some(r)] => Self(Some(Root::merge(l, r))),
+        match [lhs.root, rhs.root] {
+            [None, None] => Self::from_root(None),
+            [Some(l), None] => Self::from_root(Some(l)),
+            [None, Some(r)] => Self::from_root(Some(r)),
+            [Some(l), Some(r)] => Self::from_root(Some(Root::merge(l, r))),
         }
     }
     pub fn split(self, i: usize) -> [Self; 2] {
         assert!((0..=self.len()).contains(&i));
         if i == 0 {
-            [Self(None), self]
+            [Self::from_root(None), self]
         } else if i == self.len() {
-            [self, Self(None)]
+            [self, Self::from_root(None)]
         } else {
-            let [l, r] = self.0.unwrap().split(i);
-            [Self(Some(l)), Self(Some(r))]
+            let [l, r] = self.root.unwrap().split(i);
+            [Self::from_root(Some(l)), Self::from_root(Some(r))]
         }
     }
-}
-
-#[derive(Clone, Debug, Hash, PartialEq)]
-enum Root<T> {
-    Nil(Nil<T>),
-    Node(Node<T>),
-}
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-struct Nil<T>(T);
-
-#[derive(Clone, Debug, Hash, PartialEq)]
-struct Node<T> {
-    left: Box<Root<T>>,
-    right: Box<Root<T>>,
-    height: usize,
-    len: usize,
+    fn from_root(root: Option<Root<T, O>>) -> Self {
+        Self {
+            root,
+            __marker: PhantomData,
+        }
+    }
 }
 
 #[cfg(test)]
@@ -137,7 +148,7 @@ mod tests {
     use test_case::test_case;
 
     fn validate<T>(tree: &RbTree<T>) {
-        match &tree.0 {
+        match &tree.root {
             None => (),
             Some(root) => validate_dfs(root),
         }
