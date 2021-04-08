@@ -1,23 +1,39 @@
 use {
-    super::{Nil, Node, Root},
-    std::cmp::Ordering,
+    super::{Nop, Op},
+    std::{cmp::Ordering, marker::PhantomData},
 };
 
-impl<T> Node<T> {
-    pub fn new(lhs: Box<Root<T>>, rhs: Box<Root<T>>, height: usize) -> Self {
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub enum Root<T, O = Nop<T>> {
+    Nil(Nil<T>),
+    Node(Node<T, O>),
+}
+#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+pub struct Nil<T>(pub T);
+#[derive(Clone, Debug, Hash, PartialEq)]
+pub struct Node<T, O> {
+    pub left: Box<Root<T, O>>,
+    pub right: Box<Root<T, O>>,
+    pub height: usize,
+    pub len: usize,
+    pub __marker: PhantomData<fn(O) -> O>,
+}
+
+impl<T, O: Op> Node<T, O> {
+    pub fn new(lhs: Box<Root<T, O>>, rhs: Box<Root<T, O>>, height: usize) -> Self {
         Self {
             len: lhs.len() + rhs.len(),
             height,
             left: lhs,
             right: rhs,
+            __marker: PhantomData,
         }
     }
     pub fn update(&mut self) {
         self.len = self.left.len() + self.right.len();
     }
 }
-
-impl<T> Root<T> {
+impl<T, O: Op> Root<T, O> {
     pub fn split(self, i: usize) -> [Self; 2] {
         let node = self.into_node().unwrap();
         let left_len = node.left.len();
@@ -57,6 +73,7 @@ impl<T> Root<T> {
                 right: r,
                 height,
                 len: _,
+                __marker: _,
             } = node.left.into_node().unwrap();
             node = Node::new(
                 l,
@@ -85,6 +102,7 @@ impl<T> Root<T> {
                     right: r,
                     height,
                     len: _,
+                    __marker: _,
                 } = node.right.into_node().unwrap();
                 node = Node::new(
                     Box::new(Root::Node(Node::new(node.left, l, height))),
@@ -97,13 +115,13 @@ impl<T> Root<T> {
         }
         Self::Node(node)
     }
-    pub fn node(&self) -> Option<&Node<T>> {
+    pub fn node(&self) -> Option<&Node<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Node(node) => Some(node),
         }
     }
-    pub fn into_node(self) -> Option<Node<T>> {
+    pub fn into_node(self) -> Option<Node<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Node(node) => Some(node),
