@@ -2,20 +2,23 @@ use std::cmp::Ordering;
 
 // Non-empty RB-tree
 #[derive(Clone, Debug, Hash, PartialEq)]
-enum Root {
-    Nil,
-    Node(Node),
+enum Root<T> {
+    Nil(Nil<T>),
+    Node(Node<T>),
 }
-impl Root {}
+#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+struct Nil<T>(T);
+
 #[derive(Clone, Debug, Hash, PartialEq)]
-struct Node {
-    left: Box<Root>,
-    right: Box<Root>,
+struct Node<T> {
+    left: Box<Root<T>>,
+    right: Box<Root<T>>,
     height: usize,
     len: usize,
 }
-impl Node {
-    fn new(lhs: Box<Root>, rhs: Box<Root>, height: usize) -> Self {
+
+impl<T> Node<T> {
+    fn new(lhs: Box<Root<T>>, rhs: Box<Root<T>>, height: usize) -> Self {
         Self {
             len: lhs.len() + rhs.len(),
             height,
@@ -28,7 +31,7 @@ impl Node {
     }
 }
 
-impl Root {
+impl<T> Root<T> {
     fn split(self, i: usize) -> [Self; 2] {
         let node = self.into_node().unwrap();
         let left_len = node.left.len();
@@ -105,27 +108,27 @@ impl Root {
         }
         Self::Node(node)
     }
-    fn node(&self) -> Option<&Node> {
+    fn node(&self) -> Option<&Node<T>> {
         match self {
-            Self::Nil => None,
+            Self::Nil(_) => None,
             Self::Node(node) => Some(node),
         }
     }
-    fn into_node(self) -> Option<Node> {
+    fn into_node(self) -> Option<Node<T>> {
         match self {
-            Self::Nil => None,
+            Self::Nil(_) => None,
             Self::Node(node) => Some(node),
         }
     }
     fn len(&self) -> usize {
         match self {
-            Self::Nil => 1,
+            Self::Nil(_) => 1,
             Self::Node(node) => node.len,
         }
     }
     fn height(&self) -> usize {
         match self {
-            Self::Nil => 0,
+            Self::Nil(_) => 0,
             Self::Node(node) => node.height,
         }
     }
@@ -134,15 +137,15 @@ impl Root {
 #[cfg(test)]
 mod tests {
     use {
-        super::{Node, Root},
+        super::{Nil, Node, Root},
         test_case::test_case,
     };
 
-    fn to_structure_sring(root: &Root) -> String {
-        fn dfs(root: &Root, s: &mut String) {
+    fn to_structure_sring(root: &Root<()>) -> String {
+        fn dfs(root: &Root<()>, s: &mut String) {
             s.push('(');
             match root {
-                Root::Nil => (),
+                Root::Nil(_) => (),
                 Root::Node(node) => {
                     dfs(&node.left, s);
                     s.push_str(&node.height.to_string());
@@ -158,32 +161,32 @@ mod tests {
         s
     }
 
-    fn one_node() -> Root {
-        Root::Nil
+    fn one_node() -> Root<()> {
+        Root::Nil(Nil(()))
     }
-    fn two_node() -> Root {
+    fn two_node() -> Root<()> {
         Root::Node(Node::new(Box::new(one_node()), Box::new(one_node()), 1))
     }
-    fn three_node() -> Root {
+    fn three_node() -> Root<()> {
         Root::Node(Node::new(Box::new(two_node()), Box::new(one_node()), 1))
     }
-    fn two_node_two_node() -> Root {
+    fn two_node_two_node() -> Root<()> {
         Root::Node(Node::new(Box::new(two_node()), Box::new(two_node()), 2))
     }
-    fn two_node_three_node() -> Root {
+    fn two_node_three_node() -> Root<()> {
         Root::Node(Node::new(Box::new(two_node()), Box::new(three_node()), 2))
     }
-    fn three_node_two_node() -> Root {
+    fn three_node_two_node() -> Root<()> {
         Root::Node(Node::new(Box::new(three_node()), Box::new(two_node()), 2))
     }
-    fn three_node_three_node() -> Root {
+    fn three_node_three_node() -> Root<()> {
         Root::Node(Node::new(Box::new(three_node()), Box::new(three_node()), 2))
     }
 
     #[test_case(one_node() => "()".to_owned())]
     #[test_case(two_node() => "(()1,2())".to_owned())]
     #[test_case(three_node() => "((()1,2())1,3())".to_owned())]
-    fn test_to_structure_string(root: Root) -> String {
+    fn test_to_structure_string(root: Root<()>) -> String {
         to_structure_sring(&root)
     }
 
@@ -196,7 +199,7 @@ mod tests {
     #[test_case(three_node(), one_node() => to_structure_sring(&two_node_two_node()))]
     #[test_case(three_node(), two_node() => to_structure_sring(&three_node_two_node()))]
     #[test_case(three_node(), three_node() => to_structure_sring(&three_node_three_node()))]
-    fn test_merge(lhs: Root, rhs: Root) -> String {
+    fn test_merge(lhs: Root<()>, rhs: Root<()>) -> String {
         to_structure_sring(&Root::merge(lhs, rhs))
     }
 
@@ -210,7 +213,7 @@ mod tests {
     #[test_case(two_node_three_node(), 2 => [to_structure_sring(&two_node()), to_structure_sring(&three_node())])]
     #[test_case(two_node_three_node(), 3 => [to_structure_sring(&three_node()), to_structure_sring(&two_node())])]
     #[test_case(two_node_three_node(), 4 => [to_structure_sring(&two_node_two_node()), to_structure_sring(&one_node())])]
-    fn test_split(root: Root, i: usize) -> [String; 2] {
+    fn test_split(root: Root<()>, i: usize) -> [String; 2] {
         let [l, r] = &Root::split(root, i);
         [to_structure_sring(&l), to_structure_sring(&r)]
     }
