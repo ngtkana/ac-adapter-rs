@@ -1,28 +1,80 @@
+use std::hash::{Hash, Hasher};
+
 use {
     super::{Nop, Op},
     std::{cmp::Ordering, marker::PhantomData},
 };
 
-#[derive(Clone, Debug, Hash, PartialEq)]
-pub enum Root<T, O = Nop<T>> {
+#[derive(Clone)]
+pub enum Root<T, O: Op<Value = T> = Nop<T>> {
     Nil(Nil<T>),
     Node(Node<T, O>),
 }
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
 pub struct Nil<T>(pub T);
-#[derive(Clone, Debug, Hash, PartialEq)]
-pub struct Node<T, O> {
+#[derive(Clone)]
+pub struct Node<T, O: Op<Value = T>> {
     pub left: Box<Root<T, O>>,
     pub right: Box<Root<T, O>>,
     pub height: usize,
     pub len: usize,
+    pub summary: O::Summary,
     pub __marker: PhantomData<fn(O) -> O>,
 }
 
-impl<T, O: Op> Node<T, O> {
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for Root<T, O>
+where
+    O::Summary: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        match [self, other] {
+            [Self::Nil(x), Self::Nil(y)] => x.eq(y),
+            [Self::Node(x), Self::Node(y)] => x.eq(y),
+            _ => false,
+        }
+    }
+}
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for Node<T, O>
+where
+    O::Summary: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.left.eq(&other.left)
+            && self.right.eq(&other.right)
+            && self.height.eq(&other.height)
+            && self.len.eq(&other.len)
+            && self.summary.eq(&other.summary)
+    }
+}
+impl<T: Hash, O: Op<Value = T>> Hash for Root<T, O>
+where
+    O::Summary: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Self::Nil(x) => x.hash(state),
+            Self::Node(x) => x.hash(state),
+        }
+    }
+}
+impl<T: Hash, O: Op<Value = T>> Hash for Node<T, O>
+where
+    O::Summary: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.left.hash(state);
+        self.right.hash(state);
+        self.height.hash(state);
+        self.len.hash(state);
+        self.summary.hash(state);
+    }
+}
+
+impl<T, O: Op<Value = T>> Node<T, O> {
     pub fn new(lhs: Box<Root<T, O>>, rhs: Box<Root<T, O>>, height: usize) -> Self {
         Self {
             len: lhs.len() + rhs.len(),
+            summary: O::op(lhs.summary(), rhs.summary()),
             height,
             left: lhs,
             right: rhs,
@@ -33,7 +85,13 @@ impl<T, O: Op> Node<T, O> {
         self.len = self.left.len() + self.right.len();
     }
 }
-impl<T, O: Op> Root<T, O> {
+impl<T, O: Op<Value = T>> Root<T, O> {
+    pub fn len(&self) -> usize {
+        match self {
+            Self::Nil(_) => 1,
+            Self::Node(node) => node.len,
+        }
+    }
     pub fn split(self, i: usize) -> [Self; 2] {
         let node = self.into_node().unwrap();
         let left_len = node.left.len();
@@ -109,22 +167,22 @@ impl<T, O: Op> Root<T, O> {
             Self::Node(node) => Some(node),
         }
     }
-    pub fn into_node(self) -> Option<Node<T, O>> {
+    fn into_node(self) -> Option<Node<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Node(node) => Some(node),
         }
     }
-    pub fn len(&self) -> usize {
-        match self {
-            Self::Nil(_) => 1,
-            Self::Node(node) => node.len,
-        }
-    }
-    pub fn height(&self) -> usize {
+    fn height(&self) -> usize {
         match self {
             Self::Nil(_) => 0,
             Self::Node(node) => node.height,
+        }
+    }
+    fn summary(&self) -> O::Summary {
+        match self {
+            Self::Nil(Nil(x)) => O::summarize(x),
+            Self::Node(node) => node.summary,
         }
     }
 }

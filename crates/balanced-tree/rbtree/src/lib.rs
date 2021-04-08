@@ -2,13 +2,36 @@ mod detail;
 
 use {
     detail::{Nil, Root},
-    std::{iter::FromIterator, marker::PhantomData, mem::take},
+    std::{
+        fmt::{self, Debug},
+        hash::{Hash, Hasher},
+        iter::FromIterator,
+        marker::PhantomData,
+        mem::take,
+    },
 };
 
-#[derive(Clone, Debug, Hash, PartialEq)]
-pub struct RbTree<T, O: Op = Nop<T>> {
+#[derive(Clone)]
+pub struct RbTree<T, O: Op<Value = T> = Nop<T>> {
     root: Option<Root<T, O>>,
     __marker: PhantomData<fn(O) -> O>,
+}
+
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
+where
+    O::Summary: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.root.eq(&other.root)
+    }
+}
+impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
+where
+    O::Summary: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.root.hash(state);
+    }
 }
 
 pub trait Op {
@@ -27,7 +50,12 @@ impl<T> Op for Nop<T> {
     fn op(_lhs: Self::Summary, _rhs: Self::Summary) -> Self::Summary {}
 }
 
-impl<T, O: Op> Default for RbTree<T, O> {
+impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
     fn default() -> Self {
         Self::new()
     }
@@ -53,8 +81,8 @@ impl<A> FromIterator<A> for RbTree<A> {
     }
 }
 
-pub struct Iter<'a, T, O>(Vec<&'a Root<T, O>>);
-impl<'a, T, O: Op> Iterator for Iter<'a, T, O> {
+pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Root<T, O>>);
+impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -70,7 +98,7 @@ impl<'a, T, O: Op> Iterator for Iter<'a, T, O> {
     }
 }
 
-impl<T, O: Op> RbTree<T, O> {
+impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn new() -> Self {
         Self::from_root(None)
     }
