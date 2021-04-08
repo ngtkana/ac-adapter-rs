@@ -1,8 +1,10 @@
-use std::hash::{Hash, Hasher};
-
 use {
     super::{Nop, Op},
-    std::{cmp::Ordering, marker::PhantomData},
+    std::{
+        cmp::Ordering,
+        hash::{Hash, Hasher},
+        marker::PhantomData,
+    },
 };
 
 #[derive(Clone)]
@@ -83,6 +85,7 @@ impl<T, O: Op<Value = T>> Node<T, O> {
     }
     pub fn update(&mut self) {
         self.len = self.left.len() + self.right.len();
+        self.summary = O::op(self.left.summary().clone(), self.right.summary().clone());
     }
 }
 impl<T, O: Op<Value = T>> Root<T, O> {
@@ -179,10 +182,10 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             Self::Node(node) => node.height,
         }
     }
-    fn summary(&self) -> O::Summary {
+    pub fn summary(&self) -> O::Summary {
         match self {
             Self::Nil(Nil(x)) => O::summarize(x),
-            Self::Node(node) => node.summary,
+            Self::Node(node) => node.summary.clone(),
         }
     }
 }

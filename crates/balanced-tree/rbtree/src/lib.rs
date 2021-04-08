@@ -8,6 +8,7 @@ use {
         iter::FromIterator,
         marker::PhantomData,
         mem::take,
+        ops::{Bound, Range, RangeBounds},
     },
 };
 
@@ -15,6 +16,15 @@ use {
 pub struct RbTree<T, O: Op<Value = T> = Nop<T>> {
     root: Option<Root<T, O>>,
     __marker: PhantomData<fn(O) -> O>,
+}
+pub trait Op {
+    type Value;
+    type Summary: Clone;
+    fn summarize(value: &Self::Value) -> Self::Summary;
+    fn op(lhs: Self::Summary, rhs: Self::Summary) -> Self::Summary;
+}
+pub struct Nop<T> {
+    __marker: PhantomData<fn(T) -> T>,
 }
 
 impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
@@ -33,23 +43,6 @@ where
         self.root.hash(state);
     }
 }
-
-pub trait Op {
-    type Value;
-    type Summary: Copy;
-    fn summarize(value: &Self::Value) -> Self::Summary;
-    fn op(lhs: Self::Summary, rhs: Self::Summary) -> Self::Summary;
-}
-pub struct Nop<T> {
-    __marker: PhantomData<fn(T) -> T>,
-}
-impl<T> Op for Nop<T> {
-    type Value = T;
-    type Summary = ();
-    fn summarize(_value: &Self::Value) -> Self::Summary {}
-    fn op(_lhs: Self::Summary, _rhs: Self::Summary) -> Self::Summary {}
-}
-
 impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
@@ -60,8 +53,14 @@ impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
         Self::new()
     }
 }
+impl<T> Op for Nop<T> {
+    type Value = T;
+    type Summary = ();
+    fn summarize(_value: &Self::Value) -> Self::Summary {}
+    fn op(_lhs: Self::Summary, _rhs: Self::Summary) -> Self::Summary {}
+}
 
-impl<A> FromIterator<A> for RbTree<A> {
+impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
         let mut nodes = iter
             .into_iter()
@@ -98,6 +97,18 @@ impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     }
 }
 
+fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
+    (match range.start_bound() {
+        Bound::Unbounded => 0,
+        Bound::Included(&x) => x,
+        Bound::Excluded(&x) => x + 1,
+    })..match range.end_bound() {
+        Bound::Excluded(&x) => x,
+        Bound::Included(&x) => x + 1,
+        Bound::Unbounded => len,
+    }
+}
+
 impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn new() -> Self {
         Self::from_root(None)
@@ -113,6 +124,19 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             None => Vec::new(),
             Some(node) => vec![node],
         })
+    }
+    pub fn fold(&mut self, range: impl RangeBounds<usize>) -> Option<O::Summary> {
+        let Range { start, end } = open(range, self.len());
+        assert!(start <= end && end <= self.len());
+        if start == end {
+            return None;
+        }
+        let root = take(&mut self.root).unwrap();
+        let [l, cr] = Self::from_root(Some(root)).split(start);
+        let [c, r] = cr.split(end - start);
+        let res = c.root.as_ref().unwrap().summary();
+        *self = Self::merge(Self::merge(l, c), r);
+        Some(res)
     }
     pub fn singleton(x: T) -> Self {
         Self::from_root(Some(Root::singleton(x)))
@@ -167,21 +191,20 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
 
 #[cfg(test)]
 mod tests {
+    use super::{Op, RbTree, Root};
     use itertools::Itertools;
+    use rand::{distributions::Alphanumeric, prelude::StdRng, Rng, SeedableRng};
+    use randtools::SubRange;
+    use std::fmt::Debug;
     use std::iter::repeat_with;
 
-    use super::{RbTree, Root};
-    use rand::{prelude::StdRng, Rng, SeedableRng};
-    #[allow(unused_imports)]
-    use test_case::test_case;
-
-    fn validate<T>(tree: &RbTree<T>) {
+    fn validate<T: Debug, O: Op<Value = T>>(tree: &RbTree<T, O>) {
         match &tree.root {
             None => (),
             Some(root) => validate_dfs(root),
         }
     }
-    fn validate_dfs<T>(root: &Root<T>) {
+    fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Root<T, O>) {
         if let Some(node) = root.node() {
             if let Some(left) = node.left.node() {
                 assert!(left.height == node.height || left.height == node.height - 1);
@@ -203,7 +226,6 @@ mod tests {
         for _ in 0..200 {
             let n = rng.gen_range(0..200);
             let a = repeat_with(|| rng.gen_range(0..100)).take(n).collect_vec();
-            println!("a = {:?}", &a);
             let tree = a.iter().copied().collect::<RbTree<_>>();
             validate(&tree);
             let b = tree.iter().copied().collect_vec();
@@ -215,7 +237,7 @@ mod tests {
     fn test_insert_delete() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(0..200);
+            let n = rng.gen_range(0..80);
             let mut a = repeat_with(|| rng.gen_range(0..100)).take(n).collect_vec();
             let mut tree = a.iter().copied().collect::<RbTree<_>>();
             validate(&tree);
@@ -236,6 +258,84 @@ mod tests {
                         let i = rng.gen_range(0..a.len());
                         a.remove(i);
                         tree.delete(i);
+                    }
+                    _ => unreachable!(),
+                }
+                validate(&tree);
+                let b = tree.iter().copied().collect_vec();
+                assert_eq!(&a, &b);
+            }
+        }
+    }
+
+    struct O {}
+    impl Op for O {
+        type Summary = String;
+        type Value = char;
+        fn summarize(value: &Self::Value) -> Self::Summary {
+            value.to_string()
+        }
+        fn op(lhs: Self::Summary, rhs: Self::Summary) -> Self::Summary {
+            lhs.chars().chain(rhs.chars()).collect()
+        }
+    }
+
+    #[test]
+    fn test_fold() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(0..20);
+            let a = repeat_with(|| rng.sample(Alphanumeric))
+                .map(|c| c as char)
+                .take(n)
+                .collect_vec();
+            let mut tree = a.iter().copied().collect::<RbTree<_, O>>();
+            validate(&tree);
+
+            for _ in 0..10 + 2 * n {
+                let range = rng.sample(SubRange(0..n));
+                let result = tree.fold(range.clone()).unwrap_or_default();
+                let expected = a[range].iter().collect::<String>();
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_insert_delete_fold() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(0..80);
+            let mut a = repeat_with(|| rng.sample(Alphanumeric))
+                .map(|c| c as char)
+                .take(n)
+                .collect_vec();
+            let mut tree = a.iter().copied().collect::<RbTree<_, O>>();
+            validate(&tree);
+            let b = tree.iter().copied().collect_vec();
+            assert_eq!(&a, &b);
+
+            for _ in 0..10 + 2 * n {
+                match rng.gen_range(0..3) {
+                    // insert
+                    0 => {
+                        let i = rng.gen_range(0..=a.len());
+                        let x = rng.sample(Alphanumeric) as char;
+                        a.insert(i, x);
+                        tree.insert(i, x);
+                    }
+                    // delete
+                    1 => {
+                        let i = rng.gen_range(0..a.len());
+                        a.remove(i);
+                        tree.delete(i);
+                    }
+                    // fold
+                    2 => {
+                        let range = rng.sample(SubRange(0..a.len()));
+                        let result = tree.fold(range.clone()).unwrap_or_default();
+                        let expected = a[range].iter().collect::<String>();
+                        assert_eq!(result, expected);
                     }
                     _ => unreachable!(),
                 }
