@@ -31,20 +31,18 @@ impl<A> FromIterator<A> for RbTree<A> {
     }
 }
 
-pub struct Iter<'a, T> {
-    stack: Vec<&'a Root<T>>,
-}
+pub struct Iter<'a, T>(Vec<&'a Root<T>>);
 
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match self.stack.pop() {
+            match self.0.pop() {
                 None => return None,
                 Some(Root::Nil(Nil(x))) => return Some(x),
                 Some(Root::Node(node)) => {
-                    self.stack.push(&node.right);
-                    self.stack.push(&node.left);
+                    self.0.push(&node.right);
+                    self.0.push(&node.left);
                 }
             }
         }
@@ -62,12 +60,10 @@ impl<T> RbTree<T> {
         }
     }
     pub fn iter(&self) -> Iter<'_, T> {
-        Iter {
-            stack: match &self.0 {
-                None => Vec::new(),
-                Some(node) => vec![node],
-            },
-        }
+        Iter(match &self.0 {
+            None => Vec::new(),
+            Some(node) => vec![node],
+        })
     }
     pub fn singleton(x: T) -> Self {
         Self(Some(Root::singleton(x)))
@@ -165,14 +161,49 @@ mod tests {
     #[test]
     fn test_iter() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(0..20);
+        for _ in 0..200 {
+            let n = rng.gen_range(0..200);
             let a = repeat_with(|| rng.gen_range(0..100)).take(n).collect_vec();
             println!("a = {:?}", &a);
             let tree = a.iter().copied().collect::<RbTree<_>>();
             validate(&tree);
             let b = tree.iter().copied().collect_vec();
             assert_eq!(&a, &b);
+        }
+    }
+
+    #[test]
+    fn test_insert_delete() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(0..200);
+            let mut a = repeat_with(|| rng.gen_range(0..100)).take(n).collect_vec();
+            let mut tree = a.iter().copied().collect::<RbTree<_>>();
+            validate(&tree);
+            let b = tree.iter().copied().collect_vec();
+            assert_eq!(&a, &b);
+
+            for _ in 0..10 + 2 * n {
+                match rng.gen_range(0..2) {
+                    // insert
+                    0 => {
+                        let i = rng.gen_range(0..=a.len());
+                        let x = rng.gen_range(0..100);
+                        a.insert(i, x);
+                        tree.insert(i, x);
+                    }
+                    // delete
+                    1 => {
+                        let i = rng.gen_range(0..a.len());
+                        a.remove(i);
+                        tree.delete(i);
+                    }
+                    _ => unreachable!(),
+                }
+                validate(&tree);
+                let b = tree.iter().copied().collect_vec();
+                assert_eq!(&a, &b);
+            }
         }
     }
 }
