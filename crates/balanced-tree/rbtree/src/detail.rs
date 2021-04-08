@@ -85,7 +85,7 @@ impl<T, O: Op<Value = T>> Node<T, O> {
     }
     pub fn update(&mut self) {
         self.len = self.left.len() + self.right.len();
-        self.summary = O::op(self.left.summary().clone(), self.right.summary().clone());
+        self.summary = O::op(self.left.summary(), self.right.summary());
     }
 }
 impl<T, O: Op<Value = T>> Root<T, O> {
@@ -132,7 +132,7 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             let left = node.left.into_node().unwrap();
             node = Node::new(
                 left.left,
-                Box::new(Root::Node(Node::new(left.right, node.right, left.height))),
+                Box::new(Self::Node(Node::new(left.right, node.right, left.height))),
                 left.height + 1,
             );
         } else {
@@ -154,7 +154,7 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             } else {
                 let right = node.right.into_node().unwrap();
                 node = Node::new(
-                    Box::new(Root::Node(Node::new(node.left, right.left, right.height))),
+                    Box::new(Self::Node(Node::new(node.left, right.left, right.height))),
                     right.right,
                     right.height,
                 );
