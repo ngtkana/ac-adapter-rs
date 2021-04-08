@@ -7,14 +7,12 @@ use {
     },
 };
 
-#[derive(Clone)]
 pub enum Root<T, O: Op<Value = T> = Nop<T>> {
     Nil(Nil<T>),
     Node(Node<T, O>),
 }
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
 pub struct Nil<T>(pub T);
-#[derive(Clone)]
 pub struct Node<T, O: Op<Value = T>> {
     pub left: Box<Root<T, O>>,
     pub right: Box<Root<T, O>>,
@@ -24,6 +22,32 @@ pub struct Node<T, O: Op<Value = T>> {
     pub __marker: PhantomData<fn(O) -> O>,
 }
 
+impl<T: Clone, O: Op<Value = T>> Clone for Root<T, O>
+where
+    O::Summary: Clone,
+{
+    fn clone(&self) -> Self {
+        match self {
+            Self::Nil(x) => Self::Nil(x.clone()),
+            Self::Node(x) => Self::Node(x.clone()),
+        }
+    }
+}
+impl<T: Clone, O: Op<Value = T>> Clone for Node<T, O>
+where
+    O::Summary: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            left: self.left.clone(),
+            right: self.right.clone(),
+            height: self.height,
+            len: self.len,
+            summary: self.summary.clone(),
+            __marker: self.__marker,
+        }
+    }
+}
 impl<T: PartialEq, O: Op<Value = T>> PartialEq for Root<T, O>
 where
     O::Summary: PartialEq,
