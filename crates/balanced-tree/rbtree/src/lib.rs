@@ -62,10 +62,7 @@ impl<T> Op for Nop<T> {
 
 impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
-        let mut nodes = iter
-            .into_iter()
-            .map(|x| Self::singleton(x))
-            .collect::<Vec<_>>();
+        let mut nodes = iter.into_iter().map(Self::singleton).collect::<Vec<_>>();
         if nodes.is_empty() {
             return Self::default();
         }
@@ -113,6 +110,9 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn new() -> Self {
         Self::from_root(None)
     }
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
     pub fn len(&self) -> usize {
         match &self.root {
             None => 0,
@@ -159,7 +159,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         *self = Self::merge(l, r);
         match c.root {
             Some(Root::Node(_)) | None => unreachable!(),
-            Some(Root::Nil(Nil(x))) => x,
+            Some(Root::Nil(Nil(value))) => value,
         }
     }
     pub fn merge(lhs: Self, rhs: Self) -> Self {
@@ -237,14 +237,16 @@ mod tests {
     fn test_insert_delete() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(0..80);
-            let mut a = repeat_with(|| rng.gen_range(0..100)).take(n).collect_vec();
+            let len = rng.gen_range(0..80);
+            let mut a = repeat_with(|| rng.gen_range(0..100))
+                .take(len)
+                .collect_vec();
             let mut tree = a.iter().copied().collect::<RbTree<_>>();
             validate(&tree);
             let b = tree.iter().copied().collect_vec();
             assert_eq!(&a, &b);
 
-            for _ in 0..10 + 2 * n {
+            for _ in 0..10 + 2 * len {
                 match rng.gen_range(0..2) {
                     // insert
                     0 => {
@@ -284,16 +286,16 @@ mod tests {
     fn test_fold() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(0..20);
+            let len = rng.gen_range(0..20);
             let a = repeat_with(|| rng.sample(Alphanumeric))
                 .map(|c| c as char)
-                .take(n)
+                .take(len)
                 .collect_vec();
             let mut tree = a.iter().copied().collect::<RbTree<_, O>>();
             validate(&tree);
 
-            for _ in 0..10 + 2 * n {
-                let range = rng.sample(SubRange(0..n));
+            for _ in 0..10 + 2 * len {
+                let range = rng.sample(SubRange(0..len));
                 let result = tree.fold(range.clone()).unwrap_or_default();
                 let expected = a[range].iter().collect::<String>();
                 assert_eq!(result, expected);
@@ -305,17 +307,17 @@ mod tests {
     fn test_insert_delete_fold() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let n = rng.gen_range(0..80);
+            let len = rng.gen_range(0..80);
             let mut a = repeat_with(|| rng.sample(Alphanumeric))
                 .map(|c| c as char)
-                .take(n)
+                .take(len)
                 .collect_vec();
             let mut tree = a.iter().copied().collect::<RbTree<_, O>>();
             validate(&tree);
             let b = tree.iter().copied().collect_vec();
             assert_eq!(&a, &b);
 
-            for _ in 0..10 + 2 * n {
+            for _ in 0..10 + 2 * len {
                 match rng.gen_range(0..3) {
                     // insert
                     0 => {
