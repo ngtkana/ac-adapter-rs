@@ -68,17 +68,11 @@ impl<T, O: Op> Root<T, O> {
             node.left.merge_front(rhs)
         });
         if node.height == node.left.node().unwrap().left.height() {
-            let Node {
-                left: l,
-                right: r,
-                height,
-                len: _,
-                __marker: _,
-            } = node.left.into_node().unwrap();
+            let left = node.left.into_node().unwrap();
             node = Node::new(
-                l,
-                Box::new(Root::Node(Node::new(r, node.right, height))),
-                height + 1,
+                left.left,
+                Box::new(Root::Node(Node::new(left.right, node.right, left.height))),
+                left.height + 1,
             );
         } else {
             node.update();
@@ -97,17 +91,11 @@ impl<T, O: Op> Root<T, O> {
                 node.height += 1;
                 node.update();
             } else {
-                let Node {
-                    left: l,
-                    right: r,
-                    height,
-                    len: _,
-                    __marker: _,
-                } = node.right.into_node().unwrap();
+                let right = node.right.into_node().unwrap();
                 node = Node::new(
-                    Box::new(Root::Node(Node::new(node.left, l, height))),
-                    r,
-                    height,
+                    Box::new(Root::Node(Node::new(node.left, right.left, right.height))),
+                    right.right,
+                    right.height,
                 );
             }
         } else {
