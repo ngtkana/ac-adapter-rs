@@ -141,6 +141,20 @@ mod tests {
         test_case::test_case,
     };
 
+    fn validate(root: &Root<()>) {
+        if let Some(node) = root.node() {
+            if let Some(left) = node.left.node() {
+                assert!(left.height == node.height || left.height == node.height - 1);
+                if let Some(ll) = left.left.node() {
+                    assert_ne!(ll.height, node.height);
+                }
+            }
+            if let Some(right) = node.right.node() {
+                assert_eq!(right.height + 1, node.height);
+            }
+        }
+    }
+
     fn to_structure_sring(root: &Root<()>) -> String {
         fn dfs(root: &Root<()>, s: &mut String) {
             s.push('(');
@@ -200,7 +214,9 @@ mod tests {
     #[test_case(three_node(), two_node() => to_structure_sring(&three_node_two_node()))]
     #[test_case(three_node(), three_node() => to_structure_sring(&three_node_three_node()))]
     fn test_merge(lhs: Root<()>, rhs: Root<()>) -> String {
-        to_structure_sring(&Root::merge(lhs, rhs))
+        let res = Root::merge(lhs, rhs);
+        validate(&res);
+        to_structure_sring(&res)
     }
 
     #[test_case(two_node(), 1 => [to_structure_sring(&one_node()), to_structure_sring(&one_node())])]
@@ -215,6 +231,8 @@ mod tests {
     #[test_case(two_node_three_node(), 4 => [to_structure_sring(&two_node_two_node()), to_structure_sring(&one_node())])]
     fn test_split(root: Root<()>, i: usize) -> [String; 2] {
         let [l, r] = &Root::split(root, i);
+        validate(&l);
+        validate(&r);
         [to_structure_sring(&l), to_structure_sring(&r)]
     }
 }
