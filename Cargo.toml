@@ -4,6 +4,7 @@ members = [
     'crates/disjoint_set/*',
     'crates/fp/*',
     'crates/heaps/*',
+    'crates/balanced-tree/*',
     'crates/utils/*',
     'crates/string/*',
     'crates/algolib/*',

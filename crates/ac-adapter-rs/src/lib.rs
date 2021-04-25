@@ -1,4 +1,5 @@
 pub mod algolib;
+pub mod balanced_tree;
 pub mod disjoint_set;
 pub mod flow;
 pub mod fp;
