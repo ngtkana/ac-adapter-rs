@@ -9,7 +9,6 @@ pub use max_flow;
 pub use radix_heap;
 pub use scc;
 pub use suffix_array;
-pub use union_find;
 pub use vec_lines;
 pub use z_algorithm;
 pub use zeta;
