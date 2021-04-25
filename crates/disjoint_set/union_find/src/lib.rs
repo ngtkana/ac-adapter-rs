@@ -2,6 +2,7 @@
 use std::{
     cell::RefCell,
     fmt::{Debug, Formatter, Result},
+    mem::swap,
 };
 
 #[derive(Clone)]
@@ -39,12 +40,11 @@ impl UnionFind {
             return;
         }
         if su > sv {
-            std::mem::swap(&mut u, &mut v);
-            std::mem::swap(&mut v, &mut u);
+            swap(&mut u, &mut v);
         }
-        let mut ref_mut = self.0.borrow_mut();
-        ref_mut[v] = -((su + sv) as isize);
-        ref_mut[u] = v as isize;
+        let mut table = self.0.borrow_mut();
+        table[v] = -((su + sv) as isize);
+        table[u] = v as isize;
     }
     /// 同じ連結成分に入っていれば `true` です。
     pub fn same(&self, u: usize, v: usize) -> bool {
@@ -54,13 +54,25 @@ impl UnionFind {
     pub fn is_root(&self, u: usize) -> bool {
         self.find(u) == u
     }
-    fn find_and_size(&self, mut i: usize) -> [usize; 2] {
-        assert!(i < self.0.borrow().len());
+    fn find_and_size(&self, mut x: usize) -> [usize; 2] {
+        assert!(x < self.0.borrow().len());
+        let mut child = Vec::new();
         loop {
-            i = match self.0.borrow()[i] {
-                x if 0 <= x => x as usize,
-                x => return [i, (-x) as usize],
+            let elm = self.0.borrow()[x];
+            x = match elm {
+                p if 0 <= p => p as usize,
+                elm => {
+                    let sz = (-elm) as usize;
+                    let mut table = self.0.borrow_mut();
+                    child
+                        .iter()
+                        .copied()
+                        .filter(|&y| x != y)
+                        .for_each(|y| table[y] = x as isize);
+                    return [x, sz];
+                }
             };
+            child.push(x);
         }
     }
 }
