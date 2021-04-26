@@ -8,38 +8,38 @@ use {
     },
 };
 
-pub enum Root<T, O: Op<Value = T> = Nop<T>> {
+pub enum Nonempty<T, O: Op<Value = T> = Nop<T>> {
     Nil(Nil<T>),
-    Node(Box<Node<T, O>>),
+    Internal(Box<Internal<T, O>>),
 }
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
 pub struct Nil<T>(pub T);
-pub struct Node<T, O: Op<Value = T>> {
-    pub left: Root<T, O>,
-    pub right: Root<T, O>,
+pub struct Internal<T, O: Op<Value = T>> {
+    pub left: Nonempty<T, O>,
+    pub right: Nonempty<T, O>,
     pub height: usize,
     pub len: usize,
     pub summary: O::Summary,
     pub __marker: PhantomData<fn(O) -> O>,
 }
-impl<T, O: Op<Value = T>> Node<T, O> {
+impl<T, O: Op<Value = T>> Internal<T, O> {
     pub fn update(&mut self) {
         self.len = self.left.len() + self.right.len();
         self.summary = O::op(self.left.summary(), self.right.summary());
     }
 }
-impl<T, O: Op<Value = T>> Root<T, O> {
+impl<T, O: Op<Value = T>> Nonempty<T, O> {
     pub fn len(&self) -> usize {
         match self {
             Self::Nil(_) => 1,
-            Self::Node(node) => node.len,
+            Self::Internal(node) => node.len,
         }
     }
     pub fn fold(&self, start: usize, end: usize) -> O::Summary {
         debug_assert!(start < end && end <= self.len());
         match self {
             Self::Nil(Nil(x)) => O::summarize(x),
-            Self::Node(node) => {
+            Self::Internal(node) => {
                 let lsize = node.left.len();
                 if start == 0 && end == self.len() {
                     node.summary.clone()
@@ -88,7 +88,7 @@ impl<T, O: Op<Value = T>> Root<T, O> {
     pub fn merge_front(&mut self, other: Self) {
         let h = self.height();
         if other.height() == self.node().unwrap().left.height() {
-            let Node { left, .. } = self.node_mut().unwrap();
+            let Internal { left, .. } = self.node_mut().unwrap();
             replace_with(left, |x| Self::from_children(other, x, h));
         } else {
             self.node_mut().unwrap().left.merge_front(other);
@@ -97,10 +97,10 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             if self.node().unwrap().right.height() == h {
                 self.node_mut().unwrap().height += 1;
             } else {
-                let Node { left, right, .. } = self.node_mut().unwrap();
+                let Internal { left, right, .. } = self.node_mut().unwrap();
                 swap(left, right);
                 let l = left;
-                let Node { left, right, .. } = right.node_mut().unwrap();
+                let Internal { left, right, .. } = right.node_mut().unwrap();
                 swap(l, left);
                 swap(left, right);
                 self.node_mut().unwrap().right.node_mut().unwrap().update();
@@ -111,7 +111,7 @@ impl<T, O: Op<Value = T>> Root<T, O> {
     pub fn merge_back(&mut self, other: Self) {
         let h = self.height();
         if other.height() == self.node().unwrap().right.height() {
-            let Node { right, .. } = self.node_mut().unwrap();
+            let Internal { right, .. } = self.node_mut().unwrap();
             replace_with(right, |x| Self::from_children(x, other, h));
         } else {
             self.node_mut().unwrap().right.merge_back(other);
@@ -120,10 +120,10 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             if self.node().unwrap().left.height() == h {
                 self.node_mut().unwrap().height += 1;
             } else {
-                let Node { left, right, .. } = self.node_mut().unwrap();
+                let Internal { left, right, .. } = self.node_mut().unwrap();
                 swap(left, right);
                 let r = right;
-                let Node { left, right, .. } = left.node_mut().unwrap();
+                let Internal { left, right, .. } = left.node_mut().unwrap();
                 swap(right, r);
                 swap(left, right);
                 self.node_mut().unwrap().left.node_mut().unwrap().update();
@@ -131,32 +131,32 @@ impl<T, O: Op<Value = T>> Root<T, O> {
         }
         self.node_mut().unwrap().update();
     }
-    pub fn node(&self) -> Option<&Node<T, O>> {
+    pub fn node(&self) -> Option<&Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
-            Self::Node(node) => Some(node),
+            Self::Internal(node) => Some(node),
         }
     }
-    pub fn node_mut(&mut self) -> Option<&mut Node<T, O>> {
+    pub fn node_mut(&mut self) -> Option<&mut Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
-            Self::Node(node) => Some(node),
+            Self::Internal(node) => Some(node),
         }
     }
     pub fn summary(&self) -> O::Summary {
         match self {
             Self::Nil(Nil(x)) => O::summarize(x),
-            Self::Node(node) => node.summary.clone(),
+            Self::Internal(node) => node.summary.clone(),
         }
     }
-    fn into_node(self) -> Option<Node<T, O>> {
+    fn into_node(self) -> Option<Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
-            Self::Node(node) => Some(*node),
+            Self::Internal(node) => Some(*node),
         }
     }
     fn from_children(lhs: Self, rhs: Self, height: usize) -> Self {
-        Self::Node(Box::new(Node {
+        Self::Internal(Box::new(Internal {
             len: lhs.len() + rhs.len(),
             summary: O::op(lhs.summary(), rhs.summary()),
             height,
@@ -168,7 +168,7 @@ impl<T, O: Op<Value = T>> Root<T, O> {
     fn height(&self) -> usize {
         match self {
             Self::Nil(_) => 0,
-            Self::Node(node) => node.height,
+            Self::Internal(node) => node.height,
         }
     }
 }
@@ -177,18 +177,18 @@ fn replace_with<T, F: FnOnce(T) -> T>(dest: &mut T, f: F) {
     unsafe { std::ptr::write(dest, f(std::ptr::read(dest))) }
 }
 
-impl<T: Clone, O: Op<Value = T>> Clone for Root<T, O>
+impl<T: Clone, O: Op<Value = T>> Clone for Nonempty<T, O>
 where
     O::Summary: Clone,
 {
     fn clone(&self) -> Self {
         match self {
             Self::Nil(x) => Self::Nil(x.clone()),
-            Self::Node(x) => Self::Node(x.clone()),
+            Self::Internal(x) => Self::Internal(x.clone()),
         }
     }
 }
-impl<T: Clone, O: Op<Value = T>> Clone for Node<T, O>
+impl<T: Clone, O: Op<Value = T>> Clone for Internal<T, O>
 where
     O::Summary: Clone,
 {
@@ -203,19 +203,19 @@ where
         }
     }
 }
-impl<T: PartialEq, O: Op<Value = T>> PartialEq for Root<T, O>
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for Nonempty<T, O>
 where
     O::Summary: PartialEq,
 {
     fn eq(&self, other: &Self) -> bool {
         match [self, other] {
             [Self::Nil(x), Self::Nil(y)] => x.eq(y),
-            [Self::Node(x), Self::Node(y)] => x.eq(y),
+            [Self::Internal(x), Self::Internal(y)] => x.eq(y),
             _ => false,
         }
     }
 }
-impl<T: PartialEq, O: Op<Value = T>> PartialEq for Node<T, O>
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for Internal<T, O>
 where
     O::Summary: PartialEq,
 {
@@ -227,18 +227,18 @@ where
             && self.summary.eq(&other.summary)
     }
 }
-impl<T: Hash, O: Op<Value = T>> Hash for Root<T, O>
+impl<T: Hash, O: Op<Value = T>> Hash for Nonempty<T, O>
 where
     O::Summary: Hash,
 {
     fn hash<H: Hasher>(&self, state: &mut H) {
         match self {
             Self::Nil(x) => x.hash(state),
-            Self::Node(x) => x.hash(state),
+            Self::Internal(x) => x.hash(state),
         }
     }
 }
-impl<T: Hash, O: Op<Value = T>> Hash for Node<T, O>
+impl<T: Hash, O: Op<Value = T>> Hash for Internal<T, O>
 where
     O::Summary: Hash,
 {
@@ -254,20 +254,20 @@ where
 #[cfg(test)]
 mod tests {
     use {
-        super::{Nil, Op, Root},
+        super::{Nil, Nonempty, Op},
         test_case::test_case,
     };
 
-    fn to_structure_sring<T, O: Op<Value = T>>(root: &Root<T, O>) -> String {
+    fn to_structure_sring<T, O: Op<Value = T>>(root: &Nonempty<T, O>) -> String {
         let mut s = String::new();
         to_structure_sring_dfs(root, &mut s);
         s
     }
-    fn to_structure_sring_dfs<T, O: Op<Value = T>>(root: &Root<T, O>, s: &mut String) {
+    fn to_structure_sring_dfs<T, O: Op<Value = T>>(root: &Nonempty<T, O>, s: &mut String) {
         s.push('(');
         match root {
-            Root::Nil(_) => (),
-            Root::Node(node) => {
+            Nonempty::Nil(_) => (),
+            Nonempty::Internal(node) => {
                 to_structure_sring_dfs(&node.left, s);
                 s.push_str(&node.height.to_string());
                 s.push(',');
@@ -278,7 +278,7 @@ mod tests {
         s.push(')');
     }
 
-    fn validate(root: &Root<()>) {
+    fn validate(root: &Nonempty<()>) {
         if let Some(node) = root.node() {
             let h = node.height;
             assert_eq!(node.len, node.left.len() + node.right.len());
@@ -293,47 +293,51 @@ mod tests {
         }
     }
 
-    fn nil() -> Root<()> {
-        Root::Nil(Nil(()))
+    fn nil() -> Nonempty<()> {
+        Nonempty::Nil(Nil(()))
     }
-    fn n2(x: impl Fn() -> Root<()>, y: impl Fn() -> Root<()>, h: usize) -> impl Fn() -> Root<()> {
-        move || Root::from_children(x(), y(), h)
+    fn n2(
+        x: impl Fn() -> Nonempty<()>,
+        y: impl Fn() -> Nonempty<()>,
+        h: usize,
+    ) -> impl Fn() -> Nonempty<()> {
+        move || Nonempty::from_children(x(), y(), h)
     }
     fn l3(
-        x: impl Fn() -> Root<()>,
-        y: impl Fn() -> Root<()>,
-        z: impl Fn() -> Root<()>,
+        x: impl Fn() -> Nonempty<()>,
+        y: impl Fn() -> Nonempty<()>,
+        z: impl Fn() -> Nonempty<()>,
         h: usize,
-    ) -> impl Fn() -> Root<()> {
+    ) -> impl Fn() -> Nonempty<()> {
         n2(n2(x, y, h), z, h)
     }
     fn r3(
-        x: impl Fn() -> Root<()>,
-        y: impl Fn() -> Root<()>,
-        z: impl Fn() -> Root<()>,
+        x: impl Fn() -> Nonempty<()>,
+        y: impl Fn() -> Nonempty<()>,
+        z: impl Fn() -> Nonempty<()>,
         h: usize,
-    ) -> impl Fn() -> Root<()> {
+    ) -> impl Fn() -> Nonempty<()> {
         n2(x, n2(y, z, h), h)
     }
     fn n4(
-        x: impl Fn() -> Root<()>,
-        y: impl Fn() -> Root<()>,
-        z: impl Fn() -> Root<()>,
-        w: impl Fn() -> Root<()>,
+        x: impl Fn() -> Nonempty<()>,
+        y: impl Fn() -> Nonempty<()>,
+        z: impl Fn() -> Nonempty<()>,
+        w: impl Fn() -> Nonempty<()>,
         height: usize,
-    ) -> impl Fn() -> Root<()> {
+    ) -> impl Fn() -> Nonempty<()> {
         n2(n2(x, y, height), n2(z, w, height), height)
     }
-    fn n2nil() -> Root<()> {
+    fn n2nil() -> Nonempty<()> {
         n2(nil, nil, 1)()
     }
-    fn l3nil() -> Root<()> {
+    fn l3nil() -> Nonempty<()> {
         l3(nil, nil, nil, 1)()
     }
-    fn r3nil() -> Root<()> {
+    fn r3nil() -> Nonempty<()> {
         r3(nil, nil, nil, 1)()
     }
-    fn n4nil() -> Root<()> {
+    fn n4nil() -> Nonempty<()> {
         n4(nil, nil, nil, nil, 1)()
     }
 
@@ -342,7 +346,7 @@ mod tests {
     #[test_case(l3nil => "((()1,2())1,3())".to_owned())]
     #[test_case(r3nil => "(()1,3(()1,2()))".to_owned())]
     #[test_case(n4nil => "((()1,2())1,4(()1,2()))".to_owned())]
-    fn test_to_structure_string(x: impl Fn() -> Root<()>) -> String {
+    fn test_to_structure_string(x: impl Fn() -> Nonempty<()>) -> String {
         to_structure_sring(&x())
     }
 
@@ -357,8 +361,8 @@ mod tests {
     #[test_case(n2nil, l3(n2nil, n2nil, n2nil, 2) => to_structure_sring(&n4(n2nil, n2nil, n2nil, n2nil, 2)()))]
     #[test_case(n2nil, r3(n2nil, n2nil, n2nil, 2) => to_structure_sring(&n4(n2nil, n2nil, n2nil, n2nil, 2)()))]
     #[test_case(n2nil, n4(n2nil, n2nil, n2nil, n2nil, 2) => to_structure_sring(&n2(l3(n2nil, n2nil, n2nil, 2), n2(n2nil, n2nil, 2), 3)()))]
-    fn test_merge(lhs: impl Fn() -> Root<()>, rhs: impl Fn() -> Root<()>) -> String {
-        let root = Root::merge(lhs(), rhs());
+    fn test_merge(lhs: impl Fn() -> Nonempty<()>, rhs: impl Fn() -> Nonempty<()>) -> String {
+        let root = Nonempty::merge(lhs(), rhs());
         let res = to_structure_sring(&root);
         println!("{}", res);
         validate(&root);
