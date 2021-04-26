@@ -94,10 +94,10 @@
 //! [`Clone`], [`Hash`], [`PartialEq`] をて実装するはめになったのですが！？
 //!
 
-mod detail;
+mod nonempty;
 
 use {
-    detail::{Nil, Root},
+    nonempty::{Nil, Nonempty},
     std::{
         fmt::{self, Debug},
         hash::{Hash, Hasher},
@@ -109,10 +109,7 @@ use {
 };
 
 /// 赤黒木です。
-pub struct RbTree<T, O: Op<Value = T> = Nop<T>> {
-    root: Option<Root<T, O>>,
-    __marker: PhantomData<fn(O) -> O>,
-}
+pub struct RbTree<T, O: Op<Value = T> = Nop<T>>(Option<Nonempty<T, O>>);
 /// 赤黒木に演算を載せたいときに実装するトレイトです。（演算を載せないときには使いません）
 pub trait Op {
     /// 葉に持たせる値
@@ -127,44 +124,6 @@ pub trait Op {
 /// 赤黒木に演算を載せないときに使う型です。[`RbTree`] のデフォルト引数になっています。
 pub struct Nop<T> {
     __marker: PhantomData<fn(T) -> T>,
-}
-
-impl<T: Clone, O: Op<Value = T>> Clone for RbTree<T, O>
-where
-    O::Summary: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            root: self.root.clone(),
-            __marker: self.__marker,
-        }
-    }
-}
-impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
-where
-    O::Summary: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.root.eq(&other.root)
-    }
-}
-impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
-where
-    O::Summary: Hash,
-{
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.root.hash(state);
-    }
-}
-impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
-    }
-}
-impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 impl<T> Op for Nop<T> {
     type Value = T;
@@ -197,15 +156,15 @@ impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
 }
 
 /// [`iter`](RbTree::iter) の返す型
-pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Root<T, O>>);
+pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Nonempty<T, O>>);
 impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.0.pop() {
                 None => return None,
-                Some(Root::Nil(Nil(x))) => return Some(x),
-                Some(Root::Node(node)) => {
+                Some(Nonempty::Nil(Nil(x))) => return Some(x),
+                Some(Nonempty::Internal(node)) => {
                     self.0.push(&node.right);
                     self.0.push(&node.left);
                 }
@@ -214,37 +173,25 @@ impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     }
 }
 
-fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
-    (match range.start_bound() {
-        Bound::Unbounded => 0,
-        Bound::Included(&x) => x,
-        Bound::Excluded(&x) => x + 1,
-    })..match range.end_bound() {
-        Bound::Excluded(&x) => x,
-        Bound::Included(&x) => x + 1,
-        Bound::Unbounded => len,
-    }
-}
-
 impl<T, O: Op<Value = T>> RbTree<T, O> {
     /// 空の赤黒木を生成します。
     pub fn new() -> Self {
-        Self::from_root(None)
+        Self(None)
     }
     /// 空ならば `true`、さもなくば `false` を返します。
     pub fn is_empty(&self) -> bool {
-        self.root.is_none()
+        self.0.is_none()
     }
     /// 長さ、すなわち Nil ノードの個数を返します。
     pub fn len(&self) -> usize {
-        match &self.root {
+        match &self.0 {
             None => 0,
             Some(node) => node.len(),
         }
     }
     /// 要素を左から順に辿るイテレータを返します。（`rev`, `nth` など未実装です。）
     pub fn iter(&self) -> Iter<'_, T, O> {
-        Iter(match &self.root {
+        Iter(match &self.0 {
             None => Vec::new(),
             Some(node) => vec![node],
         })
@@ -259,12 +206,12 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         T: Copy,
     {
         assert!((0..self.len()).contains(&i));
-        let root = take(&mut self.root).unwrap();
-        let [l, cr] = Self::from_root(Some(root)).split(i);
+        let root = take(&mut self.0).unwrap();
+        let [l, cr] = Self(Some(root)).split(i);
         let [c, r] = cr.split(1);
-        let res = match c.root.as_ref().unwrap() {
-            Root::Nil(nil) => nil.0,
-            Root::Node(_) => unreachable!(),
+        let res = match c.0.as_ref().unwrap() {
+            Nonempty::Nil(nil) => nil.0,
+            Nonempty::Internal(_) => unreachable!(),
         };
         *self = Self::merge(Self::merge(l, c), r);
         res
@@ -280,12 +227,12 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         if start == end {
             None
         } else {
-            Some(self.root.as_ref().unwrap().fold(start, end))
+            Some(self.0.as_ref().unwrap().fold(start, end))
         }
     }
     /// Nil ノード一つのみからなる新しい赤黒木を構築します。
     pub fn singleton(x: T) -> Self {
-        Self::from_root(Some(Root::singleton(x)))
+        Self(Some(Nonempty::Nil(Nil(x))))
     }
     /// 新しいノードを先頭に挿入します。
     pub fn push_front(&mut self, x: T) {
@@ -303,7 +250,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn insert(&mut self, i: usize, x: T) {
         assert!((0..=self.len()).contains(&i));
         let [l, r] = take(self).split(i);
-        *self = Self::merge(Self::merge(l, Self::singleton(x)), r);
+        *self = Self::merge3(l, Self::singleton(x), r);
     }
     /// `i` 番目の Nil ノードを削除して、保持していたデータを返します。
     ///
@@ -312,22 +259,25 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     /// 範囲外のとき
     pub fn delete(&mut self, i: usize) -> T {
         assert!((0..self.len()).contains(&i));
-        let [l, cr] = take(self).split(i);
-        let [c, r] = cr.split(1);
+        let [l, c, r] = take(self).split3(i, i + 1);
         *self = Self::merge(l, r);
-        match c.root {
-            Some(Root::Node(_)) | None => unreachable!(),
-            Some(Root::Nil(Nil(value))) => value,
+        match c.0 {
+            Some(Nonempty::Internal(_)) | None => unreachable!(),
+            Some(Nonempty::Nil(Nil(value))) => value,
         }
     }
     /// 2 つの赤黒木をマージします。
     pub fn merge(lhs: Self, rhs: Self) -> Self {
-        match [lhs.root, rhs.root] {
-            [None, None] => Self::from_root(None),
-            [Some(l), None] => Self::from_root(Some(l)),
-            [None, Some(r)] => Self::from_root(Some(r)),
-            [Some(l), Some(r)] => Self::from_root(Some(Root::merge(l, r))),
+        match [lhs.0, rhs.0] {
+            [None, None] => Self(None),
+            [Some(l), None] => Self(Some(l)),
+            [None, Some(r)] => Self(Some(r)),
+            [Some(l), Some(r)] => Self(Some(Nonempty::merge(l, r))),
         }
+    }
+    /// 3 つの赤黒木をマージします。
+    pub fn merge3(x: Self, y: Self, z: Self) -> Self {
+        Self::merge(Self::merge(x, y), z)
     }
     /// `i` 番目で分割します。
     ///
@@ -337,26 +287,77 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn split(self, i: usize) -> [Self; 2] {
         assert!((0..=self.len()).contains(&i));
         if i == 0 {
-            [Self::from_root(None), self]
+            [Self(None), self]
         } else if i == self.len() {
-            [self, Self::from_root(None)]
+            [self, Self(None)]
         } else {
-            let [l, r] = self.root.unwrap().split(i);
-            [Self::from_root(Some(l)), Self::from_root(Some(r))]
+            let [l, r] = self.0.unwrap().split(i);
+            [Self(Some(l)), Self(Some(r))]
         }
     }
-    fn from_root(root: Option<Root<T, O>>) -> Self {
-        Self {
-            root,
-            __marker: PhantomData,
-        }
+    /// `l, r` 番目で 3 つに分割します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外のとき
+    pub fn split3(self, start: usize, end: usize) -> [Self; 3] {
+        let [xy, z] = self.split(end);
+        let [x, y] = xy.split(start);
+        [x, y, z]
+    }
+}
+
+impl<T: Clone, O: Op<Value = T>> Clone for RbTree<T, O>
+where
+    O::Summary: Clone,
+{
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
+where
+    O::Summary: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
+where
+    O::Summary: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
+    }
+}
+impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
+    (match range.start_bound() {
+        Bound::Unbounded => 0,
+        Bound::Included(&x) => x,
+        Bound::Excluded(&x) => x + 1,
+    })..match range.end_bound() {
+        Bound::Excluded(&x) => x,
+        Bound::Included(&x) => x + 1,
+        Bound::Unbounded => len,
     }
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::{Op, RbTree, Root},
+        super::{Nonempty, Op, RbTree},
         itertools::Itertools,
         rand::{distributions::Alphanumeric, prelude::StdRng, Rng, SeedableRng},
         randtools::SubRange,
@@ -364,12 +365,12 @@ mod tests {
     };
 
     fn validate<T: Debug, O: Op<Value = T>>(tree: &RbTree<T, O>) {
-        match &tree.root {
+        match &tree.0 {
             None => (),
             Some(root) => validate_dfs(root),
         }
     }
-    fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Root<T, O>) {
+    fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Nonempty<T, O>) {
         if let Some(node) = root.node() {
             let h = node.height;
             assert_eq!(node.len, node.left.len() + node.right.len());
