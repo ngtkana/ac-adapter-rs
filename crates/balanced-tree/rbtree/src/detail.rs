@@ -166,47 +166,50 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             Ordering::Greater => lhs.merge_back(rhs),
         }
     }
-    pub fn merge_front(self, rhs: Self) -> Self {
+    pub fn merge_front(self, other: Self) -> Self {
         let mut node = self.into_node().unwrap();
-        node.left = Box::new(if node.left.height() == rhs.height() {
-            Self::Node(Node::new(Box::new(rhs), node.left, node.height))
+        let h = node.height;
+        node.left = Box::new(if node.left.height() == other.height() {
+            Self::Node(Node::new(Box::new(other), node.left, h))
         } else {
-            node.left.merge_front(rhs)
+            node.left.merge_front(other)
         });
-        if node.height == node.left.node().unwrap().left.height() {
-            let left = node.left.into_node().unwrap();
-            node = Node::new(
-                left.left,
-                Box::new(Self::Node(Node::new(left.right, node.right, left.height))),
-                left.height + 1,
-            );
-        } else {
-            node.update();
+        if node.left.node().unwrap().left.height() == h {
+            if node.right.height() == h {
+                node.height += 1;
+            } else {
+                let left = node.left.into_node().unwrap();
+                node = Node::new(
+                    left.left,
+                    Box::new(Self::Node(Node::new(left.right, node.right, h))),
+                    h,
+                );
+            }
         }
+        node.update();
         Self::Node(node)
     }
-    pub fn merge_back(self, rhs: Self) -> Self {
+    pub fn merge_back(self, other: Self) -> Self {
         let mut node = self.into_node().unwrap();
-        node.right = Box::new(if node.right.height() == rhs.height() {
-            Self::Node(Node::new(node.right, Box::new(rhs), node.height))
+        let h = node.height;
+        node.right = Box::new(if node.right.height() == other.height() {
+            Self::Node(Node::new(node.right, Box::new(other), h))
         } else {
-            node.right.merge_back(rhs)
+            node.right.merge_back(other)
         });
-        if node.height == node.right.height() {
-            if node.height == node.left.height() {
+        if node.right.node().unwrap().right.height() == h {
+            if node.left.height() == h {
                 node.height += 1;
-                node.update();
             } else {
                 let right = node.right.into_node().unwrap();
                 node = Node::new(
-                    Box::new(Self::Node(Node::new(node.left, right.left, right.height))),
+                    Box::new(Self::Node(Node::new(node.left, right.left, h))),
                     right.right,
-                    right.height,
+                    h,
                 );
             }
-        } else {
-            node.update();
         }
+        node.update();
         Self::Node(node)
     }
     pub fn node(&self) -> Option<&Node<T, O>> {
@@ -244,14 +247,13 @@ mod tests {
 
     fn validate(root: &Root<()>) {
         if let Some(node) = root.node() {
-            if let Some(left) = node.left.node() {
-                assert!(left.height == node.height || left.height == node.height - 1);
-                if let Some(ll) = left.left.node() {
-                    assert_ne!(ll.height, node.height);
+            let h = node.height;
+            assert_eq!(node.len, node.left.len() + node.right.len());
+            for x in node.left.node().into_iter().chain(node.right.node()) {
+                assert!(x.height == node.height || x.height == node.height - 1);
+                for y in x.left.node().into_iter().chain(x.right.node()) {
+                    assert_ne!(y.height, h);
                 }
-            }
-            if let Some(right) = node.right.node() {
-                assert_eq!(right.height + 1, node.height);
             }
             validate(&node.left);
             validate(&node.right);
@@ -278,64 +280,75 @@ mod tests {
         s
     }
 
-    fn one_node() -> Root<()> {
+    fn nil() -> Root<()> {
         Root::Nil(Nil(()))
     }
-    fn two_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(one_node()), Box::new(one_node()), 1))
+    fn n2(x: impl Fn() -> Root<()>, y: impl Fn() -> Root<()>, h: usize) -> impl Fn() -> Root<()> {
+        move || Root::Node(Node::new(Box::new(x()), Box::new(y()), h))
     }
-    fn three_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(two_node()), Box::new(one_node()), 1))
+    fn l3(
+        x: impl Fn() -> Root<()>,
+        y: impl Fn() -> Root<()>,
+        z: impl Fn() -> Root<()>,
+        h: usize,
+    ) -> impl Fn() -> Root<()> {
+        n2(n2(x, y, h), z, h)
     }
-    fn two_node_two_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(two_node()), Box::new(two_node()), 2))
+    fn r3(
+        x: impl Fn() -> Root<()>,
+        y: impl Fn() -> Root<()>,
+        z: impl Fn() -> Root<()>,
+        h: usize,
+    ) -> impl Fn() -> Root<()> {
+        n2(x, n2(y, z, h), h)
     }
-    fn two_node_three_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(two_node()), Box::new(three_node()), 2))
+    fn n4(
+        x: impl Fn() -> Root<()>,
+        y: impl Fn() -> Root<()>,
+        z: impl Fn() -> Root<()>,
+        w: impl Fn() -> Root<()>,
+        h: usize,
+    ) -> impl Fn() -> Root<()> {
+        n2(n2(x, y, h), n2(z, w, h), h)
     }
-    fn three_node_two_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(three_node()), Box::new(two_node()), 2))
+    fn n2nil() -> Root<()> {
+        n2(nil, nil, 1)()
     }
-    fn three_node_three_node() -> Root<()> {
-        Root::Node(Node::new(Box::new(three_node()), Box::new(three_node()), 2))
+    fn l3nil() -> Root<()> {
+        l3(nil, nil, nil, 1)()
+    }
+    fn r3nil() -> Root<()> {
+        r3(nil, nil, nil, 1)()
+    }
+    fn n4nil() -> Root<()> {
+        n4(nil, nil, nil, nil, 1)()
     }
 
-    #[test_case(one_node() => "()".to_owned())]
-    #[test_case(two_node() => "(()1,2())".to_owned())]
-    #[test_case(three_node() => "((()1,2())1,3())".to_owned())]
-    fn test_to_structure_string(root: Root<()>) -> String {
-        to_structure_sring(&root)
+    #[test_case(nil => "()".to_owned())]
+    #[test_case(n2nil => "(()1,2())".to_owned())]
+    #[test_case(l3nil => "((()1,2())1,3())".to_owned())]
+    #[test_case(r3nil => "(()1,3(()1,2()))".to_owned())]
+    #[test_case(n4nil => "((()1,2())1,4(()1,2()))".to_owned())]
+    fn test_to_structure_string(x: impl Fn() -> Root<()>) -> String {
+        to_structure_sring(&x())
     }
 
-    #[test_case(one_node(), one_node() => to_structure_sring(&two_node()))]
-    #[test_case(one_node(), two_node() => to_structure_sring(&three_node()))]
-    #[test_case(one_node(), three_node() => to_structure_sring(&two_node_two_node()))]
-    #[test_case(two_node(), one_node() => to_structure_sring(&three_node()))]
-    #[test_case(two_node(), two_node() => to_structure_sring(&two_node_two_node()))]
-    #[test_case(two_node(), three_node() => to_structure_sring(&two_node_three_node()))]
-    #[test_case(three_node(), one_node() => to_structure_sring(&two_node_two_node()))]
-    #[test_case(three_node(), two_node() => to_structure_sring(&three_node_two_node()))]
-    #[test_case(three_node(), three_node() => to_structure_sring(&three_node_three_node()))]
-    fn test_merge(lhs: Root<()>, rhs: Root<()>) -> String {
-        let res = Root::merge(lhs, rhs);
-        validate(&res);
-        to_structure_sring(&res)
-    }
-
-    #[test_case(two_node(), 1 => [to_structure_sring(&one_node()), to_structure_sring(&one_node())])]
-    #[test_case(three_node(), 1 => [to_structure_sring(&one_node()), to_structure_sring(&two_node())])]
-    #[test_case(three_node(), 2 => [to_structure_sring(&two_node()), to_structure_sring(&one_node())])]
-    #[test_case(two_node_two_node(), 1 => [to_structure_sring(&one_node()), to_structure_sring(&three_node())])]
-    #[test_case(two_node_two_node(), 2 => [to_structure_sring(&two_node()), to_structure_sring(&two_node())])]
-    #[test_case(two_node_two_node(), 3 => [to_structure_sring(&three_node()), to_structure_sring(&one_node())])]
-    #[test_case(two_node_three_node(), 1 => [to_structure_sring(&one_node()), to_structure_sring(&two_node_two_node())])]
-    #[test_case(two_node_three_node(), 2 => [to_structure_sring(&two_node()), to_structure_sring(&three_node())])]
-    #[test_case(two_node_three_node(), 3 => [to_structure_sring(&three_node()), to_structure_sring(&two_node())])]
-    #[test_case(two_node_three_node(), 4 => [to_structure_sring(&two_node_two_node()), to_structure_sring(&one_node())])]
-    fn test_split(root: Root<()>, i: usize) -> [String; 2] {
-        let [l, r] = &Root::split(root, i);
-        validate(&l);
-        validate(&r);
-        [to_structure_sring(&l), to_structure_sring(&r)]
+    #[test_case(nil, nil => to_structure_sring(&n2nil()))]
+    #[test_case(nil, n2nil => to_structure_sring(&l3nil()))]
+    #[test_case(nil, l3nil => to_structure_sring(&n4nil()))]
+    #[test_case(nil, r3nil => to_structure_sring(&n4nil()))]
+    #[test_case(n2nil, n2nil => to_structure_sring(&n2(n2nil, n2nil, 2)()))]
+    #[test_case(n2nil, l3nil => to_structure_sring(&n2(n2nil, l3nil, 2)()))]
+    #[test_case(n2nil, r3nil => to_structure_sring(&n2(n2nil, r3nil, 2)()))]
+    #[test_case(n2nil, n2(n2nil, n2nil, 2) => to_structure_sring(&l3(n2nil, n2nil, n2nil, 2)()))]
+    #[test_case(n2nil, l3(n2nil, n2nil, n2nil, 2) => to_structure_sring(&n4(n2nil, n2nil, n2nil, n2nil, 2)()))]
+    #[test_case(n2nil, r3(n2nil, n2nil, n2nil, 2) => to_structure_sring(&n4(n2nil, n2nil, n2nil, n2nil, 2)()))]
+    #[test_case(n2nil, n4(n2nil, n2nil, n2nil, n2nil, 2) => to_structure_sring(&n2(l3(n2nil, n2nil, n2nil, 2), n2(n2nil, n2nil, 2), 3)()))]
+    fn test_merge(lhs: impl Fn() -> Root<()>, rhs: impl Fn() -> Root<()>) -> String {
+        let root = Root::merge(lhs(), rhs());
+        let res = to_structure_sring(&root);
+        println!("{}", res);
+        validate(&root);
+        res
     }
 }

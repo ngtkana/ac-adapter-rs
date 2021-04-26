@@ -371,14 +371,13 @@ mod tests {
     }
     fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Root<T, O>) {
         if let Some(node) = root.node() {
-            if let Some(left) = node.left.node() {
-                assert!(left.height == node.height || left.height == node.height - 1);
-                if let Some(ll) = left.left.node() {
-                    assert_ne!(ll.height, node.height);
+            let h = node.height;
+            assert_eq!(node.len, node.left.len() + node.right.len());
+            for x in node.left.node().into_iter().chain(node.right.node()) {
+                assert!(x.height == node.height || x.height == node.height - 1);
+                for y in x.left.node().into_iter().chain(x.right.node()) {
+                    assert_ne!(y.height, h);
                 }
-            }
-            if let Some(right) = node.right.node() {
-                assert_eq!(right.height + 1, node.height);
             }
             validate_dfs(&node.left);
             validate_dfs(&node.right);
