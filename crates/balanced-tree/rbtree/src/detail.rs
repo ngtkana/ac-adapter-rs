@@ -119,6 +119,27 @@ impl<T, O: Op<Value = T>> Root<T, O> {
             Self::Node(node) => node.len,
         }
     }
+    pub fn fold(&self, start: usize, end: usize) -> O::Summary {
+        debug_assert!(start < end && end <= self.len());
+        match self {
+            Self::Nil(Nil(x)) => O::summarize(x),
+            Self::Node(node) => {
+                let lsize = node.left.len();
+                if start == 0 && end == self.len() {
+                    node.summary.clone()
+                } else if end <= lsize {
+                    node.left.fold(start, end)
+                } else if lsize <= start {
+                    node.right.fold(start - lsize, end - lsize)
+                } else {
+                    O::op(
+                        node.left.fold(start, lsize),
+                        node.right.fold(0, end - lsize),
+                    )
+                }
+            }
+        }
+    }
     pub fn split(self, i: usize) -> [Self; 2] {
         let node = self.into_node().unwrap();
         let left_len = node.left.len();

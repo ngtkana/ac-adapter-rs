@@ -278,14 +278,10 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         let Range { start, end } = open(range, self.len());
         assert!(start <= end && end <= self.len());
         if start == end {
-            return None;
+            None
+        } else {
+            Some(self.root.as_ref().unwrap().fold(start, end))
         }
-        let root = take(&mut self.root).unwrap();
-        let [l, cr] = Self::from_root(Some(root)).split(start);
-        let [c, r] = cr.split(end - start);
-        let res = c.root.as_ref().unwrap().summary();
-        *self = Self::merge(Self::merge(l, c), r);
-        Some(res)
     }
     /// Nil ノード一つのみからなる新しい赤黒木を構築します。
     pub fn singleton(x: T) -> Self {
