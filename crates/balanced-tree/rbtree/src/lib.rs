@@ -221,7 +221,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     /// # Panics
     ///
     /// 範囲外のとき
-    pub fn fold(&mut self, range: impl RangeBounds<usize>) -> Option<O::Summary> {
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> Option<O::Summary> {
         let Range { start, end } = open(range, self.len());
         assert!(start <= end && end <= self.len());
         if start == end {
@@ -456,7 +456,7 @@ mod tests {
                 .map(|c| c as char)
                 .take(len)
                 .collect_vec();
-            let mut tree = a.iter().copied().collect::<RbTree<_, O>>();
+            let tree = a.iter().copied().collect::<RbTree<_, O>>();
             validate(&tree);
 
             for _ in 0..10 + 2 * len {
