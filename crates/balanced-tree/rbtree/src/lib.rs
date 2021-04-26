@@ -94,10 +94,10 @@
 //! [`Clone`], [`Hash`], [`PartialEq`] をて実装するはめになったのですが！？
 //!
 
-mod detail;
+mod nonempty;
 
 use {
-    detail::{Nil, Root},
+    nonempty::{Nil, Nonempty},
     std::{
         fmt::{self, Debug},
         hash::{Hash, Hasher},
@@ -109,7 +109,7 @@ use {
 };
 
 /// 赤黒木です。
-pub struct RbTree<T, O: Op<Value = T> = Nop<T>>(Option<Root<T, O>>);
+pub struct RbTree<T, O: Op<Value = T> = Nop<T>>(Option<Nonempty<T, O>>);
 /// 赤黒木に演算を載せたいときに実装するトレイトです。（演算を載せないときには使いません）
 pub trait Op {
     /// 葉に持たせる値
@@ -156,15 +156,15 @@ impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
 }
 
 /// [`iter`](RbTree::iter) の返す型
-pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Root<T, O>>);
+pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Nonempty<T, O>>);
 impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.0.pop() {
                 None => return None,
-                Some(Root::Nil(Nil(x))) => return Some(x),
-                Some(Root::Node(node)) => {
+                Some(Nonempty::Nil(Nil(x))) => return Some(x),
+                Some(Nonempty::Internal(node)) => {
                     self.0.push(&node.right);
                     self.0.push(&node.left);
                 }
@@ -210,8 +210,8 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         let [l, cr] = Self(Some(root)).split(i);
         let [c, r] = cr.split(1);
         let res = match c.0.as_ref().unwrap() {
-            Root::Nil(nil) => nil.0,
-            Root::Node(_) => unreachable!(),
+            Nonempty::Nil(nil) => nil.0,
+            Nonempty::Internal(_) => unreachable!(),
         };
         *self = Self::merge(Self::merge(l, c), r);
         res
@@ -232,7 +232,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     }
     /// Nil ノード一つのみからなる新しい赤黒木を構築します。
     pub fn singleton(x: T) -> Self {
-        Self(Some(Root::Nil(Nil(x))))
+        Self(Some(Nonempty::Nil(Nil(x))))
     }
     /// 新しいノードを先頭に挿入します。
     pub fn push_front(&mut self, x: T) {
@@ -262,8 +262,8 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         let [l, c, r] = take(self).split3(i, i + 1);
         *self = Self::merge(l, r);
         match c.0 {
-            Some(Root::Node(_)) | None => unreachable!(),
-            Some(Root::Nil(Nil(value))) => value,
+            Some(Nonempty::Internal(_)) | None => unreachable!(),
+            Some(Nonempty::Nil(Nil(value))) => value,
         }
     }
     /// 2 つの赤黒木をマージします。
@@ -272,7 +272,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             [None, None] => Self(None),
             [Some(l), None] => Self(Some(l)),
             [None, Some(r)] => Self(Some(r)),
-            [Some(l), Some(r)] => Self(Some(Root::merge(l, r))),
+            [Some(l), Some(r)] => Self(Some(Nonempty::merge(l, r))),
         }
     }
     /// 3 つの赤黒木をマージします。
@@ -357,7 +357,7 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     use {
-        super::{Op, RbTree, Root},
+        super::{Nonempty, Op, RbTree},
         itertools::Itertools,
         rand::{distributions::Alphanumeric, prelude::StdRng, Rng, SeedableRng},
         randtools::SubRange,
@@ -370,7 +370,7 @@ mod tests {
             Some(root) => validate_dfs(root),
         }
     }
-    fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Root<T, O>) {
+    fn validate_dfs<T: Debug, O: Op<Value = T>>(root: &Nonempty<T, O>) {
         if let Some(node) = root.node() {
             let h = node.height;
             assert_eq!(node.len, node.left.len() + node.right.len());
