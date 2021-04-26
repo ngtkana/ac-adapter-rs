@@ -128,44 +128,6 @@ pub trait Op {
 pub struct Nop<T> {
     __marker: PhantomData<fn(T) -> T>,
 }
-
-impl<T: Clone, O: Op<Value = T>> Clone for RbTree<T, O>
-where
-    O::Summary: Clone,
-{
-    fn clone(&self) -> Self {
-        Self {
-            root: self.root.clone(),
-            __marker: self.__marker,
-        }
-    }
-}
-impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
-where
-    O::Summary: PartialEq,
-{
-    fn eq(&self, other: &Self) -> bool {
-        self.root.eq(&other.root)
-    }
-}
-impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
-where
-    O::Summary: Hash,
-{
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.root.hash(state);
-    }
-}
-impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_list().entries(self.iter()).finish()
-    }
-}
-impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
-    fn default() -> Self {
-        Self::new()
-    }
-}
 impl<T> Op for Nop<T> {
     type Value = T;
     type Summary = ();
@@ -303,7 +265,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     pub fn insert(&mut self, i: usize, x: T) {
         assert!((0..=self.len()).contains(&i));
         let [l, r] = take(self).split(i);
-        *self = Self::merge(Self::merge(l, Self::singleton(x)), r);
+        *self = Self::merge3(l, Self::singleton(x), r);
     }
     /// `i` 番目の Nil ノードを削除して、保持していたデータを返します。
     ///
@@ -312,8 +274,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     /// 範囲外のとき
     pub fn delete(&mut self, i: usize) -> T {
         assert!((0..self.len()).contains(&i));
-        let [l, cr] = take(self).split(i);
-        let [c, r] = cr.split(1);
+        let [l, c, r] = take(self).split3(i, i + 1);
         *self = Self::merge(l, r);
         match c.root {
             Some(Root::Node(_)) | None => unreachable!(),
@@ -328,6 +289,10 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             [None, Some(r)] => Self::from_root(Some(r)),
             [Some(l), Some(r)] => Self::from_root(Some(Root::merge(l, r))),
         }
+    }
+    /// 3 つの赤黒木をマージします。
+    pub fn merge3(x: Self, y: Self, z: Self) -> Self {
+        Self::merge(Self::merge(x, y), z)
     }
     /// `i` 番目で分割します。
     ///
@@ -345,11 +310,59 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             [Self::from_root(Some(l)), Self::from_root(Some(r))]
         }
     }
+    /// `l, r` 番目で 3 つに分割します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外のとき
+    pub fn split3(self, start: usize, end: usize) -> [Self; 3] {
+        let [xy, z] = self.split(end);
+        let [x, y] = xy.split(start);
+        [x, y, z]
+    }
     fn from_root(root: Option<Root<T, O>>) -> Self {
         Self {
             root,
             __marker: PhantomData,
         }
+    }
+}
+
+impl<T: Clone, O: Op<Value = T>> Clone for RbTree<T, O>
+where
+    O::Summary: Clone,
+{
+    fn clone(&self) -> Self {
+        Self {
+            root: self.root.clone(),
+            __marker: self.__marker,
+        }
+    }
+}
+impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
+where
+    O::Summary: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool {
+        self.root.eq(&other.root)
+    }
+}
+impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
+where
+    O::Summary: Hash,
+{
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.root.hash(state);
+    }
+}
+impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
