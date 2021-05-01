@@ -216,6 +216,52 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         *self = Self::merge(Self::merge(l, c), r);
         res
     }
+    /// 中間ノードの情報で二分探索します。
+    ///
+    /// 0 ≦ i ≦ n に依存する命題 P ( i ) を次のように定めます。
+    ///
+    /// * P ( 0 ) = `true`
+    /// * P ( i ) = `f(self.fold(0..i).unwrap())` if i > 0
+    ///
+    /// ## 要件
+    ///
+    /// [C++ の
+    /// `std::partition_point`](https://cpprefjp.github.io/reference/algorithm/partition_point.html)
+    /// と同じです。
+    ///
+    /// [1, n] が P により区分化され、前側が `true`、後側が `false` となっていることです。
+    ///
+    ///
+    /// ## 戻り値
+    ///
+    /// [C++ の
+    /// `std::partition_point`](https://cpprefjp.github.io/reference/algorithm/partition_point.html)
+    /// とは 1 つずれています。
+    ///
+    /// P ( i ) が `true` となる最大の `i` を返します。
+    ///
+    ///
+    /// ## 例
+    ///
+    /// 戻り値の範囲は [0, n] です。
+    /// i が 1 以上に対して、P ( i ) が全て `false` ならば 0 を、全て `true` ならば n を返します。
+    ///
+    pub fn partition_point<F>(&self, f: F) -> usize
+    where
+        O::Summary: Clone,
+        F: Fn(&O::Summary) -> bool,
+    {
+        match self.0.as_ref() {
+            None => 0,
+            Some(nonempty) => {
+                if f(&nonempty.summary()) {
+                    self.len()
+                } else {
+                    nonempty.not_all_partition_point(None, f)
+                }
+            }
+        }
+    }
     /// `range` の範囲で畳み込みます。
     ///
     /// # Panics
@@ -483,7 +529,7 @@ mod tests {
             assert_eq!(&a, &b);
 
             for _ in 0..10 + 2 * len {
-                match rng.gen_range(0..3) {
+                match rng.gen_range(0..5) {
                     // insert
                     0 => {
                         let i = rng.gen_range(0..=a.len());
@@ -509,6 +555,14 @@ mod tests {
                         let i = rng.gen_range(0..a.len());
                         let result = tree.get(i);
                         let expected = a[i];
+                        assert_eq!(result, expected);
+                    }
+                    // partition_point
+                    4 => {
+                        let n = tree.len();
+                        let k = rng.gen_range(1..=n);
+                        let result = tree.partition_point(|s| s.len() <= k);
+                        let expected = k;
                         assert_eq!(result, expected);
                     }
                     _ => unreachable!(),

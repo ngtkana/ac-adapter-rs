@@ -35,6 +35,37 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             Self::Internal(node) => node.len,
         }
     }
+    pub fn not_all_partition_point<F>(&self, init: Option<O::Summary>, f: F) -> usize
+    where
+        O::Summary: Clone,
+        F: Fn(&O::Summary) -> bool,
+    {
+        match self {
+            Self::Nil(Nil(x)) => {
+                let x = O::summarize(&x);
+                let init = match init {
+                    None => x,
+                    Some(init) => O::op(init, x),
+                };
+                if f(&init) {
+                    1
+                } else {
+                    0
+                }
+            }
+            Self::Internal(node) => {
+                let linit = match init.clone() {
+                    None => node.left.summary(),
+                    Some(init) => O::op(init, node.left.summary()),
+                };
+                if f(&linit) {
+                    node.left.len() + node.right.not_all_partition_point(Some(linit), f)
+                } else {
+                    node.left.not_all_partition_point(init, f)
+                }
+            }
+        }
+    }
     pub fn fold(&self, start: usize, end: usize) -> O::Summary {
         debug_assert!(start < end && end <= self.len());
         match self {
