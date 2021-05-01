@@ -44,6 +44,7 @@ partially_persistent_union_find = { path = "../disjoint_set/partially_persistent
 prefix_sum = { path = "../utils/prefix_sum" }
 radix_heap = { path = "../algolib/radix_heap" }
 randtools = { path = "../utils/randtools" }
+rational = { path = "../math/rational" }
 rbtree = { path = "../balanced-tree/rbtree" }
 reverse = { path = "../utils/reverse" }
 scc = { path = "../algolib/scc" }
