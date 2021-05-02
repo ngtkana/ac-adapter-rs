@@ -33,7 +33,7 @@ use std::{
     cmp::PartialEq,
     fmt,
     hash::{Hash, Hasher},
-    iter::{Product, Sum},
+    iter::{successors, Product, Sum},
     marker::PhantomData,
     mem::swap,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -50,6 +50,69 @@ pub trait Mod: Clone + Copy + Hash {
 }
 fn reduce<M: Mod>(x: u64) -> u32 {
     ((x + u64::from(M::K.wrapping_mul(x as u32)) * u64::from(M::P)) >> 32) as u32
+}
+
+/// 階乗を順に返すイテレータを生成します。
+///
+/// # Examples
+///
+/// ```
+/// use fp::{fact_iter, F998244353 as Fp};
+///
+/// let mut fact = fact_iter();
+/// assert_eq!(fact.next(), Some(Fp::new(1)));
+/// assert_eq!(fact.next(), Some(Fp::new(1)));
+/// assert_eq!(fact.next(), Some(Fp::new(2)));
+/// ```
+pub fn fact_iter<M: Mod>() -> impl Iterator<Item = Fp<M>> {
+    (1..).scan(Fp::new(1), |state, x| {
+        let ans = *state;
+        *state *= x;
+        Some(ans)
+    })
+}
+
+/// 階乗とその逆数を前計算します。
+///
+/// # Examples
+///
+/// ```
+/// use fp::{fact_build, F998244353 as Fp};
+///
+/// let [fact, fact_inv] = fact_build(3);
+/// assert_eq!(fact, vec![Fp::new(1), Fp::new(1), Fp::new(2)]);
+/// assert_eq!(fact_inv, vec![Fp::new(1), Fp::new(1), Fp::new(2).recip()]);
+/// ```
+pub fn fact_build<M: Mod>(n: usize) -> [Vec<Fp<M>>; 2] {
+    if n == 0 {
+        return [Vec::new(), Vec::new()];
+    } else {
+        let fact = fact_iter::<M>().take(n).collect::<Vec<_>>();
+        let mut fact_inv = vec![fact.last().unwrap().recip(); n];
+        (1..n).rev().for_each(|i| fact_inv[i - 1] = fact_inv[i] * i);
+        [fact, fact_inv]
+    }
+}
+
+/// 二項係数 binom(n, k) を、n ごとにまとめて返すイテレータを生成します。
+///
+/// # Examples
+///
+/// ```
+/// use fp::{binom_iter, F998244353 as Fp};
+///
+/// let mut binom = binom_iter();
+/// assert_eq!(binom.next(), Some(vec![Fp::new(1)]));
+/// assert_eq!(binom.next(), Some(vec![Fp::new(1), Fp::new(1)]));
+/// assert_eq!(binom.next(), Some(vec![Fp::new(1), Fp::new(2), Fp::new(1)]));
+/// ```
+pub fn binom_iter<M: Mod>() -> impl Iterator<Item = Vec<Fp<M>>> {
+    successors(Some(vec![Fp::new(1)]), |last| {
+        let mut crr = last.clone();
+        crr.push(Fp::new(0));
+        crr[1..].iter_mut().zip(last).for_each(|(x, &y)| *x += y);
+        Some(crr)
+    })
 }
 
 /// 新しい mod を定義するためのマクロ
@@ -244,33 +307,25 @@ impl<M: Mod, T: Into<Self>> DivAssign<T> for Fp<M> {
     }
 }
 
+impl<'a, M: Mod> From<&'a Self> for Fp<M> {
+    fn from(x: &Self) -> Self {
+        *x
+    }
+}
+
 macro_rules! forward_ops {
     ($(($trait:ident, $method_assign:ident, $method:ident),)*) => {$(
-        impl<M: Mod> $trait for Fp<M> {
+        impl<M: Mod, T: Into<Fp<M>>> $trait<T> for Fp<M> {
             type Output = Self;
-            fn $method(mut self, rhs: Self) -> Self {
+            fn $method(mut self, rhs: T) -> Self {
                 self.$method_assign(rhs);
                 self
             }
         }
-        impl<'a, T: Mod> $trait<Fp<T>> for &'a Fp<T> {
-            type Output = Fp<T>;
-            fn $method(self, other: Fp<T>) -> Self::Output {
+        impl<'a, M: Mod, T: Into<Fp<M>>> $trait<T> for &'a Fp<M> {
+            type Output = Fp<M>;
+            fn $method(self, other: T) -> Self::Output {
                 $trait::$method(*self, other)
-            }
-        }
-
-        impl<'a, T: Mod> $trait<&'a Fp<T>> for Fp<T> {
-            type Output = Self;
-            fn $method(self, other: &Self) -> Self::Output {
-                $trait::$method(self, *other)
-            }
-        }
-
-        impl<'a, T: Mod> $trait<&'a Fp<T>> for &'a Fp<T> {
-            type Output = Fp<T>;
-            fn $method(self, other: &Fp<T>) -> Self::Output {
-                $trait::$method(*self, *other)
             }
         }
     )*};
@@ -331,10 +386,10 @@ impl<M: Mod> fmt::Display for Fp<M> {
 #[cfg(test)]
 mod tests {
     use {
-        super::F998244353 as Fp,
+        super::{binom_iter, fact_iter, F998244353 as Fp},
         assert_impl::assert_impl,
         rand::{prelude::StdRng, Rng, SeedableRng},
-        std::{fmt::Debug, hash::Hash},
+        std::{fmt::Debug, hash::Hash, ops::Add},
     };
 
     #[test]
@@ -346,6 +401,10 @@ mod tests {
         assert_impl!(PartialEq: Fp);
         assert_impl!(Copy: Fp);
         assert_impl!(Eq: Fp);
+        assert_impl!(Add<u32>: Fp);
+        assert_impl!(Add<u32>: &Fp);
+        assert_impl!(Add<Fp>: Fp);
+        assert_impl!(Add<Fp>: &Fp);
     }
 
     #[test]
@@ -463,5 +522,27 @@ mod tests {
                 .value();
             assert_eq!(result, expected);
         }
+    }
+
+    #[test]
+    fn test_fact() {
+        let mut fact = fact_iter();
+        assert_eq!(fact.next(), Some(Fp::new(1)));
+        assert_eq!(fact.next(), Some(Fp::new(1)));
+        assert_eq!(fact.next(), Some(Fp::new(2)));
+        assert_eq!(fact.next(), Some(Fp::new(6)));
+        assert_eq!(fact.next(), Some(Fp::new(24)));
+    }
+
+    #[test]
+    fn test_binom() {
+        let mut binom = binom_iter();
+        assert_eq!(binom.next(), Some(vec![Fp::new(1)]));
+        assert_eq!(binom.next(), Some(vec![Fp::new(1), Fp::new(1)]));
+        assert_eq!(binom.next(), Some(vec![Fp::new(1), Fp::new(2), Fp::new(1)]));
+        assert_eq!(
+            binom.next(),
+            Some(vec![Fp::new(1), Fp::new(3), Fp::new(3), Fp::new(1)])
+        );
     }
 }
