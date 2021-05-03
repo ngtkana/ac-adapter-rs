@@ -5,6 +5,7 @@ pub mod flow;
 pub mod fp;
 pub mod geometry;
 pub mod heaps;
+pub mod linear_algebra;
 pub mod math;
 pub mod range_query;
 pub mod string;

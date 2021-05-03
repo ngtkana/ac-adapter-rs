@@ -18,6 +18,7 @@ dfs = { path = "../algolib/dfs" }
 dial = { path = "../algolib/dial" }
 dijkstra_radix_heap = { path = "../algolib/dijkstra_radix_heap" }
 dinic = { path = "../flow/dinic" }
+elim = { path = "../linear-algebra/elim" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
 fp = { path = "../fp/fp" }
