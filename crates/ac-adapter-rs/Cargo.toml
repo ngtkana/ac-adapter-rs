@@ -12,6 +12,7 @@ advance = { path = "../utils/advance" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
 bitset = { path = "../utils/bitset" }
+box_segtree = { path = "../range-query/box_segtree" }
 convex_hull = { path = "../geometry/convex_hull" }
 dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
