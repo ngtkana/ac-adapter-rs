@@ -8,7 +8,7 @@ use std::{
     str::FromStr,
 };
 
-#[derive(Clone, Default, Hash, Copy)]
+#[derive(Clone, Default, Copy)]
 pub struct Rational<T: Signed>(T, T);
 impl<T: Signed> Rational<T> {
     pub fn new(num: T, den: T) -> Self {
