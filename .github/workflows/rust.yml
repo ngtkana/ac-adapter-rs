@@ -40,6 +40,7 @@ jobs:
         -A clippy::similar_names \
         -A clippy::missing_const_for_fn \
         -A clippy::use_self \
+        -A clippy::missing_panics_doc \
 
   test:
     runs-on: ubuntu-latest

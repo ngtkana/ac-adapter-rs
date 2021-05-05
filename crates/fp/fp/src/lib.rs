@@ -83,9 +83,11 @@ pub fn fact_iter<M: Mod>() -> impl Iterator<Item = Fp<M>> {
 /// assert_eq!(fact, vec![Fp::new(1), Fp::new(1), Fp::new(2)]);
 /// assert_eq!(fact_inv, vec![Fp::new(1), Fp::new(1), Fp::new(2).recip()]);
 /// ```
+///
+#[allow(clippy::missing_panics_doc)]
 pub fn fact_build<M: Mod>(n: usize) -> [Vec<Fp<M>>; 2] {
     if n == 0 {
-        return [Vec::new(), Vec::new()];
+        [Vec::new(), Vec::new()]
     } else {
         let fact = fact_iter::<M>().take(n).collect::<Vec<_>>();
         let mut fact_inv = vec![fact.last().unwrap().recip(); n];
@@ -173,6 +175,10 @@ impl<M: Mod> Fp<M> {
         }
     }
     /// 逆数を返します。
+    ///
+    /// # Panics
+    ///
+    /// `self` が `0` のとき
     #[allow(clippy::many_single_char_names)]
     pub fn recip(self) -> Self {
         assert_ne!(self, Self::new(0), "0 はだめ。");
