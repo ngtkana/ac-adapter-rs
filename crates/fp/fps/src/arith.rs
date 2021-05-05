@@ -6,9 +6,10 @@ use {
 
 /// FPS の、積に関する逆元を mod x ^ `precision` で返します。
 ///
-/// # 制約
+/// # Panics
 ///
-/// * `a[0]` が 0 でない。
+/// `a[0]` が 0 のとき
+///
 pub fn fps_inverse<M: Mod>(mut a: Vec<Fp<M>>, precision: usize) -> Vec<Fp<M>>
 where
     Fp<M>: Convolution,
@@ -34,9 +35,9 @@ where
 
 /// FPS の log を mod x ^ `precision` で返します。
 ///
-/// # 制約
+/// # Panics
 ///
-/// * `a[0]` が 1 。
+/// 定数項が `1` でないとき
 ///
 ///
 pub fn fps_log<M: Mod>(a: Vec<Fp<M>>, precision: usize) -> Vec<Fp<M>>
@@ -65,6 +66,11 @@ where
 /// # 制約
 ///
 /// * `a[0]` が 1 。
+///
+/// # Panics
+///
+/// 定数項が `0` でないとき
+///
 pub fn fps_exp<M: Mod>(a: &[Fp<M>], precision: usize) -> Vec<Fp<M>>
 where
     Fp<M>: Convolution,
@@ -94,6 +100,11 @@ where
 /// FPS の sqrt のひとつを mod x ^ `precision` で返します。
 ///
 /// 存在しない場合は `None` を返します。
+///
+///
+/// # Panics
+///
+/// `a` の要素がすべて `0` のとき
 ///
 pub fn fps_sqrt<M: Mod>(mut a: Vec<Fp<M>>, precision: usize) -> Option<Vec<Fp<M>>>
 where
