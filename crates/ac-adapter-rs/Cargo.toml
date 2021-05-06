@@ -34,6 +34,7 @@ inversion_number = { path = "../algolib/inversion_number" }
 lagrange = { path = "../fp/lagrange" }
 lazy_segbeats = { path = "../range-query/lazy_segbeats" }
 lazy_segtree = { path = "../range-query/lazy_segtree" }
+make_graph = { path = "../utils/make_graph" }
 max_flow = { path = "../algolib/max_flow" }
 montgomery = { path = "../fp/montgomery" }
 newton = { path = "../math/newton" }
