@@ -4,6 +4,7 @@ pub use bitset;
 pub use dbg;
 pub use grid;
 pub use gridtools;
+pub use make_graph;
 pub use next_permutation;
 pub use ngtio;
 pub use not_nan;
