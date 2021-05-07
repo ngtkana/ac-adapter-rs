@@ -22,6 +22,7 @@ dinic = { path = "../flow/dinic" }
 elim = { path = "../linear-algebra/elim" }
 erato = { path = "../math/erato" }
 euclid = { path = "../math/euclid" }
+filter_position = { path = "../iterator/filter_position" }
 fp = { path = "../fp/fp" }
 fps = { path = "../fp/fps" }
 gco = { path = "../flow/gco" }
