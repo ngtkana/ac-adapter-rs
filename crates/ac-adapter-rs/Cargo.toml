@@ -28,7 +28,7 @@ fps = { path = "../fp/fps" }
 gco = { path = "../flow/gco" }
 grid = { path = "../utils/grid" }
 gridtools = { path = "../utils/gridtools" }
-hld = { path = "../algolib/hld" }
+hld = { path = "../tree-decomposition/hld" }
 hopkarp = { path = "../flow/hopkarp" }
 hungarian = { path = "../flow/hungarian" }
 inversion_number = { path = "../algolib/inversion_number" }

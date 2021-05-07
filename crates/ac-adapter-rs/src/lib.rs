@@ -10,4 +10,5 @@ pub mod linear_algebra;
 pub mod math;
 pub mod range_query;
 pub mod string;
+pub mod tree_decomposition;
 pub mod utils;
