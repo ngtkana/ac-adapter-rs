@@ -64,6 +64,7 @@ suffix_array = { path = "../algolib/suffix_array" }
 swag = { path = "../range-query/swag" }
 trial = { path = "../math/trial" }
 trie = { path = "../string/trie" }
+uf_checklist = { path = "../range-query/uf_checklist" }
 union_find = { path = "../disjoint_set/union_find" }
 vec_lines = { path = "../algolib/vec_lines" }
 z_algorithm = { path = "../algolib/z_algorithm" }
