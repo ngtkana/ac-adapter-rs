@@ -1,5 +1,41 @@
 //! 重軽分解をします。
 //!
+//! # 使い方
+//!
+//! 構造体 [`Hld`] を使いましょう。
+//!
+//! ## 初期化
+//!
+//! * [`new`](Hld::new): 根付き木から構築します。受け取った木は親リンクが削除され、heavy edge
+//! が全て先頭に来るように並び替えられます。
+//!
+//!
+//! ## 基本的なメソッド
+//!
+//! * [`iter_v`](Hld::iter_v): パスを分解して、両端点を返すイテレータを作ります。
+//! * [`iter_e`](Hld::iter_e): それの LCA だけスキップするバージョンです。
+//!
+//!
+//! ## 便利なショートメソッド
+//!
+//! * [`dist`](Hld::dist): 2 点の間の距離を計算します。
+//! * [`lca`](Hld::lca): 2 点の LCA を探します。
+//! * [`between`](Hld::between): 3 点が一直線上にあるかどうかを判定します。
+//!
+//!
+//! ## 頂点 ID 翻訳
+//!
+//! * [`ord`](Hld::ord): 訪問時刻 → もとの頂点番号
+//! * [`time`](Hld::time): もとの頂点番号 → 訪問時刻
+//!
+//!
+//! ## せっかく計算してるので公開している情報
+//!
+//! * [`parent`](Hld::parent): 受け取った根付き木における親
+//! * [`head`](Hld::head): heavy path における先頭
+//!
+//!
+//!
 //! # Examples
 //!
 //! ```
@@ -65,49 +101,202 @@ impl Hld {
     pub fn head(&self) -> &[usize] {
         &self.head
     }
-    /// 2 つの頂点番号から、LCA の先頭の頂点番号を返します。
+    /// 2 つの頂点番号から、その間の距離を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &mut g);
+    /// assert_eq!(hld.dist(1, 3), 3); // 1 -- 0 -- 2 -- 3
+    /// ```
+    pub fn dist(&self, u: usize, v: usize) -> usize {
+        self.iter_e(u, v).map(|(l, r)| r - l + 1).sum::<usize>()
+    }
+    /// 2 つの頂点番号から、LCA の頂点番号を返します。
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &mut g);
+    /// assert_eq!(hld.lca(1, 3), 0);
+    /// ```
     pub fn lca(&self, u: usize, v: usize) -> usize {
-        __internal_for_each(self, u, v, |_, _| {}, true)
+        let (u, v) = self.iter_v(u, v).last().unwrap();
+        self.ord[u.min(v)]
     }
-    /// 2 つの頂点番号から、その間のパスを Heavy path に分解して、各々両端の頂点を処理します。
+    /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
+    ///   `true`、さもなくば `false` を返します。
     ///
-    /// つまり、`f` の引数は閉区間です。
-    pub fn for_each_vertex(&self, u: usize, v: usize, f: impl FnMut(usize, usize)) -> usize {
-        __internal_for_each(self, u, v, f, true)
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// // 1 -- 0 -- 2 -- 3
+    /// let hld = Hld::new(0, &mut g);
+    /// assert_eq!(hld.between(1, 0, 2), true);
+    /// assert_eq!(hld.between(1, 3, 2), false);
+    /// assert_eq!(hld.between(1, 2, 2), true);
+    /// ```
+    pub fn between(&self, a: usize, b: usize, c: usize) -> bool {
+        let mid = self.time[b];
+        self.iter_v(a, c)
+            .any(|(left, right)| (left..=right).contains(&mid))
     }
-    /// [`Self::for_each_vertex`] とほぼ同様ですが、LCA だけスキップします。
-    ///
+    /// 2 つの頂点番号から、その間のパスを Heavy path
+    /// に分解して、各々両端の頂点**の訪問時刻**を返すイテレータを作ります。
     /// つまり、`f` の引数は閉区間です。
-    pub fn for_each_edge(&self, u: usize, v: usize, f: impl FnMut(usize, usize)) -> usize {
-        __internal_for_each(self, u, v, f, false)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// // 1 -- 0 -- 2 -- 3
+    /// let hld = Hld::new(0, &mut g);
+    /// let vtx = hld
+    ///     .iter_v(1, 3)
+    ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
+    ///     .collect::<Vec<_>>();
+    /// assert_eq!(
+    ///     vtx.as_slice(),
+    ///     &[(1, 1), (0, 3)], // [ 1 ] + [ 0 -- 2 -- 3 ]
+    /// );
+    /// ```
+    pub fn iter_v(&self, u: usize, v: usize) -> IterV<'_> {
+        IterV {
+            hld: self,
+            u,
+            v,
+            finish: false,
+        }
+    }
+    /// [`Self::iter_v`] とほぼ同様ですが、LCA だけスキップします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &mut g);
+    /// let vtx = hld
+    ///     .iter_e(1, 3)
+    ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
+    ///     .collect::<Vec<_>>();
+    /// assert_eq!(
+    ///     vtx.as_slice(),
+    ///     &[(1, 1), (2, 3)], // lca = 0 がスキップされていますね。
+    /// );
+    /// ```
+    pub fn iter_e(&self, u: usize, v: usize) -> IterE<'_> {
+        IterE {
+            hld: self,
+            u,
+            v,
+            finish: false,
+        }
     }
 }
 
-fn __internal_for_each(
-    hld: &Hld,
-    mut u: usize,
-    mut v: usize,
-    mut f: impl FnMut(usize, usize),
-    contain_lca: bool,
-) -> usize {
-    while hld.head[u] != hld.head[v] {
-        if hld.time[u] > hld.time[v] {
-            swap(&mut u, &mut v);
+#[derive(Clone, Debug, Hash, PartialEq, Copy)]
+pub struct IterV<'a> {
+    hld: &'a Hld,
+    u: usize,
+    v: usize,
+    finish: bool,
+}
+impl Iterator for IterV<'_> {
+    type Item = (usize, usize);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.finish {
+            return None;
         }
-        let h = hld.head[v];
-        f(hld.time[h], hld.time[v]);
-        assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
-        v = hld.parent[h];
+        let Self { hld, u, v, .. } = self;
+        if hld.time[*u] > hld.time[*v] {
+            swap(u, v);
+        }
+        Some(if hld.head[*u] != hld.head[*v] {
+            let h = hld.head[*v];
+            let ans = (hld.time[h], hld.time[*v]);
+            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
+            *v = hld.parent[h];
+            ans
+        } else {
+            self.finish = true;
+            (hld.time[*u], hld.time[*v])
+        })
     }
-    if hld.time[u] > hld.time[v] {
-        swap(&mut u, &mut v);
+}
+#[derive(Clone, Debug, Hash, PartialEq, Copy)]
+pub struct IterE<'a> {
+    hld: &'a Hld,
+    u: usize,
+    v: usize,
+    finish: bool,
+}
+impl Iterator for IterE<'_> {
+    type Item = (usize, usize);
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.finish {
+            return None;
+        }
+        let Self { hld, u, v, .. } = self;
+        if hld.time[*u] > hld.time[*v] {
+            swap(u, v);
+        }
+        if hld.head[*u] != hld.head[*v] {
+            let h = hld.head[*v];
+            let ans = (hld.time[h], hld.time[*v]);
+            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
+            *v = hld.parent[h];
+            Some(ans)
+        } else {
+            self.finish = true;
+            if *u == *v {
+                None
+            } else {
+                Some((hld.time[*u] + 1, hld.time[*v]))
+            }
+        }
     }
-    if contain_lca {
-        f(hld.time[u], hld.time[v]);
-    } else if hld.time[u] != hld.time[v] {
-        f(hld.time[u] + 1, hld.time[v]);
-    }
-    hld.ord[hld.time[u]]
 }
 
 fn hld(root: usize, g: &mut [Vec<usize>]) -> (Vec<usize>, Vec<usize>, Vec<usize>, Vec<usize>) {
@@ -164,13 +353,12 @@ fn efs(
 
 #[cfg(test)]
 mod tests {
-    use std::mem::swap;
-
-    use bfs::find_path;
-
     use {
+        bfs::{calc_dist, find_path},
+        itertools::Itertools,
         rand::{prelude::StdRng, Rng, SeedableRng},
         randtools::Tree,
+        std::mem::swap,
         std::usize::MAX,
         {
             super::{hld, Hld},
@@ -196,6 +384,25 @@ mod tests {
             dfs(root, root, &g, &mut parent);
             let hld = Hld::new(root, &mut g);
             assert_eq!(hld.parent(), parent.as_slice());
+        }
+    }
+
+    #[test]
+    fn test_tree_dist() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(1..12);
+            let root = rng.gen_range(0..n);
+            let mut g = rng.sample(Tree(n));
+            let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
+            let hld = Hld::new(root, &mut g);
+            for (i, dist_i) in dist.iter().enumerate() {
+                for (j, &d) in dist_i.iter().enumerate() {
+                    let result = hld.dist(i, j);
+                    let expected = d as usize;
+                    assert_eq!(result, expected);
+                }
+            }
         }
     }
 
@@ -242,6 +449,27 @@ mod tests {
     }
 
     #[test]
+    fn test_tree_between() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(1..12);
+            let root = rng.gen_range(0..n);
+            let mut g = rng.sample(Tree(n));
+            let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
+            let hld = Hld::new(root, &mut g);
+            for i in 0..n {
+                for j in 0..n {
+                    for k in 0..n {
+                        let result = hld.between(i, j, k);
+                        let expected = dist[i][j] + dist[j][k] == dist[i][k];
+                        assert_eq!(result, expected);
+                    }
+                }
+            }
+        }
+    }
+
+    #[test]
     fn test_tree_path_sum() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -254,10 +482,10 @@ mod tests {
             let a_sorted = hld.ord.iter().map(|&i| a[i]).collect::<Vec<_>>();
             for i in 0..n {
                 for j in 0..n {
-                    let mut result = 0;
-                    hld.for_each_vertex(i, j, |l, r| {
-                        result += a_sorted[l..=r].iter().sum::<u64>();
-                    });
+                    let result = hld
+                        .iter_v(i, j)
+                        .map(|(l, r)| a_sorted[l..=r].iter().sum::<u64>())
+                        .sum::<u64>();
                     let path = find_path(i, j, &orig_g).unwrap();
                     let expected = path.iter().map(|&i| a[i]).sum::<u64>();
                     assert_eq!(result, expected);
