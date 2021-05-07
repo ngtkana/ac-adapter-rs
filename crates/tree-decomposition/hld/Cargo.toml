@@ -10,6 +10,7 @@ edition = "2018"
 
 [dev-dependencies]
 bfs = { path = "../../algolib/bfs/" }
+itertools = "0.10.0"
 make_graph = { path = "../../utils/make_graph/" }
 rand = "0.8.3"
 randtools = { path = "../../utils/randtools/" }
