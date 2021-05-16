@@ -16,6 +16,10 @@
 //!     fn id() -> Self::Value {
 //!         0
 //!     }
+//!     // init(len) = id() がデフォルト実装です。
+//!     fn init(_len: usize) -> Self::Value {
+//!         0
+//!     }
 //! }
 //! ```
 //!
@@ -168,7 +172,7 @@ fn __internal_new<T: Clone, O: Ops<Value = T>>(len: usize) -> Nonempty<T, O> {
     assert!(len.is_power_of_two());
     Nonempty {
         len,
-        value: O::id(),
+        value: O::init(len),
         child: [None, None],
         __marker: PhantomData,
     }
@@ -179,7 +183,7 @@ fn __internal_fold_recurse<T: Clone, O: Ops<Value = T>>(
     r: usize,
 ) -> T {
     match seg {
-        None => O::id(),
+        None => O::init(r - l),
         Some(seg) => {
             let len = seg.len;
             let half = len / 2;
@@ -227,10 +231,10 @@ fn __internal_update<T: Clone, O: Ops<Value = T>>(seg: &mut Nonempty<T, O>) {
     seg.value = O::op(
         &seg.child[0]
             .as_ref()
-            .map_or_else(O::id, |c| c.value.clone()),
+            .map_or_else(|| O::init(seg.len / 2), |c| c.value.clone()),
         &seg.child[1]
             .as_ref()
-            .map_or_else(O::id, |c| c.value.clone()),
+            .map_or_else(|| O::init(seg.len / 2), |c| c.value.clone()),
     );
 }
 
@@ -295,8 +299,8 @@ fn __internal_debug_list_recurse<T: Clone + Debug, O: Ops<Value = T>>(
 
 /// [`Segtree::iter`] の返す型です。
 #[derive(Clone, Hash, PartialEq)]
-pub struct Iter<'a, T, O: Ops<Value = T>>(Vec<(usize, &'a Nonempty<T, O>)>);
-impl<'a, T, O: Ops<Value = T>> Iterator for Iter<'a, T, O> {
+pub struct Iter<'a, T: Clone, O: Ops<Value = T>>(Vec<(usize, &'a Nonempty<T, O>)>);
+impl<'a, T: Clone, O: Ops<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = (usize, &'a T);
     fn next(&mut self) -> Option<Self::Item> {
         loop {
@@ -355,10 +359,16 @@ pub trait Ops {
     ///
     /// 単位元
     fn id() -> Self::Value;
+    /// 初期状態の `len` セル分の値の畳み込み
+    fn init(_len: usize) -> Self::Value {
+        Self::id()
+    }
 }
 
 #[cfg(test)]
 mod tests {
+    use std::iter::repeat;
+
     use {
         super::{Ops, Segtree},
         rand::{prelude::StdRng, Rng, SeedableRng},
@@ -374,6 +384,9 @@ mod tests {
         fn id() -> Self::Value {
             String::new()
         }
+        fn init(len: usize) -> Self::Value {
+            repeat('?').take(len).collect::<String>()
+        }
     }
 
     #[test]
@@ -382,7 +395,7 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..20);
             println!("n = {}", n);
-            let mut a = vec![String::new(); n];
+            let mut a = vec!["?".to_string(); n];
             let mut seg = Segtree::<_, Cat>::new(n);
             for iter in 0..2 * n {
                 match rng.gen_range(0..3) {
@@ -406,7 +419,7 @@ mod tests {
                     }
                     // collect
                     2 => {
-                        let mut result = vec![String::new(); n];
+                        let mut result = vec!["?".to_string(); n];
                         for (k, v) in &seg {
                             result[k] = v.clone();
                         }
