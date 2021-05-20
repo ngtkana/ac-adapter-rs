@@ -6,8 +6,7 @@
 //!
 //! ## 初期化
 //!
-//! * [`new`](Hld::new): 根付き木から構築します。受け取った木は親リンクが削除され、heavy edge
-//! が全て先頭に来るように並び替えられます。
+//! * [`new`](Hld::new): 根付き木から構築します。
 //!
 //!
 //! ## 基本的なメソッド
@@ -31,6 +30,8 @@
 //!
 //! ## せっかく計算してるので公開している情報
 //!
+//! * [`child`](Hld::child): 親を消したグラフ
+//! * [`size`](Hld::size): 部分木のサイズ
 //! * [`parent`](Hld::parent): 受け取った根付き木における親
 //! * [`head`](Hld::head): heavy path における先頭
 //!
@@ -43,15 +44,15 @@
 //! let root = 0;
 //! let n = 4;
 //! let edges = [[0, 1], [0, 2], [2, 3]];
-//! let mut g = vec![
+//! let g = vec![
 //!     vec![1, 2],
 //!     vec![0],
 //!     vec![0, 3],
 //!     vec![2],
 //! ];
-//! let hld = Hld::new(root, &mut g);
+//! let hld = Hld::new(root, &g);
 //!
-//! assert_eq!(g, vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
+//! assert_eq!(hld.child(), vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
 //! assert_eq!(hld.time(), &[0, 3, 1, 2]);
 //! assert_eq!(hld.ord(), &[0, 2, 3, 1]);
 //! assert_eq!(hld.parent(), &[0, 0, 0, 2]);
@@ -62,6 +63,8 @@ use std::{mem::swap, usize::MAX};
 /// 重軽分解
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct Hld {
+    child: Vec<Vec<usize>>,
+    size: Vec<usize>,
     time: Vec<usize>,
     ord: Vec<usize>,
     parent: Vec<usize>,
@@ -74,14 +77,24 @@ impl Hld {
     ///
     /// 入力は木である（根をひとつしか指定しないことからもわかるように、森はだめです。）
     ///
-    pub fn new(root: usize, g: &mut [Vec<usize>]) -> Self {
-        let (time, ord, parent, head) = hld(root, g);
+    pub fn new(root: usize, g: &[Vec<usize>]) -> Self {
+        let (child, [size, time, ord, parent, head]) = hld(root, g);
         Self {
+            child,
+            size,
             time,
             ord,
             parent,
             head,
         }
+    }
+    /// 親を消したグラフを返します。
+    pub fn child(&self) -> &[Vec<usize>] {
+        &self.child
+    }
+    /// 頂点番号から部分木のサイズを引くテーブルを返します。
+    pub fn size(&self) -> &[usize] {
+        &self.size
     }
     /// 頂点番号から訪問時刻を引くテーブルを返します。
     pub fn time(&self) -> &[usize] {
@@ -101,7 +114,79 @@ impl Hld {
     pub fn head(&self) -> &[usize] {
         &self.head
     }
+    /// 頂点 `u`, `v` が隣接頂点であれば `true`、さもなくば `false` を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `x`, `v` のいずれかが範囲外
+    ///
+    /// # Examples
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &g);
+    /// assert_eq!(hld.is_adjacent(0, 3), false); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.is_adjacent(2, 1), false); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.is_adjacent(0, 2), true); // 1 -- 0 -- 2 -- 3
+    /// ```
+    pub fn is_adjacent(&self, u: usize, v: usize) -> bool {
+        assert!(u < self.child.len(), "範囲外です。");
+        assert!(v < self.child.len(), "範囲外です。");
+        self.parent[u] == v || u == self.parent[v]
+    }
+    /// `x` の隣接頂点のうち、`toward` との間にあるものを返します。
+    ///
+    /// # Panics
+    ///
+    /// * `x`, `toward` のいずれかが範囲外
+    /// * `x == toward`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &g);
+    /// assert_eq!(hld.adjacent_toward(0, 3), 2); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.adjacent_toward(2, 1), 0); // 1 -- 0 -- 2 -- 3
+    /// ```
+    pub fn adjacent_toward(&self, x: usize, toward: usize) -> usize {
+        assert!(x < self.child.len(), "範囲外です。");
+        assert!(toward < self.child.len(), "範囲外です。");
+        assert_ne!(
+            x, toward,
+            "`x = toward = {} となっており、方向がわかりません。",
+            x
+        );
+        if self.is_ancestor_of(x, toward) {
+            self.child[x]
+                .iter()
+                .copied()
+                .find(|&y| self.is_ancestor_of(y, toward))
+                .unwrap()
+        } else {
+            self.parent[x]
+        }
+    }
     /// 2 つの頂点番号から、その間の距離を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
     ///
     /// # Examples
     ///
@@ -122,6 +207,12 @@ impl Hld {
         self.iter_e(u, v).map(|(l, r)| r - l + 1).sum::<usize>()
     }
     /// 2 つの頂点番号から、LCA の頂点番号を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `p`, `x` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
@@ -141,15 +232,46 @@ impl Hld {
         let (u, v) = self.iter_v(u, v).last().unwrap();
         self.ord[u.min(v)]
     }
-    /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
-    ///   `true`、さもなくば `false` を返します。
+    /// `p` が `u` の祖先であれば `true`、さもなくば `false` です。
+    ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
     ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &g);
+    /// assert_eq!(hld.is_ancestor_of(0, 3), true);;
+    /// assert_eq!(hld.is_ancestor_of(1, 3), false);
+    /// assert_eq!(hld.is_ancestor_of(3, 0), false);
+    /// ```
+    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool {
+        self.lca(p, u) == p
+    }
+    /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
+    ///   `true`、さもなくば `false` を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `a`, `b`, `c` のいずれかが範囲外
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
@@ -157,7 +279,7 @@ impl Hld {
     /// ];
     ///
     /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// assert_eq!(hld.between(1, 0, 2), true);
     /// assert_eq!(hld.between(1, 3, 2), false);
     /// assert_eq!(hld.between(1, 2, 2), true);
@@ -171,12 +293,17 @@ impl Hld {
     /// に分解して、各々両端の頂点**の訪問時刻**を返すイテレータを作ります。
     /// つまり、`f` の引数は閉区間です。
     ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
@@ -184,7 +311,7 @@ impl Hld {
     /// ];
     ///
     /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// let vtx = hld
     ///     .iter_v(1, 3)
     ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
@@ -204,19 +331,24 @@ impl Hld {
     }
     /// [`Self::iter_v`] とほぼ同様ですが、LCA だけスキップします。
     ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
     ///     vec![2],
     /// ];
     ///
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// let vtx = hld
     ///     .iter_e(1, 3)
     ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
@@ -299,33 +431,33 @@ impl Iterator for IterE<'_> {
     }
 }
 
-fn hld(root: usize, g: &mut [Vec<usize>]) -> (Vec<usize>, Vec<usize>, Vec<usize>, Vec<usize>) {
-    dfs(root, root, g);
+fn hld(root: usize, g: &[Vec<usize>]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
+    let n = g.len();
+    let mut size = vec![1; n];
+    let mut child = vec![Vec::<usize>::new(); n];
+    dfs(root, root, g, &mut size, &mut child);
     let mut ord = Vec::new();
-    let mut time = vec![MAX; g.len()];
-    let mut parent = vec![MAX; g.len()];
-    let mut head = vec![MAX; g.len()];
+    let mut time = vec![MAX; n];
+    let mut parent = vec![MAX; n];
+    let mut head = vec![MAX; n];
     parent[root] = root;
     head[root] = root;
-    efs(root, &g, &mut time, &mut ord, &mut parent, &mut head);
+    efs(root, &child, &mut time, &mut ord, &mut parent, &mut head);
     assert!(parent.iter().all(|&x| x != MAX), "入力が非連結です。");
-    (time, ord, parent, head)
+    (child, [size, time, ord, parent, head])
 }
 
-fn dfs(x: usize, p: usize, g: &mut [Vec<usize>]) -> usize {
-    let mut child = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
-    let mut size = 1;
-    let mut max_size = 1;
-    for i in 0..child.len() {
-        let s = dfs(child[i], x, g);
-        if max_size < s {
-            max_size = s;
-            child.swap(0, i);
+fn dfs(x: usize, p: usize, g: &[Vec<usize>], size: &mut [usize], child: &mut [Vec<usize>]) {
+    let mut gx = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
+    if !gx.is_empty() {
+        for &y in &gx {
+            dfs(y, x, g, size, child);
+            size[x] += size[y];
         }
-        size += s;
+        let max_position = (0..gx.len()).max_by_key(|&i| size[gx[i]]).unwrap();
+        gx.swap(0, max_position);
     }
-    g[x] = child;
-    size
+    child[x] = gx;
 }
 
 fn efs(
@@ -378,11 +510,11 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let mut parent = vec![MAX; n];
             parent[root] = root;
             dfs(root, root, &g, &mut parent);
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             assert_eq!(hld.parent(), parent.as_slice());
         }
     }
@@ -393,9 +525,9 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for (i, dist_i) in dist.iter().enumerate() {
                 for (j, &d) in dist_i.iter().enumerate() {
                     let result = hld.dist(i, j);
@@ -407,7 +539,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tree_lca() {
+    fn test_preorder() {
         fn dfs(x: usize, p: usize, g: &[Vec<usize>], height: &mut [usize], parent: &mut [usize]) {
             for y in g[x].iter().copied().filter(|&y| y != p) {
                 parent[y] = x;
@@ -419,30 +551,60 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let mut height = vec![MAX; n];
             let mut parent = vec![MAX; n];
             height[root] = 1;
             parent[root] = root;
             dfs(root, root, &g, &mut height, &mut parent);
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for i in 0..n {
                 for j in 0..n {
-                    let result = hld.lca(i, j);
-                    let mut i = i;
-                    let mut j = j;
-                    if height[i] > height[j] {
-                        swap(&mut i, &mut j);
+                    // lca
+                    {
+                        let result = hld.lca(i, j);
+                        let mut i = i;
+                        let mut j = j;
+                        if height[i] > height[j] {
+                            swap(&mut i, &mut j);
+                        }
+                        while height[i] < height[j] {
+                            j = parent[j];
+                        }
+                        while i != j {
+                            i = parent[i];
+                            j = parent[j];
+                        }
+                        let expected = i;
+                        assert_eq!(result, expected);
                     }
-                    while height[i] < height[j] {
-                        j = parent[j];
+                    // is_ancestor_of
+                    {
+                        let result = hld.is_ancestor_of(i, j);
+                        let expected = || -> bool {
+                            let mut j = j;
+                            while i != j {
+                                if j == parent[j] {
+                                    return false;
+                                }
+                                j = parent[j]
+                            }
+                            true
+                        }();
+                        assert_eq!(result, expected);
                     }
-                    while i != j {
-                        i = parent[i];
-                        j = parent[j];
+                    // is_adjacent
+                    {
+                        let result = hld.is_adjacent(i, j);
+                        let expected = parent[i] == j || i == parent[j];
+                        assert_eq!(result, expected);
                     }
-                    let expected = i;
-                    assert_eq!(result, expected);
+                    // child_toward
+                    if i != j {
+                        let result = hld.adjacent_toward(i, j);
+                        assert!(hld.is_adjacent(result, i));
+                        hld.between(i, result, j);
+                    }
                 }
             }
         }
@@ -454,9 +616,9 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for i in 0..n {
                 for j in 0..n {
                     for k in 0..n {
@@ -476,8 +638,8 @@ mod tests {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
             let orig_g = rng.sample(Tree(n));
-            let mut g = orig_g.clone();
-            let hld = Hld::new(root, &mut g);
+            let g = orig_g.clone();
+            let hld = Hld::new(root, &g);
             let a = (0..n).map(|i| 1u64 << i).collect::<Vec<_>>();
             let a_sorted = hld.ord.iter().map(|&i| a[i]).collect::<Vec<_>>();
             for i in 0..n {
@@ -498,7 +660,8 @@ mod tests {
     fn test_hand_4vtx() {
         let n = 4;
         let edges = [[0, 1], [0, 2], [2, 3]];
-        let (g, time, ord, parent, head) = test_dfs_efs_impl(n, &edges);
+        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
+        assert_eq!(size, vec![4, 1, 2, 1]);
         assert_eq!(g, vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
         assert_eq!(time, vec![0, 3, 1, 2]);
         assert_eq!(ord, vec![0, 2, 3, 1]);
@@ -519,7 +682,7 @@ mod tests {
             [5, 6],
             [5, 7],
         ];
-        let (g, time, ord, parent, head) = test_dfs_efs_impl(n, &edges);
+        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
         assert_eq!(
             g,
             vec![
@@ -534,6 +697,7 @@ mod tests {
                 Vec::new(), // 8
             ]
         );
+        assert_eq!(size, vec![9, 1, 6, 2, 1, 4, 2, 1, 1]);
         assert_eq!(time, vec![0, 6, 1, 7, 4, 2, 3, 5, 8]);
         assert_eq!(ord, vec![0, 2, 5, 6, 4, 7, 1, 3, 8]);
         assert_eq!(parent, vec![0, 2, 0, 0, 6, 2, 5, 5, 3]);
@@ -541,20 +705,10 @@ mod tests {
     }
 
     #[allow(clippy::type_complexity)]
-    fn test_dfs_efs_impl(
-        n: usize,
-        edges: &[[usize; 2]],
-    ) -> (
-        Vec<Vec<usize>>,
-        Vec<usize>,
-        Vec<usize>,
-        Vec<usize>,
-        Vec<usize>,
-    ) {
+    fn test_dfs_efs_impl(n: usize, edges: &[[usize; 2]]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
         assert_eq!(edges.len() + 1, n);
         let r = 0;
-        let mut g = array_make_undirected(n, edges);
-        let (ord, time, parent, head) = hld(r, &mut g);
-        (g, ord, time, parent, head)
+        let g = array_make_undirected(n, edges);
+        hld(r, &g)
     }
 }
