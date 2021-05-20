@@ -114,7 +114,79 @@ impl Hld {
     pub fn head(&self) -> &[usize] {
         &self.head
     }
+    /// 頂点 `u`, `v` が隣接頂点であれば `true`、さもなくば `false` を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `x`, `v` のいずれかが範囲外
+    ///
+    /// # Examples
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &g);
+    /// assert_eq!(hld.is_adjacent(0, 3), false); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.is_adjacent(2, 1), false); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.is_adjacent(0, 2), true); // 1 -- 0 -- 2 -- 3
+    /// ```
+    pub fn is_adjacent(&self, u: usize, v: usize) -> bool {
+        assert!(u < self.child.len(), "範囲外です。");
+        assert!(v < self.child.len(), "範囲外です。");
+        self.parent[u] == v || u == self.parent[v]
+    }
+    /// `x` の隣接頂点のうち、`toward` との間にあるものを返します。
+    ///
+    /// # Panics
+    ///
+    /// * `x`, `toward` のいずれかが範囲外
+    /// * `x == toward`
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &g);
+    /// assert_eq!(hld.adjacent_toward(0, 3), 2); // 1 -- 0 -- 2 -- 3
+    /// assert_eq!(hld.adjacent_toward(2, 1), 0); // 1 -- 0 -- 2 -- 3
+    /// ```
+    pub fn adjacent_toward(&self, x: usize, toward: usize) -> usize {
+        assert!(x < self.child.len(), "範囲外です。");
+        assert!(toward < self.child.len(), "範囲外です。");
+        assert_ne!(
+            x, toward,
+            "`x = toward = {} となっており、方向がわかりません。",
+            x
+        );
+        if self.is_ancestor_of(x, toward) {
+            self.child[x]
+                .iter()
+                .copied()
+                .find(|&y| self.is_ancestor_of(y, toward))
+                .unwrap()
+        } else {
+            self.parent[x]
+        }
+    }
     /// 2 つの頂点番号から、その間の距離を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
     ///
     /// # Examples
     ///
@@ -135,6 +207,12 @@ impl Hld {
         self.iter_e(u, v).map(|(l, r)| r - l + 1).sum::<usize>()
     }
     /// 2 つの頂点番号から、LCA の頂点番号を返します。
+    ///
+    /// # Panics
+    ///
+    /// * `p`, `x` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
@@ -156,19 +234,23 @@ impl Hld {
     }
     /// `p` が `u` の祖先であれば `true`、さもなくば `false` です。
     ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
     ///     vec![2],
     /// ];
     ///
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// assert_eq!(hld.is_ancestor_of(0, 3), true);;
     /// assert_eq!(hld.is_ancestor_of(1, 3), false);
     /// assert_eq!(hld.is_ancestor_of(3, 0), false);
@@ -179,12 +261,17 @@ impl Hld {
     /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
     ///   `true`、さもなくば `false` を返します。
     ///
+    /// # Panics
+    ///
+    /// * `a`, `b`, `c` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
@@ -192,7 +279,7 @@ impl Hld {
     /// ];
     ///
     /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// assert_eq!(hld.between(1, 0, 2), true);
     /// assert_eq!(hld.between(1, 3, 2), false);
     /// assert_eq!(hld.between(1, 2, 2), true);
@@ -206,12 +293,17 @@ impl Hld {
     /// に分解して、各々両端の頂点**の訪問時刻**を返すイテレータを作ります。
     /// つまり、`f` の引数は閉区間です。
     ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
@@ -219,7 +311,7 @@ impl Hld {
     /// ];
     ///
     /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// let vtx = hld
     ///     .iter_v(1, 3)
     ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
@@ -239,19 +331,24 @@ impl Hld {
     }
     /// [`Self::iter_v`] とほぼ同様ですが、LCA だけスキップします。
     ///
+    /// # Panics
+    ///
+    /// * `u`, `v` のいずれかが範囲外
+    ///
+    ///
     /// # Examples
     ///
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
+    /// let g = vec![
     ///     vec![1, 2],
     ///     vec![0],
     ///     vec![0, 3],
     ///     vec![2],
     /// ];
     ///
-    /// let hld = Hld::new(0, &mut g);
+    /// let hld = Hld::new(0, &g);
     /// let vtx = hld
     ///     .iter_e(1, 3)
     ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
@@ -442,7 +539,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tree_lca_and_ancestor() {
+    fn test_preorder() {
         fn dfs(x: usize, p: usize, g: &[Vec<usize>], height: &mut [usize], parent: &mut [usize]) {
             for y in g[x].iter().copied().filter(|&y| y != p) {
                 parent[y] = x;
@@ -495,6 +592,18 @@ mod tests {
                             true
                         }();
                         assert_eq!(result, expected);
+                    }
+                    // is_adjacent
+                    {
+                        let result = hld.is_adjacent(i, j);
+                        let expected = parent[i] == j || i == parent[j];
+                        assert_eq!(result, expected);
+                    }
+                    // child_toward
+                    if i != j {
+                        let result = hld.adjacent_toward(i, j);
+                        assert!(hld.is_adjacent(result, i));
+                        hld.between(i, result, j);
                     }
                 }
             }
