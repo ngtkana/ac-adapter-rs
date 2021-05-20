@@ -141,6 +141,28 @@ impl Hld {
         let (u, v) = self.iter_v(u, v).last().unwrap();
         self.ord[u.min(v)]
     }
+    /// `p` が `u` の祖先であれば `true`、さもなくば `false` です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use hld::Hld;
+    ///
+    /// let mut g = vec![
+    ///     vec![1, 2],
+    ///     vec![0],
+    ///     vec![0, 3],
+    ///     vec![2],
+    /// ];
+    ///
+    /// let hld = Hld::new(0, &mut g);
+    /// assert_eq!(hld.is_ancestor_of(0, 3), true);;
+    /// assert_eq!(hld.is_ancestor_of(1, 3), false);
+    /// assert_eq!(hld.is_ancestor_of(3, 0), false);
+    /// ```
+    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool {
+        self.lca(p, u) == p
+    }
     /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
     ///   `true`、さもなくば `false` を返します。
     ///
@@ -407,7 +429,7 @@ mod tests {
     }
 
     #[test]
-    fn test_tree_lca() {
+    fn test_tree_lca_and_ancestor() {
         fn dfs(x: usize, p: usize, g: &[Vec<usize>], height: &mut [usize], parent: &mut [usize]) {
             for y in g[x].iter().copied().filter(|&y| y != p) {
                 parent[y] = x;
@@ -428,21 +450,39 @@ mod tests {
             let hld = Hld::new(root, &mut g);
             for i in 0..n {
                 for j in 0..n {
-                    let result = hld.lca(i, j);
-                    let mut i = i;
-                    let mut j = j;
-                    if height[i] > height[j] {
-                        swap(&mut i, &mut j);
+                    // lca
+                    {
+                        let result = hld.lca(i, j);
+                        let mut i = i;
+                        let mut j = j;
+                        if height[i] > height[j] {
+                            swap(&mut i, &mut j);
+                        }
+                        while height[i] < height[j] {
+                            j = parent[j];
+                        }
+                        while i != j {
+                            i = parent[i];
+                            j = parent[j];
+                        }
+                        let expected = i;
+                        assert_eq!(result, expected);
                     }
-                    while height[i] < height[j] {
-                        j = parent[j];
+                    // is_ancestor_of
+                    {
+                        let result = hld.is_ancestor_of(i, j);
+                        let expected = || -> bool {
+                            let mut j = j;
+                            while i != j {
+                                if j == parent[j] {
+                                    return false;
+                                }
+                                j = parent[j]
+                            }
+                            true
+                        }();
+                        assert_eq!(result, expected);
                     }
-                    while i != j {
-                        i = parent[i];
-                        j = parent[j];
-                    }
-                    let expected = i;
-                    assert_eq!(result, expected);
                 }
             }
         }
