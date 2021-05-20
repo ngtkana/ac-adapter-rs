@@ -6,8 +6,7 @@
 //!
 //! ## 初期化
 //!
-//! * [`new`](Hld::new): 根付き木から構築します。受け取った木は親リンクが削除され、heavy edge
-//! が全て先頭に来るように並び替えられます。
+//! * [`new`](Hld::new): 根付き木から構築します。
 //!
 //!
 //! ## 基本的なメソッド
@@ -31,6 +30,8 @@
 //!
 //! ## せっかく計算してるので公開している情報
 //!
+//! * [`child`](Hld::child): 親を消したグラフ
+//! * [`size`](Hld::size): 部分木のサイズ
 //! * [`parent`](Hld::parent): 受け取った根付き木における親
 //! * [`head`](Hld::head): heavy path における先頭
 //!
@@ -43,15 +44,15 @@
 //! let root = 0;
 //! let n = 4;
 //! let edges = [[0, 1], [0, 2], [2, 3]];
-//! let mut g = vec![
+//! let g = vec![
 //!     vec![1, 2],
 //!     vec![0],
 //!     vec![0, 3],
 //!     vec![2],
 //! ];
-//! let hld = Hld::new(root, &mut g);
+//! let hld = Hld::new(root, &g);
 //!
-//! assert_eq!(g, vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
+//! assert_eq!(hld.child(), vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
 //! assert_eq!(hld.time(), &[0, 3, 1, 2]);
 //! assert_eq!(hld.ord(), &[0, 2, 3, 1]);
 //! assert_eq!(hld.parent(), &[0, 0, 0, 2]);
@@ -62,6 +63,7 @@ use std::{mem::swap, usize::MAX};
 /// 重軽分解
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct Hld {
+    child: Vec<Vec<usize>>,
     size: Vec<usize>,
     time: Vec<usize>,
     ord: Vec<usize>,
@@ -75,15 +77,20 @@ impl Hld {
     ///
     /// 入力は木である（根をひとつしか指定しないことからもわかるように、森はだめです。）
     ///
-    pub fn new(root: usize, g: &mut [Vec<usize>]) -> Self {
-        let [size, time, ord, parent, head] = hld(root, g);
+    pub fn new(root: usize, g: &[Vec<usize>]) -> Self {
+        let (child, [size, time, ord, parent, head]) = hld(root, g);
         Self {
+            child,
             size,
             time,
             ord,
             parent,
             head,
         }
+    }
+    /// 親を消したグラフを返します。
+    pub fn child(&self) -> &[Vec<usize>] {
+        &self.child
     }
     /// 頂点番号から部分木のサイズを引くテーブルを返します。
     pub fn size(&self) -> &[usize] {
@@ -327,32 +334,33 @@ impl Iterator for IterE<'_> {
     }
 }
 
-fn hld(root: usize, g: &mut [Vec<usize>]) -> [Vec<usize>; 5] {
+fn hld(root: usize, g: &[Vec<usize>]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
     let n = g.len();
     let mut size = vec![1; n];
-    dfs(root, root, g, &mut size);
+    let mut child = vec![Vec::<usize>::new(); n];
+    dfs(root, root, g, &mut size, &mut child);
     let mut ord = Vec::new();
     let mut time = vec![MAX; n];
     let mut parent = vec![MAX; n];
     let mut head = vec![MAX; n];
     parent[root] = root;
     head[root] = root;
-    efs(root, &g, &mut time, &mut ord, &mut parent, &mut head);
+    efs(root, &child, &mut time, &mut ord, &mut parent, &mut head);
     assert!(parent.iter().all(|&x| x != MAX), "入力が非連結です。");
-    [size, time, ord, parent, head]
+    (child, [size, time, ord, parent, head])
 }
 
-fn dfs(x: usize, p: usize, g: &mut [Vec<usize>], size: &mut [usize]) {
-    let mut child = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
-    if !child.is_empty() {
-        for &y in &child {
-            dfs(y, x, g, size);
+fn dfs(x: usize, p: usize, g: &[Vec<usize>], size: &mut [usize], child: &mut [Vec<usize>]) {
+    let mut gx = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
+    if !gx.is_empty() {
+        for &y in &gx {
+            dfs(y, x, g, size, child);
             size[x] += size[y];
         }
-        let max_position = (0..child.len()).max_by_key(|&i| size[child[i]]).unwrap();
-        child.swap(0, max_position);
+        let max_position = (0..gx.len()).max_by_key(|&i| size[gx[i]]).unwrap();
+        gx.swap(0, max_position);
     }
-    g[x] = child;
+    child[x] = gx;
 }
 
 fn efs(
@@ -405,11 +413,11 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let mut parent = vec![MAX; n];
             parent[root] = root;
             dfs(root, root, &g, &mut parent);
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             assert_eq!(hld.parent(), parent.as_slice());
         }
     }
@@ -420,9 +428,9 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for (i, dist_i) in dist.iter().enumerate() {
                 for (j, &d) in dist_i.iter().enumerate() {
                     let result = hld.dist(i, j);
@@ -446,13 +454,13 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let mut height = vec![MAX; n];
             let mut parent = vec![MAX; n];
             height[root] = 1;
             parent[root] = root;
             dfs(root, root, &g, &mut height, &mut parent);
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for i in 0..n {
                 for j in 0..n {
                     // lca
@@ -499,9 +507,9 @@ mod tests {
         for _ in 0..20 {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
-            let mut g = rng.sample(Tree(n));
+            let g = rng.sample(Tree(n));
             let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &mut g);
+            let hld = Hld::new(root, &g);
             for i in 0..n {
                 for j in 0..n {
                     for k in 0..n {
@@ -521,8 +529,8 @@ mod tests {
             let n = rng.gen_range(1..12);
             let root = rng.gen_range(0..n);
             let orig_g = rng.sample(Tree(n));
-            let mut g = orig_g.clone();
-            let hld = Hld::new(root, &mut g);
+            let g = orig_g.clone();
+            let hld = Hld::new(root, &g);
             let a = (0..n).map(|i| 1u64 << i).collect::<Vec<_>>();
             let a_sorted = hld.ord.iter().map(|&i| a[i]).collect::<Vec<_>>();
             for i in 0..n {
@@ -591,8 +599,7 @@ mod tests {
     fn test_dfs_efs_impl(n: usize, edges: &[[usize; 2]]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
         assert_eq!(edges.len() + 1, n);
         let r = 0;
-        let mut g = array_make_undirected(n, edges);
-        let ar = hld(r, &mut g);
-        (g, ar)
+        let g = array_make_undirected(n, edges);
+        hld(r, &g)
     }
 }
