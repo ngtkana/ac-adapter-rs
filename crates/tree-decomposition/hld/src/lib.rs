@@ -62,6 +62,7 @@ use std::{mem::swap, usize::MAX};
 /// 重軽分解
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct Hld {
+    size: Vec<usize>,
     time: Vec<usize>,
     ord: Vec<usize>,
     parent: Vec<usize>,
@@ -75,13 +76,18 @@ impl Hld {
     /// 入力は木である（根をひとつしか指定しないことからもわかるように、森はだめです。）
     ///
     pub fn new(root: usize, g: &mut [Vec<usize>]) -> Self {
-        let (time, ord, parent, head) = hld(root, g);
+        let [size, time, ord, parent, head] = hld(root, g);
         Self {
+            size,
             time,
             ord,
             parent,
             head,
         }
+    }
+    /// 頂点番号から部分木のサイズを引くテーブルを返します。
+    pub fn size(&self) -> &[usize] {
+        &self.size
     }
     /// 頂点番号から訪問時刻を引くテーブルを返します。
     pub fn time(&self) -> &[usize] {
@@ -321,33 +327,32 @@ impl Iterator for IterE<'_> {
     }
 }
 
-fn hld(root: usize, g: &mut [Vec<usize>]) -> (Vec<usize>, Vec<usize>, Vec<usize>, Vec<usize>) {
-    dfs(root, root, g);
+fn hld(root: usize, g: &mut [Vec<usize>]) -> [Vec<usize>; 5] {
+    let n = g.len();
+    let mut size = vec![1; n];
+    dfs(root, root, g, &mut size);
     let mut ord = Vec::new();
-    let mut time = vec![MAX; g.len()];
-    let mut parent = vec![MAX; g.len()];
-    let mut head = vec![MAX; g.len()];
+    let mut time = vec![MAX; n];
+    let mut parent = vec![MAX; n];
+    let mut head = vec![MAX; n];
     parent[root] = root;
     head[root] = root;
     efs(root, &g, &mut time, &mut ord, &mut parent, &mut head);
     assert!(parent.iter().all(|&x| x != MAX), "入力が非連結です。");
-    (time, ord, parent, head)
+    [size, time, ord, parent, head]
 }
 
-fn dfs(x: usize, p: usize, g: &mut [Vec<usize>]) -> usize {
+fn dfs(x: usize, p: usize, g: &mut [Vec<usize>], size: &mut [usize]) {
     let mut child = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
-    let mut size = 1;
-    let mut max_size = 1;
-    for i in 0..child.len() {
-        let s = dfs(child[i], x, g);
-        if max_size < s {
-            max_size = s;
-            child.swap(0, i);
+    if !child.is_empty() {
+        for &y in &child {
+            dfs(y, x, g, size);
+            size[x] += size[y];
         }
-        size += s;
+        let max_position = (0..child.len()).max_by_key(|&i| size[child[i]]).unwrap();
+        child.swap(0, max_position);
     }
     g[x] = child;
-    size
 }
 
 fn efs(
@@ -538,7 +543,8 @@ mod tests {
     fn test_hand_4vtx() {
         let n = 4;
         let edges = [[0, 1], [0, 2], [2, 3]];
-        let (g, time, ord, parent, head) = test_dfs_efs_impl(n, &edges);
+        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
+        assert_eq!(size, vec![4, 1, 2, 1]);
         assert_eq!(g, vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
         assert_eq!(time, vec![0, 3, 1, 2]);
         assert_eq!(ord, vec![0, 2, 3, 1]);
@@ -559,7 +565,7 @@ mod tests {
             [5, 6],
             [5, 7],
         ];
-        let (g, time, ord, parent, head) = test_dfs_efs_impl(n, &edges);
+        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
         assert_eq!(
             g,
             vec![
@@ -574,6 +580,7 @@ mod tests {
                 Vec::new(), // 8
             ]
         );
+        assert_eq!(size, vec![9, 1, 6, 2, 1, 4, 2, 1, 1]);
         assert_eq!(time, vec![0, 6, 1, 7, 4, 2, 3, 5, 8]);
         assert_eq!(ord, vec![0, 2, 5, 6, 4, 7, 1, 3, 8]);
         assert_eq!(parent, vec![0, 2, 0, 0, 6, 2, 5, 5, 3]);
@@ -581,20 +588,11 @@ mod tests {
     }
 
     #[allow(clippy::type_complexity)]
-    fn test_dfs_efs_impl(
-        n: usize,
-        edges: &[[usize; 2]],
-    ) -> (
-        Vec<Vec<usize>>,
-        Vec<usize>,
-        Vec<usize>,
-        Vec<usize>,
-        Vec<usize>,
-    ) {
+    fn test_dfs_efs_impl(n: usize, edges: &[[usize; 2]]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
         assert_eq!(edges.len() + 1, n);
         let r = 0;
         let mut g = array_make_undirected(n, edges);
-        let (ord, time, parent, head) = hld(r, &mut g);
-        (g, ord, time, parent, head)
+        let ar = hld(r, &mut g);
+        (g, ar)
     }
 }
