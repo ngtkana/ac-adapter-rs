@@ -1,11 +1,12 @@
 use std::fmt::Display;
 
-pub fn space<I, T>(mut iter: I) -> String
+pub fn space<I, T>(iter: I) -> String
 where
     T: Display,
-    I: Iterator<Item = T>,
+    I: IntoIterator<Item = T>,
 {
     let mut string = String::new();
+    let mut iter = iter.into_iter();
     if let Some(head) = iter.next() {
         string.push_str(&format!("{}", head));
         for elm in iter {
