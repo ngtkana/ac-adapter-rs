@@ -11,8 +11,10 @@ accum = { path = "../utils/accum" }
 advance = { path = "../utils/advance" }
 bfs = { path = "../algolib/bfs" }
 bfs01 = { path = "../algolib/bfs01" }
+binary = { path = "../utils/binary" }
 bitset = { path = "../utils/bitset" }
 box_segtree = { path = "../range-query/box_segtree" }
+bsgs = { path = "../math/bsgs" }
 convex_hull = { path = "../geometry/convex_hull" }
 dbg = { path = "../utils/dbg" }
 dfs = { path = "../algolib/dfs" }
@@ -57,11 +59,13 @@ segbeats_task3 = { path = "../range-query/segbeats_task3" }
 segtree = { path = "../range-query/segtree" }
 seq = { path = "../utils/seq" }
 skew-heap = { path = "../heaps/skew-heap" }
+sort_tree = { path = "../algolib/sort_tree" }
 space = { path = "../utils/space" }
 span = { path = "../utils/span" }
 sparse_table = { path = "../range-query/sparse_table" }
 suffix_array = { path = "../algolib/suffix_array" }
 swag = { path = "../range-query/swag" }
+tree_fold = { path = "../algolib/tree_fold" }
 trial = { path = "../math/trial" }
 trie = { path = "../string/trie" }
 uf_checklist = { path = "../range-query/uf_checklist" }
