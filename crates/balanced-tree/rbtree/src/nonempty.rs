@@ -186,6 +186,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             Self::Internal(node) => Some(*node),
         }
     }
+    #[allow(clippy::wrong_self_convention)]
     fn from_children(lhs: Self, rhs: Self, height: usize) -> Self {
         Self::Internal(Box::new(Internal {
             len: lhs.len() + rhs.len(),
