@@ -1,5 +1,5 @@
 [package]
-name = "golden_section_search_integer"
+name = "gss"
 version = "0.1.0"
 edition = "2018"
 
@@ -8,6 +8,7 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
+approx = "0.5.0"
 rand = "0.8.4"
 randtools = { path = "../../utils/randtools/" }
 test-case = "1.1.0"
