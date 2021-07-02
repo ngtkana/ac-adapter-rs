@@ -43,9 +43,19 @@ use std::{
 ////////////////////////////////////////////////////////////////////////////////
 // 演算
 ////////////////////////////////////////////////////////////////////////////////
+/// [`Segtree`] に使う演算です。
+///
+/// # Requirements
+///
+/// * 副作用がないこと
+/// * 結合律 `op(op(x, y), z)) == op(x, op(y, z))`
+/// * 単位元律 `op(identity(), x) == x == op(x, identity())`
 pub trait Ops {
+    /// 値型
     type Value: Debug + Default;
+    /// 積
     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    /// 単位元
     fn identity() -> Self::Value;
 }
 
@@ -238,6 +248,154 @@ impl<O: Ops> Segtree<O> {
         }
         O::op(&left, &right)
     }
+    /// 命題の成り立つ最大の区間を探します。
+    ///
+    /// # Panics
+    ///
+    /// 標準ライブラリの [`SliceIndex`] と同じ条件でパニックします。
+    ///
+    ///
+    /// # Output
+    ///
+    /// 表している配列を `a` とするとき、次を満たす `i` が存在するのでひとつ返します。
+    ///
+    /// - `i == l || pred(self.fold(l..i))`
+    /// - `i == r || !pred(self.fold(l..=i))`
+    ///
+    /// とくに `pred(self.fold(l..i))` が `i` に関して `true` から `false`
+    /// に向かって単調ならば、`pred(self.fold(l..i))` を満たす最大の `i` です。
+    ///
+    pub fn max_right(
+        &self,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&O::Value) -> bool,
+    ) -> usize {
+        let Range { mut start, mut end } = into_slice_range(self.len(), range);
+        if start == end {
+            start
+        } else {
+            start += self.len();
+            end += self.len();
+            let orig_end = end;
+            let mut crr = O::identity();
+            let mut shift = 0;
+            while start != end {
+                if start % 2 == 1 {
+                    let nxt = O::op(&crr, &self.table[start]);
+                    if !pred(&nxt) {
+                        return self.max_right_subtree(crr, start, pred);
+                    }
+                    crr = nxt;
+                    start += 1;
+                }
+                start /= 2;
+                end /= 2;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let end = (orig_end >> p) - 1;
+                if end % 2 == 0 {
+                    let nxt = O::op(&crr, &self.table[end]);
+                    if !pred(&nxt) {
+                        return self.max_right_subtree(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_end - self.len()
+        }
+    }
+    fn max_right_subtree(
+        &self,
+        mut crr: O::Value,
+        mut root: usize,
+        mut pred: impl FnMut(&O::Value) -> bool,
+    ) -> usize {
+        while root < self.len() {
+            let nxt = O::op(&crr, &self.table[root * 2]);
+            root = if pred(&nxt) {
+                crr = nxt;
+                root * 2 + 1
+            } else {
+                root * 2
+            };
+        }
+        root - self.len()
+    }
+    /// 命題の成り立つ最大の区間を探します。
+    ///
+    /// # Panics
+    ///
+    /// 標準ライブラリの [`SliceIndex`] と同じ条件でパニックします。
+    ///
+    ///
+    /// # Output
+    ///
+    /// 表している配列を `a` とするとき、次を満たす `i` が存在するのでひとつ返します。
+    ///
+    /// - `i == r || pred(self.fold(l..i))`
+    /// - `i == l || !pred(self.fold(l-1..i))`
+    ///
+    /// とくに `pred(self.fold(i..r))` が `i` に関して `false` から `true`
+    /// に向かって単調ならば、`pred(self.fold(i..r))` を満たす最小の `i` です。
+    ///
+    pub fn max_left(
+        &self,
+        range: impl RangeBounds<usize>,
+        mut pred: impl FnMut(&O::Value) -> bool,
+    ) -> usize {
+        let Range { mut start, mut end } = into_slice_range(self.len(), range);
+        if start == end {
+            start
+        } else {
+            start += self.len();
+            end += self.len();
+            let orig_start_m1 = start - 1;
+            let mut crr = O::identity();
+            let mut shift = 0;
+            while start != end {
+                if end % 2 == 1 {
+                    end -= 1;
+                    let nxt = O::op(&self.table[end], &crr);
+                    if !pred(&nxt) {
+                        return self.max_left_subtree(crr, end, pred);
+                    }
+                    crr = nxt;
+                }
+                start = (start + 1) >> 1;
+                end >>= 1;
+                shift += 1;
+            }
+            for p in (0..shift).rev() {
+                let start = (orig_start_m1 >> p) + 1;
+                if start % 2 == 1 {
+                    let nxt = O::op(&self.table[start], &crr);
+                    if !pred(&nxt) {
+                        return self.max_left_subtree(crr, start, pred);
+                    }
+                    crr = nxt;
+                }
+            }
+            orig_start_m1 + 1 - self.len()
+        }
+    }
+    fn max_left_subtree(
+        &self,
+        mut crr: O::Value,
+        mut root: usize,
+        mut pred: impl FnMut(&O::Value) -> bool,
+    ) -> usize {
+        while root < self.len() {
+            let nxt = O::op(&self.table[root * 2 + 1], &crr);
+            root = if pred(&nxt) {
+                crr = nxt;
+                root * 2
+            } else {
+                root * 2 + 1
+            };
+        }
+        root + 1 - self.len()
+    }
     /// 要素の可変ハンドラを返します。
     ///
     /// # Panics
@@ -332,6 +490,10 @@ impl<O: Ops, Idx: SliceIndex<[O::Value], Output = O::Value>> Index<Idx> for Segt
         &self.as_slice()[index]
     }
 }
+/// [`Segtree`] のエントリー型です。
+///
+/// [`impl Deref`](struct.Entry.html#impl-Deref) で要素にアクセスして、[`impl
+/// Drop`](struct.Entry.html#impl-Drop) で再計算をします。
 pub struct Entry<'a, O: Ops> {
     idx: usize,
     seg: &'a mut Segtree<O>,
@@ -548,6 +710,76 @@ mod tests {
                     }
                     _ => unreachable!(),
                 }
+            }
+        }
+    }
+
+    #[test]
+    fn test_max_right() {
+        enum O {}
+        impl Ops for O {
+            type Value = String;
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+                lhs.chars().chain(rhs.chars()).collect()
+            }
+            fn identity() -> Self::Value {
+                String::new()
+            }
+        }
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(1..=10);
+            let a = ('a'..).take(n).map(|c| c.to_string()).collect::<Vec<_>>();
+            let seg = Segtree::<O>::new(a.iter().cloned());
+            for _ in 0..2 * n {
+                let mut l = rng.gen_range(0..n);
+                let mut r = rng.gen_range(0..n + 1);
+                if r <= l {
+                    swap(&mut l, &mut r);
+                    r += 1;
+                }
+                let expected = rng.gen_range(l..=r);
+                let s = a[l..expected]
+                    .iter()
+                    .flat_map(|s| s.chars())
+                    .collect::<String>();
+                let result = seg.max_right(l..r, |t| t.len() <= s.len());
+                assert_eq!(expected, result);
+            }
+        }
+    }
+
+    #[test]
+    fn test_max_left() {
+        enum O {}
+        impl Ops for O {
+            type Value = String;
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+                lhs.chars().chain(rhs.chars()).collect()
+            }
+            fn identity() -> Self::Value {
+                String::new()
+            }
+        }
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = rng.gen_range(1..=10);
+            let a = ('a'..).take(n).map(|c| c.to_string()).collect::<Vec<_>>();
+            let seg = Segtree::<O>::new(a.iter().cloned());
+            for _ in 0..2 * n {
+                let mut l = rng.gen_range(0..n);
+                let mut r = rng.gen_range(0..n + 1);
+                if r <= l {
+                    swap(&mut l, &mut r);
+                    r += 1;
+                }
+                let expected = rng.gen_range(l..=r);
+                let s = a[expected..r]
+                    .iter()
+                    .flat_map(|s| s.chars())
+                    .collect::<String>();
+                let result = seg.max_left(l..r, |t| t.len() <= s.len());
+                assert_eq!(expected, result);
             }
         }
     }
