@@ -134,7 +134,10 @@ impl<O: Ops> Segtree<O> {
     /// let seg = Segtree::<O>::new(vec![0, 1, 2]);
     /// assert_eq!(seg.as_ref(), &[0, 1, 2]);
     /// ```
-    pub fn new<I: ExactSizeIterator<Item = O::Value>, T: IntoIterator<IntoIter = I>>(
+    pub fn new<
+        I: ExactSizeIterator<Item = O::Value>,
+        T: IntoIterator<Item = O::Value, IntoIter = I>,
+    >(
         iter: T,
     ) -> Self {
         let iter = iter.into_iter();
