@@ -10,6 +10,7 @@
 //!
 mod avltree;
 mod map;
+mod multiset;
 mod set;
 
-pub use self::{map::AvlMap, set::AvlSet};
+pub use self::{map::AvlMap, multiset::AvlMultiset, set::AvlSet};
