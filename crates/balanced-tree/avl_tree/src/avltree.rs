@@ -34,6 +34,20 @@ impl<K, V> Avltree<K, V> {
         self.rotate_update();
         res
     }
+    pub fn get_extremum(&self, e: usize) -> Option<(&K, &V)> {
+        let mut ext = self.0.as_ref()?;
+        while !ext.child[e].is_empty() {
+            ext = ext.child[e].0.as_ref().unwrap();
+        }
+        Some((&ext.key, &ext.value))
+    }
+    pub fn get_mut_extremum(&mut self, e: usize) -> Option<(&K, &mut V)> {
+        let mut ext = self.0.as_mut()?;
+        while !ext.child[e].is_empty() {
+            ext = ext.child[e].0.as_mut().unwrap();
+        }
+        Some((&ext.key, &mut ext.value))
+    }
     /// `Ordering` で二分探索して、一致するものがあればインデックスと要素への参照を返します。
     pub fn get_by<F: Fn(usize, &K) -> Ordering>(
         &self,
