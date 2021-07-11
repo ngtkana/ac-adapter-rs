@@ -62,7 +62,11 @@ impl<K, V> Avltree<K, V> {
         }
     }
     /// `Ordering` で二分探索して、一致するものがあれば削除して要素とインデックスを返します。
-    pub fn delete_by<F: Fn(&K) -> Ordering>(&mut self, cmp: F) -> Option<(usize, K, V)> {
+    pub fn delete_by<F: Fn(usize, &K) -> Ordering>(
+        &mut self,
+        offset: usize,
+        cmp: F,
+    ) -> Option<(usize, K, V)> {
         fn delete_extremum<K, V>(root: &mut Box<Avltree<K, V>>, e: usize) -> (K, V) {
             let res = if root.0.as_ref().unwrap().child[1 - e].is_empty() {
                 let swp = take(&mut root.0.as_mut().unwrap().child[e]);
@@ -75,29 +79,29 @@ impl<K, V> Avltree<K, V> {
         }
         let res = match &mut self.0 {
             None => None,
-            Some(node) => match cmp(&node.key) {
-                Ordering::Less => node.child[0].delete_by(cmp),
-                Ordering::Equal => Some(
-                    match node.child.iter().position(|child| !child.is_empty()) {
-                        None => {
-                            let old = take(&mut self.0).unwrap();
-                            (0, old.key, old.value)
-                        }
-                        Some(e) => {
-                            let i = node.child[0].len();
-                            let (ext_k, ext_v) = delete_extremum(&mut node.child[e], e);
-                            (
-                                i,
-                                replace(&mut node.key, ext_k),
-                                replace(&mut node.value, ext_v),
-                            )
-                        }
-                    },
-                ),
-                Ordering::Greater => node.child[1]
-                    .delete_by(cmp)
-                    .map(|(i, k, v)| (node.child[0].len() + 1 + i, k, v)),
-            },
+            Some(node) => {
+                let aug = node.child[0].len();
+                match cmp(offset + aug, &node.key) {
+                    Ordering::Less => node.child[0].delete_by(offset, cmp),
+                    Ordering::Equal => Some(
+                        match node.child.iter().position(|child| !child.is_empty()) {
+                            None => {
+                                let old = take(&mut self.0).unwrap();
+                                (offset + aug, old.key, old.value)
+                            }
+                            Some(e) => {
+                                let (ext_k, ext_v) = delete_extremum(&mut node.child[e], e);
+                                (
+                                    offset + aug,
+                                    replace(&mut node.key, ext_k),
+                                    replace(&mut node.value, ext_v),
+                                )
+                            }
+                        },
+                    ),
+                    Ordering::Greater => node.child[1].delete_by(offset + aug + 1, cmp),
+                }
+            }
         };
         self.rotate_update();
         res

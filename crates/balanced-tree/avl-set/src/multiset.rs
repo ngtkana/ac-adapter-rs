@@ -4,6 +4,35 @@ use {
 };
 
 /// 多重集合を管理する AVL 木です。
+///
+/// # Examples
+///
+/// ```
+/// # use avl_set::AvlMultiset;
+/// let mut a = AvlMultiset::new();
+///
+/// // 挿入します。
+/// // 成功すると、インデックスが返ります。
+/// assert_eq!(a.insert(5), 0);
+/// assert_eq!(a.insert(15), 1);
+/// assert_eq!(a.insert(10), 1);
+/// assert_eq!(a.insert(15), 2);
+///
+/// // `Vec` に変換できます。
+/// assert_eq!(a.collect_vec(), vec![5, 10, 15, 15]);
+///
+/// // 二分探索ができます。
+/// assert_eq!(a.contains(&5), true);
+/// assert_eq!(a.lower_bound(&7), 1);
+///
+/// // 削除します。
+/// // 成功すると、インデックスと要素が返ります。
+/// assert_eq!(a.delete(&5), Some((0, 5)));
+///
+/// // インデックスで削除することもできます。
+/// // 成功すると、要素が返ります。
+/// assert_eq!(a.delete_nth(0), 10);
+/// ```
 #[derive(Clone, Default)]
 pub struct AvlMultiset<K>(Avltree<K, ()>);
 impl<K: Ord> AvlMultiset<K> {
@@ -95,7 +124,36 @@ impl<K: Ord> AvlMultiset<K> {
     /// assert_eq!(a.collect_vec(), Vec::new());
     /// ```
     pub fn delete(&mut self, k: &K) -> Option<(usize, K)> {
-        self.0.delete_by(|l| k.cmp(l)).map(|(i, k, ())| (i, k))
+        self.0
+            .delete_by(0, |_, l| k.cmp(l))
+            .map(|(i, k, ())| (i, k))
+    }
+    /// `n` 番目の要素を削除します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x);
+    /// }
+    /// assert_eq!(a.delete_nth(0), 2);
+    /// assert_eq!(a.delete_nth(1), 8);
+    /// assert_eq!(a.delete_nth(0), 5);
+    /// assert_eq!(a.collect_vec(), Vec::new());
+    /// ```
+    pub fn delete_nth(&mut self, n: usize) -> K {
+        assert!(n < self.len());
+        self.0
+            .delete_by(0, |i, _| n.cmp(&i))
+            .map(|(_, k, ())| k)
+            .unwrap()
     }
     /// `x` に等しい要素があれば、`true` を返します。
     /// # Examples
@@ -267,6 +325,10 @@ mod tests {
                     }
                 }
             }
+            fn delete_nth(&mut self, n: usize) -> i32 {
+                self.0[n..].rotate_left(1);
+                self.0.pop().unwrap()
+            }
             fn lower_bound(&self, x: &i32) -> usize {
                 self.0.lower_bound(x)
             }
@@ -286,7 +348,7 @@ mod tests {
             let mut fast = AvlMultiset::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..6) {
+                match rng.gen_range(0..7) {
                     // len
                     0 => {
                         let result = fast.len();
@@ -306,22 +368,31 @@ mod tests {
                         let result = fast.delete(&x);
                         brute.delete_validate(&x, result);
                     }
-                    // lower_bound
+                    // delete_nth
                     3 => {
+                        if !fast.is_empty() {
+                            let n = rng.gen_range(0..fast.len());
+                            let result = fast.delete_nth(n);
+                            let expected = brute.delete_nth(n);
+                            assert_eq!(result, expected);
+                        }
+                    }
+                    // lower_bound
+                    4 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    4 => {
+                    5 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    5 => {
+                    6 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);

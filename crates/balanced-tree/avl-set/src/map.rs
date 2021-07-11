@@ -1,6 +1,40 @@
 use {super::avltree::Avltree, std::fmt::Debug};
 
 /// マップを管理する AVL 木です。
+///
+/// # Examples
+///
+/// ```
+/// # use avl_set::AvlMap;
+/// let mut a = AvlMap::new();
+///
+/// // 挿入します。
+/// // 成功すると、インデックスが返ります。
+/// // すでにある値は上書きされません。
+/// assert_eq!(a.insert(5, 105), Some(0));
+/// assert_eq!(a.insert(15, 115), Some(1));
+/// assert_eq!(a.insert(10, 110), Some(1));
+/// assert_eq!(a.insert(15, 215), None);
+///
+/// // `Vec` に変換できます。
+/// assert_eq!(a.collect_vec(), vec![(5, 105), (10, 110), (15, 115)]);
+///
+/// // 二分探索ができます。
+/// // 要素への参照や可変参照もとれます。
+/// assert_eq!(a.contains_key(&5), true);
+/// assert_eq!(a.lower_bound(&7), 1);
+/// assert_eq!(a.position_get(&15), Some((2, &115)));
+/// *a.get_mut(&15).unwrap() += 100;
+/// assert_eq!(a.collect_vec(), vec![(5, 105), (10, 110), (15, 215)]);
+///
+/// // 削除します。
+/// // 成功すると、インデックスと要素が返ります。
+/// assert_eq!(a.delete(&5), Some((0, 5, 105)));
+///
+/// // インデックスで削除することもできます。
+/// // 成功すると、要素が返ります。
+/// assert_eq!(a.delete_nth(0), (10, 110));
+/// ```
 #[derive(Clone, Default)]
 pub struct AvlMap<K, V>(Avltree<K, V>);
 impl<K: Ord, V> AvlMap<K, V> {
@@ -87,7 +121,34 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// assert_eq!(a.collect_keys_vec(), Vec::new());
     /// ```
     pub fn delete(&mut self, k: &K) -> Option<(usize, K, V)> {
-        self.0.delete_by(|l| k.cmp(l))
+        self.0.delete_by(0, |_, l| k.cmp(l))
+    }
+    /// `n` 番目の要素を削除します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.delete_nth(0), (2, ()));
+    /// assert_eq!(a.delete_nth(1), (8, ()));
+    /// assert_eq!(a.delete_nth(0), (5, ()));
+    /// assert_eq!(a.collect_vec(), Vec::new());
+    /// ```
+    pub fn delete_nth(&mut self, n: usize) -> (K, V) {
+        assert!(n < self.len());
+        self.0
+            .delete_by(0, |i, _| n.cmp(&i))
+            .map(|(_, k, v)| (k, v))
+            .unwrap()
     }
     /// `x` に等しい要素があれば、`true` を返します。
     /// # Examples
@@ -363,6 +424,10 @@ mod tests {
                     None
                 }
             }
+            fn delete_nth(&mut self, n: usize) -> (i32, u8) {
+                self.0[n..].rotate_left(1);
+                self.0.pop().unwrap()
+            }
             fn position_get(&self, &k: &i32) -> Option<(usize, &u8)> {
                 self.0
                     .binary_search_by_key(&k, |&(k, _)| k)
@@ -395,7 +460,7 @@ mod tests {
             let mut fast = AvlMap::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..8) {
+                match rng.gen_range(0..9) {
                     // len
                     0 => {
                         let result = fast.len();
@@ -417,15 +482,24 @@ mod tests {
                         let expected = brute.delete(&x);
                         assert_eq!(result, expected);
                     }
-                    // position_get
+                    // delete_nth
                     3 => {
+                        if !fast.is_empty() {
+                            let n = rng.gen_range(0..fast.len());
+                            let result = fast.delete_nth(n);
+                            let expected = brute.delete_nth(n);
+                            assert_eq!(result, expected);
+                        }
+                    }
+                    // position_get
+                    4 => {
                         let x = rng.gen_range(0..A);
                         let result = fast.position_get(&x);
                         let expected = brute.position_get(&x);
                         assert_eq!(result, expected);
                     }
                     // position_get_mut
-                    4 => {
+                    5 => {
                         let k = rng.gen_range(0..A);
                         let v = rng.gen_range(0..B);
                         match [fast.position_get_mut(&k), brute.position_get_mut(&k)] {
@@ -439,21 +513,21 @@ mod tests {
                         };
                     }
                     // lower_bound
-                    5 => {
+                    6 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    6 => {
+                    7 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    7 => {
+                    8 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);
