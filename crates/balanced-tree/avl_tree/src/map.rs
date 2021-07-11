@@ -5,7 +5,7 @@ use {super::avltree::Avltree, std::fmt::Debug};
 /// # Examples
 ///
 /// ```
-/// # use avl_set::AvlMap;
+/// # use avl_tree::AvlMap;
 /// let mut a = AvlMap::new();
 ///
 /// // 挿入します。
@@ -44,7 +44,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let a = AvlMap::<(), ()>::new();
     /// assert_eq!(a.collect_vec(), Vec::new());
     /// ```
@@ -56,7 +56,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// assert_eq!(a.len(), 0);
     /// a.insert((), ());
@@ -70,7 +70,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// assert_eq!(a.is_empty(), true);
     /// a.insert((), ());
@@ -89,7 +89,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// assert_eq!(a.insert(2, ()), Some(0));
     /// assert_eq!(a.insert(8, ()), Some(1));
@@ -110,7 +110,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -134,7 +134,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -151,12 +151,74 @@ impl<K: Ord, V> AvlMap<K, V> {
             .map(|(_, k, v)| (k, v))
             .unwrap()
     }
+    /// 先頭の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.front(), Some((&2, &())));
+    /// ```
+    pub fn front(&self) -> Option<(&K, &V)> {
+        self.0.get_extremum(0)
+    }
+    /// 末尾の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.back(), Some((&8, &())));
+    /// ```
+    pub fn back(&self) -> Option<(&K, &V)> {
+        self.0.get_extremum(1)
+    }
+    /// 先頭の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, 0);
+    /// }
+    /// *a.front_mut().unwrap().1 += 10;
+    /// assert_eq!(a.collect_vec(), vec![(2, 10), (5, 0), (8, 0)]);
+    /// ```
+    pub fn front_mut(&mut self) -> Option<(&K, &mut V)> {
+        self.0.get_mut_extremum(0).map(|(k, v)| (k, v))
+    }
+    /// 末尾の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, 0);
+    /// }
+    /// *a.back_mut().unwrap().1 += 10;
+    /// assert_eq!(a.collect_vec(), vec![(2, 0), (5, 0), (8, 10)]);
+    /// ```
+    pub fn back_mut(&mut self) -> Option<(&K, &mut V)> {
+        self.0.get_mut_extremum(1).map(|(k, v)| (k, v))
+    }
     /// `n` 番目の要素を返します。
     ///
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -173,7 +235,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -191,7 +253,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -209,7 +271,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
     ///     a.insert(k, v);
@@ -227,7 +289,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
     ///     a.insert(k, v);
@@ -243,7 +305,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
     ///     a.insert(k, v);
@@ -261,7 +323,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
     ///     a.insert(k, v);
@@ -280,7 +342,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -298,7 +360,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x, ());
@@ -316,7 +378,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
     ///     a.insert(x, ());
@@ -334,7 +396,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 8, 5] {
     ///     a.insert(x, ());
@@ -353,7 +415,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// for x in vec![2, 8, 5] {
     ///     a.insert(x, ());
@@ -371,7 +433,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// let mut s = String::new();
     /// for x in vec![2, 8, 5] {
@@ -388,7 +450,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlMap;
+    /// # use avl_tree::AvlMap;
     /// let mut a = AvlMap::new();
     /// let mut s = String::new();
     /// for x in vec![2, 8, 5] {

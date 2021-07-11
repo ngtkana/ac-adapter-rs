@@ -1,22 +1,25 @@
-use {super::avltree::Avltree, std::fmt::Debug};
+use {
+    std::cmp::Ordering,
+    {super::avltree::Avltree, std::fmt::Debug},
+};
 
-/// 集合を管理する AVL 木です。
+/// 多重集合を管理する AVL 木です。
 ///
 /// # Examples
 ///
 /// ```
-/// # use avl_set::AvlSet;
-/// let mut a = AvlSet::new();
+/// # use avl_tree::AvlMultiset;
+/// let mut a = AvlMultiset::new();
 ///
 /// // 挿入します。
 /// // 成功すると、インデックスが返ります。
-/// assert_eq!(a.insert(5), Some(0));
-/// assert_eq!(a.insert(15), Some(1));
-/// assert_eq!(a.insert(10), Some(1));
-/// assert_eq!(a.insert(15), None);
+/// assert_eq!(a.insert(5), 0);
+/// assert_eq!(a.insert(15), 1);
+/// assert_eq!(a.insert(10), 1);
+/// assert_eq!(a.insert(15), 2);
 ///
 /// // `Vec` に変換できます。
-/// assert_eq!(a.collect_vec(), vec![5, 10, 15]);
+/// assert_eq!(a.collect_vec(), vec![5, 10, 15, 15]);
 ///
 /// // 二分探索ができます。
 /// assert_eq!(a.nth(2), Some(&15));
@@ -32,15 +35,15 @@ use {super::avltree::Avltree, std::fmt::Debug};
 /// assert_eq!(a.delete_nth(0), 10);
 /// ```
 #[derive(Clone, Default)]
-pub struct AvlSet<K>(Avltree<K, ()>);
-impl<K: Ord> AvlSet<K> {
-    /// 空の [`AvlSet`] を構築します。
+pub struct AvlMultiset<K>(Avltree<K, ()>);
+impl<K: Ord> AvlMultiset<K> {
+    /// 空の [`AvlMultiset`] を構築します。
     ///
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let a = AvlSet::<()>::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let a = AvlMultiset::<()>::new();
     /// assert_eq!(a.collect_vec(), Vec::new());
     /// ```
     pub fn new() -> Self {
@@ -51,8 +54,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// assert_eq!(a.len(), 0);
     /// a.insert(());
     /// assert_eq!(a.len(), 1);
@@ -65,8 +68,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// assert_eq!(a.is_empty(), true);
     /// a.insert(());
     /// assert_eq!(a.is_empty(), false);
@@ -74,26 +77,31 @@ impl<K: Ord> AvlSet<K> {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
-    /// `x` に等しい要素がない場合新しく挿入します。さもなくば挿入されません。
+    /// 何がなんでも挿入します。
     ///
     /// # Returns
     ///
-    /// 挿入された場合はそのインデックスを返します。さもなくば `None` を返します。
+    /// 挿入されたインデックスを返します。
     ///
     ///
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
-    /// assert_eq!(a.insert(2), Some(0));
-    /// assert_eq!(a.insert(8), Some(1));
-    /// assert_eq!(a.insert(5), Some(1));
-    /// assert_eq!(a.insert(8), None);
-    /// assert_eq!(a.collect_vec(), vec![2, 5, 8]);
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
+    /// assert_eq!(a.insert(2), 0);
+    /// assert_eq!(a.insert(8), 1);
+    /// assert_eq!(a.insert(5), 1);
+    /// assert_eq!(a.insert(8), 2);
+    /// assert_eq!(a.collect_vec(), vec![2, 5, 8, 8]);
     /// ```
-    pub fn insert(&mut self, k: K) -> Option<usize> {
-        self.0.insert_by(k, (), Ord::cmp)
+    pub fn insert(&mut self, k: K) -> usize {
+        self.0
+            .insert_by(k, (), |x, y| match x.cmp(y) {
+                Ordering::Less | Ordering::Equal => Ordering::Less,
+                Ordering::Greater => Ordering::Greater,
+            })
+            .unwrap()
     }
     /// `x` に等しい要素がある場合は削除されます。さもなくば削除されません
     ///
@@ -105,8 +113,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
@@ -131,8 +139,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
@@ -148,31 +156,43 @@ impl<K: Ord> AvlSet<K> {
             .map(|(_, k, ())| k)
             .unwrap()
     }
-    /// `x` に等しい要素があれば、`true` を返します。
+    /// 先頭の要素を返します。
     ///
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
-    /// assert_eq!(a.contains(&2), true);
-    /// assert_eq!(a.contains(&3), false);
-    /// assert_eq!(a.contains(&4), false);
-    /// assert_eq!(a.contains(&5), true);
+    /// assert_eq!(a.front(), Some(&2));
     /// ```
-    pub fn contains(&self, k: &K) -> bool {
-        self.0.get_by(0, |_, l| k.cmp(l)).is_some()
+    pub fn front(&self) -> Option<&K> {
+        self.0.get_extremum(0).map(|(k, ())| k)
+    }
+    /// 末尾の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x);
+    /// }
+    /// assert_eq!(a.back(), Some(&8));
+    /// ```
+    pub fn back(&self) -> Option<&K> {
+        self.0.get_extremum(1).map(|(k, ())| k)
     }
     /// `n` 番目の要素を返します。
     ///
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
@@ -184,23 +204,22 @@ impl<K: Ord> AvlSet<K> {
     pub fn nth(&self, n: usize) -> Option<&K> {
         self.0.get_by(0, |i, _| n.cmp(&i)).map(|(_, k, ())| k)
     }
-    /// `x` に等しい要素があれば、そのインデックスを返します。
-    ///
+    /// `x` に等しい要素があれば、`true` を返します。
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
-    /// assert_eq!(a.position(&2), Some(0));
-    /// assert_eq!(a.position(&3), None);
-    /// assert_eq!(a.position(&4), None);
-    /// assert_eq!(a.position(&5), Some(1));
+    /// assert_eq!(a.contains(&2), true);
+    /// assert_eq!(a.contains(&3), false);
+    /// assert_eq!(a.contains(&4), false);
+    /// assert_eq!(a.contains(&5), true);
     /// ```
-    pub fn position(&self, k: &K) -> Option<usize> {
-        self.0.get_by(0, |_, l| k.cmp(l)).map(|(i, _, ())| i)
+    pub fn contains(&self, k: &K) -> bool {
+        self.0.get_by(0, |_, l| k.cmp(l)).is_some()
     }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
@@ -208,8 +227,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
@@ -226,8 +245,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 5, 8] {
     ///     a.insert(x);
     /// }
@@ -244,8 +263,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9] {
     ///     a.insert(x);
     /// }
@@ -262,8 +281,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// for x in vec![2, 8, 5] {
     ///     a.insert(x);
     /// }
@@ -280,8 +299,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// let mut s = String::new();
     /// for x in vec![2, 8, 5] {
     ///     a.insert(x);
@@ -297,8 +316,8 @@ impl<K: Ord> AvlSet<K> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_set::AvlSet;
-    /// let mut a = AvlSet::new();
+    /// # use avl_tree::AvlMultiset;
+    /// let mut a = AvlMultiset::new();
     /// let mut s = String::new();
     /// for x in vec![2, 8, 5] {
     ///     a.insert(x);
@@ -310,7 +329,7 @@ impl<K: Ord> AvlSet<K> {
         self.0.rfor_each(&mut |k, ()| f(k))
     }
 }
-impl<T: Debug> Debug for AvlSet<T> {
+impl<T: Debug> Debug for AvlMultiset<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let mut debug_set = f.debug_set();
         self.0.fmt_keys_impl(&mut debug_set);
@@ -321,109 +340,11 @@ impl<T: Debug> Debug for AvlSet<T> {
 #[cfg(test)]
 mod tests {
     use {
-        super::{super::avltree::utils::describe_set, AvlSet},
+        super::AvlMultiset,
         rand::{prelude::StdRng, Rng, SeedableRng},
         std::fmt::Debug,
         superslice::Ext,
     };
-
-    fn describe<T: Debug>(avl: &AvlSet<T>) -> String {
-        describe_set(&avl.0)
-    }
-
-    #[test]
-    fn test_structure_biased_ascending() {
-        let mut avl = AvlSet::<u32>::new();
-        assert_eq!(describe(&avl).as_str(), "");
-        avl.insert(0);
-        assert_eq!(describe(&avl).as_str(), "(0)");
-        avl.insert(1);
-        assert_eq!(describe(&avl).as_str(), "(0(1))");
-        avl.insert(2);
-        assert_eq!(describe(&avl).as_str(), "((0)1(2))");
-        avl.insert(3);
-        assert_eq!(describe(&avl).as_str(), "((0)1(2(3)))");
-        avl.insert(4);
-        assert_eq!(describe(&avl).as_str(), "((0)1((2)3(4)))");
-        avl.insert(5);
-        assert_eq!(describe(&avl).as_str(), "(((0)1(2))3(4(5)))");
-        avl.insert(6);
-        assert_eq!(describe(&avl).as_str(), "(((0)1(2))3((4)5(6)))");
-        avl.insert(7);
-        assert_eq!(describe(&avl).as_str(), "(((0)1(2))3((4)5(6(7))))");
-        avl.insert(8);
-        assert_eq!(describe(&avl).as_str(), "(((0)1(2))3((4)5((6)7(8))))");
-        avl.insert(9);
-        assert_eq!(describe(&avl).as_str(), "(((0)1(2))3(((4)5(6))7(8(9))))");
-        avl.insert(10);
-        assert_eq!(
-            describe(&avl).as_str(),
-            "(((0)1(2))3(((4)5(6))7((8)9(10))))"
-        );
-        avl.insert(11);
-        assert_eq!(
-            describe(&avl).as_str(),
-            "((((0)1(2))3((4)5(6)))7((8)9(10(11))))"
-        );
-    }
-
-    #[test]
-    fn test_structure_biased_descending() {
-        struct Reverse(u32);
-        impl PartialEq for Reverse {
-            fn eq(&self, other: &Self) -> bool {
-                self.0 == other.0
-            }
-        }
-        impl Eq for Reverse {}
-        impl PartialOrd for Reverse {
-            fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-                Some(self.cmp(&other))
-            }
-        }
-        impl Ord for Reverse {
-            fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-                self.0.cmp(&other.0).reverse()
-            }
-        }
-        impl Debug for Reverse {
-            fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-                self.0.fmt(f)
-            }
-        }
-        let mut avl = AvlSet::<Reverse>::new();
-        assert_eq!(describe(&avl).as_str(), "");
-        avl.insert(Reverse(0));
-        assert_eq!(describe(&avl).as_str(), "(0)");
-        avl.insert(Reverse(1));
-        assert_eq!(describe(&avl).as_str(), "((1)0)");
-        avl.insert(Reverse(2));
-        assert_eq!(describe(&avl).as_str(), "((2)1(0))");
-        avl.insert(Reverse(3));
-        assert_eq!(describe(&avl).as_str(), "(((3)2)1(0))");
-        avl.insert(Reverse(4));
-        assert_eq!(describe(&avl).as_str(), "(((4)3(2))1(0))");
-        avl.insert(Reverse(5));
-        assert_eq!(describe(&avl).as_str(), "(((5)4)3((2)1(0)))");
-        avl.insert(Reverse(6));
-        assert_eq!(describe(&avl).as_str(), "(((6)5(4))3((2)1(0)))");
-        avl.insert(Reverse(7));
-        assert_eq!(describe(&avl).as_str(), "((((7)6)5(4))3((2)1(0)))");
-        avl.insert(Reverse(8));
-        assert_eq!(describe(&avl).as_str(), "((((8)7(6))5(4))3((2)1(0)))");
-        avl.insert(Reverse(9));
-        assert_eq!(describe(&avl).as_str(), "((((9)8)7((6)5(4)))3((2)1(0)))");
-        avl.insert(Reverse(10));
-        assert_eq!(
-            describe(&avl).as_str(),
-            "((((10)9(8))7((6)5(4)))3((2)1(0)))"
-        );
-        avl.insert(Reverse(11));
-        assert_eq!(
-            describe(&avl).as_str(),
-            "((((11)10)9(8))7(((6)5(4))3((2)1(0))))"
-        );
-    }
 
     #[test]
     fn test_rand() {
@@ -436,22 +357,21 @@ mod tests {
             fn len(&self) -> usize {
                 self.0.len()
             }
-            fn insert(&mut self, x: i32) -> Option<usize> {
-                if self.0.binary_search(&x).is_err() {
-                    let i = self.0.lower_bound(&x);
-                    self.0.insert(i, x);
-                    Some(i)
-                } else {
-                    None
-                }
+            fn insert(&mut self, x: i32) -> usize {
+                let i = self.0.lower_bound(&x);
+                self.0.insert(i, x);
+                i
             }
-            fn delete(&mut self, x: &i32) -> Option<(usize, i32)> {
-                if self.0.binary_search(&x).is_ok() {
-                    let i = self.0.lower_bound(&x);
-                    self.0.remove(i);
-                    Some((i, *x))
-                } else {
-                    None
+            fn delete_validate(&mut self, &x: &i32, result: Option<(usize, i32)>) {
+                match result {
+                    None => {
+                        assert!(self.0.binary_search(&x).is_err());
+                    }
+                    Some((i, y)) => {
+                        assert_eq!(x, y);
+                        assert_eq!(x, self.0[i]);
+                        self.0.remove(i);
+                    }
                 }
             }
             fn delete_nth(&mut self, n: usize) -> i32 {
@@ -460,9 +380,6 @@ mod tests {
             }
             fn nth(&mut self, n: usize) -> Option<&i32> {
                 self.0.get(n)
-            }
-            fn position(&mut self, x: &i32) -> Option<usize> {
-                self.0.binary_search(&x).ok()
             }
             fn lower_bound(&self, x: &i32) -> usize {
                 self.0.lower_bound(x)
@@ -479,11 +396,11 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             const A: i32 = 40;
-            const Q: usize = 500;
-            let mut fast = AvlSet::new();
+            const Q: usize = 200;
+            let mut fast = AvlMultiset::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..9) {
+                match rng.gen_range(0..8) {
                     // len
                     0 => {
                         let result = fast.len();
@@ -501,8 +418,7 @@ mod tests {
                     2 => {
                         let x = rng.gen_range(0..A);
                         let result = fast.delete(&x);
-                        let expected = brute.delete(&x);
-                        assert_eq!(result, expected);
+                        brute.delete_validate(&x, result);
                     }
                     // delete_nth
                     3 => {
@@ -522,29 +438,22 @@ mod tests {
                             assert_eq!(result, expected);
                         }
                     }
-                    // position
-                    5 => {
-                        let x = rng.gen_range(0..A);
-                        let result = fast.position(&x);
-                        let expected = brute.position(&x);
-                        assert_eq!(result, expected);
-                    }
                     // lower_bound
-                    6 => {
+                    5 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    7 => {
+                    6 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    8 => {
+                    7 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);
@@ -560,17 +469,5 @@ mod tests {
                 assert!(ht <= len_lim[ht]);
             }
         }
-    }
-
-    #[test]
-    fn test_avltree_fmt() {
-        let mut set = AvlSet::<u32>::new();
-        assert_eq!("{}", format!("{:?}", &set).as_str());
-        set.insert(10);
-        assert_eq!("{10}", format!("{:?}", &set).as_str());
-        set.insert(15);
-        assert_eq!("{10, 15}", format!("{:?}", &set).as_str());
-        set.insert(5);
-        assert_eq!("{5, 10, 15}", format!("{:?}", &set).as_str());
     }
 }
