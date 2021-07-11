@@ -9,6 +9,7 @@
 //! - （できれば）イテレータ（これ unsafe しないとかなり辛いんですよね。）
 //!
 mod avltree;
+mod map;
 mod set;
 
-pub use self::set::AvlSet;
+pub use self::{map::AvlMap, set::AvlSet};
