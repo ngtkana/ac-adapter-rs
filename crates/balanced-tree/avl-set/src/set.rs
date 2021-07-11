@@ -89,6 +89,41 @@ impl<K: Ord> AvlSet<K> {
     pub fn delete(&mut self, k: &K) -> Option<(usize, K)> {
         self.0.delete_by(|l| k.cmp(l)).map(|(i, k, ())| (i, k))
     }
+    /// `x` に等しい要素があれば、`true` を返します。
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlSet;
+    /// let mut a = AvlSet::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x);
+    /// }
+    /// assert_eq!(a.contains(&2), true);
+    /// assert_eq!(a.contains(&3), false);
+    /// assert_eq!(a.contains(&4), false);
+    /// assert_eq!(a.contains(&5), true);
+    /// ```
+    pub fn contains(&self, k: &K) -> bool {
+        self.0.get_by(|l| k.cmp(l)).is_some()
+    }
+    /// `x` に等しい要素があれば、そのインデックスを返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlSet;
+    /// let mut a = AvlSet::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x);
+    /// }
+    /// assert_eq!(a.position(&2), Some(0));
+    /// assert_eq!(a.position(&3), None);
+    /// assert_eq!(a.position(&4), None);
+    /// assert_eq!(a.position(&5), Some(1));
+    /// ```
+    pub fn position(&self, k: &K) -> Option<usize> {
+        self.0.get_by(|l| k.cmp(l)).map(|(i, ())| i)
+    }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
     ///
@@ -341,6 +376,9 @@ mod tests {
                     None
                 }
             }
+            fn position(&mut self, x: &i32) -> Option<usize> {
+                self.0.binary_search(&x).ok()
+            }
             fn lower_bound(&self, x: &i32) -> usize {
                 self.0.lower_bound(x)
             }
@@ -360,8 +398,8 @@ mod tests {
             let mut fast = AvlSet::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..6) {
-                    // insert
+                match rng.gen_range(0..7) {
+                    // len
                     0 => {
                         let result = fast.len();
                         let expected = brute.len();
@@ -381,22 +419,29 @@ mod tests {
                         let expected = brute.delete(&x);
                         assert_eq!(result, expected);
                     }
-                    // lower_bound
+                    // position
                     3 => {
+                        let x = rng.gen_range(0..A);
+                        let result = fast.position(&x);
+                        let expected = brute.position(&x);
+                        assert_eq!(result, expected);
+                    }
+                    // lower_bound
+                    4 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    4 => {
+                    5 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    5 => {
+                    6 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);

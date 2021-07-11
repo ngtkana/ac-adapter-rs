@@ -89,6 +89,109 @@ impl<K: Ord, V> AvlMap<K, V> {
     pub fn delete(&mut self, k: &K) -> Option<(usize, K, V)> {
         self.0.delete_by(|l| k.cmp(l))
     }
+    /// `x` に等しい要素があれば、`true` を返します。
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.contains_key(&2), true);
+    /// assert_eq!(a.contains_key(&3), false);
+    /// assert_eq!(a.contains_key(&4), false);
+    /// assert_eq!(a.contains_key(&5), true);
+    /// ```
+    pub fn contains_key(&self, k: &K) -> bool {
+        self.get(k).is_some()
+    }
+    /// `x` に等しい要素があれば、そのインデックスを返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.position(&2), Some(0));
+    /// assert_eq!(a.position(&3), None);
+    /// assert_eq!(a.position(&4), None);
+    /// assert_eq!(a.position(&5), Some(1));
+    /// ```
+    pub fn position(&self, k: &K) -> Option<usize> {
+        self.0.get_by(|l| k.cmp(l)).map(|(i, _)| i)
+    }
+    /// `x` に等しい要素があれば、その値への参照を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
+    ///     a.insert(k, v);
+    /// }
+    /// assert_eq!(a.get(&2), Some(&12));
+    /// assert_eq!(a.get(&3), None);
+    /// assert_eq!(a.get(&4), None);
+    /// assert_eq!(a.get(&5), Some(&15));
+    /// ```
+    pub fn get(&self, k: &K) -> Option<&V> {
+        self.position_get(k).map(|(_, v)| v)
+    }
+    /// `x` に等しい要素があれば、その値への可変参照を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
+    ///     a.insert(k, v);
+    /// }
+    /// *a.get_mut(&2).unwrap() = 22;
+    /// assert_eq!(a.collect_vec(), vec![(2, 22), (5, 15), (8, 18)]);
+    /// ```
+    pub fn get_mut(&mut self, k: &K) -> Option<&mut V> {
+        self.position_get_mut(k).map(|(_, v)| v)
+    }
+    /// `x` に等しい要素があれば、そのインデックスと値への参照を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
+    ///     a.insert(k, v);
+    /// }
+    /// assert_eq!(a.position_get(&2), Some((0, &12)));
+    /// assert_eq!(a.position_get(&3), None);
+    /// assert_eq!(a.position_get(&4), None);
+    /// assert_eq!(a.position_get(&5), Some((1, &15)));
+    /// ```
+    pub fn position_get(&self, k: &K) -> Option<(usize, &V)> {
+        self.0.get_by(|l| k.cmp(l))
+    }
+    /// `x` に等しい要素があれば、そのインデックスと値への可変参照を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for (k, v) in vec![(2, 12), (5, 15), (8, 18)] {
+    ///     a.insert(k, v);
+    /// }
+    /// *a.position_get_mut(&2).unwrap().1 = 22;
+    /// assert_eq!(a.collect_vec(), vec![(2, 22), (5, 15), (8, 18)]);
+    /// ```
+    pub fn position_get_mut(&mut self, k: &K) -> Option<(usize, &mut V)> {
+        self.0.get_mut_by(|l| k.cmp(l))
+    }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
     ///
@@ -260,6 +363,18 @@ mod tests {
                     None
                 }
             }
+            fn position_get(&self, &k: &i32) -> Option<(usize, &u8)> {
+                self.0
+                    .binary_search_by_key(&k, |&(k, _)| k)
+                    .ok()
+                    .map(|i| (i, &self.0[i].1))
+            }
+            fn position_get_mut(&mut self, &k: &i32) -> Option<(usize, &mut u8)> {
+                match self.0.binary_search_by_key(&k, |&(k, _)| k) {
+                    Err(_) => None,
+                    Ok(i) => Some((i, &mut self.0[i].1)),
+                }
+            }
             fn lower_bound(&self, k: &i32) -> usize {
                 self.0.lower_bound_by_key(k, |&(k, _)| k)
             }
@@ -280,8 +395,8 @@ mod tests {
             let mut fast = AvlMap::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..6) {
-                    // insert
+                match rng.gen_range(0..8) {
+                    // len
                     0 => {
                         let result = fast.len();
                         let expected = brute.len();
@@ -302,22 +417,43 @@ mod tests {
                         let expected = brute.delete(&x);
                         assert_eq!(result, expected);
                     }
-                    // lower_bound
+                    // position_get
                     3 => {
+                        let x = rng.gen_range(0..A);
+                        let result = fast.position_get(&x);
+                        let expected = brute.position_get(&x);
+                        assert_eq!(result, expected);
+                    }
+                    // position_get_mut
+                    4 => {
+                        let k = rng.gen_range(0..A);
+                        let v = rng.gen_range(0..B);
+                        match [fast.position_get_mut(&k), brute.position_get_mut(&k)] {
+                            [None, None] => continue,
+                            [Some((result, fast_ref)), Some((expected, brute_ref))] => {
+                                *fast_ref = v;
+                                *brute_ref = v;
+                                assert_eq!(result, expected);
+                            }
+                            _ => panic!(),
+                        };
+                    }
+                    // lower_bound
+                    5 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    4 => {
+                    6 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    5 => {
+                    7 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);
