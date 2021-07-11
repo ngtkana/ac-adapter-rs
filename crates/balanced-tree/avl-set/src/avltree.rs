@@ -34,6 +34,33 @@ impl<K, V> Avltree<K, V> {
         self.rotate_update();
         res
     }
+    /// `Ordering` で二分探索して、一致するものがあればインデックスと要素への参照を返します。
+    pub fn get_by<F: Fn(&K) -> Ordering>(&self, cmp: F) -> Option<(usize, &V)> {
+        match &self.0 {
+            None => None,
+            Some(node) => match cmp(&node.key) {
+                Ordering::Less => node.child[0].get_by(cmp),
+                Ordering::Equal => Some((node.child[0].len(), &node.value)),
+                Ordering::Greater => node.child[1]
+                    .get_by(cmp)
+                    .map(|(i, v)| (node.child[0].len() + 1 + i, v)),
+            },
+        }
+    }
+    /// `Ordering` で二分探索して、一致するものがあればインデックスと要素への可変参照を返します。
+    pub fn get_mut_by<F: Fn(&K) -> Ordering>(&mut self, cmp: F) -> Option<(usize, &mut V)> {
+        match &mut self.0 {
+            None => None,
+            Some(node) => match cmp(&node.key) {
+                Ordering::Less => node.child[0].get_mut_by(cmp),
+                Ordering::Equal => Some((node.child[0].len(), &mut node.value)),
+                Ordering::Greater => {
+                    let len = node.child[0].len();
+                    node.child[1].get_mut_by(cmp).map(|(i, v)| (len + 1 + i, v))
+                }
+            },
+        }
+    }
     /// `Ordering` で二分探索して、一致するものがあれば削除して要素とインデックスを返します。
     pub fn delete_by<F: Fn(&K) -> Ordering>(&mut self, cmp: F) -> Option<(usize, K, V)> {
         fn delete_extremum<K, V>(root: &mut Box<Avltree<K, V>>, e: usize) -> (K, V) {
