@@ -21,6 +21,7 @@ use {super::avltree::Avltree, std::fmt::Debug};
 ///
 /// // 二分探索ができます。
 /// // 要素への参照や可変参照もとれます。
+/// assert_eq!(a.nth(2), Some((&15, &115)));
 /// assert_eq!(a.contains_key(&5), true);
 /// assert_eq!(a.lower_bound(&7), 1);
 /// assert_eq!(a.position_get(&15), Some((2, &115)));
@@ -150,6 +151,24 @@ impl<K: Ord, V> AvlMap<K, V> {
             .map(|(_, k, v)| (k, v))
             .unwrap()
     }
+    /// `n` 番目の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlMap;
+    /// let mut a = AvlMap::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x, ());
+    /// }
+    /// assert_eq!(a.nth(0), Some((&2, &())));
+    /// assert_eq!(a.nth(1), Some((&5, &())));
+    /// assert_eq!(a.nth(2), Some((&8, &())));
+    /// assert_eq!(a.nth(3), None);
+    /// ```
+    pub fn nth(&self, n: usize) -> Option<(&K, &V)> {
+        self.0.get_by(0, |i, _| n.cmp(&i)).map(|(_, k, v)| (k, v))
+    }
     /// `x` に等しい要素があれば、`true` を返します。
     /// # Examples
     ///
@@ -183,7 +202,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// assert_eq!(a.position(&5), Some(1));
     /// ```
     pub fn position(&self, k: &K) -> Option<usize> {
-        self.0.get_by(|l| k.cmp(l)).map(|(i, _)| i)
+        self.0.get_by(0, |_, l| k.cmp(l)).map(|(i, _, _)| i)
     }
     /// `x` に等しい要素があれば、その値への参照を返します。
     ///
@@ -235,7 +254,7 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// assert_eq!(a.position_get(&5), Some((1, &15)));
     /// ```
     pub fn position_get(&self, k: &K) -> Option<(usize, &V)> {
-        self.0.get_by(|l| k.cmp(l))
+        self.0.get_by(0, |_, l| k.cmp(l)).map(|(i, _, v)| (i, v))
     }
     /// `x` に等しい要素があれば、そのインデックスと値への可変参照を返します。
     ///
@@ -251,7 +270,9 @@ impl<K: Ord, V> AvlMap<K, V> {
     /// assert_eq!(a.collect_vec(), vec![(2, 22), (5, 15), (8, 18)]);
     /// ```
     pub fn position_get_mut(&mut self, k: &K) -> Option<(usize, &mut V)> {
-        self.0.get_mut_by(|l| k.cmp(l))
+        self.0
+            .get_mut_by(0, |_, l| k.cmp(l))
+            .map(|(i, _, v)| (i, v))
     }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
@@ -428,6 +449,9 @@ mod tests {
                 self.0[n..].rotate_left(1);
                 self.0.pop().unwrap()
             }
+            fn nth(&mut self, n: usize) -> Option<(&i32, &u8)> {
+                self.0.get(n).map(|(k, v)| (k, v))
+            }
             fn position_get(&self, &k: &i32) -> Option<(usize, &u8)> {
                 self.0
                     .binary_search_by_key(&k, |&(k, _)| k)
@@ -460,7 +484,7 @@ mod tests {
             let mut fast = AvlMap::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..9) {
+                match rng.gen_range(0..10) {
                     // len
                     0 => {
                         let result = fast.len();
@@ -491,15 +515,24 @@ mod tests {
                             assert_eq!(result, expected);
                         }
                     }
-                    // position_get
+                    // nth
                     4 => {
+                        if !fast.is_empty() {
+                            let n = rng.gen_range(0..fast.len());
+                            let result = fast.nth(n);
+                            let expected = brute.nth(n);
+                            assert_eq!(result, expected);
+                        }
+                    }
+                    // position_get
+                    5 => {
                         let x = rng.gen_range(0..A);
                         let result = fast.position_get(&x);
                         let expected = brute.position_get(&x);
                         assert_eq!(result, expected);
                     }
                     // position_get_mut
-                    5 => {
+                    6 => {
                         let k = rng.gen_range(0..A);
                         let v = rng.gen_range(0..B);
                         match [fast.position_get_mut(&k), brute.position_get_mut(&k)] {
@@ -513,21 +546,21 @@ mod tests {
                         };
                     }
                     // lower_bound
-                    6 => {
+                    7 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    7 => {
+                    8 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    8 => {
+                    9 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);
