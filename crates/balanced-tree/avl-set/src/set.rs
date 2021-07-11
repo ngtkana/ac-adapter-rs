@@ -2,8 +2,8 @@ use {super::avltree::Avltree, std::fmt::Debug};
 
 /// 集合を管理する AVL 木です。
 #[derive(Clone, Default)]
-pub struct AvlSet<T>(Avltree<T>);
-impl<T: Ord> AvlSet<T> {
+pub struct AvlSet<K>(Avltree<K, ()>);
+impl<K: Ord> AvlSet<K> {
     /// 空の [`AvlSet`] を構築します。
     ///
     /// # Examples
@@ -62,8 +62,8 @@ impl<T: Ord> AvlSet<T> {
     /// assert_eq!(a.insert(8), None);
     /// assert_eq!(a.collect_vec(), vec![2, 5, 8]);
     /// ```
-    pub fn insert(&mut self, x: T) -> Option<usize> {
-        self.0.insert_by(x, Ord::cmp)
+    pub fn insert(&mut self, k: K) -> Option<usize> {
+        self.0.insert_by(k, (), Ord::cmp)
     }
     /// `x` に等しい要素がある場合は削除されます。さもなくば削除されません
     ///
@@ -86,8 +86,8 @@ impl<T: Ord> AvlSet<T> {
     /// assert_eq!(a.delete(&8), None);
     /// assert_eq!(a.collect_vec(), Vec::new());
     /// ```
-    pub fn delete(&mut self, x: &T) -> Option<(usize, T)> {
-        self.0.delete_by(x, Ord::cmp)
+    pub fn delete(&mut self, k: &K) -> Option<(usize, K)> {
+        self.0.delete_by(|l| k.cmp(l)).map(|(i, k, ())| (i, k))
     }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
@@ -104,8 +104,8 @@ impl<T: Ord> AvlSet<T> {
     /// assert_eq!(a.lower_bound(&5), 1);
     /// assert_eq!(a.lower_bound(&6), 2);
     /// ```
-    pub fn lower_bound(&self, x: &T) -> usize {
-        self.0.partition_point(|y| y < x)
+    pub fn lower_bound(&self, k: &K) -> usize {
+        self.0.partition_point(|l| l < k)
     }
     /// そこより左はすべて `x` 以下、そこより右はすべて `x`
     /// より大きくなるようなインデックス境界がただ一つ存在するのでそれを返します。
@@ -122,8 +122,8 @@ impl<T: Ord> AvlSet<T> {
     /// assert_eq!(a.upper_bound(&5), 2);
     /// assert_eq!(a.upper_bound(&6), 2);
     /// ```
-    pub fn upper_bound(&self, x: &T) -> usize {
-        self.0.partition_point(|y| y <= x)
+    pub fn upper_bound(&self, k: &K) -> usize {
+        self.0.partition_point(|l| l <= k)
     }
     /// すぐ左は `false`、すぐ右は `true` になるようなインデックス境界が
     /// 一つ以上存在するので、そのうちひとつを返します。
@@ -141,7 +141,7 @@ impl<T: Ord> AvlSet<T> {
     ///     assert!(result % 5 == r || result == 10);
     /// }
     /// ```
-    pub fn partition_point<F: Fn(&T) -> bool>(&self, f: F) -> usize {
+    pub fn partition_point<F: Fn(&K) -> bool>(&self, f: F) -> usize {
         self.0.partition_point(f)
     }
     /// 要素を昇順にすべて clone して、[`Vec`] に変換します。
@@ -156,11 +156,11 @@ impl<T: Ord> AvlSet<T> {
     /// }
     /// assert_eq!(a.collect_vec(), vec![2, 5, 8]);
     /// ```
-    pub fn collect_vec(&self) -> Vec<T>
+    pub fn collect_vec(&self) -> Vec<K>
     where
-        T: Clone,
+        K: Clone,
     {
-        self.0.collect_vec()
+        self.0.collect_keys_vec()
     }
     /// 要素を昇順に訪問します。
     ///
@@ -176,8 +176,8 @@ impl<T: Ord> AvlSet<T> {
     /// a.for_each(|&x| s.push_str(&format!("{}", x)));
     /// assert_eq!(s.as_str(), "258");
     /// ```
-    pub fn for_each<F: FnMut(&T)>(&self, mut f: F) {
-        self.0.for_each(&mut f)
+    pub fn for_each<F: FnMut(&K)>(&self, mut f: F) {
+        self.0.for_each(&mut |k, ()| f(k))
     }
     /// 要素を昇順に訪問します。
     ///
@@ -193,27 +193,29 @@ impl<T: Ord> AvlSet<T> {
     /// a.rfor_each(|&x| s.push_str(&format!("{}", x)));
     /// assert_eq!(s.as_str(), "852");
     /// ```
-    pub fn rfor_each<F: FnMut(&T)>(&self, mut f: F) {
-        self.0.rfor_each(&mut f)
+    pub fn rfor_each<F: FnMut(&K)>(&self, mut f: F) {
+        self.0.rfor_each(&mut |k, ()| f(k))
     }
 }
 impl<T: Debug> Debug for AvlSet<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
+        let mut debug_set = f.debug_set();
+        self.0.fmt_keys_impl(&mut debug_set);
+        debug_set.finish()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::{super::avltree::utils::describe as describe_base, AvlSet},
+        super::{super::avltree::utils::describe_set, AvlSet},
         rand::{prelude::StdRng, Rng, SeedableRng},
         std::fmt::Debug,
         superslice::Ext,
     };
 
     fn describe<T: Debug>(avl: &AvlSet<T>) -> String {
-        describe_base(&avl.0)
+        describe_set(&avl.0)
     }
 
     #[test]
