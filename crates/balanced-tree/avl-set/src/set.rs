@@ -19,6 +19,7 @@ use {super::avltree::Avltree, std::fmt::Debug};
 /// assert_eq!(a.collect_vec(), vec![5, 10, 15]);
 ///
 /// // 二分探索ができます。
+/// assert_eq!(a.nth(2), Some(&15));
 /// assert_eq!(a.contains(&5), true);
 /// assert_eq!(a.lower_bound(&7), 1);
 ///
@@ -148,6 +149,7 @@ impl<K: Ord> AvlSet<K> {
             .unwrap()
     }
     /// `x` に等しい要素があれば、`true` を返します。
+    ///
     /// # Examples
     ///
     /// ```
@@ -162,7 +164,25 @@ impl<K: Ord> AvlSet<K> {
     /// assert_eq!(a.contains(&5), true);
     /// ```
     pub fn contains(&self, k: &K) -> bool {
-        self.0.get_by(|l| k.cmp(l)).is_some()
+        self.0.get_by(0, |_, l| k.cmp(l)).is_some()
+    }
+    /// `n` 番目の要素を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_set::AvlSet;
+    /// let mut a = AvlSet::new();
+    /// for x in vec![2, 5, 8] {
+    ///     a.insert(x);
+    /// }
+    /// assert_eq!(a.nth(0), Some(&2));
+    /// assert_eq!(a.nth(1), Some(&5));
+    /// assert_eq!(a.nth(2), Some(&8));
+    /// assert_eq!(a.nth(3), None);
+    /// ```
+    pub fn nth(&self, n: usize) -> Option<&K> {
+        self.0.get_by(0, |i, _| n.cmp(&i)).map(|(_, k, ())| k)
     }
     /// `x` に等しい要素があれば、そのインデックスを返します。
     ///
@@ -180,7 +200,7 @@ impl<K: Ord> AvlSet<K> {
     /// assert_eq!(a.position(&5), Some(1));
     /// ```
     pub fn position(&self, k: &K) -> Option<usize> {
-        self.0.get_by(|l| k.cmp(l)).map(|(i, ())| i)
+        self.0.get_by(0, |_, l| k.cmp(l)).map(|(i, _, ())| i)
     }
     /// そこより左は `x` 未満、そこより右は `x`
     /// 以上になるようなインデックス境界がただ一つ存在するのでそれを返します。
@@ -438,6 +458,9 @@ mod tests {
                 self.0[n..].rotate_left(1);
                 self.0.pop().unwrap()
             }
+            fn nth(&mut self, n: usize) -> Option<&i32> {
+                self.0.get(n)
+            }
             fn position(&mut self, x: &i32) -> Option<usize> {
                 self.0.binary_search(&x).ok()
             }
@@ -460,7 +483,7 @@ mod tests {
             let mut fast = AvlSet::new();
             let mut brute = Brute::new();
             for _ in 0..Q {
-                match rng.gen_range(0..8) {
+                match rng.gen_range(0..9) {
                     // len
                     0 => {
                         let result = fast.len();
@@ -490,29 +513,38 @@ mod tests {
                             assert_eq!(result, expected);
                         }
                     }
-                    // position
+                    // nth
                     4 => {
+                        if !fast.is_empty() {
+                            let n = rng.gen_range(0..fast.len());
+                            let result = fast.nth(n);
+                            let expected = brute.nth(n);
+                            assert_eq!(result, expected);
+                        }
+                    }
+                    // position
+                    5 => {
                         let x = rng.gen_range(0..A);
                         let result = fast.position(&x);
                         let expected = brute.position(&x);
                         assert_eq!(result, expected);
                     }
                     // lower_bound
-                    5 => {
+                    6 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.lower_bound(&x);
                         let expected = brute.lower_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // upper_bound
-                    6 => {
+                    7 => {
                         let x = rng.gen_range(0..=A);
                         let result = fast.upper_bound(&x);
                         let expected = brute.upper_bound(&x);
                         assert_eq!(result, expected);
                     }
                     // collect_vec
-                    7 => {
+                    8 => {
                         let result = fast.collect_vec();
                         let expected = brute.collect_vec();
                         assert_eq!(result, expected);
