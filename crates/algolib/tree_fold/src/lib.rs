@@ -7,7 +7,7 @@
 //! 部分木のサイズを計算する DP は、よく使うので [`Size`] 型として用意されています。
 //!
 //! ```
-//! use tree_fold::{tree_fold,Size};
+//! use tree_fold::{Ops, Size};
 //! let n = 5;
 //! let g = vec![
 //!     vec![1, 2],
@@ -16,7 +16,7 @@
 //!     vec![],
 //! ];
 //! let ord = vec![0, 1, 2, 3];
-//! let size = tree_fold::<Size>(&ord, &g);
+//! let size = Size {}.tree_fold(&ord, &g);
 //! assert_eq!(&size, &[4, 1, 2, 1]);
 //! ```
 //!
@@ -36,43 +36,43 @@ pub trait Ops {
     /// proj(Value)
     type Acc;
     /// 葉の値
-    fn leaf() -> Self::Value;
+    fn leaf(&self) -> Self::Value;
     /// フォールドする前に行う演算
-    fn proj(x: &Self::Value) -> Self::Acc;
-    fn mul(acc: Self::Acc, x: Self::Acc) -> Self::Acc;
-    fn up(acc: Self::Acc) -> Self::Value;
-}
-/// 木 DP を行います。（注意：g は親なし）
-pub fn tree_fold<T: Ops>(ord: &[usize], g: &[Vec<usize>]) -> Vec<T::Value> {
-    let mut dp = vec![T::Value::default(); g.len()];
-    for &x in ord.iter().rev() {
-        let mut acc = None;
-        for f in g[x].iter().map(|&y| T::proj(&dp[y])) {
-            acc = Some(match acc {
-                None => f,
-                Some(acc) => T::mul(acc, f),
-            });
+    fn proj(&self, x: &Self::Value) -> Self::Acc;
+    fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc;
+    fn up(&self, acc: Self::Acc) -> Self::Value;
+    /// 木 DP を行います。（注意：g は親なし）
+    fn tree_fold(&self, ord: &[usize], g: &[Vec<usize>]) -> Vec<Self::Value> {
+        let mut dp = vec![Self::Value::default(); g.len()];
+        for &x in ord.iter().rev() {
+            let mut acc = None;
+            for f in g[x].iter().map(|&y| self.proj(&dp[y])) {
+                acc = Some(match acc {
+                    None => f,
+                    Some(acc) => self.mul(acc, f),
+                });
+            }
+            dp[x] = acc.map_or_else(|| self.leaf(), |x| self.up(x));
         }
-        dp[x] = acc.map_or_else(T::leaf, T::up);
+        dp
     }
-    dp
 }
 
 /// ［演算例］部分木のサイズを計算する演算
-pub enum Size {}
+pub struct Size {}
 impl Ops for Size {
     type Value = u32;
     type Acc = u32;
-    fn leaf() -> Self::Value {
+    fn leaf(&self) -> Self::Value {
         1
     }
-    fn proj(&x: &Self::Value) -> Self::Acc {
+    fn proj(&self, &x: &Self::Value) -> Self::Acc {
         x
     }
-    fn mul(acc: Self::Acc, x: Self::Acc) -> Self::Acc {
+    fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc {
         acc + x
     }
-    fn up(acc: Self::Acc) -> Self::Value {
+    fn up(&self, acc: Self::Acc) -> Self::Value {
         acc + 1
     }
 }
@@ -80,7 +80,7 @@ impl Ops for Size {
 #[cfg(test)]
 mod tests {
     use {
-        super::{tree_fold, Size},
+        super::{Ops, Size},
         rand::{prelude::StdRng, Rng, SeedableRng},
         randtools::Tree,
     };
@@ -92,7 +92,7 @@ mod tests {
             let n = rng.gen_range(1..10);
             let mut g = rng.sample(Tree(n));
             let [ord, _parent] = sort_tree(0, &mut g);
-            let size = tree_fold::<Size>(&ord, &g);
+            let size = Size {}.tree_fold(&ord, &g);
             for x in 0..n {
                 let result = size[x];
                 let expected = 1 + g[x].iter().map(|&y| size[y]).sum::<u32>();
