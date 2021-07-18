@@ -1,344 +1,271 @@
-//! 普通の木 DP、全方位木 DP をします。
+//! 木 DP をします。
 //!
-//! [`Ops`] トレイトのメソッドにあります。
+//! [詳しくは `Ops` のドキュメントへどうぞです。](Ops)
 //!
-//! - [`tree_fold`](Ops::tree_fold) : 普通の木 DP
-//! - [`two_way_tree_fold`](Ops::two_way_tree_fold) : 全方位木 DP
-//!
-//! [`Ops::mul`] に逆元があるときには、[`Div`] トレイトのメソッドを経由して戻す DP ができます。
-//!
-//! - [`modosu_two_way_tree_fold`](Div::modosu_two_way_tree_fold) : 戻す DP 版全方位木 DP
-//!
-//! # Examples
-//!
-//! - 高さを計算する例 -> [`tree_fold`](Ops::tree_fold)
-//! - TDPC V - Subtree -> [`two_way_tree_fold`](Ops::two_way_tree_fold)
 
 use std::fmt::Debug;
 
-/// 木 DP の畳み込みを定義する演算群です。
+/// 畳み込み演算を定義します。
 ///
-/// # Output
+/// # `dp[x]` の定義
 ///
-/// 葉において、例外的に `leaf()` （とくに、`up(identity())` ではないので注意です。）
+/// ```[ignore]
+/// self.finish(
+///     g[x].iter()
+///         .map(|(&y, w)| (&dp[y], w))
+///         .fold(
+///             self.identity(),
+///             |acc, value| self.mul(acc, value)
+///         ),
+///     x,
+/// ),
+/// ```
 ///
-/// x が葉ではないとき、`dp[x] = up(mul(proj(dp[y]), ...))` です。
+/// # できないこと
 ///
-pub trait Ops {
-    /// DP 配列の値
-    type Value: Clone + Default + Debug;
-    /// proj(Value)
+/// - 葉の特別扱い
+///     - `identity()` を `None` とかにして頑張るしかないですかね
+/// - 辺重み
+///     - `頂点重みで代用できませんかね。
+///
+///
+pub trait Ops: Sized {
+    type Value: Clone + Debug + Default;
     type Acc: Clone + Debug;
-    /// 葉の値
-    fn leaf(&self) -> Self::Value;
-    /// 前処理
-    fn proj(&self, x: &Self::Value) -> Self::Acc;
-    /// [`mul`](Self::mul) の単位元
     fn identity(&self) -> Self::Acc;
-    /// 畳み込み演算
-    fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc;
-    /// 後処理
-    fn up(&self, acc: Self::Acc) -> Self::Value;
-    /// 木 DP を行います。（注意：g は親なし）
-    ///
-    /// # Examples
-    ///
-    /// サイズを計算する例（[`Size`] を使います。）
-    ///
-    /// ```
-    /// # use tree_fold::{Ops, Size};
-    /// let n = 5;
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![],
-    ///     vec![3],
-    ///     vec![],
-    /// ];
-    /// let ord = vec![0, 1, 2, 3];
-    ///
-    /// let size = Size {}.tree_fold(&ord, &g);
-    /// assert_eq!(&size, &[4, 1, 2, 1]);
-    /// ```
-    ///
-    /// 高さを計算する例（用意していないのでこういう感じで計算しましょう。）
-    ///
-    /// ```
-    /// # use tree_fold::Ops;
-    /// pub struct Hight {}
-    /// impl Ops for Hight {
-    ///     type Value = usize;
-    ///     type Acc = usize;
-    ///     fn leaf(&self) -> Self::Value {
-    ///         0
-    ///     }
-    ///     fn proj(&self, &x: &Self::Value) -> Self::Acc {
-    ///         x
-    ///     }
-    ///     fn identity(&self) -> Self::Acc {
-    ///         0
-    ///     }
-    ///     fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc {
-    ///         acc.max(x)
-    ///     }
-    ///     fn up(&self, acc: Self::Acc) -> Self::Value {
-    ///         acc + 1
-    ///     }
-    /// }
-    /// ```
-    ///
-    fn tree_fold(&self, ord: &[usize], g: &[Vec<usize>]) -> Vec<Self::Value> {
-        let mut dp = vec![Self::Value::default(); g.len()];
-        for &x in ord.iter().rev() {
-            dp[x] = if g[x].is_empty() {
-                self.leaf()
-            } else {
-                self.up(g[x]
-                    .iter()
-                    .map(|&y| self.proj(&dp[y]))
-                    .fold(self.identity(), |acc, v| self.mul(acc, v)))
-            };
-        }
-        dp
+    fn proj(&self, value: Self::Value) -> Self::Acc;
+    fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc;
+    fn finish(&self, acc: Self::Acc, index: usize) -> Self::Value;
+
+    fn tree_fold(&self, root: usize, g: &[Vec<usize>]) -> Vec<Self::Value> {
+        self.tree_fold_by_iter(root, g.len(), |x| g[x].iter().copied())
     }
-    /// 全方位木 DP を行います。（注意：g は親なし）
-    fn two_way_tree_fold(&self, ord: &[usize], g: &[Vec<usize>]) -> Vec<Self::Value> {
-        let mut dp = self.tree_fold(ord, g);
-        let mut ep = vec![Self::Value::default(); g.len()];
-        for &x in ord {
-            let d = g[x].len();
-            let mut right = vec![self.identity()];
-            for v in g[x].iter().rev().map(|&y| self.proj(&dp[y])) {
-                let value = self.mul(right.last().unwrap().clone(), v);
-                right.push(value);
-            }
-            let mut left = self.identity();
-            for (i, &y) in g[x].iter().enumerate() {
-                let mut value = self.mul(left.clone(), right[d - 1 - i].clone());
-                if x != ord[0] {
-                    value = self.mul(value, self.proj(&ep[x]));
-                };
-                ep[y] = self.up(value);
-                left = self.mul(left, self.proj(&dp[y]));
-            }
-            if x != ord[0] {
-                dp[x] = self.up(self.mul(right.last().unwrap().clone(), self.proj(&ep[x])));
-            }
-        }
-        dp
+
+    fn tree_fold_by_iter<I, A>(
+        &self,
+        root: usize,
+        n: usize,
+        g: impl Fn(usize) -> A,
+    ) -> Vec<Self::Value>
+    where
+        I: Iterator<Item = usize>,
+        A: IntoIterator<Item = usize, IntoIter = I>,
+    {
+        let sort_tree = sort_tree(root, n, &g);
+        fold_up(self, &sort_tree)
     }
-}
-/// 逆元を取れるときの [`Ops`] の拡張です。
-pub trait Div: Ops {
-    /// [`mul`](Ops::mul) の逆元
-    fn div(&self, num: &Self::Acc, den: Self::Acc) -> Self::Acc;
-    /// 戻す DP 方式の全方位木 DP を行います。（注意：g は親なし）
-    fn modosu_two_way_tree_fold(&self, ord: &[usize], g: &[Vec<usize>]) -> Vec<Self::Value> {
-        let mut dp = self.tree_fold(ord, g);
-        let mut ep = vec![Self::Value::default(); g.len()];
-        for &x in ord {
-            let all_prod = g[x]
-                .iter()
-                .map(|&y| self.proj(&dp[y]))
-                .fold(self.identity(), |u, v| self.mul(u, v));
-            for &y in &g[x] {
-                let mut value = self.div(&all_prod, self.proj(&dp[y]));
-                if x != ord[0] {
-                    value = self.mul(value, self.proj(&ep[x]));
-                };
-                ep[y] = self.up(value);
-            }
-            if x != ord[0] {
-                dp[x] = self.up(self.mul(all_prod, self.proj(&ep[x])));
-            }
-        }
-        dp
+
+    fn two_way_tree_fold(&self, root: usize, g: &[Vec<usize>]) -> Vec<Self::Value> {
+        self.two_way_tree_fold_by_iter(root, g.len(), |x| g[x].iter().copied())
+    }
+
+    fn two_way_tree_fold_by_iter<I, A>(
+        &self,
+        root: usize,
+        n: usize,
+        g: impl Fn(usize) -> A,
+    ) -> Vec<Self::Value>
+    where
+        I: Iterator<Item = usize>,
+        A: IntoIterator<Item = usize, IntoIter = I>,
+    {
+        let sort_tree = sort_tree(root, n, &g);
+        let dp = fold_up_without_finish(self, &sort_tree);
+        fold_down(self, &sort_tree, &dp)
     }
 }
 
-/// ［演算例］部分木のサイズを計算する演算
-pub struct Size {}
-impl Ops for Size {
-    type Value = usize;
-    type Acc = usize;
-    fn leaf(&self) -> Self::Value {
-        1
+fn fold_up<O: Ops>(ops: &O, sort_tree: &SortedTree) -> Vec<O::Value> {
+    let n = sort_tree.len();
+    let mut dp = vec![O::Value::default(); n];
+    for &x in sort_tree.ord.iter().rev() {
+        dp[x] = ops.finish(
+            sort_tree.child[x].iter().fold(ops.identity(), |acc, &y| {
+                ops.mul(acc, ops.proj(dp[y].clone()))
+            }),
+            x,
+        );
     }
-    fn proj(&self, &x: &Self::Value) -> Self::Acc {
-        x
+    dp
+}
+
+fn fold_up_without_finish<O: Ops>(ops: &O, sort_tree: &SortedTree) -> Vec<O::Acc> {
+    let n = sort_tree.len();
+    let mut dp = vec![ops.identity(); n];
+    for &x in sort_tree.ord.iter().rev() {
+        dp[x] = sort_tree.child[x].iter().fold(ops.identity(), |acc, &y| {
+            ops.mul(acc, ops.proj(ops.finish(dp[y].clone(), y)))
+        })
     }
-    fn identity(&self) -> Self::Acc {
-        0
+    dp
+}
+
+fn fold_down<O: Ops>(ops: &O, sort_tree: &SortedTree, dp: &[O::Acc]) -> Vec<O::Value> {
+    let n = sort_tree.len();
+    let mut ep = vec![ops.identity(); n];
+    let g = &sort_tree.child;
+    for &x in &sort_tree.ord {
+        if !g[x].is_empty() {
+            let mut acc_rev = vec![ops.identity()];
+            for &y in g[x].iter().rev().take(g[x].len() - 1) {
+                let aug = ops.mul(
+                    acc_rev.last().unwrap().clone(),
+                    ops.proj(ops.finish(dp[y].clone(), y)),
+                );
+                acc_rev.push(aug);
+            }
+            let mut acc = ep[x].clone();
+            for (&y, acc_rev) in g[x].iter().zip(acc_rev.iter().rev().cloned()) {
+                ep[y] = ops.proj(ops.finish(ops.mul(acc.clone(), acc_rev), y));
+                acc = ops.mul(acc.clone(), ops.proj(ops.finish(dp[y].clone(), y)));
+            }
+        }
     }
-    fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc {
-        acc + x
+    dp.iter()
+        .zip(&ep)
+        .enumerate()
+        .map(|(x, (dp_x, ep_x))| ops.finish(ops.mul(dp_x.clone(), ep_x.clone()), x))
+        .collect::<Vec<_>>()
+}
+
+fn sort_tree<I, A>(root: usize, n: usize, g: impl Fn(usize) -> A) -> SortedTree
+where
+    I: Iterator<Item = usize>,
+    A: IntoIterator<Item = usize, IntoIter = I>,
+{
+    fn dfs<I, A>(
+        x: usize,
+        p: usize,
+        g: &impl Fn(usize) -> A,
+        child: &mut [Vec<usize>],
+        parent: &mut [usize],
+        ord: &mut Vec<usize>,
+    ) where
+        I: Iterator<Item = usize>,
+        A: IntoIterator<Item = usize, IntoIter = I>,
+    {
+        parent[x] = p;
+        ord.push(x);
+        child[x] = g(x)
+            .into_iter()
+            .filter(|&y| y != p)
+            .inspect(|&y| dfs(y, x, g, child, parent, ord))
+            .collect::<Vec<_>>()
     }
-    fn up(&self, acc: Self::Acc) -> Self::Value {
-        acc + 1
+    let mut parent = vec![!0; n];
+    let mut child = vec![Vec::new(); n];
+    let mut ord = Vec::new();
+    dfs(root, root, &g, &mut child, &mut parent, &mut ord);
+    SortedTree { child, parent, ord }
+}
+
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+struct SortedTree {
+    child: Vec<Vec<usize>>,
+    parent: Vec<usize>,
+    ord: Vec<usize>,
+}
+impl SortedTree {
+    fn len(&self) -> usize {
+        self.child.len()
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{Div, Ops, Size},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::Tree,
-    };
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // 普通の木 DP
-    ////////////////////////////////////////////////////////////////////////////////
+    use super::Ops;
+    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use randtools::Tree;
 
     #[test]
     fn test_size() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..=50);
-            let mut g = rng.sample(Tree(n));
-            let [ord, _parent] = sort_tree(0, &mut g);
-            let size = Size {}.tree_fold(&ord, &g);
-            for x in 0..n {
-                let result = size[x];
-                let expected = 1 + g[x].iter().map(|&y| size[y]).sum::<usize>();
-                assert_eq!(result, expected);
+        struct Size {}
+        impl Ops for Size {
+            type Value = usize;
+            type Acc = usize;
+            fn proj(&self, value: Self::Value) -> Self::Acc {
+                value
+            }
+            fn identity(&self) -> Self::Acc {
+                0
+            }
+            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
+                acc + value
+            }
+            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value {
+                acc + 1
             }
         }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // 全包囲木 DP
-    ////////////////////////////////////////////////////////////////////////////////
-
-    #[test]
-    fn test_size_two_way() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..=50);
-            let mut g = rng.sample(Tree(n));
-            let [ord, _parent] = sort_tree(0, &mut g);
-            let result = Size {}.two_way_tree_fold(&ord, &g);
-            let expected = vec![n; n];
-            assert_eq!(result, expected);
+        for _ in 0..200 {
+            let n = rng.gen_range(1..=40);
+            let g = rng.sample(Tree(n));
+
+            // 全ての根でテスト
+            for root in 0..n {
+                // 普通の DP
+                let dp = Size {}.tree_fold(root, &g);
+                assert_eq!(dp[root], n);
+
+                // 全方位木 DP
+                let dp = Size {}.two_way_tree_fold(root, &g);
+                assert_eq!(dp, vec![n; n]);
+            }
         }
     }
 
     #[test]
     fn test_tdpc_v() {
-        fn brute(g: &[Vec<usize>]) -> Vec<u32> {
-            let n = g.len();
-            let mut ans = vec![0; n];
-            for bs in 0..1 << n {
-                if let Some(s) = (0..n).find(|&i| bs >> i & 1 == 1) {
-                    let mut used = 0;
-                    let mut stack = vec![s];
-                    while let Some(x) = stack.pop() {
-                        used |= 1 << x;
-                        for &y in &g[x] {
-                            if used >> y & 1 == 0 && bs >> y & 1 == 1 {
-                                stack.push(y);
-                            }
-                        }
-                    }
-                    if used != bs {
-                        continue;
-                    }
-                }
-                for i in 0..n {
-                    if bs >> i & 1 == 1 {
-                        ans[i] += 1;
-                    }
-                }
-            }
-            ans
-        }
-        pub struct O {}
+        struct O {}
         impl Ops for O {
             type Value = Value;
             type Acc = Acc;
-            fn leaf(&self) -> Self::Value {
-                Value { black: 1, white: 1 }
-            }
-            fn proj(&self, &x: &Self::Value) -> Self::Acc {
+            fn proj(&self, value: Self::Value) -> Self::Acc {
                 Acc {
-                    white: x.white,
-                    all: x.white + x.black,
+                    white: value.white,
+                    all: value.black + value.white,
                 }
             }
             fn identity(&self) -> Self::Acc {
                 Acc { white: 1, all: 1 }
             }
-            fn mul(&self, acc: Self::Acc, x: Self::Acc) -> Self::Acc {
+            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
                 Acc {
-                    white: acc.white * x.white,
-                    all: acc.all * x.all,
+                    white: acc.white * value.white,
+                    all: acc.all * value.all,
                 }
             }
-            fn up(&self, acc: Self::Acc) -> Self::Value {
+            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value {
                 Value {
                     black: acc.all,
                     white: acc.white,
                 }
             }
         }
-        impl Div for O {
-            fn div(&self, num: &Self::Acc, den: Self::Acc) -> Self::Acc {
-                Acc {
-                    white: num.white / den.white,
-                    all: num.all / den.all,
-                }
-            }
+        #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+        struct Value {
+            black: usize,
+            white: usize,
         }
         #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-        pub struct Value {
-            black: u32,
-            white: u32,
-        }
-        #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-        pub struct Acc {
-            white: u32,
-            all: u32,
+        struct Acc {
+            white: usize,
+            all: usize,
         }
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..=10);
-            let mut g = rng.sample(Tree(n));
-            let expected = brute(&g);
-            let [ord, _parent] = sort_tree(0, &mut g);
-            let result = O {}
-                .two_way_tree_fold(&ord, &g)
-                .into_iter()
-                .map(|value| value.black)
+        for _ in 0..200 {
+            let n = rng.gen_range(1..=40);
+            let g = rng.sample(Tree(n));
+
+            // 全方位木 DP
+            let result = O {}.two_way_tree_fold(0, &g);
+
+            // 普通の DP n 回
+            let expected = (0..n)
+                .map(|root| O {}.tree_fold(root, &g)[root])
                 .collect::<Vec<_>>();
-            assert_eq!(result, expected);
-            let result = O {}
-                .modosu_two_way_tree_fold(&ord, &g)
-                .into_iter()
-                .map(|value| value.black)
-                .collect::<Vec<_>>();
+
             assert_eq!(result, expected);
         }
-    }
-
-    ////////////////////////////////////////////////////////////////////////////////
-    // ユーティル
-    ////////////////////////////////////////////////////////////////////////////////
-
-    fn sort_tree(root: usize, g: &mut [Vec<usize>]) -> [Vec<usize>; 2] {
-        fn dfs(x: usize, p: usize, g: &[Vec<usize>], ord: &mut Vec<usize>, parent: &mut [usize]) {
-            ord.push(x);
-            for y in g[x].iter().copied().filter(|&y| y != p) {
-                parent[y] = x;
-                dfs(y, x, g, ord, parent);
-            }
-        }
-        let mut ord = Vec::new();
-        let mut parent = (0..g.len()).collect::<Vec<_>>();
-        dfs(root, root, g, &mut ord, &mut parent);
-        for (x, gx) in g.iter_mut().enumerate() {
-            if let Some(i) = gx.iter().position(|&y| y == parent[x]) {
-                gx.swap_remove(i);
-            }
-        }
-        [ord, parent]
     }
 }
