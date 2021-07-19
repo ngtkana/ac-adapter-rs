@@ -385,7 +385,7 @@ mod tests {
             String::new()
         }
         fn init(len: usize) -> Self::Value {
-            repeat('?').take(len).collect::<String>()
+            "?".repeat(len)
         }
     }
 
