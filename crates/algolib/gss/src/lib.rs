@@ -223,7 +223,7 @@ pub trait Float:
     + PartialOrd
     + Copy
 {
-    /// 1 / φ = 0.61803398874989484820458683436563811772030917980576286213545
+    /// 1 / φ = 0.6180339887498949
     const INVPHI: Self;
     /// 0.0
     fn zero() -> Self;
@@ -240,7 +240,8 @@ pub trait Float:
 macro_rules! impl_float {
     ($($T:ty),*) => {$(
         impl Float for $T {
-            const INVPHI: Self = 0.61803398874989484820458683436563811772030917980576286213545;
+            #[allow(clippy::excessive_precision)]
+            const INVPHI: Self = 0.618_033_988_749_894_9;
             fn zero() -> Self {
                 0.0
             }
