@@ -278,7 +278,7 @@ impl Iterator for Iter<'_> {
             let ans = *start;
             let check_result = range_check.check(*start);
             assert!(check_result);
-            let next = __next_unckecked_cell(&range_check, *start);
+            let next = __next_unckecked_cell(range_check, *start);
             *start = next;
             Some(ans)
         } else {

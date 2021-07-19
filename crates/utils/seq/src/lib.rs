@@ -187,7 +187,7 @@ mod grid_next {
         type Item = (usize, usize);
 
         fn next(&mut self) -> Option<(usize, usize)> {
-            while let Some((di, dj)) = self.difference.next() {
+            for (di, dj) in &mut self.difference {
                 let ni = self.i + di;
                 let nj = self.j + dj;
                 if 0 <= ni && ni < self.h && 0 <= nj && nj < self.w {

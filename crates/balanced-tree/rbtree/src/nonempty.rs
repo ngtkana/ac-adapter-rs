@@ -42,7 +42,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
     {
         match self {
             Self::Nil(Nil(x)) => {
-                let x = O::summarize(&x);
+                let x = O::summarize(x);
                 let init = match init {
                     None => x,
                     Some(init) => O::op(init, x),
