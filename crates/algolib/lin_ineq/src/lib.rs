@@ -265,13 +265,13 @@ impl<'a, T: Signed> Mul for &'a Interval<T> {
 impl<T: Signed> Product for Interval<T> {
     /// [`intersection()`](Self::intersection) で畳み込みます。
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Interval::full(), Self::mul)
+        iter.fold(Self::full(), Self::mul)
     }
 }
 impl<'a, T: 'a + Signed> Product<&'a Self> for Interval<T> {
     /// [`intersection()`](Self::intersection) で畳み込みます。
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Interval::full(), Self::mul)
+        iter.fold(Self::full(), Self::mul)
     }
 }
 

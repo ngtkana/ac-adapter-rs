@@ -367,7 +367,7 @@ pub trait Ops {
 
 #[cfg(test)]
 mod tests {
-    use std::iter::repeat;
+    
 
     use {
         super::{Ops, Segtree},
