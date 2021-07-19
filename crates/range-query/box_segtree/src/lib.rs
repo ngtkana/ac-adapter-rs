@@ -367,7 +367,7 @@ pub trait Ops {
 
 #[cfg(test)]
 mod tests {
-    use std::iter::repeat;
+    
 
     use {
         super::{Ops, Segtree},
@@ -385,7 +385,7 @@ mod tests {
             String::new()
         }
         fn init(len: usize) -> Self::Value {
-            repeat('?').take(len).collect::<String>()
+            "?".repeat(len)
         }
     }
 

@@ -148,7 +148,7 @@ impl<O: Ops> Segtree<O> {
             .rev()
             .for_each(|i| table[i] = O::op(&table[2 * i], &table[2 * i + 1]));
         let table = table.into_boxed_slice();
-        Segtree { table }
+        Self { table }
     }
     /// 表している配列が空であるときに `true` です。
     ///
@@ -546,7 +546,7 @@ impl<O: Ops> FromIterator<O::Value> for Segtree<O> {
             .rev()
             .for_each(|i| table[i] = O::op(&table[2 * i], &table[2 * i + 1]));
         let table = Vec::from(table).into_boxed_slice();
-        Segtree { table }
+        Self { table }
     }
 }
 impl<O: Ops> AsRef<[O::Value]> for Segtree<O> {

@@ -181,7 +181,7 @@ mod tests {
         for _ in 0..10_000 {
             const EPS: f64 = 1e-5;
             let start = rng.gen_range(-100.0..=100.0 - 3.0 * EPS);
-            let end = rng.gen_range(start + 2.0 * EPS..=100.0);
+            let end = rng.gen_range(2.0f64.mul_add(EPS, start)..=100.0);
             let lower_bound = rng.gen_range(start + EPS..=end - EPS);
             let eps = rng.gen_range(EPS.ln()..=((end - start) / 2.0).ln()).exp();
             let [start, end] =
