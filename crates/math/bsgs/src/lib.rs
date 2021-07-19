@@ -182,7 +182,7 @@ mod tests {
             let minus = |x| (n - x) % n;
             for g in 0..n {
                 let ord = n / gcd(g, n);
-                let bsgs = Bsgs::new(g, ord, add.clone(), minus, || 0);
+                let bsgs = Bsgs::new(g, ord, add, minus, || 0);
                 let mut j = 0;
                 for i in 0..ord {
                     let k = bsgs.log(j).unwrap();
@@ -197,13 +197,13 @@ mod tests {
     fn test_multiplicative() {
         for n in 2..40 {
             let mul = |x, y| (x * y) % n;
-            let pow = |x, y| binary(x, y, 1, mul.clone());
+            let pow = |x, y| binary(x, y, 1, mul);
             let ord = totient(n);
             let inv = |x| pow(x, ord - 1);
             for g in (2..n)
                 .filter(|&g| gcd(n, g) == 1 && (1..ord).all(|p| pow(g, p) != 1) && pow(g, ord) == 1)
             {
-                let bsgs = Bsgs::new(g, ord, mul.clone(), inv, || 1);
+                let bsgs = Bsgs::new(g, ord, mul, inv, || 1);
                 let mut j = 1;
                 for i in 0..ord {
                     let k = bsgs.log(j).unwrap();

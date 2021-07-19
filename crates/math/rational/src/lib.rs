@@ -105,22 +105,22 @@ impl<T: Signed> Neg for Rational<T> {
 }
 impl<T: Signed> Sum for Rational<T> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Rational(T::zero(), T::one()), Add::add)
+        iter.fold(Self(T::zero(), T::one()), Add::add)
     }
 }
 impl<T: Signed> Product for Rational<T> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Rational(T::one(), T::one()), Mul::mul)
+        iter.fold(Self(T::one(), T::one()), Mul::mul)
     }
 }
 impl<'a, T: 'a + Signed> Sum<&'a Self> for Rational<T> {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Rational(T::zero(), T::one()), Add::add)
+        iter.fold(Self(T::zero(), T::one()), Add::add)
     }
 }
 impl<'a, T: 'a + Signed> Product<&'a Self> for Rational<T> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Rational(T::one(), T::one()), Mul::mul)
+        iter.fold(Self(T::one(), T::one()), Mul::mul)
     }
 }
 

@@ -193,12 +193,12 @@ macro_rules! impl_int {
         }
         impl Golden for $Unsigned {
             fn golden_sect(self, other: Self) -> Self {
-                Self::f64_as(((self.as_f64() + other.as_f64() * f64::INVPHI) * f64::INVPHI).round())
+                Self::f64_as((other.as_f64().mul_add(f64::INVPHI, self.as_f64()) * f64::INVPHI).round())
             }
         }
         impl Golden for $Signed {
             fn golden_sect(self, other: Self) -> Self {
-                Self::f64_as(((self.as_f64() + other.as_f64() * f64::INVPHI) * f64::INVPHI).round())
+                Self::f64_as((other.as_f64().mul_add(f64::INVPHI, self.as_f64()) * f64::INVPHI).round())
             }
         }
     )*};
@@ -223,7 +223,7 @@ pub trait Float:
     + PartialOrd
     + Copy
 {
-    /// 1 / φ = 0.61803398874989484820458683436563811772030917980576286213545
+    /// 1 / φ = 0.6180339887498949
     const INVPHI: Self;
     /// 0.0
     fn zero() -> Self;
@@ -240,7 +240,8 @@ pub trait Float:
 macro_rules! impl_float {
     ($($T:ty),*) => {$(
         impl Float for $T {
-            const INVPHI: Self = 0.61803398874989484820458683436563811772030917980576286213545;
+            #[allow(clippy::excessive_precision)]
+            const INVPHI: Self = 0.618_033_988_749_894_9;
             fn zero() -> Self {
                 0.0
             }
@@ -259,7 +260,7 @@ macro_rules! impl_float {
         }
         impl Golden for $T {
             fn golden_sect(self, other: Self) -> Self {
-                (self + other * Self::INVPHI) * Self::INVPHI
+                other.mul_add(Self::INVPHI, self) * Self::INVPHI
             }
         }
     )*};
@@ -402,7 +403,7 @@ mod tests {
             let a = rng.gen_range(1.0..=3.0);
             let b = rng.gen_range(-5.0..=5.0);
             let c = rng.gen_range(-30.0..=30.0);
-            let f = |x: f64| a * x * x + b * x + c;
+            let f = |x: f64| (a * x).mul_add(x, b * x) + c;
             let count = rng.gen_range(1..2);
             let result = gss_by_count(xmin, xmax, f, count);
             let expected = vec![xmin, -b / (2.0 * a), xmax]
@@ -413,7 +414,7 @@ mod tests {
             assert_abs_diff_eq!(
                 result,
                 expected,
-                epsilon = (xmax - xmin) * f64::INVPHI.powf(count as f64) + EPS
+                epsilon = (xmax - xmin).mul_add(f64::INVPHI.powf(count as f64), EPS)
             );
         }
     }
@@ -434,7 +435,7 @@ mod tests {
             let a = rng.gen_range(1.0..=3.0);
             let b = rng.gen_range(-5.0..=5.0);
             let c = rng.gen_range(-30.0..=30.0);
-            let f = |x: f64| a * x * x + b * x + c;
+            let f = |x: f64| (a * x).mul_add(x, b * x) + c;
             let eps = rng.gen_range(EPS.ln()..=((xmax - xmin) / 2.0).ln()).exp();
             let result = gss_by_absolute_eps(xmin, xmax, f, eps);
             let expected = vec![xmin, -b / (2.0 * a), xmax]
