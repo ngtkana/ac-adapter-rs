@@ -85,10 +85,10 @@ impl<O: Ops> DualSegtree<O> {
     pub fn apply(&mut self, range: impl RangeBounds<usize>, x: O::Value) {
         let Range { mut start, mut end } = into_slice_range(self.len(), range);
         if end < start {
-            segtree_index_order_fail(start, end);
+            dual_segtree_index_order_fail(start, end);
         }
         if self.len() < end {
-            segtree_end_index_len_fail(end, self.len());
+            dual_segtree_end_index_len_fail(end, self.len());
         }
         start += self.len();
         end += self.len();
@@ -106,6 +106,33 @@ impl<O: Ops> DualSegtree<O> {
             start /= 2;
             end /= 2;
         }
+    }
+    /// `i` 番目の要素への可変参照を返します。
+    pub fn get_mut(&mut self, i: usize) -> &mut O::Value {
+        if self.len() <= i {
+            dual_segtree_index_out_of_range_fail(i, self.len())
+        }
+        let i = self.len() + i;
+        (1..=self.lg()).rev().for_each(|p| self.push(i >> p));
+        &mut self.table[i]
+    }
+    /// `i` 番目の要素への参照を返します。
+    pub fn get(&mut self, i: usize) -> &O::Value {
+        self.get_mut(i)
+    }
+    /// `i` 番目の要素をコピーして返します。
+    pub fn get_copied(&mut self, i: usize) -> O::Value
+    where
+        O::Value: Copy,
+    {
+        *self.get_mut(i)
+    }
+    /// `i` 番目の要素をクローンして返します。
+    pub fn get_cloned(&mut self, i: usize) -> O::Value
+    where
+        O::Value: Clone,
+    {
+        self.get_mut(i).clone()
     }
     /// [`Vec`] に変換します。
     pub fn to_vec(&mut self) -> Vec<O::Value> {
@@ -173,14 +200,20 @@ fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> 
     start..end
 }
 
-fn segtree_end_index_len_fail(index: usize, len: usize) -> ! {
+fn dual_segtree_index_out_of_range_fail(index: usize, len: usize) -> ! {
     panic!(
-        "range end index {} out of range for segtree of length {}",
+        "index {} out of range for dual segtree of length {}",
         index, len
     );
 }
-fn segtree_index_order_fail(index: usize, end: usize) -> ! {
-    panic!("segtree index starts at {} but ends at {}", index, end);
+fn dual_segtree_end_index_len_fail(index: usize, len: usize) -> ! {
+    panic!(
+        "range end index {} out of range for dual segtree of length {}",
+        index, len
+    );
+}
+fn dual_segtree_index_order_fail(start: usize, end: usize) -> ! {
+    panic!("dual segtree index starts at {} but ends at {}", start, end);
 }
 fn slice_start_index_overflow_fail() -> ! {
     panic!("attempted to index slice from after maximum usize");
@@ -246,6 +279,12 @@ mod tests {
                 .iter_mut()
                 .for_each(|y| O::op_assign_from_right(y, x.clone()));
         }
+        pub fn get_cloned(&self, i: usize) -> O::Value
+        where
+            O::Value: Clone,
+        {
+            self.table[i].clone()
+        }
     }
 
     #[test]
@@ -271,8 +310,8 @@ mod tests {
             let mut seg = DualSegtree::<O>::new(a.iter().cloned());
             let mut brute = Brute::<O>::new(a.iter().cloned());
             for _ in 0..20 {
-                match rng.gen_range(0..1) {
-                    0 => {
+                match rng.gen_range(0..3) {
+                    0 | 1 => {
                         let mut l = rng.gen_range(0..n);
                         let mut r = rng.gen_range(0..n);
                         if l > r {
@@ -282,6 +321,12 @@ mod tests {
                         let x = new_value(&mut rng);
                         seg.apply(l..r, x.clone());
                         brute.apply(l..r, x);
+                    }
+                    2 => {
+                        let i = rng.gen_range(0..n);
+                        let result = seg.get_cloned(i);
+                        let expected = brute.get_cloned(i);
+                        assert_eq!(result, expected);
                     }
                     _ => unreachable!(),
                 }
