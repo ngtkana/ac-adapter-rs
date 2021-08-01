@@ -208,6 +208,7 @@ impl<O: Ops> SplayTree<O> {
     /// let splay = SplayTree::<Nop<()>>::new();
     /// assert!(splay.is_empty());
     /// ```
+    #[must_use]
     pub fn new() -> Self {
         Self::default()
     }
@@ -686,7 +687,7 @@ mod tests {
         }
     }
 
-    const ABCDEFG: &'static str = "ABCDEFG";
+    const ABCDEFG: &str = "ABCDEFG";
 
     #[test]
     fn test_clone() {
@@ -753,6 +754,8 @@ mod tests {
 
     #[test]
     fn test_hash() {
+        #![allow(clippy::bool_assert_comparison)]
+        #[allow(clippy::mutable_key_type)]
         let mut set = HashSet::new();
         set.insert(from_slice(&[0, 1]));
         assert_eq!(set.len(), 1);
@@ -810,7 +813,7 @@ mod tests {
         for _ in 0..20 {
             test_case(
                 &mut rng,
-                Spec {
+                &Spec {
                     get: 4,
                     fold: 2,
                     push_back: 1,
@@ -830,7 +833,7 @@ mod tests {
         for _ in 0..20 {
             test_case(
                 &mut rng,
-                Spec {
+                &Spec {
                     get: 4,
                     fold: 2,
                     push_back: 1,
@@ -850,7 +853,7 @@ mod tests {
         for _ in 0..20 {
             test_case(
                 &mut rng,
-                Spec {
+                &Spec {
                     get: 4,
                     fold: 2,
                     push_back: 2,
@@ -875,7 +878,7 @@ mod tests {
         delete: usize,
     }
 
-    fn test_case(rng: &mut StdRng, spec: Spec) {
+    fn test_case(rng: &mut StdRng, spec: &Spec) {
         let mut splay = SplayTree::<O>::new();
         let mut brute = Brute::new();
         let dice_max = spec.get
@@ -890,7 +893,7 @@ mod tests {
 
             // get
             if dice < spec.get {
-                let i = rng.gen_range(0..brute.len() + 1);
+                let i = rng.gen_range(0..=brute.len());
                 let expected = brute.get(i);
                 println!("get({}) = {:?}", i, &expected);
                 let result = splay.get(i);
@@ -901,8 +904,8 @@ mod tests {
 
             // fold
             if dice < spec.fold {
-                let mut l = rng.gen_range(0..brute.len() + 2);
-                let mut r = rng.gen_range(0..brute.len() + 1);
+                let mut l = rng.gen_range(0..=brute.len() + 1);
+                let mut r = rng.gen_range(0..=brute.len());
                 if l > r {
                     swap(&mut l, &mut r);
                     r -= 1;
