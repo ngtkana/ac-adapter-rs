@@ -1,104 +1,22 @@
 //! Splay 木で、列を管理するデータ構造です。
 //!
-//! # できること
+//! [詳しいインターフェースは `SplayTree`](SplayTree) のドキュメントをご覧ください。
+//!
+//! # 概要
 //!
 //! [`SplayTree`] は、列 `a = [ a[0], a[1], ..., a[n-1] ]`
 //! を管理します。要素の間には（可換とは限らない）積が定義されているとします。
-//! また、列の結合を和で表記します。このとき、次のことを実現するデータ構造です。
+//! また、列の結合を和で表記します。このとき、主に次のことを実現するデータ構造です。
 //!
 //! | おなまえ                                  | 計算量        | やること                          |
 //! | -                                         | -             | -                                 |
 //! | [`new`](SplayTree::new)                   | O(1)          | `a = []`                          |
-//! | [`is_empty`](SplayTree::is_empty)         | O(1)          | `a = []?`                         |
-//! | [`get(i)`](SplayTree::get)                | O(lg n) am.   | `a[i]?`                           |
 //! | [`entry(i)`](SplayTree::entry)            | O(lg n) am.   | `a[i]` のハンドラ                 |
 //! | [`fold(l..r)`](SplayTree::fold)           | O(lg n) am.   | `a[l] * a[l+1] * ... * a[r-1]`    |
 //! | [`insert(i, x)`](SplayTree::insert)       | O(lg n) am.   | `a = a[..i] + [x] + a[i+1..]`     |
 //! | [`delete(i)`](SplayTree::delete)          | O(lg n) am.   | `a = a[..i-1] + a[i+1..]`         |
 //! | [`append(b)`](SplayTree::append)          | O(lg n) am.   | `a = a + b`                       |
-//! | [`prepend(b)`](SplayTree::prepend)        | O(lg n) am.   | `a = b + a`                       |
 //! | [`split_off(i)`](SplayTree::split_off)    | O(lg n) am.   | `a = a[..i], return a[i..]`       |
-//! | [`split_on(i)`](SplayTree::split_on)      | O(lg n) am.   | `a = a[i..], return a[..i]`       |
-//!
-//! あと [`push_back`](SplayTree::push_back) とかもあります。
-//!
-//!
-//! # イテレータ
-//!
-//! | おなまえ                                  | やること                          |
-//! | -                                         | -                                 |
-//! | [`range(l..r)`](SplayTree::range)         | 部分を操作するイテレータ          |
-//! | [`iter`](SplayTree::iter)                 | `range(..)`                       |
-//!
-//!
-//!
-//! # Examples
-//!
-//! ## 演算の必要がない場合
-//!
-//! [`Nop`] を使いましょう。
-//!
-//! ```
-//! # use splay_tree::{SplayTree, Nop};
-//! // FromIterator
-//! let mut splay = (0..4).collect::<SplayTree<Nop<i32>>>();
-//!
-//! // get
-//! assert_eq!(splay.get(2), Some(&2));
-//!
-//! // insert （push_{front,back} もよろしくです。）
-//! splay.insert(3, -1);
-//!
-//! // delete（pop_{front,back} もよろしくです。）
-//! assert_eq!(splay.delete(0), 0);
-//!
-//! // iter
-//! assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![1, 2, -1, 3]);
-//! assert_eq!(splay.iter().rev().copied().collect::<Vec<_>>(), vec![3, -1, 2, 1]);
-//! assert_eq!(splay.iter().step_by(2).copied().collect::<Vec<_>>(), vec![1, -1]);
-//! assert_eq!(splay.iter().rev().step_by(2).copied().collect::<Vec<_>>(), vec![3, 2]);
-//!
-//! // append（prepend もよろしくです。）
-//! splay.append(&mut (4..8).collect::<SplayTree<_>>());
-//!
-//! // split_off（split_on もよろしくです。）
-//! let split_off = splay.split_off(6);
-//! assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![1, 2, -1, 3, 4, 5]);
-//! assert_eq!(split_off.iter().copied().collect::<Vec<_>>(), vec![6, 7]);
-//! ```
-//!
-//! ## 演算 `+` の例
-//!
-//! 戻り値が `Option<O::Value>` です。
-//!
-//! ```
-//! # use splay_tree::{SplayTree, Ops};
-//! enum O {}
-//! impl Ops for O {
-//!     type Value = i32;
-//!     type Acc = i32;
-//!     fn proj(&value: &Self::Value) -> Self::Acc {
-//!         value
-//!     }
-//!     fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
-//!         lhs + rhs
-//!     }
-//! }
-//!
-//! // FromIterator
-//! let mut splay = vec![1, 2, 4, 8].into_iter().collect::<SplayTree<O>>();
-//!
-//! // fold, fold_all
-//! assert_eq!(splay.fold(1..3), Some(2 + 4));
-//!
-//! // push_front, pop_back
-//! splay.push_front(-10);
-//! assert_eq!(splay.pop_back(), Some(8));
-//! assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![-10, 1, 2, 4]);
-//!
-//! // fold
-//! assert_eq!(splay.fold(..3), Some(-10 + 1 + 2));
-//! ```
 
 use std::hash::Hash;
 
@@ -139,6 +57,74 @@ pub trait Ops {
 }
 
 /// スプレー木
+///
+/// # Examples
+///
+/// ## 演算の必要がない場合
+///
+/// [`Nop`] を使いましょう。
+///
+/// ```
+/// # use splay_tree::{SplayTree, Nop};
+/// // FromIterator
+/// let mut splay = (0..4).collect::<SplayTree<Nop<i32>>>();
+///
+/// // get
+/// assert_eq!(splay.get(2), Some(&2));
+///
+/// // insert （push_{front,back} もよろしくです。）
+/// splay.insert(3, -1);
+///
+/// // delete（pop_{front,back} もよろしくです。）
+/// assert_eq!(splay.delete(0), 0);
+///
+/// // iter
+/// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![1, 2, -1, 3]);
+/// assert_eq!(splay.iter().rev().copied().collect::<Vec<_>>(), vec![3, -1, 2, 1]);
+/// assert_eq!(splay.iter().step_by(2).copied().collect::<Vec<_>>(), vec![1, -1]);
+/// assert_eq!(splay.iter().rev().step_by(2).copied().collect::<Vec<_>>(), vec![3, 2]);
+///
+/// // append（prepend もよろしくです。）
+/// splay.append(&mut (4..8).collect::<SplayTree<_>>());
+///
+/// // split_off（split_on もよろしくです。）
+/// let split_off = splay.split_off(6);
+/// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![1, 2, -1, 3, 4, 5]);
+/// assert_eq!(split_off.iter().copied().collect::<Vec<_>>(), vec![6, 7]);
+/// ```
+///
+/// ## 演算 `+` の例
+///
+/// 戻り値が `Option<O::Value>` です。
+///
+/// ```
+/// # use splay_tree::{SplayTree, Ops};
+/// enum O {}
+/// impl Ops for O {
+///     type Value = i32;
+///     type Acc = i32;
+///     fn proj(&value: &Self::Value) -> Self::Acc {
+///         value
+///     }
+///     fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+///         lhs + rhs
+///     }
+/// }
+///
+/// // FromIterator
+/// let mut splay = vec![1, 2, 4, 8].into_iter().collect::<SplayTree<O>>();
+///
+/// // fold, fold_all
+/// assert_eq!(splay.fold(1..3), Some(2 + 4));
+///
+/// // push_front, pop_back
+/// splay.push_front(-10);
+/// assert_eq!(splay.pop_back(), Some(8));
+/// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![-10, 1, 2, 4]);
+///
+/// // fold
+/// assert_eq!(splay.fold(..3), Some(-10 + 1 + 2));
+/// ```
 pub struct SplayTree<O: Ops>(Cell<*mut Node<O>>);
 impl<O: Ops> Debug for SplayTree<O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
