@@ -1,7 +1,12 @@
 //! おいでよ unsafe の森
+
+use std::cmp::Ordering;
 use {
     super::Ops,
-    std::{marker::PhantomData, ptr::null_mut},
+    std::{
+        marker::PhantomData,
+        ptr::{self, null_mut},
+    },
 };
 
 pub unsafe fn deep_free<O: Ops>(root: *mut Node<O>) {
@@ -21,15 +26,17 @@ pub unsafe fn get<O: Ops>(root: *mut Node<O>, mut index: usize) -> *mut Node<O> 
         } else {
             (*(*now).left).len
         };
-        if index < lsize {
-            now = (*now).left;
-        } else if index == lsize {
-            (*now).splay();
-            return now;
-        } else {
-            index -= lsize + 1;
-            now = (*now).right;
-        }
+        now = match index.cmp(&lsize) {
+            Ordering::Less => (*now).left,
+            Ordering::Equal => {
+                (*now).splay();
+                return now;
+            }
+            Ordering::Greater => {
+                index -= lsize + 1;
+                (*now).right
+            }
+        };
     }
 }
 
@@ -156,9 +163,9 @@ impl<O: Ops> Node<O> {
         let p = self.parent;
         if p.is_null() {
             0
-        } else if (*p).left as *const _ == self as *const _ {
+        } else if ptr::eq((*p).left as *const _, self as *const _) {
             1
-        } else if (*p).right as *const _ == self as *const _ {
+        } else if ptr::eq((*p).right as *const _, self as *const _) {
             -1
         } else {
             unreachable!()
