@@ -1,9 +1,9 @@
 use {
-    super::Ops,
+    super::LazyOps,
     std::{cmp::Ordering, ptr, ptr::null_mut},
 };
 
-pub struct Node<O: Ops> {
+pub struct Node<O: LazyOps> {
     pub left: *mut Self,
     pub right: *mut Self,
     pub parent: *mut Self,
@@ -12,7 +12,7 @@ pub struct Node<O: Ops> {
     pub len: usize,
     pub lazy: Option<O::Lazy>,
 }
-impl<O: Ops> Node<O> {
+impl<O: LazyOps> Node<O> {
     pub fn new(value: O::Value) -> Self {
         Self {
             left: null_mut(),
@@ -106,7 +106,15 @@ impl<O: Ops> Node<O> {
     }
 }
 
-pub unsafe fn get<O: Ops>(root: *mut Node<O>, mut index: usize) -> *mut Node<O> {
+pub unsafe fn deep_free<O: LazyOps>(root: *mut Node<O>) {
+    if !root.is_null() {
+        deep_free((*root).left);
+        deep_free((*root).right);
+        Box::from_raw(root);
+    }
+}
+
+pub unsafe fn get<O: LazyOps>(root: *mut Node<O>, mut index: usize) -> *mut Node<O> {
     let mut root = root.as_mut().unwrap();
     loop {
         let lsize = root.left.as_ref().map_or(0, |left| left.len);
@@ -124,7 +132,7 @@ pub unsafe fn get<O: Ops>(root: *mut Node<O>, mut index: usize) -> *mut Node<O> 
     }
 }
 
-pub unsafe fn merge<O: Ops>(lhs: *mut Node<O>, rhs: *mut Node<O>) -> *mut Node<O> {
+pub unsafe fn merge<O: LazyOps>(lhs: *mut Node<O>, rhs: *mut Node<O>) -> *mut Node<O> {
     if let Some(mut lhs) = lhs.as_mut() {
         if let Some(rhs) = rhs.as_mut() {
             lhs = get(lhs, lhs.len - 1).as_mut().unwrap();
@@ -138,7 +146,7 @@ pub unsafe fn merge<O: Ops>(lhs: *mut Node<O>, rhs: *mut Node<O>) -> *mut Node<O
     }
 }
 
-pub unsafe fn split<O: Ops>(root: *mut Node<O>, index: usize) -> [*mut Node<O>; 2] {
+pub unsafe fn split<O: LazyOps>(root: *mut Node<O>, index: usize) -> [*mut Node<O>; 2] {
     if let Some(root) = root.as_mut() {
         if index == root.len {
             [root, null_mut()]
