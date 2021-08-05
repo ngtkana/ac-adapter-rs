@@ -24,6 +24,8 @@ mod node;
 #[cfg(test)]
 pub mod brute;
 #[cfg(test)]
+mod test_affine;
+#[cfg(test)]
 mod test_cat;
 #[cfg(test)]
 mod tests;

@@ -1,53 +1,68 @@
 use {
     super::{
         brute::{test_case, Spec},
-        NoLazy, Ops,
+        LazyOps,
     },
-    rand::{distributions::Alphanumeric, prelude::StdRng, Rng, SeedableRng},
+    rand::{prelude::StdRng, Rng, SeedableRng},
 };
 
-enum Cat {}
-impl Ops for Cat {
-    type Value = char;
-    type Acc = String;
-    fn proj(c: &char) -> String {
-        c.to_string()
-    }
-    fn op(lhs: &String, rhs: &String) -> String {
-        lhs.chars().chain(rhs.chars()).collect()
-    }
-}
+const P: i64 = 998_244_353;
 
-fn random_value(rng: &mut StdRng) -> char {
-    rng.sample(Alphanumeric) as char
+enum Affine {}
+impl LazyOps for Affine {
+    type Value = i64;
+    type Acc = i64;
+    type Lazy = [i64; 2];
+    fn proj(&value: &Self::Value) -> Self::Acc {
+        value
+    }
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Acc {
+        (lhs + rhs) % P
+    }
+    fn act_value(lazy: &Self::Lazy, value: &mut Self::Value) {
+        *value = (lazy[0] * *value + lazy[1]) % P;
+    }
+    fn act_acc(lazy: &Self::Lazy, acc: &mut Self::Acc) {
+        *acc = (lazy[0] * *acc + lazy[1]) % P;
+    }
+    fn lazy_propagate(upper: &Self::Lazy, lower: &mut Self::Lazy) {
+        *lower = [
+            (upper[0] * lower[0]) % P,
+            (upper[0] * lower[1] + lower[0]) % P,
+        ];
+    }
 }
 
 #[test]
-fn test_cat_typical_queries() {
+fn test_affine_only_get() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<NoLazy<Cat>, _>(
+        test_case::<Affine, _>(
             &mut rng,
             random_value,
             &Spec {
                 get: 4,
-                fold: 2,
-                push_back: 1,
-                push_front: 1,
-                insert: 1,
-                pop_back: 1,
-                pop_front: 1,
-                delete: 1,
+                fold: 0,
+                push_back: 0,
+                push_front: 0,
+                insert: 4,
+                pop_back: 0,
+                pop_front: 0,
+                delete: 0,
             },
         );
     }
 }
 
+fn random_value(rng: &mut StdRng) -> i64 {
+    rng.gen_range(0..10)
+}
+
 #[test]
-fn test_cat_insert_delete() {
+fn test_affine_insert_delete() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<NoLazy<Cat>, _>(
+        test_case::<Affine, _>(
             &mut rng,
             random_value,
             &Spec {
@@ -62,10 +77,10 @@ fn test_cat_insert_delete() {
 }
 
 #[test]
-fn test_cat_push_pop() {
+fn test_affine_push_pop() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<NoLazy<Cat>, _>(
+        test_case::<Affine, _>(
             &mut rng,
             random_value,
             &Spec {
@@ -82,31 +97,10 @@ fn test_cat_push_pop() {
 }
 
 #[test]
-fn test_affine_typical_queries_many_delete() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        test_case::<NoLazy<Cat>, _>(
-            &mut rng,
-            random_value,
-            &Spec {
-                get: 4,
-                fold: 2,
-                push_back: 1,
-                push_front: 1,
-                insert: 1,
-                pop_back: 2,
-                pop_front: 2,
-                delete: 2,
-            },
-        );
-    }
-}
-
-#[test]
 fn test_affine_typical_queries_many_push() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<NoLazy<Cat>, _>(
+        test_case::<Affine, _>(
             &mut rng,
             random_value,
             &Spec {
