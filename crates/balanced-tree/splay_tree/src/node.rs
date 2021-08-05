@@ -43,6 +43,7 @@ impl<O: LazyOps> Node<O> {
                 self.rotate();
             }
         }
+        self.push();
     }
     pub unsafe fn rotate(&mut self) {
         let p = self.parent.as_mut().unwrap();

@@ -23,34 +23,13 @@ impl LazyOps for Affine {
         *value = (lazy[0] * *value + lazy[1]) % P;
     }
     fn act_acc(lazy: &Self::Lazy, acc: &mut Self::Acc) {
-        *acc = (lazy[0] * *acc + lazy[1]) % P;
+        *acc = (lazy[1] * *acc + lazy[1]) % P;
     }
     fn lazy_propagate(upper: &Self::Lazy, lower: &mut Self::Lazy) {
         *lower = [
             (upper[0] * lower[0]) % P,
-            (upper[0] * lower[1] + lower[0]) % P,
+            (upper[0] * lower[1] + upper[1]) % P,
         ];
-    }
-}
-
-#[test]
-fn test_affine_only_get() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        test_case::<Affine, _>(
-            &mut rng,
-            random_value,
-            &Spec {
-                get: 4,
-                fold: 0,
-                push_back: 0,
-                push_front: 0,
-                insert: 4,
-                pop_back: 0,
-                pop_front: 0,
-                delete: 0,
-            },
-        );
     }
 }
 
@@ -58,18 +37,23 @@ fn random_value(rng: &mut StdRng) -> i64 {
     rng.gen_range(0..10)
 }
 
+fn random_lazy(rng: &mut StdRng) -> [i64; 2] {
+    [rng.gen_range(1..3), rng.gen_range(0..10)]
+}
+
 #[test]
 fn test_affine_insert_delete() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<Affine, _>(
+        test_case::<Affine, _, _>(
             &mut rng,
             random_value,
+            random_lazy,
             &Spec {
                 get: 4,
                 fold: 2,
                 insert: 1,
-                delete: 2,
+                delete: 1,
                 ..Spec::default()
             },
         );
@@ -80,14 +64,16 @@ fn test_affine_insert_delete() {
 fn test_affine_push_pop() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<Affine, _>(
+        test_case::<Affine, _, _>(
             &mut rng,
             random_value,
+            random_lazy,
             &Spec {
+                len: 1,
                 get: 4,
                 fold: 2,
-                push_back: 2,
-                push_front: 2,
+                push_back: 1,
+                push_front: 1,
                 pop_back: 1,
                 pop_front: 1,
                 ..Spec::default()
@@ -97,21 +83,17 @@ fn test_affine_push_pop() {
 }
 
 #[test]
-fn test_affine_typical_queries_many_push() {
+fn test_affine_act() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        test_case::<Affine, _>(
+        test_case::<Affine, _, _>(
             &mut rng,
             random_value,
+            random_lazy,
             &Spec {
-                get: 4,
-                fold: 2,
-                push_back: 2,
-                push_front: 2,
-                insert: 2,
-                pop_back: 1,
-                pop_front: 1,
-                delete: 1,
+                fold: 4,
+                act: 2,
+                ..Spec::default()
             },
         );
     }
