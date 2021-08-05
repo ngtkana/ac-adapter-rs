@@ -28,10 +28,12 @@ mod test_affine;
 #[cfg(test)]
 mod test_cat;
 #[cfg(test)]
+mod test_min_add;
+#[cfg(test)]
 mod tests;
 
 use {
-    node::{deep_free, get, merge, split, Node},
+    self::node::{deep_free, get, merge, split, Node},
     std::{
         cell::Cell,
         cmp::Ordering,

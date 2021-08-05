@@ -1,3 +1,5 @@
+use std::iter::repeat_with;
+
 use {
     super::{LazyOps, SplayTree},
     itertools::Itertools,
@@ -14,7 +16,8 @@ impl<O: LazyOps> Brute<O> {
         Self { vec: Vec::new() }
     }
     pub fn len(&self) -> usize {
-        self.vec.len()
+        let ans = self.vec.len();
+        ans
     }
     pub fn get(&self, index: usize) -> Option<&O::Value> {
         let ans = self.vec.get(index);
@@ -61,10 +64,18 @@ impl<O: LazyOps> Brute<O> {
         println!("delete({}) = {:?}; {:?}", i, &ans, &self.vec);
         ans
     }
+    pub fn act(&mut self, range: Range<usize>, lazy: O::Lazy) {
+        let Range { start, end } = range;
+        self.vec[start..end]
+            .iter_mut()
+            .for_each(|value| O::act_value(&lazy, value));
+        println!("act({:?}, {:?}); {:?}", start..end, &lazy, &self.vec);
+    }
 }
 
 #[derive(Default)]
 pub struct Spec {
+    pub len: usize,
     pub get: usize,
     pub fold: usize,
     pub push_back: usize,
@@ -73,26 +84,42 @@ pub struct Spec {
     pub pop_back: usize,
     pub pop_front: usize,
     pub delete: usize,
+    pub act: usize,
 }
 
-pub fn test_case<O: LazyOps, F>(rng: &mut StdRng, random_value: F, spec: &Spec)
+pub fn test_case<O: LazyOps, F, G>(rng: &mut StdRng, random_value: F, random_lazy: G, spec: &Spec)
 where
     O::Value: PartialEq,
     O::Acc: PartialEq,
     F: Fn(&mut StdRng) -> O::Value,
+    G: Fn(&mut StdRng) -> O::Lazy,
 {
     println!("New test case");
-    let mut splay = SplayTree::<O>::new();
-    let mut brute = Brute::<O>::new();
-    let dice_max = spec.get
+    let a = repeat_with(|| random_value(rng))
+        .take(4)
+        .collect::<Vec<_>>();
+    let mut splay = a.iter().cloned().collect::<SplayTree<O>>();
+    let mut brute = Brute::<O> { vec: a };
+    let dice_max = spec.len
+        + spec.get
         + spec.fold
         + spec.push_back
         + spec.push_front
         + spec.insert
         + spec.pop_back
-        + spec.pop_front;
+        + spec.delete
+        + spec.act;
     for _ in 0..200 {
         let mut dice = rng.gen_range(0..dice_max);
+
+        // len
+        if dice < spec.len {
+            let expected = brute.len();
+            let result = splay.len();
+            assert_eq!(result, expected);
+            continue;
+        }
+        dice -= spec.len;
 
         // get
         if dice < spec.get {
@@ -167,12 +194,27 @@ where
 
         // delete
         if dice < spec.delete {
-            let i = rng.gen_range(0..brute.len());
-            if i < brute.len() {
+            if brute.len() != 0 {
+                let i = rng.gen_range(0..brute.len());
                 let expected = brute.delete(i);
                 let result = splay.delete(i);
                 assert_eq!(expected, result);
             }
+            continue;
+        }
+        dice -= spec.delete;
+
+        // act
+        if dice < spec.act {
+            let mut l = rng.gen_range(0..=brute.len() + 1);
+            let mut r = rng.gen_range(0..=brute.len());
+            if l > r {
+                swap(&mut l, &mut r);
+                r -= 1;
+            }
+            let lazy = random_lazy(rng);
+            brute.act(l..r, lazy.clone());
+            splay.act(l..r, lazy.clone());
             continue;
         }
         unreachable!();
