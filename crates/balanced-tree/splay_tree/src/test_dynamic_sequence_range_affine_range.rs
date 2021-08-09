@@ -1,6 +1,3 @@
-// Library-Checer Dynamic Sequence Range Affine Range Sum
-//
-// https://judge.yosupo.jp/problem/dynamic_sequence_range_affine_range_sum
 use {
     super::{
         brute::{test_case, Spec},

@@ -2,8 +2,49 @@ mod node;
 
 #[cfg(test)]
 mod brute;
+
+/// # Citation
+///
+/// [Library-Checer Dynamic Sequence Range Affine Range Sum]
+/// (https://judge.yosupo.jp/problem/dynamic_sequence_range_affine_range_sum)
+///
+/// # 制約
+///
+/// N, Q ≤ 500,000
+///
+///
+/// # APIs
+///
+/// insert, delete, reverse, act, fold
+///
+/// # 提出 (3051 ms)
+///
+/// https://judge.yosupo.jp/submission/55691
+///
 #[cfg(test)]
 mod test_dynamic_sequence_range_affine_range;
+
+/// # Citation
+///
+/// [SoundHound Programming Contest 2018 Masters Tournament 本戦 (Open)]
+/// (https://atcoder.jp/contests/soundhound2018-summer-final-open/tasks/soundhound2018_summer_final_e)
+///
+/// # 制約
+///
+/// N, Q ≤ 200,000
+///
+///
+/// # APIs
+///
+/// merge, split_off, fold
+///
+/// # 提出 (3157 ms)
+///
+/// https://atcoder.jp/contests/soundhound2018-summer-final-open/submissions/24922921
+///
+#[cfg(test)]
+mod test_hash_swapping;
+
 #[cfg(test)]
 mod test_trivial;
 
@@ -145,9 +186,15 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(root);
         Some(Entry(self))
     }
-    pub fn split_at(self, at: usize) -> [Self; 2] {
+    pub fn split_off(&mut self, at: usize) -> Self {
         let [left, right] = split_at(self.0.get(), at);
-        [Self(Cell::new(left)), Self(Cell::new(right))]
+        self.0.set(left);
+        Self(Cell::new(right))
+    }
+    pub fn append(&mut self, right: &mut Self) {
+        let root = merge(self.0.get(), right.0.get());
+        self.0.set(root);
+        right.0.set(null_mut());
     }
     pub fn iter(&self) -> Iter<'_, O> {
         Iter {
