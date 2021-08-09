@@ -21,13 +21,13 @@
 //!
 //! // 構築
 //! let mut seg = DualSegtree::<O>::new([[0, 0], [0, 0]]);
-//! assert_eq!(seg.to_vec(), vec![[0, 0], [0, 0]]);
+//! assert_eq!(seg.collect_vec(), vec![[0, 0], [0, 0]]);
 //!
 //! // 更新
 //! seg.apply(0..1, [-2, -2]); // -2
-//! assert_eq!(seg.to_vec(), vec![[-2, -2], [0, 0]]);
+//! assert_eq!(seg.collect_vec(), vec![[-2, -2], [0, 0]]);
 //! seg.apply(0..1, [0, 3]); // +3
-//! assert_eq!(seg.to_vec(), vec![[-2, 1], [0, 0]]);
+//! assert_eq!(seg.collect_vec(), vec![[-2, 1], [0, 0]]);
 //!
 //!
 //! ```
@@ -67,7 +67,7 @@ impl<O: Ops> DualSegtree<O> {
     ) -> Self {
         let iter = iter.into_iter();
         Self {
-            table: repeat_with(|| O::identity())
+            table: repeat_with(O::identity)
                 .take(iter.len())
                 .chain(iter)
                 .collect::<Vec<_>>(),
@@ -135,7 +135,7 @@ impl<O: Ops> DualSegtree<O> {
         self.get_mut(i).clone()
     }
     /// [`Vec`] に変換します。
-    pub fn to_vec(&mut self) -> Vec<O::Value> {
+    pub fn collect_vec(&mut self) -> Vec<O::Value> {
         update_all::<O>(&mut self.table);
         self.table[self.len()..].to_vec()
     }
@@ -234,24 +234,10 @@ impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let v = iter.into_iter().collect::<VecDeque<_>>();
         Self {
-            table: repeat_with(|| O::identity())
-                .take(v.len())
-                .chain(v)
-                .collect(),
+            table: repeat_with(O::identity).take(v.len()).chain(v).collect(),
         }
     }
 }
-// impl<O: Ops> AsRef<[O::Value]> for DualSegtree<O> {
-//     fn as_ref(&self) -> &[O::Value] {
-//         &self.table[self.len()..]
-//     }
-// }
-// impl<O: Ops> AsMut<[O::Value]> for DualSegtree<O> {
-//     fn as_mut(&mut self) -> &mut [O::Value] {
-//         let n = self.len();
-//         &mut self.table[n..]
-//     }
-// }
 
 #[cfg(test)]
 mod tests {
