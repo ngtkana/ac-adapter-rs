@@ -187,14 +187,11 @@ impl<O: LazyOps> Node<O> {
             if let Some(g) = unsafe { p.parent.as_mut() } {
                 if ptr::eq(self, p.left) == ptr::eq(p, g.left) {
                     p.rotate();
-                    self.rotate();
                 } else {
                     self.rotate();
-                    self.rotate();
                 }
-            } else {
-                self.rotate();
             }
+            self.rotate();
         }
     }
 }
