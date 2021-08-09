@@ -17,7 +17,7 @@ impl LazyOps for I32Add {
     }
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
     fn act_acc(&(): &Self::Lazy, _acc: &mut Self::Acc) {}
-    fn lazy_propagate(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
+    fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
 
 #[test]
@@ -28,7 +28,7 @@ fn test_clone() {
     for i in 0..10 {
         splay.get(i);
         new.get(i);
-        assert_ne!(splay.root.get(), new.root.get());
+        assert_ne!(splay.0.get(), new.0.get());
     }
 }
 
