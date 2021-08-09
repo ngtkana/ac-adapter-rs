@@ -1,8 +1,5 @@
 mod node;
 
-#[cfg(test)]
-mod brute;
-
 /// # Citation
 ///
 /// [Library-Checer Dynamic Sequence Range Affine Range Sum]

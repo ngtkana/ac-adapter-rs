@@ -1,9 +1,8 @@
 use {
-    super::{
-        brute::{test_case, Spec},
-        LazyOps,
-    },
+    super::{LazyOps, SplayTree},
+    itertools::Itertools,
     rand::{prelude::StdRng, Rng, SeedableRng},
+    std::{iter::repeat_with, mem::swap},
 };
 
 const P: i64 = 998_244_353;
@@ -33,24 +32,75 @@ impl LazyOps for Affine {
     }
 }
 
-fn random_value(rng: &mut StdRng) -> i64 {
-    rng.gen_range(0..10)
-}
-
-fn random_lazy(rng: &mut StdRng) -> [i64; 2] {
-    [rng.gen_range(1..3), rng.gen_range(0..10)]
-}
-
 #[test]
-fn test_affine_insert_delete() {
+fn test_dynamic_sequence_range_affine_range() {
     let mut rng = StdRng::seed_from_u64(42);
-    let mut spec = Spec::new();
-    spec.add("insert", 1);
-    spec.add("delete", 1);
-    spec.add("reverse", 1);
-    spec.add("act", 1);
-    spec.add("fold", 1);
     for _ in 0..20 {
-        test_case::<Affine, _, _>(&mut rng, random_value, random_lazy, &spec);
+        let n = rng.gen_range(2..10);
+        let mut brute = repeat_with(|| rng.gen_range(0..P)).take(n).collect_vec();
+        let mut splay = brute.iter().copied().collect::<SplayTree<Affine>>();
+        for _ in 0..200 {
+            match rng.gen_range(0..5) {
+                0 => {
+                    let i = rng.gen_range(0..=brute.len());
+                    let value = rng.gen_range(0..P);
+                    brute.insert(i, value);
+                    splay.insert(i, value);
+                }
+                1 => {
+                    if brute.is_empty() {
+                        continue;
+                    }
+                    let i = rng.gen_range(0..brute.len());
+                    brute.remove(i);
+                    splay.delete(i);
+                }
+                2 => {
+                    if brute.len() < 2 {
+                        continue;
+                    }
+                    let mut start = rng.gen_range(0..brute.len());
+                    let mut end = rng.gen_range(0..brute.len() - 1);
+                    if start >= end {
+                        swap(&mut start, &mut end);
+                        end += 1;
+                    }
+                    brute[start..end].reverse();
+                    splay.reverse(start..end);
+                }
+                3 => {
+                    if brute.len() < 2 {
+                        continue;
+                    }
+                    let mut start = rng.gen_range(0..brute.len());
+                    let mut end = rng.gen_range(0..brute.len() - 1);
+                    if start >= end {
+                        swap(&mut start, &mut end);
+                        end += 1;
+                    }
+                    let b = rng.gen_range(0..P);
+                    let c = rng.gen_range(0..P);
+                    brute[start..end]
+                        .iter_mut()
+                        .for_each(|x| *x = ((b * *x) + c) % P);
+                    splay.act(start..end, [b, c]);
+                }
+                4 => {
+                    if brute.len() < 2 {
+                        continue;
+                    }
+                    let mut start = rng.gen_range(0..brute.len());
+                    let mut end = rng.gen_range(0..brute.len() - 1);
+                    if start >= end {
+                        swap(&mut start, &mut end);
+                        end += 1;
+                    }
+                    let expected = brute[start..end].iter().fold(0, |acc, &x| (acc + x) % P);
+                    let result = splay.fold(start..end).unwrap().0;
+                    assert_eq!(expected, result);
+                }
+                _ => unreachable!(),
+            }
+        }
     }
 }
