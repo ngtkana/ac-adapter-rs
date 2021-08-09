@@ -30,6 +30,27 @@ impl<T: Value> LazyOps for Nop<T> {
     fn act_acc(&(): &Self::Lazy, &mut (): &mut Self::Acc) {}
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
+pub struct NoLazy<T>(PhantomData<fn(T) -> T>);
+pub trait Ops {
+    type Value: Value;
+    type Acc: Value;
+    fn proj(value: &Self::Value) -> Self::Acc;
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc;
+}
+impl<O: Ops> LazyOps for NoLazy<O> {
+    type Value = O::Value;
+    type Acc = O::Acc;
+    type Lazy = ();
+    fn proj(value: &Self::Value) -> Self::Acc {
+        O::proj(value)
+    }
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+        O::op(lhs, rhs)
+    }
+    fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
+    fn act_acc(&(): &Self::Lazy, _acc: &mut Self::Acc) {}
+    fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
+}
 
 pub trait LazyOps {
     type Value: Value;
