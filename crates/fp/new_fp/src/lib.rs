@@ -274,6 +274,26 @@ impl<M: Mod> FactTable<M> {
         assert!(k <= n);
         self.0[0][n] * self.0[1][k] * self.0[1][n - k]
     }
+    /// 0 ≤ k ≤ n < len ならば 1 / binom(n, k) を返します。さもなくばパニックします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use new_fp::{fact_build, define_mod, fp};
+    /// define_mod! { type 13 }
+    /// let fact = fact_build::<M>(5);
+    ///
+    /// assert_eq!(fact.binom_inv(4, 0), fp!(1; 1));
+    /// assert_eq!(fact.binom_inv(4, 1), fp!(1; 4));
+    /// assert_eq!(fact.binom_inv(4, 2), fp!(1; 6));
+    /// ```
+    pub fn binom_inv(&self, n: u64, k: u64) -> Fp<M> {
+        let n = n as usize;
+        let k = k as usize;
+        assert!(n < self.0[0].len());
+        assert!(k <= n);
+        self.0[1][n] * self.0[0][k] * self.0[0][n - k]
+    }
     /// 0 ≤ n < len ならば binom(n, k) を返します。さもなくばパニックします。
     ///
     /// # Examples
