@@ -254,7 +254,7 @@ pub fn fact_build<M: Mod>(n: usize) -> FactTable<M> {
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct FactTable<M: Mod>(pub [Vec<Fp<M>>; 2]);
 impl<M: Mod> FactTable<M> {
-    /// 0 ≤ k ≤ n < len ならば binom(n, k) を返します。さもなくばパニックします。
+    /// k ≤ n < len ならば binom(n, k) を返します。さもなくばパニックします。
     ///
     /// # Examples
     ///
@@ -267,12 +267,26 @@ impl<M: Mod> FactTable<M> {
     /// assert_eq!(fact.binom(4, 1), fp!(4));
     /// assert_eq!(fact.binom(4, 2), fp!(6));
     /// ```
-    pub fn binom(&self, n: u64, k: u64) -> Fp<M> {
-        let n = n as usize;
-        let k = k as usize;
+    pub fn binom(&self, n: usize, k: usize) -> Fp<M> {
         assert!(n < self.0[0].len());
         assert!(k <= n);
         self.0[0][n] * self.0[1][k] * self.0[1][n - k]
+    }
+    /// i + j < len ならば binom(i + j, i) を返します。さもなくばパニックします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use new_fp::{fact_build, define_mod, fp};
+    /// define_mod! { type 13 }
+    /// let fact = fact_build::<M>(5);
+    ///
+    /// assert_eq!(fact.binom2(0, 4), fp!(1));
+    /// assert_eq!(fact.binom2(1, 3), fp!(4));
+    /// assert_eq!(fact.binom2(2, 2), fp!(6));
+    /// ```
+    pub fn binom2(&self, i: usize, j: usize) -> Fp<M> {
+        self.binom(i + j, i)
     }
     /// 0 ≤ k ≤ n < len ならば 1 / binom(n, k) を返します。さもなくばパニックします。
     ///
@@ -312,10 +326,10 @@ impl<M: Mod> FactTable<M> {
     /// assert_eq!(fact.binom_or_zero(4, 5), fp!(0));
     /// assert_eq!(fact.binom_or_zero(4, -1), fp!(0));
     /// ```
-    pub fn binom_or_zero(&self, n: u64, k: i64) -> Fp<M> {
-        assert!(n < self.0[0].len() as u64);
-        if (0..=n as i64).contains(&k) {
-            self.binom(n, k as u64)
+    pub fn binom_or_zero(&self, n: usize, k: isize) -> Fp<M> {
+        assert!(n < self.0[0].len() as usize);
+        if (0..=n as isize).contains(&k) {
+            self.binom(n, k as usize)
         } else {
             Fp::new(0)
         }
