@@ -1,19 +1,2 @@
 [workspace]
-members = [
-    'crates/ac-adapter-rs',
-    'crates/disjoint_set/*',
-    'crates/data-structures/*',
-    'crates/tree-decomposition/*',
-    'crates/fp/*',
-    'crates/heaps/*',
-    'crates/balanced-tree/*',
-    'crates/utils/*',
-    'crates/string/*',
-    'crates/algolib/*',
-    'crates/iterator/*',
-    'crates/linear-algebra/*',
-    'crates/range-query/*',
-    'crates/math/*',
-    'crates/geometry/*',
-    'crates/flow/*',
-]
+members = ['crates/*']
