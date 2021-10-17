@@ -1,3 +1,0 @@
-ac-adapter-rs
-make-ac-adapter-rs-crate.sh
-acignore.txt
