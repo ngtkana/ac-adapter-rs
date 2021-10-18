@@ -293,11 +293,9 @@ impl<V> TrieMap<V> {
     /// ].into_iter();
     /// map.for_each_kv(|k, &v| {
     ///     let (ek, ev) = expected.next().unwrap();
-    ///     assert_eq!(k, ek);
+    ///     assert_eq!(k, ek.as_slice());
     ///     assert_eq!(v, ev);
     /// });
-    ///
-    ///
     /// ```
     pub fn for_each_kv(&self, mut visit: impl FnMut(&[usize], &V)) {
         let mut prefix = Vec::new();

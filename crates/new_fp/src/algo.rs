@@ -44,7 +44,7 @@ mod tests {
 
     #[test]
     fn test_ext_euclid_modinv() {
-        for p in SMALL_PRIMES {
+        for &p in SMALL_PRIMES.iter() {
             for x in 1..p {
                 let y = ext_euclid_modinv(x, p);
                 assert!((1..p).contains(&y));
