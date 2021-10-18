@@ -20,7 +20,7 @@
 //! }
 //!
 //! // 構築
-//! let mut seg = DualSegtree::<O>::new([[0, 0], [0, 0]]);
+//! let mut seg = DualSegtree::<O>::new(vec![[0, 0], [0, 0]]);
 //! assert_eq!(seg.collect_vec(), vec![[0, 0], [0, 0]]);
 //!
 //! // 更新

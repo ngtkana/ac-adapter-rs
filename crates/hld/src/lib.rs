@@ -52,7 +52,7 @@
 //! ];
 //! let hld = Hld::new(root, &g);
 //!
-//! assert_eq!(hld.child(), vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
+//! assert_eq!(hld.child(), &[vec![2, 1], Vec::new(), vec![3], Vec::new()]);
 //! assert_eq!(hld.time(), &[0, 3, 1, 2]);
 //! assert_eq!(hld.ord(), &[0, 2, 3, 1]);
 //! assert_eq!(hld.parent(), &[0, 0, 0, 2]);

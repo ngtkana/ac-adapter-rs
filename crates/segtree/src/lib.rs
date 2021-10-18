@@ -647,11 +647,11 @@ mod tests {
                 }
                 if l != 0 && l < r {
                     let range = (Bound::Excluded(l), Bound::Excluded(r));
-                    v.push((seg.fold(range), &a[range]));
+                    v.push((seg.fold(range), &a[l + 1..r]));
                 }
                 if l != 0 && l <= r && r < n {
                     let range = (Bound::Excluded(l), Bound::Included(r));
-                    v.push((seg.fold(range), &a[range]));
+                    v.push((seg.fold(range), &a[l + 1..=r]));
                 }
                 v
             })
@@ -664,7 +664,7 @@ mod tests {
                 }
                 if i != 0 && i != n {
                     let range = (Bound::Excluded(i), Bound::Unbounded);
-                    v.push((seg.fold(range), &a[range]));
+                    v.push((seg.fold(range), &a[i + 1..]));
                 }
                 v
             }))
@@ -690,7 +690,12 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..=10);
-            let mut a = ('a'..).take(n).map(|c| c.to_string()).collect::<Vec<_>>();
+            let mut a = (0..)
+                .take(n)
+                .map(|x| (x + b'a') as char)
+                .take(n)
+                .map(|c| c.to_string())
+                .collect::<Vec<_>>();
             let mut seg = Segtree::<O>::new(a.iter().cloned());
             for _ in 0..2 * n {
                 match rng.gen_range(0..2) {
@@ -732,7 +737,12 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..=10);
-            let a = ('a'..).take(n).map(|c| c.to_string()).collect::<Vec<_>>();
+            let a = (0..)
+                .take(n)
+                .map(|x| (x + b'a') as char)
+                .take(n)
+                .map(|c| c.to_string())
+                .collect::<Vec<_>>();
             let seg = Segtree::<O>::new(a.iter().cloned());
             for _ in 0..2 * n {
                 let mut l = rng.gen_range(0..n);
@@ -767,7 +777,11 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(1..=10);
-            let a = ('a'..).take(n).map(|c| c.to_string()).collect::<Vec<_>>();
+            let a = (0..)
+                .take(n)
+                .map(|x| (x + b'a') as char)
+                .map(|c| c.to_string())
+                .collect::<Vec<_>>();
             let seg = Segtree::<O>::new(a.iter().cloned());
             for _ in 0..2 * n {
                 let mut l = rng.gen_range(0..n);

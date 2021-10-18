@@ -258,11 +258,12 @@ mod tests {
             let expected_to_be_a = Fp::convolution(result.clone(), result.clone());
             assert_eq!(
                 &expected_to_be_a[..precision],
-                &a.iter()
+                a.iter()
                     .copied()
                     .chain(repeat(Fp::new(0)))
                     .take(precision)
                     .collect::<Vec<_>>()
+                    .as_slice(),
             );
         }
     }
