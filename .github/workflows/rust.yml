@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-      toolchain: 1.42
     - name: Build
       run: cargo build --release
 
@@ -23,8 +21,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-      toolchain: 1.42
     - name: Clippy
       run: |
         cargo clippy --all-targets -- \
@@ -50,8 +46,6 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-      toolchain: 1.42
     - name: Run tests
       run: cargo test
 
@@ -59,7 +53,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-      with:
-      toolchain: 1.42
     - name: Run cargo-doc
       run: cargo doc
