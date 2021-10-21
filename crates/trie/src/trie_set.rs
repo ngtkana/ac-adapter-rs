@@ -179,7 +179,7 @@ impl TrieSet {
     /// ].into_iter();
     /// set.for_each(|k| {
     ///     let ek = expected.next().unwrap();
-    ///     assert_eq!(k, ek);
+    ///     assert_eq!(k, ek.as_slice());
     /// });
     /// ```
     pub fn for_each(&self, mut visit: impl FnMut(&[usize])) {
