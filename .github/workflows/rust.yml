@@ -14,16 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+      toolchain: 1.42
     - name: Build
-      run: cargo +1.42.0 build --release
+      run: cargo build --release
 
   clippy:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+      toolchain: 1.42
     - name: Clippy
       run: |
-        cargo +1.42.0 clippy --all-targets -- \
+        cargo clippy --all-targets -- \
         -W clippy::pedantic \
         -W clippy::nursery \
         -A clippy::must_use_candidate \
@@ -46,12 +50,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+      toolchain: 1.42
     - name: Run tests
-      run: cargo +1.42.0 test
+      run: cargo test
 
   doc:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run cargo +1.42.0-doc
-      run: cargo +1.42.0 doc
+      with:
+      toolchain: 1.42
+    - name: Run cargo-doc
+      run: cargo doc
