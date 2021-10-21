@@ -21,6 +21,12 @@ pub fn min<T: Copy + Ord>(a: &mut [T]) {
 pub fn max<T: Copy + Ord>(a: &mut [T]) {
     for_each_mut(a, |&mut x, y| *y = x.max(*y));
 }
+pub fn skipped_min<T: Copy + Ord>(a: &[T], max: T) -> Vec<T> {
+    skipped(a, |x, y| (*x).min(*y), || max).collect()
+}
+pub fn skipped_max<T: Copy + Ord>(a: &[T], min: T) -> Vec<T> {
+    skipped(a, |x, y| (*x).max(*y), || min).collect()
+}
 // --  bit
 pub fn xor<T: Copy + BitXorAssign>(a: &mut [T]) {
     for_each_mut(a, |&mut x, y| *y ^= x);
@@ -68,8 +74,69 @@ pub fn rfor_each_mut<T>(a: &mut [T], mut f: impl FnMut(&mut T, &mut T)) {
     }
 }
 
+pub fn skipped<T, F, I>(a: &[T], f: F, identity: I) -> Skipped<T, F, I>
+where
+    F: FnMut(&T, &T) -> T,
+    I: FnMut() -> T,
+{
+    Skipped::new(a, f, identity)
+}
+
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+pub struct Skipped<'a, T, F, I> {
+    a: &'a [T],
+    left: T,
+    right: Vec<T>,
+    f: F,
+    identity: I,
+}
+impl<'a, T, F, I> Skipped<'a, T, F, I>
+where
+    F: FnMut(&T, &T) -> T,
+    I: FnMut() -> T,
+{
+    fn new(a: &'a [T], mut f: F, mut identity: I) -> Self {
+        let right = if a.is_empty() {
+            Default::default()
+        } else {
+            let mut right = vec![identity()];
+            for x in a[1..].iter().rev() {
+                let x = f(x, right.last().unwrap());
+                right.push(x);
+            }
+            right
+        };
+        Self {
+            a,
+            left: identity(),
+            right,
+            f,
+            identity,
+        }
+    }
+}
+impl<'a, T, F, I> Iterator for Skipped<'a, T, F, I>
+where
+    F: FnMut(&T, &T) -> T,
+    I: FnMut() -> T,
+{
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        if let Some(right) = self.right.pop() {
+            let res = (self.f)(&self.left, &right);
+            self.left = (self.f)(&self.left, &self.a[0]);
+            self.a = &self.a[1..];
+            Some(res)
+        } else {
+            None
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use super::{skipped, skipped_max, skipped_min};
+
     #[test]
     fn test_for_each() {
         let a = vec![0, 1, 2, 3];
@@ -135,5 +202,33 @@ mod tests {
         let mut a = vec![4, 6, 7, 3, 7];
         super::max(&mut a);
         assert_eq!(&a, &[4, 6, 7, 7, 7]);
+    }
+    #[test]
+    fn test_skipped() {
+        let a = (0..4)
+            .map(|i| ((b'a' + i) as char).to_string())
+            .collect::<Vec<_>>();
+        let skipped = skipped(
+            &a,
+            |s, t| s.chars().chain(t.chars()).collect::<String>(),
+            String::new,
+        )
+        .collect::<Vec<_>>();
+        assert_eq!(skipped[0].as_str(), "bcd");
+        assert_eq!(skipped[1].as_str(), "acd");
+        assert_eq!(skipped[2].as_str(), "abd");
+        assert_eq!(skipped[3].as_str(), "abc");
+    }
+    #[test]
+    fn test_skipped_min() {
+        let a = vec![4, 2, 6, 1];
+        let skipped = skipped_min(&a, std::i32::MAX);
+        assert_eq!(skipped, vec![1, 1, 1, 2]);
+    }
+    #[test]
+    fn test_skipped_max() {
+        let a = vec![4, 2, 6, 1];
+        let skipped = skipped_max(&a, std::i32::MIN);
+        assert_eq!(skipped, vec![6, 6, 4, 6]);
     }
 }
