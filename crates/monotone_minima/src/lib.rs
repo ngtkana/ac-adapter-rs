@@ -4,7 +4,10 @@
 //!
 //! - [ABC 218 H - Red and Blue Lamps](https://atcoder.jp/contests/abc218/tasks/abc218_h)
 //!
-use std::{cmp::Ordering, ops::Add};
+use std::{
+    cmp::{Ordering, Reverse},
+    ops::Add,
+};
 
 ////////////////////////////////////////////////////////////////////////////////
 // Monotone minima
@@ -31,90 +34,68 @@ pub fn monotone_minima_by(
     ans
 }
 
-/// 行列 `f(i, j)` を受け取って、monotone minima をします。
-pub fn monotone_minima_by_key<T: Ord>(
-    h: usize,
-    w: usize,
-    f: impl Fn(usize, usize) -> T,
+/// 行ごとのセル比較 `cmp(i, j, k)` を受け取って、monotone maxima をします。
+pub fn monotone_maxima_by(
+    h: usize,                                                    // a.len()
+    w: usize,                                                    // a[0].len()
+    mut cmp: impl FnMut(usize, usize, usize) -> Ordering + Copy, // a[i][j].cmp(&a[i][k])
 ) -> Vec<usize> {
+    monotone_minima_by(h, w, move |i, j, k| cmp(i, k, j))
+}
+
+/// 行列 `f(i, j)` を受け取って、monotone minima をします。
+pub fn monotone_minima<T: Ord>(h: usize, w: usize, f: impl Fn(usize, usize) -> T) -> Vec<usize> {
     monotone_minima_by(h, w, |i, j, k| f(i, j).cmp(&f(i, k)))
 }
 
-////////////////////////////////////////////////////////////////////////////////
-// Trait
-////////////////////////////////////////////////////////////////////////////////
-/// 大小比較と加算を要求します。`Copy`, `Ord`, `Add<Output = Self>` を実装していると
-/// 自動的に実装されます
-pub trait Tropical: Copy {
-    fn cmp(&self, rhs: &Self) -> Ordering;
-    fn add(self, rhs: Self) -> Self;
-}
-impl<T> Tropical for T
-where
-    T: Copy + Ord + Add<Output = Self>,
-{
-    fn cmp(&self, rhs: &Self) -> Ordering {
-        self.cmp(rhs)
-    }
-    fn add(self, rhs: Self) -> Self {
-        self.add(rhs)
-    }
+/// 行列 `f(i, j)` を受け取って、monotone maxima をします。
+pub fn monotone_maxima<T: Ord>(h: usize, w: usize, f: impl Fn(usize, usize) -> T) -> Vec<usize> {
+    monotone_maxima_by(h, w, |i, j, k| f(i, j).cmp(&f(i, k)))
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // Convolution
 ////////////////////////////////////////////////////////////////////////////////
-fn convex_minplus_convolution_by<T>(
-    a: &[T],
-    b: &[T],
-    mut add: impl FnMut(T, T) -> T + Copy,
-    mut cmp: impl FnMut(&T, &T) -> Ordering + Copy,
-) -> Vec<T>
+/// convex な列に対して min-plus convolution を計算します。
+pub fn convex_minplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
-    T: Copy,
+    T: Copy + Ord + Add<Output = T>,
 {
     if a.is_empty() && b.is_empty() {
         return Vec::new();
     }
-    monotone_minima_by(a.len() + b.len() - 1, a.len(), move |i, j, k| {
-        match [
-            i.checked_sub(j).and_then(|d| b.get(d)),
-            i.checked_sub(k).and_then(|e| b.get(e)),
-        ] {
-            [None, None] => Ordering::Equal,
-            [None, Some(_)] => Ordering::Greater,
-            [Some(_), None] => Ordering::Less,
-            [Some(&x), Some(&y)] => cmp(&add(a[j], x), &add(a[k], y)),
-        }
+    monotone_maxima(a.len() + b.len() - 1, a.len(), move |i, j| {
+        i.checked_sub(j)
+            .and_then(|ij| b.get(ij))
+            .map(|&y| Reverse(a[j] + y))
     })
     .into_iter()
     .enumerate()
-    .map(|(i, j)| add(a[j], b[i - j]))
+    .map(|(i, j)| a[j] + b[i - j])
     .collect()
 }
 
-/// [`Tropical`] トレイトのメソッドを呼び出して、convex な列に対して
-/// min-plus convolution を計算します。
-pub fn convex_minplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
-where
-    T: Tropical,
-{
-    convex_minplus_convolution_by(a, b, T::add, T::cmp)
-}
-
-/// [`Tropical`] トレイトのメソッドを呼び出して、concave な列に対して
-/// max-plus convolution を計算します。
+/// concave な列に対して max-plus convolution を計算します。
 pub fn concave_maxplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
-    T: Tropical,
+    T: Copy + Ord + Add<Output = T>,
 {
-    convex_minplus_convolution_by(a, b, T::add, |x, y| y.cmp(x))
+    if a.is_empty() && b.is_empty() {
+        return Vec::new();
+    }
+    monotone_maxima(a.len() + b.len() - 1, a.len(), move |i, j| {
+        i.checked_sub(j).and_then(|ij| b.get(ij)).map(|&y| a[j] + y)
+    })
+    .into_iter()
+    .enumerate()
+    .map(|(i, j)| a[j] + b[i - j])
+    .collect()
 }
 
 #[cfg(test)]
 mod tests {
     use {
-        super::{concave_maxplus_convolution, convex_minplus_convolution, monotone_minima_by},
+        super::{concave_maxplus_convolution, convex_minplus_convolution, monotone_minima},
         rand::{prelude::StdRng, Rng, SeedableRng},
         std::iter::{once, repeat_with},
     };
@@ -220,17 +201,17 @@ mod tests {
     #[test]
     fn test_monotone_minima_by() {
         let a = MONOTONE_0;
-        let result = monotone_minima_by(9, 18, |i, j, k| a[i][j].cmp(&a[i][k]));
+        let result = monotone_minima(9, 18, |i, j| a[i][j]);
         let expected = minima_brute(a);
         assert_eq!(result, expected);
 
         let a = MONOTONE_1;
-        let result = monotone_minima_by(9, 18, |i, j, k| a[i][j].cmp(&a[i][k]));
+        let result = monotone_minima(9, 18, |i, j| a[i][j]);
         let expected = minima_brute(a);
         assert_eq!(result, expected);
 
         let a = MONOTONE_2;
-        let result = monotone_minima_by(9, 18, |i, j, k| a[i][j].cmp(&a[i][k]));
+        let result = monotone_minima(9, 18, |i, j| a[i][j]);
         let expected = minima_brute(a);
         assert_eq!(result, expected);
     }
@@ -280,7 +261,7 @@ mod tests {
     }
 
     #[test]
-    fn test_convex_maxplus_convolution() {
+    fn test_convex_minplus_convolution() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(2..20);
