@@ -6,7 +6,7 @@ use super::Unsigned;
 ///
 /// Basic usage:
 /// ```
-/// use bitset::subsets;
+/// use bitutils::subsets;
 ///
 /// assert_eq!(
 ///     subsets(10u32).collect::<Vec<_>>(),
