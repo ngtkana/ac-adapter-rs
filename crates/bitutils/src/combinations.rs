@@ -6,7 +6,7 @@ use super::Unsigned;
 ///
 /// Basic usage:
 /// ```
-/// use bitset::combinations;
+/// use bitutils::combinations;
 ///
 /// assert_eq!(
 ///     combinations::<u32>(3, 2).collect::<Vec<_>>(),
