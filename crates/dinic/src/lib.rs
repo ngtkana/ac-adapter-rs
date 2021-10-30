@@ -803,6 +803,7 @@ mod tests {
     // Max-flow min-cut theorem test
     ////////////////////////////////////////////////////////////////////////////////
 
+    #[allow(clippy::unused_unit)]
     #[test_case(2, 1, 10; "trivially small graph")]
     #[test_case(5, 8, 1000; "small sparse graph")]
     #[test_case(10, 8, 100; "very sparse graph")]
@@ -825,6 +826,7 @@ mod tests {
         }
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(10; "small hack")]
     #[test_case(100; "large hack")]
     fn test_hack(n: usize) {
@@ -920,6 +922,7 @@ mod tests {
     // Kőnig's theorem test
     ////////////////////////////////////////////////////////////////////////////////
 
+    #[allow(clippy::unused_unit)]
     #[test_case(3, 5, 10, 10; "small graph")]
     #[test_case(5, 8, 10, 10; "medium graph")]
     #[test_case(10, 20, 10, 10; "large graph")]

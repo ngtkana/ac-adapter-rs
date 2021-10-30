@@ -114,7 +114,7 @@ fn test_entry() {
     let mut splay = (0..5).collect::<SplayTree<I32Add>>();
     *splay.entry(2).unwrap() = 42;
     assert!(splay.entry(1000).is_none());
-    assert_eq!(splay.fold(..), Some(0 + 1 + 42 + 3 + 4));
+    assert_eq!(splay.fold(..), Some(1 + 42 + 3 + 4));
 }
 
 #[test]

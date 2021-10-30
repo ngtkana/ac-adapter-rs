@@ -48,6 +48,7 @@ mod tests {
             .collect()
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case("abcabca")]
     #[test_case("abracadabra")]
     #[test_case("mississippi")]
