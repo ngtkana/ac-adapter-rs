@@ -115,9 +115,9 @@ mod tests {
                         uf.union(u, v);
                         let u = parent[u];
                         let v = parent[v];
-                        for i in 0..n {
-                            if parent[i] == u || parent[i] == v {
-                                parent[i] = u;
+                        for p in &mut parent {
+                            if *p == u || *p == v {
+                                *p = u;
                             }
                         }
                         println!("union({}, {}): {:?}", orig_u, orig_v, &uf);

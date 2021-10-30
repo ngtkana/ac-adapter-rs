@@ -217,6 +217,7 @@ mod tests {
         Super,
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(Add::add, 0, add, Dir::Sub)]
     #[test_case(cmp::max, std::u32::MIN, max, Dir::Sub)]
     #[test_case(cmp::min, std::u32::MAX, min, Dir::Sub)]
@@ -257,6 +258,7 @@ mod tests {
         }
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(Add::add, 0)]
     #[test_case(cmp::max, std::u32::MIN)]
     #[test_case(cmp::min, std::u32::MAX)]

@@ -36,6 +36,7 @@ pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
 mod tests {
     use {crate::ext_gcd, crate::gcd, test_case::test_case};
 
+    #[allow(clippy::unused_unit)]
     #[test_case(1, 1)]
     #[test_case(1, 18)]
     #[test_case(18, 1)]

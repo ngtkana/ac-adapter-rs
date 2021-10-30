@@ -289,12 +289,12 @@ mod tests {
         let new_value = |rng: &mut StdRng| rng.gen_range('a'..='z').to_string();
         for _ in 0..200 {
             let n = rng.gen_range(1..=50);
-            let a = repeat_with(|| new_value(&mut rng))
+            let vec = repeat_with(|| new_value(&mut rng))
                 .take(n)
                 .collect::<Vec<_>>();
-            dbg!(&a);
-            let mut seg = DualSegtree::<O>::new(a.iter().cloned());
-            let mut brute = Brute::<O>::new(a.iter().cloned());
+            dbg!(&vec);
+            let mut seg = DualSegtree::<O>::new(vec.iter().cloned());
+            let mut brute = Brute::<O>::new(vec.iter().cloned());
             for _ in 0..20 {
                 match rng.gen_range(0..3) {
                     0 | 1 => {
