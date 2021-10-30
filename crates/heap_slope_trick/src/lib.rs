@@ -196,6 +196,8 @@ pub struct Summary {
 
 #[cfg(test)]
 mod tests {
+    use std::cmp::Ordering;
+
     use {
         super::HeapSlopeTrick,
         rand::{prelude::StdRng, Rng, SeedableRng},
@@ -383,17 +385,21 @@ mod tests {
             }
         }
         fn shift(&mut self, a: i64) {
-            if 0 < a {
-                let a = a as usize;
-                self.values.rotate_right(a);
-                self.values[..a].iter_mut().for_each(|x| *x = std::i64::MAX);
-            } else if a < 0 {
-                let a = -a as usize;
-                self.values.rotate_left(a);
-                let n = self.values.len();
-                self.values[n - a..]
-                    .iter_mut()
-                    .for_each(|x| *x = std::i64::MAX);
+            match a.cmp(&0) {
+                Ordering::Less => {
+                    let a = -a as usize;
+                    self.values.rotate_left(a);
+                    let n = self.values.len();
+                    self.values[n - a..]
+                        .iter_mut()
+                        .for_each(|x| *x = std::i64::MAX);
+                }
+                Ordering::Greater => {
+                    let a = a as usize;
+                    self.values.rotate_right(a);
+                    self.values[..a].iter_mut().for_each(|x| *x = std::i64::MAX);
+                }
+                Ordering::Equal => (),
             }
         }
         fn sliding_window_minimum(&mut self, a: i64, b: i64) {

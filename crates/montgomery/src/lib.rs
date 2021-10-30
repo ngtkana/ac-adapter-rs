@@ -368,6 +368,7 @@ mod tests {
         test_case::test_case,
     };
 
+    #[allow(clippy::unused_unit)]
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
     #[test_case(std::u32::MAX; "large")]
@@ -398,6 +399,7 @@ mod tests {
         }
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(3, 50; "small")]
     #[test_case(30, 100_000; "medium")]
     #[test_case(std::u32::MAX, std::u64::MAX; "large")]
@@ -433,6 +435,7 @@ mod tests {
         }
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
     #[test_case(std::u32::MAX; "large")]

@@ -656,9 +656,7 @@ mod tests {
                 v
             })
             .chain((0..=n).flat_map(|i| {
-                let mut v = Vec::new();
-                v.push((seg.fold(i..), &a[i..]));
-                v.push((seg.fold(..i), &a[..i]));
+                let mut v = vec![(seg.fold(i..), &a[i..]), (seg.fold(..i), &a[..i])];
                 if i != n {
                     v.push((seg.fold(..=i), &a[..=i]));
                 }
@@ -752,11 +750,11 @@ mod tests {
                     r += 1;
                 }
                 let expected = rng.gen_range(l..=r);
-                let s = a[l..expected]
+                let string = a[l..expected]
                     .iter()
-                    .flat_map(|s| s.chars())
+                    .flat_map(|string| string.chars())
                     .collect::<String>();
-                let result = seg.max_right(l..r, |t| t.len() <= s.len());
+                let result = seg.max_right(l..r, |t| t.len() <= string.len());
                 assert_eq!(expected, result);
             }
         }
@@ -791,11 +789,11 @@ mod tests {
                     r += 1;
                 }
                 let expected = rng.gen_range(l..=r);
-                let s = a[expected..r]
+                let string = a[expected..r]
                     .iter()
-                    .flat_map(|s| s.chars())
+                    .flat_map(|string| string.chars())
                     .collect::<String>();
-                let result = seg.max_left(l..r, |t| t.len() <= s.len());
+                let result = seg.max_left(l..r, |t| t.len() <= string.len());
                 assert_eq!(expected, result);
             }
         }

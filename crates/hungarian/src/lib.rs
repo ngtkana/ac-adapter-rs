@@ -182,19 +182,17 @@ impl_value_float!(f32, f64);
 
 #[cfg(test)]
 mod tests {
-    use approx::{assert_abs_diff_eq, AbsDiffEq};
-    use next_permutation::permutations_for_each;
-
     use {
         super::{hungarian, HungarianResult, Value},
+        approx::{assert_abs_diff_eq, AbsDiffEq},
         itertools::Itertools,
-        rand::distributions::uniform::SampleUniform,
+        next_permutation::permutations_for_each,
         rand::{
+            distributions::uniform::SampleUniform,
             prelude::{Rng, StdRng},
             SeedableRng,
         },
-        std::iter::repeat_with,
-        std::{assert_eq, fmt::Debug, mem::swap, ops::RangeInclusive},
+        std::{assert_eq, fmt::Debug, iter::repeat_with, mem::swap, ops::RangeInclusive},
         test_case::test_case,
     };
 
@@ -205,6 +203,7 @@ mod tests {
         (forward.into_vec(), value)
     }
 
+    #[allow(clippy::unused_unit)]
     #[test_case(5, 5, 100, true)]
     #[test_case(5, 5, 1000, false)]
     #[test_case(30, 500, 30, false)]
@@ -212,14 +211,14 @@ mod tests {
         test_rand_impl::<i32>(h, w, iter, brute, 0..=100);
     }
 
-    #[test_case(5, 5, 1000, false)]
-    fn test_rand_i32(h: usize, w: usize, iter: usize, brute: bool) {
-        test_rand_impl::<i32>(h, w, iter, brute, -100..=100);
+    #[test]
+    fn test_rand_i32() {
+        test_rand_impl::<i32>(5, 5, 1000, false, -100..=100);
     }
 
-    #[test_case(5, 5, 1000, false)]
-    fn test_rand_f64(h: usize, w: usize, iter: usize, brute: bool) {
-        test_rand_impl::<f64>(h, w, iter, brute, -100.0..=100.);
+    #[test]
+    fn test_rand_f64() {
+        test_rand_impl::<f64>(5, 5, 1000, false, -100.0..=100.);
     }
 
     fn test_rand_impl<T: Value + Debug + Epsilon + SampleUniform>(
