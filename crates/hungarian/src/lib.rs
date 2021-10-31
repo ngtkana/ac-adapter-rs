@@ -186,7 +186,7 @@ mod tests {
         super::{hungarian, HungarianResult, Value},
         approx::{assert_abs_diff_eq, AbsDiffEq},
         itertools::Itertools,
-        next_permutation::permutations_for_each,
+        next_permutation::permutations,
         rand::{
             distributions::uniform::SampleUniform,
             prelude::{Rng, StdRng},
@@ -313,13 +313,10 @@ mod tests {
     fn compare_with_brute<T: Value + Debug>(cost_matrix: &[Vec<T>], result: &HungarianResult<T>) {
         let h = cost_matrix.len();
         let w = cost_matrix[0].len();
-        let mut value = T::infinity();
-        permutations_for_each((0..w).collect_vec(), |v| {
-            let now = calculate_score(cost_matrix, v[..h].iter().copied());
-            if now < value {
-                value = now;
-            }
-        });
+        let value = permutations((0..w).collect_vec())
+            .map(|v| calculate_score(cost_matrix, v[..h].iter().copied()))
+            .min_by(|x, y| x.partial_cmp(&y).unwrap())
+            .unwrap();
         assert_eq!(value, result.value);
     }
 
