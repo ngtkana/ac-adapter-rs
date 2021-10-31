@@ -10,3 +10,4 @@ edition = "2018"
 
 [dev-dependencies]
 itertools = "0.10.0"
+rand = "0.8.4"
