@@ -142,7 +142,7 @@ impl Bs {
     /// ```
     pub fn test(&self, i: usize) -> bool {
         debug_assert!(i < self.len);
-        self.vec[i / 64] >> i % 64 & 1 == 1
+        self.vec[i / 64] >> (i % 64) & 1 == 1
     }
     /// 特定のビットを立てます。
     ///
@@ -158,7 +158,7 @@ impl Bs {
     /// ```
     pub fn set(&mut self, i: usize) {
         debug_assert!(i < self.len);
-        self.vec[i / 64] |= 1_u64 << i % 64;
+        self.vec[i / 64] |= 1_u64 << (i % 64);
     }
     /// 特定のビットをおろします。
     ///
@@ -174,7 +174,7 @@ impl Bs {
     /// ```
     pub fn unset(&mut self, i: usize) {
         debug_assert!(i < self.len);
-        self.vec[i / 64] &= !(1_u64 << i % 64);
+        self.vec[i / 64] &= !(1_u64 << (i % 64));
     }
     pub fn format(&self, t: char, f: char) -> String {
         self.iter().map(|b| if b { t } else { f }).collect()

@@ -315,7 +315,7 @@ mod tests {
         let w = cost_matrix[0].len();
         let value = permutations((0..w).collect_vec())
             .map(|v| calculate_score(cost_matrix, v[..h].iter().copied()))
-            .min_by(|x, y| x.partial_cmp(&y).unwrap())
+            .min_by(|x, y| x.partial_cmp(y).unwrap())
             .unwrap();
         assert_eq!(value, result.value);
     }
