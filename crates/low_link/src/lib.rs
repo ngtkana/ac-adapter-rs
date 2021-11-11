@@ -334,10 +334,10 @@ mod tests {
             {
                 let mut result = low_link.biconnected_components();
                 let mut expected = biconnected_components(n, &edges);
-                result.iter_mut().flatten().for_each(|v| v.sort());
-                expected.iter_mut().flatten().for_each(|v| v.sort());
-                result.iter_mut().for_each(|v| v.sort());
-                expected.iter_mut().for_each(|v| v.sort());
+                result.iter_mut().flatten().for_each(|v| v.sort_unstable());
+                expected.iter_mut().flatten().for_each(|v| v.sort_unstable());
+                result.iter_mut().for_each(|v| v.sort_unstable());
+                expected.iter_mut().for_each(|v| v.sort_unstable());
                 result.sort();
                 expected.sort();
                 assert_eq!(&result, &expected);
@@ -347,8 +347,8 @@ mod tests {
             {
                 let mut result = low_link.two_edge_components();
                 let mut expected = two_edge_components(n, &edges);
-                result.iter_mut().for_each(|v| v.sort());
-                expected.iter_mut().for_each(|v| v.sort());
+                result.iter_mut().for_each(|v| v.sort_unstable());
+                expected.iter_mut().for_each(|v| v.sort_unstable());
                 result.sort();
                 expected.sort();
                 assert_eq!(&result, &expected);
@@ -369,15 +369,13 @@ mod tests {
         let mut ideal = HashSet::new();
         let mut ans = Vec::new();
         for bs in (0..1 << n).rev() {
-            if !ideal.contains(&bs) {
-                if is_two_edge_connected(bs, n, edges) {
-                    ans.push((0..n).filter(|&i| bs >> i & 1 == 1).collect());
-                    ideal.insert(bs);
-                    let mut cs = bs;
-                    while cs != 0 {
-                        cs = (cs - 1) & bs;
-                        ideal.insert(cs);
-                    }
+            if !ideal.contains(&bs) && is_two_edge_connected(bs, n, edges) {
+                ans.push((0..n).filter(|&i| bs >> i & 1 == 1).collect());
+                ideal.insert(bs);
+                let mut cs = bs;
+                while cs != 0 {
+                    cs = (cs - 1) & bs;
+                    ideal.insert(cs);
                 }
             }
         }
@@ -415,20 +413,18 @@ mod tests {
         let mut ideal = HashSet::new();
         let mut ans = Vec::new();
         for bs in (0..1 << m).rev() {
-            if !ideal.contains(&bs) {
-                if is_binonnected(bs, n, &edges) {
-                    ans.push(
-                        (0..m)
-                            .filter(|&j| bs >> j & 1 == 1)
-                            .map(|j| edges[j])
-                            .collect(),
-                    );
-                    ideal.insert(bs);
-                    let mut cs = bs;
-                    while cs != 0 {
-                        cs = (cs - 1) & bs;
-                        ideal.insert(cs);
-                    }
+            if !ideal.contains(&bs) && is_binonnected(bs, n, edges) {
+                ans.push(
+                    (0..m)
+                        .filter(|&j| bs >> j & 1 == 1)
+                        .map(|j| edges[j])
+                        .collect(),
+                );
+                ideal.insert(bs);
+                let mut cs = bs;
+                while cs != 0 {
+                    cs = (cs - 1) & bs;
+                    ideal.insert(cs);
                 }
             }
         }
@@ -463,7 +459,7 @@ mod tests {
     }
 
     fn is_bridge(x: usize, y: usize, g: &[Vec<usize>]) -> bool {
-        let orig_count = count_connected_components(&g);
+        let orig_count = count_connected_components(g);
         let mut g = g.to_vec();
         let i = g[x].iter().position(|&z| z == y).unwrap();
         g[x].remove(i);
@@ -474,7 +470,7 @@ mod tests {
     }
 
     fn is_articulation_point(x: usize, g: &[Vec<usize>]) -> bool {
-        let orig_count = count_connected_components(&g);
+        let orig_count = count_connected_components(g);
         let mut g = g.to_vec();
         let gx = take(&mut g[x]);
         for y in gx {
