@@ -1,4 +1,4 @@
-use std::{fmt::Debug, mem::swap};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, mem::swap};
 
 pub struct AvlTree<T> {
     root: Option<Box<Node<T>>>,
@@ -38,6 +38,25 @@ impl<T: Debug> AvlTree<T> {
         let center = self.split_off_at(index);
         self.append(&mut right);
         center.root.unwrap().value
+    }
+    pub fn get(&self, index: usize) -> Option<&T> {
+        get(&self.root, index).map(|node| &node.value)
+    }
+    pub fn binary_search_by(&self, mut f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
+        binary_search_by(&self.root, |node| f(&node.value)).map(|(_node, index)| index)
+    }
+    pub fn binary_search_by_key<B>(&self, b: &B, mut f: impl FnMut(&T) -> B) -> Result<usize, usize>
+    where
+        B: Ord,
+    {
+        self.binary_search_by(|x| f(x).cmp(&b))
+    }
+    pub fn binary_search<Q>(&self, value: &Q) -> Result<usize, usize>
+    where
+        T: Borrow<Q>,
+        Q: Ord,
+    {
+        self.binary_search_by(|x| x.borrow().cmp(&value))
     }
     // TODO: iterator
     pub fn collect_vec(&self) -> Vec<T>
@@ -216,13 +235,41 @@ fn split_by<T: Debug>(
 fn split_at<T: Debug>(tree: Option<Box<Node<T>>>, mut index: usize) -> [Option<Box<Node<T>>>; 2] {
     split_by(tree, |node| {
         let current = len(&node.child[0]);
-        if index <= current {
-            true
-        } else {
+        let res = index <= current;
+        if !res {
             index -= current + 1;
-            false
         }
+        res
     })
+}
+fn binary_search_by<T: Debug>(
+    tree: &Option<Box<Node<T>>>,
+    mut f: impl FnMut(&Node<T>) -> Ordering,
+) -> Result<(&Node<T>, usize), usize> {
+    let node = match tree.as_ref() {
+        None => return Err(0),
+        Some(node) => node,
+    };
+    let lsize = len(&node.child[0]);
+    match f(&*node) {
+        Ordering::Less => binary_search_by(&node.child[1], f)
+            .map(|(node, index)| (node, lsize + 1 + index))
+            .map_err(|index| lsize + 1 + index),
+        Ordering::Equal => Ok((&*node, lsize)),
+        Ordering::Greater => binary_search_by(&node.child[0], f),
+    }
+}
+fn get<T: Debug>(tree: &Option<Box<Node<T>>>, mut index: usize) -> Option<&Node<T>> {
+    binary_search_by(tree, |node| {
+        let current = len(&node.child[0]);
+        let res = current.cmp(&index);
+        if res == Ordering::Less {
+            index -= current + 1;
+        }
+        res
+    })
+    .ok()
+    .map(|(node, _index)| node)
 }
 
 #[cfg(test)]
@@ -301,6 +348,45 @@ mod tests {
                 result.remove_at(i);
                 expected.remove(i);
                 assert_eq!(result.collect_vec(), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_get() {
+        for n in 0..=10 {
+            for i in 0..=n {
+                let result = (0..n).collect::<AvlTree<_>>();
+                let expected = (0..n).collect::<Vec<_>>();
+                let result = result.get(i);
+                let expected = expected.get(i);
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_binary_search() {
+        for n in 0..=10 {
+            for i in 0..=2 * n + 1 {
+                let result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
+                let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
+                let result = result.binary_search(&i);
+                let expected = expected.binary_search(&i);
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_binary_search_by_key() {
+        for n in 0..=10 {
+            for i in 0..=2 * n + 1 {
+                let result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
+                let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
+                let result = result.binary_search_by_key(&(i * 10), |x| x * 10);
+                let expected = expected.binary_search_by_key(&(i * 10), |x| x * 10);
+                assert_eq!(result, expected);
             }
         }
     }
