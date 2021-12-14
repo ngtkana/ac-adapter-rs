@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, mem::swap};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap};
 
 pub struct AvlTree<T> {
     root: Option<Box<Node<T>>>,
@@ -58,25 +58,13 @@ impl<T: Debug> AvlTree<T> {
     {
         self.binary_search_by(|x| x.borrow().cmp(&value))
     }
-    // TODO: iterator
-    pub fn collect_vec(&self) -> Vec<T>
-    where
-        T: Clone,
-    {
-        fn collect_vec<T: Debug + Clone>(node: &Node<T>, out: &mut Vec<T>) {
-            if let Some(c) = node.child[0].as_ref() {
-                collect_vec(c, out);
-            }
-            out.push(node.value.clone());
-            if let Some(c) = node.child[1].as_ref() {
-                collect_vec(c, out);
-            }
+    pub fn iter(&self) -> Iter<'_, T> {
+        Iter {
+            stack: successors(self.root.as_ref().map(|node| &**node), |prev| {
+                prev.child[0].as_ref().map(|node| &**node)
+            })
+            .collect(),
         }
-        let mut out = Vec::new();
-        if let Some(node) = self.root.as_ref() {
-            collect_vec(node, &mut out);
-        }
-        out
     }
 }
 
@@ -113,6 +101,24 @@ impl<T: Debug> FromIterator<T> for AvlTree<T> {
                     .as_mut_slice(),
             ),
         }
+    }
+}
+
+pub struct Iter<'a, T> {
+    stack: Vec<&'a Node<T>>,
+}
+impl<'a, T: Debug> Iterator for Iter<'a, T> {
+    type Item = &'a T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let last = self.stack.pop()?;
+        if let Some(mut crr) = last.child[1].as_ref() {
+            self.stack.push(crr);
+            while let Some(next) = crr.child[0].as_ref() {
+                self.stack.push(next);
+                crr = next;
+            }
+        }
+        Some(&last.value)
     }
 }
 
@@ -279,7 +285,11 @@ mod tests {
     #[test]
     fn test_from_iter() {
         for n in 0..=10 {
-            let result = (0..n).collect::<AvlTree<_>>().collect_vec();
+            let result = (0..n)
+                .collect::<AvlTree<_>>()
+                .iter()
+                .copied()
+                .collect::<Vec<_>>();
             let expected = (0..n).collect::<Vec<_>>();
             assert_eq!(result, expected);
         }
@@ -291,7 +301,7 @@ mod tests {
             for r in 0..=10 {
                 let mut result = (0..l).collect::<AvlTree<_>>();
                 result.append(&mut (l..l + r).collect::<AvlTree<_>>());
-                let result = result.collect_vec();
+                let result = result.iter().copied().collect::<Vec<_>>();
                 let expected = (0..l + r).collect::<Vec<_>>();
                 assert_eq!(result, expected);
             }
@@ -306,8 +316,8 @@ mod tests {
                 let result1 = result0.split_off_by(|&x| i <= x);
                 let expected0 = (0..i).collect::<Vec<_>>();
                 let expected1 = (i..n).collect::<Vec<_>>();
-                assert_eq!(result0.collect_vec(), expected0);
-                assert_eq!(result1.collect_vec(), expected1);
+                assert_eq!(result0.iter().copied().collect::<Vec<_>>(), expected0);
+                assert_eq!(result1.iter().copied().collect::<Vec<_>>(), expected1);
             }
         }
     }
@@ -320,8 +330,8 @@ mod tests {
                 let result1 = result0.split_off_at(i);
                 let expected0 = (0..i).collect::<Vec<_>>();
                 let expected1 = (i..n).collect::<Vec<_>>();
-                assert_eq!(result0.collect_vec(), expected0);
-                assert_eq!(result1.collect_vec(), expected1);
+                assert_eq!(result0.iter().copied().collect::<Vec<_>>(), expected0);
+                assert_eq!(result1.iter().copied().collect::<Vec<_>>(), expected1);
             }
         }
     }
@@ -334,7 +344,7 @@ mod tests {
                 let mut expected = (0..n).collect::<Vec<_>>();
                 result.insert(i, n);
                 expected.insert(i, n);
-                assert_eq!(result.collect_vec(), expected);
+                assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
             }
         }
     }
@@ -347,7 +357,7 @@ mod tests {
                 let mut expected = (0..n).collect::<Vec<_>>();
                 result.remove_at(i);
                 expected.remove(i);
-                assert_eq!(result.collect_vec(), expected);
+                assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
             }
         }
     }
