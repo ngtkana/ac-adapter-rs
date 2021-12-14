@@ -7,6 +7,9 @@ impl<T: Debug> AvlTree<T> {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
     pub fn len(&self) -> usize {
         len(&self.root)
     }
