@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap, ops::Index};
 
 pub struct AvlTree<T> {
     root: Option<Box<Node<T>>>,
@@ -71,6 +71,12 @@ impl<T: Debug> AvlTree<T> {
 impl<T: Debug> Default for AvlTree<T> {
     fn default() -> Self {
         Self { root: None }
+    }
+}
+impl<T: Debug> Index<usize> for AvlTree<T> {
+    type Output = T;
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index).unwrap()
     }
 }
 // TODO: not using vector
@@ -370,6 +376,19 @@ mod tests {
                 let expected = (0..n).collect::<Vec<_>>();
                 let result = result.get(i);
                 let expected = expected.get(i);
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_index() {
+        for n in 0..=10 {
+            for i in 0..n {
+                let result = (0..n).collect::<AvlTree<_>>();
+                let expected = (0..n).collect::<Vec<_>>();
+                let result = result[i];
+                let expected = expected[i];
                 assert_eq!(result, expected);
             }
         }
