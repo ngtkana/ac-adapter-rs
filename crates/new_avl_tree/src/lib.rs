@@ -7,6 +7,19 @@ impl<T: Debug> AvlTree<T> {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn append(&mut self, other: &mut Self) {
+        self.root = merge([self.root.take(), other.root.take()]);
+    }
+    pub fn split_by(&mut self, mut is_right: impl FnMut(&T) -> bool) -> Self {
+        let [left, right] = split_by(self.root.take(), |node| is_right(&node.value));
+        self.root = left;
+        Self { root: right }
+    }
+    pub fn split_at(&mut self, index: usize) -> Self {
+        let [left, right] = split_at(self.root.take(), index);
+        self.root = left;
+        Self { root: right }
+    }
     // TODO: iterator
     pub fn collect_vec(&self) -> Vec<T>
     where
@@ -126,7 +139,7 @@ fn merge_with_root<T: Debug>(
             tmp[e] = root.child[1 - e].take();
             tmp[1 - e] = sub[1 - e].take();
             root.child[1 - e] = Some(merge_with_root(tmp, center));
-            root.update();
+            balance(&mut root);
             return root;
         }
     }
@@ -134,15 +147,27 @@ fn merge_with_root<T: Debug>(
     center.update();
     center
 }
+fn merge<T: Debug>(mut sub: [Option<Box<Node<T>>>; 2]) -> Option<Box<Node<T>>> {
+    match sub[1].take() {
+        None => sub[0].take(),
+        Some(sub1) => {
+            let ([none, rhs], center, res) = split_delete_by(sub1, |_| true);
+            debug_assert!(none.is_none());
+            debug_assert_eq!(res, true);
+            Some(merge_with_root([sub[0].take(), rhs], center))
+        }
+    }
+}
 fn split_delete_by<T: Debug>(
     mut root: Box<Node<T>>,
-    mut is_right: impl FnMut(&Node<T>) -> usize,
-) -> ([Option<Box<Node<T>>>; 2], Box<Node<T>>, usize) {
-    let e = is_right(&*root);
+    mut is_right: impl FnMut(&Node<T>) -> bool,
+) -> ([Option<Box<Node<T>>>; 2], Box<Node<T>>, bool) {
+    let b = is_right(&*root) as bool;
+    let e = b as usize;
     if root.child[1 - e].is_none() {
         let mut sub = [None, None];
         sub[e] = root.child[e].take();
-        (sub, root, e)
+        (sub, root, b)
     } else {
         let (mut sub, center, res) = split_delete_by(root.child[1 - e].take().unwrap(), is_right);
         let mut tmp = [None, None];
@@ -151,6 +176,34 @@ fn split_delete_by<T: Debug>(
         sub[e] = Some(merge_with_root(tmp, root));
         (sub, center, res)
     }
+}
+fn split_by<T: Debug>(
+    mut tree: Option<Box<Node<T>>>,
+    is_right: impl FnMut(&Node<T>) -> bool,
+) -> [Option<Box<Node<T>>>; 2] {
+    match tree.take() {
+        Some(root) => {
+            let (mut sub, center, res) = split_delete_by(root, is_right);
+            let e = res as usize;
+            let mut tmp = [None, None];
+            tmp[e] = sub[e].take();
+            tmp[1 - e] = Some(center);
+            sub[e] = merge(tmp);
+            sub
+        }
+        None => [None, None],
+    }
+}
+fn split_at<T: Debug>(tree: Option<Box<Node<T>>>, mut index: usize) -> [Option<Box<Node<T>>>; 2] {
+    split_by(tree, |node| {
+        let current = len(&node.child[0]);
+        if index <= current {
+            true
+        } else {
+            index -= current + 1;
+            false
+        }
+    })
 }
 
 #[cfg(test)]
@@ -163,6 +216,47 @@ mod tests {
             let result = (0..n).collect::<AvlTree<_>>().collect_vec();
             let expected = (0..n).collect::<Vec<_>>();
             assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    fn test_append() {
+        for l in 0..=10 {
+            for r in 0..=10 {
+                let mut result = (0..l).collect::<AvlTree<_>>();
+                result.append(&mut (l..l + r).collect::<AvlTree<_>>());
+                let result = result.collect_vec();
+                let expected = (0..l + r).collect::<Vec<_>>();
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_split_by() {
+        for n in 0..=10 {
+            for i in 0..=n {
+                let mut result0 = (0..n).collect::<AvlTree<_>>();
+                let result1 = result0.split_by(|&x| i <= x);
+                let expected0 = (0..i).collect::<Vec<_>>();
+                let expected1 = (i..n).collect::<Vec<_>>();
+                assert_eq!(result0.collect_vec(), expected0);
+                assert_eq!(result1.collect_vec(), expected1);
+            }
+        }
+    }
+
+    #[test]
+    fn test_split_at() {
+        for n in 0..=10 {
+            for i in 0..=n {
+                let mut result0 = (0..n).collect::<AvlTree<_>>();
+                let result1 = result0.split_at(i);
+                let expected0 = (0..i).collect::<Vec<_>>();
+                let expected1 = (i..n).collect::<Vec<_>>();
+                assert_eq!(result0.collect_vec(), expected0);
+                assert_eq!(result1.collect_vec(), expected1);
+            }
         }
     }
 }
