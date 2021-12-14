@@ -7,18 +7,37 @@ impl<T: Debug> AvlTree<T> {
     pub fn new() -> Self {
         Self::default()
     }
+    pub fn len(&self) -> usize {
+        len(&self.root)
+    }
     pub fn append(&mut self, other: &mut Self) {
         self.root = merge([self.root.take(), other.root.take()]);
     }
-    pub fn split_by(&mut self, mut is_right: impl FnMut(&T) -> bool) -> Self {
+    pub fn split_off_by(&mut self, mut is_right: impl FnMut(&T) -> bool) -> Self {
         let [left, right] = split_by(self.root.take(), |node| is_right(&node.value));
         self.root = left;
         Self { root: right }
     }
-    pub fn split_at(&mut self, index: usize) -> Self {
+    pub fn split_off_at(&mut self, index: usize) -> Self {
+        assert!(index <= self.len());
         let [left, right] = split_at(self.root.take(), index);
         self.root = left;
         Self { root: right }
+    }
+    pub fn insert(&mut self, index: usize, value: T) {
+        assert!(index <= self.len());
+        let mut other = self.split_off_at(index);
+        self.root = Some(merge_with_root(
+            [self.root.take(), other.root.take()],
+            new(value),
+        ));
+    }
+    pub fn remove_at(&mut self, index: usize) -> T {
+        assert!(index < self.len());
+        let mut right = self.split_off_at(index + 1);
+        let center = self.split_off_at(index);
+        self.append(&mut right);
+        center.root.unwrap().value
     }
     // TODO: iterator
     pub fn collect_vec(&self) -> Vec<T>
@@ -233,11 +252,11 @@ mod tests {
     }
 
     #[test]
-    fn test_split_by() {
+    fn test_split_off_by() {
         for n in 0..=10 {
             for i in 0..=n {
                 let mut result0 = (0..n).collect::<AvlTree<_>>();
-                let result1 = result0.split_by(|&x| i <= x);
+                let result1 = result0.split_off_by(|&x| i <= x);
                 let expected0 = (0..i).collect::<Vec<_>>();
                 let expected1 = (i..n).collect::<Vec<_>>();
                 assert_eq!(result0.collect_vec(), expected0);
@@ -247,15 +266,41 @@ mod tests {
     }
 
     #[test]
-    fn test_split_at() {
+    fn test_split_off_at() {
         for n in 0..=10 {
             for i in 0..=n {
                 let mut result0 = (0..n).collect::<AvlTree<_>>();
-                let result1 = result0.split_at(i);
+                let result1 = result0.split_off_at(i);
                 let expected0 = (0..i).collect::<Vec<_>>();
                 let expected1 = (i..n).collect::<Vec<_>>();
                 assert_eq!(result0.collect_vec(), expected0);
                 assert_eq!(result1.collect_vec(), expected1);
+            }
+        }
+    }
+
+    #[test]
+    fn test_insert() {
+        for n in 0..=10 {
+            for i in 0..=n {
+                let mut result = (0..n).collect::<AvlTree<_>>();
+                let mut expected = (0..n).collect::<Vec<_>>();
+                result.insert(i, n);
+                expected.insert(i, n);
+                assert_eq!(result.collect_vec(), expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_remove_at() {
+        for n in 0..=10 {
+            for i in 0..n {
+                let mut result = (0..n).collect::<AvlTree<_>>();
+                let mut expected = (0..n).collect::<Vec<_>>();
+                result.remove_at(i);
+                expected.remove(i);
+                assert_eq!(result.collect_vec(), expected);
             }
         }
     }
