@@ -37,6 +37,7 @@
 //! ## 走査系
 //!
 //! - [`iter`](AvlTree::iter)
+//! - [`into_iter`](AvlTree::into_iter)
 //!
 use std::{
     borrow::Borrow, cmp::Ordering, fmt::Debug, hash::Hash, iter::successors, mem::swap, ops::Index,
@@ -553,6 +554,21 @@ impl<T: Hash> Hash for AvlTree<T> {
         self.iter().for_each(|elm| elm.hash(state));
     }
 }
+impl<T> IntoIterator for AvlTree<T> {
+    type IntoIter = IntoIter<T>;
+    type Item = T;
+    fn into_iter(self) -> Self::IntoIter {
+        let mut stack = Vec::new();
+        if let Some(mut current) = self.root {
+            while let Some(next) = current.left.take() {
+                stack.push(current);
+                current = next;
+            }
+            stack.push(current);
+        }
+        IntoIter { stack }
+    }
+}
 impl<'a, T> IntoIterator for &'a AvlTree<T> {
     type IntoIter = Iter<'a, T>;
     type Item = &'a T;
@@ -592,7 +608,7 @@ impl<T> FromIterator<T> for AvlTree<T> {
     }
 }
 
-/// [`AvlTree`] の要素を前から順にすべて操作するイテレータです。
+/// [`AvlTree`] の要素を前から順にすべて走査するイテレータです。
 pub struct Iter<'a, T> {
     stack: Vec<&'a Node<T>>,
     rstack: Vec<&'a Node<T>>,
@@ -602,8 +618,8 @@ impl<'a, T> Iterator for Iter<'a, T> {
     fn next(&mut self) -> Option<Self::Item> {
         let current = self.stack.pop()?;
         self.stack
-            .extend(successors(current.right.as_deref(), |crr| {
-                crr.left.as_deref()
+            .extend(successors(current.right.as_deref(), |node| {
+                node.left.as_deref()
             }));
         if std::ptr::eq(current, *self.rstack.last().unwrap()) {
             self.stack.clear();
@@ -616,14 +632,33 @@ impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let current = self.rstack.pop()?;
         self.rstack
-            .extend(successors(current.left.as_deref(), |crr| {
-                crr.right.as_deref()
+            .extend(successors(current.left.as_deref(), |node| {
+                node.right.as_deref()
             }));
         if std::ptr::eq(current, *self.stack.last().unwrap()) {
             self.stack.clear();
             self.rstack.clear();
         }
         Some(&current.value)
+    }
+}
+
+/// [`AvlTree`] の要素を前から順にすべて走査するイテレータです。
+pub struct IntoIter<T> {
+    stack: Vec<Box<Node<T>>>,
+}
+impl<T> Iterator for IntoIter<T> {
+    type Item = T;
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut current = self.stack.pop()?;
+        if let Some(mut current) = current.right.take() {
+            while let Some(next) = current.left.take() {
+                self.stack.push(current);
+                current = next;
+            }
+            self.stack.push(current);
+        }
+        Some(current.value)
     }
 }
 
@@ -1061,6 +1096,15 @@ mod tests {
             let result = (0..n).collect::<AvlTree<_>>();
             let expected = (0..n).collect::<Vec<_>>();
             assert!(result.iter().rev().eq(expected.iter().rev()));
+        }
+    }
+
+    #[test]
+    fn test_into_iter() {
+        for n in 0..=10 {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            assert_eq!(result.into_iter().collect::<Vec<_>>(), expected);
         }
     }
 
