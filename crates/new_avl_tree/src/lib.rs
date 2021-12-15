@@ -1,5 +1,6 @@
 use std::{borrow::Borrow, cmp::Ordering, iter::successors, mem::swap, ops::Index};
 
+#[derive(Clone)]
 pub struct AvlTree<T> {
     root: Option<Box<Node<T>>>,
 }
@@ -189,6 +190,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
     }
 }
 
+#[derive(Clone)]
 struct Node<T> {
     child: [Option<Box<Self>>; 2],
     value: T,
@@ -568,6 +570,19 @@ mod tests {
                 let expected = expected[i];
                 assert_eq!(result, expected);
             }
+        }
+    }
+
+    #[test]
+    fn test_clone() {
+        for n in 0..=10 {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            assert_eq!(&result.iter().copied().collect::<Vec<_>>(), &expected);
+
+            let cloned = result.clone();
+            assert_eq!(&result.iter().copied().collect::<Vec<_>>(), &expected);
+            assert_eq!(&cloned.iter().copied().collect::<Vec<_>>(), &expected);
         }
     }
 }
