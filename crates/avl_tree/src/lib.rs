@@ -389,8 +389,8 @@ impl<T> AvlTree<T> {
     /// let r = avl.binary_search_by(|x| x.cmp(&1));
     /// assert!(matches!(r, Ok(1..=4)));
     /// ```
-    pub fn binary_search_by(&self, mut f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
-        binary_search_by(self.root.as_deref(), |node| f(&node.value))
+    pub fn binary_search_by(&self, f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
+        binary_search_by(self.root.as_deref(), f)
     }
     /// `f` が `Equal` を返す要素があれば、なければ挿入箇所のインデックスを返します。
     ///
@@ -817,14 +817,14 @@ fn split<T>(
 }
 fn binary_search_by<T>(
     tree: Option<&Node<T>>,
-    mut f: impl FnMut(&Node<T>) -> Ordering,
+    mut f: impl FnMut(&T) -> Ordering,
 ) -> Result<usize, usize> {
     let node = match tree {
         None => return Err(0),
         Some(node) => node,
     };
     let lsize = len(node.left.as_deref());
-    match f(&*node) {
+    match f(&node.value) {
         Ordering::Less => binary_search_by(node.right.as_deref(), f)
             .map(|index| lsize + 1 + index)
             .map_err(|index| lsize + 1 + index),
