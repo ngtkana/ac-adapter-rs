@@ -299,6 +299,7 @@ fn merge<T>(left: Option<Box<Node<T>>>, mut right: Option<Box<Node<T>>>) -> Opti
         }
     }
 }
+#[allow(clippy::type_complexity)]
 fn split_delete<T>(
     mut root: Box<Node<T>>,
     index: usize,
@@ -321,6 +322,7 @@ fn split_delete<T>(
         }
     }
 }
+#[allow(clippy::type_complexity)]
 fn split<T>(
     tree: Option<Box<Node<T>>>,
     index: usize,
@@ -647,7 +649,7 @@ mod tests {
             let expected = (0..n).collect::<Vec<_>>();
             let mut result = result.iter();
             let mut expected = expected.iter();
-            for bs in 0..1 << n + 1 {
+            for bs in 0..1 << (n + 1) {
                 for i in 0..=n {
                     if bs >> i & 1 == 0 {
                         assert_eq!(result.next(), expected.next());
