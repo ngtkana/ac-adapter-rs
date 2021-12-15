@@ -48,7 +48,13 @@
 //! - [`into_iter`](AvlTree::into_iter)
 //!
 use std::{
-    borrow::Borrow, cmp::Ordering, fmt::Debug, hash::Hash, iter::successors, mem::swap, ops::Index,
+    borrow::Borrow,
+    cmp::Ordering,
+    fmt::Debug,
+    hash::Hash,
+    iter::{successors, FromIterator},
+    mem::swap,
+    ops::Index,
 };
 
 /// AVL 木本体です。
