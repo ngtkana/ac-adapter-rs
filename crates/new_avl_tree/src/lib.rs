@@ -40,12 +40,7 @@ impl<T> AvlTree<T> {
     pub fn prepend(&mut self, other: &mut Self) {
         self.root = merge([other.root.take(), self.root.take()]);
     }
-    pub fn split_off_by(&mut self, mut is_right: impl FnMut(&T) -> bool) -> Self {
-        let [left, right] = split_by(self.root.take(), |node| is_right(&node.value));
-        self.root = left;
-        Self { root: right }
-    }
-    pub fn split_off_at(&mut self, index: usize) -> Self {
+    pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
         let [left, right] = split_at(self.root.take(), index);
         self.root = left;
@@ -53,26 +48,24 @@ impl<T> AvlTree<T> {
     }
     pub fn insert(&mut self, index: usize, value: T) {
         assert!(index <= self.len());
-        let mut other = self.split_off_at(index);
+        let mut other = self.split_off(index);
         self.root = Some(merge_with_root(
             [self.root.take(), other.root.take()],
             new(value),
         ));
     }
-    pub fn partition_point_insert(&mut self, is_right: impl FnMut(&T) -> bool, value: T) {
-        let mut right = self.split_off_by(is_right);
-        self.push_back(value);
-        self.append(&mut right);
-    }
     pub fn remove_at(&mut self, index: usize) -> T {
         assert!(index < self.len());
-        let mut right = self.split_off_at(index + 1);
-        let center = self.split_off_at(index);
+        let mut right = self.split_off(index + 1);
+        let center = self.split_off(index);
         self.append(&mut right);
         center.root.unwrap().value
     }
     pub fn get(&self, index: usize) -> Option<&T> {
         get(&self.root, index).map(|node| &node.value)
+    }
+    pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
+        get_mut(&mut self.root, index).map(|node| &mut node.value)
     }
     pub fn binary_search_by(&self, mut f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
         binary_search_by(&self.root, |node| f(&node.value)).map(|(_node, index)| index)
@@ -90,38 +83,6 @@ impl<T> AvlTree<T> {
         Q: Ord,
     {
         self.binary_search_by(|x| x.borrow().cmp(&value))
-    }
-    pub fn binary_search_remove_by(
-        &mut self,
-        mut f: impl FnMut(&T) -> Ordering,
-    ) -> Result<(T, usize), usize> {
-        let mut right = self.split_off_by(|x| f(x) != Ordering::Less);
-        let index = self.len();
-        let (mut sub, center, _res) = split_delete_by(right.root.take().ok_or(index)?, |_| true);
-        if f(&center.value) == Ordering::Equal {
-            self.append(&mut Self {
-                root: sub[1].take(),
-            });
-            Ok((center.value, index))
-        } else {
-            sub[0] = self.root.take();
-            self.root = Some(merge_with_root(sub, center));
-            Err(index)
-        }
-    }
-    pub fn binary_search_remove_by_key<B: Ord>(
-        &mut self,
-        b: &B,
-        mut f: impl FnMut(&T) -> B,
-    ) -> Result<(T, usize), usize> {
-        self.binary_search_remove_by(|x| f(x).cmp(&b))
-    }
-    pub fn binary_search_remove<Q>(&mut self, value: &Q) -> Result<(T, usize), usize>
-    where
-        T: Borrow<Q>,
-        Q: Ord,
-    {
-        self.binary_search_remove_by(|x| x.borrow().cmp(&value))
     }
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
@@ -358,6 +319,35 @@ fn get<T>(tree: &Option<Box<Node<T>>>, mut index: usize) -> Option<&Node<T>> {
     .ok()
     .map(|(node, _index)| node)
 }
+fn binary_search_mut_by<T>(
+    tree: &mut Option<Box<Node<T>>>,
+    mut f: impl FnMut(&Node<T>) -> Ordering,
+) -> Result<(&mut Node<T>, usize), usize> {
+    let node = match tree.as_mut() {
+        None => return Err(0),
+        Some(node) => node,
+    };
+    let lsize = len(&node.child[0]);
+    match f(&*node) {
+        Ordering::Less => binary_search_mut_by(&mut node.child[1], f)
+            .map(|(node, index)| (node, lsize + 1 + index))
+            .map_err(|index| lsize + 1 + index),
+        Ordering::Equal => Ok((&mut *node, lsize)),
+        Ordering::Greater => binary_search_mut_by(&mut node.child[0], f),
+    }
+}
+fn get_mut<T>(tree: &mut Option<Box<Node<T>>>, mut index: usize) -> Option<&mut Node<T>> {
+    binary_search_mut_by(tree, |node| {
+        let current = len(&node.child[0]);
+        let res = current.cmp(&index);
+        if res == Ordering::Less {
+            index -= current + 1;
+        }
+        res
+    })
+    .ok()
+    .map(|(node, _index)| node)
+}
 
 #[cfg(test)]
 mod tests {
@@ -439,25 +429,11 @@ mod tests {
     }
 
     #[test]
-    fn test_split_off_by() {
+    fn test_split_off() {
         for n in 0..=10 {
             for i in 0..=n {
                 let mut result0 = (0..n).collect::<AvlTree<_>>();
-                let result1 = result0.split_off_by(|&x| i <= x);
-                let expected0 = (0..i).collect::<Vec<_>>();
-                let expected1 = (i..n).collect::<Vec<_>>();
-                assert_eq!(result0.iter().copied().collect::<Vec<_>>(), expected0);
-                assert_eq!(result1.iter().copied().collect::<Vec<_>>(), expected1);
-            }
-        }
-    }
-
-    #[test]
-    fn test_split_off_at() {
-        for n in 0..=10 {
-            for i in 0..=n {
-                let mut result0 = (0..n).collect::<AvlTree<_>>();
-                let result1 = result0.split_off_at(i);
+                let result1 = result0.split_off(i);
                 let expected0 = (0..i).collect::<Vec<_>>();
                 let expected1 = (i..n).collect::<Vec<_>>();
                 assert_eq!(result0.iter().copied().collect::<Vec<_>>(), expected0);
@@ -473,19 +449,6 @@ mod tests {
                 let mut result = (0..n).collect::<AvlTree<_>>();
                 let mut expected = (0..n).collect::<Vec<_>>();
                 result.insert(i, n);
-                expected.insert(i, n);
-                assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
-            }
-        }
-    }
-
-    #[test]
-    fn test_partition_point_insert() {
-        for n in 0..=10 {
-            for i in 0..=n {
-                let mut result = (0..n).collect::<AvlTree<_>>();
-                let mut expected = (0..n).collect::<Vec<_>>();
-                result.partition_point_insert(|&x| i <= x, n);
                 expected.insert(i, n);
                 assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
             }
@@ -519,6 +482,19 @@ mod tests {
     }
 
     #[test]
+    fn test_get_mut() {
+        for n in 0..=10 {
+            for i in 0..=n {
+                let mut result = (0..n).collect::<AvlTree<_>>();
+                let mut expected = (0..n).collect::<Vec<_>>();
+                let _ = result.get_mut(i).map(|x| *x = n);
+                let _ = expected.get_mut(i).map(|x| *x = n);
+                assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
+            }
+        }
+    }
+
+    #[test]
     fn test_binary_search() {
         for n in 0..=10 {
             for i in 0..=2 * n + 1 {
@@ -539,34 +515,6 @@ mod tests {
                 let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
                 let result = result.binary_search_by_key(&(i * 10), |x| x * 10);
                 let expected = expected.binary_search_by_key(&(i * 10), |x| x * 10);
-                assert_eq!(result, expected);
-            }
-        }
-    }
-
-    #[test]
-    fn test_binary_search_remove() {
-        for n in 0..=10 {
-            for i in 0..=2 * n + 1 {
-                let mut result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
-                let mut expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
-                let result = result.binary_search_remove(&i);
-                let expected = expected.binary_search(&i).map(|i| (expected.remove(i), i));
-                assert_eq!(result, expected);
-            }
-        }
-    }
-
-    #[test]
-    fn test_binary_search_remove_by_key() {
-        for n in 0..=10 {
-            for i in 0..=2 * n + 1 {
-                let mut result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
-                let mut expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
-                let result = result.binary_search_remove_by_key(&(i * 10), |x| x * 10);
-                let expected = expected
-                    .binary_search_by_key(&(i * 10), |x| x * 10)
-                    .map(|i| (expected.remove(i), i));
                 assert_eq!(result, expected);
             }
         }
