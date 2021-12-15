@@ -54,7 +54,7 @@ impl<T> AvlTree<T> {
             new(value),
         ));
     }
-    pub fn remove_at(&mut self, index: usize) -> T {
+    pub fn remove(&mut self, index: usize) -> T {
         assert!(index < self.len());
         let mut right = self.split_off(index + 1);
         let center = self.split_off(index);
@@ -461,7 +461,7 @@ mod tests {
             for i in 0..n {
                 let mut result = (0..n).collect::<AvlTree<_>>();
                 let mut expected = (0..n).collect::<Vec<_>>();
-                result.remove_at(i);
+                result.remove(i);
                 expected.remove(i);
                 assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
             }
