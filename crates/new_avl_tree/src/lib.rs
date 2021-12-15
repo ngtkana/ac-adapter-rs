@@ -1,4 +1,6 @@
-use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap, ops::Index};
+use std::{
+    borrow::Borrow, cmp::Ordering, fmt::Debug, hash::Hash, iter::successors, mem::swap, ops::Index,
+};
 
 #[derive(Clone)]
 pub struct AvlTree<T> {
@@ -118,6 +120,11 @@ impl<T> Default for AvlTree<T> {
 impl<T: Debug> Debug for AvlTree<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self).finish()
+    }
+}
+impl<T: Hash> Hash for AvlTree<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.iter().for_each(|elm| elm.hash(state));
     }
 }
 impl<'a, T> IntoIterator for &'a AvlTree<T> {
