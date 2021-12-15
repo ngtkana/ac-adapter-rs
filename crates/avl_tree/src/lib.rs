@@ -1,4 +1,43 @@
 //! AVL 木により二分探索可能な列を実現します。
+//!
+//! # できること
+//!
+//! ## 二分探索してインデックスを返す系
+//!
+//! - [`binary_search`](AvlTree::binary_search)
+//! - [`binary_search_by`](AvlTree::binary_search_by)
+//! - [`binary_search_by_key`](AvlTree::binary_search_by_key)
+//! - [`partition_point`](AvlTree::partition_point)
+//!
+//!
+//! ## ランダムアクセス系
+//!
+//! - [`get`](AvlTree::get)
+//! - [`get_mut`](AvlTree::get_mut)
+//!
+//!
+//! ## 挿入・削除・併合・分割系
+//!
+//! - [`insert`](AvlTree::insert)
+//! - [`remove`](AvlTree::remove)
+//! - [`append`](AvlTree::append)
+//! - [`split_off`](AvlTree::split_off)
+//!
+//!
+//! ## 先頭・末尾系
+//!
+//! - [`front`](AvlTree::front)
+//! - [`back`](AvlTree::back)
+//! - [`push_front`](AvlTree::push_front)
+//! - [`push_back`](AvlTree::push_back)
+//! - [`pop_front`](AvlTree::pop_front)
+//! - [`pop_back`](AvlTree::pop_back)
+//!
+//!
+//! ## 走査系
+//!
+//! - [`iter`](AvlTree::iter)
+//!
 use std::{
     borrow::Borrow, cmp::Ordering, fmt::Debug, hash::Hash, iter::successors, mem::swap, ops::Index,
 };
@@ -62,11 +101,36 @@ impl<T> AvlTree<T> {
             root: Some(new(value)),
         })
     }
+    /// 列の先頭に要素を追加します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_front(1);
+    /// avl.push_front(2);
+    /// assert_eq!(avl.front(), Some(&2));
+    /// ```
     pub fn push_front(&mut self, value: T) {
-        self.prepend(&mut Self {
+        let mut swp = Self {
             root: Some(new(value)),
-        })
+        };
+        swp.append(self);
+        *self = swp;
     }
+    /// 列の末尾の要素があれば削除して返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// assert_eq!(avl.pop_back(), None);
+    /// avl.push_back(1);
+    /// avl.push_back(3);
+    /// assert_eq!(avl.pop_back(), Some(3));
+    /// ```
     pub fn pop_back(&mut self) -> Option<T> {
         let root = self.root.take()?;
         let last_index = root.len - 1;
@@ -74,40 +138,192 @@ impl<T> AvlTree<T> {
         self.root = left;
         Some(center.value)
     }
+    /// 列の先頭の要素があれば削除して返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_front(1);
+    /// avl.push_front(2);
+    /// assert_eq!(avl.front(), Some(&2));
+    /// ```
     pub fn pop_front(&mut self) -> Option<T> {
         let (_left, center, right) = split_delete(self.root.take()?, 0);
         self.root = right;
         Some(center.value)
     }
+    /// 列の末尾の要素があれば返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// assert_eq!(avl.back(), None);
+    ///
+    /// avl.push_back(1);
+    /// avl.push_back(2);
+    /// assert_eq!(avl.back(), Some(&2));
+    /// ```
     pub fn back(&self) -> Option<&T> {
         self.get(self.len().checked_sub(1)?)
     }
+    /// 列の先頭の要素があれば返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// assert_eq!(avl.front(), None);
+    ///
+    /// avl.push_back(1);
+    /// avl.push_back(2);
+    /// assert_eq!(avl.front(), Some(&1));
+    /// ```
     pub fn front(&self) -> Option<&T> {
-        self.get(self.len().checked_sub(1)?)
+        self.get(0)
     }
+    /// 列の末尾の要素があれば返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl_tree = AvlTree::new();
+    /// assert_eq!(avl_tree.back(), None);
+    ///
+    /// avl_tree.push_back(1);
+    /// avl_tree.push_back(2);
+    /// match avl_tree.back_mut() {
+    ///     Some(x) => *x = 9,
+    ///     None => (),
+    /// }
+    /// assert_eq!(avl_tree.back(), Some(&9));
+    /// ```
+    pub fn back_mut(&mut self) -> Option<&mut T> {
+        self.get_mut(self.len().checked_sub(1)?)
+    }
+    /// 列の先頭の要素があれば返し、空なら `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// assert_eq!(avl.front_mut(), None);
+    ///
+    /// avl.push_back(1);
+    /// avl.push_back(2);
+    /// match avl.front_mut() {
+    ///     Some(x) => *x = 9,
+    ///     None => (),
+    /// }
+    /// assert_eq!(avl.front(), Some(&9));
+    /// ```
+    pub fn front_mut(&mut self) -> Option<&mut T> {
+        self.get_mut(0)
+    }
+    /// `other` のすべての要素を `self` の後ろに挿入します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut buf: AvlTree<_> = vec![1, 2].into_iter().collect();
+    /// let mut buf2: AvlTree<_> = vec![3, 4].into_iter().collect();
+    /// buf.append(&mut buf2);
+    /// assert_eq!(buf, [1, 2, 3, 4][..]);
+    /// assert_eq!(buf2, [][..]);
+    /// ```
     pub fn append(&mut self, other: &mut Self) {
         self.root = merge(self.root.take(), other.root.take());
     }
-    pub fn prepend(&mut self, other: &mut Self) {
-        self.root = merge(other.root.take(), self.root.take());
-    }
+    /// `other` の第 `index` 成分以降を切り離します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut buf: AvlTree<_> = vec![1, 2, 3].into_iter().collect();
+    /// let buf2 = buf.split_off(1);
+    /// assert_eq!(buf, [1][..]);
+    /// assert_eq!(buf2, [2, 3][..]);
+    /// ```
     pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
         let (left, right) = split(self.root.take(), index);
         self.root = left;
         Self { root: right }
     }
+    /// `other` の第 `index` 成分に `value` を挿入します。
+    ///
+    /// # Panics
+    ///
+    /// 範囲外
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_back('a');
+    /// avl.push_back('b');
+    /// avl.push_back('c');
+    /// assert_eq!(avl, ['a', 'b', 'c'][..]);
+    ///
+    /// avl.insert(1, 'd');
+    /// assert_eq!(avl, ['a', 'd', 'b', 'c'][..]);
+    /// ```
     pub fn insert(&mut self, index: usize, value: T) {
         assert!(index <= self.len());
         let other = self.split_off(index);
         self.root = Some(merge_with_root(self.root.take(), new(value), other.root));
     }
-    pub fn remove(&mut self, index: usize) -> T {
-        assert!(index < self.len());
-        let (left, center, right) = split_delete(self.root.take().unwrap(), index);
-        self.root = merge(left, right);
-        center.value
+    /// `other` の第 `index` 成分があれば削除して返し、なければ `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_back(1);
+    /// avl.push_back(2);
+    /// avl.push_back(3);
+    /// assert_eq!(avl, [1, 2, 3][..]);
+    ///
+    /// assert_eq!(avl.remove(1), Some(2));
+    /// assert_eq!(avl, [1, 3][..]);
+    /// ```
+    pub fn remove(&mut self, index: usize) -> Option<T> {
+        if index < self.len() {
+            let (left, center, right) = split_delete(self.root.take().unwrap(), index);
+            self.root = merge(left, right);
+            Some(center.value)
+        } else {
+            None
+        }
     }
+    /// `other` の第 `index` 成分があれば返し、なければ `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_back(3);
+    /// avl.push_back(4);
+    /// avl.push_back(5);
+    /// assert_eq!(avl.get(1), Some(&4));
+    /// ```
     pub fn get(&self, index: usize) -> Option<&T> {
         if index < self.len() {
             Some(&get(self.root.as_ref().unwrap(), index).value)
@@ -115,6 +331,22 @@ impl<T> AvlTree<T> {
             None
         }
     }
+    /// `other` の第 `index` 成分があれば返し、なければ `None` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut avl = AvlTree::new();
+    /// avl.push_back(3);
+    /// avl.push_back(4);
+    /// avl.push_back(5);
+    /// if let Some(elem) = avl.get_mut(1) {
+    ///     *elem = 7;
+    /// }
+    ///
+    /// assert_eq!(avl[1], 7);
+    /// ```
     pub fn get_mut(&mut self, index: usize) -> Option<&mut T> {
         if index < self.len() {
             Some(&mut get_mut(self.root.as_mut().unwrap(), index).value)
@@ -122,9 +354,51 @@ impl<T> AvlTree<T> {
             None
         }
     }
+    /// `f` が `Equal` を返す要素があれば、なければ挿入箇所のインデックスを返します。
+    ///
+    /// # Requirements
+    ///
+    /// `f` の結果が `Less`, `Equal`, `Greater` とこの順に分割されていること。
+    ///
+    ///
+    /// # Examples
+    ///
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let avl: AvlTree<_> = vec![0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55].into_iter().collect();
+    ///
+    /// assert_eq!(avl.binary_search_by(|x| x.cmp(&13)),  Ok(9));
+    /// assert_eq!(avl.binary_search_by(|x| x.cmp(&4)),   Err(7));
+    /// assert_eq!(avl.binary_search_by(|x| x.cmp(&100)), Err(13));
+    /// let r = avl.binary_search_by(|x| x.cmp(&1));
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
     pub fn binary_search_by(&self, mut f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
         binary_search_by(self.root.as_deref(), |node| f(&node.value))
     }
+    /// `f` が `Equal` を返す要素があれば、なければ挿入箇所のインデックスを返します。
+    ///
+    /// # Requirements
+    ///
+    /// `f` による射影が `b` と比べて小なる、等しい、大なる要素がこの順に分割されていること。
+    ///
+    ///
+    /// # Examples
+    ///
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let avl: AvlTree<_> = vec![(0, 0), (2, 1), (4, 1), (5, 1),
+    ///          (3, 1), (1, 2), (2, 3), (4, 5), (5, 8), (3, 13),
+    ///          (1, 21), (2, 34), (4, 55)].into_iter().collect();
+    ///
+    /// assert_eq!(avl.binary_search_by_key(&13, |&(a, b)| b),  Ok(9));
+    /// assert_eq!(avl.binary_search_by_key(&4, |&(a, b)| b),   Err(7));
+    /// assert_eq!(avl.binary_search_by_key(&100, |&(a, b)| b), Err(13));
+    /// let r = avl.binary_search_by_key(&1, |&(a, b)| b);
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
     pub fn binary_search_by_key<B: Ord>(
         &self,
         b: &B,
@@ -132,6 +406,25 @@ impl<T> AvlTree<T> {
     ) -> Result<usize, usize> {
         self.binary_search_by(|x| f(x).cmp(b))
     }
+    /// `value` に等しい要素があればそのインデックスを返し、なければ挿入箇所のインデックスを返します。
+    ///
+    /// # Requirements
+    ///
+    /// `value` よりも小なる、等しい、大なる要素がこの順に分割されていること。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let avl: AvlTree<_> = vec![0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55].into_iter().collect();
+    ///
+    /// assert_eq!(avl.binary_search(&13),  Ok(9));
+    /// assert_eq!(avl.binary_search(&4),   Err(7));
+    /// assert_eq!(avl.binary_search(&100), Err(13));
+    /// let r = avl.binary_search(&1);
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
     pub fn binary_search<Q: Ord>(&self, value: &Q) -> Result<usize, usize>
     where
         T: Borrow<Q>,
@@ -141,18 +434,78 @@ impl<T> AvlTree<T> {
     pub fn partition_point(&self, mut is_right: impl FnMut(&T) -> bool) -> usize {
         partition_point(self.root.as_deref(), |node| is_right(&node.value))
     }
+    /// `value` 以上の要素があればそおインデックスを、なければ要素数を返します。
+    ///
+    /// # Requirements
+    ///
+    /// 要素が全てソート済みであること。
+    /// ただしソート済みでなくてもそれらしいところを返します。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let a: AvlTree<_> = [10, 11, 13, 13, 15].iter().copied().collect();
+    /// assert_eq!(a.lower_bound(&9), 0);
+    /// assert_eq!(a.lower_bound(&10), 0);
+    /// assert_eq!(a.lower_bound(&11), 1);
+    /// assert_eq!(a.lower_bound(&12), 2);
+    /// assert_eq!(a.lower_bound(&13), 2);
+    /// assert_eq!(a.lower_bound(&14), 4);
+    /// assert_eq!(a.lower_bound(&15), 4);
+    /// assert_eq!(a.lower_bound(&16), 5);
+    /// ```
     pub fn lower_bound<Q: Ord>(&self, value: &Q) -> usize
     where
         T: Borrow<Q>,
     {
         partition_point(self.root.as_deref(), |node| value <= node.value.borrow())
     }
+    /// `value` より大きな要素があればそおインデックスを、なければ要素数を返します。
+    ///
+    /// # Requirements
+    ///
+    /// 要素が全てソート済みであること。
+    /// ただしソート済みでなくてもそれらしいところを返します。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let a: AvlTree<_> = [10, 11, 13, 13, 15].iter().copied().collect();
+    /// assert_eq!(a.upper_bound(&9), 0);
+    /// assert_eq!(a.upper_bound(&10), 1);
+    /// assert_eq!(a.upper_bound(&11), 2);
+    /// assert_eq!(a.upper_bound(&12), 2);
+    /// assert_eq!(a.upper_bound(&13), 4);
+    /// assert_eq!(a.upper_bound(&14), 4);
+    /// assert_eq!(a.upper_bound(&15), 5);
+    /// assert_eq!(a.upper_bound(&16), 5);
+    /// ```
     pub fn upper_bound<Q: Ord>(&self, value: &Q) -> usize
     where
         T: Borrow<Q>,
     {
         partition_point(self.root.as_deref(), |node| value < node.value.borrow())
     }
+    /// 要素を前から順にすべて走査するイテレータを返します。
+    ///
+    /// なお [`Iter`] は [`DoubleEndedIterator`] を実装しています。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use avl_tree::AvlTree;
+    /// let mut buf = AvlTree::new();
+    /// buf.push_back(5);
+    /// buf.push_back(3);
+    /// buf.push_back(4);
+    /// let b: &[_] = &[&5, &3, &4];
+    /// let c: Vec<&i32> = buf.iter().collect();
+    /// assert_eq!(&c[..], b);
+    /// ```
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             stack: successors(self.root.as_deref(), |current| current.left.as_deref()).collect(),
@@ -164,6 +517,30 @@ impl<T> AvlTree<T> {
 impl<T> Default for AvlTree<T> {
     fn default() -> Self {
         Self { root: None }
+    }
+}
+impl<T: PartialEq> PartialEq for AvlTree<T> {
+    fn eq(&self, other: &Self) -> bool {
+        self.iter().eq(other)
+    }
+}
+impl<T: PartialEq, A> PartialEq<[A]> for AvlTree<T>
+where
+    T: PartialEq<A>,
+{
+    fn eq(&self, other: &[A]) -> bool {
+        self.iter().eq(other)
+    }
+}
+impl<T: Eq> Eq for AvlTree<T> {}
+impl<T: PartialOrd> PartialOrd for AvlTree<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.iter().partial_cmp(other)
+    }
+}
+impl<T: Ord> Ord for AvlTree<T> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.iter().cmp(other)
     }
 }
 impl<T: Debug> Debug for AvlTree<T> {
@@ -215,6 +592,7 @@ impl<T> FromIterator<T> for AvlTree<T> {
     }
 }
 
+/// [`AvlTree`] の要素を前から順にすべて操作するイテレータです。
 pub struct Iter<'a, T> {
     stack: Vec<&'a Node<T>>,
     rstack: Vec<&'a Node<T>>,
