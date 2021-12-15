@@ -1,4 +1,11 @@
-use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap, ops::Index};
+use std::{
+    borrow::Borrow,
+    cmp::Ordering,
+    fmt::Debug,
+    iter::successors,
+    mem::{swap, take},
+    ops::Index,
+};
 
 #[derive(Clone)]
 pub struct AvlTree<T> {
@@ -25,41 +32,39 @@ impl<T> AvlTree<T> {
         })
     }
     pub fn pop_back(&mut self) -> Option<T> {
-        let (mut sub, center, _res) = split_delete_by(self.root.take()?, |_| false);
-        self.root = sub[0].take();
+        let root = self.root.take()?;
+        let last_index = root.len - 1;
+        let (left, center, _right) = split_delete(root, last_index);
+        self.root = left;
         Some(center.value)
     }
     pub fn pop_front(&mut self) -> Option<T> {
-        let (mut sub, center, _res) = split_delete_by(self.root.take()?, |_| true);
-        self.root = sub[1].take();
+        let (_left, center, right) = split_delete(self.root.take()?, 0);
+        self.root = right;
         Some(center.value)
     }
     pub fn append(&mut self, other: &mut Self) {
-        self.root = merge([self.root.take(), other.root.take()]);
+        self.root = merge(self.root.take(), other.root.take());
     }
     pub fn prepend(&mut self, other: &mut Self) {
-        self.root = merge([other.root.take(), self.root.take()]);
+        self.root = merge(other.root.take(), self.root.take());
     }
     pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
-        let [left, right] = split_at(self.root.take(), index);
+        let (left, right) = split(self.root.take(), index);
         self.root = left;
         Self { root: right }
     }
     pub fn insert(&mut self, index: usize, value: T) {
         assert!(index <= self.len());
-        let mut other = self.split_off(index);
-        self.root = Some(merge_with_root(
-            [self.root.take(), other.root.take()],
-            new(value),
-        ));
+        let other = self.split_off(index);
+        self.root = Some(merge_with_root(self.root.take(), new(value), other.root));
     }
     pub fn remove(&mut self, index: usize) -> T {
         assert!(index < self.len());
-        let mut right = self.split_off(index + 1);
-        let center = self.split_off(index);
-        self.append(&mut right);
-        center.root.unwrap().value
+        let (left, center, right) = split_delete(self.root.take().unwrap(), index);
+        self.root = merge(left, right);
+        center.value
     }
     pub fn get(&self, index: usize) -> Option<&T> {
         get(&self.root, index).map(|node| &node.value)
@@ -68,7 +73,7 @@ impl<T> AvlTree<T> {
         get_mut(&mut self.root, index).map(|node| &mut node.value)
     }
     pub fn binary_search_by(&self, mut f: impl FnMut(&T) -> Ordering) -> Result<usize, usize> {
-        binary_search_by(&self.root, |node| f(&node.value)).map(|(_node, index)| index)
+        binary_search_by(&self.root, |node| f(&node.value))
     }
     pub fn binary_search_by_key<B: Ord>(
         &self,
@@ -125,11 +130,9 @@ impl<T> FromIterator<T> for AvlTree<T> {
             } else {
                 let i = nodes.len() / 2;
                 Some(merge_with_root(
-                    [
-                        from_slice_of_nodes(&mut nodes[..i]),
-                        from_slice_of_nodes(&mut nodes[i + 1..]),
-                    ],
+                    from_slice_of_nodes(&mut nodes[..i]),
                     nodes[i].take().unwrap(),
+                    from_slice_of_nodes(&mut nodes[i + 1..]),
                 ))
             }
         }
@@ -215,85 +218,76 @@ fn balance<T>(tree: &mut Box<Node<T>>) {
     }
 }
 fn merge_with_root<T>(
-    mut sub: [Option<Box<Node<T>>>; 2],
+    mut left: Option<Box<Node<T>>>,
     mut center: Box<Node<T>>,
+    mut right: Option<Box<Node<T>>>,
 ) -> Box<Node<T>> {
-    for e in 0..2 {
-        if ht(&sub[e]) > ht(&sub[1 - e]) {
-            let mut root = sub[e].take().unwrap();
-            let mut tmp = [None, None];
-            tmp[e] = root.child[1 - e].take();
-            tmp[1 - e] = sub[1 - e].take();
-            root.child[1 - e] = Some(merge_with_root(tmp, center));
-            balance(&mut root);
-            return root;
-        }
-    }
-    center.child = sub;
-    center.update();
-    center
-}
-fn merge<T>(mut sub: [Option<Box<Node<T>>>; 2]) -> Option<Box<Node<T>>> {
-    match sub[1].take() {
-        None => sub[0].take(),
-        Some(sub1) => {
-            let ([none, rhs], center, res) = split_delete_by(sub1, |_| true);
-            debug_assert!(none.is_none());
-            debug_assert_eq!(res, true);
-            Some(merge_with_root([sub[0].take(), rhs], center))
-        }
-    }
-}
-fn split_delete_by<T>(
-    mut root: Box<Node<T>>,
-    mut is_right: impl FnMut(&Node<T>) -> bool,
-) -> ([Option<Box<Node<T>>>; 2], Box<Node<T>>, bool) {
-    let b = is_right(&*root) as bool;
-    let e = b as usize;
-    if root.child[1 - e].is_none() {
-        let mut sub = [None, None];
-        sub[e] = root.child[e].take();
-        (sub, root, b)
+    if ht(&left) > ht(&right) {
+        let mut root = left.take().unwrap();
+        root.child[1] = Some(merge_with_root(root.child[1].take(), center, right));
+        balance(&mut root);
+        root
+    } else if ht(&left) < ht(&right) {
+        let mut root = right.take().unwrap();
+        root.child[0] = Some(merge_with_root(left, center, root.child[0].take()));
+        balance(&mut root);
+        root
     } else {
-        let (mut sub, center, res) = split_delete_by(root.child[1 - e].take().unwrap(), is_right);
-        let mut tmp = [None, None];
-        tmp[e] = root.child[e].take();
-        tmp[1 - e] = sub[e].take();
-        sub[e] = Some(merge_with_root(tmp, root));
-        (sub, center, res)
+        center.child = [left, right];
+        center.update();
+        center
     }
 }
-fn split_by<T>(
-    mut tree: Option<Box<Node<T>>>,
-    is_right: impl FnMut(&Node<T>) -> bool,
-) -> [Option<Box<Node<T>>>; 2] {
-    match tree.take() {
+fn merge<T>(left: Option<Box<Node<T>>>, mut right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
+    match right.take() {
+        None => left,
+        Some(right) => {
+            let (_none, center, rhs) = split_delete(right, 0);
+            Some(merge_with_root(left, center, rhs))
+        }
+    }
+}
+fn split_delete<T>(
+    mut root: Box<Node<T>>,
+    index: usize,
+) -> (Option<Box<Node<T>>>, Box<Node<T>>, Option<Box<Node<T>>>) {
+    debug_assert!((0..root.len).contains(&index));
+    let [left, right] = take(&mut root.child);
+    let lsize = len(&left);
+    match lsize.cmp(&index) {
+        Ordering::Less => {
+            let mut res = split_delete(right.unwrap(), index - lsize - 1);
+            res.0 = Some(merge_with_root(left, root, res.0));
+            res
+        }
+        Ordering::Equal => (left, root, right),
+        Ordering::Greater => {
+            let mut res = split_delete(left.unwrap(), index);
+            res.2 = Some(merge_with_root(res.2, root, right));
+            res
+        }
+    }
+}
+fn split<T>(
+    tree: Option<Box<Node<T>>>,
+    index: usize,
+) -> (Option<Box<Node<T>>>, Option<Box<Node<T>>>) {
+    match tree {
         Some(root) => {
-            let (mut sub, center, res) = split_delete_by(root, is_right);
-            let e = res as usize;
-            let mut tmp = [None, None];
-            tmp[e] = sub[e].take();
-            tmp[1 - e] = Some(center);
-            sub[e] = merge(tmp);
-            sub
+            if root.len == index {
+                (Some(root), None)
+            } else {
+                let (left, center, right) = split_delete(root, index);
+                (left, Some(merge_with_root(None, center, right)))
+            }
         }
-        None => [None, None],
+        None => (None, None),
     }
-}
-fn split_at<T>(tree: Option<Box<Node<T>>>, mut index: usize) -> [Option<Box<Node<T>>>; 2] {
-    split_by(tree, |node| {
-        let current = len(&node.child[0]);
-        let res = index <= current;
-        if !res {
-            index -= current + 1;
-        }
-        res
-    })
 }
 fn binary_search_by<T>(
     tree: &Option<Box<Node<T>>>,
     mut f: impl FnMut(&Node<T>) -> Ordering,
-) -> Result<(&Node<T>, usize), usize> {
+) -> Result<usize, usize> {
     let node = match tree.as_ref() {
         None => return Err(0),
         Some(node) => node,
@@ -301,52 +295,29 @@ fn binary_search_by<T>(
     let lsize = len(&node.child[0]);
     match f(&*node) {
         Ordering::Less => binary_search_by(&node.child[1], f)
-            .map(|(node, index)| (node, lsize + 1 + index))
+            .map(|index| lsize + 1 + index)
             .map_err(|index| lsize + 1 + index),
-        Ordering::Equal => Ok((&*node, lsize)),
+        Ordering::Equal => Ok(lsize),
         Ordering::Greater => binary_search_by(&node.child[0], f),
     }
 }
-fn get<T>(tree: &Option<Box<Node<T>>>, mut index: usize) -> Option<&Node<T>> {
-    binary_search_by(tree, |node| {
-        let current = len(&node.child[0]);
-        let res = current.cmp(&index);
-        if res == Ordering::Less {
-            index -= current + 1;
-        }
-        res
-    })
-    .ok()
-    .map(|(node, _index)| node)
-}
-fn binary_search_mut_by<T>(
-    tree: &mut Option<Box<Node<T>>>,
-    mut f: impl FnMut(&Node<T>) -> Ordering,
-) -> Result<(&mut Node<T>, usize), usize> {
-    let node = match tree.as_mut() {
-        None => return Err(0),
-        Some(node) => node,
-    };
+fn get<T>(tree: &Option<Box<Node<T>>>, index: usize) -> Option<&Node<T>> {
+    let node = tree.as_ref()?;
     let lsize = len(&node.child[0]);
-    match f(&*node) {
-        Ordering::Less => binary_search_mut_by(&mut node.child[1], f)
-            .map(|(node, index)| (node, lsize + 1 + index))
-            .map_err(|index| lsize + 1 + index),
-        Ordering::Equal => Ok((&mut *node, lsize)),
-        Ordering::Greater => binary_search_mut_by(&mut node.child[0], f),
+    match lsize.cmp(&index) {
+        Ordering::Less => get(&node.child[1], index - lsize - 1),
+        Ordering::Equal => Some(node),
+        Ordering::Greater => get(&node.child[0], index),
     }
 }
-fn get_mut<T>(tree: &mut Option<Box<Node<T>>>, mut index: usize) -> Option<&mut Node<T>> {
-    binary_search_mut_by(tree, |node| {
-        let current = len(&node.child[0]);
-        let res = current.cmp(&index);
-        if res == Ordering::Less {
-            index -= current + 1;
-        }
-        res
-    })
-    .ok()
-    .map(|(node, _index)| node)
+fn get_mut<T>(tree: &mut Option<Box<Node<T>>>, index: usize) -> Option<&mut Node<T>> {
+    let node = tree.as_mut()?;
+    let lsize = len(&node.child[0]);
+    match lsize.cmp(&index) {
+        Ordering::Less => get_mut(&mut node.child[1], index - lsize - 1),
+        Ordering::Equal => Some(node),
+        Ordering::Greater => get_mut(&mut node.child[0], index),
+    }
 }
 
 #[cfg(test)]
@@ -456,7 +427,7 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_at() {
+    fn test_remove() {
         for n in 0..=10 {
             for i in 0..n {
                 let mut result = (0..n).collect::<AvlTree<_>>();
