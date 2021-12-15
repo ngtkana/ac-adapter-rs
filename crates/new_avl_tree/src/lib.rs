@@ -73,19 +73,23 @@ impl<T> AvlTree<T> {
         b: &B,
         mut f: impl FnMut(&T) -> B,
     ) -> Result<usize, usize> {
-        self.binary_search_by(|x| f(x).cmp(&b))
+        self.binary_search_by(|x| f(x).cmp(b))
     }
     pub fn binary_search<Q>(&self, value: &Q) -> Result<usize, usize>
     where
         T: Borrow<Q>,
         Q: Ord,
     {
-        self.binary_search_by(|x| x.borrow().cmp(&value))
+        self.binary_search_by(|x| x.borrow().cmp(value))
     }
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
-            stack: successors(self.root.as_ref().map(|node| &**node), |prev| {
-                prev.left.as_ref().map(|node| &**node)
+            stack: successors(self.root.as_ref().map(Box::as_ref), |current| {
+                current.left.as_ref().map(Box::as_ref)
+            })
+            .collect(),
+            rstack: successors(self.root.as_ref().map(Box::as_ref), |current| {
+                current.right.as_ref().map(Box::as_ref)
             })
             .collect(),
         }
@@ -143,19 +147,35 @@ impl<T> FromIterator<T> for AvlTree<T> {
 
 pub struct Iter<'a, T> {
     stack: Vec<&'a Node<T>>,
+    rstack: Vec<&'a Node<T>>,
 }
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
-        let last = self.stack.pop()?;
-        if let Some(mut crr) = last.right.as_ref() {
-            self.stack.push(crr);
-            while let Some(next) = crr.left.as_ref() {
-                self.stack.push(next);
-                crr = next;
-            }
+        let current = self.stack.pop()?;
+        self.stack
+            .extend(successors(current.right.as_ref().map(Box::as_ref), |crr| {
+                crr.left.as_ref().map(Box::as_ref)
+            }));
+        if std::ptr::eq(current, *self.rstack.last().unwrap()) {
+            self.stack.clear();
+            self.rstack.clear();
         }
-        Some(&last.value)
+        Some(&current.value)
+    }
+}
+impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let current = self.rstack.pop()?;
+        self.rstack
+            .extend(successors(current.left.as_ref().map(Box::as_ref), |crr| {
+                crr.right.as_ref().map(Box::as_ref)
+            }));
+        if std::ptr::eq(current, *self.stack.last().unwrap()) {
+            self.stack.clear();
+            self.rstack.clear();
+        }
+        Some(&current.value)
     }
 }
 
@@ -228,21 +248,25 @@ fn merge_with_root<T>(
     mut center: Box<Node<T>>,
     mut right: Option<Box<Node<T>>>,
 ) -> Box<Node<T>> {
-    if ht(&left) > ht(&right) {
-        let mut root = left.take().unwrap();
-        root.right = Some(merge_with_root(root.right.take(), center, right));
-        balance(&mut root);
-        root
-    } else if ht(&left) < ht(&right) {
-        let mut root = right.take().unwrap();
-        root.left = Some(merge_with_root(left, center, root.left.take()));
-        balance(&mut root);
-        root
-    } else {
-        center.left = left;
-        center.right = right;
-        center.update();
-        center
+    match ht(&left).cmp(&ht(&right)) {
+        Ordering::Less => {
+            let mut root = right.take().unwrap();
+            root.left = Some(merge_with_root(left, center, root.left.take()));
+            balance(&mut root);
+            root
+        }
+        Ordering::Equal => {
+            center.left = left;
+            center.right = right;
+            center.update();
+            center
+        }
+        Ordering::Greater => {
+            let mut root = left.take().unwrap();
+            root.right = Some(merge_with_root(root.right.take(), center, right));
+            balance(&mut root);
+            root
+        }
     }
 }
 fn merge<T>(left: Option<Box<Node<T>>>, mut right: Option<Box<Node<T>>>) -> Option<Box<Node<T>>> {
@@ -533,6 +557,43 @@ mod tests {
             let result = format!("{:?}", &result);
             let expected = format!("{:?}", &expected);
             assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    fn test_next() {
+        for n in 0..=10 {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            assert!(result.iter().eq(&expected));
+        }
+    }
+
+    #[test]
+    fn test_next_back() {
+        for n in (0..=10).rev() {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            assert!(result.iter().rev().eq(expected.iter().rev()));
+        }
+    }
+
+    #[test]
+    fn test_next_next_back() {
+        for n in (0..=8).rev() {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            let mut result = result.iter();
+            let mut expected = expected.iter();
+            for bs in 0..1 << n + 1 {
+                for i in 0..=n {
+                    if bs >> i & 1 == 0 {
+                        assert_eq!(result.next(), expected.next());
+                    } else {
+                        assert_eq!(result.next_back(), expected.next_back());
+                    }
+                }
+            }
         }
     }
 }
