@@ -75,12 +75,26 @@ impl<T> AvlTree<T> {
     ) -> Result<usize, usize> {
         self.binary_search_by(|x| f(x).cmp(b))
     }
-    pub fn binary_search<Q>(&self, value: &Q) -> Result<usize, usize>
+    pub fn binary_search<Q: Ord>(&self, value: &Q) -> Result<usize, usize>
     where
         T: Borrow<Q>,
-        Q: Ord,
     {
         self.binary_search_by(|x| x.borrow().cmp(value))
+    }
+    pub fn partition_point(&self, mut is_right: impl FnMut(&T) -> bool) -> usize {
+        partition_point(&self.root, |node| is_right(&node.value))
+    }
+    pub fn lower_bound<Q: Ord>(&self, value: &Q) -> usize
+    where
+        T: Borrow<Q>,
+    {
+        partition_point(&self.root, |node| value <= node.value.borrow())
+    }
+    pub fn upper_bound<Q: Ord>(&self, value: &Q) -> usize
+    where
+        T: Borrow<Q>,
+    {
+        partition_point(&self.root, |node| value < node.value.borrow())
     }
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
@@ -333,6 +347,21 @@ fn binary_search_by<T>(
         Ordering::Greater => binary_search_by(&node.left, f),
     }
 }
+fn partition_point<T>(
+    tree: &Option<Box<Node<T>>>,
+    mut is_right: impl FnMut(&Node<T>) -> bool,
+) -> usize {
+    let node = match tree.as_ref() {
+        None => return 0,
+        Some(node) => node,
+    };
+    let lsize = len(&node.left);
+    if is_right(&*node) {
+        partition_point(&node.left, is_right)
+    } else {
+        lsize + 1 + partition_point(&node.right, is_right)
+    }
+}
 fn get<T>(tree: &Option<Box<Node<T>>>, index: usize) -> Option<&Node<T>> {
     let node = tree.as_ref()?;
     let lsize = len(&node.left);
@@ -518,6 +547,32 @@ mod tests {
                 let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
                 let result = result.binary_search_by_key(&(i * 10), |x| x * 10);
                 let expected = expected.binary_search_by_key(&(i * 10), |x| x * 10);
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_lower_bound() {
+        for n in 0..=10 {
+            for i in 0..=2 * n + 1 {
+                let result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
+                let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
+                let result = result.lower_bound(&i);
+                let expected = expected.iter().position(|&x| i <= x).unwrap_or(n);
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_upper_bound() {
+        for n in 0..=10 {
+            for i in 0..=2 * n + 1 {
+                let result = (1..=2 * n).step_by(2).collect::<AvlTree<_>>();
+                let expected = (1..=2 * n).step_by(2).collect::<Vec<_>>();
+                let result = result.upper_bound(&i);
+                let expected = expected.iter().position(|&x| i < x).unwrap_or(n);
                 assert_eq!(result, expected);
             }
         }
