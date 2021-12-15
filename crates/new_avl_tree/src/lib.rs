@@ -1,4 +1,4 @@
-use std::{borrow::Borrow, cmp::Ordering, iter::successors, mem::swap, ops::Index};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap, ops::Index};
 
 #[derive(Clone)]
 pub struct AvlTree<T> {
@@ -136,6 +136,18 @@ impl<T> AvlTree<T> {
 impl<T> Default for AvlTree<T> {
     fn default() -> Self {
         Self { root: None }
+    }
+}
+impl<T: Debug> Debug for AvlTree<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_list().entries(self).finish()
+    }
+}
+impl<'a, T> IntoIterator for &'a AvlTree<T> {
+    type IntoIter = Iter<'a, T>;
+    type Item = &'a T;
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
     }
 }
 impl<T> Index<usize> for AvlTree<T> {
@@ -583,6 +595,17 @@ mod tests {
             let cloned = result.clone();
             assert_eq!(&result.iter().copied().collect::<Vec<_>>(), &expected);
             assert_eq!(&cloned.iter().copied().collect::<Vec<_>>(), &expected);
+        }
+    }
+
+    #[test]
+    fn test_debug() {
+        for n in 0..=10 {
+            let result = (0..n).collect::<AvlTree<_>>();
+            let expected = (0..n).collect::<Vec<_>>();
+            let result = format!("{:?}", &result);
+            let expected = format!("{:?}", &expected);
+            assert_eq!(result, expected);
         }
     }
 }
