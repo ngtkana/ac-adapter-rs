@@ -1,11 +1,4 @@
-use std::{
-    borrow::Borrow,
-    cmp::Ordering,
-    fmt::Debug,
-    iter::successors,
-    mem::{swap, take},
-    ops::Index,
-};
+use std::{borrow::Borrow, cmp::Ordering, fmt::Debug, iter::successors, mem::swap, ops::Index};
 
 #[derive(Clone)]
 pub struct AvlTree<T> {
@@ -92,7 +85,7 @@ impl<T> AvlTree<T> {
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             stack: successors(self.root.as_ref().map(|node| &**node), |prev| {
-                prev.child[0].as_ref().map(|node| &**node)
+                prev.left.as_ref().map(|node| &**node)
             })
             .collect(),
         }
@@ -155,9 +148,9 @@ impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
     fn next(&mut self) -> Option<Self::Item> {
         let last = self.stack.pop()?;
-        if let Some(mut crr) = last.child[1].as_ref() {
+        if let Some(mut crr) = last.right.as_ref() {
             self.stack.push(crr);
-            while let Some(next) = crr.child[0].as_ref() {
+            while let Some(next) = crr.left.as_ref() {
                 self.stack.push(next);
                 crr = next;
             }
@@ -168,14 +161,16 @@ impl<'a, T> Iterator for Iter<'a, T> {
 
 #[derive(Clone)]
 struct Node<T> {
-    child: [Option<Box<Self>>; 2],
+    left: Option<Box<Self>>,
+    right: Option<Box<Self>>,
     value: T,
     len: usize,
     ht: u8,
 }
 fn new<T>(value: T) -> Box<Node<T>> {
     Box::new(Node {
-        child: [None, None],
+        left: None,
+        right: None,
         value,
         len: 1,
         ht: 1,
@@ -183,11 +178,8 @@ fn new<T>(value: T) -> Box<Node<T>> {
 }
 impl<T> Node<T> {
     fn update(&mut self) {
-        self.len = len(&self.child[0]) + 1 + len(&self.child[1]);
-        self.ht = 1 + ht(&self.child[0]).max(ht(&self.child[1]));
-    }
-    fn diff(&self, e: usize) -> isize {
-        ht(&self.child[e]) as isize - ht(&self.child[1 - e]) as isize
+        self.len = len(&self.left) + 1 + len(&self.right);
+        self.ht = 1 + ht(&self.left).max(ht(&self.right));
     }
 }
 fn len<T>(tree: &Option<Box<Node<T>>>) -> usize {
@@ -196,25 +188,39 @@ fn len<T>(tree: &Option<Box<Node<T>>>) -> usize {
 fn ht<T>(tree: &Option<Box<Node<T>>>) -> u8 {
     tree.as_ref().map_or(0, |node| node.ht)
 }
-fn balance<T>(tree: &mut Box<Node<T>>) {
-    fn rotate<T>(tree: &mut Box<Node<T>>, e: usize) {
-        let mut x = tree.child[e].take().unwrap();
-        let y = x.child[1 - e].take();
-        swap(tree, &mut x);
-        x.child[e] = y;
+fn balance<T>(node: &mut Box<Node<T>>) {
+    fn rotate_left<T>(node: &mut Box<Node<T>>) {
+        let mut x = node.left.take().unwrap();
+        let y = x.right.take();
+        swap(node, &mut x);
+        x.left = y;
         x.update();
-        tree.child[1 - e] = Some(x);
-        tree.update();
+        node.right = Some(x);
+        node.update();
     }
-    tree.update();
-    for e in 0..2 {
-        if 1 < tree.diff(e) {
-            if 0 < tree.child[e].as_ref().unwrap().diff(1 - e) {
-                rotate(tree.child[e].as_mut().unwrap(), 1 - e);
-            }
-            rotate(tree, e);
-            break;
+    fn rotate_right<T>(node: &mut Box<Node<T>>) {
+        let mut x = node.right.take().unwrap();
+        let y = x.left.take();
+        swap(node, &mut x);
+        x.right = y;
+        x.update();
+        node.left = Some(x);
+        node.update();
+    }
+    if ht(&node.left) > 1 + ht(&node.right) {
+        let left = node.left.as_mut().unwrap();
+        if ht(&left.left) < ht(&left.right) {
+            rotate_right(left);
         }
+        rotate_left(node);
+    } else if ht(&node.left) + 1 < ht(&node.right) {
+        let right = node.right.as_mut().unwrap();
+        if ht(&right.left) > ht(&right.right) {
+            rotate_left(right);
+        }
+        rotate_right(node);
+    } else {
+        node.update();
     }
 }
 fn merge_with_root<T>(
@@ -224,16 +230,17 @@ fn merge_with_root<T>(
 ) -> Box<Node<T>> {
     if ht(&left) > ht(&right) {
         let mut root = left.take().unwrap();
-        root.child[1] = Some(merge_with_root(root.child[1].take(), center, right));
+        root.right = Some(merge_with_root(root.right.take(), center, right));
         balance(&mut root);
         root
     } else if ht(&left) < ht(&right) {
         let mut root = right.take().unwrap();
-        root.child[0] = Some(merge_with_root(left, center, root.child[0].take()));
+        root.left = Some(merge_with_root(left, center, root.left.take()));
         balance(&mut root);
         root
     } else {
-        center.child = [left, right];
+        center.left = left;
+        center.right = right;
         center.update();
         center
     }
@@ -252,7 +259,8 @@ fn split_delete<T>(
     index: usize,
 ) -> (Option<Box<Node<T>>>, Box<Node<T>>, Option<Box<Node<T>>>) {
     debug_assert!((0..root.len).contains(&index));
-    let [left, right] = take(&mut root.child);
+    let left = root.left.take();
+    let right = root.right.take();
     let lsize = len(&left);
     match lsize.cmp(&index) {
         Ordering::Less => {
@@ -292,31 +300,31 @@ fn binary_search_by<T>(
         None => return Err(0),
         Some(node) => node,
     };
-    let lsize = len(&node.child[0]);
+    let lsize = len(&node.left);
     match f(&*node) {
-        Ordering::Less => binary_search_by(&node.child[1], f)
+        Ordering::Less => binary_search_by(&node.right, f)
             .map(|index| lsize + 1 + index)
             .map_err(|index| lsize + 1 + index),
         Ordering::Equal => Ok(lsize),
-        Ordering::Greater => binary_search_by(&node.child[0], f),
+        Ordering::Greater => binary_search_by(&node.left, f),
     }
 }
 fn get<T>(tree: &Option<Box<Node<T>>>, index: usize) -> Option<&Node<T>> {
     let node = tree.as_ref()?;
-    let lsize = len(&node.child[0]);
+    let lsize = len(&node.left);
     match lsize.cmp(&index) {
-        Ordering::Less => get(&node.child[1], index - lsize - 1),
+        Ordering::Less => get(&node.right, index - lsize - 1),
         Ordering::Equal => Some(node),
-        Ordering::Greater => get(&node.child[0], index),
+        Ordering::Greater => get(&node.left, index),
     }
 }
 fn get_mut<T>(tree: &mut Option<Box<Node<T>>>, index: usize) -> Option<&mut Node<T>> {
     let node = tree.as_mut()?;
-    let lsize = len(&node.child[0]);
+    let lsize = len(&node.left);
     match lsize.cmp(&index) {
-        Ordering::Less => get_mut(&mut node.child[1], index - lsize - 1),
+        Ordering::Less => get_mut(&mut node.right, index - lsize - 1),
         Ordering::Equal => Some(node),
-        Ordering::Greater => get_mut(&mut node.child[0], index),
+        Ordering::Greater => get_mut(&mut node.left, index),
     }
 }
 
