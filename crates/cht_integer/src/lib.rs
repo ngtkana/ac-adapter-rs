@@ -3,24 +3,85 @@ use std::{
     collections::BTreeSet,
     fmt::Debug,
     i64::{MAX, MIN},
+    marker::PhantomData,
 };
 
+pub trait ConvexOrConcave {}
+pub enum Convex {}
+pub enum Concave {}
+impl ConvexOrConcave for Convex {}
+impl ConvexOrConcave for Concave {}
+
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct ConvexHullTrick {
-    set: BTreeSet<Segment>,
+pub struct ConvexHullTrick<C: ConvexOrConcave> {
+    base: ConvexHullTrickBase,
+    __marker: PhantomData<fn(C) -> C>,
 }
-impl ConvexHullTrick {
+impl ConvexHullTrick<Convex> {
     pub fn new() -> Self {
-        Self::default()
+        Self {
+            base: Default::default(),
+            __marker: PhantomData,
+        }
     }
     pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         xs.map(|x| self.eval(x)).collect()
     }
     pub fn collect_lines(&self) -> Vec<(i64, i64)> {
-        self.set
+        self.base
+            .set
             .iter()
             .map(|&seg| (seg.line.p, -seg.line.q))
             .collect()
+    }
+    pub fn eval(&self, x: i64) -> i64 {
+        self.base.eval(x)
+    }
+    pub fn lave(&self, p: i64) -> Option<i64> {
+        self.base.lave(p)
+    }
+    pub fn insert(&mut self, tilt: i64, intercept: i64) -> bool {
+        self.base.insert(tilt, intercept)
+    }
+}
+impl ConvexHullTrick<Concave> {
+    pub fn new() -> Self {
+        Self {
+            base: Default::default(),
+            __marker: PhantomData,
+        }
+    }
+    pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        xs.map(|x| self.eval(x)).collect()
+    }
+    pub fn collect_lines(&self) -> Vec<(i64, i64)> {
+        self.base
+            .set
+            .iter()
+            .map(|&seg| (-seg.line.p, seg.line.q))
+            .collect()
+    }
+    pub fn eval(&self, x: i64) -> i64 {
+        -self.base.eval(x)
+    }
+    pub fn lave(&self, p: i64) -> Option<i64> {
+        assert_ne!(p, MIN);
+        self.base.lave(-p).map(|q| -q)
+    }
+    pub fn insert(&mut self, tilt: i64, intercept: i64) -> bool {
+        assert_ne!(tilt, MIN);
+        assert_ne!(intercept, MIN);
+        self.base.insert(-tilt, -intercept)
+    }
+}
+
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+pub struct ConvexHullTrickBase {
+    set: BTreeSet<Segment>,
+}
+impl ConvexHullTrickBase {
+    pub fn new() -> Self {
+        Self::default()
     }
     pub fn eval(&self, x: i64) -> i64 {
         assert!(
@@ -181,10 +242,9 @@ impl Borrow<Max> for Segment {
 
 #[cfg(test)]
 mod tests {
+    use super::*;
     use itertools::Itertools;
     use rand::{prelude::StdRng, Rng, SeedableRng};
-
-    use super::*;
 
     #[test]
     fn test_brace_ok() {
@@ -206,31 +266,30 @@ mod tests {
         assert_eq!(l0.brace(l1), expected);
     }
 
-    fn multieval(brute: &[Line], xs: impl Iterator<Item = i64>) -> Vec<i64> {
-        xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
-            .collect()
-    }
-    fn multilave(
-        brute: &[Line],
-        xy: &[(i64, i64)],
-        ps: impl Iterator<Item = i64>,
-    ) -> Vec<Option<i64>> {
-        ps.map(|p| {
-            if p < brute.iter().map(|&line| line.p).min().unwrap()
-                || brute.iter().map(|&line| line.p).max().unwrap() < p
-            {
-                None
-            } else {
-                Some(xy.iter().map(|&(x, y)| x * p - y).max().unwrap())
-            }
-        })
-        .collect()
-    }
-
     #[test]
-    fn test_insert() {
-        let mut input_max;
+    fn test_convex() {
+        fn multieval(brute: &[Line], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+            xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
+                .collect()
+        }
+        fn multilave(
+            brute: &[Line],
+            xy: &[(i64, i64)],
+            ps: impl Iterator<Item = i64>,
+        ) -> Vec<Option<i64>> {
+            ps.map(|p| {
+                if p < brute.iter().map(|&line| line.p).min().unwrap()
+                    || brute.iter().map(|&line| line.p).max().unwrap() < p
+                {
+                    None
+                } else {
+                    Some(xy.iter().map(|&(x, y)| x * p - y).max().unwrap())
+                }
+            })
+            .collect()
+        }
 
+        let mut input_max;
         let mut cht;
         let mut brute;
         macro_rules! insert {
@@ -254,14 +313,87 @@ mod tests {
                 // lines
                 eprintln!("lines: {:?}", &cht.collect_lines());
 
-                // consistency
-                for (seg0, seg1) in cht.set.iter().tuple_windows() {
-                    assert_eq!(seg0.max.0, seg1.min.0, "x");
-                    assert_eq!(seg0.line.eval(seg0.max.0), seg1.line.eval(seg1.min.0), "y");
-                    assert!(seg0.line.p < seg1.line.p, "tilt",);
+                // eval
+                let result = cht.multieval(x_range.clone());
+                let expected = multieval(&brute, x_range.clone());
+                assert_eq!(result, expected, "eval");
+
+                // lave
+                let xy = x_range
+                    .clone()
+                    .zip(&expected)
+                    .map(|(x, &y)| (x, y))
+                    .collect_vec();
+                let result = p_range.clone().map(|p| cht.lave(p)).collect_vec();
+                let expected = multilave(&brute, &xy, p_range.clone());
+                assert_eq!(result, expected, "lave");
+            };
+        }
+
+        let mut rng = StdRng::seed_from_u64(42);
+        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+            input_max = im;
+            eprintln!("Initialize");
+            cht = ConvexHullTrick::<Convex>::new();
+            brute = Vec::new();
+            for _ in 0..20 {
+                let tilt = rng.gen_range(-input_max..=input_max);
+                let intercept = rng.gen_range(-input_max..=input_max);
+                insert!(tilt, intercept);
+            }
+            eprintln!();
+        }
+    }
+
+    #[test]
+    fn test_concave() {
+        fn multieval(brute: &[Line], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+            xs.map(|x| brute.iter().map(|&line| line.eval(x)).min().unwrap())
+                .collect()
+        }
+        fn multilave(
+            brute: &[Line],
+            xy: &[(i64, i64)],
+            ps: impl Iterator<Item = i64>,
+        ) -> Vec<Option<i64>> {
+            ps.map(|p| {
+                if p < brute.iter().map(|&line| line.p).min().unwrap()
+                    || brute.iter().map(|&line| line.p).max().unwrap() < p
+                {
+                    None
+                } else {
+                    Some(xy.iter().map(|&(x, y)| x * p - y).min().unwrap())
                 }
-                assert_eq!(cht.set.iter().next().unwrap().min.0, MIN, "min");
-                assert_eq!(cht.set.iter().next_back().unwrap().max.0, MAX, "max");
+            })
+            .collect()
+        }
+
+        let mut input_max;
+        let mut cht;
+        let mut brute;
+        macro_rules! insert {
+            ($tilt:expr, $intercept:expr) => {
+                let tilt: i64 = $tilt;
+                let intercept: i64 = $intercept;
+
+                // parameters
+                let test_max = input_max * 3;
+                let x_range = -test_max..=test_max;
+                let p_range = -test_max..=test_max;
+
+                // mutate
+                eprintln!("insert: {}, {}", tilt, intercept);
+                cht.insert(tilt, intercept);
+                brute.push(Line {
+                    p: tilt,
+                    q: -intercept,
+                });
+
+                // lines
+                eprintln!("lines: {:?}", &cht.collect_lines());
+
+                assert_eq!(cht.base.set.iter().next().unwrap().min.0, MIN, "min");
+                assert_eq!(cht.base.set.iter().next_back().unwrap().max.0, MAX, "max");
 
                 // eval
                 let result = cht.multieval(x_range.clone());
@@ -284,7 +416,7 @@ mod tests {
         for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
-            cht = ConvexHullTrick::new();
+            cht = ConvexHullTrick::<Concave>::new();
             brute = Vec::new();
             for _ in 0..20 {
                 let tilt = rng.gen_range(-input_max..=input_max);
