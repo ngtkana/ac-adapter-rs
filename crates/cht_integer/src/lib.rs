@@ -4,6 +4,7 @@ use std::{
     fmt::Debug,
     i64::{MAX, MIN},
     marker::PhantomData,
+    ops::{Add, Mul, Neg, Sub},
 };
 
 pub trait ConvexOrConcave {}
@@ -15,12 +16,14 @@ impl ConvexOrConcave for Concave {}
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct ConvexHullTrick<C: ConvexOrConcave> {
     base: ConvexHullTrickBase,
+    coeff_at_two: i64,
     __marker: PhantomData<fn(C) -> C>,
 }
 impl ConvexHullTrick<Convex> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
+            coeff_at_two: 0,
             __marker: PhantomData,
         }
     }
@@ -35,19 +38,26 @@ impl ConvexHullTrick<Convex> {
             .collect()
     }
     pub fn eval(&self, x: i64) -> i64 {
-        self.base.eval(x)
+        self.base.eval(x) + self.coeff_at_two * x * x
     }
-    pub fn lave(&self, p: i64) -> Option<i64> {
-        self.base.lave(p)
-    }
-    pub fn insert(&mut self, tilt: i64, intercept: i64) -> bool {
-        self.base.insert(tilt, intercept)
+    pub fn add(&mut self, quadratic: Quadratic) {
+        let Quadratic([zeroth, first, second]) = quadratic;
+        if self.base.set.is_empty() {
+            self.coeff_at_two = second;
+        } else {
+            assert_eq!(
+                self.coeff_at_two, second,
+                "added a expression with different `second` from the before.",
+            )
+        }
+        self.base.insert(first, zeroth)
     }
 }
 impl ConvexHullTrick<Concave> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
+            coeff_at_two: 0,
             __marker: PhantomData,
         }
     }
@@ -62,35 +72,35 @@ impl ConvexHullTrick<Concave> {
             .collect()
     }
     pub fn eval(&self, x: i64) -> i64 {
-        -self.base.eval(x)
+        -self.base.eval(x) + self.coeff_at_two * x * x
     }
-    pub fn lave(&self, p: i64) -> Option<i64> {
-        assert_ne!(p, MIN);
-        self.base.lave(-p).map(|q| -q)
-    }
-    pub fn insert(&mut self, tilt: i64, intercept: i64) -> bool {
-        assert_ne!(tilt, MIN);
-        assert_ne!(intercept, MIN);
-        self.base.insert(-tilt, -intercept)
+    pub fn add(&mut self, quadratic: Quadratic) {
+        let Quadratic([zeroth, first, second]) = quadratic;
+        if self.base.set.is_empty() {
+            self.coeff_at_two = second;
+        } else {
+            assert_eq!(
+                self.coeff_at_two, second,
+                "added a expression with different `second` from the before.",
+            )
+        }
+        self.base.insert(-first, -zeroth)
     }
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct ConvexHullTrickBase {
+struct ConvexHullTrickBase {
     set: BTreeSet<Segment>,
 }
 impl ConvexHullTrickBase {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub fn eval(&self, x: i64) -> i64 {
+    fn eval(&self, x: i64) -> i64 {
         assert!(
             !self.set.is_empty(),
             "empty maximum is the negative infinity"
         );
         self.set.range(Max(x)..).next().unwrap().line.eval(x)
     }
-    pub fn lave(&self, p: i64) -> Option<i64> {
+    fn lave(&self, p: i64) -> Option<i64> {
         assert!(
             !self.set.is_empty(),
             "empty maximum is the negative infinity"
@@ -110,11 +120,11 @@ impl ConvexHullTrickBase {
             Some(q1 - (p1 - p) * min)
         }
     }
-    pub fn insert(&mut self, tilt: i64, intercept: i64) -> bool {
+    pub fn insert(&mut self, tilt: i64, intercept: i64) {
         let q = -intercept;
         let p = tilt;
         if !self.set.is_empty() && self.lave(p).map_or(false, |c| c <= q) {
-            return false;
+            return;
         }
         self.set.take(&p);
         let line = Line { p, q };
@@ -181,7 +191,87 @@ impl ConvexHullTrickBase {
         if min.0 < max.0 {
             self.set.insert(Segment { line, min, max });
         }
-        true
+    }
+}
+
+pub const X: Quadratic = Quadratic([0, 1, 0]);
+#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+pub struct Quadratic([i64; 3]);
+impl Quadratic {
+    pub fn eval(self, x: i64) -> i64 {
+        self.0[0] + (self.0[1] + self.0[2] * x) * x
+    }
+    pub fn square(self) -> Self {
+        self * self
+    }
+}
+impl From<i64> for Quadratic {
+    fn from(x: i64) -> Self {
+        Self([x, 0, 0])
+    }
+}
+impl Neg for Quadratic {
+    type Output = Self;
+    fn neg(self) -> Self::Output {
+        Self([-self.0[0], -self.0[1], -self.0[2]])
+    }
+}
+impl<T: Into<Self>> Add<T> for Quadratic {
+    type Output = Self;
+    fn add(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into();
+        Self([
+            self.0[0] + rhs.0[0],
+            self.0[1] + rhs.0[1],
+            self.0[2] + rhs.0[2],
+        ])
+    }
+}
+impl Add<Quadratic> for i64 {
+    type Output = Quadratic;
+    fn add(self, rhs: Quadratic) -> Self::Output {
+        rhs.add(self)
+    }
+}
+impl<T: Into<Self>> Sub<T> for Quadratic {
+    type Output = Self;
+    fn sub(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into();
+        Self([
+            self.0[0] - rhs.0[0],
+            self.0[1] - rhs.0[1],
+            self.0[2] - rhs.0[2],
+        ])
+    }
+}
+impl Sub<Quadratic> for i64 {
+    type Output = Quadratic;
+    fn sub(self, rhs: Quadratic) -> Self::Output {
+        let lhs: Quadratic = self.into();
+        Quadratic([
+            lhs.0[0] - rhs.0[0],
+            lhs.0[1] - rhs.0[1],
+            lhs.0[2] - rhs.0[2],
+        ])
+    }
+}
+impl<T: Into<Self>> Mul<T> for Quadratic {
+    type Output = Self;
+    fn mul(self, rhs: T) -> Self::Output {
+        let rhs = rhs.into();
+        assert_eq!(self.0[1] * rhs.0[2] + self.0[2] * rhs.0[1], 0);
+        assert_eq!(self.0[2] * rhs.0[2], 0);
+        Self([
+            self.0[0] * rhs.0[0],
+            self.0[0] * rhs.0[1] + self.0[1] * rhs.0[0],
+            self.0[0] * rhs.0[2] + self.0[1] * rhs.0[1] + self.0[2] * rhs.0[0],
+        ])
+    }
+}
+impl Mul<Quadratic> for i64 {
+    type Output = Quadratic;
+    fn mul(self, rhs: Quadratic) -> Self::Output {
+        rhs.mul(self)
     }
 }
 
@@ -243,7 +333,6 @@ impl Borrow<Max> for Segment {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::Itertools;
     use rand::{prelude::StdRng, Rng, SeedableRng};
 
     #[test]
@@ -268,47 +357,26 @@ mod tests {
 
     #[test]
     fn test_convex() {
-        fn multieval(brute: &[Line], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        fn multieval(brute: &[Quadratic], xs: impl Iterator<Item = i64>) -> Vec<i64> {
             xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
                 .collect()
-        }
-        fn multilave(
-            brute: &[Line],
-            xy: &[(i64, i64)],
-            ps: impl Iterator<Item = i64>,
-        ) -> Vec<Option<i64>> {
-            ps.map(|p| {
-                if p < brute.iter().map(|&line| line.p).min().unwrap()
-                    || brute.iter().map(|&line| line.p).max().unwrap() < p
-                {
-                    None
-                } else {
-                    Some(xy.iter().map(|&(x, y)| x * p - y).max().unwrap())
-                }
-            })
-            .collect()
         }
 
         let mut input_max;
         let mut cht;
         let mut brute;
         macro_rules! insert {
-            ($tilt:expr, $intercept:expr) => {
-                let tilt: i64 = $tilt;
-                let intercept: i64 = $intercept;
+            ($q:expr) => {
+                let q: Quadratic = $q;
 
                 // parameters
                 let test_max = input_max * 3;
                 let x_range = -test_max..=test_max;
-                let p_range = -test_max..=test_max;
 
                 // mutate
-                eprintln!("insert: {}, {}", tilt, intercept);
-                cht.insert(tilt, intercept);
-                brute.push(Line {
-                    p: tilt,
-                    q: -intercept,
-                });
+                eprintln!("insert: {:?}", q);
+                cht.add(q);
+                brute.push(q);
 
                 // lines
                 eprintln!("lines: {:?}", &cht.collect_lines());
@@ -317,16 +385,6 @@ mod tests {
                 let result = cht.multieval(x_range.clone());
                 let expected = multieval(&brute, x_range.clone());
                 assert_eq!(result, expected, "eval");
-
-                // lave
-                let xy = x_range
-                    .clone()
-                    .zip(&expected)
-                    .map(|(x, &y)| (x, y))
-                    .collect_vec();
-                let result = p_range.clone().map(|p| cht.lave(p)).collect_vec();
-                let expected = multilave(&brute, &xy, p_range.clone());
-                assert_eq!(result, expected, "lave");
             };
         }
 
@@ -336,10 +394,14 @@ mod tests {
             eprintln!("Initialize");
             cht = ConvexHullTrick::<Convex>::new();
             brute = Vec::new();
+            let second = rng.gen_range(-input_max..=input_max);
             for _ in 0..20 {
-                let tilt = rng.gen_range(-input_max..=input_max);
-                let intercept = rng.gen_range(-input_max..=input_max);
-                insert!(tilt, intercept);
+                let q = Quadratic([
+                    rng.gen_range(-input_max..=input_max),
+                    rng.gen_range(-input_max..=input_max),
+                    second,
+                ]);
+                insert!(q);
             }
             eprintln!();
         }
@@ -347,68 +409,34 @@ mod tests {
 
     #[test]
     fn test_concave() {
-        fn multieval(brute: &[Line], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        fn multieval(brute: &[Quadratic], xs: impl Iterator<Item = i64>) -> Vec<i64> {
             xs.map(|x| brute.iter().map(|&line| line.eval(x)).min().unwrap())
                 .collect()
-        }
-        fn multilave(
-            brute: &[Line],
-            xy: &[(i64, i64)],
-            ps: impl Iterator<Item = i64>,
-        ) -> Vec<Option<i64>> {
-            ps.map(|p| {
-                if p < brute.iter().map(|&line| line.p).min().unwrap()
-                    || brute.iter().map(|&line| line.p).max().unwrap() < p
-                {
-                    None
-                } else {
-                    Some(xy.iter().map(|&(x, y)| x * p - y).min().unwrap())
-                }
-            })
-            .collect()
         }
 
         let mut input_max;
         let mut cht;
         let mut brute;
         macro_rules! insert {
-            ($tilt:expr, $intercept:expr) => {
-                let tilt: i64 = $tilt;
-                let intercept: i64 = $intercept;
+            ($q:expr) => {
+                let q: Quadratic = $q;
 
                 // parameters
                 let test_max = input_max * 3;
                 let x_range = -test_max..=test_max;
-                let p_range = -test_max..=test_max;
 
                 // mutate
-                eprintln!("insert: {}, {}", tilt, intercept);
-                cht.insert(tilt, intercept);
-                brute.push(Line {
-                    p: tilt,
-                    q: -intercept,
-                });
+                eprintln!("insert: {:?}", q);
+                cht.add(q);
+                brute.push(q);
 
                 // lines
                 eprintln!("lines: {:?}", &cht.collect_lines());
-
-                assert_eq!(cht.base.set.iter().next().unwrap().min.0, MIN, "min");
-                assert_eq!(cht.base.set.iter().next_back().unwrap().max.0, MAX, "max");
 
                 // eval
                 let result = cht.multieval(x_range.clone());
                 let expected = multieval(&brute, x_range.clone());
                 assert_eq!(result, expected, "eval");
-
-                // lave
-                let xy = x_range
-                    .clone()
-                    .zip(&expected)
-                    .map(|(x, &y)| (x, y))
-                    .collect_vec();
-                let result = p_range.clone().map(|p| cht.lave(p)).collect_vec();
-                let expected = multilave(&brute, &xy, p_range.clone());
-                assert_eq!(result, expected, "lave");
             };
         }
 
@@ -418,10 +446,14 @@ mod tests {
             eprintln!("Initialize");
             cht = ConvexHullTrick::<Concave>::new();
             brute = Vec::new();
+            let second = rng.gen_range(-input_max..=input_max);
             for _ in 0..20 {
-                let tilt = rng.gen_range(-input_max..=input_max);
-                let intercept = rng.gen_range(-input_max..=input_max);
-                insert!(tilt, intercept);
+                let q = Quadratic([
+                    rng.gen_range(-input_max..=input_max),
+                    rng.gen_range(-input_max..=input_max),
+                    second,
+                ]);
+                insert!(q);
             }
             eprintln!();
         }
