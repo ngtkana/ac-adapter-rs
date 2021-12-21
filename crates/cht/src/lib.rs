@@ -9,7 +9,7 @@
 //!
 //! # できること
 //!
-//! - 本体: [`ConvexHullTrick`]
+//! - 本体: [`Cht`]
 //! - マーカー
 //!   - トレイト（ユーザーが実装する必要なし）: [`ConvexOrConcave`]
 //!   - 凸: [`Convex`]
@@ -22,11 +22,11 @@
 //! # Examples
 //!
 //! ```
-//! use cht::{ConvexHullTrick, Concave, X};
+//! use cht::{Cht, Concave, X};
 //!
 //! // 初期化
 //! // この時点で `eval`, `multieval` を呼ぶとパニックします。
-//! let mut cht = ConvexHullTrick::<Concave>::new();
+//! let mut cht = Cht::<Concave>::new();
 //!
 //! // 1 + x + x^2 を追加
 //! cht.add(1 + X + X * X);
@@ -58,12 +58,12 @@ impl ConvexOrConcave for Concave {}
 
 /// 本体
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct ConvexHullTrick<C: ConvexOrConcave> {
-    base: ConvexHullTrickBase,
+pub struct Cht<C: ConvexOrConcave> {
+    base: ChtBase,
     coeff_at_two: i64,
     __marker: PhantomData<fn(C) -> C>,
 }
-impl ConvexHullTrick<Convex> {
+impl Cht<Convex> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
@@ -97,7 +97,7 @@ impl ConvexHullTrick<Convex> {
         self.base.add(first, zeroth)
     }
 }
-impl ConvexHullTrick<Concave> {
+impl Cht<Concave> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
@@ -133,10 +133,10 @@ impl ConvexHullTrick<Concave> {
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-struct ConvexHullTrickBase {
+struct ChtBase {
     set: BTreeSet<Segment>,
 }
-impl ConvexHullTrickBase {
+impl ChtBase {
     fn eval(&self, x: i64) -> i64 {
         assert!(
             !self.set.is_empty(),
@@ -426,7 +426,7 @@ mod tests {
         for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
-            cht = ConvexHullTrick::<Convex>::new();
+            cht = Cht::<Convex>::new();
             brute = Vec::new();
             let second = rng.gen_range(-input_max..=input_max);
             for _ in 0..20 {
@@ -478,7 +478,7 @@ mod tests {
         for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
-            cht = ConvexHullTrick::<Concave>::new();
+            cht = Cht::<Concave>::new();
             brute = Vec::new();
             let second = rng.gen_range(-input_max..=input_max);
             for _ in 0..20 {
