@@ -1,3 +1,44 @@
+//! ログのつく CHT です。
+//!
+//! # TODO
+//!
+//! - ログのつかない方
+//! - 浮動小数点数
+//! - Concave 版を -1 倍ではなく反転で
+//! - 各アイテムのドキュメントを書く
+//!
+//! # できること
+//!
+//! - 本体: [`ConvexHullTrick`]
+//! - マーカー
+//!   - トレイト（ユーザーが実装する必要なし）: [`ConvexOrConcave`]
+//!   - 凸: [`Convex`]
+//!   - 凹: [`Concave`]
+//! - 二次式
+//!   - 式: [`Quadratic`]
+//!   - 変数: [`X`]
+//!
+//!
+//! # Examples
+//!
+//! ```
+//! use cht_integer::{ConvexHullTrick, Concave, X};
+//!
+//! // 初期化
+//! // この時点で `eval`, `multieval` を呼ぶとパニックします。
+//! let mut cht = ConvexHullTrick::<Concave>::new();
+//!
+//! // 1 + x + x^2 を追加
+//! cht.add(1 + X + X * X);
+//! assert_eq!(cht.multieval(0..5), vec![1, 3, 7, 13, 21]);
+//!
+//! // (1 - 2x) * (1 - 3x) - 5x^2 を追加
+//! cht.add((1 - 2 * X) * (1 - 3 * X) - 5 * X * X);
+//! assert_eq!(cht.multieval(0..5), vec![1, -3, -5, -5, -3]);
+//! assert_eq!(cht.eval(-1), 1);
+//! ```
+//!
+
 use std::{
     borrow::Borrow,
     collections::BTreeSet,
@@ -8,11 +49,14 @@ use std::{
 };
 
 pub trait ConvexOrConcave {}
+/// 凸関数を管理する方であるというマーカー
 pub enum Convex {}
+/// 凹関数を管理する方であるというマーカー
 pub enum Concave {}
 impl ConvexOrConcave for Convex {}
 impl ConvexOrConcave for Concave {}
 
+/// 本体
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct ConvexHullTrick<C: ConvexOrConcave> {
     base: ConvexHullTrickBase,
@@ -182,8 +226,10 @@ impl ConvexHullTrickBase {
     }
 }
 
+/// 変数
 pub const X: Quadratic = Quadratic([0, 1, 0]);
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+/// 二次式
 pub struct Quadratic([i64; 3]);
 impl Quadratic {
     pub fn eval(self, x: i64) -> i64 {
