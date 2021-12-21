@@ -50,7 +50,7 @@ impl ConvexHullTrick<Convex> {
                 "added a expression with different `second` from the before.",
             )
         }
-        self.base.insert(first, zeroth)
+        self.base.add(first, zeroth)
     }
 }
 impl ConvexHullTrick<Concave> {
@@ -84,7 +84,7 @@ impl ConvexHullTrick<Concave> {
                 "added a expression with different `second` from the before.",
             )
         }
-        self.base.insert(-first, -zeroth)
+        self.base.add(-first, -zeroth)
     }
 }
 
@@ -100,30 +100,18 @@ impl ConvexHullTrickBase {
         );
         self.set.range(Max(x)..).next().unwrap().line.eval(x)
     }
-    fn lave(&self, p: i64) -> Option<i64> {
-        assert!(
-            !self.set.is_empty(),
-            "empty maximum is the negative infinity"
-        );
-        let &Segment {
-            line: Line { p: p1, q: q1 },
-            min: Min(min),
-            max: _,
-        } = self.set.range(p..).next()?;
-        if min == MIN {
-            if p1 == p {
-                Some(q1)
-            } else {
-                None
-            }
-        } else {
-            Some(q1 - (p1 - p) * min)
-        }
-    }
-    pub fn insert(&mut self, tilt: i64, intercept: i64) {
+    pub fn add(&mut self, tilt: i64, intercept: i64) {
         let q = -intercept;
         let p = tilt;
-        if !self.set.is_empty() && self.lave(p).map_or(false, |c| c <= q) {
+        if !self.set.is_empty()
+            && self.set.range(p..).next().map_or(false, |seg| {
+                if seg.min.0 == MIN {
+                    seg.line.p == p && seg.line.q <= q
+                } else {
+                    seg.line.q - seg.line.p * seg.min.0 <= q - p * seg.min.0
+                }
+            })
+        {
             return;
         }
         self.set.take(&p);
