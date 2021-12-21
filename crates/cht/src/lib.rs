@@ -1,15 +1,17 @@
-//! ログのつく CHT です。
+//! CHT です。
 //!
 //! # TODO
 //!
-//! - ログのつかない方
 //! - 浮動小数点数
-//! - Concave 版を -1 倍ではなく反転で
 //! - 各アイテムのドキュメントを書く
+//! - [`VecCht`] のカーソル管理もう少し上手にできないですかね
+//! - [`Convex`], [`Concave`] の共通化も少し上手にできないですかね
 //!
 //! # できること
 //!
-//! - 本体: [`Cht`]
+//! - 本体
+//!   - ログ付き: [`BTreeCht`]
+//!   - ログなし: [`VecCht`]
 //! - マーカー
 //!   - トレイト（ユーザーが実装する必要なし）: [`ConvexOrConcave`]
 //!   - 凸: [`Convex`]
@@ -22,11 +24,11 @@
 //! # Examples
 //!
 //! ```
-//! use cht::{Cht, Concave, X};
+//! use cht::{BTreeCht, Concave, X};
 //!
 //! // 初期化
 //! // この時点で `eval`, `multieval` を呼ぶとパニックします。
-//! let mut cht = Cht::<Concave>::new();
+//! let mut cht = BTreeCht::<Concave>::new();
 //!
 //! // 1 + x + x^2 を追加
 //! cht.add(1 + X + X * X);
@@ -41,6 +43,7 @@
 
 use std::{
     borrow::Borrow,
+    cmp::Ordering,
     collections::BTreeSet,
     fmt::Debug,
     i64::{MAX, MIN},
@@ -48,22 +51,32 @@ use std::{
     ops::{Add, Mul, Neg, Sub},
 };
 
-pub trait ConvexOrConcave {}
+pub trait ConvexOrConcave {
+    fn reverse_if_concave(cmp: Ordering) -> Ordering;
+}
 /// 凸関数を管理する方であるというマーカー
 pub enum Convex {}
 /// 凹関数を管理する方であるというマーカー
 pub enum Concave {}
-impl ConvexOrConcave for Convex {}
-impl ConvexOrConcave for Concave {}
+impl ConvexOrConcave for Convex {
+    fn reverse_if_concave(cmp: Ordering) -> Ordering {
+        cmp
+    }
+}
+impl ConvexOrConcave for Concave {
+    fn reverse_if_concave(cmp: Ordering) -> Ordering {
+        cmp.reverse()
+    }
+}
 
-/// 本体
+/// ログがつく方
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct Cht<C: ConvexOrConcave> {
-    base: ChtBase,
+pub struct BTreeCht<C: ConvexOrConcave> {
+    base: BTreeChtBase,
     coeff_at_two: i64,
     __marker: PhantomData<fn(C) -> C>,
 }
-impl Cht<Convex> {
+impl BTreeCht<Convex> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
@@ -73,13 +86,6 @@ impl Cht<Convex> {
     }
     pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         xs.map(|x| self.eval(x)).collect()
-    }
-    pub fn collect_lines(&self) -> Vec<(i64, i64)> {
-        self.base
-            .set
-            .iter()
-            .map(|&seg| (seg.line.p, -seg.line.q))
-            .collect()
     }
     pub fn eval(&self, x: i64) -> i64 {
         self.base.eval(x) + self.coeff_at_two * x * x
@@ -94,10 +100,10 @@ impl Cht<Convex> {
                 "added a expression with different `second` from the before.",
             )
         }
-        self.base.add(first, zeroth)
+        self.base.add(first, -zeroth)
     }
 }
-impl Cht<Concave> {
+impl BTreeCht<Concave> {
     pub fn new() -> Self {
         Self {
             base: Default::default(),
@@ -107,13 +113,6 @@ impl Cht<Concave> {
     }
     pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         xs.map(|x| self.eval(x)).collect()
-    }
-    pub fn collect_lines(&self) -> Vec<(i64, i64)> {
-        self.base
-            .set
-            .iter()
-            .map(|&seg| (-seg.line.p, seg.line.q))
-            .collect()
     }
     pub fn eval(&self, x: i64) -> i64 {
         -self.base.eval(x) + self.coeff_at_two * x * x
@@ -128,34 +127,165 @@ impl Cht<Concave> {
                 "added a expression with different `second` from the before.",
             )
         }
-        self.base.add(-first, -zeroth)
+        self.base.add(-first, zeroth)
+    }
+}
+
+/// ログのない方
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+pub struct VecCht<C: ConvexOrConcave> {
+    base: VecChtBase,
+    coeff_at_two: i64,
+    __marker: PhantomData<fn(C) -> C>,
+}
+impl VecCht<Convex> {
+    pub fn new() -> Self {
+        Self {
+            base: Default::default(),
+            coeff_at_two: 0,
+            __marker: PhantomData,
+        }
+    }
+    pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        let orig_current = self.base.current;
+        let res = xs.into_iter().map(|x| self.eval(x)).collect();
+        unsafe {
+            *(&self.base.current as *const _ as *mut usize) = orig_current;
+        }
+        res
+    }
+    pub fn eval(&self, x: i64) -> i64 {
+        self.base.eval(x) + self.coeff_at_two * x * x
+    }
+    pub fn add(&mut self, quadratic: Quadratic) {
+        let Quadratic([zeroth, first, second]) = quadratic;
+        if self.base.vec.is_empty() {
+            self.coeff_at_two = second;
+        } else {
+            assert_eq!(
+                self.coeff_at_two, second,
+                "added a expression with different `second` from the before.",
+            )
+        }
+        self.base.add(first, -zeroth)
+    }
+}
+impl VecCht<Concave> {
+    pub fn new() -> Self {
+        Self {
+            base: Default::default(),
+            coeff_at_two: 0,
+            __marker: PhantomData,
+        }
+    }
+    pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        let orig_current = self.base.current;
+        let res = xs.into_iter().map(|x| self.eval(x)).collect();
+        unsafe {
+            *(&self.base.current as *const _ as *mut usize) = orig_current;
+        }
+        res
+    }
+    pub fn eval(&self, x: i64) -> i64 {
+        -self.base.eval(x) + self.coeff_at_two * x * x
+    }
+    pub fn add(&mut self, quadratic: Quadratic) {
+        let Quadratic([zeroth, first, second]) = quadratic;
+        if self.base.vec.is_empty() {
+            self.coeff_at_two = second;
+        } else {
+            assert_eq!(
+                self.coeff_at_two, second,
+                "added a expression with different `second` from the before.",
+            )
+        }
+        self.base.add(-first, zeroth)
+    }
+}
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+struct VecChtBase {
+    vec: Vec<Segment>,
+    current: usize,
+}
+impl VecChtBase {
+    fn eval(&self, x: i64) -> i64 {
+        assert!(!self.vec.is_empty(), "cannot eval an empty cht");
+        while self.vec.len() <= self.current || Min(x) < self.vec[self.current].min {
+            unsafe {
+                *(&self.current as *const _ as *mut usize) -= 1;
+            }
+        }
+        while self.vec[self.current].max < Max(x) {
+            unsafe {
+                *(&self.current as *const _ as *mut usize) += 1;
+            }
+        }
+        self.vec[self.current].line.eval(x)
+    }
+    fn add(&mut self, p: i64, q: i64) {
+        let line = Line { p, q };
+        if let Some(&last) = self.vec.last() {
+            assert!(last.line.p <= p, "the tilt must be monotone");
+            if last.line.p == p {
+                if last.line.q <= q {
+                    return;
+                }
+                self.vec.pop().unwrap();
+            }
+        }
+        while let Some(&last) = self.vec.last() {
+            let min = last.min.0;
+            if min != MIN && last.line.eval(min) <= line.eval(min) {
+                self.vec.pop().unwrap();
+            } else {
+                break;
+            }
+        }
+        if let Some(last) = self.vec.pop() {
+            match last.line.brace(line) {
+                Err(x) => {
+                    self.vec.push(Segment {
+                        max: Max(x),
+                        ..last
+                    });
+                }
+                Ok(brace) => {
+                    if last.min < brace.min {
+                        self.vec.push(Segment {
+                            max: Max(brace.min.0),
+                            ..last
+                        })
+                    }
+                    self.vec.push(brace);
+                }
+            }
+        }
+        let min = Min(self.vec.last().map_or(MIN, |seg| seg.max.0));
+        self.vec.push(Segment {
+            line,
+            min,
+            max: Max(MAX),
+        });
     }
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-struct ChtBase {
+struct BTreeChtBase {
     set: BTreeSet<Segment>,
 }
-impl ChtBase {
+impl BTreeChtBase {
     fn eval(&self, x: i64) -> i64 {
-        assert!(
-            !self.set.is_empty(),
-            "empty maximum is the negative infinity"
-        );
+        assert!(!self.set.is_empty(), "cannot eval an empty cht");
         self.set.range(Max(x)..).next().unwrap().line.eval(x)
     }
-    pub fn add(&mut self, tilt: i64, intercept: i64) {
-        let q = -intercept;
-        let p = tilt;
-        if !self.set.is_empty()
-            && self.set.range(p..).next().map_or(false, |seg| {
-                if seg.min.0 == MIN {
-                    seg.line.p == p && seg.line.q <= q
-                } else {
-                    seg.line.q - seg.line.p * seg.min.0 <= q - p * seg.min.0
-                }
-            })
-        {
+    fn add(&mut self, p: i64, q: i64) {
+        if self.set.range(p..).next().map_or(false, |seg| {
+            if seg.min.0 == MIN {
+                seg.line.p == p && seg.line.q <= q
+            } else {
+                seg.line.q - seg.line.p * seg.min.0 <= q - p * seg.min.0
+            }
+        }) {
             return;
         }
         self.set.take(&p);
@@ -325,7 +455,6 @@ impl Line {
     fn brace(self, other: Self) -> Result<Segment, i64> {
         let Self { p: p0, q: q0 } = self;
         let Self { p: p1, q: q1 } = other;
-        debug_assert!(p0 < p1);
         let x0 = (q1 - q0).div_euclid(p1 - p0);
         if x0 * (p1 - p0) == (q1 - q0) {
             return Err(x0);
@@ -366,11 +495,14 @@ impl Borrow<Max> for Segment {
 
 #[cfg(test)]
 mod tests {
+    use std::iter::from_fn;
+
     use super::*;
+    use itertools::Itertools;
     use rand::{prelude::StdRng, Rng, SeedableRng};
 
     #[test]
-    fn test_brace_ok() {
+    fn test_brace_ok_convex() {
         let l0 = Line { p: -2, q: -4 };
         let l1 = Line { p: 3, q: 3 };
         let expected = Ok(Segment {
@@ -382,7 +514,7 @@ mod tests {
     }
 
     #[test]
-    fn test_brace_err() {
+    fn test_brace_err_convex() {
         let l0 = Line { p: -2, q: -4 };
         let l1 = Line { p: 3, q: 1 };
         let expected = Err(1);
@@ -412,9 +544,6 @@ mod tests {
                 cht.add(q);
                 brute.push(q);
 
-                // lines
-                eprintln!("lines: {:?}", &cht.collect_lines());
-
                 // eval
                 let result = cht.multieval(x_range.clone());
                 let expected = multieval(&brute, x_range.clone());
@@ -426,7 +555,7 @@ mod tests {
         for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
-            cht = Cht::<Convex>::new();
+            cht = BTreeCht::<Convex>::new();
             brute = Vec::new();
             let second = rng.gen_range(-input_max..=input_max);
             for _ in 0..20 {
@@ -464,8 +593,56 @@ mod tests {
                 cht.add(q);
                 brute.push(q);
 
-                // lines
-                eprintln!("lines: {:?}", &cht.collect_lines());
+                // eval
+                let result = cht.multieval(x_range.clone());
+                let expected = multieval(&brute, x_range.clone());
+                assert_eq!(result, expected, "eval");
+            };
+        }
+
+        let mut rng = StdRng::seed_from_u64(42);
+        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+            input_max = im;
+            eprintln!("Initialize");
+            cht = BTreeCht::<Concave>::new();
+            brute = Vec::new();
+            let second = rng.gen_range(-input_max..=input_max);
+            for _ in 0..20 {
+                let q = Quadratic([
+                    rng.gen_range(-input_max..=input_max),
+                    rng.gen_range(-input_max..=input_max),
+                    second,
+                ]);
+                insert!(q);
+            }
+            eprintln!();
+        }
+    }
+
+    #[test]
+    fn test_vec_convex() {
+        fn multieval(brute: &[Quadratic], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+            xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
+                .collect()
+        }
+
+        let mut input_max;
+        let mut cht;
+        let mut brute;
+        macro_rules! insert {
+            ($q:expr) => {
+                let q: Quadratic = $q;
+
+                // parameters
+                let test_max = input_max * 3;
+                let x_range = -test_max..=test_max;
+
+                // mutate
+                eprintln!("insert: {:?}", q);
+                cht.add(q);
+                brute.push(q);
+
+                eprintln!("{:?}", &cht.base);
 
                 // eval
                 let result = cht.multieval(x_range.clone());
@@ -478,15 +655,21 @@ mod tests {
         for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
-            cht = Cht::<Concave>::new();
+            cht = VecCht::<Convex>::new();
             brute = Vec::new();
             let second = rng.gen_range(-input_max..=input_max);
-            for _ in 0..20 {
-                let q = Quadratic([
+
+            let queries = from_fn(|| {
+                Some(Quadratic([
                     rng.gen_range(-input_max..=input_max),
                     rng.gen_range(-input_max..=input_max),
                     second,
-                ]);
+                ]))
+            })
+            .take(20)
+            .sorted_by_key(|q| q.0[1])
+            .collect_vec();
+            for q in queries {
                 insert!(q);
             }
             eprintln!();
