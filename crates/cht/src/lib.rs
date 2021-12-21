@@ -22,7 +22,7 @@
 //! # Examples
 //!
 //! ```
-//! use cht_integer::{ConvexHullTrick, Concave, X};
+//! use cht::{ConvexHullTrick, Concave, X};
 //!
 //! // 初期化
 //! // この時点で `eval`, `multieval` を呼ぶとパニックします。
