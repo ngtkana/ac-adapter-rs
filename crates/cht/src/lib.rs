@@ -3,15 +3,26 @@
 //! # TODO
 //!
 //! - 浮動小数点数
+//!   - ないと困ります
 //! - 各アイテムのドキュメントを書く
 //! - [`VecCht`] のカーソル管理もう少し上手にできないですかね
-//! - [`Convex`], [`Concave`] の共通化も少し上手にできないですかね
+//!
+//!
+//! # WON'T DO
+//!
+//! - 凸探索付き平衡二分木を自作して、直線の式だけ管理すれば良いようにする
+//!   - 理由: 大変そう
+//!
 //!
 //! # できること
+//!
+//! ２次の係数のすべて等しいような、区分的に２次関数であるような、凸/凹関数を管理します。
 //!
 //! - 本体
 //!   - ログ付き: [`BTreeCht`]
 //!   - ログなし: [`VecCht`]
+//!     - 前挿入は、いらないですか…
+//!     - カーソルを１つだけ持っています。２つ以上はいらないですかね……どうしてもならオブジェクトごと２つ作ればできなくはないです。
 //! - マーカー
 //!   - トレイト（ユーザーが実装する必要なし）: [`ConvexOrConcave`]
 //!   - 凸: [`Convex`]
@@ -50,6 +61,7 @@ use std::{
     ops::{Add, Mul, Neg, Sub},
 };
 
+/// [`BTreeCht`], [`VecCht`] が凸関数を管理するか、凹関数を管理するかを表すマーカーのトレイト
 pub trait ConvexOrConcave: Copy {
     fn negate_if_concave(x: i64) -> i64;
 }
@@ -67,6 +79,97 @@ impl ConvexOrConcave for Convex {
 impl ConvexOrConcave for Concave {
     fn negate_if_concave(x: i64) -> i64 {
         -x
+    }
+}
+
+/// ログがつかない方
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+pub struct VecCht<C> {
+    vec: Vec<Segment>,
+    coeff_at_two: i64,
+    current: usize,
+    __marker: PhantomData<fn() -> C>,
+}
+impl<C: ConvexOrConcave> VecCht<C> {
+    pub fn new() -> Self {
+        Self {
+            vec: Default::default(),
+            coeff_at_two: 0,
+            current: 0,
+            __marker: PhantomData,
+        }
+    }
+    pub fn multieval(&mut self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
+        let orig_current = self.current;
+        self.current = 0;
+        let res = xs.map(|x| self.eval(x)).collect();
+        self.current = orig_current;
+        res
+    }
+    pub fn eval(&mut self, x: i64) -> i64 {
+        assert!(!self.vec.is_empty(), "cannot eval an empty cht");
+        while self
+            .vec
+            .get(self.current)
+            .map_or(false, |last| Min(x) <= last.min)
+        {
+            self.current -= 1;
+        }
+        while self.vec[self.current].max <= Max(x) {
+            self.current += 1;
+        }
+        C::negate_if_concave(self.vec[self.current].line.eval(x)) + self.coeff_at_two * x * x
+    }
+    pub fn add(&mut self, quadratic: Quadratic) {
+        let Quadratic([zeroth, first, second]) = quadratic;
+        if self.vec.is_empty() {
+            self.coeff_at_two = second;
+        } else {
+            assert_eq!(
+                self.coeff_at_two, second,
+                "added a expression with different `second` from the before.",
+            )
+        }
+
+        let p = C::negate_if_concave(first);
+        let q = C::negate_if_concave(-zeroth);
+        let line = Line { p, q };
+        if let Some(&seg) = self.vec.last() {
+            if seg.line.p == p {
+                if seg.line.q <= q {
+                    return;
+                }
+                self.vec.pop().unwrap();
+            }
+        }
+
+        while let Some(seg) = self.vec.pop() {
+            let Min(x) = seg.min;
+            if x == MIN || line.eval(x) < seg.line.eval(x) {
+                self.vec.push(seg);
+                break;
+            }
+        }
+        if let Some(seg) = self.vec.pop() {
+            match brace(seg.line, line) {
+                Err(x) => self.vec.push(Segment { max: Max(x), ..seg }),
+                Ok(brace) => {
+                    if seg.min.0 < brace.min.0 {
+                        self.vec.push(Segment {
+                            max: Max(brace.min.0),
+                            ..seg
+                        });
+                    }
+                    self.vec.push(brace)
+                }
+            }
+        }
+        let min = Min(self.vec.last().map_or(MIN, |seg| seg.max.0));
+        self.vec.push(Segment {
+            line,
+            min,
+            max: Max(MAX),
+        });
     }
 }
 
@@ -402,8 +505,6 @@ mod tests {
                 // eval
                 let result = cht.multieval(x_range.clone());
                 let expected = multieval(&brute, x_range.clone());
-                eprintln!("{:?}", &brute);
-                eprintln!("{:?}", &result);
                 assert_eq!(result, expected, "eval");
             };
         }
@@ -427,59 +528,57 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn test_vec_convex() {
-    //     fn multieval(brute: &[Quadratic], xs: impl Iterator<Item = i64>) -> Vec<i64> {
-    //         xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
-    //             .collect()
-    //     }
-    //
-    //     let mut input_max;
-    //     let mut cht;
-    //     let mut brute;
-    //     macro_rules! insert {
-    //         ($q:expr) => {
-    //             let q: Quadratic = $q;
-    //
-    //             // parameters
-    //             let test_max = input_max * 3;
-    //             let x_range = -test_max..=test_max;
-    //
-    //             // mutate
-    //             cht.add(q);
-    //             brute.push(q);
-    //
-    //             eprintln!("{:?}", &cht.base);
-    //
-    //             // eval
-    //             let result = cht.multieval(x_range.clone());
-    //             let expected = multieval(&brute, x_range.clone());
-    //             assert_eq!(result, expected, "eval");
-    //         };
-    //     }
-    //
-    //     let mut rng = StdRng::seed_from_u64(42);
-    //     for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
-    //         input_max = im;
-    //         eprintln!("Initialize");
-    //         cht = VecCht::<Convex>::new();
-    //         brute = Vec::new();
-    //         let second = rng.gen_range(-input_max..=input_max);
-    //
-    //         let queries = from_fn(|| {
-    //             Some(Quadratic([
-    //                 rng.gen_range(-input_max..=input_max),
-    //                 rng.gen_range(-input_max..=input_max),
-    //                 second,
-    //             ]))
-    //         })
-    //         .take(20)
-    //         .sorted_by_key(|q| q.0[1])
-    //         .collect_vec();
-    //         for q in queries {
-    //             insert!(q);
-    //         }
-    //         eprintln!();
-    //     }
-    // }
+    #[test]
+    fn test_vec_convex() {
+        fn multieval(brute: &[Quadratic], xs: impl Iterator<Item = i64>) -> Vec<i64> {
+            xs.map(|x| brute.iter().map(|&line| line.eval(x)).max().unwrap())
+                .collect()
+        }
+
+        let mut input_max;
+        let mut cht;
+        let mut brute;
+        macro_rules! insert {
+            ($q:expr) => {
+                let q: Quadratic = $q;
+
+                // parameters
+                let test_max = input_max * 3;
+                let x_range = -test_max..=test_max;
+
+                // mutate
+                cht.add(q);
+                brute.push(q);
+
+                // eval
+                let result = cht.multieval(x_range.clone());
+                let expected = multieval(&brute, x_range.clone());
+                assert_eq!(result, expected, "eval");
+            };
+        }
+
+        let mut rng = StdRng::seed_from_u64(42);
+        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+            input_max = im;
+            eprintln!("Initialize");
+            cht = VecCht::<Convex>::new();
+            brute = Vec::new();
+            let second = rng.gen_range(-input_max..=input_max);
+
+            let queries = from_fn(|| {
+                Some(Quadratic([
+                    rng.gen_range(-input_max..=input_max),
+                    rng.gen_range(-input_max..=input_max),
+                    second,
+                ]))
+            })
+            .take(20)
+            .sorted_by_key(|q| q.0[1])
+            .collect_vec();
+            for q in queries {
+                insert!(q);
+            }
+            eprintln!();
+        }
+    }
 }
