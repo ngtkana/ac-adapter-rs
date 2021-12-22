@@ -242,7 +242,7 @@ impl VecChtBase {
             }
         }
         if let Some(last) = self.vec.pop() {
-            match last.line.brace(line) {
+            match brace_convex(last.line, line) {
                 Err(x) => {
                     self.vec.push(Segment {
                         max: Max(x),
@@ -304,7 +304,7 @@ impl BTreeChtBase {
         }
         if let Some(&seg1) = self.set.range(..p).next_back() {
             self.set.remove(&seg1);
-            match seg1.line.brace(line) {
+            match brace_convex(seg1.line, line) {
                 Err(x) => {
                     debug_assert!(seg1.min.0 < x);
                     self.set.insert(Segment {
@@ -325,7 +325,7 @@ impl BTreeChtBase {
         }
         if let Some(&seg1) = self.set.range(p..).next() {
             self.set.remove(&seg1);
-            match line.brace(seg1.line) {
+            match brace_convex(line, seg1.line) {
                 Err(x) => {
                     debug_assert!(x < seg1.max.0);
                     self.set.insert(Segment {
@@ -452,20 +452,36 @@ impl Line {
     fn eval(&self, x: i64) -> i64 {
         self.p * x - self.q
     }
-    fn brace(self, other: Self) -> Result<Segment, i64> {
-        let Self { p: p0, q: q0 } = self;
-        let Self { p: p1, q: q1 } = other;
-        let x0 = (q1 - q0).div_euclid(p1 - p0);
-        if x0 * (p1 - p0) == (q1 - q0) {
-            return Err(x0);
-        }
-        let x1 = x0 + 1;
-        let p = (p1 * x1 - p0 * x0) - (q1 - q0);
-        let q = (p1 - p0) * x0 * x1 - q1 * x0 + q0 * x1;
-        debug_assert_eq!(p * x0 - q, p0 * x0 - q0);
-        debug_assert_eq!(p * x1 - q, p1 * x1 - q1);
+}
+fn brace_convex(l0: Line, l1: Line) -> Result<Segment, i64> {
+    let Line { p: p0, q: q0 } = l0;
+    let Line { p: p1, q: q1 } = l1;
+    let x = (q1 - q0).div_euclid(p1 - p0);
+    if l0.eval(x) == l1.eval(x) {
+        Err(x)
+    } else {
+        let (x0, x1) = (x, x + 1);
+        let p = l1.eval(x1) - l0.eval(x0);
+        let q = p * x0 - l0.eval(x0);
         Ok(Segment {
-            line: Self { p, q },
+            line: Line { p, q },
+            min: Min(x0),
+            max: Max(x1),
+        })
+    }
+}
+fn brace_concave(l0: Line, l1: Line) -> Result<Segment, i64> {
+    let Line { p: p0, q: q0 } = l0;
+    let Line { p: p1, q: q1 } = l1;
+    let x = (q0 - q1).div_euclid(p0 - p1);
+    if l0.eval(x) == l1.eval(x) {
+        Err(x)
+    } else {
+        let (x0, x1) = (x, x + 1);
+        let p = l1.eval(x1) - l0.eval(x0);
+        let q = p * x0 - l0.eval(x0);
+        Ok(Segment {
+            line: Line { p, q },
             min: Min(x0),
             max: Max(x1),
         })
@@ -510,7 +526,19 @@ mod tests {
             min: Min(1),
             max: Max(2),
         });
-        assert_eq!(l0.brace(l1), expected);
+        assert_eq!(brace_convex(l0, l1), expected);
+    }
+
+    #[test]
+    fn test_brace_ok_concave() {
+        let l0 = Line { p: 2, q: 2 };
+        let l1 = Line { p: -1, q: 0 };
+        let expected = Ok(Segment {
+            line: Line { p: 1, q: 2 },
+            min: Min(0),
+            max: Max(1),
+        });
+        assert_eq!(brace_concave(l0, l1), expected);
     }
 
     #[test]
@@ -518,7 +546,7 @@ mod tests {
         let l0 = Line { p: -2, q: -4 };
         let l1 = Line { p: 3, q: 1 };
         let expected = Err(1);
-        assert_eq!(l0.brace(l1), expected);
+        assert_eq!(brace_convex(l0, l1), expected);
     }
 
     #[test]
