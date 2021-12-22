@@ -210,12 +210,13 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
         let p = C::negate_if_concave(first);
         let q = C::negate_if_concave(-zeroth);
         let line = Line { p, q };
-        if self.set.range(p..).next().map_or(false, |seg| {
+        if let Some(seg) = self.set.range(p..).next() {
             let Min(x) = seg.min;
-            x == MIN && seg.line.p == p && seg.line.q <= q
+            if x == MIN && seg.line.p == p && seg.line.q <= q
                 || x != MIN && line.eval(x) <= seg.line.eval(x)
-        }) {
-            return;
+            {
+                return;
+            }
         }
 
         self.set.take(&p);
