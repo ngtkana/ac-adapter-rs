@@ -5,17 +5,26 @@
 //!
 //! # このライブラリを使える問題
 //!
-//! - AOJ 2674: Disordered Data Detection
+//! - AOJ 2674 - Disordered Data Detection
 //!   - 問題: <https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=2674>
-//!   - 提出: <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530>
+//!   - 提出: TODO <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530>
 //!   - 難易度: 貼るだけ
+//!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
 //!
-//! - AOJ 1549: Hard Beans
+//! - AOJ 1549 - Hard Beans
 //!   - 問題: <https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=1549>
-//!   - 提出: <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168616>
+//!   - 提出: TODO <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168616>
 //!   - 難易度: 貼るだけ
+//!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`next_value`](WaveletMatrix::next_value), [`prev_value`](WaveletMatrix::prev_value)
+//!
+//! - Library Checker - Range Kth Smallest
+//!   - 問題: <https://judge.yosupo.jp/problem/range_kth_smallest>
+//!   - 提出 (640 ms): TODO <https://judge.yosupo.jp/submission/72220>
+//!   - 難易度: 貼るだけ
+//!   - 制約: N, Q ≤ 200,000
+//!   - 使用するメソッド: [`quantile`](WaveletMatrix::quantile)
 //!
 //!
 //! # パフォーマンスについての実験結果
@@ -24,8 +33,9 @@
 //!
 //! 僅差ですが、自作のほうが若干速いようなので、そちらを採用しています。
 //!
-//! - [`std`] の `sort_by_key` (26 ms): <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169044>
+//! - [`std`] の `sort_by_key` (26 ms): <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045>
 //! - 自作 `stable_partition_by_key` (22 ms): <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045>
+#![allow(clippy::len_zero)]
 
 use std::{
     fmt::Debug,
@@ -98,126 +108,49 @@ impl WaveletMatrix {
         ans
     }
     /// `a[pos_range]` の要素のうち、`value_range` に含まれるものの個数。
-    /// `a[l..r].iter().filter(|&&x| value_range.contains(&x)).count()` と等価
-    ///
     pub fn range_freq(
         &self,
-        pos_range: impl RangeBounds<usize>,
+        index_range: impl RangeBounds<usize>,
         value_range: impl RangeBounds<usize>,
     ) -> usize {
-        fn range_freq(
-            wv: &WaveletMatrix,
-            i: usize,
-            pos_range: Range<usize>,
-            query: &Range<usize>,
-            node: Range<usize>,
-        ) -> usize {
-            if is_disjoint_with(&node, query) {
-                0
-            } else if is_subrange_of(&node, query) {
-                pos_range.len()
-            } else {
-                let mid = midpoint(&node);
-                range_freq(
-                    wv,
-                    i + 1,
-                    next_position_range(&wv.table[i], &pos_range, false),
-                    query,
-                    node.start..mid,
-                ) + range_freq(
-                    wv,
-                    i + 1,
-                    next_position_range(&wv.table[i], &pos_range, true),
-                    query,
-                    mid..node.end,
-                )
-            }
-        }
-        let (pl, pr) = open(pos_range, self.len());
-        let (vl, vr) = open(value_range, self.lim());
-        range_freq(self, 0, pl..pr, &(vl..vr), 0..self.lim())
+        self.span(open(index_range, self.len()))
+            .range_freq(&open(value_range, self.lim()))
     }
+    /// `a[pos_range]` の要素のうち、`value_range` に含まれる最小のもの、なければ `None`。
     pub fn next_value(
         &self,
-        pos_range: impl RangeBounds<usize>,
+        index_range: impl RangeBounds<usize>,
         value_range: impl RangeBounds<usize>,
     ) -> Option<usize> {
-        fn next_value(
-            wv: &WaveletMatrix,
-            i: usize,
-            pos: Range<usize>,
-            query: &Range<usize>,
-            node: Range<usize>,
-        ) -> Option<usize> {
-            #[allow(clippy::len_zero)]
-            if is_disjoint_with(&node, query) || pos.len() == 0 {
-                None
-            } else if node.len() == 1 {
-                Some(node.start)
-            } else {
-                let mid = midpoint(&node);
-                next_value(
-                    wv,
-                    i + 1,
-                    next_position_range(&wv.table[i], &pos, false),
-                    query,
-                    node.start..mid,
-                )
-                .or_else(|| {
-                    next_value(
-                        wv,
-                        i + 1,
-                        next_position_range(&wv.table[i], &pos, true),
-                        query,
-                        mid..node.end,
-                    )
-                })
-            }
-        }
-        let (pl, pr) = open(pos_range, self.len());
-        let (vl, vr) = open(value_range, self.lim());
-        next_value(self, 0, pl..pr, &(vl..vr), 0..self.lim())
+        self.span(open(index_range, self.len()))
+            .next_value(&open(value_range, self.lim()))
     }
+    /// `a[pos_range]` の要素のうち、`value_range` に含まれる最大のもの、なければ `None`。
     pub fn prev_value(
         &self,
-        pos_range: impl RangeBounds<usize>,
+        index_range: impl RangeBounds<usize>,
         value_range: impl RangeBounds<usize>,
     ) -> Option<usize> {
-        fn prev_value(
-            wv: &WaveletMatrix,
-            i: usize,
-            pos: Range<usize>,
-            query: &Range<usize>,
-            node: Range<usize>,
-        ) -> Option<usize> {
-            #[allow(clippy::len_zero)]
-            if is_disjoint_with(&node, query) || pos.len() == 0 {
-                None
-            } else if node.len() == 1 {
-                Some(node.end - 1)
-            } else {
-                let mid = midpoint(&node);
-                prev_value(
-                    wv,
-                    i + 1,
-                    next_position_range(&wv.table[i], &pos, true),
-                    query,
-                    mid..node.end,
-                )
-                .or_else(|| {
-                    prev_value(
-                        wv,
-                        i + 1,
-                        next_position_range(&wv.table[i], &pos, false),
-                        query,
-                        node.start..mid,
-                    )
-                })
-            }
+        self.span(open(index_range, self.len()))
+            .prev_value(&open(value_range, self.lim()))
+    }
+    /// `a[pos_range]` の要素のうち、`value_range` に含まれる `k` 番目に小さいもの、なければ `None`。
+    pub fn quantile(
+        &self,
+        k: usize,
+        index_range: impl RangeBounds<usize>,
+        value_range: impl RangeBounds<usize>,
+    ) -> Option<usize> {
+        self.span(open(index_range, self.len()))
+            .quantile(k, &open(value_range, self.lim()))
+            .ok()
+    }
+    fn span(&self, index_range: Range<usize>) -> Span<'_> {
+        Span {
+            span: &self.table,
+            index_range,
+            value_range: 0..self.lim(),
         }
-        let (pl, pr) = open(pos_range, self.len());
-        let (vl, vr) = open(value_range, self.lim());
-        prev_value(self, 0, pl..pr, &(vl..vr), 0..self.lim())
     }
 }
 
@@ -246,6 +179,7 @@ fn next_position_range(row: &StaticBitVec, range: &Range<usize>, which: bool) ->
     next_position(row, range.start, which)..next_position(row, range.end, which)
 }
 
+/// 累積和のできる静的なビットベクター
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct StaticBitVec {
     len: usize,
@@ -331,6 +265,76 @@ impl StaticBitVec {
     }
 }
 
+#[derive(Clone, Debug, Hash, PartialEq)]
+struct Span<'a> {
+    span: &'a [StaticBitVec],
+    index_range: Range<usize>,
+    value_range: Range<usize>,
+}
+impl<'a> Span<'a> {
+    fn left_down(&self) -> Self {
+        Self {
+            span: &self.span[1..],
+            index_range: next_position_range(&self.span[0], &self.index_range, false),
+            value_range: self.value_range.start..midpoint(&self.value_range),
+        }
+    }
+    fn right_down(&self) -> Self {
+        Self {
+            span: &self.span[1..],
+            index_range: next_position_range(&self.span[0], &self.index_range, true),
+            value_range: midpoint(&self.value_range)..self.value_range.end,
+        }
+    }
+    fn range_freq(&self, target: &Range<usize>) -> usize {
+        if is_disjoint_with(&self.value_range, target) || self.index_range.len() == 0 {
+            0
+        } else if is_subrange_of(&self.value_range, target) {
+            self.index_range.len()
+        } else {
+            self.left_down().range_freq(target) + self.right_down().range_freq(target)
+        }
+    }
+    fn next_value(&self, target: &Range<usize>) -> Option<usize> {
+        if is_disjoint_with(&self.value_range, target) || self.index_range.len() == 0 {
+            None
+        } else if self.value_range.len() == 1 {
+            Some(self.value_range.start)
+        } else {
+            self.left_down()
+                .next_value(target)
+                .or_else(|| self.right_down().next_value(target))
+        }
+    }
+    fn prev_value(&self, target: &Range<usize>) -> Option<usize> {
+        if is_disjoint_with(&self.value_range, target) || self.index_range.len() == 0 {
+            None
+        } else if self.value_range.len() == 1 {
+            Some(self.value_range.start)
+        } else {
+            self.right_down()
+                .prev_value(target)
+                .or_else(|| self.left_down().prev_value(target))
+        }
+    }
+    fn quantile(&self, k: usize, target: &Range<usize>) -> Result<usize, usize> {
+        let ans = if is_disjoint_with(&self.value_range, target) {
+            Err(0)
+        } else if is_subrange_of(&self.value_range, target) && self.index_range.len() <= k {
+            Err(self.index_range.len())
+        } else if self.value_range.len() == 1 {
+            Ok(self.value_range.start)
+        } else {
+            self.left_down().quantile(k, target).or_else(|len| {
+                self.right_down()
+                    .quantile(k - len, target)
+                    .map_err(|e| e + len)
+            })
+        };
+        ans
+    }
+}
+
 fn midpoint(range: &Range<usize>) -> usize {
     range.start + (range.end - range.start) / 2
 }
@@ -348,24 +352,22 @@ fn divrem(num: usize, den: usize) -> (usize, usize) {
     (q, num - q * den)
 }
 
-fn open(range: impl RangeBounds<usize>, len: usize) -> (usize, usize) {
-    (
-        match range.start_bound() {
-            Bound::Included(&l) => l,
-            Bound::Excluded(&l) => l + 1,
-            Bound::Unbounded => 0,
-        },
-        match range.end_bound() {
-            Bound::Included(&r) => r + 1,
-            Bound::Excluded(&r) => r,
-            Bound::Unbounded => len,
-        },
-    )
+fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
+    (match range.start_bound() {
+        Bound::Included(&l) => l,
+        Bound::Excluded(&l) => l + 1,
+        Bound::Unbounded => 0,
+    })..(match range.end_bound() {
+        Bound::Included(&r) => r + 1,
+        Bound::Excluded(&r) => r,
+        Bound::Unbounded => len,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use itertools::{iproduct, Itertools};
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use std::iter::repeat_with;
 
@@ -375,12 +377,10 @@ mod tests {
         let n = 12;
         let mut a = (0..n)
             .map(|i| i * 2 + rng.gen_bool(0.5) as usize)
-            .collect::<Vec<_>>();
+            .collect_vec();
         let mut b = a.clone();
-        dbg!(&a, &b);
         a.sort_by_key(|&x| x & 1);
         stable_partition_by_key(&mut b, |x| x & 1 == 1);
-        dbg!(&a, &b);
         assert_eq!(a, b);
     }
 
@@ -416,7 +416,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for &(n, p) in &[(9, 0.5), (15, 0.5), (300, 0.5), (300, 0.1), (300, 0.9)] {
             for _ in 0..20 {
-                let vec = repeat_with(|| rng.gen_bool(p)).take(n).collect::<Vec<_>>();
+                let vec = repeat_with(|| rng.gen_bool(p)).take(n).collect_vec();
                 let bitvec = vec.iter().copied().collect::<StaticBitVec>();
 
                 // access
@@ -452,8 +452,8 @@ mod tests {
         ];
         let expected = expected
             .iter()
-            .map(|row| row.chars().map(|c| c == '1').collect::<Vec<_>>())
-            .collect::<Vec<_>>();
+            .map(|row| row.chars().map(|c| c == '1').collect_vec())
+            .collect_vec();
         let wm = vec![5, 4, 5, 5, 2, 1, 5, 6, 1, 3, 5, 0]
             .into_iter()
             .collect::<WaveletMatrix>();
@@ -479,34 +479,34 @@ mod tests {
             assert_eq!(wm.access(i), expected);
         }
 
-        for l in 0..=n {
-            for r in l..=n {
-                for lower in 0..=m {
-                    for upper in 0..=m {
-                        // next_value
-                        let expected = slice[l..r]
-                            .iter()
-                            .filter(|&&x| (lower..upper).contains(&x))
-                            .count();
-                        assert_eq!(wm.range_freq(l..r, lower..upper), expected);
+        // ソートした部分列に対するクエリ
+        for (index, value) in iproduct!(
+            (0..=n + 1).tuple_combinations().map(|(l, r)| l..r - 1),
+            (0..=m + 1).tuple_combinations().map(|(l, r)| l..r - 1)
+        ) {
+            let sorted = slice[index.clone()]
+                .iter()
+                .copied()
+                .filter(|&x| value.contains(&x))
+                .sorted()
+                .collect_vec();
 
-                        // next_value
-                        let expected = slice[l..r]
-                            .iter()
-                            .copied()
-                            .filter(|&x| (lower..upper).contains(&x))
-                            .min();
-                        assert_eq!(wm.next_value(l..r, lower..upper), expected);
+            // range_freq
+            let expected = sorted.len();
+            assert_eq!(wm.range_freq(index.clone(), value.clone()), expected);
 
-                        // prev_value
-                        let expected = slice[l..r]
-                            .iter()
-                            .copied()
-                            .filter(|&x| (lower..upper).contains(&x))
-                            .max();
-                        assert_eq!(wm.prev_value(l..r, lower..upper), expected);
-                    }
-                }
+            // next_value
+            let expected = sorted.first().copied();
+            assert_eq!(wm.next_value(index.clone(), value.clone()), expected);
+
+            // prev_value
+            let expected = sorted.last().copied();
+            assert_eq!(wm.prev_value(index.clone(), value.clone()), expected);
+
+            // quantile
+            for k in 0..=index.len() {
+                let expected = sorted.get(k).copied();
+                assert_eq!(wm.quantile(k, index.clone(), value.clone()), expected);
             }
         }
     }
