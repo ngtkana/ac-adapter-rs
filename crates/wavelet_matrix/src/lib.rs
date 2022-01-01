@@ -26,6 +26,13 @@
 //!   - 制約: N, Q ≤ 200,000
 //!   - 使用するメソッド: [`quantile`](WaveletMatrix::quantile)
 //!
+//! - ECR 22 E - Army Creation
+//!   - 問題: <http://codeforces.com/contest/813/problem/E>
+//!   - 提出 (1117 ms): <http://codeforces.com/contest/813/submission/141316921>
+//!   - 難易度: ちょっと工夫が要ります。想定解法は fractional cascading なるものを使うようです。
+//!   - 制約: N, Q ≤ 100,000
+//!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
+//!
 //!
 //! # パフォーマンスについての実験結果
 //!
