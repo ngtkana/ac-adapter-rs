@@ -246,7 +246,7 @@ where
                 groups
                     .into_iter()
                     .filter(|group| !group.is_empty())
-                    .map(|list| (&self.values[self.find(*list.iter().next().unwrap())], list)),
+                    .map(|list| (&self.values[self.find(*list.get(0).unwrap())], list)),
             )
             .finish()
     }
