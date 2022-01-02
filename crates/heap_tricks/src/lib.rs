@@ -68,6 +68,16 @@
 //!   - 難易度: 易しめ。
 //!   - 制約: N ≤ 200,000
 //!   - 使う構造体: [`RemovableHeap`]
+//! - yukicoder No.919 - You Are A Project Manager
+//!   - 問題: <https://yukicoder.me/problems/no/919>
+//!   - 提出: TODO
+//!   - 出題日: 2019-10-25
+//!   - 難易度: そこそこ
+//!   - 制約: N ≤ 100,000
+//!   - 使う構造体: [`DoubleHeap`]
+//!   - 難易度: Mo 書かないといけないので先延ばしに……
+//!   ウェーブレット行列で解く問題を Mo で無理やりクエリ
+//!   先読みしているイメージですかね。
 //! - ABC 170 E - Smart Infants
 //!   - 問題: <https://atcoder.jp/contests/abc170/tasks/abc170_e>
 //!   - 提出 (163 ms): <https://atcoder.jp/contests/abc170/submissions/28296739>
@@ -80,16 +90,6 @@
 //!     - AVL 木 (2477 ms): <https://atcoder.jp/contests/abc170/submissions/24165251>
 //!   - コメント: これフルクラッチで書くとけっこう混乱するので、
 //!   ライブラリがるとかなり助かります。
-//! - yukicoder No.919 - You Are A Project Manager
-//!   - 問題: <https://yukicoder.me/problems/no/919>
-//!   - 提出: TODO
-//!   - 出題日: 2020-12-06
-//!   - 難易度: そこそこ
-//!   - 制約: N ≤ 100,000
-//!   - 使う構造体: [`DoubleHeap`]
-//!   - 難易度: Mo 書かないといけないので先延ばしに……
-//!   ウェーブレット行列で解く問題を Mo で無理やりクエリ
-//!   先読みしているイメージですかね。
 //! - OUPC 2020 D - 仲良しスライム
 //!   - 問題: <https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D>
 //!   - 提出 (90 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242>
