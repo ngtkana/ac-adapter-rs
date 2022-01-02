@@ -2,23 +2,57 @@
 //!
 //! 本体は [`RemovableHeap`] です。
 //!
-//! # 注意点
+//! # ⚠️ 注意点
 //!
-//! ヒープに入っていない要素で [`remove_unchecked`](RemovableHeap::remove_unchecked)
-//! を呼び出すと、内部状態が壊れ、その後あらゆる挙動が未定義になります。
-//! ヒープに入っているかどうかを知りたいときには、別途 [`std::collections::HashMap`]
-//! を併用するなどしてください。
+//! [`RemovableHeap`] は、ヒープに入っていない要素を削除すると
+//! **たとえその要素をすぐに挿入し直したとしても、
+//! その後の挙動がすべて未定義になります。**
+//!
+//! # パフォーマンスに関する実験
+//!
+//! ## 実験１: 中央値取得で両方に入れる実装
+//!
+//! 下記「Yukicoder No.738 - 平らな農地」に次の変更を入れたものです。
+//! 35 ms だったものが 53 ms に悪化します。
+//! 実行時間制限が厳し目なときにはやめたほうが良いかもです。
+//!
+//! 提出 (53 ms): <https://yukicoder.me/submissions/727802>
+//!
+//! ```diff
+//! 14,19c14,16
+//! <     for (i, &x) in a.iter().enumerate().take(k) {
+//! <         if i % 2 == 0 {
+//! <             heap.push_right(x);
+//! <         } else {
+//! <             heap.push_left(x);
+//! <         }
+//! ---
+//! >     for &x in &a[..k] {
+//! >         heap.push_right(x);
+//! >         heap.push_left(x);
+//! 30a28,29
+//! >         heap.push_left(a[j]);
+//! >         heap.remove_left_unchecked(a[i]);
+//! 33c32
+//! <     println!("{}", ans)
+//! ---
+//! >     println!("{}", ans / 2)
+//! ```
+//!
 //!
 //! # このライブラリを使える問題
 //!
 //! - Yukicoder No.738 - 平らな農地
 //!   - 問題: <https://yukicoder.me/problems/no/738>
-//!   - 提出 (38 ms): <https://yukicoder.me/submissions/727771>
+//!   - 提出 (35 ms): <https://yukicoder.me/submissions/727798>
 //!   - 難易度: ほぼ貼るだけ
 //!   - 制約: N, Q ≤ 100,000
-//!   - コメント: 固定個数中央値は、最初の時点で右、左、右、左と入れるか、
-//!   入れ終わったときに [`balance`](MedianHeap::balance) を呼ぶかがよいです。
-//!
+//!   - コメント: 固定個数中央値は、両方に入れると楽です。
+//! - ABC 127 F -  Absolute Minima
+//!   - 問題: <https://atcoder.jp/contests/abc127/tasks/abc127_f>
+//!   - 提出 (211 ms): <https://atcoder.jp/contests/abc127/submissions/28290935>
+//!   - 難易度: slope trick やるだけ
+//!   - 制約: Q ≤ 200,000
 
 use std::{
     cmp::{Ordering, Reverse},
@@ -26,35 +60,72 @@ use std::{
     fmt::Debug,
     hash::Hash,
     iter::FromIterator,
+    ops::{AddAssign, SubAssign},
 };
 
+/// 集約操作を指定するためのトレイトです。
+/// 単なるマーカートレイトではなく、集約結果を管理するための
+/// オブジェクトとして使用されます
 pub trait Handler<T> {
     fn push_left(&mut self, value: T);
     fn pop_left(&mut self, value: T);
     fn push_right(&mut self, value: T);
     fn pop_right(&mut self, value: T);
 }
-struct Nop;
+/// 何も集約しないことを表す型です。
+/// [`Handler`] の一種です。
+/// [`DoubleHeap::new()`] で構築すると自動的に採用されます。
+/// Unit-like struct なので、同名の定数が自動定義されています。
+#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+pub struct Nop;
 impl<T> Handler<T> for Nop {
     fn push_left(&mut self, _value: T) {}
     fn pop_left(&mut self, _value: T) {}
     fn push_right(&mut self, _value: T) {}
     fn pop_right(&mut self, _value: T) {}
 }
+/// 総和を集約するための型です。
+/// [`Handler`] の一種です。
+/// [`Sum::default()`] でデフォルト構築できます。
+#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+pub struct Sum<T> {
+    left: T,
+    right: T,
+}
+impl<T> Handler<T> for Sum<T>
+where
+    T: AddAssign<T> + SubAssign<T>,
+{
+    fn push_left(&mut self, value: T) {
+        self.left += value;
+    }
+    fn pop_left(&mut self, value: T) {
+        self.left -= value;
+    }
+    fn push_right(&mut self, value: T) {
+        self.right += value;
+    }
+    fn pop_right(&mut self, value: T) {
+        self.right -= value;
+    }
+}
 
+/// ヒープを４本使って中央値などを管理するデータ構造です。
+/// [`Handler`] が必要ないときには [`DoubleHeap::new()`] で構築すると
+/// 勝手に [`Nop`] が採用されます。
 #[derive(Clone)]
-pub struct MedianHeap<T, H> {
+pub struct DoubleHeap<T, H> {
     left: RemovableHeap<T>,
     right: RemovableHeap<Reverse<T>>,
     handler: H,
 }
-impl<T, H> Debug for MedianHeap<T, H>
+impl<T, H> Debug for DoubleHeap<T, H>
 where
     T: Copy + Ord + Hash + Debug,
     H: Handler<T>,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("MedianHeap")
+        f.debug_struct("DoubleHeap")
             .field("left", &self.left)
             .field(
                 "right",
@@ -69,7 +140,7 @@ where
             .finish()
     }
 }
-impl<T> Default for MedianHeap<T, Nop>
+impl<T> Default for DoubleHeap<T, Nop>
 where
     T: Copy + Ord + Hash,
 {
@@ -81,7 +152,7 @@ where
         }
     }
 }
-impl<T> MedianHeap<T, Nop>
+impl<T> DoubleHeap<T, Nop>
 where
     T: Copy + Ord + Hash,
 {
@@ -89,11 +160,15 @@ where
         Self::default()
     }
 }
-impl<T, H> MedianHeap<T, H>
+impl<T, H> DoubleHeap<T, H>
 where
     T: Copy + Ord + Hash,
     H: Handler<T>,
 {
+    /// [`Handler`] を指定して構築します。
+    ///
+    /// ```
+    /// ```
     pub fn with_handler(handler: H) -> Self {
         Self {
             left: RemovableHeap::default(),
@@ -212,7 +287,14 @@ where
     }
 }
 
-/// 本体です。
+/// 論理削除のできるヒープです。
+///
+/// # ⚠️  注意点
+///
+/// ヒープに入っていない要素を削除すると
+/// **たとえその要素をすぐに挿入し直したとしても、
+/// その後の挙動がすべて未定義になります。**
+///
 #[derive(Clone)]
 pub struct RemovableHeap<T> {
     heap: BinaryHeap<T>,
@@ -406,7 +488,7 @@ mod tests {
     #[test]
     fn test_median_heap() {
         let mut sorted = Vec::new();
-        let mut heap = MedianHeap::default();
+        let mut heap = DoubleHeap::default();
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let x = rng.gen_range(0..10);
