@@ -12,7 +12,7 @@
 //!
 //! ## 実験１: 中央値取得で両方に入れる実装
 //!
-//! 下記「Yukicoder No.738 - 平らな農地」に次の変更を入れたものです。
+//! 下記「yukicoder No.738 - 平らな農地」に次の変更を入れたものです。
 //! 35 ms だったものが 53 ms に悪化します。
 //! 実行時間制限が厳し目なときにはやめたほうが良いかもです。
 //!
@@ -42,7 +42,10 @@
 //!
 //! # このライブラリを使える問題
 //!
-//! - Yukicoder No.738 - 平らな農地
+//! 固定された数列の順位を答えるだけなら、ウェーブレット行列
+//! のほうが楽という説はあります。
+//!
+//! - yukicoder No.738 - 平らな農地
 //!   - 問題: <https://yukicoder.me/problems/no/738>
 //!   - 提出 (35 ms): <https://yukicoder.me/submissions/727798>
 //!   - 出題日: 2018-09-28
@@ -65,6 +68,41 @@
 //!   - 難易度: 易しめ。
 //!   - 制約: N ≤ 200,000
 //!   - 使う構造体: [`RemovableHeap`]
+//! - ABC 170 E - Smart Infants
+//!   - 問題: <https://atcoder.jp/contests/abc170/tasks/abc170_e>
+//!   - 提出 (163 ms): <https://atcoder.jp/contests/abc170/submissions/28296739>
+//!   - 出題日: 2020-06-14
+//!   - 難易度: そこそこ。
+//!   - 制約: N ≤ 200,000
+//!   - 使う構造体: [`RemovableHeap`]
+//!   - 他の解法:
+//!     - C++ の `std::multiset` (488 ms): <https://atcoder.jp/contests/abc170/submissions/14328933>
+//!     - AVL 木 (2477 ms): <https://atcoder.jp/contests/abc170/submissions/24165251>
+//!   - コメント: これフルクラッチで書くとけっこう混乱するので、
+//!   ライブラリがるとかなり助かります。
+//! - yukicoder No.919 - You Are A Project Manager
+//!   - 問題: <https://yukicoder.me/problems/no/919>
+//!   - 提出: TODO
+//!   - 出題日: 2020-12-06
+//!   - 難易度: そこそこ
+//!   - 制約: N ≤ 100,000
+//!   - 使う構造体: [`DoubleHeap`]
+//!   - 難易度: Mo 書かないといけないので先延ばしに……
+//!   ウェーブレット行列で解く問題を Mo で無理やりクエリ
+//!   先読みしているイメージですかね。
+//! - OUPC 2020 D - 仲良しスライム
+//!   - 問題: <https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D>
+//!   - 提出 (90 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242>
+//!   - 出題日: 2020-12-12
+//!   - 難易度: 簡単。
+//!   - 制約: N ≤ 100,000
+//!   - 使う構造体: [`DoubleHeap`]
+//!   - 他の解法:
+//!     - ウェーブレット行列 (440 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171281>
+//!   - コメント: A:B 重み付き中央値クエリ。平衡基準を抽象化して良かった〜〜
+//!   これもウェーブレット行列のほうが思いつきやすそうですが、
+//!   ウェーブレット行列ライブラリの累積和系の機能が使いづらい（あの！？）ので、
+//!   実装は [`DoubleHeap`] を使うほうが楽です。
 //! - ABC 213 G - Game on Tree 2
 //!   - 問題: <https://atcoder.jp/contests/abc218/tasks/abc218_g>
 //!   - 提出 (115 ms): <https://atcoder.jp/contests/abc218/submissions/28295770>
