@@ -45,6 +45,23 @@
 //! 固定された数列の順位を答えるだけなら、ウェーブレット行列
 //! のほうが楽という説はあります。
 //!
+//! - JAG Practice Contest for ACM-ICPC Asia Regional 2016 C - We Don't Wanna Work!
+//!   - 問題: <https://atcoder.jp/contests/jag2016autumn/tasks/icpc2016autumn_c>
+//!   - 提出: TODO
+//!   - 出題日: 2016-09-04
+//!   - 難易度: 易しめ。
+//!   - 制約: N + Q ≤ 70,000
+//!   - コメント: キーに [`Copy`] を課しているので [`String`] がくるとかなり
+//!   めんどくさいことに！！ むーん……
+//!   - 使う構造体: [`DoubleHeap`] （左右移動の明示的追跡あり）
+//! - yukicoder No.649 - ここでちょっとQK！
+//!   - 問題: <https://yukicoder.me/problems/no/649>
+//!   - 提出 (262 ms): <https://yukicoder.me/submissions/727871>
+//!   - 出題日: 2018-02-09
+//!   - 難易度: 易しめ。
+//!   - 制約: N, Q ≤ 200,000
+//!   - コメント: 中央削除があります。
+//!   - 使う構造体: [`DoubleHeap`] (削除は中央のみです。）
 //! - yukicoder No.738 - 平らな農地
 //!   - 問題: <https://yukicoder.me/problems/no/738>
 //!   - 提出 (35 ms): <https://yukicoder.me/submissions/727798>
@@ -113,6 +130,14 @@
 //!   - コメント: 本番二分探索を考えてうまく行かず、
 //!   後日 [`std::collections::BTreeMap`] で multiset もどきを作って
 //!   なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
+//! - yukicoder No.1786 - Maximum Suffix Median (Online)
+//!   - 問題: <https://yukicoder.me/problems/no/1786>
+//!   - 提出 TODO
+//!   - 出題日: 2021-12-01
+//!   - 難易度: 解けていません。
+//!   - 制約: N ≤ 200,000
+//!   - 使う構造体: [`DoubleHeap`] （らしいです。)
+//!   - コメント: むーん
 
 use std::{
     cmp::Reverse,
