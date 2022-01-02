@@ -1,5 +1,5 @@
 [package]
-name = "removable_heap"
+name = "heap_tricks"
 version = "0.1.0"
 edition = "2021"
 
