@@ -51,11 +51,12 @@
 //! - ABC 127 F -  Absolute Minima
 //!   - 問題: <https://atcoder.jp/contests/abc127/tasks/abc127_f>
 //!   - 提出 (211 ms): <https://atcoder.jp/contests/abc127/submissions/28290935>
-//!   - 難易度: slope trick やるだけ
+//!   - 難易度: slope trick やるだけ。`heap_slope_trick` クレートがあるので
+//!   そちらを使ったほうが楽です。
 //!   - 制約: Q ≤ 200,000
 
 use std::{
-    cmp::{Ordering, Reverse},
+    cmp::Reverse,
     collections::BinaryHeap,
     fmt::Debug,
     hash::Hash,
@@ -66,10 +67,18 @@ use std::{
 /// 集約操作を指定するためのトレイトです。
 /// 単なるマーカートレイトではなく、集約結果を管理するための
 /// オブジェクトとして使用されます
+///
+/// [`Nop`] か [`Sum`] を使っておけばだいたい大丈夫ですが、
+/// 必要なら自分で定義することができます。
+///
 pub trait Handler<T> {
+    /// 左側に挿入するときのコールバック関数
     fn push_left(&mut self, value: T);
+    /// 左側から削除するときのコールバック関数
     fn pop_left(&mut self, value: T);
+    /// 右側に挿入するときのコールバック関数
     fn push_right(&mut self, value: T);
+    /// 右側から削除するときのコールバック関数
     fn pop_right(&mut self, value: T);
 }
 /// 何も集約しないことを表す型です。
@@ -89,8 +98,8 @@ impl<T> Handler<T> for Nop {
 /// [`Sum::default()`] でデフォルト構築できます。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
 pub struct Sum<T> {
-    left: T,
-    right: T,
+    pub left: T,
+    pub right: T,
 }
 impl<T> Handler<T> for Sum<T>
 where
@@ -122,21 +131,18 @@ pub struct DoubleHeap<T, H> {
 impl<T, H> Debug for DoubleHeap<T, H>
 where
     T: Copy + Ord + Hash + Debug,
-    H: Handler<T>,
+    H: Handler<T> + Debug,
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
-            .field("left", &self.left)
             .field(
-                "right",
-                &self
-                    .right
-                    .collect_sorted_vec()
-                    .into_iter()
-                    .rev()
-                    .map(|rev| rev.0)
-                    .collect::<Vec<_>>(),
+                "elm",
+                &[
+                    self.collect_left_sorted_vec(),
+                    self.collect_right_sorted_vec(),
+                ],
             )
+            .field("handler", &self.handler)
             .finish()
     }
 }
@@ -167,7 +173,13 @@ where
 {
     /// [`Handler`] を指定して構築します。
     ///
+    /// # Examples
+    ///
     /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// assert_eq!(heap.collect_sorted_vec(), vec![42]);
     /// ```
     pub fn with_handler(handler: H) -> Self {
         Self {
@@ -176,58 +188,247 @@ where
             handler,
         }
     }
+    /// ヒープが空ならば `true` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// assert_eq!(heap.is_empty(), true);
+    /// heap.push_left(42);
+    /// assert_eq!(heap.is_empty(), false);
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.left.is_empty() && self.right.is_empty()
     }
+    /// 全体の要素数を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// assert_eq!(heap.len(), 0);
+    /// heap.push_left(42);
+    /// assert_eq!(heap.len(), 1);
+    /// ```
     pub fn len(&self) -> usize {
         self.left.len() + self.right.len()
     }
+    /// 左側ヒープの要素数を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// assert_eq!(heap.left_len(), 0);
+    /// heap.push_left(42);
+    /// heap.push_right(42);
+    /// heap.push_right(42);
+    /// assert_eq!(heap.left_len(), 1);
+    /// ```
     pub fn left_len(&self) -> usize {
         self.left.len()
     }
+    /// 右側ヒープの要素数を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// assert_eq!(heap.right_len(), 0);
+    /// heap.push_left(42);
+    /// heap.push_right(42);
+    /// heap.push_right(42);
+    /// assert_eq!(heap.right_len(), 2);
+    /// ```
     pub fn right_len(&self) -> usize {
         self.right.len()
     }
+    /// 左側ヒープの要素数が１増加するように、要素を挿入します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    ///
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
+    /// ```
     pub fn push_left(&mut self, elm: T) {
         self.handler.push_left(elm);
         self.left.push(elm);
         self.settle();
     }
+    /// 右側ヒープの要素数が１増加するように、要素を挿入します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    ///
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
+    /// ```
     pub fn push_right(&mut self, elm: T) {
         self.handler.push_right(elm);
         self.right.push(Reverse(elm));
         self.settle();
     }
+    /// 左側ヒープの最大要素があれば返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.peek_left(), Some(13));
+    /// ```
     pub fn peek_left(&self) -> Option<T> {
         self.left.peek()
     }
+    /// 右側ヒープの最大要素があれば返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.peek_left(), Some(13));
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
+    /// ```
     pub fn peek_right(&self) -> Option<T> {
         self.right.peek().map(|rev| rev.0)
     }
+    /// 左側ヒープの最大要素があれば削除して返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.pop_left(), Some(13));
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
+    /// ```
     pub fn pop_left(&mut self) -> Option<T> {
         let ans = self.left.pop();
         self.settle();
         ans
     }
+    /// 右側ヒープの最大要素があれば削除して返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.pop_right(), Some(42));
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
+    /// ```
     pub fn pop_right(&mut self) -> Option<T> {
         let ans = self.right.pop().map(|rev| rev.0);
         self.settle();
         ans
     }
+    /// 左側ヒープの要素数が１増加するように、右側ヒープから要素を移動します
+    ///
+    /// # Panics
+    ///
+    /// 右側ヒープが空のとき。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// heap.move_left();
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13, 42]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
+    /// ```
     pub fn move_left(&mut self) {
-        let elm = self.right.pop().unwrap().0;
+        let elm = self.right.pop().expect("右側ヒープは空です。").0;
         self.handler.pop_right(elm);
         self.handler.push_left(elm);
         self.left.push(elm);
         self.settle();
     }
+    /// 右側ヒープの要素数が１増加するように、左側ヒープから要素を移動します
+    ///
+    /// # Panics
+    ///
+    /// 左側ヒープが空のとき。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// heap.move_right();
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 42, 45]);
+    /// ```
     pub fn move_right(&mut self) {
-        let elm = self.left.pop().unwrap();
+        let elm = self.left.pop().expect("左側ヒープは空です。");
         self.handler.pop_left(elm);
         self.handler.push_right(elm);
         self.right.push(Reverse(elm));
         self.settle();
     }
+    /// ヒープに入っている要素を１つ指定して、左側ヒープの要素数が
+    /// １減少するように削除します。
+    ///
+    /// # ⚠️  Undefined Behavior
+    ///
+    /// 指定された要素がヒープに入っていないとき、
+    /// 以降の挙動すべてが未定義になります。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// heap.remove_left_unchecked(42);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 45]);
+    /// ```
     pub fn remove_left_unchecked(&mut self, elm: T) {
         if self.left.peek().map_or(false, |lmax| elm <= lmax) {
             self.handler.pop_left(elm);
@@ -240,30 +441,179 @@ where
             self.move_right();
         }
     }
+    /// ヒープに入っている要素を１つ指定して、右側ヒープの要素数が
+    /// １減少するように削除します。
+    ///
+    /// # ⚠️  Undefined Behavior
+    ///
+    /// 指定された要素がヒープに入っていないとき、
+    /// 以降の挙動すべてが未定義になります。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(42);
+    /// heap.push_right(45);
+    /// heap.push_right(13);
+    /// heap.remove_right_unchecked(42);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
+    /// ```
     pub fn remove_right_unchecked(&mut self, elm: T) {
         if self.left.peek().map_or(false, |lmax| elm <= lmax) {
             self.handler.pop_left(elm);
             self.left.remove_unchecked(elm);
             self.settle();
+            self.move_left();
         } else {
             self.handler.pop_right(elm);
             self.right.remove_unchecked(Reverse(elm));
             self.settle();
-            self.move_right();
         }
     }
-    pub fn balance(&mut self, mut f: impl FnMut(usize, usize) -> Ordering) {
-        loop {
-            match f(self.left_len(), self.right_len()) {
-                Ordering::Less => self.move_left(),
-                Ordering::Equal => break,
-                Ordering::Greater => self.move_right(),
-            }
+    /// 左側ヒープの要素が `k` 個になるように動かします。
+    ///
+    /// # Panics
+    ///
+    /// `k` が総要素数よりも大きいとき。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
+    ///
+    /// heap.balance_left(1);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![11, 12, 13]);
+    /// ```
+    pub fn balance_left(&mut self, k: usize) {
+        assert!(k <= self.len());
+        while self.left_len() < k {
+            self.move_left()
+        }
+        while self.left_len() > k {
+            self.move_right()
         }
     }
+    /// 右側ヒープの要素が `k` 個になるように動かします。
+    ///
+    /// # Panics
+    ///
+    /// `k` が総要素数よりも大きいとき。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
+    ///
+    /// heap.balance_right(3);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10]);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![11, 12, 13]);
+    /// ```
+    pub fn balance_right(&mut self, k: usize) {
+        assert!(k <= self.len());
+        while self.right_len() < k {
+            self.move_right()
+        }
+        while self.right_len() > k {
+            self.move_left()
+        }
+    }
+    /// ハンドラへの参照を返します。
+    ///
+    /// # Panics
+    ///
+    /// `k` が総要素数よりも大きいとき。
+    ///
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::{DoubleHeap, Sum};
+    /// let mut heap = DoubleHeap::with_handler(Sum::default());
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.handler().left, 33);
+    /// assert_eq!(heap.handler().right, 13);
+    ///
+    /// heap.balance_left(1);
+    /// assert_eq!(heap.handler().left, 10);
+    /// assert_eq!(heap.handler().right, 36);
+    /// ```
     pub fn handler(&self) -> &H {
         &self.handler
     }
+    /// 左側ヒープの要素を昇順に格納したベクターを構築して返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
+    /// ```
+    pub fn collect_left_sorted_vec(&self) -> Vec<T> {
+        self.left.collect_sorted_vec()
+    }
+    /// 右側ヒープの要素を昇順に格納したベクターを構築して返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
+    /// ```
+    pub fn collect_right_sorted_vec(&self) -> Vec<T> {
+        self.right
+            .collect_sorted_vec()
+            .into_iter()
+            .rev()
+            .map(|rev| rev.0)
+            .collect()
+    }
+    /// すべての要素を昇順に格納したベクターを構築して返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(10);
+    /// heap.push_left(11);
+    /// heap.push_left(12);
+    /// heap.push_right(13);
+    /// assert_eq!(heap.collect_sorted_vec(), vec![10, 11, 12, 13]);
+    /// ```
     pub fn collect_sorted_vec(&self) -> Vec<T> {
         let mut left = self.left.collect_sorted_vec();
         let right = self.right.collect_sorted_vec();
@@ -506,17 +856,15 @@ mod tests {
                 }
                 _ => unreachable!(),
             }
-            dbg!(&heap, &sorted);
             assert_eq!(&heap.collect_sorted_vec(), &sorted);
             assert_eq!(heap.len(), sorted.len());
 
             if !sorted.is_empty() {
                 let i = rng.gen_range(0..sorted.len());
                 let expected = sorted[i];
-                heap.balance(|l, _r| l.cmp(&i));
+                heap.balance_left(i);
                 assert_eq!(heap.peek_right().unwrap(), expected);
             }
-            dbg!(&heap, &sorted);
         }
     }
 }
