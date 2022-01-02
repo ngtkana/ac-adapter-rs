@@ -45,15 +45,36 @@
 //! - Yukicoder No.738 - 平らな農地
 //!   - 問題: <https://yukicoder.me/problems/no/738>
 //!   - 提出 (35 ms): <https://yukicoder.me/submissions/727798>
-//!   - 難易度: ほぼ貼るだけ
+//!   - 出題日: 2018-09-28
+//!   - 難易度: 易しめ。
 //!   - 制約: N, Q ≤ 100,000
 //!   - コメント: 固定個数中央値は、両方に入れると楽です。
+//!   - 使う構造体: [`DoubleHeap`] (削除も使います。)
 //! - ABC 127 F -  Absolute Minima
 //!   - 問題: <https://atcoder.jp/contests/abc127/tasks/abc127_f>
 //!   - 提出 (211 ms): <https://atcoder.jp/contests/abc127/submissions/28290935>
-//!   - 難易度: slope trick やるだけ。`heap_slope_trick` クレートがあるので
+//!   - 出題日: 2019-05-25
+//!   - 難易度: 易しめ。`heap_slope_trick` クレートがあるので
 //!   そちらを使ったほうが楽です。
 //!   - 制約: Q ≤ 200,000
+//!   - 使う構造体: [`DoubleHeap`] （`heap_slope_trick` クレートを使ったほうがよいです。)
+//! - ABC 128 E - Roadwork
+//!   - 問題: <https://atcoder.jp/contests/abc128/tasks/abc128_e>
+//!   - 提出 (156 ms): <https://atcoder.jp/contests/abc128/submissions/28294898>
+//!   - 出題日: 2019-05-26
+//!   - 難易度: 易しめ。
+//!   - 制約: N ≤ 200,000
+//!   - 使う構造体: [`RemovableHeap`]
+//! - ABC 213 G - Game on Tree 2
+//!   - 問題: <https://atcoder.jp/contests/abc218/tasks/abc218_g>
+//!   - 提出 (115 ms): <https://atcoder.jp/contests/abc218/submissions/28295770>
+//!   - 出題日: 2021-09-11
+//!   - 難易度: そこそこ。
+//!   - 制約: N ≤ 100,000
+//!   - 使う構造体: [`DoubleHeap`] (削除も使います。)
+//!   - コメント: 本番二分探索を考えてうまく行かず、
+//!   後日 [`std::collections::BTreeMap`] で multiset もどきを作って
+//!   なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
 
 use std::{
     cmp::Reverse,
