@@ -86,10 +86,18 @@
 //! - AOJ 1549 - Hard Beans
 //!   - 問題: <https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=1549>
 //!   - 提出: <https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168616>
-//!   - 出題日易しめ。
+//!   - 出題日: 不明
 //!   - 難易度: 貼るだけ
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`next_value`](WaveletMatrix::next_value), [`prev_value`](WaveletMatrix::prev_value)
+//! - AtCoder 競プロ典型 90 問 017 - Crossing Segments（★7）
+//!   - 問題: <https://atcoder.jp/contests/typical90/tasks/typical90_q>
+//!   - 提出 (549 ms): <https://atcoder.jp/contests/typical90/submissions/28306990>
+//!   - 出題日: 2021-04-20
+//!   - 難易度: 易しめ
+//!   - 制約: N, Q ≤ 100,000
+//!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
+//!   - コメント: 想定は余事象を考えて RSQ
 //!
 #![allow(clippy::len_zero)]
 
