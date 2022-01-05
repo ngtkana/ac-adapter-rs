@@ -1,34 +1,103 @@
-//! 二分法をします。
+//! 二分法（ダブリング）をします。
+//!
+//! # このライブラリを使える問題
+//!
+//! - AtCoder 競プロ典型 90 問 058 - Original Calculator（★4）
+//!   - 問題: <https://atcoder.jp/contests/typical90/tasks/typical90_bf>
+//!   - 提出 (31 ms): <https://atcoder.jp/contests/typical90/submissions/28333297>
+//!   - 出題日: 2021-06-05
+//!   - 難易度: 易しめ。
+//!   - コメント: 周期性でも解けます。
+//!   - 使う関数: [`operator_binary`]
 
 /// 指数部分に使うためのトレイトです。すべての符号なし整数型に実装されています。
 pub trait Pow {
     /// `*x != 0`
     fn is_nonzero(&self) -> bool;
+    /// `*x != 1`
+    fn is_nonone(&self) -> bool;
     /// `x & 1 == 1`
     fn is_odd(&self) -> bool;
     /// `self >>= 1`
     fn shr1(&mut self);
 }
 
-/// 二分法により、`a` を `b` 個 `f` したものを計算します。
+/// aⁿ(x) を計算します。
 ///
 /// # Requirements
 ///
-/// * `f` が結合的で `init` がその単位元（もしくは `a` の非負冪の上で成り立っていればよいです。）
+/// - `T` が積と `U` への作用を持つ
+/// - `square` が `T` における２乗
+/// - `apply` が `T` の `U` への作用
 ///
 ///
-/// # Returns
+/// # Examples
 ///
-/// * `a` を `b` 個 `f` したもの。
+/// ```
+/// use binary::operator_binary;
 ///
-pub fn binary<T>(mut a: T, mut b: impl Pow, init: T, f: impl Fn(&T, &T) -> T) -> T {
-    let mut ans = init;
-    while b.is_nonzero() {
-        if b.is_odd() {
-            ans = f(&ans, &a);
+/// let a = 2;
+/// let n = 5_u32; // `i32` はコンパイルエラー
+/// let x = 42;
+/// let result = operator_binary(a, n, x, |&i| i * i, |&i, j| i * j);
+/// assert_eq!(result, 32 * x);
+/// ```
+///
+pub fn operator_binary<T, U>(
+    mut a: T,
+    mut n: impl Pow,
+    mut x: U,
+    mut square: impl FnMut(&T) -> T,
+    mut apply: impl FnMut(&T, U) -> U,
+) -> U {
+    if n.is_nonzero() {
+        while n.is_nonone() {
+            if n.is_odd() {
+                x = apply(&a, x);
+            }
+            a = square(&a);
+            n.shr1();
         }
-        a = f(&a, &a);
-        b.shr1();
+        x = apply(&a, x);
+    }
+    x
+}
+
+/// aⁿを計算します。
+///
+/// # Requirements
+///
+/// - `T` が積と単位元を持つ
+/// - `identity` が `T` の単位元
+/// - `mul` が `T` の積
+///
+///
+/// # Examples
+///
+/// ```
+/// use binary::value_binary;
+///
+/// let a = 3;
+/// let n = 5_u32; // `i32` はコンパイルエラー
+/// let result = value_binary(a, n, 1, |&i, &j| i * j);
+/// assert_eq!(result, 243);
+/// ```
+pub fn value_binary<T>(
+    mut a: T,
+    mut n: impl Pow,
+    identity: T,
+    mut mul: impl FnMut(&T, &T) -> T,
+) -> T {
+    let mut ans = identity;
+    if n.is_nonzero() {
+        while n.is_nonone() {
+            if n.is_odd() {
+                ans = mul(&a, &ans);
+            }
+            a = mul(&a, &a);
+            n.shr1();
+        }
+        ans = mul(&a, &ans);
     }
     ans
 }
@@ -38,6 +107,9 @@ macro_rules! impl_pow {
         impl Pow for $T {
             fn is_nonzero(&self) -> bool {
                 *self != 0
+            }
+            fn is_nonone(&self) -> bool {
+                *self != 1
             }
             fn is_odd(&self) -> bool {
                 self & 1 == 1
@@ -55,17 +127,36 @@ impl_pow! {
 
 #[cfg(test)]
 mod tests {
-    use {super::binary, test_case::test_case};
+    use super::*;
+    use test_case::test_case;
+
+    fn cat(s: &str, t: &str) -> String {
+        s.chars().chain(t.chars()).collect()
+    }
+
+    #[test_case(0 => "x".to_owned())]
+    #[test_case(1 => "abx".to_owned())]
+    #[test_case(2 => "ababx".to_owned())]
+    #[test_case(3 => "abababx".to_owned())]
+    #[test_case(4 => "ababababx".to_owned())]
+    #[test_case(5 => "abababababx".to_owned())]
+    fn test_operator_binary(n: u32) -> String {
+        operator_binary(
+            "ab".to_owned(),
+            n,
+            "x".to_string(),
+            |a| cat(a, a),
+            |a, x| cat(a, &x),
+        )
+    }
 
     #[test_case(0 => "".to_owned())]
-    #[test_case(1 => "abc".to_owned())]
-    #[test_case(2 => "abcabc".to_owned())]
-    #[test_case(3 => "abcabcabc".to_owned())]
-    #[test_case(4 => "abcabcabcabc".to_owned())]
-    #[test_case(5 => "abcabcabcabcabc".to_owned())]
-    fn test_cat(n: u32) -> String {
-        binary("abc".to_owned(), n, String::new(), |s, t| {
-            s.chars().chain(t.chars()).collect::<String>()
-        })
+    #[test_case(1 => "ab".to_owned())]
+    #[test_case(2 => "abab".to_owned())]
+    #[test_case(3 => "ababab".to_owned())]
+    #[test_case(4 => "abababab".to_owned())]
+    #[test_case(5 => "ababababab".to_owned())]
+    fn test_value_binary(n: u32) -> String {
+        value_binary("ab".to_owned(), n, String::new(), |a, b| cat(a, b))
     }
 }
