@@ -1,6 +1,6 @@
 //! Boolean 配列を [`u64`] のベクターに詰め込みます。
 //!
-//! [詳しくは `Bs` のドキュメントをご覧ください。](Bs)
+//! [詳しくは `BitVec` のドキュメントをご覧ください。](BitVec)
 
 use std::{
     fmt::Debug,
@@ -18,56 +18,56 @@ use std::{
 /// ビット演算に対応しています。
 ///
 /// ```
-/// # use bitset::Bs;
-/// let mut bs = Bs::from_01str("0010010010");
+/// # use bitvec::BitVec;
+/// let mut bv = BitVec::from_01str("0010010010");
 ///
 /// // 左シフト
 /// // NOTE: スライスや文字列でいうところの右に移動する感じになります。
-/// bs <<= 2;
-/// assert_eq!(&bs, &Bs::from_01str("0000100100"));
-/// bs <<= 10;
-/// assert_eq!(&bs, &Bs::from_01str("0000000000"));
+/// bv <<= 2;
+/// assert_eq!(&bv, &BitVec::from_01str("0000100100"));
+/// bv <<= 10;
+/// assert_eq!(&bv, &BitVec::from_01str("0000000000"));
 ///
 /// // 右シフト
 /// // NOTE: スライスや文字列でいうところの左に移動する感じになります。
-/// bs = Bs::from_01str("0010010010");
-/// bs >>= 2;
-/// assert_eq!(&bs, &Bs::from_01str("1001001000"));
-/// bs >>= 10;
-/// assert_eq!(&bs, &Bs::from_01str("0000000000"));
+/// bv = BitVec::from_01str("0010010010");
+/// bv >>= 2;
+/// assert_eq!(&bv, &BitVec::from_01str("1001001000"));
+/// bv >>= 10;
+/// assert_eq!(&bv, &BitVec::from_01str("0000000000"));
 ///
 /// // OR 演算
 /// // NOTE: 複合代入しかありません。右辺は参照です。
-/// bs = Bs::from_01str("0000011111");
-/// bs |= &Bs::from_01str("0101010101");
-/// assert_eq!(&bs, &Bs::from_01str("0101011111"));
+/// bv = BitVec::from_01str("0000011111");
+/// bv |= &BitVec::from_01str("0101010101");
+/// assert_eq!(&bv, &BitVec::from_01str("0101011111"));
 ///
 /// // AND 演算
 /// // NOTE: 複合代入しかありません。右辺は参照です。
-/// bs = Bs::from_01str("0000011111");
-/// bs &= &Bs::from_01str("0101010101");
-/// assert_eq!(&bs, &Bs::from_01str("0000010101"));
+/// bv = BitVec::from_01str("0000011111");
+/// bv &= &BitVec::from_01str("0101010101");
+/// assert_eq!(&bv, &BitVec::from_01str("0000010101"));
 ///
 /// // XOR 演算
 /// // NOTE: 複合代入しかありません。右辺は参照です。
-/// bs = Bs::from_01str("0000011111");
-/// bs ^= &Bs::from_01str("0101010101");
-/// assert_eq!(&bs, &Bs::from_01str("0101001010"));
+/// bv = BitVec::from_01str("0000011111");
+/// bv ^= &BitVec::from_01str("0101010101");
+/// assert_eq!(&bv, &BitVec::from_01str("0101001010"));
 /// ```
 #[derive(Clone, Hash, PartialEq)]
-pub struct Bs {
+pub struct BitVec {
     vec: Vec<u64>,
     len: usize,
 }
-impl Bs {
+impl BitVec {
     /// サイズを指定して 0 埋め構築します。
     ///
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::new(10);
-    /// assert_eq!(&bs, &Bs::from_01str("0000000000"));
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::new(10);
+    /// assert_eq!(&bv, &BitVec::from_01str("0000000000"));
     /// ```
     pub fn new(len: usize) -> Self {
         Self::from_raw(vec![0; div_ceil(len, 64)], len)
@@ -82,11 +82,11 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// assert_eq!(bs.test(0), false);
-    /// assert_eq!(bs.test(1), true);
-    /// assert_eq!(bs.test(2), false);
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// assert_eq!(bv.test(0), false);
+    /// assert_eq!(bv.test(1), true);
+    /// assert_eq!(bv.test(2), false);
     /// ```
     pub fn from_01str(s: &str) -> Self {
         s.chars()
@@ -102,9 +102,9 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// assert_eq!(bs.len(), 3);
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// assert_eq!(bv.len(), 3);
     /// ```
     pub fn len(&self) -> usize {
         self.len
@@ -114,11 +114,11 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// bs.push(false);
-    /// bs.push(true);
-    /// assert_eq!(&bs, &Bs::from_01str("01001"));
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// bv.push(false);
+    /// bv.push(true);
+    /// assert_eq!(&bv, &BitVec::from_01str("01001"));
     /// ```
     pub fn push(&mut self, x: bool) {
         let i = self.len;
@@ -134,11 +134,11 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// assert_eq!(bs.test(0), false);
-    /// assert_eq!(bs.test(1), true);
-    /// assert_eq!(bs.test(2), false);
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// assert_eq!(bv.test(0), false);
+    /// assert_eq!(bv.test(1), true);
+    /// assert_eq!(bv.test(2), false);
     /// ```
     pub fn test(&self, i: usize) -> bool {
         debug_assert!(i < self.len);
@@ -151,10 +151,10 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// bs.set(2);
-    /// assert_eq!(&bs, &Bs::from_01str("011"));
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// bv.set(2);
+    /// assert_eq!(&bv, &BitVec::from_01str("011"));
     /// ```
     pub fn set(&mut self, i: usize) {
         debug_assert!(i < self.len);
@@ -167,50 +167,53 @@ impl Bs {
     /// # Example
     ///
     /// ```
-    /// # use bitset::Bs;
-    /// let mut bs = Bs::from_01str("010");
-    /// bs.unset(1);
-    /// assert_eq!(&bs, &Bs::from_01str("000"));
+    /// # use bitvec::BitVec;
+    /// let mut bv = BitVec::from_01str("010");
+    /// bv.unset(1);
+    /// assert_eq!(&bv, &BitVec::from_01str("000"));
     /// ```
     pub fn unset(&mut self, i: usize) {
         debug_assert!(i < self.len);
         self.vec[i / 64] &= !(1_u64 << (i % 64));
     }
+    /// 指定したフォーマットの [`String`] に変換します。
     pub fn format(&self, t: char, f: char) -> String {
         self.iter().map(|b| if b { t } else { f }).collect()
     }
+    /// ビットを順に [`bool`] を返すイテレータを作ります。
     pub fn iter(&self) -> Iter<'_> {
-        Iter { bs: self, i: 0 }
+        Iter { bv: self, i: 0 }
     }
     fn from_raw(vec: Vec<u64>, len: usize) -> Self {
         Self { vec, len }
     }
 }
 
+/// ビットを順に [`bool`] を返すイテレータです。
 pub struct Iter<'a> {
-    bs: &'a Bs,
+    bv: &'a BitVec,
     i: usize,
 }
 impl<'a> Iterator for Iter<'a> {
     type Item = bool;
     fn next(&mut self) -> Option<bool> {
-        if self.bs.len() == self.i {
+        if self.bv.len() == self.i {
             None
         } else {
-            let res = self.bs.test(self.i);
+            let res = self.bv.test(self.i);
             self.i += 1;
             Some(res)
         }
     }
 }
 
-impl Default for Bs {
+impl Default for BitVec {
     fn default() -> Self {
         Self::from_raw(Vec::new(), 0)
     }
 }
 
-impl FromIterator<bool> for Bs {
+impl FromIterator<bool> for BitVec {
     fn from_iter<T: IntoIterator<Item = bool>>(iter: T) -> Self {
         let iter = iter.into_iter();
         let mut vec = Vec::with_capacity(div_ceil(iter.size_hint().1.unwrap_or(0), 64));
@@ -232,18 +235,18 @@ impl FromIterator<bool> for Bs {
         Self::from_raw(vec, len)
     }
 }
-impl Debug for Bs {
+impl Debug for BitVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
-impl ToString for Bs {
+impl ToString for BitVec {
     fn to_string(&self) -> String {
         self.format('1', '0')
     }
 }
 
-impl BitAndAssign<&Self> for Bs {
+impl BitAndAssign<&Self> for BitVec {
     fn bitand_assign(&mut self, rhs: &Self) {
         assert_eq!(self.len(), rhs.len());
         self.vec
@@ -252,7 +255,7 @@ impl BitAndAssign<&Self> for Bs {
             .for_each(|(x, &y)| *x &= y);
     }
 }
-impl BitOrAssign<&Self> for Bs {
+impl BitOrAssign<&Self> for BitVec {
     fn bitor_assign(&mut self, rhs: &Self) {
         assert_eq!(self.len(), rhs.len());
         self.vec
@@ -261,7 +264,7 @@ impl BitOrAssign<&Self> for Bs {
             .for_each(|(x, &y)| *x |= y);
     }
 }
-impl BitXorAssign<&Self> for Bs {
+impl BitXorAssign<&Self> for BitVec {
     fn bitxor_assign(&mut self, rhs: &Self) {
         assert_eq!(self.len(), rhs.len());
         self.vec
@@ -273,7 +276,7 @@ impl BitXorAssign<&Self> for Bs {
 
 macro_rules! impl_shifts {
     ($($t: ty,)*) => {$(
-        impl ShlAssign<$t> for Bs {
+        impl ShlAssign<$t> for BitVec {
             fn shl_assign(&mut self, other: $t) {
                 let other = other as usize;
                 assert!(other <= self.len());
@@ -294,7 +297,7 @@ macro_rules! impl_shifts {
                 }
             }
         }
-        impl ShrAssign<$t> for Bs {
+        impl ShrAssign<$t> for BitVec {
             fn shr_assign(&mut self, other: $t) {
                 let other = other as usize;
                 assert!(other <= self.len());
@@ -329,31 +332,31 @@ fn div_ceil(x: usize, y: usize) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use super::Bs;
+    use super::BitVec;
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use std::iter::repeat_with;
 
     macro_rules! assert_eq_bs {
-        ($bs: expr, $slice: expr) => {
-            let bs: &Bs = $bs;
+        ($bv: expr, $slice: expr) => {
+            let bv: &BitVec = $bv;
             let slice: &[bool] = $slice;
-            assert_eq!(bs.len(), slice.len(), "different size",);
-            for i in 0..bs.len() {
+            assert_eq!(bv.len(), slice.len(), "different size",);
+            for i in 0..bv.len() {
                 assert_eq!(
-                    bs.test(i),
+                    bv.test(i),
                     slice[i],
-                    "{} th bit differs;\n bs = {:?},\n slice = {}",
+                    "{} th bit differs;\n bv = {:?},\n slice = {}",
                     i,
-                    &bs,
+                    &bv,
                     slice
                         .iter()
                         .map(|&b| if b { '1' } else { '0' })
                         .collect::<String>(),
                 );
             }
-            let r = bs.len() % 64;
+            let r = bv.len() % 64;
             if r != 0 {
-                assert_eq!(bs.vec.last().unwrap() >> r, 0, "nonzero");
+                assert_eq!(bv.vec.last().unwrap() >> r, 0, "nonzero");
             }
         };
     }
@@ -368,8 +371,8 @@ mod tests {
         for _ in 0..2000 {
             let n = rng.gen_range(1..=256);
             let a = generate_random(&mut rng, n);
-            let bs = a.iter().copied().collect::<Bs>();
-            assert_eq_bs!(&bs, &a);
+            let bv = a.iter().copied().collect::<BitVec>();
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -380,11 +383,11 @@ mod tests {
             let n = rng.gen_range(1..=256);
             let i = rng.gen_range(0..=n);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
-            bs <<= i;
+            let mut bv = a.iter().copied().collect::<BitVec>();
+            bv <<= i;
             a.rotate_right(i);
             a[..i].iter_mut().for_each(|x| *x = false);
-            assert_eq_bs!(&bs, &a);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -395,11 +398,11 @@ mod tests {
             let n = rng.gen_range(1..=256);
             let i = rng.gen_range(0..=n);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
-            bs >>= i;
+            let mut bv = a.iter().copied().collect::<BitVec>();
+            bv >>= i;
             a.rotate_left(i);
             a[n - i..].iter_mut().for_each(|x| *x = false);
-            assert_eq_bs!(&bs, &a);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -409,12 +412,12 @@ mod tests {
         for _ in 0..2000 {
             let n = rng.gen_range(1..=256);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
+            let mut bv = a.iter().copied().collect::<BitVec>();
             let a1 = generate_random(&mut rng, n);
-            let bs1 = a1.iter().copied().collect::<Bs>();
-            bs |= &bs1;
+            let bs1 = a1.iter().copied().collect::<BitVec>();
+            bv |= &bs1;
             a.iter_mut().zip(&a1).for_each(|(x, &y)| *x |= y);
-            assert_eq_bs!(&bs, &a);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -424,12 +427,12 @@ mod tests {
         for _ in 0..2000 {
             let n = rng.gen_range(1..=256);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
+            let mut bv = a.iter().copied().collect::<BitVec>();
             let a1 = generate_random(&mut rng, n);
-            let bs1 = a1.iter().copied().collect::<Bs>();
-            bs ^= &bs1;
+            let bs1 = a1.iter().copied().collect::<BitVec>();
+            bv ^= &bs1;
             a.iter_mut().zip(&a1).for_each(|(x, &y)| *x ^= y);
-            assert_eq_bs!(&bs, &a);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -440,10 +443,10 @@ mod tests {
             let n = rng.gen_range(1..=256);
             let x = rng.gen_ratio(1, 2);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
+            let mut bv = a.iter().copied().collect::<BitVec>();
             a.push(x);
-            bs.push(x);
-            assert_eq_bs!(&bs, &a);
+            bv.push(x);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -454,10 +457,10 @@ mod tests {
             let n = rng.gen_range(1..=256);
             let i = rng.gen_range(0..n);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
+            let mut bv = a.iter().copied().collect::<BitVec>();
             a[i] = true;
-            bs.set(i);
-            assert_eq_bs!(&bs, &a);
+            bv.set(i);
+            assert_eq_bs!(&bv, &a);
         }
     }
 
@@ -468,10 +471,10 @@ mod tests {
             let n = rng.gen_range(1..=256);
             let i = rng.gen_range(0..n);
             let mut a = generate_random(&mut rng, n);
-            let mut bs = a.iter().copied().collect::<Bs>();
+            let mut bv = a.iter().copied().collect::<BitVec>();
             a[i] = false;
-            bs.unset(i);
-            assert_eq_bs!(&bs, &a);
+            bv.unset(i);
+            assert_eq_bs!(&bv, &a);
         }
     }
 }
