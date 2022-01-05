@@ -1,333 +1,403 @@
-//! 強連結成分分解をします。
 //!
-//! [厳密な出力要件は、`scc_flatgraph` をご覧ください。](scc_flatgraph)
+//! # このライブラリを使える問題
 //!
-//! # Functions
-//!
-//! | お名前            | 入力グラフ表現    |
-//! | -                 | -                 |
-//! | [`scc_iterator`]  | 辺イテレータ      |
-//! | [`scc_adjlist`]   | 隣接リスト表現    |
-//! | [`scc_flatgraph`] | フラットグラフ    |
-//!
-//!
-//! # Examples
-//!
-//! ```
-//! # use scc::scc_adjlist;
-//! let g = vec![
-//!     vec![1],
-//!     vec![2],
-//!     vec![0, 3],
-//!     vec![4],
-//!     vec![5],
-//!     vec![3],
-//! ];
-//! let result = scc_adjlist(&g);
-//! assert_eq!(result.cmp_of, vec![0, 0, 0, 1, 1, 1]);
-//! ```
-//!
-use std::{fmt::Debug, mem::replace, ops::Index};
+//! - AOJ GRL_3_C - 強連結成分分解
+//!   - 問題: <https://onlinejudge.u-aizu.ac.jp/problems/GRL_3_C>
+//!   - 提出 (8 ms):
+//!   <https://onlinejudge.u-aizu.ac.jp/status/users/ngtkana/submissions/1/GRL_3_C/judge/6179065/Rust>
+//!   - 出題日: 2016-09-04
+//!   - 難易度: 易しめ。
+//!   - 制約:
+//!     - N ≤ 10,000
+//!     - M ≤ 30,000
+//!     - Q ≤ 100,000
+use std::{collections::HashSet, mem::replace};
 
-/// 強連結成分をする関数 − 隣接リスト版
-///
-/// [厳密な出力要件は、`scc_flatgraph` をご覧ください。](scc_flatgraph)
-///
-/// # 実装の特徴
-///
-/// フラットグラフに変換して [`scc_flatgraph`] を呼び出しています。
-///
-pub fn scc_adjlist(g: &[Vec<usize>]) -> SccResult {
-    scc_iterator(
-        g.len(),
-        g.iter()
-            .enumerate()
-            .flat_map(|(i, v)| v.iter().map(move |&j| [i, j])),
-    )
+/// 本体です。
+#[derive(Clone, Debug, Default, Hash, PartialEq)]
+pub struct Scc {
+    g: Vec<Vec<usize>>,
+    rg: Vec<Vec<usize>>,
+    ord: Vec<usize>,    // トポロジカル順序に従って頂点番号が入ります。
+    cmp_of: Vec<usize>, // 各頂点の属する強連結成分番号が入ります
+    cmp_count: usize,   // 強連結成分の総数が入ります。
+    built: bool,
 }
-
-/// 強連結成分をする関数 − 辺イテレータ版
-///
-/// # 実装の特徴
-///
-/// フラットグラフに変換して [`scc_flatgraph`] を呼び出しています。
-///
-pub fn scc_iterator(n: usize, iter: impl IntoIterator<Item = [usize; 2]>) -> SccResult {
-    scc_flatgraph(n, &mut iter.into_iter().collect::<Vec<_>>())
-}
-
-/// 強連結成分をする関数 − フラットグラフ版
-///
-///
-/// # 実装の特徴
-///
-/// 隣接リストを二次元 `Vec<Vec<usize>>` で構築せず、不安定計数ソートにより代用します。
-/// これにより動的メモリ確保の回数を抑えるとともに、逆グラフでも同じ配列を
-/// （ソートし直すことで）使い回すことができます。
-///
-///
-/// # 出力要件
-///
-/// * `cmp_count` は強連結成分の個数
-/// * `cmp_of` の要素は `0..cmp_count`
-/// * `cmp_of[i] == cmp_of[j]` は、`i` と `j` が同じ強連結成分に入っていることと同値
-/// * `i` から `j` へ到達可能ならば、`cmp_of[i] <= cmp_of[j]` （i.e.
-/// 強連結成分はトポロジカルソートされています。）
-///
-pub fn scc_flatgraph(n: usize, edges: &mut [[usize; 2]]) -> SccResult {
-    let start = counting_sort_by_key_unstable(edges, n, |&[u, _]| u);
-    let mut post_order = Vec::new();
-    let mut used = vec![false; n];
-    (0..n).for_each(|x| dfs_post_order(x, edges, &start, &mut used, &mut post_order));
-
-    let start = counting_sort_by_key_unstable(edges, n, |&[_, v]| v);
-    let mut cmp_of = vec![!0; n];
-    let mut cmp_count = 0;
-    for &x in post_order.iter().rev() {
-        if cmp_of[x] == !0 {
-            dfs_sort(x, edges, &start, &mut cmp_of, cmp_count);
-            cmp_count += 1;
+impl Scc {
+    /// 管理しているグラフが空グラフならば、`true` を返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let scc = Scc::new(0);
+    /// assert!(scc.is_empty());
+    ///
+    /// let scc = Scc::new(1);
+    /// assert!(!scc.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.g.is_empty()
+    }
+    /// 管理しているグラフの頂点数を返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let scc = Scc::new(0);
+    /// assert_eq!(scc.len(), 0);
+    ///
+    /// let scc = Scc::new(1);
+    /// assert_eq!(scc.len(), 1);
+    /// ```
+    pub fn len(&self) -> usize {
+        self.g.len()
+    }
+    /// 頂点数 `n` の辺のない未ビルドのグラフを構築します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let scc = Scc::new(42);
+    /// ```
+    pub fn new(n: usize) -> Self {
+        Self {
+            g: vec![Vec::new(); n],
+            rg: vec![Vec::new(); n],
+            ord: Vec::new(),
+            cmp_of: Vec::new(),
+            cmp_count: 0,
+            built: false,
         }
     }
-    SccResult { cmp_of, cmp_count }
-}
-
-fn dfs_post_order(
-    x: usize,
-    edges: &[[usize; 2]],
-    start: &[usize],
-    used: &mut [bool],
-    post_order: &mut Vec<usize>,
-) {
-    if !replace(&mut used[x], true) {
-        edges[start[x]..start[x + 1]]
-            .iter()
-            .for_each(|&[_, y]| dfs_post_order(y, edges, start, used, post_order));
-        post_order.push(x);
+    /// 【Require: 未ビルド】
+    /// 辺 (from, to) を追加します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(42);
+    /// scc.add_edge(13, 18);
+    /// scc.add_edge(13, 6);
+    /// assert_eq!(&scc.g()[13], &[18, 6]);
+    /// assert_eq!(&scc.g()[6], &[]);
+    /// ```
+    pub fn add_edge(&mut self, from: usize, to: usize) {
+        assert!(!self.built);
+        self.g[from].push(to);
+        self.rg[to].push(from);
     }
-}
-
-fn dfs_sort(
-    x: usize,
-    edges: &[[usize; 2]],
-    start: &[usize],
-    cmp_of: &mut [usize],
-    cmp_count: usize,
-) {
-    if cmp_of[x] == !0 {
-        cmp_of[x] = cmp_count;
-        edges[start[x]..start[x + 1]]
-            .iter()
-            .for_each(|&[y, _]| dfs_sort(y, edges, start, cmp_of, cmp_count))
+    /// 正向きのグラフの隣接リストを返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(42);
+    /// scc.add_edge(13, 18);
+    /// scc.add_edge(13, 6);
+    /// assert_eq!(&scc.g()[13], &[18, 6]);
+    /// assert_eq!(&scc.g()[6], &[]);
+    /// ```
+    pub fn g(&self) -> &[Vec<usize>] {
+        &self.g
     }
-}
-
-fn counting_sort_by_key_unstable<T>(a: &mut [T], k: usize, f: impl Fn(&T) -> usize) -> Vec<usize> {
-    let mut end = vec![0; k];
-    a.iter().map(|ai| f(ai)).for_each(|key| end[key] += 1);
-    (0..k).skip(1).for_each(|i| end[i] += end[i - 1]);
-    let mut start = end.clone();
-    start.rotate_right(1);
-    start[0] = 0;
-    for i in 0..k {
-        while start[i] != end[i] {
-            let j = f(&a[start[i]]);
-            if i == j {
-                start[i] += 1;
-            } else {
-                while f(&a[start[j]]) == j {
-                    start[j] += 1;
+    /// 逆向きのグラフの隣接リストを返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(42);
+    /// scc.add_edge(13, 18);
+    /// scc.add_edge(13, 6);
+    /// assert_eq!(&scc.rg()[13], &[]);
+    /// assert_eq!(&scc.rg()[6], &[13]);
+    /// ```
+    pub fn rg(&self) -> &[Vec<usize>] {
+        &self.rg
+    }
+    /// 【Require: ビルド済み】
+    /// 商グラフにおけるトポロジカル順序に従って頂点番号の入ったスライスを返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    /// assert_eq!(&scc.ord(), &[3, 4, 5, 2, 1, 0]);
+    /// ```
+    pub fn ord(&self) -> &[usize] {
+        assert!(self.built);
+        &self.ord
+    }
+    /// 【Require: ビルド済み】
+    /// 強連結成分の個数を返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    /// assert_eq!(scc.cmp_count(), 5);
+    /// ```
+    pub fn cmp_count(&self) -> usize {
+        assert!(self.built);
+        self.cmp_count
+    }
+    /// 【Require: ビルド済み】
+    /// 頂点 `x` の属する強連結成分の番号を返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    /// assert_eq!(scc.cmp_of(0), 4);
+    /// assert_eq!(scc.cmp_of(1), 3);
+    /// ```
+    pub fn cmp_of(&self, x: usize) -> usize {
+        assert!(self.built);
+        self.cmp_of[x]
+    }
+    /// 【Require: ビルド済み】
+    /// 頂点番号から、その属する強連結成分の番号を検索できる
+    /// スライスを返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    /// assert_eq!(scc.cmp_of(0), 4);
+    /// assert_eq!(scc.cmp_of(1), 3);
+    /// ```
+    pub fn cmp_ofs(&self) -> &[usize] {
+        assert!(self.built);
+        &self.cmp_of
+    }
+    /// 【Require: ビルド済み】
+    /// 辺の重複と自己辺を除いた商グラフを構築して返します。
+    ///
+    /// # 計算量
+    ///
+    /// O(N)
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    ///
+    /// let g = scc.quotient_graph();
+    /// let expected = vec![
+    ///     vec![1],
+    ///     vec![],
+    ///     vec![4],
+    ///     vec![4],
+    ///     vec![],
+    /// ];
+    /// assert_eq!(g, expected);
+    /// ```
+    pub fn quotient_graph(&self) -> Vec<Vec<usize>> {
+        assert!(self.built);
+        let mut ans = vec![Vec::new(); self.cmp_count];
+        let mut used = HashSet::new();
+        for x in 0..self.len() {
+            for &y in &self.g[x] {
+                let x = self.cmp_of[x];
+                let y = self.cmp_of[y];
+                if x != y && used.insert((x, y)) {
+                    ans[x].push(y);
                 }
-                a.swap(start[i], start[j]);
             }
         }
+        ans
     }
-    start.insert(0, 0);
-    start
-}
-
-/// 強連結成分分解情報を保持します。
-///
-/// [厳密な仕様は、`scc_flatgraph` をご覧ください。](scc_flatgraph)
-///
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct SccResult {
-    /// 各頂点の属する強連結成分番号です。
-    pub cmp_of: Vec<usize>,
-    /// 強連結成分の個数です。
-    pub cmp_count: usize,
-}
-impl SccResult {
-    /// 各強連結成分について、そこに属する頂点全体の昇順の列を返します。
-    pub fn to_vec2(&self) -> Vec<Vec<usize>> {
-        let mut res = vec![Vec::new(); self.cmp_count];
-        self.cmp_of
-            .iter()
-            .enumerate()
-            .for_each(|(i, &c)| res[c].push(i));
-        res
-    }
-    /// 各強連結成分について、そこに属する頂点全体の**順不同の**列を与えるような [`FlatVec`] を返します。
+    /// 【Require: ビルド済み】
+    /// 各強連結成分に属する頂点全体の集合を、[`Self::ord()`]  と同じ
+    /// トポロジカル順序順序で返します。
     ///
-    /// # 順不同な理由
+    /// # 計算量
     ///
-    /// 内部で不安定計数ソートをしているためです。
+    /// O(N)
     ///
-    pub fn to_flatvec(&self) -> FlatVec {
-        let mut vec = (0..self.cmp_of.len()).collect::<Vec<_>>();
-        let start = counting_sort_by_key_unstable(&mut vec, self.cmp_count, |&x| self.cmp_of[x]);
-        FlatVec { vec, start }
+    /// # Example
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    ///
+    /// let g = scc.quotient_set();
+    /// let expected = vec![
+    ///     vec![3],
+    ///     vec![4, 5],
+    ///     vec![2],
+    ///     vec![1],
+    ///     vec![0],
+    /// ];
+    /// assert_eq!(g, expected);
+    /// ```
+    pub fn quotient_set(&self) -> Vec<Vec<usize>> {
+        assert!(self.built);
+        let mut ans = vec![Vec::new(); self.cmp_count];
+        for &x in &self.ord {
+            ans[self.cmp_of(x)].push(x);
+        }
+        ans
     }
-}
-
-/// 二次元配列を 2 本の [`Vec`] で管理する構造体です。[`SccResult::to_flatvec`] の戻り値に使います。
-#[derive(Clone, Default, Hash, PartialEq)]
-pub struct FlatVec {
-    pub vec: Vec<usize>,
-    pub start: Vec<usize>,
-}
-impl Index<usize> for FlatVec {
-    type Output = [usize];
-    fn index(&self, index: usize) -> &Self::Output {
-        assert!(index + 1 < self.start.len());
-        &self.vec[self.start[index]..self.start[index + 1]]
+    /// 【Require: 未ビルド】
+    /// ビルドします。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use scc::Scc;
+    ///
+    /// let mut scc = Scc::new(6);
+    /// scc.add_edge(2, 0);
+    /// scc.add_edge(1, 0);
+    /// scc.add_edge(3, 4);
+    /// scc.add_edge(4, 5);
+    /// scc.add_edge(5, 4);
+    /// scc.build();
+    /// ```
+    pub fn build(&mut self) {
+        assert!(!self.built);
+        self.built = true;
+        let mut cmp_of = vec![0; self.len()];
+        let mut ord = Vec::new();
+        (0..self.len()).for_each(|i| self.dfs1(i, &mut cmp_of, &mut ord));
+        ord.reverse();
+        for &i in &ord {
+            if cmp_of[i] == !0 {
+                self.dfs2(i, &mut cmp_of);
+                self.cmp_count += 1;
+            }
+        }
+        self.cmp_of = cmp_of;
+        self.ord = ord;
     }
-}
-impl Debug for FlatVec {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_list()
-            .entries(self.start.windows(2).map(|v| &self.vec[v[0]..v[1]]))
-            .finish()
+    fn dfs1(&self, x: usize, cmp_of: &mut [usize], ord: &mut Vec<usize>) {
+        if replace(&mut cmp_of[x], !0) == 0 {
+            self.g[x].iter().for_each(|&y| self.dfs1(y, cmp_of, ord));
+            ord.push(x);
+        }
+    }
+    fn dfs2(&self, x: usize, cmp_of: &mut [usize]) {
+        cmp_of[x] = self.cmp_count;
+        for &y in &self.rg[x] {
+            if cmp_of[y] == !0 {
+                self.dfs2(y, cmp_of);
+            }
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{scc_adjlist, scc_flatgraph, scc_iterator, SccResult},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::{collections::HashSet, iter::repeat_with},
-    };
+    use super::*;
+    use rand::{prelude::StdRng, Rng, SeedableRng};
 
     #[test]
-    fn test_scc_iterator() {
+    fn test_scc() {
         let mut rng = StdRng::seed_from_u64(42);
-        combine(
-            10, // 実装は `scc_flatgraph` を呼ぶだけなので、テスト弱めで
-            &mut rng,
-            test_case_random,
-            |n, edges| scc_iterator(n, edges.to_vec()),
-            validate,
-        );
-    }
+        for _ in 0..20 {
+            let n = rng.gen_range(1..20);
+            let m = rng.gen_range(0..20);
+            let mut g = vec![vec![false; n]; n];
+            (0..n).for_each(|i| g[i][i] = true);
+            let mut scc = Scc::new(n);
+            for _ in 0..m {
+                let u = rng.gen_range(0..n);
+                let v = rng.gen_range(0..n);
+                g[u][v] = true;
+                scc.add_edge(u, v);
+            }
+            scc.build();
+            for k in 0..n {
+                for i in 0..n {
+                    for j in 0..n {
+                        g[i][j] |= g[i][k] && g[k][j];
+                    }
+                }
+            }
 
-    #[test]
-    fn test_scc_adjlist() {
-        let mut rng = StdRng::seed_from_u64(42);
-        combine(
-            10, // 実装は `scc_flatgraph` を呼ぶだけなので、テスト弱めで
-            &mut rng,
-            test_case_random,
-            |n, edges| {
-                let mut g = vec![Vec::new(); n];
-                edges.iter().for_each(|&[u, v]| g[u].push(v));
-                scc_adjlist(&g)
-            },
-            validate,
-        );
-    }
-
-    #[test]
-    fn test_scc_flatgraph() {
-        let mut rng = StdRng::seed_from_u64(42);
-        combine(200, &mut rng, test_case_random, scc_flatgraph, validate);
-    }
-
-    fn combine(
-        repeat: usize,
-        rng: &mut StdRng,
-        test_case: impl Fn(&mut StdRng) -> (usize, Vec<[usize; 2]>),
-        solve: impl Fn(usize, &mut [[usize; 2]]) -> SccResult,
-        validate: impl Fn(usize, &[[usize; 2]], &SccResult),
-    ) {
-        for _ in 0..repeat {
-            let (n, mut edges) = test_case(rng);
-            let result = solve(n, &mut edges);
-            validate(n, &edges, &result);
-        }
-    }
-
-    /// # テストケース
-    ///
-    /// 自己辺・多重辺のあるかもしれない有効グラフです。
-    /// 頂点の個数が [2, 30] で一様ランダム
-    /// 辺の本数が [1, N²[ で対数的一様ランダム、
-    /// それぞれの辺は独立に N² 通り一様ランダムな頂点をつなぎます。
-    fn test_case_random(rng: &mut StdRng) -> (usize, Vec<[usize; 2]>) {
-        let n = rng.gen_range(2..=30);
-        let m = rng.gen_range(0_f64..2.0 * (n as f64).ln()).exp().floor() as usize;
-        let edges = repeat_with(|| [rng.gen_range(0..n), rng.gen_range(0..n)])
-            .take(m)
-            .collect::<Vec<_>>();
-        (n, edges)
-    }
-
-    /// # テスト実装
-    ///
-    /// Floyed−Warshall と比較します。
-    ///
-    ///
-    /// # 計算量
-    ///
-    /// O ( N ³)
-    ///
-    fn validate(n: usize, edges: &[[usize; 2]], result: &SccResult) {
-        // Floyed−Warshall
-        let mut adj = vec![vec![false; n]; n];
-        (0..n).for_each(|i| adj[i][i] = true);
-        edges.iter().for_each(|&[u, v]| adj[u][v] = true);
-        for k in 0..n {
+            // equiv クエリ
             for i in 0..n {
                 for j in 0..n {
-                    adj[i][j] |= adj[i][k] && adj[k][j];
+                    let result = scc.cmp_of(i) == scc.cmp_of(j);
+                    let expected = g[i][j] && g[j][i];
+                    assert_eq!(result, expected);
                 }
             }
-        }
-
-        // Validate cmp_of
-        for i in 0..n {
-            for j in 0..n {
-                assert_eq!(result.cmp_of[i] == result.cmp_of[j], adj[i][j] && adj[j][i]);
-                if adj[i][j] {
-                    assert!(result.cmp_of[i] <= result.cmp_of[j]);
+            // その他整合性
+            let qset = scc.quotient_set();
+            assert_eq!(qset.iter().map(|q| q.len()).sum::<usize>(), n);
+            assert_eq!(qset.len(), scc.cmp_count());
+            let mut used = vec![false; n];
+            for (i, qset) in qset.iter().enumerate() {
+                assert!(!qset.is_empty());
+                for &j in qset {
+                    assert_eq!(scc.cmp_of(j), i);
+                    assert!(!used[j]);
+                    used[j] = true;
                 }
             }
+            for (i, &j) in scc.cmp_ofs().iter().enumerate() {
+                assert_eq!(j, scc.cmp_of(i));
+            }
         }
-
-        // Validate cmp_count
-        assert!((0..result.cmp_count).all(|i| result.cmp_of.iter().any(|&c| c == i)));
-        assert!(result.cmp_of.iter().all(|&c| c < result.cmp_count));
-
-        // Validate to_vec2
-        let result_vec2 = result.to_vec2();
-        let mut used = vec![false; n];
-        result_vec2.iter().flatten().for_each(|&x| used[x] = true);
-        assert!(used.iter().all(|&c| c));
-        assert_eq!(result_vec2.iter().map(|v| v.len()).sum::<usize>(), n);
-        assert_eq!(result_vec2.len(), result.cmp_count);
-        assert!(result_vec2
-            .iter()
-            .enumerate()
-            .all(|(i, v)| v.iter().all(|&x| result.cmp_of[x] == i)));
-        assert!(result_vec2
-            .iter()
-            .all(|v| v.windows(2).all(|v| v[0] < v[1])));
-
-        // Validate to_flatvec
-        let result_flatvec = result.to_flatvec();
-        assert!(
-            (0..result.cmp_count).all(|i| result_flatvec[i].iter().collect::<HashSet<_>>()
-                == result_vec2[i].iter().collect::<HashSet<_>>())
-        );
     }
 }

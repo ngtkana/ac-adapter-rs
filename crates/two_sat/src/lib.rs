@@ -9,46 +9,48 @@
 //!
 //! ```
 //! # use two_sat::TwoSat;
-//! let mut two_sat = TwoSat::new();
+//! let mut two_sat = TwoSat::new(3);
 //!
 //! two_sat.implies(0, true, 1, true);
 //! two_sat.implies(1, true, 2, true);
 //! two_sat.implies(2, true, 0, false);
 //! two_sat.implies(2, true, 1, false);
+//! two_sat.build();
 //!
 //! // Debug がきれいです。
-//! assert_eq!("[0→1, 1→2, 2→¬0, 2→¬1]", format!("{:?}", &two_sat).as_str());
+//! let expected = "[0→1, 0→¬2, ¬1→¬0, 1→2, 1→¬2, ¬2→¬1, 2→¬0, 2→¬1]";
+//! assert_eq!(format!("{:?}", &two_sat).as_str(), expected);
 //!
 //! // 解きます。
-//! assert_eq!(Some(vec![false, false, true]), two_sat.solve(3));
+//! assert_eq!(Some(vec![false, false, true]), two_sat.solve());
 //! ```
 
-use {
-    scc::scc_flatgraph,
-    std::{cmp::Ordering, fmt::Debug},
-};
+use scc::Scc;
+use std::{cmp::Ordering, fmt::Debug};
 
 /// 2-SAT の本体です。
 #[derive(Clone, Default, Hash, PartialEq)]
 pub struct TwoSat {
-    edges: Vec<[usize; 2]>,
+    scc: Scc,
 }
 impl TwoSat {
-    /// Always true を作ります。
-    pub fn new() -> Self {
-        Self::default()
+    /// `n` 個の不定元を持つ Always true を作ります。
+    pub fn new(n: usize) -> Self {
+        Self {
+            scc: Scc::new(2 * n),
+        }
     }
     /// `(x == a) -> (y == b)` をかつでつなぎます。
     pub fn implies(&mut self, x: usize, a: bool, y: usize, b: bool) {
         let x = 2 * x + a as usize;
         let y = 2 * y + b as usize;
-        self.edges.push([x, y]);
-        self.edges.push([y ^ 1, x ^ 1]);
+        self.scc.add_edge(x, y);
+        self.scc.add_edge(y ^ 1, x ^ 1);
     }
     /// 充足する割り当てがあれば返し、なければ `None` を返します。
-    pub fn solve(&self, n: usize) -> Option<Vec<bool>> {
-        let scc = scc_flatgraph(n * 2, &mut self.edges.clone());
-        scc.cmp_of
+    pub fn solve(&self) -> Option<Vec<bool>> {
+        self.scc
+            .cmp_ofs()
             .chunks(2)
             .map(|v| match v[0].cmp(&v[1]) {
                 Ordering::Less => Some(true),
@@ -57,15 +59,20 @@ impl TwoSat {
             })
             .collect()
     }
+    pub fn build(&mut self) {
+        self.scc.build();
+    }
 }
 impl Debug for TwoSat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list()
             .entries(
-                self.edges
-                    .chunks(2)
-                    .map(|chunk| chunk[0])
-                    .map(|[x, y]| DebugImplication { x, y }),
+                self.scc
+                    .g()
+                    .iter()
+                    .enumerate()
+                    .flat_map(|(i, gi)| gi.iter().map(move |&j| (i, j)))
+                    .map(|(x, y)| DebugImplication { x, y }),
             )
             .finish()
     }
@@ -112,11 +119,12 @@ mod tests {
             .take(m)
             .collect::<Vec<_>>();
 
-            let mut two_sat = TwoSat::new();
+            let mut two_sat = TwoSat::new(n);
             implications
                 .iter()
                 .for_each(|&(x, a, y, b)| two_sat.implies(x, a, y, b));
-            let result = two_sat.solve(n);
+            two_sat.build();
+            let result = two_sat.solve();
 
             if let Some(result) = result {
                 assert!(feasible(&result, &implications));
