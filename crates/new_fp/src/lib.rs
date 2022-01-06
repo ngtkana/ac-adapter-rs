@@ -7,33 +7,118 @@ use std::{
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-define_fp! { pub type 1_000_000_007, M1000000007, F1000000007 }
-define_fp! { pub type 998_244_353, M998244353, F998244353 } // 119 * 2 ^ 23 + 1
+define_fp! {
+    1_000_000_007;
+    pub enum M1000000007;
+    pub type F1000000007;
+}
+define_fp! {
+    998_244_353, 3; // 119 * 2 ^ 23 + 1
+    pub enum M998244353;
+    pub type F998244353;
+}
+define_fp! {
+    1_012_924_417, 5; // 483 * 2 ^ 21 + 1
+    pub enum M1012924417;
+    pub type F1012924417;
+}
+define_fp! {
+    924_844_033, 5; // 441 * 2 ^ 21 + 1
+    pub enum M924844033;
+    pub type F924844033;
+}
 
-/// 有限体型の実装するトレイトです。
+/// 有限体型の実装するトレイトです。[`define_fp!`] マクロを使いましょう。
 pub trait Mod {
     /// 法
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::define_fp;
+    /// define_fp!(13);
+    /// assert_eq!(F::P, 13);
+    /// ```
     const P: u64; // ……ほう。
+}
+/// FFT に使えそうな法に実装するトレイトです。[`define_fp!`] マクロを使いましょう。
+pub trait Fft: Mod {
+    /// 原子根
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fp};
+    /// define_fp!(5, 2);
+    /// assert_eq!(F::ROOT, fp!(2));
+    /// ```
+    const ROOT: u64;
 }
 
 /// [`Mod`] を実装した型 `$m` と、型エイリアス `$f = Fp<$m>` を定義します。
+///
+/// # Examples
+///
+/// ## 基本
+///
+/// ```
+/// use new_fp::{define_fp, fp, Mod};
+/// define_fp!(13);
+/// assert_eq!(F::P, 13);
+/// assert_eq!(M::P, 13);
+/// ```
+///
+/// ## 原子根付き
+/// ```
+/// use new_fp::{define_fp, fp, Mod, Fft};
+/// define_fp!(13, 2);
+/// assert_eq!(F::P, 13);
+/// assert_eq!(M::P, 13);
+/// assert_eq!(F::ROOT, fp!(2));
+/// assert_eq!(M::ROOT, 2);
+/// ```
+///
+/// ## 型名付き
+/// ```
+/// use new_fp::{define_fp, fp, Mod, Fft};
+/// define_fp!(13; pub enum M13; pub type F13);
+/// assert_eq!(F13::P, 13);
+/// assert_eq!(M13::P, 13);
+///
+/// define_fp!(13, 2; pub enum M13_2; pub type F13_2);
+/// assert_eq!(F13_2::P, 13);
+/// assert_eq!(M13_2::P, 13);
+/// assert_eq!(F13_2::ROOT, fp!(2));
+/// assert_eq!(M13_2::ROOT, 2);
+/// ```
 #[macro_export]
 macro_rules! define_fp {
-    ($mod:expr) => {
-        $crate::define_fp! { type $mod }
+    ($p:expr) => {
+        $crate::define_fp! { $p; enum M; type F }
     };
-    ($mod:expr, $f:ident, $m:ident) => {
-        $crate::define_fp! { type $mod, $f, $m }
+    ($p:expr, $root:expr) => {
+        $crate::define_fp! { $p, $root; enum M; type F }
     };
-    ($pub:vis type $mod:expr) => {
-        $crate::define_fp! { $pub type $mod, F, M }
-    };
-    ($pub:vis type $mod:expr, $f:ident, $m:ident) => {
-        $pub enum $m {}
+    (
+        $p:expr;
+        $vism:vis enum $m:ident;
+        $visf:vis type $f:ident$(;)?
+    ) => {
+        $vism enum $m {}
         impl $crate::Mod for $m {
-            const P: u64 = $mod;
+            const P: u64 = $p;
         }
-        $pub type $f = $crate::Fp<$m>;
+        $visf type $f = $crate::Fp<$m>;
+    };
+    (
+        $p:expr, $root:expr;
+        $vism:vis enum $m:ident;
+        $visf:vis type $f:ident$(;)?
+    ) => {
+        $crate::define_fp! { $p; $vism enum $m; $visf type $f }
+        impl $crate::Fft for $m {
+            const ROOT: u64 = $root;
+        }
     };
 }
 
@@ -78,6 +163,10 @@ macro_rules! fp {
 }
 
 pub struct Fp<M>(u64, PhantomData<fn() -> M>);
+impl<M: Fft> Fp<M> {
+    /// 原子根
+    pub const ROOT: Self = Self(M::ROOT, PhantomData);
+}
 impl<M: Mod> Fp<M> {
     /// 法です。[`Mod::P`] へのショートカットです。
     ///
@@ -86,10 +175,10 @@ impl<M: Mod> Fp<M> {
     /// ```
     /// use new_fp::{define_fp};
     ///
-    /// define_fp! { type 7 }
+    /// define_fp!(7);
     /// assert_eq!(F::P, 7);
     ///
-    /// define_fp! { type 11, F11, M11 }
+    /// define_fp! { 11; enum M11; type F11 }
     /// assert_eq!(F11::P, 11);
     /// ```
     pub const P: u64 = M::P;
@@ -103,7 +192,7 @@ impl<M: Mod> Fp<M> {
     /// ```
     /// use new_fp::{define_fp};
     ///
-    /// define_fp! { type 7 }
+    /// define_fp!(7);
     /// let x = F::new(13).value();
     /// assert_eq!(x, 6);
     /// ```
@@ -117,7 +206,7 @@ impl<M: Mod> Fp<M> {
     /// ```
     /// use new_fp::{define_fp, fp};
     ///
-    /// define_fp! { type 7 }
+    /// define_fp!(7);
     /// let x = F::new(3).inv();
     /// assert_eq!(x, fp!(5));
     /// ```
@@ -140,6 +229,31 @@ impl<M: Mod> Fp<M> {
             u += Self::P as i64;
         }
         Self(u as u64, PhantomData)
+    }
+    /// `self` の `exp` 乗を返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fp};
+    ///
+    /// define_fp!(7);
+    /// let x = F::new(3).inv();
+    /// assert_eq!(x, fp!(5));
+    /// ```
+    pub fn pow(mut self, mut exp: u64) -> Self {
+        let mut res = Self(1, PhantomData);
+        if exp != 0 {
+            while exp != 1 {
+                if exp % 2 == 1 {
+                    res *= self;
+                }
+                exp /= 2;
+                self *= self;
+            }
+            res *= self;
+        }
+        res
     }
 }
 impl<M: Mod> Copy for Fp<M> {}
@@ -514,8 +628,250 @@ pub fn binom_iter<M: Mod>() -> impl Iterator<Item = Vec<Fp<M>>> {
     })
 }
 
+/// [`fft`] を用いて畳み込み（多項式乗算）を行います。
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{convolution, fp, F998244353 as F};
+///
+/// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3), fp!(4)];
+/// let b: Vec<F> = vec![fp!(5), fp!(6), fp!(7), fp!(8), fp!(9)];
+/// let c = convolution(a, b);
+/// let expected: Vec<F> = vec![
+///     fp!(5),
+///     fp!(16),
+///     fp!(34),
+///     fp!(60),
+///     fp!(70),
+///     fp!(70),
+///     fp!(59),
+///     fp!(36),
+/// ];
+/// assert_eq!(&c, &expected);
+/// ```
+pub fn convolution<M: Fft>(mut a: Vec<Fp<M>>, mut b: Vec<Fp<M>>) -> Vec<Fp<M>> {
+    if a.is_empty() || b.is_empty() {
+        Vec::new()
+    } else {
+        let n = a.len() + b.len() - 1;
+        a.resize(n.next_power_of_two(), Fp::new(0));
+        b.resize(n.next_power_of_two(), Fp::new(0));
+        fft(&mut a);
+        fft(&mut b);
+        let mut c = a.into_iter().zip(b).map(|(x, y)| x * y).collect::<Vec<_>>();
+        ifft(&mut c);
+        c.truncate(n);
+        c
+    }
+}
+
+/// 3 つの NTT-friendly 素数を用いて任意 mod でコンボリューションします。
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{anymod_convolution, fp, define_fp};
+/// define_fp!(71);
+///
+/// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3), fp!(4)];
+/// let b: Vec<F> = vec![fp!(5), fp!(6), fp!(7), fp!(8), fp!(9)];
+/// let c = anymod_convolution(&a, &b);
+/// let expected: Vec<F> = vec![
+///     fp!(5),
+///     fp!(16),
+///     fp!(34),
+///     fp!(60),
+///     fp!(70),
+///     fp!(70),
+///     fp!(59),
+///     fp!(36),
+/// ];
+/// assert_eq!(&c, &expected);
+/// ```
+pub fn anymod_convolution<M: Mod>(a: &[Fp<M>], b: &[Fp<M>]) -> Vec<Fp<M>> {
+    type Fp1 = F998244353;
+    type Fp2 = F1012924417;
+    type Fp3 = F924844033;
+    let v1 = convolution(
+        a.iter().map(|&x| Fp1::new(x.value())).collect::<Vec<_>>(),
+        b.iter().map(|&x| Fp1::new(x.value())).collect::<Vec<_>>(),
+    );
+    let v2 = convolution(
+        a.iter().map(|&x| Fp2::new(x.value())).collect::<Vec<_>>(),
+        b.iter().map(|&x| Fp2::new(x.value())).collect::<Vec<_>>(),
+    );
+    let v3 = convolution(
+        a.iter().map(|&x| Fp3::new(x.value())).collect::<Vec<_>>(),
+        b.iter().map(|&x| Fp3::new(x.value())).collect::<Vec<_>>(),
+    );
+    v1.into_iter()
+        .zip(v2)
+        .zip(v3)
+        .map(|((e1, e2), e3)| {
+            let x1 = e1;
+            let x2 = (e2 - Fp2::new(x1.value())) * Fp2::new(Fp1::P).inv();
+            let x3 = ((e3 - Fp3::new(x1.value())) * Fp3::new(Fp1::P).inv() - Fp3::new(x2.value()))
+                * Fp3::new(Fp2::P).inv();
+            Fp::new(x1.value())
+                + Fp::new(x2.value()) * Fp::new(Fp1::P)
+                + Fp::new(x3.value()) * Fp::new(Fp1::P) * Fp::new(Fp2::P)
+        })
+        .collect::<Vec<_>>()
+}
+/// [`fft`] の逆関数です。
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{define_fp, ifft, fp};
+///
+/// define_fp!(17, 3);
+///
+/// let r = fp!(13); // pow(3, 1/4)
+/// let mut a = vec![
+///     fp!(15),
+///     fp!(-5),
+///     fp!(-3) + r * fp!(-6),
+///     fp!(-3) - r * fp!(-6),
+/// ];
+/// ifft(&mut a);
+///
+/// let expected: Vec<F> = vec![
+///     fp!(1),
+///     fp!(2),
+///     fp!(4),
+///     fp!(8),
+/// ];
+/// assert_eq!(&a, &expected);
+/// ```
+pub fn ifft<M: Fft>(a: &mut [Fp<M>]) {
+    let n = a.len();
+    assert!(n.is_power_of_two());
+    let root = Fp::ROOT.pow((M::P - 1) / a.len() as u64);
+    let mut roots = successors(Some(root.inv()), |x| Some(x * x))
+        .take(n.trailing_zeros() as usize + 1)
+        .collect::<Vec<_>>();
+    roots.reverse();
+    let fourth = Fp::ROOT.pow((M::P - 1) / 4).inv();
+    let mut quarter = 1_usize;
+    if n.trailing_zeros() % 2 == 1 {
+        for a in a.chunks_mut(2) {
+            let x = a[0];
+            let y = a[1];
+            a[0] = x + y;
+            a[1] = x - y;
+        }
+        quarter = 2;
+    }
+    while quarter != n {
+        let fft_len = quarter * 4;
+        let root = roots[fft_len.trailing_zeros() as usize];
+        for a in a.chunks_mut(fft_len) {
+            let mut c = Fp::new(1);
+            for (((i, j), k), l) in (0..)
+                .zip(quarter..)
+                .zip(quarter * 2..)
+                .zip(quarter * 3..)
+                .take(quarter)
+            {
+                let c2 = c * c;
+                let x = a[i] + c2 * a[j];
+                let y = a[i] - c2 * a[j];
+                let z = c * (a[k] + c2 * a[l]);
+                let w = fourth * c * (a[k] - c2 * a[l]);
+                a[i] = x + z;
+                a[j] = y + w;
+                a[k] = x - z;
+                a[l] = y - w;
+                c *= root;
+            }
+        }
+        quarter = fft_len;
+    }
+    let d = Fp::from(a.len()).inv();
+    a.iter_mut().for_each(|x| *x *= d);
+}
+
+/// 長さ２冪の配列のFFT を、ビットリバースを直さずに行います。
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{define_fp, fft, fp};
+///
+/// define_fp!(17, 3);
+///
+/// let mut a: Vec<F> = vec![
+///     fp!(1),
+///     fp!(2),
+///     fp!(4),
+///     fp!(8),
+/// ];
+/// fft(&mut a);
+///
+/// // Mod 17 での３冪
+/// //    i | 0  1  2  3  4  5  6  7  8 ...
+/// // ---------------------------------
+/// //  3^i | 1  3  9 10 13  5 15 11 16 ...
+/// let r = fp!(13); // pow(3, 1/4)
+///
+/// let expected = vec![
+///     fp!(15),
+///     fp!(-5),
+///     fp!(-3) + r * fp!(-6),
+///     fp!(-3) - r * fp!(-6),
+/// ];
+/// assert_eq!(&a, &expected);
+/// ```
+pub fn fft<M: Fft>(a: &mut [Fp<M>]) {
+    let n = a.len();
+    assert!(n.is_power_of_two());
+    let mut root = Fp::ROOT.pow((M::P - 1) / a.len() as u64);
+    let fourth = Fp::ROOT.pow((M::P - 1) / 4);
+    let mut fft_len = n;
+    while 4 <= fft_len {
+        let quarter = fft_len / 4;
+        for a in a.chunks_mut(fft_len) {
+            let mut c = Fp::new(1);
+            for (((i, j), k), l) in (0..)
+                .zip(quarter..)
+                .zip(quarter * 2..)
+                .zip(quarter * 3..)
+                .take(quarter)
+            {
+                let c2 = c * c;
+                let x = a[i] + a[k];
+                let y = a[j] + a[l];
+                let z = a[i] - a[k];
+                let w = fourth * (a[j] - a[l]);
+                a[i] = x + y;
+                a[j] = c2 * (x - y);
+                a[k] = c * (z + w);
+                a[l] = c2 * c * (z - w);
+                c *= root;
+            }
+        }
+        root *= root;
+        root *= root;
+        fft_len = quarter;
+    }
+    if fft_len == 2 {
+        for a in a.chunks_mut(2) {
+            let x = a[0];
+            let y = a[1];
+            a[0] = x + y;
+            a[1] = x - y;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
+    use std::iter::repeat_with;
+
+    use rand::{prelude::StdRng, Rng, SeedableRng};
+
     use super::*;
     define_fp!(13);
 
@@ -524,11 +880,35 @@ mod tests {
     fn test_visibility() {
         mod internal {
             use super::*;
-            define_fp! { pub type 17, F17, M17 }
+            define_fp! { 17; pub enum M17; pub type F17 }
+            define_fp! { 19; pub enum M19; type _F19 }
         }
-        use internal::{F17, M17};
+        use internal::*;
         assert_eq!(F17::P, 17);
         assert_eq!(M17::P, 17);
+        assert_eq!(M19::P, 19);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_fmt() {
+        define_fp!(998244353);
+        for num in 1..100_u64 {
+            for den in 1..100_u64 {
+                let x: F = fp!(num; den);
+                let s = format!("{:?}", x);
+                if num % den == 0 {
+                    let restored = s.parse::<u64>().unwrap();
+                    assert_eq!(num, den * restored);
+                } else {
+                    let v = s.split('/').collect::<Vec<_>>();
+                    assert_eq!(v.len(), 2);
+                    let a = v[0].parse::<u64>().unwrap();
+                    let b = v[1].parse::<u64>().unwrap();
+                    assert_eq!(num * b, den * a);
+                }
+            }
+        }
     }
 
     #[test]
@@ -619,24 +999,37 @@ mod tests {
     }
 
     #[test]
-    #[allow(clippy::op_ref)]
-    fn test_fmt() {
-        define_fp!(998244353);
-        for num in 1..100_u64 {
-            for den in 1..100_u64 {
-                let x: F = fp!(num; den);
-                let s = format!("{:?}", x);
-                if num % den == 0 {
-                    let restored = s.parse::<u64>().unwrap();
-                    assert_eq!(num, den * restored);
-                } else {
-                    let v = s.split('/').collect::<Vec<_>>();
-                    assert_eq!(v.len(), 2);
-                    let a = v[0].parse::<u64>().unwrap();
-                    let b = v[1].parse::<u64>().unwrap();
-                    assert_eq!(num * b, den * a);
+    fn test_primroot() {
+        define_fp!(998244353, 3);
+        assert_eq!(F::ROOT, fp!(3));
+    }
+
+    #[test]
+    fn test_anymod_convolution() {
+        type F = F1000000007;
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let l = rng.gen_range(0..10);
+            let m = rng.gen_range(0..10);
+            let a = repeat_with(|| F::new(rng.gen_range(0..F::P)))
+                .take(l)
+                .collect::<Vec<_>>();
+            let b = repeat_with(|| F::new(rng.gen_range(0..F::P)))
+                .take(m)
+                .collect::<Vec<_>>();
+            let result = anymod_convolution(&a, &b);
+            let expected = if a.is_empty() || b.is_empty() {
+                Vec::new()
+            } else {
+                let mut c = vec![fp!(0); (l + m).saturating_sub(1)];
+                for (i, &x) in a.iter().enumerate() {
+                    for (j, &y) in b.iter().enumerate() {
+                        c[i + j] += x * y;
+                    }
                 }
-            }
+                c
+            };
+            assert_eq!(result, expected);
         }
     }
 }
