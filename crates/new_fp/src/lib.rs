@@ -1,32 +1,47 @@
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+///
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
-    iter::{successors, Product, Sum},
+    iter::{repeat, successors, FromIterator, Product, Sum},
     marker::PhantomData,
-    mem::swap,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    mem::{swap, take},
+    ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
 
-define_fp! {
-    1_000_000_007;
-    pub enum M1000000007;
-    pub type F1000000007;
+// TODO: マクロで定義するとバンドラさんに壊されしまいます。
+pub enum M1000000007 {}
+impl Mod for M1000000007 {
+    const P: u64 = 1_000_000_007;
 }
-define_fp! {
-    998_244_353, 3; // 119 * 2 ^ 23 + 1
-    pub enum M998244353;
-    pub type F998244353;
+pub type F1000000007 = Fp<M1000000007>;
+pub enum M998244353 {}
+impl Mod for M998244353 {
+    const P: u64 = 998_244_353;
 }
-define_fp! {
-    1_012_924_417, 5; // 483 * 2 ^ 21 + 1
-    pub enum M1012924417;
-    pub type F1012924417;
+impl Fft for M998244353 {
+    const ROOT: u64 = 5;
 }
-define_fp! {
-    924_844_033, 5; // 441 * 2 ^ 21 + 1
-    pub enum M924844033;
-    pub type F924844033;
+pub type F998244353 = Fp<M998244353>;
+pub type Fps998244353 = Fpsp<M998244353>;
+pub enum M1012924417 {}
+impl Mod for M1012924417 {
+    const P: u64 = 1_012_924_417;
 }
+impl Fft for M1012924417 {
+    const ROOT: u64 = 5;
+}
+pub type F1012924417 = Fp<M1012924417>;
+pub type Fps1012924417 = Fpsp<M1012924417>;
+pub enum M924844033 {}
+impl Mod for M924844033 {
+    const P: u64 = 924_844_033;
+}
+impl Fft for M924844033 {
+    const ROOT: u64 = 5;
+}
+pub type F924844033 = Fp<M924844033>;
+pub type Fps924844033 = Fpsp<M924844033>;
 
 /// 有限体型の実装するトレイトです。[`define_fp!`] マクロを使いましょう。
 pub trait Mod {
@@ -85,7 +100,7 @@ pub trait Fft: Mod {
 /// assert_eq!(F13::P, 13);
 /// assert_eq!(M13::P, 13);
 ///
-/// define_fp!(13, 2; pub enum M13_2; pub type F13_2);
+/// define_fp!(13, 2; pub enum M13_2; pub type F13_2; pub type Fps13_2);
 /// assert_eq!(F13_2::P, 13);
 /// assert_eq!(M13_2::P, 13);
 /// assert_eq!(F13_2::ROOT, fp!(2));
@@ -97,28 +112,33 @@ macro_rules! define_fp {
         $crate::define_fp! { $p; enum M; type F }
     };
     ($p:expr, $root:expr) => {
-        $crate::define_fp! { $p, $root; enum M; type F }
+        $crate::define_fp! { $p, $root; enum M; type F; type Fps }
     };
     (
         $p:expr;
         $vism:vis enum $m:ident;
         $visf:vis type $f:ident$(;)?
     ) => {
+        #[allow(dead_code)]
         $vism enum $m {}
         impl $crate::Mod for $m {
             const P: u64 = $p;
         }
+        #[allow(dead_code)]
         $visf type $f = $crate::Fp<$m>;
     };
     (
         $p:expr, $root:expr;
         $vism:vis enum $m:ident;
-        $visf:vis type $f:ident$(;)?
+        $visf:vis type $f:ident;
+        $visfps:vis type $fps:ident$(;)?
     ) => {
         $crate::define_fp! { $p; $vism enum $m; $visf type $f }
         impl $crate::Fft for $m {
             const ROOT: u64 = $root;
         }
+        #[allow(dead_code)]
+        $visfps type $fps = $crate::Fpsp<$m>;
     };
 }
 
@@ -144,13 +164,25 @@ macro_rules! define_fp {
 /// assert_eq!(fp!(x), F::new(10));
 /// ```
 ///
-/// セミコロン区切りで２つ整数を入れると、順に分子、分母とする分数を構築します。
+/// ## 分数
 ///
 /// ```
 /// use new_fp::{fp, define_fp};
 /// define_fp!(13);
 ///
 /// assert_eq!(fp!(2; 3), F::new(2) / F::new(3));
+/// ```
+///
+/// ## 二重
+///
+/// `F::from(F::from(x)) == F::From(x)` なので、`fp!(fp!(x)) == fp!(x)` です。
+///
+/// ```
+/// use new_fp::{fp, define_fp};
+/// define_fp!(13);
+///
+/// let x: F = fp!(fp!(2));
+/// assert_eq!(x / 3, fp!(2; 3));
 /// ```
 #[macro_export]
 macro_rules! fp {
@@ -160,6 +192,36 @@ macro_rules! fp {
     ($value:expr) => {
         $crate::Fp::from($value)
     };
+}
+/// [`vec!`] と類似の文法で、[`Fpsp`] を構築します。
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{define_fp, fp, fps};
+/// define_fp!(17, 3);
+///
+/// let _: Fps = fps![];
+/// let _: Fps = fps![42];
+/// let _: Fps = fps![42, 43];
+/// let _: Fps = fps![42; 10];
+///
+/// let _: Fps = fps![fp!(42), fp!(43)];
+/// let _: Fps = fps![fp!(42); 10];
+///
+/// let _: Fps = fps![fp!(42; 16), fp!(1), 6, fp!(fp!(4; 2)), F::new(4)];
+/// ```
+#[macro_export]
+macro_rules! fps {
+    () => (
+        $crate::Fpsp(Vec::new())
+    );
+    ($elem:expr; $n:expr) => (
+        $crate::Fpsp(vec![$crate::fp!($elem); $n])
+    );
+    ($($x:expr),+ $(,)?) => (
+        $crate::Fpsp(vec![$($crate::fp!($x)),+])
+    );
 }
 
 pub struct Fp<M>(u64, PhantomData<fn() -> M>);
@@ -211,6 +273,9 @@ impl<M: Mod> Fp<M> {
     /// assert_eq!(x, fp!(5));
     /// ```
     pub fn inv(self) -> Self {
+        if self.0 == 0 {
+            panic!("Cannot invert `0`.");
+        }
         let mut x = Self::P as i64;
         let mut y = self.0 as i64;
         let mut u = 0;
@@ -391,13 +456,13 @@ impl<M: Mod> Neg for &Fp<M> {
     }
 }
 
-macro_rules! forward_ops {
-    ($((
+macro_rules! fp_forward_ops {
+    ($(
         $trait:ident,
         $trait_assign:ident,
         $fn:ident,
-        $fn_assign:ident$(,)?
-    )),* $(,)?) => {$(
+        $fn_assign:ident,
+    )*) => {$(
         impl<M: Mod> $trait_assign<&Fp<M>> for Fp<M> {
             fn $fn_assign(&mut self, rhs: &Fp<M>) {
                 self.$fn_assign(*rhs);
@@ -430,11 +495,11 @@ macro_rules! forward_ops {
         }
     )*};
 }
-forward_ops! {
-    (Add, AddAssign, add, add_assign),
-    (Sub, SubAssign, sub, sub_assign),
-    (Mul, MulAssign, mul, mul_assign),
-    (Div, DivAssign, div, div_assign),
+fp_forward_ops! {
+    Add, AddAssign, add, add_assign,
+    Sub, SubAssign, sub, sub_assign,
+    Mul, MulAssign, mul, mul_assign,
+    Div, DivAssign, div, div_assign,
 }
 impl<M: Mod> Sum for Fp<M> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
@@ -866,13 +931,327 @@ pub fn fft<M: Fft>(a: &mut [Fp<M>]) {
     }
 }
 
+/// 算術演算子などの定義された、[`Vec<Fp<M>>`] の透明なラッパーです。
+///
+/// - ⚠️  Trailing zeros は無視されません。特に、`fps![2, 3, 0] != fps![2, 3]` です。
+/// - [`vec!`] マクロに類似した [`fps!`] マクロを利用するとよいです。
+/// - 演算子は、`+`, `-`（引き算、負元両方）, `*` とその代入演算子が使えます。
+/// `*` は FFT を用います。
+/// - ニュートン法による形式的べき級数の演算が使えます。
+///     - [`inv`]: 逆元
+///
+/// # Examples
+///
+/// ```
+/// use new_fp::{define_fp, fps};
+/// define_fp!(998244353, 3);
+///
+/// let a: Fps = fps![2, 3] + fps![1];
+/// assert_eq!(a, fps![3, 3]);
+/// ```
+pub struct Fpsp<M>(pub Vec<Fp<M>>);
+impl<M: Fft> Fpsp<M> {
+    /// 空ベクターを構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::define_fp;
+    /// define_fp!(998244353, 2);
+    /// let a = Fps::new();
+    /// assert!(a.is_empty());
+    /// ```
+    pub fn new() -> Self {
+        Self::default()
+    }
+    /// 中身のベクターが空ならば `true` を返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps};
+    /// define_fp!(998244353, 2);
+    ///
+    /// let a = Fps::new();
+    /// assert!(a.is_empty());
+    ///
+    /// let a: Fps = fps![1, 2];
+    /// assert!(!a.is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+    /// 中身のベクターの長さを返します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps};
+    /// define_fp!(998244353, 2);
+    ///
+    /// let a = Fps::new();
+    /// assert_eq!(a.len(), 0);
+    ///
+    /// let a: Fps = fps![1, 2];
+    /// assert_eq!(a.len(), 2);
+    ///
+    /// let a: Fps = fps![42; 10];
+    /// assert_eq!(a.len(), 10);
+    /// ```
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+    /// 中身のベクターの長さがもとの長さと `len` の minimum になるように
+    /// truncate したものを構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps};
+    /// define_fp!(998244353, 2);
+    ///
+    /// let a: Fps = fps![1, 2];
+    /// assert_eq!(a.truncated(0), fps![]);
+    /// assert_eq!(a.truncated(1), fps![1]);
+    /// assert_eq!(a.truncated(2), fps![1, 2]);
+    /// assert_eq!(a.truncated(3), fps![1, 2]);
+    /// ```
+    pub fn truncated(&self, len: usize) -> Self {
+        self.iter().copied().take(len).collect()
+    }
+    /// 中身のベクターの長さが `len` になるように
+    /// `0` で埋めるもしくは truncate したものを構築します。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps};
+    /// define_fp!(998244353, 2);
+    ///
+    /// let a: Fps = fps![1, 2];
+    /// assert_eq!(a.resized(0), fps![]);
+    /// assert_eq!(a.resized(1), fps![1]);
+    /// assert_eq!(a.resized(2), fps![1, 2]);
+    /// assert_eq!(a.resized(3), fps![1, 2, 0]);
+    /// ```
+    pub fn resized(&self, len: usize) -> Self {
+        self.iter()
+            .copied()
+            .chain(repeat(fp!(0)))
+            .take(len)
+            .collect()
+    }
+    /// x の `precision` 乗を法とした逆元を返します。
+    ///
+    /// # 計算量
+    ///
+    /// O(lg(`precision`))
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fp, fps};
+    /// define_fp!(998244353, 3);
+    ///
+    /// let a: Fps = fps![1, -1].inv(5);
+    /// assert_eq!(a, fps![1, 1, 1, 1, 1]);
+    ///
+    /// let a: Fps = fps![1, -1, -1].inv(5);
+    /// assert_eq!(a, fps![1, 1, 2, 3, 5]);
+    ///
+    /// let a: Fps = fps![5, 3, 1].inv(3);
+    /// assert_eq!(a, fps![fp!(1; 5), fp!(-3; 25), fp!(4; 125)]);
+    /// ```
+    pub fn inv(&self, precision: usize) -> Self {
+        assert!(
+            !self.is_empty() && self[0] != fp!(0),
+            "Cannot invert an FPS `0`"
+        );
+        let mut ans = Self(vec![self[0].inv()]);
+        while ans.len() < precision {
+            let len = ans.len() * 2;
+            ans = (ans.clone() * (-ans * self.truncated(len) + 2)).resized(len);
+        }
+        ans.truncated(precision)
+    }
+}
+// HACK: Deref パターンってラッパーで使っていいんでしたっけ。
+impl<M: Fft> Deref for Fpsp<M> {
+    type Target = Vec<Fp<M>>;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl<M: Fft> DerefMut for Fpsp<M> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+impl<M: Fft> Clone for Fpsp<M> {
+    fn clone(&self) -> Self {
+        Self(self.to_vec())
+    }
+}
+impl<M: Fft, T: Into<Fp<M>>> FromIterator<T> for Fpsp<M> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self(iter.into_iter().map(Into::into).collect())
+    }
+}
+impl<M: Fft> AddAssign<&Fpsp<M>> for Fpsp<M> {
+    fn add_assign(&mut self, rhs: &Fpsp<M>) {
+        self.0.iter_mut().zip(&rhs.0).for_each(|(x, &y)| *x += y);
+        if self.len() < rhs.len() {
+            self.0.extend(rhs.0[self.len()..].iter().copied());
+        }
+    }
+}
+impl<M: Fft> AddAssign<&Fp<M>> for Fpsp<M> {
+    fn add_assign(&mut self, rhs: &Fp<M>) {
+        if self.is_empty() {
+            self.0.push(*rhs);
+        } else {
+            self[0] += *rhs;
+        }
+    }
+}
+impl<M: Fft> SubAssign<&Fpsp<M>> for Fpsp<M> {
+    fn sub_assign(&mut self, rhs: &Fpsp<M>) {
+        self.0.iter_mut().zip(&rhs.0).for_each(|(x, &y)| *x -= y);
+        if self.len() < rhs.len() {
+            self.0.extend(rhs.0[self.len()..].iter().map(|&x| -x));
+        }
+    }
+}
+impl<M: Fft> SubAssign<&Fp<M>> for Fpsp<M> {
+    fn sub_assign(&mut self, rhs: &Fp<M>) {
+        if self.is_empty() {
+            self.0.push(-*rhs);
+        } else {
+            self[0] -= *rhs;
+        }
+    }
+}
+impl<M: Fft> Neg for Fpsp<M> {
+    type Output = Self;
+    fn neg(mut self) -> Self::Output {
+        self.0.iter_mut().for_each(|x| *x = -*x);
+        self
+    }
+}
+macro_rules! fps_forward_ops_borrow {
+    ($(
+        $trait:ident,
+        $trait_assign: ident,
+        $fn:ident,
+        $fn_assign:ident,
+    )*) => {$(
+        impl<M: Fft> $trait_assign for Fpsp<M> {
+            fn $fn_assign(&mut self, rhs: Self) {
+                self.$fn_assign(&rhs)
+            }
+        }
+        impl<M: Fft, T: Into<Fp<M>>> $trait_assign<T> for Fpsp<M> {
+            fn $fn_assign(&mut self, rhs: T) {
+                self.$fn_assign(&rhs.into())
+            }
+        }
+        impl<M: Fft> $trait for Fpsp<M> {
+            type Output = Fpsp<M>;
+            fn $fn(mut self, rhs: Fpsp<M>) -> Self::Output {
+                self.$fn_assign(rhs);
+                self
+            }
+        }
+        impl<M: Fft> $trait<&Fpsp<M>> for Fpsp<M> {
+            type Output = Fpsp<M>;
+            fn $fn(mut self, rhs: &Fpsp<M>) -> Self::Output {
+                self.$fn_assign(rhs);
+                self
+            }
+        }
+        impl<M: Fft> $trait<&Fp<M>> for Fpsp<M> {
+            type Output = Fpsp<M>;
+            fn $fn(mut self, rhs: &Fp<M>) -> Self::Output {
+                self.$fn_assign(rhs);
+                self
+            }
+        }
+        impl<M: Fft, T: Into<Fp<M>>> $trait<T> for Fpsp<M> {
+            type Output = Fpsp<M>;
+            fn $fn(mut self, rhs: T) -> Self::Output {
+                self.$fn_assign(rhs);
+                self
+            }
+        }
+    )*};
+}
+fps_forward_ops_borrow! {
+    Add, AddAssign, add, add_assign,
+    Sub, SubAssign, sub, sub_assign,
+}
+impl<M: Fft> Mul<Fpsp<M>> for Fpsp<M> {
+    type Output = Fpsp<M>;
+    fn mul(self, rhs: Fpsp<M>) -> Self::Output {
+        Fpsp(convolution(self.0, rhs.0))
+    }
+}
+impl<M: Fft> MulAssign<&Fp<M>> for Fpsp<M> {
+    fn mul_assign(&mut self, rhs: &Fp<M>) {
+        self.0.iter_mut().for_each(|x| *x *= *rhs);
+    }
+}
+impl<M: Fft> MulAssign<Fpsp<M>> for Fpsp<M> {
+    fn mul_assign(&mut self, rhs: Fpsp<M>) {
+        *self = take(self).mul(rhs)
+    }
+}
+impl<M: Fft, T: Into<Fp<M>>> MulAssign<T> for Fpsp<M> {
+    fn mul_assign(&mut self, rhs: T) {
+        self.mul_assign(&rhs.into());
+    }
+}
+impl<M: Fft> Mul<&Fp<M>> for Fpsp<M> {
+    type Output = Fpsp<M>;
+    fn mul(mut self, rhs: &Fp<M>) -> Self::Output {
+        self.mul_assign(rhs);
+        self
+    }
+}
+impl<M: Fft, T: Into<Fp<M>>> Mul<T> for Fpsp<M> {
+    type Output = Fpsp<M>;
+    fn mul(mut self, rhs: T) -> Self::Output {
+        self.mul_assign(rhs);
+        self
+    }
+}
+
+impl<M: Fft> Debug for Fpsp<M> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl<M: Fft> PartialEq for Fpsp<M> {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.eq(&other.0)
+    }
+}
+impl<M: Fft> Eq for Fpsp<M> {}
+impl<M: Fft> Default for Fpsp<M> {
+    fn default() -> Self {
+        Self(Vec::new())
+    }
+}
+impl<M: Fft> Hash for Fpsp<M> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.0.hash(state)
+    }
+}
+
 #[cfg(test)]
 mod tests {
-    use std::iter::repeat_with;
-
-    use rand::{prelude::StdRng, Rng, SeedableRng};
-
     use super::*;
+    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use std::iter::repeat_with;
     define_fp!(13);
 
     #[test]
@@ -1030,6 +1409,169 @@ mod tests {
                 c
             };
             assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_fps_add() {
+        define_fp!(998244353, 3);
+
+        let result: Fps = fps![2, 3] + fps![4, 5];
+        assert_eq!(result, fps![6, 8]);
+
+        let result: Fps = fps![2, 3] + &fps![4, 5];
+        assert_eq!(result, fps![6, 8]);
+
+        let mut result: Fps = fps![2, 3];
+        result += fps![4, 5];
+        assert_eq!(result, fps![6, 8]);
+
+        let mut result: Fps = fps![2, 3];
+        result += &fps![4, 5];
+        assert_eq!(result, fps![6, 8]);
+
+        let result: Fps = fps![2, 3] + fps![4, -3];
+        assert_eq!(result, fps![6, 0]);
+
+        let result: Fps = fps![2, 3] + fps![-2, -3];
+        assert_eq!(result, fps![0, 0]);
+
+        let result: Fps = fps![2, 3] + fps![4, 5, 6];
+        assert_eq!(result, fps![6, 8, 6]);
+
+        let result: Fps = fps![2, 3, 4] + fps![4, 5];
+        assert_eq!(result, fps![6, 8, 4]);
+
+        let result: Fps = fps![] + fps![];
+        assert_eq!(result, fps![]);
+
+        let result: Fps = fps![2, 3, 4] + fp!(3);
+        assert_eq!(result, fps![5, 3, 4]);
+
+        let result: Fps = fps![2, 3, 4] + 3;
+        assert_eq!(result, fps![5, 3, 4]);
+
+        let result: Fps = fps![2, 3, 4] + &fp!(3);
+        assert_eq!(result, fps![5, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result += fp!(3);
+        assert_eq!(result, fps![5, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result += 3;
+        assert_eq!(result, fps![5, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result += &fp!(3);
+        assert_eq!(result, fps![5, 3, 4]);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_fps_sub() {
+        define_fp!(998244353, 3);
+
+        let result: Fps = fps![2, 3] - fps![4, 5];
+        assert_eq!(result, fps![-2, -2]);
+
+        let result: Fps = fps![2, 3] - &fps![4, 5];
+        assert_eq!(result, fps![-2, -2]);
+
+        let mut result: Fps = fps![2, 3];
+        result -= fps![4, 5];
+        assert_eq!(result, fps![-2, -2]);
+
+        let mut result: Fps = fps![2, 3];
+        result -= &fps![4, 5];
+        assert_eq!(result, fps![-2, -2]);
+
+        let result: Fps = fps![2, 3] - fps![4, 3];
+        assert_eq!(result, fps![-2, 0]);
+
+        let result: Fps = fps![2, 3] - fps![2, 3];
+        assert_eq!(result, fps![0, 0]);
+
+        let result: Fps = fps![2, 3] - fps![4, 5, 6];
+        assert_eq!(result, fps![-2, -2, -6]);
+
+        let result: Fps = fps![2, 3, 4] - fps![4, 5];
+        assert_eq!(result, fps![-2, -2, 4]);
+
+        let result: Fps = fps![] - fps![];
+        assert_eq!(result, fps![]);
+
+        let result: Fps = fps![2, 3, 4] - fp!(3);
+        assert_eq!(result, fps![-1, 3, 4]);
+
+        let result: Fps = fps![2, 3, 4] - 3;
+        assert_eq!(result, fps![-1, 3, 4]);
+
+        let result: Fps = fps![2, 3, 4] - &fp!(3);
+        assert_eq!(result, fps![-1, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result -= fp!(3);
+        assert_eq!(result, fps![-1, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result -= 3;
+        assert_eq!(result, fps![-1, 3, 4]);
+
+        let mut result: Fps = fps![2, 3, 4];
+        result -= &fp!(3);
+        assert_eq!(result, fps![-1, 3, 4]);
+    }
+
+    #[test]
+    #[allow(clippy::op_ref)]
+    fn test_fps_mul() {
+        define_fp!(998244353, 3);
+
+        let result: Fps = fps![2, 3] * fps![4, 5];
+        assert_eq!(result, fps![8, 22, 15]);
+
+        let result: Fps = fps![2, 3] * fp![4];
+        assert_eq!(result, fps![8, 12]);
+
+        let result: Fps = fps![2, 3] * &fp![4];
+        assert_eq!(result, fps![8, 12]);
+
+        let result: Fps = fps![2, 3] * 4;
+        assert_eq!(result, fps![8, 12]);
+
+        let mut result: Fps = fps![2, 3];
+        result *= fps![4, 5];
+        assert_eq!(result, fps![8, 22, 15]);
+
+        let mut result: Fps = fps![2, 3];
+        result *= fps![4];
+        assert_eq!(result, fps![8, 12]);
+
+        let mut result: Fps = fps![2, 3];
+        result *= 4;
+        assert_eq!(result, fps![8, 12]);
+    }
+
+    #[test]
+    fn test_inv() {
+        define_fp!(998244353, 3);
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let l = rng.gen_range(0..10);
+            let m = rng.gen_range(0..10);
+            let a = repeat_with(|| F::new(rng.gen_range(0..F::P)))
+                .take(l)
+                .collect::<Fps>();
+            if l == 0 || m == 0 || a[0] == fp!(0) {
+                continue;
+            }
+            let result = a.inv(m);
+            let should_be_one = (a * result).resized(m);
+            let mut expected = fps![0; m];
+            expected[0] = fp!(1);
+            assert_eq!(should_be_one, expected);
         }
     }
 }
