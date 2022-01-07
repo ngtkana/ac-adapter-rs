@@ -3,7 +3,7 @@
 use std::{
     fmt::{Debug, Display},
     hash::Hash,
-    iter::{repeat, successors, FromIterator, Product, Sum},
+    iter::{once, repeat, successors, FromIterator, Product, Sum},
     marker::PhantomData,
     mem::{swap, take},
     ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
@@ -20,7 +20,7 @@ impl Mod for M998244353 {
     const P: u64 = 998_244_353;
 }
 impl Fft for M998244353 {
-    const ROOT: u64 = 5;
+    const ROOT: u64 = 3;
 }
 pub type F998244353 = Fp<M998244353>;
 pub type Fps998244353 = Fpsp<M998244353>;
@@ -957,7 +957,7 @@ impl<M: Fft> Fpsp<M> {
     ///
     /// ```
     /// use new_fp::define_fp;
-    /// define_fp!(998244353, 2);
+    /// define_fp!(998244353, 3);
     /// let a = Fps::new();
     /// assert!(a.is_empty());
     /// ```
@@ -970,7 +970,7 @@ impl<M: Fft> Fpsp<M> {
     ///
     /// ```
     /// use new_fp::{define_fp, fps};
-    /// define_fp!(998244353, 2);
+    /// define_fp!(998244353, 3);
     ///
     /// let a = Fps::new();
     /// assert!(a.is_empty());
@@ -987,7 +987,7 @@ impl<M: Fft> Fpsp<M> {
     ///
     /// ```
     /// use new_fp::{define_fp, fps};
-    /// define_fp!(998244353, 2);
+    /// define_fp!(998244353, 3);
     ///
     /// let a = Fps::new();
     /// assert_eq!(a.len(), 0);
@@ -1008,7 +1008,7 @@ impl<M: Fft> Fpsp<M> {
     ///
     /// ```
     /// use new_fp::{define_fp, fps};
-    /// define_fp!(998244353, 2);
+    /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, 2];
     /// assert_eq!(a.truncated(0), fps![]);
@@ -1026,7 +1026,7 @@ impl<M: Fft> Fpsp<M> {
     ///
     /// ```
     /// use new_fp::{define_fp, fps};
-    /// define_fp!(998244353, 2);
+    /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, 2];
     /// assert_eq!(a.resized(0), fps![]);
@@ -1041,7 +1041,59 @@ impl<M: Fft> Fpsp<M> {
             .take(len)
             .collect()
     }
-    /// x の `precision` 乗を法とした逆元を返します。
+    /// 定数項が `0` の原始関数を返します。長さはちょうど `1` 増えます。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps};
+    /// define_fp!(998244353, 3);
+    ///
+    /// let a: Fps = fps![40, 41, 42];
+    /// assert_eq!(a.derivative(), fps![41, 84]);
+    ///
+    /// let a: Fps = fps![40, 41];
+    /// assert_eq!(a.derivative(), fps![41]);
+    ///
+    /// let a: Fps = fps![40];
+    /// assert_eq!(a.derivative(), fps![]);
+    ///
+    /// let a: Fps = fps![];
+    /// assert_eq!(a.derivative(), fps![]);
+    /// ```
+    pub fn derivative(&self) -> Self {
+        self.iter()
+            .enumerate()
+            .skip(1)
+            .map(|(i, &x)| fp!(i) * x)
+            .collect()
+    }
+    /// 導関数を返します。長さは `saturating_sub(1)` です。
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fps, fp};
+    /// define_fp!(998244353, 3);
+    ///
+    /// let a: Fps = fps![40, 41, 42];
+    /// assert_eq!(a.integral(), fps![0, 40, fp!(41; 2), 14]);
+    ///
+    /// let a: Fps = fps![40, 41];
+    /// assert_eq!(a.integral(), fps![0, 40, fp!(41; 2)]);
+    ///
+    /// let a: Fps = fps![40];
+    /// assert_eq!(a.integral(), fps![0, 40]);
+    ///
+    /// let a: Fps = fps![];
+    /// assert_eq!(a.integral(), fps![0]);
+    /// ```
+    pub fn integral(&self) -> Self {
+        once(fp!(0))
+            .chain(self.iter().enumerate().map(|(i, &x)| x / fp!(i + 1)))
+            .collect()
+    }
+    /// 逆元を返します。
     ///
     /// # 計算量
     ///
@@ -1067,13 +1119,77 @@ impl<M: Fft> Fpsp<M> {
             !self.is_empty() && self[0] != fp!(0),
             "Cannot invert an FPS `0`"
         );
-        let mut ans = Self(vec![self[0].inv()]);
-        while ans.len() < precision {
-            let len = ans.len() * 2;
-            ans = (ans.clone() * (-ans * self.truncated(len) + 2)).resized(len);
-        }
-        ans.truncated(precision)
+        newton_by(precision, self[0].inv(), |g, d| {
+            (-&g * self.truncated(d) + 2) * g
+        })
     }
+    /// log を返します。
+    ///
+    /// # 計算量
+    ///
+    /// O(lg(`precision`))
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fp, fps};
+    /// define_fp!(998244353, 3);
+    ///
+    /// let a: Fps = fps![1, 1, fp!(1; 2), fp!(1; 6)].log(3);
+    /// assert_eq!(a, fps![0, 1, 0]);
+    ///
+    /// let a: Fps = fps![1, 1, fp!(5; 2), fp!(13; 6)].log(3);
+    /// assert_eq!(a, fps![0, 1, 2]);
+    /// ```
+    pub fn log(&self, precision: usize) -> Self {
+        assert!(
+            !self.is_empty() && self[0] == fp!(1),
+            "Cannot take a log of an FPS with constant term other than `1`"
+        );
+        (self.derivative().truncated(precision) * self.inv(precision))
+            .integral()
+            .resized(precision)
+    }
+    /// exp を返します
+    ///
+    /// # 計算量
+    ///
+    /// O(lg(`precision`))
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use new_fp::{define_fp, fp, fps};
+    /// define_fp!(998244353, 3);
+    ///
+    /// let a: Fps = fps![0, 1, 0].exp(4);
+    /// assert_eq!(a, fps![1, 1, fp!(1; 2), fp!(1; 6)]);
+    ///
+    /// let a: Fps = fps![0, 1, 2].exp(4);
+    /// assert_eq!(a, fps![1, 1, fp!(5; 2), fp!(13; 6)]);
+    /// ```
+    pub fn exp(&self, precision: usize) -> Self {
+        assert!(
+            !self.is_empty() && self[0] == fp!(0),
+            "Cannot take an exp of an FPS with constant term other than `0`"
+        );
+        newton_by(precision, fp!(1), |g, d| {
+            (self.truncated(d) + 1 - g.log(d)) * g
+        })
+    }
+}
+/// 指定された漸化式により、x-adic ニュートン法を実行します。
+pub fn newton_by<M: Fft>(
+    precision: usize,
+    init: Fp<M>,
+    rec: impl Fn(Fpsp<M>, usize) -> Fpsp<M>,
+) -> Fpsp<M> {
+    let mut ans = Fpsp(vec![init]);
+    while ans.len() != precision {
+        let d = ans.len() * 2;
+        ans = rec(ans, d).resized(d.min(precision))
+    }
+    ans
 }
 // HACK: Deref パターンってラッパーで使っていいんでしたっけ。
 impl<M: Fft> Deref for Fpsp<M> {
@@ -1132,10 +1248,16 @@ impl<M: Fft> SubAssign<&Fp<M>> for Fpsp<M> {
     }
 }
 impl<M: Fft> Neg for Fpsp<M> {
-    type Output = Self;
+    type Output = Fpsp<M>;
     fn neg(mut self) -> Self::Output {
         self.0.iter_mut().for_each(|x| *x = -*x);
         self
+    }
+}
+impl<M: Fft> Neg for &Fpsp<M> {
+    type Output = Fpsp<M>;
+    fn neg(self) -> Self::Output {
+        self.0.iter().map(|&x| -x).collect()
     }
 }
 macro_rules! fps_forward_ops_borrow {
@@ -1572,6 +1694,33 @@ mod tests {
             let mut expected = fps![0; m];
             expected[0] = fp!(1);
             assert_eq!(should_be_one, expected);
+        }
+    }
+
+    #[test]
+    fn test_exp() {
+        fn brute(a: Fps, precision: usize) -> Fps {
+            let mut aug = fps![1];
+            let mut ans = Fps::new();
+            for i in 0..precision {
+                ans += &aug;
+                aug = (aug * a.clone() * fp!(1; i + 1)).truncated(precision);
+            }
+            ans.resized(precision)
+        }
+        define_fp!(998244353, 3);
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let l = rng.gen_range(1..10);
+            let m = rng.gen_range(0..10);
+            let a = once(fp!(0))
+                .chain(repeat_with(|| F::new(rng.gen_range(0..F::P))))
+                .take(l)
+                .collect::<Fps>();
+            dbg!(&a);
+            let result = a.exp(m);
+            let expected = brute(a, m);
+            assert_eq!(&result, &expected);
         }
     }
 }
