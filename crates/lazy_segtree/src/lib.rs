@@ -78,6 +78,7 @@ where
             );
             table.borrow_mut()[i] = x;
         });
+        #[allow(clippy::redundant_closure)]
         let lazy = RefCell::new(
             std::iter::repeat_with(|| id_action())
                 .take(len)

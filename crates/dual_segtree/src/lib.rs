@@ -182,6 +182,7 @@ impl<O: Ops> Debug for DualSegtree<O> {
 ////////////////////////////////////////////////////////////////////////////////
 // プライベート - RangeBounds 関連
 ////////////////////////////////////////////////////////////////////////////////
+#[allow(clippy::redundant_closure)]
 fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     let start = match range.start_bound() {
         Bound::Included(&start) => start,
