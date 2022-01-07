@@ -50,7 +50,7 @@ pub trait Mod {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::define_fp;
+    /// use fp::define_fp;
     /// define_fp!(13);
     /// assert_eq!(F::P, 13);
     /// ```
@@ -63,7 +63,7 @@ pub trait Fft: Mod {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fp};
+    /// use fp::{define_fp, fp};
     /// define_fp!(5, 2);
     /// assert_eq!(F::ROOT, fp!(2));
     /// ```
@@ -77,7 +77,7 @@ pub trait Fft: Mod {
 /// ## 基本
 ///
 /// ```
-/// use new_fp::{define_fp, fp, Mod};
+/// use fp::{define_fp, fp, Mod};
 /// define_fp!(13);
 /// assert_eq!(F::P, 13);
 /// assert_eq!(M::P, 13);
@@ -85,7 +85,7 @@ pub trait Fft: Mod {
 ///
 /// ## 原子根付き
 /// ```
-/// use new_fp::{define_fp, fp, Mod, Fft};
+/// use fp::{define_fp, fp, Mod, Fft};
 /// define_fp!(13, 2);
 /// assert_eq!(F::P, 13);
 /// assert_eq!(M::P, 13);
@@ -95,7 +95,7 @@ pub trait Fft: Mod {
 ///
 /// ## 型名付き
 /// ```
-/// use new_fp::{define_fp, fp, Mod, Fft};
+/// use fp::{define_fp, fp, Mod, Fft};
 /// define_fp!(13; pub enum M13; pub type F13);
 /// assert_eq!(F13::P, 13);
 /// assert_eq!(M13::P, 13);
@@ -149,7 +149,7 @@ macro_rules! define_fp {
 /// １つ式を入れると、それで [`Fp::from()`] を呼びます。
 ///
 /// ```
-/// use new_fp::{fp, define_fp};
+/// use fp::{fp, define_fp};
 /// define_fp!(13);
 ///
 /// // リテラル
@@ -167,7 +167,7 @@ macro_rules! define_fp {
 /// ## 分数
 ///
 /// ```
-/// use new_fp::{fp, define_fp};
+/// use fp::{fp, define_fp};
 /// define_fp!(13);
 ///
 /// assert_eq!(fp!(2; 3), F::new(2) / F::new(3));
@@ -178,7 +178,7 @@ macro_rules! define_fp {
 /// `F::from(F::from(x)) == F::From(x)` なので、`fp!(fp!(x)) == fp!(x)` です。
 ///
 /// ```
-/// use new_fp::{fp, define_fp};
+/// use fp::{fp, define_fp};
 /// define_fp!(13);
 ///
 /// let x: F = fp!(fp!(2));
@@ -198,7 +198,7 @@ macro_rules! fp {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{define_fp, fp, fps};
+/// use fp::{define_fp, fp, fps};
 /// define_fp!(17, 3);
 ///
 /// let _: Fps = fps![];
@@ -235,7 +235,7 @@ impl<M: Mod> Fp<M> {
     /// # Example
     ///
     /// ```
-    /// use new_fp::{define_fp};
+    /// use fp::{define_fp};
     ///
     /// define_fp!(7);
     /// assert_eq!(F::P, 7);
@@ -252,7 +252,7 @@ impl<M: Mod> Fp<M> {
     /// # Example
     ///
     /// ```
-    /// use new_fp::{define_fp};
+    /// use fp::{define_fp};
     ///
     /// define_fp!(7);
     /// let x = F::new(13).value();
@@ -266,7 +266,7 @@ impl<M: Mod> Fp<M> {
     /// # Example
     ///
     /// ```
-    /// use new_fp::{define_fp, fp};
+    /// use fp::{define_fp, fp};
     ///
     /// define_fp!(7);
     /// let x = F::new(3).inv();
@@ -300,7 +300,7 @@ impl<M: Mod> Fp<M> {
     /// # Example
     ///
     /// ```
-    /// use new_fp::{define_fp, fp};
+    /// use fp::{define_fp, fp};
     ///
     /// define_fp!(7);
     /// let x = F::new(3).inv();
@@ -527,7 +527,7 @@ impl<'a, M: Mod> Product<&'a Self> for Fp<M> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{fact_iter, define_fp, fp};
+/// use fp::{fact_iter, define_fp, fp};
 /// define_fp!(13);
 ///
 /// let mut fact = fact_iter::<M>();
@@ -550,7 +550,7 @@ pub fn fact_iter<M: Mod>() -> impl Iterator<Item = Fp<M>> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{fact_build, define_fp, fp};
+/// use fp::{fact_build, define_fp, fp};
 /// define_fp!(13);
 ///
 /// let fact = fact_build::<M>(3);
@@ -575,7 +575,7 @@ pub fn fact_build<M: Mod>(n: usize) -> FactTable<M> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{fact_build, define_fp, fp};
+/// use fp::{fact_build, define_fp, fp};
 /// define_fp!(13);
 ///
 /// let fact = fact_build::<M>(4);
@@ -593,7 +593,7 @@ impl<M: Mod> FactTable<M> {
     /// # Examples
     ///
     /// ```
-    /// # use new_fp::{fact_build, define_fp, fp};
+    /// # use fp::{fact_build, define_fp, fp};
     /// define_fp!(13);
     /// let fact = fact_build::<M>(5);
     ///
@@ -611,7 +611,7 @@ impl<M: Mod> FactTable<M> {
     /// # Examples
     ///
     /// ```
-    /// # use new_fp::{fact_build, define_fp, fp};
+    /// # use fp::{fact_build, define_fp, fp};
     /// define_fp!(13);
     /// let fact = fact_build::<M>(5);
     ///
@@ -627,7 +627,7 @@ impl<M: Mod> FactTable<M> {
     /// # Examples
     ///
     /// ```
-    /// # use new_fp::{fact_build, define_fp, fp};
+    /// # use fp::{fact_build, define_fp, fp};
     /// define_fp!(13);
     /// let fact = fact_build::<M>(5);
     ///
@@ -647,7 +647,7 @@ impl<M: Mod> FactTable<M> {
     /// # Examples
     ///
     /// ```
-    /// # use new_fp::{fact_build, define_fp, fp};
+    /// # use fp::{fact_build, define_fp, fp};
     /// define_fp!(13);
     /// let fact = fact_build::<M>(5);
     ///
@@ -675,7 +675,7 @@ impl<M: Mod> FactTable<M> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{binom_iter, define_fp, fp};
+/// use fp::{binom_iter, define_fp, fp};
 /// define_fp!(13);
 ///
 /// let mut binom = binom_iter::<M>();
@@ -698,7 +698,7 @@ pub fn binom_iter<M: Mod>() -> impl Iterator<Item = Vec<Fp<M>>> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{convolution, fp, F998244353 as F};
+/// use fp::{convolution, fp, F998244353 as F};
 ///
 /// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3), fp!(4)];
 /// let b: Vec<F> = vec![fp!(5), fp!(6), fp!(7), fp!(8), fp!(9)];
@@ -736,7 +736,7 @@ pub fn convolution<M: Fft>(mut a: Vec<Fp<M>>, mut b: Vec<Fp<M>>) -> Vec<Fp<M>> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{anymod_convolution, fp, define_fp};
+/// use fp::{anymod_convolution, fp, define_fp};
 /// define_fp!(71);
 ///
 /// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3), fp!(4)];
@@ -789,7 +789,7 @@ pub fn anymod_convolution<M: Mod>(a: &[Fp<M>], b: &[Fp<M>]) -> Vec<Fp<M>> {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{define_fp, ifft, fp};
+/// use fp::{define_fp, ifft, fp};
 ///
 /// define_fp!(17, 3);
 ///
@@ -863,7 +863,7 @@ pub fn ifft<M: Fft>(a: &mut [Fp<M>]) {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{define_fp, fft, fp};
+/// use fp::{define_fp, fft, fp};
 ///
 /// define_fp!(17, 3);
 ///
@@ -943,7 +943,7 @@ pub fn fft<M: Fft>(a: &mut [Fp<M>]) {
 /// # Examples
 ///
 /// ```
-/// use new_fp::{define_fp, fps};
+/// use fp::{define_fp, fps};
 /// define_fp!(998244353, 3);
 ///
 /// let a: Fps = fps![2, 3] + fps![1];
@@ -956,7 +956,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::define_fp;
+    /// use fp::define_fp;
     /// define_fp!(998244353, 3);
     /// let a = Fps::new();
     /// assert!(a.is_empty());
@@ -969,7 +969,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps};
+    /// use fp::{define_fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a = Fps::new();
@@ -986,7 +986,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps};
+    /// use fp::{define_fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a = Fps::new();
@@ -1007,7 +1007,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps};
+    /// use fp::{define_fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, 2];
@@ -1025,7 +1025,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps};
+    /// use fp::{define_fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, 2];
@@ -1046,7 +1046,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps};
+    /// use fp::{define_fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![40, 41, 42];
@@ -1073,7 +1073,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fps, fp};
+    /// use fp::{define_fp, fps, fp};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![40, 41, 42];
@@ -1102,7 +1102,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fp, fps};
+    /// use fp::{define_fp, fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, -1].inv(5);
@@ -1132,7 +1132,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fp, fps};
+    /// use fp::{define_fp, fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![1, 1, fp!(1; 2), fp!(1; 6)].log(3);
@@ -1159,7 +1159,7 @@ impl<M: Fft> Fpsp<M> {
     /// # Examples
     ///
     /// ```
-    /// use new_fp::{define_fp, fp, fps};
+    /// use fp::{define_fp, fp, fps};
     /// define_fp!(998244353, 3);
     ///
     /// let a: Fps = fps![0, 1, 0].exp(4);

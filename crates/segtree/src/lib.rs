@@ -574,6 +574,7 @@ impl<O: Ops> Debug for Segtree<O> {
 // プライベート - RangeBounds 関連
 ////////////////////////////////////////////////////////////////////////////////
 fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
+    #[allow(clippy::redundant_closure)]
     let start = match range.start_bound() {
         Bound::Included(&start) => start,
         Bound::Excluded(&start) => start
@@ -581,6 +582,7 @@ fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> 
             .unwrap_or_else(|| slice_start_index_overflow_fail()),
         Bound::Unbounded => 0,
     };
+    #[allow(clippy::redundant_closure)]
     let end = match range.end_bound() {
         Bound::Included(&end) => end
             .checked_add(1)
