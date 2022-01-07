@@ -92,7 +92,7 @@ pub fn interpolate<M: Mod>(evals: &[[Fp<M>; 2]]) -> Vec<Fp<M>> {
             left.iter()
                 .chain(right.iter())
                 .fold(vec![yi], |mut acc, &[xj, _]| {
-                    let scalar = (xi - xj).recip();
+                    let scalar = (xi - xj).inv();
                     acc.iter_mut().for_each(|y| *y *= scalar);
                     acc.insert(0, Fp::new(0));
                     for i in 0..acc.len() - 1 {
@@ -232,7 +232,7 @@ mod tests {
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
     #[test_case(Fp::P; "maximum")]
-    fn test_interpolate_rand(lim: u32) {
+    fn test_interpolate_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = rng.gen_range(1..20.min(lim as usize));
@@ -263,7 +263,7 @@ mod tests {
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
     #[test_case(Fp::P; "maximum")]
-    fn test_interpolate_first_n_rand(lim: u32) {
+    fn test_interpolate_first_n_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = rng.gen_range(1..20);
@@ -280,7 +280,7 @@ mod tests {
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
     #[test_case(Fp::P; "maximum")]
-    fn test_interpolate_one_point_rand(lim: u32) {
+    fn test_interpolate_one_point_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = rng.gen_range(1..3);

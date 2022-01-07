@@ -103,6 +103,18 @@ impl BitVec {
     ///
     /// ```
     /// # use bitvec::BitVec;
+    /// assert!(BitVec::new(0).is_empty());
+    /// assert!(!BitVec::new(1).is_empty());
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.vec.is_empty()
+    }
+    /// 長さを返します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// # use bitvec::BitVec;
     /// let mut bv = BitVec::from_01str("010");
     /// assert_eq!(bv.len(), 3);
     /// ```

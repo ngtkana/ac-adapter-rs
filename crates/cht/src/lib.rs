@@ -462,7 +462,7 @@ mod tests {
         }
 
         let mut rng = StdRng::seed_from_u64(42);
-        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+        for &im in &[0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
             cht = BTreeCht::<Convex>::new();
@@ -511,7 +511,7 @@ mod tests {
         }
 
         let mut rng = StdRng::seed_from_u64(42);
-        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+        for &im in &[0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
             cht = BTreeCht::<Concave>::new();
@@ -559,7 +559,7 @@ mod tests {
         }
 
         let mut rng = StdRng::seed_from_u64(42);
-        for im in vec![0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
+        for &im in &[0, 1, 3, 3, 5, 5, 10, 10, 100, 100] {
             input_max = im;
             eprintln!("Initialize");
             cht = VecCht::<Convex>::new();
