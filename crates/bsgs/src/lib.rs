@@ -49,22 +49,18 @@ use std::{
 /// Baby-stpp giant-step のソルバーです。
 ///
 #[derive(Clone)]
-pub struct Bsgs<T, Mul, Inv, Id> {
+pub struct Bsgs<T, Mul> {
     generator: T,
     ord_upper_bound: u64,
     sqrt: u64,
     giant_step_inverse: T,
     map: HashMap<T, u64>,
     mul: Mul,
-    inv: Inv,
-    id: Id,
 }
-impl<T, Mul, Inv, Id> Bsgs<T, Mul, Inv, Id>
+impl<T, Mul> Bsgs<T, Mul>
 where
     T: Copy + Hash + Eq,
     Mul: Fn(T, T) -> T,
-    Inv: Fn(T) -> T,
-    Id: Fn() -> T,
 {
     /// 新しい BSGS ソルバーを構築します。
     ///
@@ -90,7 +86,11 @@ where
     /// * `map`: `generator` の `0..sqrt` 乗
     /// * `giant_step_inverse`: `generator` の `-sqrt` 乗
     ///
-    pub fn new(generator: T, ord_upper_bound: u64, mul: Mul, inv: Inv, id: Id) -> Self {
+    pub fn new<Inv, Id>(generator: T, ord_upper_bound: u64, mul: Mul, inv: Inv, id: Id) -> Self
+    where
+        Id: Fn() -> T,
+        Inv: Fn(T) -> T,
+    {
         let sqrt = sqrt(ord_upper_bound);
         let map = successors(Some(id()), |&acc| Some(mul(acc, generator)))
             .take(sqrt as usize)
@@ -105,8 +105,6 @@ where
             giant_step_inverse,
             map,
             mul,
-            inv,
-            id,
         }
     }
     /// `x` の離散対数が存在すれば返し、存在しなければ `None` を返します。
@@ -130,7 +128,7 @@ where
     }
 }
 
-impl<T: Debug, Mul, Inv, Id> Debug for Bsgs<T, Mul, Inv, Id> {
+impl<T: Debug, Mul> Debug for Bsgs<T, Mul> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("Bsgs")
             .field("generator", &self.generator)

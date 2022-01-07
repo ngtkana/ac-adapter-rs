@@ -339,6 +339,7 @@ impl<V> Default for Node<V> {
 mod tests {
     use {super::TrieMap, rand::prelude::*, std::collections::BTreeMap, test_case::test_case};
 
+    #[allow(clippy::unused_unit)]
     #[test_case(200, 2; "short")]
     #[test_case(200, 10; "mid")]
     #[test_case(200, 100; "long")]

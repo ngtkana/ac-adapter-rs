@@ -291,11 +291,11 @@ mod multi_token {
                 $($T: Parser,)*
             {
                 type Output = ($($T::Output,)*);
-                #[allow(unused_variables)]
-                fn parse<S: BufRead >(&self, server: &mut Tokenizer<S>) -> Self::Output {
+                fn parse<S: BufRead >(&self, _server: &mut Tokenizer<S>) -> Self::Output {
+                    #[allow(clippy::unused_unit)]
                     match self {
                         Tuple(($($t,)*)) => {
-                            ($($t.parse(server),)*)
+                            ($($t.parse(_server),)*)
                         }
                     }
                 }

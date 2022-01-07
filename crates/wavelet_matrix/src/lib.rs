@@ -72,7 +72,8 @@
 //!   - 出題日: 2020-12-12
 //!   - 難易度: 簡単。
 //!   - 制約: N ≤ 100,000
-//!   - 使う構造体: [`DoubleHeap`]
+//!   - 使う構造体: [`quantile`](WaveletMatrix::quantile),
+//!   [`range_freq`](WaveletMatrix::range_freq)
 //!   - 他の解法:
 //!     - ヒープ４本 (90 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242>
 //!   - コメント: ヒープ４本のほうが楽です。
