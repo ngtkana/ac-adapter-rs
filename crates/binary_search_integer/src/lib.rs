@@ -54,42 +54,96 @@ pub fn binary_search_integer<T: Int>(
     [lower, upper]
 }
 
+/// 整数で指数探索をします。
+///
+/// # Requirements
+///
+/// `T` の最大値を超えない２冪であって、
+/// `f` による評価結果が `true` であるものが存在すること。
+///
+///
+/// # Returns
+///
+/// ```[ignore]
+/// (x == T::zero() || is_upper(x - T::one()))
+///     && is_upper(y)
+/// ```
+///
+/// を満たす `x` を返します。
+///
+pub fn exponential_search<T: Int>(is_upper: impl Fn(T) -> bool) -> T {
+    if is_upper(T::zero()) {
+        return T::zero();
+    }
+    let mut lower = T::zero();
+    let mut upper = T::one();
+    while !is_upper(upper) {
+        lower = upper;
+        upper = upper.twice();
+    }
+    while lower + T::one() != upper {
+        let mid = lower.midpoint_sorted(upper);
+        *(if is_upper(mid) {
+            &mut upper
+        } else {
+            &mut lower
+        }) = mid;
+    }
+    upper
+}
+
 /// [`binary_search_integer`] の引数型のためのトレイトです。全ての整数型に実装されています。
 pub trait Int: Add<Output = Self> + Ord + Copy {
     /// 数学的な `floor((self + upper)/2)` と厳密に等しいものを計算します。
     fn midpoint_sorted(self, upper: Self) -> Self;
+    /// `0`
+    fn zero() -> Self;
     /// `1`
     fn one() -> Self;
+    /// ２倍
+    fn twice(self) -> Self;
 }
 
 macro_rules! impl_int {
-    ($(($Unsigned:ty, $Signed:ty),)*) => {$(
+    ($($Unsigned:ty, $Signed:ty,)*) => {$(
         impl Int for $Unsigned {
             fn midpoint_sorted(self, upper: Self) -> Self {
                 self + (upper - self) / 2
             }
+            fn zero() -> Self {
+                0
+            }
             fn one() -> Self {
                 1
+            }
+            fn twice(self) -> Self {
+                self.checked_shl(1).unwrap()
             }
         }
         impl Int for $Signed {
             fn midpoint_sorted(self, upper: Self) -> Self {
                 self + ((upper.wrapping_sub(self) as $Unsigned) / 2) as $Signed
             }
+            fn zero() -> Self {
+                0
+            }
             fn one() -> Self {
                 1
+            }
+            fn twice(self) -> Self {
+                self.checked_shl(1).unwrap()
             }
         }
     )*};
 }
 
 impl_int! {
-    (u8, i8),
-    (u16, i16),
-    (u32, i32),
-    (u64, i64),
-    (u128, i128),
-    (usize, isize),
+    u8, i8,
+    u16, i16,
+    u32, i32,
+    u64, i64,
+    u128, i128,
+    usize, isize,
 }
 
 #[cfg(test)]
