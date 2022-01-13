@@ -1,8 +1,11 @@
+//! 符号付き・符号なし整数や浮動小数点数の二分探索をします。
+
 use std::{
     fmt::Debug,
     ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Shl, Shr, Sub},
 };
 
+/// 浮動小数点数型の実装するトレイトです。
 pub trait Float:
     Sized
     + Copy
@@ -39,6 +42,20 @@ impl Float for f64 {
     }
 }
 
+/// 浮動小数点数型について指数探索をします。
+///
+/// `f` が `false` と `true` に二分されいるとき、
+/// `f(x)` が `true` となる最小の `x` を探します。
+///
+/// # 厳密な仕様
+///
+/// この `x` が
+///
+/// - `-T::MAX.sqrt()..=T:MAX.sqrt()` に収まる正規値であるとき、
+/// `x` に厳密に等しい有限正規値を返します。
+/// - 上述の範囲より大きいときや、`T::INFINITY` のときは、`T::INFINITY` を返します。
+/// - 上述の範囲より小さいときや、`T::NEG_INFINITY` のときは、`T::NEG_INFINITY` を返します。
+///
 pub fn exponential_search_floating<T: Float>(mut f: impl FnMut(T) -> bool) -> T {
     let mut lower;
     let mut upper;
@@ -115,6 +132,7 @@ pub fn exponential_search_floating<T: Float>(mut f: impl FnMut(T) -> bool) -> T 
     }
 }
 
+/// 符号なし整数型に実装されるトレイトです。
 pub trait Unsigned:
     Sized
     + Copy
@@ -139,6 +157,11 @@ impl Unsigned for u8 {
     const BITS: u32 = 8;
 }
 
+/// 符号なし整数型で指数探索をします。
+///
+/// `f` で二分されているとして、
+/// `f(x)` が `true` となる `x` が存在すればその最小を返し、
+/// さもなくば `None` を返します。
 pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     if f(T::ZERO) {
         return Some(T::ZERO);
@@ -157,6 +180,11 @@ pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) ->
     }
     Some(binary_search_unsigned(lower, upper, f))
 }
+
+/// 符号なし整数型で二分探索をします。
+///
+/// `!f(lower) && f(upper)` であるとして、
+/// `(lower + 1..=upper).contains(&x) && !f(x - 1) && f(x)` なる `x` を返します。
 pub fn binary_search_unsigned<T: Unsigned>(
     mut lower: T,
     mut upper: T,
@@ -175,6 +203,7 @@ pub fn binary_search_unsigned<T: Unsigned>(
     upper
 }
 
+/// 符号付き整数型に実装されるトレイトです。
 pub trait Signed:
     Sized
     + Copy
@@ -204,28 +233,11 @@ impl Signed for i8 {
     const BITS: u32 = 8;
 }
 
-pub fn binary_search_signed<T: Signed>(
-    mut lower: T,
-    mut upper: T,
-    mut f: impl FnMut(T) -> bool,
-) -> T {
-    assert!(lower < upper);
-    assert!(!f(lower) && f(upper));
-    while lower + T::ONE != upper {
-        let mid = if lower <= T::ZERO && T::ZERO <= upper {
-            (lower + upper) / (T::ONE + T::ONE)
-        } else {
-            lower + (upper - lower) / (T::ONE + T::ONE)
-        };
-        if f(mid) {
-            upper = mid;
-        } else {
-            lower = mid;
-        }
-    }
-    upper
-}
-
+/// 符号付き整数型で指数探索をします。
+///
+/// `f` で二分されているとして、
+/// `f(x)` が `true` となる `x` が存在すればその最小を返し、
+/// さもなくば `None` を返します。
 pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     let mut lower;
     let mut upper;
@@ -262,6 +274,32 @@ pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Opt
         }
     }
     Some(upper)
+}
+
+/// 符号付き整数型で二分探索をします。
+///
+/// `!f(lower) && f(upper)` であるとして、
+/// `(lower + 1..=upper).contains(&x) && !f(x - 1) && f(x)` なる `x` を返します。
+pub fn binary_search_signed<T: Signed>(
+    mut lower: T,
+    mut upper: T,
+    mut f: impl FnMut(T) -> bool,
+) -> T {
+    assert!(lower < upper);
+    assert!(!f(lower) && f(upper));
+    while lower + T::ONE != upper {
+        let mid = if lower <= T::ZERO && T::ZERO <= upper {
+            (lower + upper) / (T::ONE + T::ONE)
+        } else {
+            lower + (upper - lower) / (T::ONE + T::ONE)
+        };
+        if f(mid) {
+            upper = mid;
+        } else {
+            lower = mid;
+        }
+    }
+    upper
 }
 
 #[cfg(test)]
