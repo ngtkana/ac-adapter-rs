@@ -1,6 +1,6 @@
 use std::{
     fmt::Debug,
-    ops::{Add, Div, Mul, Neg, Sub},
+    ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Shl, Shr, Sub},
 };
 
 pub trait Float:
@@ -115,11 +115,55 @@ pub fn exponential_search_floating<T: Float>(mut f: impl FnMut(T) -> bool) -> T 
     }
 }
 
-pub fn binary_search_u8(mut lower: u8, mut upper: u8, mut f: impl FnMut(u8) -> bool) -> u8 {
-    assert!(lower < upper);
-    assert!(!f(lower) && f(upper));
-    while lower + 1 < upper {
-        let mid = lower + (upper - lower) / 2;
+pub trait Unsigned:
+    Sized
+    + Copy
+    + PartialOrd
+    + Debug
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
+    + Shr<u32, Output = Self>
+    + Shl<u32, Output = Self>
+    + BitAnd<Output = Self>
+    + BitOr<Output = Self>
+{
+    const ZERO: Self;
+    const ONE: Self;
+    const BITS: u32;
+}
+impl Unsigned for u8 {
+    const ZERO: Self = 0;
+    const ONE: Self = 1;
+    const BITS: u32 = 8;
+}
+
+pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<T> {
+    if f(T::ZERO) {
+        return Some(T::ZERO);
+    }
+    let mut lower = T::ZERO;
+    let mut upper = T::ONE;
+    while !f(upper) {
+        lower = upper;
+        if upper >> (T::BITS - 1) & T::ONE == T::ZERO {
+            upper = upper + upper;
+        } else if upper & T::ONE == T::ONE {
+            return None;
+        } else {
+            upper = upper >> 1 | T::ONE << (T::BITS - 1);
+        }
+    }
+    Some(binary_search_unsigned(lower, upper, f))
+}
+pub fn binary_search_unsigned<T: Unsigned>(
+    mut lower: T,
+    mut upper: T,
+    mut f: impl FnMut(T) -> bool,
+) -> T {
+    while lower + T::ONE != upper {
+        let mid = lower + (upper - lower) / (T::ONE + T::ONE);
         if f(mid) {
             upper = mid;
         } else {
@@ -145,25 +189,6 @@ pub fn binary_search_i8(mut lower: i8, mut upper: i8, mut f: impl FnMut(i8) -> b
         }
     }
     upper
-}
-
-pub fn exponential_search_u8(mut f: impl FnMut(u8) -> bool) -> Option<u8> {
-    if f(0) {
-        return Some(0);
-    }
-    let mut lower = 0;
-    let mut upper = 1;
-    while !f(upper) {
-        lower = upper;
-        if upper <= std::u8::MAX / 2 {
-            upper *= 2;
-        } else if upper == std::u8::MAX {
-            return None;
-        } else {
-            upper = upper >> 1 | 1 << 7;
-        }
-    }
-    Some(binary_search_u8(lower, upper, f))
 }
 
 pub fn exponential_search_i8(mut f: impl FnMut(i8) -> bool) -> Option<i8> {
@@ -209,26 +234,6 @@ mod tests {
     use super::*;
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use std::{collections::HashMap, mem::swap};
-
-    #[test]
-    fn test_exponential_search_u8() {
-        for expected in 0..=255 {
-            let result = exponential_search_u8(|x| expected <= x);
-            assert_eq!(result, Some(expected));
-        }
-        let result = exponential_search_u8(|_| false);
-        assert_eq!(result, None);
-    }
-
-    #[test]
-    fn test_exponential_search_i8() {
-        for expected in -128..=127 {
-            let result = exponential_search_i8(|x| expected <= x);
-            assert_eq!(result, Some(expected));
-        }
-        let result = exponential_search_i8(|_| false);
-        assert_eq!(result, None);
-    }
 
     #[test]
     fn test_exponential_search_f64() {
@@ -305,9 +310,19 @@ mod tests {
     }
 
     #[test]
+    fn test_exponential_search_u8() {
+        for expected in 0..=255_u8 {
+            let result = exponential_search_unsigned(|x| expected <= x);
+            assert_eq!(result, Some(expected));
+        }
+        let result = exponential_search_unsigned(|_| false);
+        assert_eq!(result, None::<u8>);
+    }
+
+    #[test]
     fn test_binary_search_u8() {
-        for expected in 1..=255 {
-            let result = binary_search_u8(0, 255, |x| expected <= x);
+        for expected in 1..=255_u8 {
+            let result = binary_search_unsigned(0, 255, |x| expected <= x);
             assert_eq!(result, expected);
         }
 
@@ -321,11 +336,21 @@ mod tests {
             }
             let mut memo = HashMap::<u8, bool>::from_iter(vec![(lower, false), (upper, true)]);
             let f = |x| *memo.entry(x).or_insert_with(|| rng.gen_bool(0.5));
-            let result = binary_search_u8(lower, upper, f);
+            let result = binary_search_unsigned(lower, upper, f);
             assert!((lower + 1..=upper).contains(&result));
             assert!(memo[&result]);
             assert!(!memo[&(result - 1)]);
         }
+    }
+
+    #[test]
+    fn test_exponential_search_i8() {
+        for expected in -128..=127 {
+            let result = exponential_search_i8(|x| expected <= x);
+            assert_eq!(result, Some(expected));
+        }
+        let result = exponential_search_i8(|_| false);
+        assert_eq!(result, None);
     }
 
     #[test]
