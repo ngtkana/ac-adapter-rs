@@ -143,21 +143,19 @@ pub trait Unsigned:
     + Sub<Output = Self>
     + Mul<Output = Self>
     + Div<Output = Self>
-    + Shr<u32, Output = Self>
-    + Shl<u32, Output = Self>
+    + Shr<usize, Output = Self>
+    + Shl<usize, Output = Self>
     + BitAnd<Output = Self>
     + BitOr<Output = Self>
 {
     const ZERO: Self;
     const ONE: Self;
-    const BITS: u32;
 }
 macro_rules! impl_unsigned {
     ($($ty:ty),*) => {$(
         impl Unsigned for $ty {
             const ZERO: Self = 0;
             const ONE: Self = 1;
-            const BITS: u32 = 8;
         }
     )*};
 }
@@ -176,12 +174,12 @@ pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) ->
     let mut upper = T::ONE;
     while !f(upper) {
         lower = upper;
-        if upper >> (T::BITS - 1) & T::ONE == T::ZERO {
+        if upper >> (size_of::<T>() * 8 - 1) & T::ONE == T::ZERO {
             upper = upper + upper;
         } else if upper & T::ONE == T::ONE {
             return None;
         } else {
-            upper = upper >> 1 | T::ONE << (T::BITS - 1);
+            upper = upper >> 1 | T::ONE << (size_of::<T>() * 8 - 1);
         }
     }
     Some(binary_search_unsigned(lower, upper, f))
@@ -220,8 +218,8 @@ pub trait Signed:
     + Mul<Output = Self>
     + Div<Output = Self>
     + Neg<Output = Self>
-    + Shr<u32, Output = Self>
-    + Shl<u32, Output = Self>
+    + Shr<usize, Output = Self>
+    + Shl<usize, Output = Self>
     + BitAnd<Output = Self>
     + BitOr<Output = Self>
 {
@@ -265,12 +263,12 @@ pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Opt
         upper = T::ONE;
         while !f(upper) {
             lower = upper;
-            if upper >> (size_of::<T>() as u32 * 8 - 2) & T::ONE == T::ZERO {
+            if upper >> (size_of::<T>() * 8 - 2) & T::ONE == T::ZERO {
                 upper = upper + upper
             } else if upper == T::MAX {
                 return None;
             } else {
-                upper = upper >> 1 | T::ONE << (size_of::<T>() as u32 * 8 - 2);
+                upper = upper >> 1 | T::ONE << (size_of::<T>() * 8 - 2);
             }
         }
     }
