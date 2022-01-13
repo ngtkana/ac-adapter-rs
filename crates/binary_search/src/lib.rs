@@ -2,6 +2,7 @@
 
 use std::{
     fmt::Debug,
+    mem::size_of,
     ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Shl, Shr, Sub},
 };
 
@@ -151,11 +152,16 @@ pub trait Unsigned:
     const ONE: Self;
     const BITS: u32;
 }
-impl Unsigned for u8 {
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-    const BITS: u32 = 8;
+macro_rules! impl_unsigned {
+    ($($ty:ty),*) => {$(
+        impl Unsigned for $ty {
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
+            const BITS: u32 = 8;
+        }
+    )*};
 }
+impl_unsigned! { u8, u16, u32, u64, u128, usize }
 
 /// 符号なし整数型で指数探索をします。
 ///
@@ -223,15 +229,18 @@ pub trait Signed:
     const ONE: Self;
     const MIN: Self;
     const MAX: Self;
-    const BITS: u32;
 }
-impl Signed for i8 {
-    const ZERO: Self = 0;
-    const ONE: Self = 1;
-    const MIN: Self = std::i8::MIN;
-    const MAX: Self = std::i8::MAX;
-    const BITS: u32 = 8;
+macro_rules! impl_signed {
+    ($($ty:ident),*) => {$(
+        impl Signed for $ty {
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
+            const MIN: Self = std::$ty::MIN;
+            const MAX: Self = std::$ty::MAX;
+        }
+    )*};
 }
+impl_signed! { i8, i16, i32, i64, i128 }
 
 /// 符号付き整数型で指数探索をします。
 ///
@@ -256,12 +265,12 @@ pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Opt
         upper = T::ONE;
         while !f(upper) {
             lower = upper;
-            if upper >> (T::BITS - 2) & T::ONE == T::ZERO {
+            if upper >> (size_of::<T>() as u32 * 8 - 2) & T::ONE == T::ZERO {
                 upper = upper + upper
             } else if upper == T::MAX {
                 return None;
             } else {
-                upper = upper >> 1 | T::ONE << (T::BITS - 2);
+                upper = upper >> 1 | T::ONE << (size_of::<T>() as u32 * 8 - 2);
             }
         }
     }
