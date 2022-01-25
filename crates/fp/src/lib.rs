@@ -6,7 +6,9 @@ use std::{
     iter::{once, repeat, successors, FromIterator, Product, Sum},
     marker::PhantomData,
     mem::{swap, take},
-    ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+    ops::{
+        Add, AddAssign, Deref, DerefMut, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign,
+    },
 };
 
 // TODO: マクロで定義するとバンドラさんに壊されしまいます。
@@ -173,6 +175,31 @@ macro_rules! define_fp {
 /// assert_eq!(fp!(2; 3), F::new(2) / F::new(3));
 /// ```
 ///
+/// ## 条件付き
+///
+/// ```
+/// use fp::{fp, define_fp};
+/// define_fp!(13);
+///
+/// assert_eq!(fp!(2; if true), F::new(2));
+/// assert_eq!(fp!(2; if false), F::new(0));
+///
+/// let mut called = false;
+/// let mut f = || {
+///     called = true;
+///     2
+/// };
+/// assert_eq!(fp!(f(); if false), F::new(0));
+/// assert!(!called); // f は評価されませんでした。
+///
+/// let mut f = || {
+///     called = true;
+///     2
+/// };
+/// assert_eq!(fp!(f(); if true), F::new(2));
+/// assert!(called); // f は評価されました！
+/// ```
+///
 /// ## 二重
 ///
 /// `F::from(F::from(x)) == F::From(x)` なので、`fp!(fp!(x)) == fp!(x)` です。
@@ -186,6 +213,13 @@ macro_rules! define_fp {
 /// ```
 #[macro_export]
 macro_rules! fp {
+    ($value:expr; if $cond:expr) => {
+        if $cond {
+            fp!($value)
+        } else {
+            fp!(0)
+        }
+    };
     ($num:expr; $den:expr) => {
         $crate::Fp::from($num) / $crate::Fp::from($den)
     };
@@ -407,7 +441,7 @@ macro_rules! impl_from_small_int {
     )*}
 }
 impl_from_small_int! {
-    u8, u16, u32, u64,
+    u8, u16, u32, u64, bool,
 }
 
 impl<M: Mod, T: Into<Fp<M>>> AddAssign<T> for Fp<M> {
@@ -554,20 +588,20 @@ pub fn fact_iter<M: Mod>() -> impl Iterator<Item = Fp<M>> {
 /// define_fp!(13);
 ///
 /// let fact = fact_build::<M>(3);
-/// assert_eq!(fact.0[0], vec![fp!(1), fp!(1), fp!(2)]);
-/// assert_eq!(fact.0[1], vec![fp!(1), fp!(1), fp!(1; 2)]);
+/// assert_eq!(fact.0, vec![fp!(1), fp!(1), fp!(2)]);
+/// assert_eq!(fact.1, vec![fp!(1), fp!(1), fp!(1; 2)]);
 /// ```
 ///
 #[allow(clippy::missing_panics_doc)]
 pub fn fact_build<M: Mod>(n: usize) -> FactTable<M> {
-    FactTable(if n == 0 {
-        [Vec::new(), Vec::new()]
+    if n == 0 {
+        FactTable(Vec::new(), Vec::new())
     } else {
         let fact = fact_iter::<M>().take(n).collect::<Vec<_>>();
         let mut fact_inv = vec![fact.last().unwrap().inv(); n];
         (1..n).rev().for_each(|i| fact_inv[i - 1] = fact_inv[i] * i);
-        [fact, fact_inv]
-    })
+        FactTable(fact, fact_inv)
+    }
 }
 
 /// [`fact_build`] の戻り値型で、階乗とその逆数のテーブルを管理しています。
@@ -580,13 +614,23 @@ pub fn fact_build<M: Mod>(n: usize) -> FactTable<M> {
 ///
 /// let fact = fact_build::<M>(4);
 ///
-/// assert_eq!(fact.0[0], vec![fp!(1), fp!(1), fp!(2), fp!(6)]);
-/// assert_eq!(fact.0[1], vec![fp!(1), fp!(1), fp!(1; 2), fp!(1; 6)]);
+/// assert_eq!(fact[..], vec![fp!(1), fp!(1), fp!(2), fp!(6)]);
+/// assert_eq!(fact.0, vec![fp!(1), fp!(1), fp!(2), fp!(6)]);
+/// assert_eq!(fact.1, vec![fp!(1), fp!(1), fp!(1; 2), fp!(1; 6)]);
 /// ```
 ///
 ///
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
-pub struct FactTable<M: Mod>(pub [Vec<Fp<M>>; 2]);
+pub struct FactTable<M: Mod>(pub Vec<Fp<M>>, pub Vec<Fp<M>>);
+impl<M: Mod, I> Index<I> for FactTable<M>
+where
+    Vec<Fp<M>>: Index<I>,
+{
+    type Output = <Vec<Fp<M>> as Index<I>>::Output;
+    fn index(&self, index: I) -> &Self::Output {
+        &self.0[index]
+    }
+}
 impl<M: Mod> FactTable<M> {
     /// k ≤ n < len ならば binom(n, k) を返します。さもなくばパニックします。
     ///
@@ -602,9 +646,9 @@ impl<M: Mod> FactTable<M> {
     /// assert_eq!(fact.binom(4, 2), fp!(6));
     /// ```
     pub fn binom(&self, n: usize, k: usize) -> Fp<M> {
-        assert!(n < self.0[0].len());
+        assert!(n < self.0.len());
         assert!(k <= n);
-        self.0[0][n] * self.0[1][k] * self.0[1][n - k]
+        self.0[n] * self.1[k] * self.1[n - k]
     }
     /// i + j < len ならば binom(i + j, i) を返します。さもなくばパニックします。
     ///
@@ -638,9 +682,9 @@ impl<M: Mod> FactTable<M> {
     pub fn binom_inv(&self, n: u64, k: u64) -> Fp<M> {
         let n = n as usize;
         let k = k as usize;
-        assert!(n < self.0[0].len());
+        assert!(n < self.0.len());
         assert!(k <= n);
-        self.0[1][n] * self.0[0][k] * self.0[0][n - k]
+        self.1[n] * self.0[k] * self.0[n - k]
     }
     /// 0 ≤ n < len ならば binom(n, k) を返します。さもなくばパニックします。
     ///
@@ -661,7 +705,7 @@ impl<M: Mod> FactTable<M> {
     /// assert_eq!(fact.binom_or_zero(4, -1), fp!(0));
     /// ```
     pub fn binom_or_zero(&self, n: usize, k: isize) -> Fp<M> {
-        assert!(n < self.0[0].len() as usize);
+        assert!(n < self.0.len() as usize);
         if (0..=n as isize).contains(&k) {
             self.binom(n, k as usize)
         } else {
