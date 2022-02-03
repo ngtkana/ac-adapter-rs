@@ -269,7 +269,7 @@ impl<M: Mod> Fp<M> {
     /// # Example
     ///
     /// ```
-    /// use fp::{define_fp};
+    /// use fp::define_fp;
     ///
     /// define_fp!(7);
     /// assert_eq!(F::P, 7);
@@ -278,8 +278,43 @@ impl<M: Mod> Fp<M> {
     /// assert_eq!(F11::P, 11);
     /// ```
     pub const P: u64 = M::P;
+    /// 整数 `value` を射影します。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use fp::define_fp;
+    ///
+    /// define_fp!(7);
+    /// assert_eq!(F::new(3).value(), 3);
+    /// assert_eq!(F::new(13).value(), 6);
+    /// ```
     pub fn new(value: u64) -> Self {
         Self(value % Self::P, PhantomData)
+    }
+    /// -1 の `value` 乗を計算します。
+    ///
+    /// 引数が `u32` なのは、`count_ones` と一緒に使うことが多そうだからです。
+    /// `usize` とか `u64` とかが気がちになってきたらまた考えましょう。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use fp::{define_fp, fp};
+    ///
+    /// define_fp!(7);
+    /// assert_eq!(F::m1pow(2), fp!(1));
+    /// assert_eq!(F::m1pow(3), fp!(-1));
+    /// ```
+    pub fn m1pow(pow: u32) -> Self {
+        Self(
+            match pow % 2 {
+                0 => 1,
+                1 => Self::P - 1,
+                _ => unreachable!(),
+            },
+            PhantomData,
+        )
     }
     /// 整数に戻します。
     ///
