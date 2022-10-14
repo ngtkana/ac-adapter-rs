@@ -20,7 +20,7 @@ use super::{coord, swap_size, Coord, Dihedral, Rows};
 /// * [`R2S`](Dihedral::R2S): anti-transposition.
 /// * [`R3S`](Dihedral::R3S): reflections through `j = (w - 1) / 2`.
 ///
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Grid<T> {
     elm: Vec<T>,
     raw_h: usize,

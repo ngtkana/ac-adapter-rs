@@ -80,7 +80,7 @@ pub type VecLinesIncreasing<T> = VecLines<T, IncreasingTilt>;
 /// let expected = vec![Line([1, 0]), Line([-1, 0])];
 /// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
 /// ```
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct VecLines<T, C> {
     lines: Vec<Line<T>>,
     _marker: PhantomData<fn(C) -> C>,
@@ -269,7 +269,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
 /// 一次関数 ax + b を、`[a, b]` の形で管理します。
 ///
 /// 中身は `.0` でも `into_coeff` でもとれます。
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Line<T>(pub [T; 2]);
 impl<T: Signed> Line<T> {
     /// 特定の x 座標における値を計算します。
@@ -313,9 +313,9 @@ pub trait Constraint: Clone + Debug + Hash + PartialEq {
     fn strictly_better<T: Signed>(x: T, y: T) -> bool;
 }
 /// 傾き単調減少を意味するマーカー
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DecreasingTilt {}
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 /// 傾き単調増加を意味するマーカー
 pub enum IncreasingTilt {}
 impl Constraint for DecreasingTilt {

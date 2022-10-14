@@ -61,7 +61,7 @@
 use std::{mem::swap, usize::MAX};
 
 /// 重軽分解
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Hld {
     child: Vec<Vec<usize>>,
     size: Vec<usize>,
@@ -368,7 +368,7 @@ impl Hld {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
 pub struct IterV<'a> {
     hld: &'a Hld,
     u: usize,
@@ -397,7 +397,7 @@ impl Iterator for IterV<'_> {
         })
     }
 }
-#[derive(Clone, Debug, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
 pub struct IterE<'a> {
     hld: &'a Hld,
     u: usize,

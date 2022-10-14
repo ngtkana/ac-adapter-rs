@@ -22,7 +22,7 @@ pub fn combinations<T: Unsigned>(n: u32, k: u32) -> Combinations<T> {
 }
 
 /// [See the document of `combinations`](combinations)
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Combinations<T> {
     n: u32,
     bs: T,

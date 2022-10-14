@@ -655,7 +655,7 @@ pub fn fact_build<M: Mod>(n: usize) -> FactTable<M> {
 /// ```
 ///
 ///
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct FactTable<M: Mod>(pub Vec<Fp<M>>, pub Vec<Fp<M>>);
 impl<M: Mod, I> Index<I> for FactTable<M>
 where

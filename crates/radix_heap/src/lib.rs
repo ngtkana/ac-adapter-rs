@@ -6,7 +6,7 @@ use std::fmt::{self, Debug};
 const RADIX_HEAP_LEN: usize = 32;
 
 #[deprecated]
-#[derive(Clone, PartialEq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct RadixHeap<T> {
     stacks: [Vec<(u32, T)>; RADIX_HEAP_LEN],
     last: u32,

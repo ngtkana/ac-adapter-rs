@@ -1,7 +1,7 @@
 use super::{swap_size, Dihedral};
 use std::mem::swap;
 
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Coord {
     pub origin: isize,
     pub x: isize,
