@@ -5,7 +5,7 @@
 use std::mem::{replace, swap, take};
 
 /// Low-link を計算する構造体です。
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct LowLink {
     g: Vec<Vec<usize>>, // 隣接リストです。未ビルドならば無向グラフ、ビルド済みならば木辺と後退辺のみが入っています。
     sorted: Vec<usize>, // [i]: pre-order で i 番目である頂点の番号

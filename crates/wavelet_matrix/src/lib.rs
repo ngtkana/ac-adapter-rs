@@ -115,7 +115,7 @@ const UNIT: usize = size_of::<usize>();
 ///
 /// [問題例などは `wavelet_matrix` クレートのドキュメントにあります。](crate)
 ///
-#[derive(Clone, Default, Hash, PartialEq)]
+#[derive(Clone, Default, Hash, PartialEq, Eq)]
 pub struct WaveletMatrix {
     table: Vec<StaticBitVec>,
 }
@@ -404,7 +404,7 @@ fn next_position_range(row: &StaticBitVec, range: &Range<usize>, which: bool) ->
 }
 
 /// 累積和のできる静的なビットベクター
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct StaticBitVec {
     len: usize,
     rank: Vec<usize>,
@@ -490,7 +490,7 @@ impl StaticBitVec {
 }
 
 /// イテレータです [詳しくは `WaveletMatrix::spans` をご覧ください。](WaveletMatrix::spans)
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct Spans<'a> {
     stack: Vec<SpanInNode<'a>>,
     target: Range<usize>,
@@ -515,7 +515,7 @@ impl<'a> Iterator for Spans<'a> {
 }
 
 /// [`Spans`] のアイテム型です。[詳しくは `WaveletMatrix::spans` をご覧ください。](WaveletMatrix::spans)
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct SpanInNode<'a> {
     wm: &'a WaveletMatrix,
     /// ウェーブレット行列内の `i` 座標

@@ -169,7 +169,7 @@ pub trait Handler<T> {
 /// [`Handler`] の一種です。
 /// [`DoubleHeap::new()`] で構築すると自動的に採用されます。
 /// Unit-like struct なので、同名の定数が自動定義されています。
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Nop;
 impl<T> Handler<T> for Nop {
     fn push_left(&mut self, _value: T) {}
@@ -180,7 +180,7 @@ impl<T> Handler<T> for Nop {
 /// 総和を集約するための型です。
 /// [`Handler`] の一種です。
 /// [`Sum::default()`] でデフォルト構築できます。
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Sum<T> {
     pub left: T,
     pub right: T,

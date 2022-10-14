@@ -72,7 +72,7 @@ pub trait TFilterPosition: Sized + Iterator {
 }
 
 /// [`TFilterPosition::filter_position_by`] の作るイテレータです。
-#[derive(Clone, Debug, Hash, PartialEq)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FilterPosition<I, F> {
     iter: I,
     pos: usize,

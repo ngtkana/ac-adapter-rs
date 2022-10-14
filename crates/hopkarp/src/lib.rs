@@ -31,7 +31,7 @@ use std::collections::VecDeque;
 ///
 /// The set of `i < h` s.t. `left[i]` is `true` and `j < w` s.t. `right[j]` is `true` consists the
 /// set of vertices which are reachable from the source in the resulting residual graph.
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct HopkarpResult {
     /// Cardinality of a maximum cardinality bipartite matching.
     pub count: usize,

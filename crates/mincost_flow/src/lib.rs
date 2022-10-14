@@ -5,7 +5,7 @@
 use std::{cmp::Reverse, collections::BinaryHeap, fmt::Debug, i64::MAX, mem::replace};
 
 /// [`MinCostFlow::get_edge`] の戻り値型
-#[derive(Clone, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Edge {
     from: usize,
     to: usize,

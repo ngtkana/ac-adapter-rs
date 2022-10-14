@@ -246,7 +246,7 @@ where
                 groups
                     .into_iter()
                     .filter(|group| !group.is_empty())
-                    .map(|list| (&self.values[self.find(*list.get(0).unwrap())], list)),
+                    .map(|list| (&self.values[self.find(*list.first().unwrap())], list)),
             )
             .finish()
     }
@@ -275,7 +275,7 @@ mod tests {
         }
         let _ = <UnionFind>::new(3); // requires `<_>`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/
         let _ = UnionFind::<()>::new(3);
-        let _: () = <UnionFind>::new(3).value(0);
+        <UnionFind>::new(3).value(0);
         let _: usize = UnionFind::<EdgeCount>::new(3).value(0);
         let _: (usize, usize) = UnionFind::<(EdgeCount, VertexCount)>::new(3).value(0);
         let _: (bool, bool, bool) = UnionFind::<(HasCycle, HasCycle, HasCycle)>::new(3).value(0);

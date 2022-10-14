@@ -5,7 +5,7 @@ use std::{
     ops::{Add, AddAssign, Range, RangeBounds, Sub, SubAssign},
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Segbeats<T> {
     len: usize,
     lg: u32,

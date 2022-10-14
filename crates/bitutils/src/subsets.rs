@@ -22,7 +22,7 @@ pub fn subsets<T: Unsigned>(bs: T) -> Subsets<T> {
 }
 
 /// [See the document of `subsets`](subsets)
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Subsets<T> {
     bs: T,
     full: T,
