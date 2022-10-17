@@ -126,7 +126,7 @@ impl Gco {
 }
 
 /// [`Gco::solve`] の返すオブジェクトです。
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct GcoResult {
     /// 最小値
     pub value: i64,

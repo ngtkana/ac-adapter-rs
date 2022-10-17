@@ -54,7 +54,7 @@ use std::{
 /// bv ^= &BitVec::from_01str("0101010101");
 /// assert_eq!(&bv, &BitVec::from_01str("0101001010"));
 /// ```
-#[derive(Clone, Hash, PartialEq)]
+#[derive(Clone, Hash, PartialEq, Eq)]
 pub struct BitVec {
     vec: Vec<u64>,
     len: usize,

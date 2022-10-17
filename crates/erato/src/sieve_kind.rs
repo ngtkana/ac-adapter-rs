@@ -5,9 +5,9 @@ pub trait SieveKind {
     fn is_prime(index: usize, b: Self::SieveValue) -> bool;
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Boolean {}
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Usize {}
 
 impl SieveKind for Boolean {

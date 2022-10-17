@@ -2,7 +2,7 @@ use super::Coord;
 use std::ops::Index;
 
 /// An iterator over all the rows of [`Grid`](super::Grid).
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Rows<'a, T> {
     elm: &'a [T],
     crr: isize,
@@ -44,7 +44,7 @@ impl<'a, T> Iterator for Rows<'a, T> {
 }
 
 /// The item type of a iterable type [`Rows`].
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct Row<'a, T> {
     elm: &'a [T],
     len: usize,
@@ -94,7 +94,7 @@ impl<'a, T> IntoIterator for Row<'a, T> {
 }
 
 /// An iterator over all the cells of a grid.
-#[derive(Debug, Clone, PartialEq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct RowIter<'a, T> {
     elm: &'a [T],
     count: usize,

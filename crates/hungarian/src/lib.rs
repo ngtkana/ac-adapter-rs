@@ -125,7 +125,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
 }
 
 /// A value object to represent the optimal solution of an assignment problem.
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HungarianResult<T: Value> {
     /// Takes the first component of a match and returns the second one.
     pub forward: Box<[usize]>,
