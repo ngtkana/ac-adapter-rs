@@ -188,7 +188,7 @@ impl HeapSlopeTrick {
 }
 
 /// [`HeapSlopeTrick::summary()`] の戻り値です。
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Summary {
     articulation_points: Vec<[i64; 2]>,
     tilt: [i64; 2],

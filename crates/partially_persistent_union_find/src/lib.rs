@@ -190,7 +190,7 @@ impl PartiallyPersistentUnionFind {
     pub fn size(&self, mut index: usize, time: usize) -> usize {
         index = self.find(index, time);
         let size_history = &self.size_history[index];
-        if size_history.get(0).map_or(true, |&[s, _]| time < s) {
+        if size_history.first().map_or(true, |&[s, _]| time < s) {
             return 1;
         }
         let mut l = 0;

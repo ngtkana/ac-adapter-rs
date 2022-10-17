@@ -14,7 +14,7 @@
 use std::{collections::HashSet, mem::replace};
 
 /// 本体です。
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Scc {
     g: Vec<Vec<usize>>,
     rg: Vec<Vec<usize>>,

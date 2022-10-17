@@ -82,7 +82,7 @@ where
     Skipped::new(a, f, identity)
 }
 
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct Skipped<'a, T, F, I> {
     a: &'a [T],
     left: T,

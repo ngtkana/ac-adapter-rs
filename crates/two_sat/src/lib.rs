@@ -29,7 +29,7 @@ use scc::Scc;
 use std::{cmp::Ordering, fmt::Debug};
 
 /// 2-SAT の本体です。
-#[derive(Clone, Default, Hash, PartialEq)]
+#[derive(Clone, Default, Hash, PartialEq, Eq)]
 pub struct TwoSat {
     scc: Scc,
 }

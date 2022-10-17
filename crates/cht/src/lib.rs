@@ -83,7 +83,7 @@ impl ConvexOrConcave for Concave {
 }
 
 /// ログがつかない方
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct VecCht<C> {
     vec: Vec<Segment>,
     coeff_at_two: i64,
@@ -174,7 +174,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
 }
 
 /// ログがつく方
-#[derive(Clone, Debug, Default, Hash, PartialEq)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct BTreeCht<C> {
     set: BTreeSet<Segment>,
     coeff_at_two: i64,
@@ -275,7 +275,7 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
 
 /// 変数
 pub const X: Quadratic = Quadratic([0, 1, 0]);
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 /// 二次式
 pub struct Quadratic([i64; 3]);
 impl Quadratic {

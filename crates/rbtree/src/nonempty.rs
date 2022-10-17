@@ -12,7 +12,7 @@ pub enum Nonempty<T, O: Op<Value = T> = Nop<T>> {
     Nil(Nil<T>),
     Internal(Box<Internal<T, O>>),
 }
-#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Nil<T>(pub T);
 pub struct Internal<T, O: Op<Value = T>> {
     pub left: Nonempty<T, O>,

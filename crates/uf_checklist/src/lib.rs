@@ -460,7 +460,7 @@ mod dbg {
                             row_index,
                             row.as_ref()
                                 .iter()
-                                .map(|cell| format!(" {}", (&self.f)(cell)))
+                                .map(|cell| format!(" {}", (self.f)(cell)))
                                 .collect::<String>()
                         )
                     })

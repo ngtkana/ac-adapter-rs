@@ -41,7 +41,7 @@ use std::{
 ///
 /// 長さ N の配列を管理しているとし、`fold` を Q 回呼ぶとき、Θ( N + Q ) です。
 ///
-#[derive(Clone, Default, Hash, PartialEq)]
+#[derive(Clone, Default, Hash, PartialEq, Eq)]
 pub struct Swag<T, V, F> {
     v: V,
     folder: F,
