@@ -10,5 +10,5 @@ edition = "2018"
 radix_heap = { path = "../radix_heap" }
 
 [dev-dependencies]
-rand = "0.8.2"
+rand = { workspace = true }
 randtools = { path = "../randtools" }

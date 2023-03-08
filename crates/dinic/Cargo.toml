@@ -9,6 +9,6 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-rand = "0.8.2"
+rand = { workspace = true }
 randtools = { path = "../randtools" }
-test-case = "1.1.0"
+test-case = { workspace = true }

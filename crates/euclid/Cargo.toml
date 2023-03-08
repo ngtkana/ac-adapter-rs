@@ -10,5 +10,5 @@ edition = "2018"
 dbg = { path = "../dbg/" }
 
 [dev-dependencies]
-rand = "0.8.3"
-test-case = "1.1.0"
+rand = { workspace = true }
+test-case = { workspace = true }

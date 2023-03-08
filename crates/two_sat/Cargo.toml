@@ -9,4 +9,4 @@ edition = "2018"
 scc = { path = "../scc" }
 
 [dev-dependencies]
-rand = "0.8.4"
+rand = { workspace = true }

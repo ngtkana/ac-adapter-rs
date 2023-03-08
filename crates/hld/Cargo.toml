@@ -10,7 +10,7 @@ edition = "2018"
 
 [dev-dependencies]
 bfs = { path = "../bfs/" }
-itertools = "0.10.0"
+itertools = { workspace = true }
 make_graph = { path = "../make_graph/" }
-rand = "0.8.3"
+rand = { workspace = true }
 randtools = { path = "../randtools/" }
