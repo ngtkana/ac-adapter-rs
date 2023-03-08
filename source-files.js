@@ -5,7 +5,6 @@ var sourcesIndex = JSON.parse('{\
 "bfs":["",[],["lib.rs"]],\
 "bfs01":["",[],["lib.rs"]],\
 "binary":["",[],["lib.rs"]],\
-"binsearch":["",[],["lib.rs"]],\
 "bitutils":["",[],["combinations.rs","lib.rs","subsets.rs"]],\
 "bitvec":["",[],["lib.rs"]],\
 "box_segtree":["",[],["lib.rs"]],\
@@ -47,6 +46,7 @@ var sourcesIndex = JSON.parse('{\
 "next_permutation":["",[],["lib.rs"]],\
 "ngtio":["",[],["i.rs","lib.rs"]],\
 "not_nan":["",[],["lib.rs"]],\
+"numeric_search":["",[],["lib.rs"]],\
 "open":["",[],["lib.rs"]],\
 "ordtools":["",[],["lib.rs"]],\
 "partially_persistent_union_find":["",[],["lib.rs"]],\
