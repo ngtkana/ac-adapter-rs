@@ -8,6 +8,4 @@ edition = "2018"
 
 [dev-dependencies]
 randtools = { path = "../randtools" }
-dbg = { path = "../dbg" }
 rand = "0.8.2"
-accum = { path = "../accum" }
