@@ -266,7 +266,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     }
 }
 
-/// 一次関数 ax + b を、`[a, b]` の形で管理します。
+/// 一次関数 $ax + b$ を、`[a, b]` の形で管理します。
 ///
 /// 中身は `.0` でも `into_coeff` でもとれます。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]

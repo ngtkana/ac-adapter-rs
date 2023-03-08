@@ -30,10 +30,12 @@ impl<T> RadixHeap<T> {
             None
         } else {
             if self.stacks[0].is_empty() {
-                let stack = std::mem::take(self.stacks
+                let stack = std::mem::take(
+                    self.stacks
                         .iter_mut()
                         .find(|stack| !stack.is_empty())
-                        .unwrap());
+                        .unwrap(),
+                );
                 let new_last = stack.iter().map(|&(key, _)| key).min().unwrap();
                 for (key, value) in stack {
                     self.stacks[Self::index(key ^ new_last)].push((key, value));
