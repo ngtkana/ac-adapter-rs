@@ -6,6 +6,7 @@ use std::{
     ptr::{self, null_mut},
 };
 
+#[allow(unused_must_use)]
 pub fn deep_free<O: LazyOps>(root: *mut Node<O>) {
     if !root.is_null() {
         unsafe {

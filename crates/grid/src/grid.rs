@@ -202,7 +202,7 @@ impl<T> Grid<T> {
     /// assert_eq!(grid[(0, 0)], 3);
     /// ```
     pub fn get_mut(&mut self, i: isize, j: isize) -> Option<&mut T> {
-        self.iget_mut(i as isize, j as isize)
+        self.iget_mut(i, j)
     }
     /// Apply a dihedral element to a grid logically.
     ///
