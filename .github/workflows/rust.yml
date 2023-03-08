@@ -54,4 +54,10 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run cargo-doc
-      run: cargo doc
+      run: cargo doc --workspace --no-deps
+      env:
+        RUSTDOCFLAGS='--html-in-header contents/header.html' cargo doc --workspace --no-deps
+
+    - name: Add index.html etc
+      run: cp -r contents/index_html_etc/* target/doc
+
