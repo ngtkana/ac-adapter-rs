@@ -54,4 +54,16 @@ jobs:
     steps:
     - uses: actions/checkout@v2
     - name: Run cargo-doc
-      run: cargo doc
+      run: cargo doc --workspace --no-deps
+      env:
+        RUSTDOCFLAGS: --html-in-header contents/header.html
+
+    - name: Add index.html etc
+      run: cp -r contents/index.html target/doc
+
+    - name: Deploy GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: .target/doc
+
