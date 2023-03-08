@@ -76,7 +76,7 @@ impl Float for f64 {
 /// They are some usual usages where the function $f$ is monotone.
 ///
 /// ```
-/// # use binsearch::exp_search_float;
+/// # use numeric_search::exp_search_float;
 /// assert_eq!(exp_search_float(|x| 2.5 <= x), 2.5);
 /// assert_eq!(exp_search_float(|x| -2.5 <= x), -2.5);
 /// ```
@@ -204,7 +204,7 @@ impl_unsigned! { u8, u16, u32, u64, u128, usize }
 /// They are some usual usages where the function $f$ is monotone.
 ///
 /// ```
-/// # use binsearch::exp_search_unsigned;
+/// # use numeric_search::exp_search_unsigned;
 /// assert_eq!(exp_search_unsigned(|x: u32| 6 <= x), Some(6));
 /// assert_eq!(exp_search_unsigned(|_: u32| false), None);
 /// assert_eq!(exp_search_unsigned(|_: u32| true), Some(0));
@@ -237,7 +237,7 @@ pub fn exp_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<
 /// # Examples
 ///
 /// ```
-/// # use binsearch::binary_search_unsigned;
+/// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
 /// ```
 ///
@@ -307,7 +307,7 @@ impl_signed! { i8, i16, i32, i64, i128 }
 /// # Examples
 ///
 /// ```
-/// # use binsearch::exp_search_signed;
+/// # use numeric_search::exp_search_signed;
 /// assert_eq!(exp_search_signed(|x| 6 <= x), Some(6));
 /// assert_eq!(exp_search_signed(|_: i32| false), None);
 /// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
@@ -359,7 +359,7 @@ pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
 /// # Examples
 ///
 /// ```
-/// # use binsearch::binary_search_unsigned;
+/// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
 /// ```
 ///
