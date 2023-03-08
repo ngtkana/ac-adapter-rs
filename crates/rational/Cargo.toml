@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-float-cmp = "0.8.0"
-ordered-float = "2.1.1"
-rand = "0.8.3"
-test-case = "1.1.0"
+approx = { workspace = true }
+ordered-float = { workspace = true }
+rand = { workspace = true }
+test-case = { workspace = true }

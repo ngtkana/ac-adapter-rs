@@ -9,4 +9,4 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-test-case = "1.1.0"
+test-case = { workspace = true }
