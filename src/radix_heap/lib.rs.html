@@ -117,6 +117,8 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
 </pre><pre class="rust"><code><span class="doccomment">//! CAUTION: Failing in tests!
 
 </span><span class="attr">#![allow(deprecated, unused_imports)]
@@ -149,10 +151,12 @@
             <span class="prelude-val">None
         </span>} <span class="kw">else </span>{
             <span class="kw">if </span><span class="self">self</span>.stacks[<span class="number">0</span>].is_empty() {
-                <span class="kw">let </span>stack = std::mem::take(<span class="self">self</span>.stacks
+                <span class="kw">let </span>stack = std::mem::take(
+                    <span class="self">self</span>.stacks
                         .iter_mut()
                         .find(|stack| !stack.is_empty())
-                        .unwrap());
+                        .unwrap(),
+                );
                 <span class="kw">let </span>new_last = stack.iter().map(|<span class="kw-2">&amp;</span>(key, <span class="kw">_</span>)| key).min().unwrap();
                 <span class="kw">for </span>(key, value) <span class="kw">in </span>stack {
                     <span class="self">self</span>.stacks[<span class="self">Self</span>::index(key ^ new_last)].push((key, value));

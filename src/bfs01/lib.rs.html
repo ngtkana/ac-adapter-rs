@@ -151,6 +151,7 @@
 <a href="#132" id="132">132</a>
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::collections::VecDeque;
 
 <span class="attr">#[derive(Debug, Clone, PartialEq, Copy, Eq, Hash)]
@@ -261,7 +262,8 @@
         <span class="macro">assert_eq!</span>(dist[s], <span class="number">0</span>);
         <span class="kw">for </span>(u, v, w) <span class="kw">in </span>g
             .iter()
-            .enumerate().flat_map(|(i, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>(j, w)| (i, j, w)))
+            .enumerate()
+            .flat_map(|(i, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>(j, w)| (i, j, w)))
         {
             <span class="kw">match </span>w {
                 <span class="kw">super</span>::Weight::Zero =&gt; {

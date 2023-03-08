@@ -340,6 +340,7 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Finds a maximum cardinality bipartite matching by Hopcroft―Karp&#39;s algorithm.
 //!
 //! # Basic usage
@@ -554,7 +555,8 @@
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">let </span>unmach_edges = graph
             .iter()
-            .enumerate().flat_map(|(x, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>y| (x, y)))
+            .enumerate()
+            .flat_map(|(x, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>y| (x, y)))
             .filter(|<span class="kw-2">&amp;</span>(x, y)| backward[y] != <span class="prelude-val">Some</span>(x))
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 

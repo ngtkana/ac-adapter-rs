@@ -61,6 +61,7 @@
 <a href="#42" id="42">42</a>
 <a href="#43" id="43">43</a>
 <a href="#44" id="44">44</a>
+<a href="#45" id="45">45</a>
 </pre><pre class="rust"><code><span class="kw">use </span>std::mem::replace;
 
 <span class="doccomment">/// 一点からの到達可能性配列を返します。
@@ -100,7 +101,8 @@
             <span class="comment">// calc_reachability
             </span><span class="kw">let </span>ckd = calc_reachability(s, <span class="kw-2">&amp;</span>g);
             g.iter()
-                .enumerate().flat_map(|(i, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>j| (i, j)))
+                .enumerate()
+                .flat_map(|(i, v)| v.iter().map(<span class="kw">move </span>|<span class="kw-2">&amp;</span>j| (i, j)))
                 .for_each(|(i, j)| <span class="macro">assert_eq!</span>(ckd[i], ckd[j]));
         }
     }

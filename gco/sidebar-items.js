@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Gco","2 次以下の劣モジュラー Graph cut 最適化問題を解きます。"],["GcoResult","[`Gco::solve`] の返すオブジェクトです。"]]};
+window.SIDEBAR_ITEMS = {"struct":[["Gco","A solver of graph cut optimization problems."],["GcoResult","The minimum value and and an argmin of $f$."]]};
