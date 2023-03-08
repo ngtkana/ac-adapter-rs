@@ -49,6 +49,7 @@ use std::{
 ///
 /// * 副作用がないこと
 /// * 結合律 `op(op(x, y), z)) == op(x, op(y, z))`
+/// * 結合律 $(x \circ y) \circ z = x \circ (y \circ z)$
 /// * 単位元律 `op(identity(), x) == x == op(x, identity())`
 pub trait Ops {
     /// 値型
