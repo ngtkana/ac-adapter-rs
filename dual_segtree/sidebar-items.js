@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["DualSegtree","双対セグメント木（右作用）"]],"trait":[["Ops","演算（右作用）"]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["inversion_number","Takes a sequence of numbers in `0..value_limit` and returns the number of (strong) inversions."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["advance_until","`checker` が `true` になるか配列をはみ出すまで添字を進めます。"],["advance_visit_until","[`advance_until`] を呼んだあと、進んだ箇所すべてを訪問します。"]]};

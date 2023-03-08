@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Dihedral","An element of a dihedral group D₄."]],"struct":[["Grid","A wrapper to rotate/reflect a grid logically."],["Row","The item type of a iterable type [`Rows`]."],["RowIter","An iterator over all the cells of a grid."],["Rows","An iterator over all the rows of `Grid`."]]};

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"trait":[["Ops","畳み込み演算を定義します。"]]};

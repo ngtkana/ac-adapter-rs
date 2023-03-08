@@ -1,0 +1,55 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="2 次以下の劣モジュラー Graph cut 最適化問題を解きます。"><meta name="keywords" content="rust, rustlang, rust-lang, gco"><title>gco - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+    });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../gco/index.html"><div class="logo-container"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../gco/index.html"><div class="logo-container"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2 class="location"><a href="#">Crate gco</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.1.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1 class="fqn">Crate <a class="mod" href="#">gco</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/gco/lib.rs.html#1-302">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>2 次以下の劣モジュラー Graph cut 最適化問題を解きます。</p>
+<p><a href="struct.Gco.html">詳細なインターフェースは <code>Gco</code> 構造体の各メソッドへどうぞ</a></p>
+<h2 id="依存ライブラリ"><a href="#依存ライブラリ">依存ライブラリ</a></h2>
+<p>[<code>dinic</code>]</p>
+<h2 id="できること"><a href="#できること">できること</a></h2>
+<p>R: 実数体とします</p>
+<p>関数 f: { 0, 1 } ^ n → R は必ず n 次以下の多項式で書ける。このような f
+のうち性質の良いものについて、最小値 f(x) とそれを達成する x を計算します。</p>
+<p>f の条件は、次のものの和で表せることです。</p>
+<ul>
+<li>1 次の項</li>
+<li>2 次の項であり、劣モジュラであるもの</li>
+</ul>
+<h2 id="使い方"><a href="#使い方">使い方</a></h2>
+<p><a href="struct.Gco.html#method.unary"><code>unary</code></a>, <a href="struct.Gco.html#method.binary"><code>binary</code></a>
+メソッドで項を足していきます。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>gco::Gco;
+
+<span class="kw">let </span><span class="kw-2">mut </span>gco = gco::Gco::new(<span class="number">2</span>);
+gco.unary(<span class="number">0</span>, [<span class="number">10</span>, <span class="number">20</span>]);
+gco.unary(<span class="number">1</span>, [<span class="number">40</span>, <span class="number">10</span>]);
+gco.binary([<span class="number">0</span>, <span class="number">1</span>], [[<span class="number">0</span>, <span class="number">99</span>], [<span class="number">99</span>,  <span class="number">0</span>]]);
+
+<span class="kw">let </span>result = gco.solve();
+<span class="macro">assert_eq!</span>(result.value, <span class="number">30</span>);
+<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>result.args, <span class="kw-2">&amp;</span>[<span class="bool-val">true</span>, <span class="bool-val">true</span>]);</code></pre></div>
+<ul>
+<li>負のコストも使えます。</li>
+<li>変数のフリップはできません。</li>
+<li>表現可能性は<strong>項ごと</strong>にチェックされます。</li>
+<li>復元は、0 が <code>false</code>、1 が <code>true</code> で表されます。</li>
+</ul>
+<h2 id="関連リンク"><a href="#関連リンク">関連リンク</a></h2>
+<p><a href="https://en.wikipedia.org/wiki/Graph_cut_optimization">Graph cut optimization - Wikipedia</a></p>
+</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Gco.html" title="gco::Gco struct">Gco</a></div><div class="item-right docblock-short">2 次以下の劣モジュラー Graph cut 最適化問題を解きます。</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.GcoResult.html" title="gco::GcoResult struct">GcoResult</a></div><div class="item-right docblock-short"><a href="struct.Gco.html#method.solve" title="Gco::solve"><code>Gco::solve</code></a> の返すオブジェクトです。</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="gco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

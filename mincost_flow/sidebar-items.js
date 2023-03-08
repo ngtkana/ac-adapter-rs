@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Edge","[`MinCostFlow::get_edge`] の戻り値型"],["MinCostFlow","Dijkstra 法の最短路反復により、最小費用流問題を解きます。"]]};

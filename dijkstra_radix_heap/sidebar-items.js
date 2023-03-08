@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["calc_dist","一点からの距離配列を作ります。"],["calc_dist_restore","一点からの距離配列を作ります。"]]};

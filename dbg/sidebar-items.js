@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["table","Formats a two-dimensional slice in table style."]],"macro":[["lg",""]],"struct":[["BitSlice","Formats `&[bool]` bitwise to `0` or `1`."],["Table","An object created by a function `table`."]]};

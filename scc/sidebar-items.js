@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Scc","本体です。"]]};

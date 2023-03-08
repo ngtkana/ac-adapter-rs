@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["add",""],["add_inv",""],["and",""],["for_each",""],["for_each_mut",""],["max",""],["min",""],["mul",""],["mul_inv",""],["or",""],["rfor_each",""],["rfor_each_mut",""],["skipped",""],["skipped_max",""],["skipped_min",""],["xor",""],["xor_inv",""]],"struct":[["Skipped",""]]};

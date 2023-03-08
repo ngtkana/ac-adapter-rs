@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["remove_parent","親を消します"],["sort_tree","根付き木をトポロジカルソートします。"],["sort_tree_by","根付き木をトポロジカルソートします。"],["sort_tree_remove_parent","根付き木をトポロジカルソートして、親を消します。"]]};

@@ -1,0 +1,63 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="グリッドの様々な隣接セルを取得するライブラリです。"><meta name="keywords" content="rust, rustlang, rust-lang, gridnei"><title>gridnei - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-6827029ac823cab7.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-ebce58d0a40c3431.css"><link rel="stylesheet" disabled href="../static.files/dark-f23faae4a2daf9a6.css"><link rel="stylesheet" disabled href="../static.files/ayu-8af5e100b21cd173.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-c55e1eb52e1886b4.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+    crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+    crossorigin="anonymous"></script>
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        renderMathInElement(document.body, {
+            delimiters: [
+                {left: "$$", right: "$$", display: true},
+                {left: "$", right: "$", display: false}
+            ]
+        });
+    });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="sidebar-logo" href="../gridnei/index.html"><div class="logo-container"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2></h2></nav><nav class="sidebar"><a class="sidebar-logo" href="../gridnei/index.html"><div class="logo-container"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></div></a><h2 class="location"><a href="#">Crate gridnei</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.1.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#macros">Macros</a></li><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li><li><a href="#functions">Functions</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1 class="fqn">Crate <a class="mod" href="#">gridnei</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/gridnei/lib.rs.html#1-261">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="rustdoc-toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>グリッドの様々な隣接セルを取得するライブラリです。</p>
+<h2 id="隣接４マス"><a href="#隣接４マス">隣接４マス</a></h2>
+<p>問題例: <a href="https://atcoder.jp/contests/typical90/tasks/typical90_bt">AtCoder 典型 90 問 072 - Loop Railway Plan（★4）</a></p>
+<p>隣接４マスの取得だけ、専用の関数を用意しています。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>gridnei::{grid4, grid4encode};
+
+<span class="kw">let </span>result = grid4(<span class="number">1</span>, <span class="number">0</span>, <span class="number">3</span>, <span class="number">10</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span>expected = <span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">0</span>), (<span class="number">1</span>, <span class="number">1</span>), (<span class="number">2</span>, <span class="number">0</span>)];
+<span class="macro">assert_eq!</span>(result, expected);
+
+<span class="kw">let </span>result = grid4encode(<span class="number">10</span>, <span class="number">3</span>, <span class="number">10</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span>expected = <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">11</span>, <span class="number">20</span>];
+<span class="macro">assert_eq!</span>(result, expected);</code></pre></div>
+<h2 id="アレンジ"><a href="#アレンジ">アレンジ</a></h2>
+<p>８マス以下ならこのように作れます。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>gridnei::{Grid8, Encode};
+
+<span class="kw">fn </span>knight(i: isize, j: isize) -&gt; [(isize, isize); <span class="number">8</span>] {
+    [
+        (i - <span class="number">1</span>, j - <span class="number">2</span>),
+        (i + <span class="number">1</span>, j - <span class="number">2</span>),
+        (i - <span class="number">2</span>, j - <span class="number">1</span>),
+        (i + <span class="number">2</span>, j - <span class="number">1</span>),
+        (i - <span class="number">2</span>, j + <span class="number">1</span>),
+        (i + <span class="number">2</span>, j + <span class="number">1</span>),
+        (i - <span class="number">1</span>, j + <span class="number">2</span>),
+        (i + <span class="number">1</span>, j + <span class="number">2</span>),
+    ]
+}
+
+<span class="comment">// x.x........
+// ...x.......
+// .o.........
+// ...x.......
+</span><span class="kw">let </span>result = Grid8::from_fn(<span class="number">2</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">10</span>, knight).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span>expected = <span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">0</span>), (<span class="number">0</span>, <span class="number">2</span>), (<span class="number">1</span>, <span class="number">3</span>), (<span class="number">3</span>, <span class="number">3</span>)];
+<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>result, <span class="kw-2">&amp;</span>expected);
+
+<span class="kw">let </span>result = Encode::&lt;Grid8&gt;::from_fn(<span class="number">21</span>, <span class="number">4</span>, <span class="number">10</span>, knight).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span>expected = <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">13</span>, <span class="number">33</span>];
+<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>result, <span class="kw-2">&amp;</span>expected);</code></pre></div>
+</div></details><h2 id="macros" class="small-section-header"><a href="#macros">Macros</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="macro" href="macro.grid_iter.html" title="gridnei::grid_iter macro">grid_iter</a></div><div class="item-right docblock-short">新しい <code>Grid*</code> を定義して、<a href="trait.GridIterator.html" title="GridIterator"><code>GridIterator</code></a> を実装します。</div></div></div><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Encode.html" title="gridnei::Encode struct">Encode</a></div><div class="item-right docblock-short">座標をエンコードした形で返すイテレータです。</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid0.html" title="gridnei::Grid0 struct">Grid0</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid1.html" title="gridnei::Grid1 struct">Grid1</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid2.html" title="gridnei::Grid2 struct">Grid2</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid3.html" title="gridnei::Grid3 struct">Grid3</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid4.html" title="gridnei::Grid4 struct">Grid4</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid5.html" title="gridnei::Grid5 struct">Grid5</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid6.html" title="gridnei::Grid6 struct">Grid6</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid7.html" title="gridnei::Grid7 struct">Grid7</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Grid8.html" title="gridnei::Grid8 struct">Grid8</a></div></div></div><h2 id="traits" class="small-section-header"><a href="#traits">Traits</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="trait" href="trait.GridIterator.html" title="gridnei::GridIterator trait">GridIterator</a></div><div class="item-right docblock-short"><a href="macro.grid_iter.html" title="grid_iter!"><code>grid_iter!</code></a> を通じで定義した型に自動的に実装されます。</div></div></div><h2 id="functions" class="small-section-header"><a href="#functions">Functions</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.grid4.html" title="gridnei::grid4 fn">grid4</a></div><div class="item-right docblock-short">隣接４マスを返すイテレータを構築します。</div></div><div class="item-row"><div class="item-left module-item"><a class="fn" href="fn.grid4encode.html" title="gridnei::grid4encode fn">grid4encode</a></div><div class="item-right docblock-short">隣接４マスをエンコードして返すイテレータを構築します。</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="gridnei" data-themes="" data-resource-suffix="" data-rustdoc-version="1.67.1 (d5a82bbd2 2023-02-07)" data-search-js="search-444266647c4dba98.js" data-settings-js="settings-bebeae96e00e4617.js" data-settings-css="settings-af96d9e2fc13e081.css" ></div></body></html>

@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Bsgs","Baby-stpp giant-step のソルバーです。"]]};

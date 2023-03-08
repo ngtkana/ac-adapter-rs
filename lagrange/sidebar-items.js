@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":[["evaluate","多項式の係数から 1 点での評価を計算します。"],["interpolate","x 座標の異なるような N 点の評価から、N - 1 次以下の多項式を一意的に復元します。"],["interpolate_first_n","0..N の評価から、N - 1 次以下の多項式を一意的に復元します。"],["interpolate_one_point_first_n","0..N での評価から決まる N - 1 次以下の一意的な多項式で、与えられた点を評価します。"]]};

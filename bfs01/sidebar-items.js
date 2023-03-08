@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":[["Weight",""]],"fn":[["calc_dist","一点からの距離配列を作ります。"],["calc_dist_restore","一点からの距離配列と、前者配列を作ります。始点の前者は自分自身です。"]]};

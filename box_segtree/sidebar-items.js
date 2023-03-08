@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["Iter","[`Segtree::iter`] の返す型です。"],["Segtree","セグツリーです。"],["SegtreeDebugList","[`Segtree::debug_list`] の生成物です。`Segtree::debug_list` のドキュメントをご覧ください。"]],"trait":[["Ops","[`Segtree`] の演算の情報を持つ型です。"]]};
