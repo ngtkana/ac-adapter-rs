@@ -212,7 +212,8 @@ mod tests {
             .collect::<Vec<_>>();
         let unmach_edges = graph
             .iter()
-            .enumerate().flat_map(|(x, v)| v.iter().map(move |&y| (x, y)))
+            .enumerate()
+            .flat_map(|(x, v)| v.iter().map(move |&y| (x, y)))
             .filter(|&(x, y)| backward[y] != Some(x))
             .collect::<Vec<_>>();
 
