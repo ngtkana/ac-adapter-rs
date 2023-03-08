@@ -230,7 +230,7 @@ pub fn exp_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<
 
 /// Run a binary search search on unsigned numbers.
 ///
-/// Given a function $f: \lbrack L, R \brack \to \mathtt { bool }$
+/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
 /// satisfying $\neg f ( L ) \land f ( R )$,
 /// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
 ///
@@ -352,7 +352,7 @@ pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
 
 /// Run a binary search search on signed numbers.
 ///
-/// Given a function $f: \lbrack L, R \brack \to \mathtt { bool }$
+/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
 /// satisfying $\neg f ( L ) \land f ( R )$,
 /// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
 ///
