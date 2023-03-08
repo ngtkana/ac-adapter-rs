@@ -1,4 +1,12 @@
-//! 符号付き・符号なし整数や浮動小数点数の二分探索をします。
+//! Run classic binary or exponential search on integer or floating point numbers.
+//!
+//! Both classic binary seach and exponential search has their streangth and weakness.
+//!
+//! - The classic binary search is (about $\times 2$)) faster in worst case.
+//! - The classic binary search never fails, even if the partition function is not monotone.
+//! - We do not have to know the limit values to use the exponential search.
+//! - The running time of the exponential search is output-sensitively fast.
+//!
 
 use std::{
     fmt::Debug,
@@ -6,7 +14,7 @@ use std::{
     ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Shl, Shr, Sub},
 };
 
-/// 浮動小数点数型の実装するトレイトです。
+/// Floating pont number.
 pub trait Float:
     Sized
     + Copy
@@ -18,10 +26,15 @@ pub trait Float:
     + Div<Output = Self>
     + Neg<Output = Self>
 {
+    /// $0$
     const ZERO: Self;
+    /// $1$
     const ONE: Self;
+    /// $\infty$
     const INFINITY: Self;
+    /// $-\infty$
     const NEG_INFINITY: Self;
+    /// $x \mapsto \sqrt x$
     fn sqrt(self) -> Self;
 }
 impl Float for f32 {
@@ -43,21 +56,31 @@ impl Float for f64 {
     }
 }
 
-/// 浮動小数点数型について指数探索をします。
+/// Run an exponential search on floating point numbers.
 ///
-/// `f` が `false` と `true` に二分されいるとき、
-/// `f(x)` が `true` となる最小の `x` を探します。
+/// Given a binary function $f: \mathbb R \rightarrow \mathtt { bool }$,
+/// it trys to find a normal number $x \in \mathbb R$ satisfying
+/// $\neg f( \mathtt { prev } ( x ) ) \land f(x)$
+/// (where $\mathtt { prev } ( x )$ is the previous normal number of $x$).
 ///
-/// # 厳密な仕様
+/// This trial always succeeds provided that
 ///
-/// この `x` が
+/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
+/// - there exist such $x$'s in `-T::MAX.sqrt()..=T::MAX.sqrt()`.
 ///
-/// - `-T::MAX.sqrt()..=T:MAX.sqrt()` に収まる正規値であるとき、
-/// `x` に厳密に等しい有限正規値を返します。
-/// - 上述の範囲より大きいときや、`T::INFINITY` のときは、`T::INFINITY` を返します。
-/// - 上述の範囲より小さいときや、`T::NEG_INFINITY` のときは、`T::NEG_INFINITY` を返します。
+/// If it falis to find it, it returns `T::{INFINITY, NEG_INFINITY}`.
 ///
-pub fn exponential_search_floating<T: Float>(mut f: impl FnMut(T) -> bool) -> T {
+///
+/// # Examples
+///
+/// They are some usual usages where the function $f$ is monotone.
+///
+/// ```
+/// # use numeric_search::exp_search_float;
+/// assert_eq!(exp_search_float(|x| 2.5 <= x), 2.5);
+/// assert_eq!(exp_search_float(|x| -2.5 <= x), -2.5);
+/// ```
+pub fn exp_search_float<T: Float>(mut f: impl FnMut(T) -> bool) -> T {
     let mut lower;
     let mut upper;
     if f(T::ZERO) {
@@ -133,7 +156,7 @@ pub fn exponential_search_floating<T: Float>(mut f: impl FnMut(T) -> bool) -> T 
     }
 }
 
-/// 符号なし整数型に実装されるトレイトです。
+/// Unsigned integers.
 pub trait Unsigned:
     Sized
     + Copy
@@ -148,7 +171,9 @@ pub trait Unsigned:
     + BitAnd<Output = Self>
     + BitOr<Output = Self>
 {
+    /// $0$
     const ZERO: Self;
+    /// $1$
     const ONE: Self;
 }
 macro_rules! impl_unsigned {
@@ -161,12 +186,30 @@ macro_rules! impl_unsigned {
 }
 impl_unsigned! { u8, u16, u32, u64, u128, usize }
 
-/// 符号なし整数型で指数探索をします。
+/// Run an exponential search on unsigned numbers.
 ///
-/// `f` で二分されているとして、
-/// `f(x)` が `true` となる `x` が存在すればその最小を返し、
-/// さもなくば `None` を返します。
-pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<T> {
+/// Given a function $f: \mathbb N \to \mathtt { bool }$,
+/// it try to find $x \in \mathbb N$ satisfying $\neg f ( x - 1 ) \land f ( x )$ (where we assume that $\neg f ( -1 )$).
+///
+/// This trial always succeeds provided that
+///
+/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
+/// - $f$ is not always-true
+///
+/// If it falis to find it, it returns `None`.
+///
+///
+/// # Examples
+///
+/// They are some usual usages where the function $f$ is monotone.
+///
+/// ```
+/// # use numeric_search::exp_search_unsigned;
+/// assert_eq!(exp_search_unsigned(|x: u32| 6 <= x), Some(6));
+/// assert_eq!(exp_search_unsigned(|_: u32| false), None);
+/// assert_eq!(exp_search_unsigned(|_: u32| true), Some(0));
+/// ```
+pub fn exp_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     if f(T::ZERO) {
         return Some(T::ZERO);
     }
@@ -185,10 +228,19 @@ pub fn exponential_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) ->
     Some(binary_search_unsigned(lower, upper, f))
 }
 
-/// 符号なし整数型で二分探索をします。
+/// Run a binary search search on unsigned numbers.
 ///
-/// `!f(lower) && f(upper)` であるとして、
-/// `(lower + 1..=upper).contains(&x) && !f(x - 1) && f(x)` なる `x` を返します。
+/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
+/// satisfying $\neg f ( L ) \land f ( R )$,
+/// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
+///
+/// # Examples
+///
+/// ```
+/// # use numeric_search::binary_search_unsigned;
+/// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
+/// ```
+///
 pub fn binary_search_unsigned<T: Unsigned>(
     mut lower: T,
     mut upper: T,
@@ -207,7 +259,7 @@ pub fn binary_search_unsigned<T: Unsigned>(
     upper
 }
 
-/// 符号付き整数型に実装されるトレイトです。
+/// Signed integers.
 pub trait Signed:
     Sized
     + Copy
@@ -240,12 +292,27 @@ macro_rules! impl_signed {
 }
 impl_signed! { i8, i16, i32, i64, i128 }
 
-/// 符号付き整数型で指数探索をします。
+/// Run an exponential search on unsigned numbers.
 ///
-/// `f` で二分されているとして、
-/// `f(x)` が `true` となる `x` が存在すればその最小を返し、
-/// さもなくば `None` を返します。
-pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
+/// Given a function $f: \mathbb Z \to \mathtt { bool }$,
+/// it try to find $x \in \mathbb Z$ satisfying $\neg f ( x - 1 ) \land f ( x )$ (where we assume that $\neg f ( \mathtt { MIN } - 1 )$).
+///
+/// This trial always succeeds provided that
+///
+/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
+/// - $f$ is not always-true
+///
+/// If it falis to find it, it returns `None`.
+///
+/// # Examples
+///
+/// ```
+/// # use numeric_search::exp_search_signed;
+/// assert_eq!(exp_search_signed(|x| 6 <= x), Some(6));
+/// assert_eq!(exp_search_signed(|_: i32| false), None);
+/// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
+/// ```
+pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     let mut lower;
     let mut upper;
     if f(T::ZERO) {
@@ -283,10 +350,19 @@ pub fn exponential_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Opt
     Some(upper)
 }
 
-/// 符号付き整数型で二分探索をします。
+/// Run a binary search search on signed numbers.
 ///
-/// `!f(lower) && f(upper)` であるとして、
-/// `(lower + 1..=upper).contains(&x) && !f(x - 1) && f(x)` なる `x` を返します。
+/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
+/// satisfying $\neg f ( L ) \land f ( R )$,
+/// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
+///
+/// # Examples
+///
+/// ```
+/// # use numeric_search::binary_search_unsigned;
+/// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
+/// ```
+///
 pub fn binary_search_signed<T: Signed>(
     mut lower: T,
     mut upper: T,
@@ -324,7 +400,7 @@ mod tests {
             let expected: f64 = if rng.gen_bool(0.5) { 1.0 } else { -1.0 }
                 * 2_f64.powf(rng.gen_range(-512.0..512.0));
             let mut count = 0;
-            let result = exponential_search_floating(|x| {
+            let result = exp_search_float(|x| {
                 count += 1;
                 expected <= x
             });
@@ -333,7 +409,7 @@ mod tests {
         }
 
         for &(threshold, expected) in &[
-            // 正確に計算できるもの
+            // Succeeds
             (0.0, 0.0),
             (-0.0, 0.0),
             (INFINITY, INFINITY),
@@ -343,11 +419,11 @@ mod tests {
             (-MAX.sqrt(), -MAX.sqrt()),
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
-            // できないもの
+            // Fails
             (MAX.sqrt() * 1.000000000001, INFINITY),
             (-MAX.sqrt() * 1.000000000001, NEG_INFINITY),
         ] {
-            let result = exponential_search_floating(|x| threshold <= x);
+            let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
         }
     }
@@ -361,7 +437,7 @@ mod tests {
             let expected: f32 =
                 if rng.gen_bool(0.5) { 1.0 } else { -1.0 } * 2_f32.powf(rng.gen_range(-63.0..63.0));
             let mut count = 0;
-            let result = exponential_search_floating(|x| {
+            let result = exp_search_float(|x| {
                 count += 1;
                 expected <= x
             });
@@ -370,7 +446,7 @@ mod tests {
         }
 
         for &(threshold, expected) in &[
-            // 正確に計算できるもの
+            // Succeeds
             (0.0, 0.0),
             (-0.0, 0.0),
             (INFINITY, INFINITY),
@@ -380,11 +456,11 @@ mod tests {
             (-MAX.sqrt(), -MAX.sqrt()),
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
-            // できないもの
+            // Fails
             (MAX.sqrt() * 1.000001, INFINITY),
             (-MAX.sqrt() * 1.000001, NEG_INFINITY),
         ] {
-            let result = exponential_search_floating(|x| threshold <= x);
+            let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
         }
     }
@@ -392,10 +468,10 @@ mod tests {
     #[test]
     fn test_exponential_search_u8() {
         for expected in 0..=255_u8 {
-            let result = exponential_search_unsigned(|x| expected <= x);
+            let result = exp_search_unsigned(|x| expected <= x);
             assert_eq!(result, Some(expected));
         }
-        let result = exponential_search_unsigned(|_| false);
+        let result = exp_search_unsigned(|_| false);
         assert_eq!(result, None::<u8>);
     }
 
@@ -426,10 +502,10 @@ mod tests {
     #[test]
     fn test_exponential_search_i8() {
         for expected in -128..=127_i8 {
-            let result = exponential_search_signed(|x| expected <= x);
+            let result = exp_search_signed(|x| expected <= x);
             assert_eq!(result, Some(expected));
         }
-        let result = exponential_search_signed(|_| false);
+        let result = exp_search_signed(|_| false);
         assert_eq!(result, None::<i8>);
     }
 
