@@ -367,7 +367,6 @@ pub trait Ops {
 
 #[cfg(test)]
 mod tests {
-    
 
     use {
         super::{Ops, Segtree},
