@@ -393,9 +393,9 @@ mod tests {
             let mut lines = VecLinesDecreasing::new();
             let mut raw_lines = Vec::new();
             let n = rng.gen_range(1..20);
-            for x in 0..3 * n as i64 {
+            for x in 0..3 * n {
                 let x = x / 3;
-                let y = rng.gen_range(0..(n * n) as i64);
+                let y = rng.gen_range(0..(n * n));
                 let one = -2 * x;
                 let zero = x * x + y;
                 raw_lines.push([one, zero]);
@@ -431,9 +431,9 @@ mod tests {
             let mut lines = VecLinesIncreasing::new();
             let mut raw_lines = Vec::new();
             let n = rng.gen_range(1..20);
-            for x in 0..3 * n as i64 {
+            for x in 0..3 * n {
                 let x = x / 3;
-                let y = rng.gen_range(0..(n * n) as i64);
+                let y = rng.gen_range(0..(n * n));
                 let one = 2 * x;
                 let zero = x * x + y;
                 raw_lines.push([one, zero]);

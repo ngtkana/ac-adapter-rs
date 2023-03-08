@@ -740,7 +740,7 @@ impl<M: Mod> FactTable<M> {
     /// assert_eq!(fact.binom_or_zero(4, -1), fp!(0));
     /// ```
     pub fn binom_or_zero(&self, n: usize, k: isize) -> Fp<M> {
-        assert!(n < self.0.len() as usize);
+        assert!(n < self.0.len());
         if (0..=n as isize).contains(&k) {
             self.binom(n, k as usize)
         } else {
