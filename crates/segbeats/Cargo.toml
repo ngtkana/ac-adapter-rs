@@ -15,5 +15,5 @@ package = "query_test"
 open = { path = "../open" }
 
 [dev-dependencies]
-rand = "0.8.2"
+rand = { workspace = true }
 

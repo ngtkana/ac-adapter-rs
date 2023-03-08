@@ -219,7 +219,7 @@ mod tests {
 
     use {
         super::Rational,
-        float_cmp::approx_eq,
+        approx::assert_abs_diff_eq,
         ordered_float::OrderedFloat,
         rand::{prelude::StdRng, Rng, SeedableRng},
     };
@@ -236,7 +236,7 @@ mod tests {
                 "{:?} + {:?} = {:?} ({:.3} + {:.3} = {:.3})",
                 x, y, z, xf64, yf64, zf64
             );
-            assert!(approx_eq!(f64, z.into_f64(), zf64, epsilon = 1e-6));
+            assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
 
@@ -252,7 +252,7 @@ mod tests {
                 "{:?} - {:?} = {:?} ({:.3} - {:.3} = {:.3})",
                 x, y, z, xf64, yf64, zf64
             );
-            assert!(approx_eq!(f64, z.into_f64(), zf64, epsilon = 1e-6));
+            assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
 
@@ -268,7 +268,7 @@ mod tests {
                 "{:?} * {:?} = {:?} ({:.3} * {:.3} = {:.3})",
                 x, y, z, xf64, yf64, zf64
             );
-            assert!(approx_eq!(f64, z.into_f64(), zf64, epsilon = 1e-6));
+            assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
 
@@ -284,7 +284,7 @@ mod tests {
                 "{:?} / {:?} = {:?} ({:.3} / {:.3} = {:.3})",
                 x, y, z, xf64, yf64, zf64
             );
-            assert!(approx_eq!(f64, z.into_f64(), zf64, epsilon = 1e-6));
+            assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
 
@@ -296,7 +296,7 @@ mod tests {
             let y = -x;
             let yf64 = -xf64;
             println!("neg({:?})  = -{:?} (neg({:.3}) = {:.3})", x, y, xf64, yf64);
-            assert!(approx_eq!(f64, y.into_f64(), yf64, epsilon = 1e-6));
+            assert_abs_diff_eq!(y.into_f64(), yf64, epsilon = 1e-6);
         }
     }
 
@@ -327,13 +327,8 @@ mod tests {
             let res = a.iter().sum::<Rational<_>>();
             let res_copied = a.iter().copied().sum::<Rational<_>>();
             let resf64 = af64.iter().sum::<f64>();
-            assert!(approx_eq!(f64, res.into_f64(), resf64, epsilon = 1e-6));
-            assert!(approx_eq!(
-                f64,
-                res_copied.into_f64(),
-                resf64,
-                epsilon = 1e-6
-            ));
+            assert_abs_diff_eq!(res.into_f64(), resf64, epsilon = 1e-6);
+            assert_abs_diff_eq!(res_copied.into_f64(), resf64, epsilon = 1e-6);
         }
     }
 
@@ -348,13 +343,8 @@ mod tests {
             let res = a.iter().product::<Rational<_>>();
             let res_copied = a.iter().copied().product::<Rational<_>>();
             let resf64 = af64.iter().product::<f64>();
-            assert!(approx_eq!(f64, res.into_f64(), resf64, epsilon = 1e-6));
-            assert!(approx_eq!(
-                f64,
-                res_copied.into_f64(),
-                resf64,
-                epsilon = 1e-6
-            ));
+            assert_abs_diff_eq!(res.into_f64(), resf64, epsilon = 1e-6);
+            assert_abs_diff_eq!(res_copied.into_f64(), resf64, epsilon = 1e-6);
         }
     }
 

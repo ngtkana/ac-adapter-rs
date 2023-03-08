@@ -5,4 +5,4 @@ authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"
 
 [dev-dependencies]
-rand = "0.8.2"
+rand = { workspace = true }
