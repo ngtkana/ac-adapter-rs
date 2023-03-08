@@ -1,30 +1,43 @@
-//! 2 次以下の劣モジュラー Graph cut 最適化問題を解きます。
+//! Solve a submodular graph cut optimizaion problem of degree $\le 2$
 //!
-//! [詳細なインターフェースは `Gco` 構造体の各メソッドへどうぞ](Gco)
+//! As in [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization),
+//! any pseudo-boolean function $f: \lbrace 0, 1 \rbrace ^ n → \mathbb R$ can be written uniquely
+//! as a multi-linear polynominal:
 //!
-//! # 依存ライブラリ
+//! $$
+//! f ( \boldsymbol x ) =
+//!     a
+//!     + \sum _ { i } a _ i x _ i
+//!     + \sum _ { i, j } a _ { i, j } x _ i x _ j
+//!     + \dots
+//! $$
+//!
+//! This library can solve the minimum value of $f$ satisfying
+//!
+//! - $\mathop { \mathrm { deg } } f \le 2$
+//! - $f$ is submodular $a _ { i, i } + a _ { j , j } \le a _ { i, j } + a _ { j, i }$
+//!
+//!
+//! # Dependencies
 //!
 //! [`dinic`]
 //!
 //!
-//! # できること
-//!
-//! R: 実数体とします
-//!
-//! 関数 f: { 0, 1 } ^ n → R は必ず n 次以下の多項式で書ける。このような f
-//! のうち性質の良いものについて、最小値 f(x) とそれを達成する x を計算します。
-//!
-//! f の条件は、次のものの和で表せることです。
-//!
-//! - 1 次の項
-//! - 2 次の項であり、劣モジュラであるもの
+//! # Usages
 //!
 //!
+//! - Use two methods [`unary`](`Gco::unary), [`binary`](Gco::binary) to add terms.
+//! - The cost must has a type [`i64`].
+//! - The result has a type [`bool`]. ($0$ is `false`, $1$ is `true`)
+//! - We cannot automatically "filp" variables.
 //!
-//! # 使い方
+//! This example code shows that a function
 //!
-//! [`unary`](`Gco::unary), [`binary`](Gco::binary)
-//! メソッドで項を足していきます。
+//! $$
+//! f (x, y) = (10 + 10 x) + (40 - 30 y) + 99 (x + y - 2xy)
+//! $$
+//!
+//! takes its minimum $30$ at $(x, y) = (1, 1)$.
 //!
 //! ```
 //! use gco::Gco;
@@ -32,31 +45,17 @@
 //! let mut gco = gco::Gco::new(2);
 //! gco.unary(0, [10, 20]);
 //! gco.unary(1, [40, 10]);
-//! gco.binary([0, 1], [[0, 99], [99,  0]]);
+//! gco.binary([0, 1], [[0, 99], [99, 0]]);
 //!
 //! let result = gco.solve();
 //! assert_eq!(result.value, 30);
 //! assert_eq!(&result.args, &[true, true]);
 //! ```
-//!
-//! - 負のコストも使えます。
-//! - 変数のフリップはできません。
-//! - 表現可能性は**項ごと**にチェックされます。
-//! - 復元は、0 が `false`、1 が `true` で表されます。
-//!
-//!
-//!
-//! # 関連リンク
-//!
-//! [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization)
-//!
 
 use dinic::Dinic;
 use std::cmp::Ordering;
 
-/// 2 次以下の劣モジュラー Graph cut 最適化問題を解きます。
-///
-/// [概論は `gco` クレートのドキュメントへどうぞ](`self`)
+/// A solver of graph cut optimization problems.
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct Gco {
     vars: usize,
@@ -64,52 +63,56 @@ pub struct Gco {
     binary: Vec<Binary>,
 }
 impl Gco {
-    /// 変数 `n` 個からなる、制約のないインスタンスを作ります。
+    /// Initialize a solver with $n$ terms.
     pub fn new(n: usize) -> Self {
         Self {
             vars: n,
             ..Self::default()
         }
     }
-    /// 1 次の項を足します。
+    /// Add a unary term.
     ///
-    /// # 効果
+    /// # Effects
     ///
-    /// f(x) に項 `cost[x[i]]` を足します。
-    ///
+    /// Add a unary term $c _ 0 ( 1 - x _ i ) + c _ 1 x _ i$ to $f$.
     ///
     /// # Examples
     ///
     /// ```
-    /// use gco::Gco;
-    ///
-    /// let mut gco = gco::Gco::new(2);
-    /// gco.unary(0, [0, 10]); // x _ 0 = 1 のときコスト 10
-    /// gco.unary(0, [-40, 0]); // x _ 1 = 0 のときコスト -40
+    /// # use gco::Gco;
+    /// # let mut gco = gco::Gco::new(2);
+    /// gco.unary(0, [0, 10]);
+    /// gco.unary(1, [-40, 0]);
     /// ```
     ///
     pub fn unary(&mut self, i: usize, cost: [i64; 2]) {
         self.unary.push(Unary { i, cost });
     }
-    /// モジュラーな 2 次の項を足します。
+    /// Add a binary term.
     ///
-    /// # 効果
+    /// # Effects
     ///
-    /// f(x) に項 `cost[x[i]][x[j]]` を足します。
+    /// Add the following binary term to $f$:
+    ///
+    /// $$
+    /// c _ { 0, 0 } ( 1 - x _ i) ( 1 - x _ j )
+    ///     + c _ { 0, 1 } ( 1 - x _ i ) x _ j
+    ///     + c _ { 1, 0 } x _ i ( 1 - x _ j )
+    ///     + c _ { 1, 1 } x _ i x _ j
+    /// $$
     ///
     ///
     /// # Panics
     ///
-    /// モジュラーでないとき
+    /// If this binary term is not submodular.
     ///
     ///
     /// # Examples
     ///
     /// ```
-    /// use gco::Gco;
-    ///
-    /// let mut gco = gco::Gco::new(2);
-    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // x _ 0 = 0, x _ 1 = 1 のときコスト 10
+    /// # use gco::Gco;
+    /// # let mut gco = gco::Gco::new(2);
+    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // Costs 10 when x0 = 0, x1 = 1
     /// ```
     ///
     pub fn binary(&mut self, ij: [usize; 2], cost: [[i64; 2]; 2]) {
@@ -120,20 +123,21 @@ impl Gco {
         );
         self.binary.push(Binary { ij, cost });
     }
+    /// Returns the minimum value and an argmin of $f$.
     pub fn solve(&self) -> GcoResult {
         solve(self)
     }
 }
 
-/// [`Gco::solve`] の返すオブジェクトです。
+/// The minimum value and and an argmin of $f$.
+///
+/// - $x _ i = 0 \Leftrightarrow \mathtt { args } _ i = \mathtt { false }$
+/// - $x _ i = 1 \Leftrightarrow \mathtt { args } _ i = \mathtt { true }$
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct GcoResult {
-    /// 最小値
+    /// The minimum value
     pub value: i64,
-    /// 最小を達成する割当
-    ///
-    /// - x _ i = 0 のとき `args[i] == false`
-    /// - x _ i = 1 のとき `args[i] == true`
+    /// An argmin
     pub args: Vec<bool>,
 }
 
