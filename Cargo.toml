@@ -1,2 +1,9 @@
 [workspace]
 members = ['crates/*']
+
+[workspace.dependencies]
+approx = "0.5"
+itertools = "0.10"
+ordered_float = "3.4"
+rand = "0.8"
+test_case = "3.0"
