@@ -8,4 +8,4 @@ edition = "2018"
 
 [dev-dependencies]
 randtools = { path = "../randtools" }
-rand = "0.8.2"
+rand = { workspace = true }
