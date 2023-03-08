@@ -59,7 +59,7 @@ jobs:
         RUSTDOCFLAGS: --html-in-header contents/header.html
 
     - name: Add index.html etc
-      run: cp -r contents/index_html_etc/* target/doc
+      run: cp -r contents/index.html target/doc
 
     - name: Deploy GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
