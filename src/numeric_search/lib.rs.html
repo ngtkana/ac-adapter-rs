@@ -630,7 +630,7 @@
 /// They are some usual usages where the function $f$ is monotone.
 ///
 /// ```
-/// # use binsearch::exp_search_float;
+/// # use numeric_search::exp_search_float;
 /// assert_eq!(exp_search_float(|x| 2.5 &lt;= x), 2.5);
 /// assert_eq!(exp_search_float(|x| -2.5 &lt;= x), -2.5);
 /// ```
@@ -758,7 +758,7 @@
 /// They are some usual usages where the function $f$ is monotone.
 ///
 /// ```
-/// # use binsearch::exp_search_unsigned;
+/// # use numeric_search::exp_search_unsigned;
 /// assert_eq!(exp_search_unsigned(|x: u32| 6 &lt;= x), Some(6));
 /// assert_eq!(exp_search_unsigned(|_: u32| false), None);
 /// assert_eq!(exp_search_unsigned(|_: u32| true), Some(0));
@@ -791,7 +791,7 @@
 /// # Examples
 ///
 /// ```
-/// # use binsearch::binary_search_unsigned;
+/// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 &lt;= x * x), 15);
 /// ```
 ///
@@ -861,7 +861,7 @@
 /// # Examples
 ///
 /// ```
-/// # use binsearch::exp_search_signed;
+/// # use numeric_search::exp_search_signed;
 /// assert_eq!(exp_search_signed(|x| 6 &lt;= x), Some(6));
 /// assert_eq!(exp_search_signed(|_: i32| false), None);
 /// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
@@ -913,7 +913,7 @@
 /// # Examples
 ///
 /// ```
-/// # use binsearch::binary_search_unsigned;
+/// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 &lt;= x * x), 15);
 /// ```
 ///
