@@ -1,5 +1,4 @@
 [env]
-RUSTDOCFLAGS = "--html-in-header contents/header.html"
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 
 [tasks.doc]
