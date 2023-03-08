@@ -68,7 +68,7 @@ pub struct Rle<T: Int, P: PrimeFactors<T>> {
     iter: Peekable<P>,
     _marker: PhantomData<T>,
 }
-impl<'a, T: Int, P: PrimeFactors<T>> Iterator for Rle<T, P> {
+impl<T: Int, P: PrimeFactors<T>> Iterator for Rle<T, P> {
     type Item = (P::Item, usize);
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(p) = self.iter.next() {
