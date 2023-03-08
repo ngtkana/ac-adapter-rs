@@ -335,7 +335,10 @@ mod tests {
                 let mut result = low_link.biconnected_components();
                 let mut expected = biconnected_components(n, &edges);
                 result.iter_mut().flatten().for_each(|v| v.sort_unstable());
-                expected.iter_mut().flatten().for_each(|v| v.sort_unstable());
+                expected
+                    .iter_mut()
+                    .flatten()
+                    .for_each(|v| v.sort_unstable());
                 result.iter_mut().for_each(|v| v.sort_unstable());
                 expected.iter_mut().for_each(|v| v.sort_unstable());
                 result.sort();
