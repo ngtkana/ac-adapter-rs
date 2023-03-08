@@ -9,5 +9,5 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-itertools = "0.10.0"
-test-case = "1.1.0"
+itertools = { workspace = true }
+test-case = { workspace = true }

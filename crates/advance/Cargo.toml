@@ -9,8 +9,4 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-ga = "0.1.4"
-galvanic-assert = "0.8.7"
-itertools = "0.10.0"
-rand = "0.8.3"
-test-case = "1.1.0"
+itertools = { workspace = true }

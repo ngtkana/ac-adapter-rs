@@ -10,6 +10,6 @@ edition = "2018"
 fp = { path = "../fp" }
 
 [dev-dependencies]
-itertools = "0.10.0"
-rand = "0.8.3"
-test-case = "1.1.0"
+itertools = { workspace = true }
+rand = { workspace = true }
+test-case = { workspace = true }

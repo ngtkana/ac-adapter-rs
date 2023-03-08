@@ -9,10 +9,9 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-approx = "0.4.0"
-assert_that = "0.1.2"
+approx = { workspace = true }
 dbg = { path = "../dbg" }
-itertools = "0.10.0"
+itertools = { workspace = true }
 next_permutation = { path = "../next_permutation/" }
-rand = "0.8.3"
-test-case = "1.1.0"
+rand = { workspace = true }
+test-case = { workspace = true }

@@ -175,7 +175,9 @@ mod tests {
                 .enumerate()
                 .flat_map(|(i, v)| v.iter().map(move |&j| (i, j)))
                 .collect::<HashSet<_>>();
-            accum::for_each(&path, |&u, &v| assert!(edges.contains(&(u, v))));
+            for i in 1..path.len() {
+                debug_assert!(edges.contains(&(path[i - 1], path[i])));
+            }
         }
     }
 
