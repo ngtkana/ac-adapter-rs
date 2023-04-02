@@ -1,6 +1,11 @@
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 
+[tasks.test]
+command = "cargo"
+env = { "RUSTDOCFLAGS" = "" }
+args = [ "test" ]
+
 [tasks.doc]
 command = "cargo"
 args = [ "doc", "--workspace", "--no-deps" ]
