@@ -11,6 +11,7 @@ var sourcesIndex = JSON.parse('{\
 "bsgs":["",[],["lib.rs"]],\
 "cht":["",[],["lib.rs"]],\
 "cipolla":["",[],["lib.rs"]],\
+"cmpmore":["",[],["lib.rs"]],\
 "convex_hull":["",[],["lib.rs"]],\
 "dbg":["",[],["lib.rs"]],\
 "dfs":["",[],["lib.rs"]],\
@@ -48,7 +49,6 @@ var sourcesIndex = JSON.parse('{\
 "not_nan":["",[],["lib.rs"]],\
 "numeric_search":["",[],["lib.rs"]],\
 "open":["",[],["lib.rs"]],\
-"ordtools":["",[],["lib.rs"]],\
 "partially_persistent_union_find":["",[],["lib.rs"]],\
 "poly":["",[],["lib.rs"]],\
 "prefix_sum":["",[],["lib.rs"]],\

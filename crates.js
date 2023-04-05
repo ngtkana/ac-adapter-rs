@@ -36,6 +36,9 @@ const crates = [
         "name": "cipolla"
     },
     {
+        "name": "cmpmore"
+    },
+    {
         "name": "convex_hull"
     },
     {
@@ -145,9 +148,6 @@ const crates = [
     },
     {
         "name": "open"
-    },
-    {
-        "name": "ordtools"
     },
     {
         "name": "partially_persistent_union_find"
