@@ -10,7 +10,6 @@ edition = "2018"
 
 [dev-dependencies]
 approx = { workspace = true }
-dbg = { path = "../dbg" }
 itertools = { workspace = true }
 next_permutation = { path = "../next_permutation/" }
 rand = { workspace = true }

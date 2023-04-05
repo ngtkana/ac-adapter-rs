@@ -42,9 +42,6 @@ const crates = [
         "name": "convex_hull"
     },
     {
-        "name": "dbg"
-    },
-    {
         "name": "dfs"
     },
     {
@@ -115,6 +112,9 @@ const crates = [
     },
     {
         "name": "lin_ineq"
+    },
+    {
+        "name": "lg"
     },
     {
         "name": "low_link"

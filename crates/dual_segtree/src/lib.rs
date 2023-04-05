@@ -293,7 +293,6 @@ mod tests {
             let vec = repeat_with(|| new_value(&mut rng))
                 .take(n)
                 .collect::<Vec<_>>();
-            dbg!(&vec);
             let mut seg = DualSegtree::<O>::new(vec.iter().cloned());
             let mut brute = Brute::<O>::new(vec.iter().cloned());
             for _ in 0..20 {

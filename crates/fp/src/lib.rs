@@ -1796,7 +1796,6 @@ mod tests {
                 .chain(repeat_with(|| F::new(rng.gen_range(0..F::P))))
                 .take(l)
                 .collect::<Fps>();
-            dbg!(&a);
             let result = a.exp(m);
             let expected = brute(a, m);
             assert_eq!(&result, &expected);
