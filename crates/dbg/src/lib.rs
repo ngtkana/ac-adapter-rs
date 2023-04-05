@@ -2,14 +2,6 @@
 
 #[macro_export]
 macro_rules! lg {
-    (@nl $value:expr) => {
-        eprintln!("[{}:{}]", file!(), line!());
-        match $value {
-            value => {
-                eprint!("{:?}", &value);
-            }
-        }
-    };
     (@contents $head:expr $(,)?) => {
         match $head {
             head => {
