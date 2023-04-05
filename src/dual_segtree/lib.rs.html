@@ -340,7 +340,6 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
 </pre><pre class="rust"><code><span class="doccomment">//! 双対セグメント木（右作用）
 //!
 //! 作用の方向迷うのですが、右作用にしました。
@@ -636,7 +635,6 @@
             <span class="kw">let </span>vec = repeat_with(|| new_value(<span class="kw-2">&amp;mut </span>rng))
                 .take(n)
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="macro">dbg!</span>(<span class="kw-2">&amp;</span>vec);
             <span class="kw">let </span><span class="kw-2">mut </span>seg = DualSegtree::&lt;O&gt;::new(vec.iter().cloned());
             <span class="kw">let </span><span class="kw-2">mut </span>brute = Brute::&lt;O&gt;::new(vec.iter().cloned());
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
@@ -666,4 +664,4 @@
     }
 }
 </code></pre></div>
-</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="dual_segtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.1 (8460ca823 2023-03-20)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
+</section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="dual_segtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.2 (9eb3afe9e 2023-03-27)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>

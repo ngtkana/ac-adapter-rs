@@ -13,7 +13,6 @@ var sourcesIndex = JSON.parse('{\
 "cipolla":["",[],["lib.rs"]],\
 "cmpmore":["",[],["lib.rs"]],\
 "convex_hull":["",[],["lib.rs"]],\
-"dbg":["",[],["lib.rs"]],\
 "dfs":["",[],["lib.rs"]],\
 "dial":["",[],["lib.rs"]],\
 "dijkstra_radix_heap":["",[],["lib.rs"]],\
@@ -37,6 +36,7 @@ var sourcesIndex = JSON.parse('{\
 "lagrange":["",[],["lib.rs"]],\
 "lazy_segbeats":["",[],["lib.rs"]],\
 "lazy_segtree":["",[],["lib.rs"]],\
+"lg":["",[],["lib.rs"]],\
 "lin_ineq":["",[],["lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\
 "make_graph":["",[],["lib.rs"]],\
