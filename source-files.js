@@ -12,7 +12,7 @@ var sourcesIndex = JSON.parse('{\
 "cht":["",[],["lib.rs"]],\
 "cipolla":["",[],["lib.rs"]],\
 "convex_hull":["",[],["lib.rs"]],\
-"dbg":["",[],["bitslice.rs","lib.rs","table.rs"]],\
+"dbg":["",[],["lib.rs"]],\
 "dfs":["",[],["lib.rs"]],\
 "dial":["",[],["lib.rs"]],\
 "dijkstra_radix_heap":["",[],["lib.rs"]],\
