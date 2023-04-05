@@ -11,4 +11,3 @@ edition = "2018"
 [dev-dependencies]
 rand = { workspace = true }
 randtools = { path = "../randtools" }
-dbg = { path = "../dbg" }

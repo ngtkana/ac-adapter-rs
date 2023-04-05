@@ -314,7 +314,6 @@ mod tests {
                 low_link.add_edge(u, v);
             }
             low_link.build();
-            dbg!(n, &edges);
 
             // 関節点
             for i in 0..n {
