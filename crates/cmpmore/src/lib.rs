@@ -11,7 +11,7 @@
 /// assert_eq!(x, 2);
 /// ```
 pub fn change_min<T: PartialOrd>(lhs: &mut T, rhs: T) {
-    if &*lhs > &rhs {
+    if *lhs > rhs {
         *lhs = rhs;
     }
 }
@@ -27,7 +27,7 @@ pub fn change_min<T: PartialOrd>(lhs: &mut T, rhs: T) {
 /// assert_eq!(x, 4);
 /// ```
 pub fn change_max<T: PartialOrd>(lhs: &mut T, rhs: T) {
-    if &*lhs < &rhs {
+    if *lhs < rhs {
         *lhs = rhs;
     }
 }
