@@ -1,5 +1,5 @@
 [package]
-name = "span"
+name = "slicemore"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition = "2018"

@@ -192,13 +192,13 @@ const crates = [
         "name": "skew-heap"
     },
     {
+        "name": "slicemore"
+    },
+    {
         "name": "sort_tree"
     },
     {
         "name": "space"
-    },
-    {
-        "name": "span"
     },
     {
         "name": "sparse_table"
