@@ -41,29 +41,33 @@
 <a href="#22" id="22">22</a>
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
+<a href="#25" id="25">25</a>
+<a href="#26" id="26">26</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Provides a macro [lg]
 
 </span><span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>lg {
-    (@contents <span class="macro-nonterminal">$head</span>:expr $(,)<span class="question-mark">?</span>) =&gt; {
+    (@contents <span class="macro-nonterminal">$head</span>:expr $(,)<span class="question-mark">?</span>) =&gt; {{
         <span class="kw">match </span><span class="macro-nonterminal">$head </span>{
             head =&gt; {
                 <span class="macro">eprintln!</span>(<span class="string">&quot; {} = {:?}&quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$head</span>), <span class="kw-2">&amp;</span>head);
+                head
             }
         }
-    };
-    (@contents <span class="macro-nonterminal">$head</span>:expr $(,<span class="macro-nonterminal">$tail</span>:expr)+ $(,)<span class="question-mark">?</span>) =&gt; {
+    }};
+    (@contents <span class="macro-nonterminal">$head</span>:expr $(,<span class="macro-nonterminal">$tail</span>:expr)+ $(,)<span class="question-mark">?</span>) =&gt; {{
         <span class="kw">match </span><span class="macro-nonterminal">$head </span>{
             head =&gt; {
                 <span class="macro">eprint!</span>(<span class="string">&quot; {} = {:?},&quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$head</span>), <span class="kw-2">&amp;</span>head);
+                head
             }
         }
         <span class="macro-nonterminal">$</span><span class="macro">crate::lg!</span>(@<span class="macro-nonterminal">contents </span>$(<span class="macro-nonterminal">$tail</span>),<span class="kw-2">*</span>);
-    };
-    ($(<span class="macro-nonterminal">$expr</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {
+    }};
+    ($(<span class="macro-nonterminal">$expr</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {{
         <span class="macro">eprint!</span>(<span class="string">&quot;[{}:{}]&quot;</span>, <span class="macro">file!</span>(), <span class="macro">line!</span>());
         <span class="macro-nonterminal">$</span><span class="macro">crate::lg!</span>(@<span class="macro-nonterminal">contents </span>$(<span class="macro-nonterminal">$expr</span>),<span class="kw-2">*</span>)
-    };
+    }};
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.2 (9eb3afe9e 2023-03-27)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
