@@ -2,23 +2,25 @@
 
 #[macro_export]
 macro_rules! lg {
-    (@contents $head:expr $(,)?) => {
+    (@contents $head:expr $(,)?) => {{
         match $head {
             head => {
                 eprintln!(" {} = {:?}", stringify!($head), &head);
+                head
             }
         }
-    };
-    (@contents $head:expr $(,$tail:expr)+ $(,)?) => {
+    }};
+    (@contents $head:expr $(,$tail:expr)+ $(,)?) => {{
         match $head {
             head => {
                 eprint!(" {} = {:?},", stringify!($head), &head);
+                head
             }
         }
         $crate::lg!(@contents $($tail),*);
-    };
-    ($($expr:expr),* $(,)?) => {
+    }};
+    ($($expr:expr),* $(,)?) => {{
         eprint!("[{}:{}]", file!(), line!());
         $crate::lg!(@contents $($expr),*)
-    };
+    }};
 }
