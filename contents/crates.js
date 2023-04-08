@@ -117,6 +117,9 @@ const crates = [
         "name": "lg"
     },
     {
+        "name": "lg_bools"
+    },
+    {
         "name": "low_link"
     },
     {
