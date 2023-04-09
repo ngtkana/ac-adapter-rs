@@ -120,6 +120,9 @@ const crates = [
         "name": "lg_bools"
     },
     {
+        "name": "lg_max"
+    },
+    {
         "name": "low_link"
     },
     {
