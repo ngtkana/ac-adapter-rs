@@ -38,6 +38,7 @@ var sourcesIndex = JSON.parse('{\
 "lazy_segtree":["",[],["lib.rs"]],\
 "lg":["",[],["lib.rs"]],\
 "lg_bools":["",[],["lib.rs"]],\
+"lg_max":["",[],["lib.rs"]],\
 "lin_ineq":["",[],["lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\
 "make_graph":["",[],["lib.rs"]],\

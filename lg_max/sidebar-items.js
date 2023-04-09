@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":[["QuietMax","A Wrapper to quiet `{integer}::MAX` down to `\"_\"`."]]};
