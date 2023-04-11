@@ -102,6 +102,9 @@ const crates = [
         "name": "inversion_number"
     },
     {
+        "name": "itermore"
+    },
+    {
         "name": "lagrange"
     },
     {
