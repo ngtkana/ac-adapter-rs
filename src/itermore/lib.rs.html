@@ -171,8 +171,46 @@
 <a href="#152" id="152">152</a>
 <a href="#153" id="153">153</a>
 <a href="#154" id="154">154</a>
+<a href="#155" id="155">155</a>
+<a href="#156" id="156">156</a>
+<a href="#157" id="157">157</a>
+<a href="#158" id="158">158</a>
+<a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
+<a href="#162" id="162">162</a>
+<a href="#163" id="163">163</a>
+<a href="#164" id="164">164</a>
+<a href="#165" id="165">165</a>
+<a href="#166" id="166">166</a>
+<a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
+<a href="#170" id="170">170</a>
+<a href="#171" id="171">171</a>
+<a href="#172" id="172">172</a>
+<a href="#173" id="173">173</a>
+<a href="#174" id="174">174</a>
+<a href="#175" id="175">175</a>
+<a href="#176" id="176">176</a>
+<a href="#177" id="177">177</a>
+<a href="#178" id="178">178</a>
+<a href="#179" id="179">179</a>
+<a href="#180" id="180">180</a>
+<a href="#181" id="181">181</a>
+<a href="#182" id="182">182</a>
+<a href="#183" id="183">183</a>
+<a href="#184" id="184">184</a>
+<a href="#185" id="185">185</a>
+<a href="#186" id="186">186</a>
+<a href="#187" id="187">187</a>
+<a href="#188" id="188">188</a>
+<a href="#189" id="189">189</a>
+<a href="#190" id="190">190</a>
+<a href="#191" id="191">191</a>
+<a href="#192" id="192">192</a>
+<a href="#193" id="193">193</a>
 </pre><pre class="rust"><code><span class="doccomment">//! An extension trait of [`Iterator`]
-
 </span><span class="kw">use </span>std::ops::{AddAssign, Sub};
 
 <span class="doccomment">/// Returns $\sum \left \lbrace a _ j \vert 0 \le j \lt i \right \rbrace$.
@@ -216,24 +254,37 @@
         iter: iter.into_iter(),
     }
 }
-
 <span class="doccomment">/// Returns $a _ i - \min \left \lbrace a _ j \vert 0 \le j \le i \right \rbrace$.
 ///
 /// # Example
 /// ```
-/// # use itermore::closed_max_increase;
+/// # use itermore::max_increase;
 /// # use itertools::assert_equal;
 /// assert_equal(
-///     closed_max_increase(vec![10, 11, 8, 12, 5, 11], std::i32::MAX),
+///     max_increase(vec![10, 11, 8, 12, 5, 11], std::i32::MAX),
 ///     vec![0, 1, 0, 4, 0, 6],
 /// );
 /// ```
-</span><span class="kw">pub fn </span>closed_max_increase&lt;I: IntoIterator&lt;Item = T&gt;, T&gt;(
-    iter: I,
-    max: T,
-) -&gt; ClosedMaxIncrease&lt;I::IntoIter&gt; {
-    ClosedMaxIncrease {
+</span><span class="kw">pub fn </span>max_increase&lt;I: IntoIterator&lt;Item = T&gt;, T&gt;(iter: I, max: T) -&gt; MaxIncrease&lt;I::IntoIter&gt; {
+    MaxIncrease {
         min: max,
+        iter: iter.into_iter(),
+    }
+}
+<span class="doccomment">/// Returns $\max \left \lbrace a _ j \vert 0 \le j \le i \right \rbrace - a _ i$.
+///
+/// # Example
+/// ```
+/// # use itermore::max_decrease;
+/// # use itertools::assert_equal;
+/// assert_equal(
+///     max_decrease(vec![10, 11, 8, 12, 5, 11], std::i32::MIN),
+///     vec![0, 0, 3, 0, 7, 1],
+/// );
+/// ```
+</span><span class="kw">pub fn </span>max_decrease&lt;I: IntoIterator&lt;Item = T&gt;, T&gt;(iter: I, min: T) -&gt; MaxDecrease&lt;I::IntoIter&gt; {
+    MaxDecrease {
+        max: min,
         iter: iter.into_iter(),
     }
 }
@@ -242,7 +293,8 @@
 </span><span class="kw">pub trait </span>IterMore: Iterator + Sized {
     <span class="kw">fn </span>open_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; OpenPrefixSum&lt;<span class="self">Self</span>&gt;;
     <span class="kw">fn </span>closed_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; ClosedPrefixSum&lt;<span class="self">Self</span>&gt;;
-    <span class="kw">fn </span>closed_max_increase(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; ClosedMaxIncrease&lt;<span class="self">Self</span>&gt;;
+    <span class="kw">fn </span>max_increase(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; MaxIncrease&lt;<span class="self">Self</span>&gt;;
+    <span class="kw">fn </span>max_decrease(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; MaxDecrease&lt;<span class="self">Self</span>&gt;;
 }
 <span class="kw">impl</span>&lt;I: Iterator&gt; IterMore <span class="kw">for </span>I {
     <span class="kw">fn </span>open_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; OpenPrefixSum&lt;<span class="self">Self</span>&gt; {
@@ -257,9 +309,15 @@
             iter: <span class="self">self</span>,
         }
     }
-    <span class="kw">fn </span>closed_max_increase(<span class="self">self</span>, max: <span class="self">Self</span>::Item) -&gt; ClosedMaxIncrease&lt;<span class="self">Self</span>&gt; {
-        ClosedMaxIncrease {
+    <span class="kw">fn </span>max_increase(<span class="self">self</span>, max: <span class="self">Self</span>::Item) -&gt; MaxIncrease&lt;<span class="self">Self</span>&gt; {
+        MaxIncrease {
             min: max,
+            iter: <span class="self">self</span>,
+        }
+    }
+    <span class="kw">fn </span>max_decrease(<span class="self">self</span>, min: <span class="self">Self</span>::Item) -&gt; MaxDecrease&lt;<span class="self">Self</span>&gt; {
+        MaxDecrease {
+            max: min,
             iter: <span class="self">self</span>,
         }
     }
@@ -305,12 +363,12 @@
         }
     }
 }
-<span class="doccomment">/// Return value of [`closed_max_increase`].
-</span><span class="kw">pub struct </span>ClosedMaxIncrease&lt;I: Iterator&gt; {
+<span class="doccomment">/// Return value of [`max_increase`].
+</span><span class="kw">pub struct </span>MaxIncrease&lt;I: Iterator&gt; {
     min: I::Item,
     iter: I,
 }
-<span class="kw">impl</span>&lt;I: Iterator&gt; Iterator <span class="kw">for </span>ClosedMaxIncrease&lt;I&gt;
+<span class="kw">impl</span>&lt;I: Iterator&gt; Iterator <span class="kw">for </span>MaxIncrease&lt;I&gt;
 <span class="kw">where
     </span>I::Item: Sub&lt;Output = I::Item&gt; + Ord + Copy,
 {
@@ -320,6 +378,26 @@
             <span class="prelude-val">Some</span>(key) =&gt; {
                 <span class="self">self</span>.min = <span class="self">self</span>.min.min(key);
                 <span class="prelude-val">Some</span>(key - <span class="self">self</span>.min)
+            }
+            <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
+        }
+    }
+}
+<span class="doccomment">/// Return value of [`max_decrease`].
+</span><span class="kw">pub struct </span>MaxDecrease&lt;I: Iterator&gt; {
+    max: I::Item,
+    iter: I,
+}
+<span class="kw">impl</span>&lt;I: Iterator&gt; Iterator <span class="kw">for </span>MaxDecrease&lt;I&gt;
+<span class="kw">where
+    </span>I::Item: Sub&lt;Output = I::Item&gt; + Ord + Copy,
+{
+    <span class="kw">type </span>Item = I::Item;
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="kw">match </span><span class="self">self</span>.iter.next() {
+            <span class="prelude-val">Some</span>(key) =&gt; {
+                <span class="self">self</span>.max = <span class="self">self</span>.max.max(key);
+                <span class="prelude-val">Some</span>(<span class="self">self</span>.max - key)
             }
             <span class="prelude-val">None </span>=&gt; <span class="prelude-val">None</span>,
         }
