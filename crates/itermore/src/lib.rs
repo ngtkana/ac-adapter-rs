@@ -81,8 +81,8 @@ pub fn max_decrease<I: IntoIterator<Item = T>, T>(iter: I, min: T) -> MaxDecreas
 pub trait IterMore: Iterator + Sized {
     fn open_prefix_sum(self, zero: Self::Item) -> OpenPrefixSum<Self>;
     fn closed_prefix_sum(self, zero: Self::Item) -> ClosedPrefixSum<Self>;
-    fn max_increase(self, zero: Self::Item) -> MaxIncrease<Self>;
-    fn max_decrease(self, zero: Self::Item) -> MaxDecrease<Self>;
+    fn max_increase(self, max: Self::Item) -> MaxIncrease<Self>;
+    fn max_decrease(self, min: Self::Item) -> MaxDecrease<Self>;
 }
 impl<I: Iterator> IterMore for I {
     fn open_prefix_sum(self, zero: Self::Item) -> OpenPrefixSum<Self> {
