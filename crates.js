@@ -195,9 +195,6 @@ const crates = [
         "name": "segtree"
     },
     {
-        "name": "seq"
-    },
-    {
         "name": "skew-heap"
     },
     {
