@@ -293,8 +293,8 @@
 </span><span class="kw">pub trait </span>IterMore: Iterator + Sized {
     <span class="kw">fn </span>open_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; OpenPrefixSum&lt;<span class="self">Self</span>&gt;;
     <span class="kw">fn </span>closed_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; ClosedPrefixSum&lt;<span class="self">Self</span>&gt;;
-    <span class="kw">fn </span>max_increase(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; MaxIncrease&lt;<span class="self">Self</span>&gt;;
-    <span class="kw">fn </span>max_decrease(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; MaxDecrease&lt;<span class="self">Self</span>&gt;;
+    <span class="kw">fn </span>max_increase(<span class="self">self</span>, max: <span class="self">Self</span>::Item) -&gt; MaxIncrease&lt;<span class="self">Self</span>&gt;;
+    <span class="kw">fn </span>max_decrease(<span class="self">self</span>, min: <span class="self">Self</span>::Item) -&gt; MaxDecrease&lt;<span class="self">Self</span>&gt;;
 }
 <span class="kw">impl</span>&lt;I: Iterator&gt; IterMore <span class="kw">for </span>I {
     <span class="kw">fn </span>open_prefix_sum(<span class="self">self</span>, zero: <span class="self">Self</span>::Item) -&gt; OpenPrefixSum&lt;<span class="self">Self</span>&gt; {
