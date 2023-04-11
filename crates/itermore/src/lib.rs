@@ -1,5 +1,4 @@
 //! An extension trait of [`Iterator`]
-
 use std::ops::{AddAssign, Sub};
 
 /// Returns $\sum \left \lbrace a _ j \vert 0 \le j \lt i \right \rbrace$.
@@ -43,24 +42,37 @@ pub fn closed_prefix_sum<I: IntoIterator<Item = T>, T>(
         iter: iter.into_iter(),
     }
 }
-
 /// Returns $a _ i - \min \left \lbrace a _ j \vert 0 \le j \le i \right \rbrace$.
 ///
 /// # Example
 /// ```
-/// # use itermore::closed_max_increase;
+/// # use itermore::max_increase;
 /// # use itertools::assert_equal;
 /// assert_equal(
-///     closed_max_increase(vec![10, 11, 8, 12, 5, 11], std::i32::MAX),
+///     max_increase(vec![10, 11, 8, 12, 5, 11], std::i32::MAX),
 ///     vec![0, 1, 0, 4, 0, 6],
 /// );
 /// ```
-pub fn closed_max_increase<I: IntoIterator<Item = T>, T>(
-    iter: I,
-    max: T,
-) -> ClosedMaxIncrease<I::IntoIter> {
-    ClosedMaxIncrease {
+pub fn max_increase<I: IntoIterator<Item = T>, T>(iter: I, max: T) -> MaxIncrease<I::IntoIter> {
+    MaxIncrease {
         min: max,
+        iter: iter.into_iter(),
+    }
+}
+/// Returns $\max \left \lbrace a _ j \vert 0 \le j \le i \right \rbrace - a _ i$.
+///
+/// # Example
+/// ```
+/// # use itermore::max_decrease;
+/// # use itertools::assert_equal;
+/// assert_equal(
+///     max_decrease(vec![10, 11, 8, 12, 5, 11], std::i32::MIN),
+///     vec![0, 0, 3, 0, 7, 1],
+/// );
+/// ```
+pub fn max_decrease<I: IntoIterator<Item = T>, T>(iter: I, min: T) -> MaxDecrease<I::IntoIter> {
+    MaxDecrease {
+        max: min,
         iter: iter.into_iter(),
     }
 }
@@ -69,7 +81,8 @@ pub fn closed_max_increase<I: IntoIterator<Item = T>, T>(
 pub trait IterMore: Iterator + Sized {
     fn open_prefix_sum(self, zero: Self::Item) -> OpenPrefixSum<Self>;
     fn closed_prefix_sum(self, zero: Self::Item) -> ClosedPrefixSum<Self>;
-    fn closed_max_increase(self, zero: Self::Item) -> ClosedMaxIncrease<Self>;
+    fn max_increase(self, zero: Self::Item) -> MaxIncrease<Self>;
+    fn max_decrease(self, zero: Self::Item) -> MaxDecrease<Self>;
 }
 impl<I: Iterator> IterMore for I {
     fn open_prefix_sum(self, zero: Self::Item) -> OpenPrefixSum<Self> {
@@ -84,9 +97,15 @@ impl<I: Iterator> IterMore for I {
             iter: self,
         }
     }
-    fn closed_max_increase(self, max: Self::Item) -> ClosedMaxIncrease<Self> {
-        ClosedMaxIncrease {
+    fn max_increase(self, max: Self::Item) -> MaxIncrease<Self> {
+        MaxIncrease {
             min: max,
+            iter: self,
+        }
+    }
+    fn max_decrease(self, min: Self::Item) -> MaxDecrease<Self> {
+        MaxDecrease {
+            max: min,
             iter: self,
         }
     }
@@ -132,12 +151,12 @@ where
         }
     }
 }
-/// Return value of [`closed_max_increase`].
-pub struct ClosedMaxIncrease<I: Iterator> {
+/// Return value of [`max_increase`].
+pub struct MaxIncrease<I: Iterator> {
     min: I::Item,
     iter: I,
 }
-impl<I: Iterator> Iterator for ClosedMaxIncrease<I>
+impl<I: Iterator> Iterator for MaxIncrease<I>
 where
     I::Item: Sub<Output = I::Item> + Ord + Copy,
 {
@@ -147,6 +166,26 @@ where
             Some(key) => {
                 self.min = self.min.min(key);
                 Some(key - self.min)
+            }
+            None => None,
+        }
+    }
+}
+/// Return value of [`max_decrease`].
+pub struct MaxDecrease<I: Iterator> {
+    max: I::Item,
+    iter: I,
+}
+impl<I: Iterator> Iterator for MaxDecrease<I>
+where
+    I::Item: Sub<Output = I::Item> + Ord + Copy,
+{
+    type Item = I::Item;
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.iter.next() {
+            Some(key) => {
+                self.max = self.max.max(key);
+                Some(self.max - key)
             }
             None => None,
         }
