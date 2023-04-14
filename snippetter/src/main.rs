@@ -1,31 +1,19 @@
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
 use std::{
+    collections::HashMap,
     ffi::OsStr,
+    fs,
     path::{Path, PathBuf},
 };
 
 static PROJECT_ROOT: OnceCell<PathBuf> = OnceCell::new();
-static CRATE_NAMES: OnceCell<Vec<String>> = OnceCell::new();
+static DEPENDENCY_GRAPH: OnceCell<HashMap<String, Vec<String>>> = OnceCell::new();
 
 fn main() {
-    PROJECT_ROOT
-        .set(
-            std::env::current_dir()
-                .unwrap()
-                .ancestors()
-                .find(|&ancestor| {
-                    ancestor.read_dir().unwrap().any(|entry| {
-                        entry.unwrap().path().as_path().file_name()
-                            == Some(OsStr::new("Cargo.lock"))
-                    })
-                })
-                .unwrap()
-                .to_path_buf(),
-        )
-        .unwrap();
+    PROJECT_ROOT.set(find_project_root_path()).unwrap();
     dbg!(PROJECT_ROOT.get());
-    CRATE_NAMES
+    DEPENDENCY_GRAPH
         .set(
             PROJECT_ROOT
                 .get()
@@ -35,7 +23,7 @@ fn main() {
                 .unwrap()
                 .filter_map(Result::ok)
                 .filter_map(|crate_entry| {
-                    (crate_entry
+                    crate_entry
                         .path()
                         .read_dir()
                         .unwrap()
@@ -44,18 +32,59 @@ fn main() {
                             crate_entry.path().as_path().file_name()
                                 == Some(OsStr::new("Cargo.toml"))
                         })
-                        .is_some())
-                    .then(|| {
-                        crate_entry
-                            .path()
-                            .file_name()
-                            .unwrap()
-                            .to_string_lossy()
-                            .into_owned()
-                    })
+                        .map(|cargo_toml_entry| {
+                            (
+                                crate_entry
+                                    .path()
+                                    .file_name()
+                                    .unwrap()
+                                    .to_string_lossy()
+                                    .into_owned(),
+                                parse_local_dependencies_from_cargo_toml(
+                                    &fs::read_to_string(cargo_toml_entry.path()).unwrap(),
+                                ),
+                            )
+                        })
                 })
-                .collect_vec(),
+                .collect(),
         )
         .unwrap();
-    dbg!(CRATE_NAMES.get());
+    dbg!(DEPENDENCY_GRAPH.get());
+}
+
+fn find_project_root_path() -> PathBuf {
+    std::env::current_dir()
+        .unwrap()
+        .ancestors()
+        .find(|&ancestor| {
+            ancestor.read_dir().unwrap().any(|entry| {
+                entry.unwrap().path().as_path().file_name() == Some(OsStr::new("Cargo.lock"))
+            })
+        })
+        .unwrap()
+        .to_path_buf()
+}
+
+fn parse_local_dependencies_from_cargo_toml(file_content: &str) -> Vec<String> {
+    match toml::from_str::<toml::Value>(file_content).unwrap() {
+        toml::Value::Table(table) => match table.get("dependencies") {
+            None => Vec::new(),
+            Some(toml::Value::Table(table)) => table
+                .iter()
+                .filter_map(|(key, value)| -> Option<String> {
+                    (match value {
+                        toml::Value::Table(table) => table.get("path").map(|value| match value {
+                            toml::Value::String(path) => path,
+                            _ => unreachable!(),
+                        }),
+                        toml::Value::String(path) => Some(path),
+                        _ => unreachable!(),
+                    })
+                    .and_then(|path| path.starts_with("../").then(|| key.clone()))
+                })
+                .collect_vec(),
+            _ => unreachable!(),
+        },
+        _ => unreachable!(),
+    }
 }
