@@ -66,6 +66,7 @@ var sourcesIndex = JSON.parse('{\
 "segtree":["",[],["lib.rs"]],\
 "skew_heap":["",[],["lib.rs"]],\
 "slicemore":["",[],["lib.rs"]],\
+"snippetter":["",[],["main.rs"]],\
 "sort_tree":["",[],["lib.rs"]],\
 "space":["",[],["lib.rs"]],\
 "sparse_table":["",[],["lib.rs"]],\
