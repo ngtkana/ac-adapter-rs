@@ -42,7 +42,6 @@
 <a href="#23" id="23">23</a>
 <a href="#24" id="24">24</a>
 <a href="#25" id="25">25</a>
-<a href="#26" id="26">26</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Provides a macro [lg]
 
 </span><span class="attr">#[macro_export]
@@ -59,7 +58,6 @@
         <span class="kw">match </span><span class="macro-nonterminal">$head </span>{
             head =&gt; {
                 <span class="macro">eprint!</span>(<span class="string">&quot; {} = {:?},&quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$head</span>), <span class="kw-2">&amp;</span>head);
-                head
             }
         }
         <span class="macro-nonterminal">$</span><span class="macro">crate::lg!</span>(@<span class="macro-nonterminal">contents </span>$(<span class="macro-nonterminal">$tail</span>),<span class="kw-2">*</span>);
