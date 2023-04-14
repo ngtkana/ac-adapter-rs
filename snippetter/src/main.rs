@@ -8,12 +8,17 @@ use std::{
 };
 
 static PROJECT_ROOT: OnceCell<PathBuf> = OnceCell::new();
-static DEPENDENCY_GRAPH: OnceCell<HashMap<String, Vec<String>>> = OnceCell::new();
+static CRATE_METADATAS: OnceCell<HashMap<String, CrateMetadata>> = OnceCell::new();
+
+#[derive(Clone, Debug, PartialEq, serde::Serialize)]
+struct CrateMetadata {
+    dependencies: Vec<String>,
+    tags: Vec<String>,
+}
 
 fn main() {
     PROJECT_ROOT.set(find_project_root_path()).unwrap();
-    dbg!(PROJECT_ROOT.get());
-    DEPENDENCY_GRAPH
+    CRATE_METADATAS
         .set(
             PROJECT_ROOT
                 .get()
@@ -40,16 +45,29 @@ fn main() {
                                     .unwrap()
                                     .to_string_lossy()
                                     .into_owned(),
-                                parse_local_dependencies_from_cargo_toml(
-                                    &fs::read_to_string(cargo_toml_entry.path()).unwrap(),
-                                ),
+                                CrateMetadata {
+                                    dependencies: parse_local_dependencies_from_cargo_toml(
+                                        &fs::read_to_string(cargo_toml_entry.path()).unwrap(),
+                                    ),
+                                    tags: Vec::new(),
+                                },
                             )
                         })
                 })
                 .collect(),
         )
         .unwrap();
-    dbg!(DEPENDENCY_GRAPH.get());
+
+    let json = serde_json::to_string(CRATE_METADATAS.get().unwrap()).unwrap();
+    fs::write(
+        PROJECT_ROOT
+            .get()
+            .unwrap()
+            .join("contents")
+            .join("crates.js"),
+        format!("crates = {}", json),
+    )
+    .unwrap();
 }
 
 fn find_project_root_path() -> PathBuf {
