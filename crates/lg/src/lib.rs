@@ -14,7 +14,6 @@ macro_rules! lg {
         match $head {
             head => {
                 eprint!(" {} = {:?},", stringify!($head), &head);
-                head
             }
         }
         $crate::lg!(@contents $($tail),*);
