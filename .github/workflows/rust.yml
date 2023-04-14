@@ -58,6 +58,9 @@ jobs:
       env:
         RUSTDOCFLAGS: --html-in-header contents/header.html
 
+    - name: Run the binary `snippetter`.
+      run: cargo run --bin snippetter
+
     - name: Add index.html etc
       run: cp -r contents/* target/doc
 
