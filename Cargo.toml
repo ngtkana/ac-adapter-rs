@@ -1,5 +1,5 @@
 [workspace]
-members = ['crates/*']
+members = ['crates/*', 'snippetter']
 
 [workspace.dependencies]
 approx = "0.5"
