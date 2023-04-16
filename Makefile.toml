@@ -60,6 +60,8 @@ args = [
   "-A",
   "clippy::shadow-unrelated",
   "-A",
+  "clippy::semicolon-if-nothing-returned",
+  "-A",
   "clippy::similar-names",
   "-A",
   "clippy::use-self",
