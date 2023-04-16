@@ -806,7 +806,7 @@
             }
             <span class="comment">// その他整合性
             </span><span class="kw">let </span>qset = scc.quotient_set();
-            <span class="macro">assert_eq!</span>(qset.iter().map(|q| q.len()).sum::&lt;usize&gt;(), n);
+            <span class="macro">assert_eq!</span>(qset.iter().map(std::vec::Vec::len).sum::&lt;usize&gt;(), n);
             <span class="macro">assert_eq!</span>(qset.len(), scc.cmp_count());
             <span class="kw">let </span><span class="kw-2">mut </span>used = <span class="macro">vec!</span>[<span class="bool-val">false</span>; n];
             <span class="kw">for </span>(i, qset) <span class="kw">in </span>qset.iter().enumerate() {

@@ -184,6 +184,8 @@
 <a href="#165" id="165">165</a>
 <a href="#166" id="166">166</a>
 <a href="#167" id="167">167</a>
+<a href="#168" id="168">168</a>
+<a href="#169" id="169">169</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Suffix Array を計算します。
 
 /// Surrix Array を計算します。
@@ -270,9 +272,11 @@
         h = h.saturating_sub(<span class="number">1</span>);
         <span class="kw">if </span>r != <span class="number">0 </span>{
             <span class="kw">let </span>j = sa[r - <span class="number">1</span>];
-            h = (h..)
-                .find(|<span class="kw-2">&amp;</span>h| j + h == n || i + h == n || s[j + h] != s[i + h])
-                .unwrap();
+            h = s[i..]
+                .iter()
+                .zip(<span class="kw-2">&amp;</span>s[j..])
+                .position(|(c, d)| c != d)
+                .unwrap_or_else(|| s[i..].len().min(s[j..].len()));
             lcp[r - <span class="number">1</span>] = h;
         }
     }

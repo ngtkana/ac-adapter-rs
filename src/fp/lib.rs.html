@@ -3286,7 +3286,7 @@
             <span class="macro">define_fp! </span>{ <span class="number">17</span>; <span class="kw">pub enum </span>M17; <span class="kw">pub type </span>F17 }
             <span class="macro">define_fp! </span>{ <span class="number">19</span>; <span class="kw">pub enum </span>M19; <span class="kw">type </span>_F19 }
         }
-        <span class="kw">use </span>internal::<span class="kw-2">*</span>;
+        <span class="kw">use </span>internal::{F17, M17, M19};
         <span class="macro">assert_eq!</span>(F17::P, <span class="number">17</span>);
         <span class="macro">assert_eq!</span>(M17::P, <span class="number">17</span>);
         <span class="macro">assert_eq!</span>(M19::P, <span class="number">19</span>);
@@ -3295,7 +3295,7 @@
     <span class="attr">#[test]
     #[allow(clippy::op_ref)]
     </span><span class="kw">fn </span>test_fmt() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>);
         <span class="kw">for </span>num <span class="kw">in </span><span class="number">1</span>..<span class="number">100_u64 </span>{
             <span class="kw">for </span>den <span class="kw">in </span><span class="number">1</span>..<span class="number">100_u64 </span>{
                 <span class="kw">let </span>x: F = <span class="macro">fp!</span>(num; den);
@@ -3403,7 +3403,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_primroot() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
         <span class="macro">assert_eq!</span>(F::ROOT, <span class="macro">fp!</span>(<span class="number">3</span>));
     }
 
@@ -3439,7 +3439,7 @@
     <span class="attr">#[test]
     #[allow(clippy::op_ref)]
     </span><span class="kw">fn </span>test_fps_add() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
 
         <span class="kw">let </span>result: Fps = <span class="macro">fps!</span>[<span class="number">2</span>, <span class="number">3</span>] + <span class="macro">fps!</span>[<span class="number">4</span>, <span class="number">5</span>];
         <span class="macro">assert_eq!</span>(result, <span class="macro">fps!</span>[<span class="number">6</span>, <span class="number">8</span>]);
@@ -3495,7 +3495,7 @@
     <span class="attr">#[test]
     #[allow(clippy::op_ref)]
     </span><span class="kw">fn </span>test_fps_sub() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
 
         <span class="kw">let </span>result: Fps = <span class="macro">fps!</span>[<span class="number">2</span>, <span class="number">3</span>] - <span class="macro">fps!</span>[<span class="number">4</span>, <span class="number">5</span>];
         <span class="macro">assert_eq!</span>(result, <span class="macro">fps!</span>[-<span class="number">2</span>, -<span class="number">2</span>]);
@@ -3551,7 +3551,7 @@
     <span class="attr">#[test]
     #[allow(clippy::op_ref)]
     </span><span class="kw">fn </span>test_fps_mul() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
 
         <span class="kw">let </span>result: Fps = <span class="macro">fps!</span>[<span class="number">2</span>, <span class="number">3</span>] * <span class="macro">fps!</span>[<span class="number">4</span>, <span class="number">5</span>];
         <span class="macro">assert_eq!</span>(result, <span class="macro">fps!</span>[<span class="number">8</span>, <span class="number">22</span>, <span class="number">15</span>]);
@@ -3580,7 +3580,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_inv() {
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
             <span class="kw">let </span>l = rng.gen_range(<span class="number">0</span>..<span class="number">10</span>);
@@ -3601,7 +3601,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_exp() {
-        <span class="kw">fn </span>brute(a: Fps, precision: usize) -&gt; Fps {
+        <span class="kw">fn </span>brute(a: <span class="kw-2">&amp;</span>Fps, precision: usize) -&gt; Fps {
             <span class="kw">let </span><span class="kw-2">mut </span>aug = <span class="macro">fps!</span>[<span class="number">1</span>];
             <span class="kw">let </span><span class="kw-2">mut </span>ans = Fps::new();
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..precision {
@@ -3610,7 +3610,7 @@
             }
             ans.resized(precision)
         }
-        <span class="macro">define_fp!</span>(<span class="number">998244353</span>, <span class="number">3</span>);
+        <span class="macro">define_fp!</span>(<span class="number">998_244_353</span>, <span class="number">3</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
             <span class="kw">let </span>l = rng.gen_range(<span class="number">1</span>..<span class="number">10</span>);
@@ -3620,7 +3620,7 @@
                 .take(l)
                 .collect::&lt;Fps&gt;();
             <span class="kw">let </span>result = a.exp(m);
-            <span class="kw">let </span>expected = brute(a, m);
+            <span class="kw">let </span>expected = brute(<span class="kw-2">&amp;</span>a, m);
             <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>result, <span class="kw-2">&amp;</span>expected);
         }
     }

@@ -976,8 +976,8 @@
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
             <span class="comment">// Fails
-            </span>(MAX.sqrt() * <span class="number">1.000000000001</span>, INFINITY),
-            (-MAX.sqrt() * <span class="number">1.000000000001</span>, NEG_INFINITY),
+            </span>(MAX.sqrt() * <span class="number">1.000_000_000_001</span>, INFINITY),
+            (-MAX.sqrt() * <span class="number">1.000_000_000_001</span>, NEG_INFINITY),
         ] {
             <span class="kw">let </span>result = exp_search_float(|x| threshold &lt;= x);
             <span class="macro">assert_eq!</span>(result, expected);
@@ -1013,8 +1013,8 @@
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
             <span class="comment">// Fails
-            </span>(MAX.sqrt() * <span class="number">1.000001</span>, INFINITY),
-            (-MAX.sqrt() * <span class="number">1.000001</span>, NEG_INFINITY),
+            </span>(MAX.sqrt() * <span class="number">1.000_001</span>, INFINITY),
+            (-MAX.sqrt() * <span class="number">1.000_001</span>, NEG_INFINITY),
         ] {
             <span class="kw">let </span>result = exp_search_float(|x| threshold &lt;= x);
             <span class="macro">assert_eq!</span>(result, expected);

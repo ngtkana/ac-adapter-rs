@@ -37,9 +37,9 @@
 <span class="macro">assert_eq!</span>(seg.collect_vec(), <span class="macro">vec!</span>[[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">0</span>, <span class="number">0</span>]]);
 
 <span class="comment">// 更新
-</span>seg.apply(<span class="number">0</span>..<span class="number">1</span>, [-<span class="number">2</span>, -<span class="number">2</span>]); <span class="comment">// -2
+</span>seg.apply(<span class="number">0</span>..<span class="number">1</span>, <span class="kw-2">&amp;</span>[-<span class="number">2</span>, -<span class="number">2</span>]); <span class="comment">// -2
 </span><span class="macro">assert_eq!</span>(seg.collect_vec(), <span class="macro">vec!</span>[[-<span class="number">2</span>, -<span class="number">2</span>], [<span class="number">0</span>, <span class="number">0</span>]]);
-seg.apply(<span class="number">0</span>..<span class="number">1</span>, [<span class="number">0</span>, <span class="number">3</span>]); <span class="comment">// +3
+seg.apply(<span class="number">0</span>..<span class="number">1</span>, <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">3</span>]); <span class="comment">// +3
 </span><span class="macro">assert_eq!</span>(seg.collect_vec(), <span class="macro">vec!</span>[[-<span class="number">2</span>, <span class="number">1</span>], [<span class="number">0</span>, <span class="number">0</span>]]);
 
 </code></pre></div>

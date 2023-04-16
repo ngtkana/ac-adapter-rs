@@ -818,6 +818,7 @@
 <a href="#799" id="799">799</a>
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
 </pre><pre class="rust"><code><span class="doccomment">//! ウェーブレット行列
 //!
 //! 本体は [`WaveletMatrix`] です。
@@ -981,7 +982,7 @@
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, |row| row.len())
+        <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, StaticBitVec::len)
     }
     <span class="doccomment">/// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///
@@ -1214,9 +1215,10 @@
 }
 
 <span class="kw">fn </span>next_position(row: <span class="kw-2">&amp;</span>StaticBitVec, i: usize, which: bool) -&gt; usize {
-    <span class="kw">match </span>which {
-        <span class="bool-val">false </span>=&gt; i - row.rank(i),
-        <span class="bool-val">true </span>=&gt; row.len() - row.rank(row.len()) + row.rank(i),
+    <span class="kw">if </span>which {
+        row.len() - row.rank(row.len()) + row.rank(i)
+    } <span class="kw">else </span>{
+        i - row.rank(i)
     }
 }
 <span class="kw">fn </span>next_position_range(row: <span class="kw-2">&amp;</span>StaticBitVec, range: <span class="kw-2">&amp;</span>Range&lt;usize&gt;, which: bool) -&gt; Range&lt;usize&gt; {

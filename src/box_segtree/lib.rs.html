@@ -452,7 +452,6 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
 </pre><pre class="rust"><code><span class="doccomment">//! [`Box`] で実装された、ポインタベースのセグツリーです。
 //!
 //! # 使い方
@@ -764,11 +763,10 @@
                 <span class="prelude-val">Some</span>((offset, seg)) =&gt; {
                     <span class="kw">if </span>seg.len == <span class="number">1 </span>{
                         <span class="kw">return </span><span class="prelude-val">Some</span>((offset, <span class="kw-2">&amp;</span>seg.value));
-                    } <span class="kw">else </span>{
-                        <span class="kw">for </span>e <span class="kw">in </span><span class="number">0</span>..<span class="number">2 </span>{
-                            <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = seg.child[e].as_ref() {
-                                <span class="self">self</span>.<span class="number">0</span>.push((offset + seg.len / <span class="number">2 </span>* e, c));
-                            }
+                    }
+                    <span class="kw">for </span>e <span class="kw">in </span><span class="number">0</span>..<span class="number">2 </span>{
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = seg.child[e].as_ref() {
+                            <span class="self">self</span>.<span class="number">0</span>.push((offset + seg.len / <span class="number">2 </span>* e, c));
                         }
                     }
                 }

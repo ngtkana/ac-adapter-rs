@@ -1531,7 +1531,7 @@
                     }
                     <span class="number">1 </span>=&gt; {
                         <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..n);
-                        <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..n + <span class="number">1</span>);
+                        <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..=n);
                         <span class="kw">if </span>r &lt;= l {
                             swap(<span class="kw-2">&amp;mut </span>l, <span class="kw-2">&amp;mut </span>r);
                             r += <span class="number">1</span>;
@@ -1570,7 +1570,7 @@
             <span class="kw">let </span>seg = Segtree::&lt;O&gt;::new(a.iter().cloned());
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2 </span>* n {
                 <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..n);
-                <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..n + <span class="number">1</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..=n);
                 <span class="kw">if </span>r &lt;= l {
                     swap(<span class="kw-2">&amp;mut </span>l, <span class="kw-2">&amp;mut </span>r);
                     r += <span class="number">1</span>;
@@ -1609,7 +1609,7 @@
             <span class="kw">let </span>seg = Segtree::&lt;O&gt;::new(a.iter().cloned());
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2 </span>* n {
                 <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..n);
-                <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..n + <span class="number">1</span>);
+                <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..=n);
                 <span class="kw">if </span>r &lt;= l {
                     swap(<span class="kw-2">&amp;mut </span>l, <span class="kw-2">&amp;mut </span>r);
                     r += <span class="number">1</span>;

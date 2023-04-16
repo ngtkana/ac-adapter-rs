@@ -366,9 +366,9 @@
 //! assert_eq!(seg.collect_vec(), vec![[0, 0], [0, 0]]);
 //!
 //! // 更新
-//! seg.apply(0..1, [-2, -2]); // -2
+//! seg.apply(0..1, &amp;[-2, -2]); // -2
 //! assert_eq!(seg.collect_vec(), vec![[-2, -2], [0, 0]]);
-//! seg.apply(0..1, [0, 3]); // +3
+//! seg.apply(0..1, &amp;[0, 3]); // +3
 //! assert_eq!(seg.collect_vec(), vec![[-2, 1], [0, 0]]);
 //!
 //!
@@ -424,7 +424,7 @@
         <span class="self">self</span>.table.len() / <span class="number">2
     </span>}
     <span class="doccomment">/// `range` に `x` を作用させます。（右作用）
-    </span><span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, x: O::Value) {
+    </span><span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, x: <span class="kw-2">&amp;</span>O::Value) {
         <span class="kw">let </span>Range { <span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end } = into_slice_range(<span class="self">self</span>.len(), range);
         <span class="kw">if </span>end &lt; start {
             dual_segtree_index_order_fail(start, end);
@@ -603,7 +603,7 @@
                 table: iter.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
             }
         }
-        <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: Range&lt;usize&gt;, x: O::Value) {
+        <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: Range&lt;usize&gt;, x: <span class="kw-2">&amp;</span>O::Value) {
             <span class="self">self</span>.table[range]
                 .iter_mut()
                 .for_each(|y| O::op_assign_from_right(y, x.clone()));
@@ -647,8 +647,8 @@
                             r += <span class="number">1</span>;
                         }
                         <span class="kw">let </span>x = new_value(<span class="kw-2">&amp;mut </span>rng);
-                        seg.apply(l..r, x.clone());
-                        brute.apply(l..r, x);
+                        seg.apply(l..r, <span class="kw-2">&amp;</span>x);
+                        brute.apply(l..r, <span class="kw-2">&amp;</span>x);
                     }
                     <span class="number">2 </span>=&gt; {
                         <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
