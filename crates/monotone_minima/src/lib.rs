@@ -192,7 +192,7 @@ mod tests {
         ],
     ];
 
-    fn minima_brute(a: [[u32; 18]; 9]) -> Vec<usize> {
+    fn minima_brute(a: &[[u32; 18]; 9]) -> Vec<usize> {
         a.iter()
             .map(|v| (0..v.len()).rev().min_by_key(|&j| v[j]).unwrap())
             .collect()
@@ -202,17 +202,17 @@ mod tests {
     fn test_monotone_minima_by() {
         let a = MONOTONE_0;
         let result = monotone_minima(9, 18, |i, j| a[i][j]);
-        let expected = minima_brute(a);
+        let expected = minima_brute(&a);
         assert_eq!(result, expected);
 
         let a = MONOTONE_1;
         let result = monotone_minima(9, 18, |i, j| a[i][j]);
-        let expected = minima_brute(a);
+        let expected = minima_brute(&a);
         assert_eq!(result, expected);
 
         let a = MONOTONE_2;
         let result = monotone_minima(9, 18, |i, j| a[i][j]);
-        let expected = minima_brute(a);
+        let expected = minima_brute(&a);
         assert_eq!(result, expected);
     }
 
