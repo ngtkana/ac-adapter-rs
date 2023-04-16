@@ -26,21 +26,22 @@ jobs:
         cargo clippy --all-targets -- \
         -W clippy::pedantic \
         -W clippy::nursery \
-        -A clippy::cast_possible_truncation \
-        -A clippy::cast_possible_wrap \
-        -A clippy::cast_precision_loss \
-        -A clippy::cast_sign_loss \
-        -A clippy::doc_markdown \
-        -A clippy::filter_map \
-        -A clippy::maybe_infinite_iter \
-        -A clippy::missing_const_for_fn \
-        -A clippy::missing_panics_doc \
-        -A clippy::module_name_repetitions \
-        -A clippy::must_use_candidate \
-        -A clippy::non_ascii_literal \
-        -A clippy::shadow_unrelated \
-        -A clippy::similar_names \
-        -A clippy::use_self \
+        -A clippy::cast-possible-truncation \
+        -A clippy::cast-possible-wrap \
+        -A clippy::cast-precision-loss \
+        -A clippy::cast-sign-loss \
+        -A clippy::doc-markdown \
+        -A clippy::filter-map \
+        -A clippy::manual-let-else \
+        -A clippy::maybe-infinite-iter \
+        -A clippy::missing-const-for-fn \
+        -A clippy::missing-panics-doc \
+        -A clippy::module-name-repetitions \
+        -A clippy::must-use-candidate \
+        -A clippy::non-ascii-literal \
+        -A clippy::shadow-unrelated \
+        -A clippy::similar-names \
+        -A clippy::use-self \
 
   test:
     runs-on: ubuntu-latest
