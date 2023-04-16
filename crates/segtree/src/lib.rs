@@ -708,7 +708,7 @@ mod tests {
                     }
                     1 => {
                         let mut l = rng.gen_range(0..n);
-                        let mut r = rng.gen_range(0..n + 1);
+                        let mut r = rng.gen_range(0..=n);
                         if r <= l {
                             swap(&mut l, &mut r);
                             r += 1;
@@ -747,7 +747,7 @@ mod tests {
             let seg = Segtree::<O>::new(a.iter().cloned());
             for _ in 0..2 * n {
                 let mut l = rng.gen_range(0..n);
-                let mut r = rng.gen_range(0..n + 1);
+                let mut r = rng.gen_range(0..=n);
                 if r <= l {
                     swap(&mut l, &mut r);
                     r += 1;
@@ -786,7 +786,7 @@ mod tests {
             let seg = Segtree::<O>::new(a.iter().cloned());
             for _ in 0..2 * n {
                 let mut l = rng.gen_range(0..n);
-                let mut r = rng.gen_range(0..n + 1);
+                let mut r = rng.gen_range(0..=n);
                 if r <= l {
                     swap(&mut l, &mut r);
                     r += 1;

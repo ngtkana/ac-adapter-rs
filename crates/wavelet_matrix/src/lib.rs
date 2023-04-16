@@ -161,7 +161,7 @@ impl WaveletMatrix {
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
     pub fn len(&self) -> usize {
-        self.table.first().map_or(0, |row| row.len())
+        self.table.first().map_or(0, StaticBitVec::len)
     }
     /// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///

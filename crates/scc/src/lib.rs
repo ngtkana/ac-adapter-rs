@@ -384,7 +384,7 @@ mod tests {
             }
             // その他整合性
             let qset = scc.quotient_set();
-            assert_eq!(qset.iter().map(|q| q.len()).sum::<usize>(), n);
+            assert_eq!(qset.iter().map(std::vec::Vec::len).sum::<usize>(), n);
             assert_eq!(qset.len(), scc.cmp_count());
             let mut used = vec![false; n];
             for (i, qset) in qset.iter().enumerate() {

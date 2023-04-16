@@ -115,7 +115,7 @@ impl LowLink {
         } else {
             self.g[x]
                 .iter()
-                .any(|&y| self.ord[x] < self.ord[y] && self.ord[x] <= self.low[y])
+                .any(|&y| self.ord[x] < self.ord[y] && self.low[x] <= self.low[y])
         }
     }
     /// 頂点 `x`, `y` を結ぶ（無向）辺があれば、それが橋であるときに `ture` を返します。
