@@ -97,12 +97,10 @@ impl HeapSlopeTrick {
         [
             self.small
                 .peek()
-                .map(|&x| x + self.shift_small)
-                .unwrap_or(std::i64::MIN),
+                .map_or(std::i64::MIN, |&x| x + self.shift_small),
             self.large
                 .peek()
-                .map(|&Reverse(x)| x + self.shift_large)
-                .unwrap_or(std::i64::MAX),
+                .map_or(std::i64::MAX, |&Reverse(x)| x + self.shift_large),
         ]
     }
     /// 最小値取得 min { f(x) | x in ]-∞, ∞[ }
