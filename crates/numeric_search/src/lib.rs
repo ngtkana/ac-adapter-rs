@@ -387,6 +387,7 @@ pub fn binary_search_signed<T: Signed>(
 
 #[cfg(test)]
 mod tests {
+    #![allow(clippy::float_cmp)]
     use super::*;
     use rand::{prelude::StdRng, Rng, SeedableRng};
     use std::{collections::HashMap, mem::swap};
