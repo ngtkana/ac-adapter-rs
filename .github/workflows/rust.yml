@@ -10,13 +10,6 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - name: Build
-      run: cargo build --release
-
   clippy:
     runs-on: ubuntu-latest
     steps:
@@ -25,7 +18,7 @@ jobs:
       with:
         command: install
         args: --debug cargo-make
-    - name: Clippy
+    - name: Run makers clippy
       uses: actions-rs/cargo@v1
       with:
         command: make
@@ -35,24 +28,29 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run tests
-      run: cargo test
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: --debug cargo-make
+    - name: Run makers test
+      uses: actions-rs/cargo@v1
+      with:
+        command: make
+        args: test
 
   doc:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Run cargo-doc
-      run: cargo doc --workspace --no-deps
-      env:
-        RUSTDOCFLAGS: --html-in-header contents/header.html
-
-    - name: Run the binary `snippetter`.
-      run: cargo run --bin snippetter
-
-    - name: Add index.html etc
-      run: cp -r contents/* target/doc
-
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: --debug cargo-make
+    - name: Run makers doc
+      uses: actions-rs/cargo@v1
+      with:
+        command: make
+        args: doc
     - name: Deploy GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
