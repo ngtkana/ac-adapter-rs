@@ -35,6 +35,7 @@ jobs:
         -A clippy::manual-let-else \
         -A clippy::maybe-infinite-iter \
         -A clippy::missing-const-for-fn \
+        -A clippy::missing-errors-doc \
         -A clippy::missing-panics-doc \
         -A clippy::module-name-repetitions \
         -A clippy::must-use-candidate \
