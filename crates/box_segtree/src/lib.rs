@@ -309,11 +309,10 @@ impl<'a, T: Clone, O: Ops<Value = T>> Iterator for Iter<'a, T, O> {
                 Some((offset, seg)) => {
                     if seg.len == 1 {
                         return Some((offset, &seg.value));
-                    } else {
-                        for e in 0..2 {
-                            if let Some(c) = seg.child[e].as_ref() {
-                                self.0.push((offset + seg.len / 2 * e, c));
-                            }
+                    }
+                    for e in 0..2 {
+                        if let Some(c) = seg.child[e].as_ref() {
+                            self.0.push((offset + seg.len / 2 * e, c));
                         }
                     }
                 }

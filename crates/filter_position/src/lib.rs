@@ -87,9 +87,8 @@ impl<I: Iterator, F: Fn(I::Item) -> bool> Iterator for FilterPosition<I, F> {
                 let pos = self.pos;
                 self.pos += 1;
                 return Some(pos);
-            } else {
-                self.pos += 1;
             }
+            self.pos += 1;
         }
     }
 }
