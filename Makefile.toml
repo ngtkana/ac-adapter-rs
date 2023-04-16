@@ -12,3 +12,8 @@ env = { RUSTDOCFLAGS = "--html-in-header contents/header.html" }
 command = "cargo"
 args = ["doc", "--workspace", "--no-deps"]
 dependencies = ["pre-docs"]
+
+[tasks.pedantics]
+script ='''
+cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'note: `-W clippy::' | sed -n 's/.*note: `-W clippy::\([a-z|-]*\).*/\1/p' | sort | uniq
+'''
