@@ -41,6 +41,8 @@ jobs:
     - uses: actions/checkout@v1
     - name: Run makers docs
       run: cargo make docs
+    - name: Check that crates.js is surely copied
+      run: test -e target/doc/crates.js
     - name: Deploy GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
