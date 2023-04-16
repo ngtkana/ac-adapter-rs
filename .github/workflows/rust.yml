@@ -26,32 +26,10 @@ jobs:
         command: install
         args: --debug cargo-make
     - name: Clippy
-      run: |
-        cargo clippy \
-        --all-features \
-        --all-targets \
-        -- \
-        -W clippy::pedantic \
-        -A clippy::cast-possible-truncation \
-        -A clippy::cast-possible-wrap \
-        -A clippy::cast-precision-loss \
-        -A clippy::cast-sign-loss \
-        -A clippy::doc-markdown \
-        -A clippy::manual-let-else \
-        -A clippy::manual-clamp \\
-        -A clippy::maybe-infinite-iter \
-        -A clippy::missing-const-for-fn \
-        -A clippy::missing-errors-doc \
-        -A clippy::missing-panics-doc \
-        -A clippy::module-name-repetitions \
-        -A clippy::must-use-candidate \
-        -A clippy::non-ascii-literal \
-        -A clippy::return-self-not-must-use \
-        -A clippy::shadow-unrelated \
-        -A clippy::semicolon-if-nothing-returned \
-        -A clippy::similar-names \
-        -A clippy::use-self \
-        -A clippy::uninlined-format-args \
+      uses: actions-rs/cargo@v1
+      with:
+        command: make
+        args: clippy
 
   test:
     runs-on: ubuntu-latest
