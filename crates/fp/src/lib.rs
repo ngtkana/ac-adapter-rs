@@ -1778,7 +1778,7 @@ mod tests {
 
     #[test]
     fn test_exp() {
-        fn brute(a: Fps, precision: usize) -> Fps {
+        fn brute(a: &Fps, precision: usize) -> Fps {
             let mut aug = fps![1];
             let mut ans = Fps::new();
             for i in 0..precision {
@@ -1797,7 +1797,7 @@ mod tests {
                 .take(l)
                 .collect::<Fps>();
             let result = a.exp(m);
-            let expected = brute(a, m);
+            let expected = brute(&a, m);
             assert_eq!(&result, &expected);
         }
     }

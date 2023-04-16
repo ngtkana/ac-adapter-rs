@@ -82,7 +82,7 @@ impl<O: Ops> DualSegtree<O> {
         self.table.len() / 2
     }
     /// `range` に `x` を作用させます。（右作用）
-    pub fn apply(&mut self, range: impl RangeBounds<usize>, x: O::Value) {
+    pub fn apply(&mut self, range: impl RangeBounds<usize>, x: &O::Value) {
         let Range { mut start, mut end } = into_slice_range(self.len(), range);
         if end < start {
             dual_segtree_index_order_fail(start, end);
@@ -261,7 +261,7 @@ mod tests {
                 table: iter.into_iter().collect::<Vec<_>>(),
             }
         }
-        pub fn apply(&mut self, range: Range<usize>, x: O::Value) {
+        pub fn apply(&mut self, range: Range<usize>, x: &O::Value) {
             self.table[range]
                 .iter_mut()
                 .for_each(|y| O::op_assign_from_right(y, x.clone()));
@@ -305,8 +305,8 @@ mod tests {
                             r += 1;
                         }
                         let x = new_value(&mut rng);
-                        seg.apply(l..r, x.clone());
-                        brute.apply(l..r, x);
+                        seg.apply(l..r, &x);
+                        brute.apply(l..r, &x);
                     }
                     2 => {
                         let i = rng.gen_range(0..n);

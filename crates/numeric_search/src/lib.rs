@@ -421,8 +421,8 @@ mod tests {
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
             // Fails
-            (MAX.sqrt() * 1.000000000001, INFINITY),
-            (-MAX.sqrt() * 1.000000000001, NEG_INFINITY),
+            (MAX.sqrt() * 1.000_000_000_001, INFINITY),
+            (-MAX.sqrt() * 1.000_000_000_001, NEG_INFINITY),
         ] {
             let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
@@ -458,8 +458,8 @@ mod tests {
             (MIN_POSITIVE, MIN_POSITIVE),
             (-MIN_POSITIVE, -MIN_POSITIVE),
             // Fails
-            (MAX.sqrt() * 1.000001, INFINITY),
-            (-MAX.sqrt() * 1.000001, NEG_INFINITY),
+            (MAX.sqrt() * 1.000_001, INFINITY),
+            (-MAX.sqrt() * 1.000_001, NEG_INFINITY),
         ] {
             let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
