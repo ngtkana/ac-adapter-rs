@@ -385,15 +385,15 @@ impl Iterator for IterV<'_> {
         if hld.time[*u] > hld.time[*v] {
             swap(u, v);
         }
-        Some(if hld.head[*u] != hld.head[*v] {
+        Some(if hld.head[*u] == hld.head[*v] {
+            self.finish = true;
+            (hld.time[*u], hld.time[*v])
+        } else {
             let h = hld.head[*v];
             let ans = (hld.time[h], hld.time[*v]);
             assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
             *v = hld.parent[h];
             ans
-        } else {
-            self.finish = true;
-            (hld.time[*u], hld.time[*v])
         })
     }
 }
@@ -414,19 +414,19 @@ impl Iterator for IterE<'_> {
         if hld.time[*u] > hld.time[*v] {
             swap(u, v);
         }
-        if hld.head[*u] != hld.head[*v] {
-            let h = hld.head[*v];
-            let ans = (hld.time[h], hld.time[*v]);
-            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
-            *v = hld.parent[h];
-            Some(ans)
-        } else {
+        if hld.head[*u] == hld.head[*v] {
             self.finish = true;
             if *u == *v {
                 None
             } else {
                 Some((hld.time[*u] + 1, hld.time[*v]))
             }
+        } else {
+            let h = hld.head[*v];
+            let ans = (hld.time[h], hld.time[*v]);
+            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
+            *v = hld.parent[h];
+            Some(ans)
         }
     }
 }
