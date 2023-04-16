@@ -62,4 +62,6 @@ args = [
   "clippy::similar-names",
   "-A",
   "clippy::use-self",
+  "-A",
+  "clippy::uninlined-format-args",
 ]
