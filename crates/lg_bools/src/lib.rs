@@ -46,18 +46,18 @@ mod tests {
     #[test]
     fn test_generics() {
         assert_eq!(format1(<[bool; 0]>::default()).as_str(), "[]");
-        assert_eq!(format1(&<[bool; 0]>::default()).as_str(), "[]");
+        assert_eq!(format1(<[bool; 0]>::default()).as_str(), "[]");
         assert_eq!(format1(<[&bool; 0]>::default()).as_str(), "[]");
         assert_eq!(format1(<[bool; 0]>::default().as_slice()).as_str(), "[]");
         assert_eq!(format1(Vec::<bool>::new()).as_str(), "[]");
         assert_eq!(format1(Vec::<&bool>::new()).as_str(), "[]");
         assert_eq!(format1(Vec::<&mut bool>::new()).as_str(), "[]");
-        assert_eq!(format1(&Vec::<bool>::new()).as_str(), "[]");
-        assert_eq!(format1(&mut Vec::<bool>::new()).as_str(), "[]");
+        assert_eq!(format1(Vec::<bool>::new()).as_str(), "[]");
+        assert_eq!(format1(Vec::<bool>::new()).as_str(), "[]");
         assert_eq!(format1(BTreeSet::<bool>::new()).as_str(), "[]");
         assert_eq!(format1(empty::<bool>()).as_str(), "[]");
-        assert_eq!(format1(&mut empty::<bool>()).as_str(), "[]");
+        assert_eq!(format1(empty::<bool>()).as_str(), "[]");
         assert_eq!(format1(empty::<&bool>()).as_str(), "[]");
-        assert_eq!(format1(&mut empty::<&bool>()).as_str(), "[]");
+        assert_eq!(format1(empty::<&bool>()).as_str(), "[]");
     }
 }

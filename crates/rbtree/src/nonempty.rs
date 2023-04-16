@@ -47,11 +47,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
                     None => x,
                     Some(init) => O::op(init, x),
                 };
-                if f(&init) {
-                    1
-                } else {
-                    0
-                }
+                usize::from(f(&init))
             }
             Self::Internal(node) => {
                 let linit = match init.clone() {
