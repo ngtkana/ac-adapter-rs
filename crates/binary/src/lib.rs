@@ -150,7 +150,7 @@ mod tests {
         )
     }
 
-    #[test_case(0 => "".to_owned())]
+    #[test_case(0 => String::new())]
     #[test_case(1 => "ab".to_owned())]
     #[test_case(2 => "abab".to_owned())]
     #[test_case(3 => "ababab".to_owned())]
