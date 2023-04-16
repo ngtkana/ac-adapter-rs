@@ -4,7 +4,11 @@ default_to_workspace = false
 [tasks.pre-docs]
 script = '''
 cargo run --bin snippetter
-cp contents/* target/doc
+TARGET_DOC_PATH="target/doc"
+if [ ! -e "${TARGET_DOC_PATH}" ]; then
+    mkdir "${TARGET_DOC_PATH}"
+fi
+cp contents/* ${TARGET_DOC_PATH}
 '''
 
 [tasks.docs]
