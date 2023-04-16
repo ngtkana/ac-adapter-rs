@@ -208,8 +208,8 @@
     }
     <span class="doccomment">/// `(x == a) -&gt; (y == b)` をかつでつなぎます。
     </span><span class="kw">pub fn </span>implies(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: usize, a: bool, y: usize, b: bool) {
-        <span class="kw">let </span>x = <span class="number">2 </span>* x + a <span class="kw">as </span>usize;
-        <span class="kw">let </span>y = <span class="number">2 </span>* y + b <span class="kw">as </span>usize;
+        <span class="kw">let </span>x = <span class="number">2 </span>* x + usize::from(a);
+        <span class="kw">let </span>y = <span class="number">2 </span>* y + usize::from(b);
         <span class="self">self</span>.scc.add_edge(x, y);
         <span class="self">self</span>.scc.add_edge(y ^ <span class="number">1</span>, x ^ <span class="number">1</span>);
     }

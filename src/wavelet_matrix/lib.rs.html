@@ -1049,7 +1049,7 @@
             <span class="kw">let </span>here = row.access(i);
             i = next_position(row, i, row.access(i));
             ans &lt;&lt;= <span class="number">1</span>;
-            ans |= here <span class="kw">as </span>usize;
+            ans |= usize::from(here);
         }
         ans
     }
@@ -1452,7 +1452,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">let </span>n = <span class="number">12</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>a = (<span class="number">0</span>..n)
-            .map(|i| i * <span class="number">2 </span>+ rng.gen_bool(<span class="number">0.5</span>) <span class="kw">as </span>usize)
+            .map(|i| i * <span class="number">2 </span>+ usize::from(rng.gen_bool(<span class="number">0.5</span>)))
             .collect_vec();
         <span class="kw">let </span><span class="kw-2">mut </span>b = a.clone();
         a.sort_by_key(|<span class="kw-2">&amp;</span>x| x &amp; <span class="number">1</span>);

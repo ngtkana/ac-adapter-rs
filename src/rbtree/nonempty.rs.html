@@ -416,10 +416,6 @@
 <a href="#397" id="397">397</a>
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
 </pre><pre class="rust"><code><span class="kw">use </span>{
     <span class="kw">super</span>::{Nop, Op},
     std::{
@@ -469,11 +465,7 @@
                     <span class="prelude-val">None </span>=&gt; x,
                     <span class="prelude-val">Some</span>(init) =&gt; O::op(init, x),
                 };
-                <span class="kw">if </span>f(<span class="kw-2">&amp;</span>init) {
-                    <span class="number">1
-                </span>} <span class="kw">else </span>{
-                    <span class="number">0
-                </span>}
+                usize::from(f(<span class="kw-2">&amp;</span>init))
             }
             <span class="self">Self</span>::Internal(node) =&gt; {
                 <span class="kw">let </span>linit = <span class="kw">match </span>init.clone() {

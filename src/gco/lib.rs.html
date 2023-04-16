@@ -620,9 +620,9 @@
                 value,
                 gco.unary
                     .iter()
-                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[args[i] <span class="kw">as </span>usize])
+                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[usize::from(args[i])])
                     .chain(gco.binary.iter().map(
-                        |<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost[args[i] <span class="kw">as </span>usize][args[j] <span class="kw">as </span>usize]
+                        |<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost[usize::from(args[i])][usize::from(args[j])]
                     ),)
                     .sum::&lt;i64&gt;()
             );

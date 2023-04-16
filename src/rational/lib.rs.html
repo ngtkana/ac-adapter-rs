@@ -743,7 +743,7 @@
         <span class="kw">if </span><span class="number">0 </span>&lt;= den {
             den += <span class="number">1</span>;
         }
-        (Rational::new(num, den), num <span class="kw">as </span>f64 / den <span class="kw">as </span>f64)
+        (Rational::new(num, den), f64::from(num) / f64::from(den))
     }
     <span class="kw">fn </span>gen_nonzero_rational_and_f64(rng: <span class="kw-2">&amp;mut </span>StdRng) -&gt; (Rational&lt;i32&gt;, f64) {
         <span class="kw">let </span><span class="kw-2">mut </span>num = rng.gen_range(-<span class="number">6</span>..<span class="number">6</span>);
@@ -754,7 +754,7 @@
         <span class="kw">if </span><span class="number">0 </span>&lt;= den {
             den += <span class="number">1</span>;
         }
-        (Rational::new(num, den), num <span class="kw">as </span>f64 / den <span class="kw">as </span>f64)
+        (Rational::new(num, den), f64::from(num) / f64::from(den))
     }
 }
 </code></pre></div>
