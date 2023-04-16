@@ -368,7 +368,7 @@ impl Hld {
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct IterV<'a> {
     hld: &'a Hld,
     u: usize,
@@ -397,7 +397,7 @@ impl Iterator for IterV<'_> {
         })
     }
 }
-#[derive(Clone, Debug, Hash, PartialEq, Eq, Copy)]
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct IterE<'a> {
     hld: &'a Hld,
     u: usize,
