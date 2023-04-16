@@ -16,6 +16,7 @@ struct CrateMetadata {
     tags: Vec<String>,
 }
 
+// TODO: use crates.js etc. in target/doc/
 fn main() {
     PROJECT_ROOT.set(find_project_root_path()).unwrap();
     CRATE_METADATAS
@@ -59,13 +60,15 @@ fn main() {
         .unwrap();
 
     let json = serde_json::to_string(CRATE_METADATAS.get().unwrap()).unwrap();
+    fs::create_dir_all(PROJECT_ROOT.get().unwrap().join("target").join("doc")).unwrap();
     fs::write(
         PROJECT_ROOT
             .get()
             .unwrap()
-            .join("contents")
-            .join("crates.js"),
-        format!("crates = {}", json),
+            .join("target")
+            .join("doc")
+            .join("dependencies.js"),
+        format!("dependencies = {}", json),
     )
     .unwrap();
 }
