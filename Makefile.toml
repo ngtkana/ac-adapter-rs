@@ -1,6 +1,10 @@
 [config]
 default_to_workspace = false
 
+[tasks.check]
+command = "cargo"
+args = ["check", "--all-features", "--all-targets"]
+
 [tasks.pre-docs]
 script = '''
 cargo run --bin snippetter
