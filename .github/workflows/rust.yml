@@ -20,7 +20,7 @@ jobs:
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers check
-      run: makers check
+      run: cargo make check
 
   test:
     runs-on: ubuntu-latest
@@ -32,7 +32,7 @@ jobs:
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers test
-      run: makers test
+      run: cargo make test
 
   clippy:
     runs-on: ubuntu-latest
@@ -44,7 +44,7 @@ jobs:
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers clippy
-      run: makers clippy
+      run: cargo make clippy
 
   docs:
     runs-on: ubuntu-latest
@@ -56,7 +56,7 @@ jobs:
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers docs
-      run: makers docs
+      run: cargo make docs
     - name: Deploy GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
