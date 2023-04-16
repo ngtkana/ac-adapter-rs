@@ -25,7 +25,6 @@ jobs:
       run: |
         cargo clippy --all-targets -- \
         -W clippy::pedantic \
-        -W clippy::nursery \
         -A clippy::cast-possible-truncation \
         -A clippy::cast-possible-wrap \
         -A clippy::cast-precision-loss \
