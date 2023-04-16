@@ -3,6 +3,7 @@ default_to_workspace = false
 
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
+RUSTDOCFLAGS = "--html-in-header contents/header.html"
 
 [tasks.test]
 command = "cargo"
