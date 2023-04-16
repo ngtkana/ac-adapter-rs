@@ -971,6 +971,13 @@
 <a href="#952" id="952">952</a>
 <a href="#953" id="953">953</a>
 <a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
 </pre><pre class="rust"><code><span class="doccomment">//! [`remove_unchecked`](RemovableHeap::remove_unchecked) のできるヒープです。
 //!
 //! 本体は [`RemovableHeap`] です。
@@ -1750,7 +1757,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// assert_eq!(RemovableHeap::from_iter(Vec::&lt;u32&gt;::new()).is_empty(), true);
     /// assert_eq!(RemovableHeap::from_iter(vec![42]).is_empty(), false);
     /// ```
@@ -1762,7 +1770,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// assert_eq!(RemovableHeap::from_iter(Vec::&lt;u32&gt;::new()).len(), 0);
     /// assert_eq!(RemovableHeap::from_iter(vec![42, 45, 56]).len(), 3);
     /// ```
@@ -1774,7 +1783,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// heap.push(48);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 45, 48, 56]);
@@ -1790,7 +1800,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// heap.remove_unchecked(45);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 56]);
@@ -1806,7 +1817,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.pop(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 45]);
@@ -1822,7 +1834,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.peek(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 45, 56]);
@@ -1835,7 +1848,8 @@
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 45, 56]);
     /// ```
