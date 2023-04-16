@@ -17,6 +17,8 @@ struct CrateMetadata {
 }
 
 // TODO: use crates.js etc. in target/doc/{crates.js,source-files.js} to bundle files
+// TODO: or use `.packages | map({ "name": .name, "dependencies": .dependencies })` of `cargo
+// metadata
 fn main() {
     PROJECT_ROOT.set(find_project_root_path()).unwrap();
     CRATE_METADATAS
