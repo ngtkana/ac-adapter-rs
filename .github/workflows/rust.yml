@@ -14,15 +14,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: --debug cargo-make
     - name: Run makers check
       uses: actions-rs/cargo@v1
       with:
-        command: make
-        args: check
+        command: check
+        args: --all-features --all-targets
+
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Run cargo test
+      uses: actions-rs/cargo@v1
+      with:
+        command: test
 
   clippy:
     runs-on: ubuntu-latest
@@ -37,20 +42,6 @@ jobs:
       with:
         command: make
         args: clippy
-
-  test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v2
-    - uses: actions-rs/cargo@v1
-      with:
-        command: install
-        args: --debug cargo-make
-    - name: Run makers test
-      uses: actions-rs/cargo@v1
-      with:
-        command: make
-        args: test
 
   docs:
     runs-on: ubuntu-latest
