@@ -523,7 +523,7 @@
         ],
     ];
 
-    <span class="kw">fn </span>minima_brute(a: [[u32; <span class="number">18</span>]; <span class="number">9</span>]) -&gt; Vec&lt;usize&gt; {
+    <span class="kw">fn </span>minima_brute(a: <span class="kw-2">&amp;</span>[[u32; <span class="number">18</span>]; <span class="number">9</span>]) -&gt; Vec&lt;usize&gt; {
         a.iter()
             .map(|v| (<span class="number">0</span>..v.len()).rev().min_by_key(|<span class="kw-2">&amp;</span>j| v[j]).unwrap())
             .collect()
@@ -533,17 +533,17 @@
     </span><span class="kw">fn </span>test_monotone_minima_by() {
         <span class="kw">let </span>a = MONOTONE_0;
         <span class="kw">let </span>result = monotone_minima(<span class="number">9</span>, <span class="number">18</span>, |i, j| a[i][j]);
-        <span class="kw">let </span>expected = minima_brute(a);
+        <span class="kw">let </span>expected = minima_brute(<span class="kw-2">&amp;</span>a);
         <span class="macro">assert_eq!</span>(result, expected);
 
         <span class="kw">let </span>a = MONOTONE_1;
         <span class="kw">let </span>result = monotone_minima(<span class="number">9</span>, <span class="number">18</span>, |i, j| a[i][j]);
-        <span class="kw">let </span>expected = minima_brute(a);
+        <span class="kw">let </span>expected = minima_brute(<span class="kw-2">&amp;</span>a);
         <span class="macro">assert_eq!</span>(result, expected);
 
         <span class="kw">let </span>a = MONOTONE_2;
         <span class="kw">let </span>result = monotone_minima(<span class="number">9</span>, <span class="number">18</span>, |i, j| a[i][j]);
-        <span class="kw">let </span>expected = minima_brute(a);
+        <span class="kw">let </span>expected = minima_brute(<span class="kw-2">&amp;</span>a);
         <span class="macro">assert_eq!</span>(result, expected);
     }
 

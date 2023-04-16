@@ -552,6 +552,7 @@
 <a href="#533" id="533">533</a>
 <a href="#534" id="534">534</a>
 <a href="#535" id="535">535</a>
+<a href="#536" id="536">536</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Run classic binary or exponential search on integer or floating point numbers.
 //!
 //! Both classic binary seach and exponential search has their streangth and weakness.
@@ -941,7 +942,8 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="attr">#![allow(clippy::float_cmp)]
+    </span><span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>rand::{prelude::StdRng, Rng, SeedableRng};
     <span class="kw">use </span>std::{collections::HashMap, mem::swap};
 

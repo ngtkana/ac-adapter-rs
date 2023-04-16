@@ -1118,15 +1118,15 @@
         <span class="kw">if </span>hld.time[<span class="kw-2">*</span>u] &gt; hld.time[<span class="kw-2">*</span>v] {
             swap(u, v);
         }
-        <span class="prelude-val">Some</span>(<span class="kw">if </span>hld.head[<span class="kw-2">*</span>u] != hld.head[<span class="kw-2">*</span>v] {
+        <span class="prelude-val">Some</span>(<span class="kw">if </span>hld.head[<span class="kw-2">*</span>u] == hld.head[<span class="kw-2">*</span>v] {
+            <span class="self">self</span>.finish = <span class="bool-val">true</span>;
+            (hld.time[<span class="kw-2">*</span>u], hld.time[<span class="kw-2">*</span>v])
+        } <span class="kw">else </span>{
             <span class="kw">let </span>h = hld.head[<span class="kw-2">*</span>v];
             <span class="kw">let </span>ans = (hld.time[h], hld.time[<span class="kw-2">*</span>v]);
             <span class="macro">assert_ne!</span>(hld.parent[h], h, <span class="string">&quot;入力のグラフが非連結です。&quot;</span>);
             <span class="kw-2">*</span>v = hld.parent[h];
             ans
-        } <span class="kw">else </span>{
-            <span class="self">self</span>.finish = <span class="bool-val">true</span>;
-            (hld.time[<span class="kw-2">*</span>u], hld.time[<span class="kw-2">*</span>v])
         })
     }
 }
@@ -1147,19 +1147,19 @@
         <span class="kw">if </span>hld.time[<span class="kw-2">*</span>u] &gt; hld.time[<span class="kw-2">*</span>v] {
             swap(u, v);
         }
-        <span class="kw">if </span>hld.head[<span class="kw-2">*</span>u] != hld.head[<span class="kw-2">*</span>v] {
-            <span class="kw">let </span>h = hld.head[<span class="kw-2">*</span>v];
-            <span class="kw">let </span>ans = (hld.time[h], hld.time[<span class="kw-2">*</span>v]);
-            <span class="macro">assert_ne!</span>(hld.parent[h], h, <span class="string">&quot;入力のグラフが非連結です。&quot;</span>);
-            <span class="kw-2">*</span>v = hld.parent[h];
-            <span class="prelude-val">Some</span>(ans)
-        } <span class="kw">else </span>{
+        <span class="kw">if </span>hld.head[<span class="kw-2">*</span>u] == hld.head[<span class="kw-2">*</span>v] {
             <span class="self">self</span>.finish = <span class="bool-val">true</span>;
             <span class="kw">if </span><span class="kw-2">*</span>u == <span class="kw-2">*</span>v {
                 <span class="prelude-val">None
             </span>} <span class="kw">else </span>{
                 <span class="prelude-val">Some</span>((hld.time[<span class="kw-2">*</span>u] + <span class="number">1</span>, hld.time[<span class="kw-2">*</span>v]))
             }
+        } <span class="kw">else </span>{
+            <span class="kw">let </span>h = hld.head[<span class="kw-2">*</span>v];
+            <span class="kw">let </span>ans = (hld.time[h], hld.time[<span class="kw-2">*</span>v]);
+            <span class="macro">assert_ne!</span>(hld.parent[h], h, <span class="string">&quot;入力のグラフが非連結です。&quot;</span>);
+            <span class="kw-2">*</span>v = hld.parent[h];
+            <span class="prelude-val">Some</span>(ans)
         }
     }
 }

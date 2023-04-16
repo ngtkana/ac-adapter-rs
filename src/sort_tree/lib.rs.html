@@ -166,7 +166,7 @@
             <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">5</span>);
             <span class="kw">let </span>g = rng.sample(Tree(n));
             <span class="kw">for </span>root <span class="kw">in </span><span class="number">0</span>..n {
-                <span class="kw">let </span><span class="kw-2">mut </span>g = g.to_vec();
+                <span class="kw">let </span><span class="kw-2">mut </span>g = g.clone();
                 <span class="kw">let </span>[ord, parent] = sort_tree_remove_parent(root, <span class="kw-2">&amp;mut </span>g);
                 <span class="macro">assert_eq!</span>(ord.len(), n);
                 <span class="macro">assert_eq!</span>(parent.len(), n);
