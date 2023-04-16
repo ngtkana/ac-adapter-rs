@@ -16,7 +16,7 @@ struct CrateMetadata {
     tags: Vec<String>,
 }
 
-// TODO: use crates.js etc. in target/doc/
+// TODO: use crates.js etc. in target/doc/{crates.js,source-files.js} to bundle files
 fn main() {
     PROJECT_ROOT.set(find_project_root_path()).unwrap();
     CRATE_METADATAS
