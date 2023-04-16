@@ -13,10 +13,6 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers check
@@ -25,10 +21,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers test
@@ -37,10 +29,6 @@ jobs:
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers clippy
@@ -49,10 +37,6 @@ jobs:
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
     - uses: davidB/rust-cargo-make@v1
     - uses: actions/checkout@v1
     - name: Run makers docs
