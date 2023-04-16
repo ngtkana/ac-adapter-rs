@@ -84,9 +84,11 @@ pub fn lcp_array<T: Ord>(s: &[T], sa: &[usize]) -> Vec<usize> {
         h = h.saturating_sub(1);
         if r != 0 {
             let j = sa[r - 1];
-            h = (h..)
-                .find(|&h| j + h == n || i + h == n || s[j + h] != s[i + h])
-                .unwrap();
+            h = s[i..]
+                .iter()
+                .zip(&s[j..])
+                .position(|(c, d)| c != d)
+                .unwrap_or_else(|| s[i..].len().min(s[j..].len()));
             lcp[r - 1] = h;
         }
     }
