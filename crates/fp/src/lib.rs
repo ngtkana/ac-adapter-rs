@@ -1463,7 +1463,7 @@ mod tests {
             define_fp! { 17; pub enum M17; pub type F17 }
             define_fp! { 19; pub enum M19; type _F19 }
         }
-        use internal::*;
+        use internal::{F17, M17, M19};
         assert_eq!(F17::P, 17);
         assert_eq!(M17::P, 17);
         assert_eq!(M19::P, 19);
@@ -1472,7 +1472,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn test_fmt() {
-        define_fp!(998244353);
+        define_fp!(998_244_353);
         for num in 1..100_u64 {
             for den in 1..100_u64 {
                 let x: F = fp!(num; den);
@@ -1580,7 +1580,7 @@ mod tests {
 
     #[test]
     fn test_primroot() {
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
         assert_eq!(F::ROOT, fp!(3));
     }
 
@@ -1616,7 +1616,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn test_fps_add() {
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
 
         let result: Fps = fps![2, 3] + fps![4, 5];
         assert_eq!(result, fps![6, 8]);
@@ -1672,7 +1672,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn test_fps_sub() {
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
 
         let result: Fps = fps![2, 3] - fps![4, 5];
         assert_eq!(result, fps![-2, -2]);
@@ -1728,7 +1728,7 @@ mod tests {
     #[test]
     #[allow(clippy::op_ref)]
     fn test_fps_mul() {
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
 
         let result: Fps = fps![2, 3] * fps![4, 5];
         assert_eq!(result, fps![8, 22, 15]);
@@ -1757,7 +1757,7 @@ mod tests {
 
     #[test]
     fn test_inv() {
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let l = rng.gen_range(0..10);
@@ -1787,7 +1787,7 @@ mod tests {
             }
             ans.resized(precision)
         }
-        define_fp!(998244353, 3);
+        define_fp!(998_244_353, 3);
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let l = rng.gen_range(1..10);
