@@ -125,6 +125,9 @@
 <a href="#106" id="106">106</a>
 <a href="#107" id="107">107</a>
 <a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
+<a href="#110" id="110">110</a>
+<a href="#111" id="111">111</a>
 </pre><pre class="rust"><code><span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>once_cell::sync::OnceCell;
 <span class="kw">use </span>std::{
@@ -143,7 +146,8 @@
     tags: Vec&lt;String&gt;,
 }
 
-<span class="kw">fn </span>main() {
+<span class="comment">// TODO: use crates.js etc. in target/doc/
+</span><span class="kw">fn </span>main() {
     PROJECT_ROOT.set(find_project_root_path()).unwrap();
     CRATE_METADATAS
         .set(
@@ -186,13 +190,15 @@
         .unwrap();
 
     <span class="kw">let </span>json = serde_json::to_string(CRATE_METADATAS.get().unwrap()).unwrap();
+    fs::create_dir_all(PROJECT_ROOT.get().unwrap().join(<span class="string">&quot;target&quot;</span>).join(<span class="string">&quot;doc&quot;</span>)).unwrap();
     fs::write(
         PROJECT_ROOT
             .get()
             .unwrap()
-            .join(<span class="string">&quot;contents&quot;</span>)
-            .join(<span class="string">&quot;crates.js&quot;</span>),
-        <span class="macro">format!</span>(<span class="string">&quot;crates = {}&quot;</span>, json),
+            .join(<span class="string">&quot;target&quot;</span>)
+            .join(<span class="string">&quot;doc&quot;</span>)
+            .join(<span class="string">&quot;dependencies.js&quot;</span>),
+        <span class="macro">format!</span>(<span class="string">&quot;dependencies = {}&quot;</span>, json),
     )
     .unwrap();
 }
