@@ -697,7 +697,7 @@
 <span class="kw">impl</span>&lt;C: ConvexOrConcave&gt; VecCht&lt;C&gt; {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            vec: Default::default(),
+            vec: Vec::new(),
             coeff_at_two: <span class="number">0</span>,
             current: <span class="number">0</span>,
             __marker: PhantomData,
@@ -787,7 +787,7 @@
 <span class="kw">impl</span>&lt;C: ConvexOrConcave&gt; BTreeCht&lt;C&gt; {
     <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
-            set: Default::default(),
+            set: BTreeSet::new(),
             coeff_at_two: <span class="number">0</span>,
             __marker: PhantomData,
         }

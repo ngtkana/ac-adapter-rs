@@ -350,7 +350,7 @@
 {
     <span class="kw">fn </span>new(a: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[T], <span class="kw-2">mut </span>f: F, <span class="kw-2">mut </span>identity: I) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>right = <span class="kw">if </span>a.is_empty() {
-            Default::default()
+            <span class="self">Self</span>::default()
         } <span class="kw">else </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>right = <span class="macro">vec!</span>[identity()];
             <span class="kw">for </span>x <span class="kw">in </span>a[<span class="number">1</span>..].iter().rev() {
