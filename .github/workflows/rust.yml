@@ -38,7 +38,7 @@ jobs:
         command: make
         args: test
 
-  doc:
+  docs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
@@ -46,14 +46,14 @@ jobs:
       with:
         command: install
         args: --debug cargo-make
-    - name: Run makers doc
+    - name: Run makers docs
       uses: actions-rs/cargo@v1
       with:
         command: make
-        args: doc
+        args: docs
     - name: Deploy GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: target/doc
+        publish_dir: target/docs
 
