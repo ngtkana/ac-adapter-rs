@@ -1,11 +1,24 @@
+[config]
+default_to_workspace = false
+
 [env]
 CARGO_MAKE_EXTEND_WORKSPACE_MAKEFILE = true
 
 [tasks.test]
 command = "cargo"
 env = { "RUSTDOCFLAGS" = "" }
-args = [ "test" ]
+args = ["test"]
+
+[tasks.run]
+command = "cargo"
+args = ["run", "--bin", "snippetter"]
+
+[tasks.cp]
+script = '''
+cp contents/* target/doc
+'''
 
 [tasks.doc]
 command = "cargo"
-args = [ "doc", "--workspace", "--no-deps" ]
+args = ["doc", "--workspace", "--no-deps"]
+dependencies = ["run", "cp"]
