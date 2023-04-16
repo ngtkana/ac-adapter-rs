@@ -10,6 +10,20 @@ env:
   CARGO_TERM_COLOR: always
 
 jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: actions-rs/cargo@v1
+      with:
+        command: install
+        args: --debug cargo-make
+    - name: Run makers check
+      uses: actions-rs/cargo@v1
+      with:
+        command: make
+        args: check
+
   clippy:
     runs-on: ubuntu-latest
     steps:
