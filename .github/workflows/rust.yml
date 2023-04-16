@@ -31,7 +31,6 @@ jobs:
         -A clippy::cast-precision-loss \
         -A clippy::cast-sign-loss \
         -A clippy::doc-markdown \
-        -A clippy::filter-map \
         -A clippy::manual-let-else \
         -A clippy::maybe-infinite-iter \
         -A clippy::missing-const-for-fn \
