@@ -394,9 +394,10 @@ fn stable_partition_by_key(slice: &mut [usize], is_upper: impl Fn(usize) -> bool
 }
 
 fn next_position(row: &StaticBitVec, i: usize, which: bool) -> usize {
-    match which {
-        false => i - row.rank(i),
-        true => row.len() - row.rank(row.len()) + row.rank(i),
+    if which {
+        row.len() - row.rank(row.len()) + row.rank(i)
+    } else {
+        i - row.rank(i)
     }
 }
 fn next_position_range(row: &StaticBitVec, range: &Range<usize>, which: bool) -> Range<usize> {
