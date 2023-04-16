@@ -777,7 +777,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// assert_eq!(RemovableHeap::from_iter(Vec::<u32>::new()).is_empty(), true);
     /// assert_eq!(RemovableHeap::from_iter(vec![42]).is_empty(), false);
     /// ```
@@ -789,7 +790,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// assert_eq!(RemovableHeap::from_iter(Vec::<u32>::new()).len(), 0);
     /// assert_eq!(RemovableHeap::from_iter(vec![42, 45, 56]).len(), 3);
     /// ```
@@ -801,7 +803,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// heap.push(48);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 45, 48, 56]);
@@ -817,7 +820,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// heap.remove_unchecked(45);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 56]);
@@ -833,7 +837,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.pop(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 45]);
@@ -849,7 +854,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.peek(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 45, 56]);
@@ -862,7 +868,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::RemovableHeap;
+    /// # use heap_tricks::RemovableHeap;
+    /// # use std::iter::FromIterator;
     /// let heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 45, 56]);
     /// ```
