@@ -61,7 +61,7 @@ mod tests {
             let n = rng.gen_range(1..=5);
             let g = rng.sample(Tree(n));
             for root in 0..n {
-                let mut g = g.to_vec();
+                let mut g = g.clone();
                 let [ord, parent] = sort_tree_remove_parent(root, &mut g);
                 assert_eq!(ord.len(), n);
                 assert_eq!(parent.len(), n);
