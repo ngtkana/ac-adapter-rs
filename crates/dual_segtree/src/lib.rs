@@ -24,9 +24,9 @@
 //! assert_eq!(seg.collect_vec(), vec![[0, 0], [0, 0]]);
 //!
 //! // 更新
-//! seg.apply(0..1, [-2, -2]); // -2
+//! seg.apply(0..1, &[-2, -2]); // -2
 //! assert_eq!(seg.collect_vec(), vec![[-2, -2], [0, 0]]);
-//! seg.apply(0..1, [0, 3]); // +3
+//! seg.apply(0..1, &[0, 3]); // +3
 //! assert_eq!(seg.collect_vec(), vec![[-2, 1], [0, 0]]);
 //!
 //!
