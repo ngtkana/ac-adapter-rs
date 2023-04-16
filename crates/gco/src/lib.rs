@@ -295,9 +295,9 @@ mod tests {
                 value,
                 gco.unary
                     .iter()
-                    .map(|&Unary { i, cost }| cost[args[i] as usize])
+                    .map(|&Unary { i, cost }| cost[usize::from(args[i])])
                     .chain(gco.binary.iter().map(
-                        |&Binary { ij: [i, j], cost }| cost[args[i] as usize][args[j] as usize]
+                        |&Binary { ij: [i, j], cost }| cost[usize::from(args[i])][usize::from(args[j])]
                     ),)
                     .sum::<i64>()
             );

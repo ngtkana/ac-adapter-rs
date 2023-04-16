@@ -354,7 +354,7 @@ mod tests {
         if 0 <= den {
             den += 1;
         }
-        (Rational::new(num, den), num as f64 / den as f64)
+        (Rational::new(num, den), f64::from(num) / f64::from(den))
     }
     fn gen_nonzero_rational_and_f64(rng: &mut StdRng) -> (Rational<i32>, f64) {
         let mut num = rng.gen_range(-6..6);
@@ -365,6 +365,6 @@ mod tests {
         if 0 <= den {
             den += 1;
         }
-        (Rational::new(num, den), num as f64 / den as f64)
+        (Rational::new(num, den), f64::from(num) / f64::from(den))
     }
 }
