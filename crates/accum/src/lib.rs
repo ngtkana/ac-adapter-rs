@@ -97,7 +97,7 @@ where
 {
     fn new(a: &'a [T], mut f: F, mut identity: I) -> Self {
         let right = if a.is_empty() {
-            Default::default()
+            Vec::new()
         } else {
             let mut right = vec![identity()];
             for x in a[1..].iter().rev() {

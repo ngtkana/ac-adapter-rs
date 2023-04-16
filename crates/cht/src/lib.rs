@@ -93,7 +93,7 @@ pub struct VecCht<C> {
 impl<C: ConvexOrConcave> VecCht<C> {
     pub fn new() -> Self {
         Self {
-            vec: Default::default(),
+            vec: Vec::new(),
             coeff_at_two: 0,
             current: 0,
             __marker: PhantomData,
@@ -183,7 +183,7 @@ pub struct BTreeCht<C> {
 impl<C: ConvexOrConcave> BTreeCht<C> {
     pub fn new() -> Self {
         Self {
-            set: Default::default(),
+            set: BTreeSet::new(),
             coeff_at_two: 0,
             __marker: PhantomData,
         }
