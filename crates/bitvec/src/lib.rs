@@ -136,7 +136,7 @@ impl BitVec {
         let i = self.len;
         self.len += 1;
         if i % 64 == 0 {
-            self.vec.push(x as u64);
+            self.vec.push(u64::from(x));
         } else if x {
             self.set(i);
         }
@@ -236,7 +236,7 @@ impl FromIterator<bool> for BitVec {
                 i = 0;
                 vec.push(replace(&mut cell, 0));
             }
-            cell |= (x as u64) << i;
+            cell |= u64::from(x) << i;
             i += 1;
         }
         if vec.is_empty() && i == 0 {

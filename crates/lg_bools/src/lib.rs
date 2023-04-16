@@ -17,7 +17,7 @@ where
     S(format!(
         "[{}]",
         iter.into_iter()
-            .map(|b| ['.', '#'][*(b.borrow()) as usize])
+            .map(|b| ['.', '#'][usize::from(*(b.borrow()))])
             .collect::<String>(),
     ))
 }

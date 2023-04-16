@@ -229,7 +229,7 @@ impl WaveletMatrix {
             let here = row.access(i);
             i = next_position(row, i, row.access(i));
             ans <<= 1;
-            ans |= here as usize;
+            ans |= usize::from(here);
         }
         ans
     }
@@ -632,7 +632,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         let n = 12;
         let mut a = (0..n)
-            .map(|i| i * 2 + rng.gen_bool(0.5) as usize)
+            .map(|i| i * 2 + usize::from(rng.gen_bool(0.5)))
             .collect_vec();
         let mut b = a.clone();
         a.sort_by_key(|&x| x & 1);

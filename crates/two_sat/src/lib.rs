@@ -42,8 +42,8 @@ impl TwoSat {
     }
     /// `(x == a) -> (y == b)` をかつでつなぎます。
     pub fn implies(&mut self, x: usize, a: bool, y: usize, b: bool) {
-        let x = 2 * x + a as usize;
-        let y = 2 * y + b as usize;
+        let x = 2 * x + usize::from(a);
+        let y = 2 * y + usize::from(b);
         self.scc.add_edge(x, y);
         self.scc.add_edge(y ^ 1, x ^ 1);
     }
