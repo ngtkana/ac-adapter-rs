@@ -25,6 +25,7 @@ args = [
   "--all-features",
   "--all-targets",
   "--",
+  "-Dwarnings",
   "-Wclippy::pedantic",
   "-Aclippy::cast-possible-truncation",
   "-Aclippy::cast-possible-wrap",
