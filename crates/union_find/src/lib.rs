@@ -273,8 +273,8 @@ mod tests {
             fn add_edge(_x: &mut Self::Value) {}
             fn graft(_parent: &mut Self::Value, _child: Self::Value) {}
         }
-        let _ = <UnionFind>::new(3); // requires `<_>`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/
-        let _ = UnionFind::<()>::new(3);
+        let _: UnionFind<()> = <UnionFind>::new(3); // requires `<_>`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/
+        let _: UnionFind<()> = UnionFind::<()>::new(3);
         <UnionFind>::new(3).value(0);
         let _: usize = UnionFind::<EdgeCount>::new(3).value(0);
         let _: (usize, usize) = UnionFind::<(EdgeCount, VertexCount)>::new(3).value(0);
