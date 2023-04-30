@@ -30,32 +30,32 @@ fn line() -> String {
     }
 }
 pub trait ForceFromStr: FromStr {
-    fn force_parse(s: &str) -> Self;
+    fn force_from_str(s: &str) -> Self;
 }
 impl<T, E> ForceFromStr for T
 where
     T: FromStr<Err = E>,
     E: std::fmt::Debug,
 {
-    fn force_parse(s: &str) -> Self {
+    fn force_from_str(s: &str) -> Self {
         s.parse().unwrap()
     }
 }
-/// Read a line from stdin and parse to [T; N].
+/// Read a line from stdin and from_str to [T; N].
 pub fn input_array<T: ForceFromStr, const N: usize>() -> [T; N]
 where
     T: std::fmt::Debug,
 {
     <[_; N]>::try_from(input_vec()).unwrap()
 }
-/// Read a line from stdin and parse to Vec<T>.
+/// Read a line from stdin and from_str to Vec<T>.
 pub fn input_vec<T: ForceFromStr>() -> Vec<T> {
     line()
         .split_whitespace()
-        .map(T::force_parse)
+        .map(T::force_from_str)
         .collect::<Vec<_>>()
 }
-/// Read a line from stdin and parse to T.
+/// Read a line from stdin and from_str to T.
 pub fn input<T: ForceFromStr>() -> T {
-    T::force_parse(&line())
+    T::force_from_str(&line())
 }
