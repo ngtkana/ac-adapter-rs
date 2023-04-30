@@ -1,5 +1,0 @@
-[package]
-name = "ngtio"
-version = "0.1.0"
-authors = ["ngtkana <ngtkana@gmail.com>"]
-edition = "2018"
