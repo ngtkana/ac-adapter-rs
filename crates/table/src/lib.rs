@@ -136,20 +136,18 @@ where
                 row.as_ref()
                     .iter()
                     .map(|value| {
-                        let s = format!("{:column_width$?}", value);
-                        if matches!(
-                            s.as_str(),
-                            "18446744073709551615"
-                                | "9223372036854775807"
-                                | "-9223372036854775808"
-                                | "4294967295"
-                                | "-4294967296"
-                                | "2147483647"
-                        ) {
-                            format!("{:>column_width$}", '*')
-                        } else {
-                            s
-                        }
+                        format!(
+                            "{:>column_width$}",
+                            format!("{:?}", value)
+                                .replace("18446744073709551615", "*") // u64
+                                .replace("9223372036854775807", "*") // i64
+                                .replace("-9223372036854775808", "*") // i64
+                                .replace("4294967295", "*") // i32
+                                .replace("-4294967296", "*") // i32
+                                .replace("2147483647", "*") // i32
+                                .replace("None", "*")
+                                .replace("Some", "")
+                        )
                     })
                     .collect::<String>()
             )?;
