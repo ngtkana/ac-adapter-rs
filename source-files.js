@@ -49,7 +49,6 @@ var sourcesIndex = JSON.parse('{\
 "monotone_minima":["",[],["lib.rs"]],\
 "newton":["",[],["lib.rs"]],\
 "next_permutation":["",[],["lib.rs"]],\
-"ngtio":["",[],["i.rs","lib.rs"]],\
 "not_nan":["",[],["lib.rs"]],\
 "numeric_search":["",[],["lib.rs"]],\
 "open":["",[],["lib.rs"]],\

@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["with_stdin","with_str"],"mod":["prelude"]};
