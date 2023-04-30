@@ -1819,8 +1819,6 @@
 <a href="#1800" id="1800">1800</a>
 <a href="#1801" id="1801">1801</a>
 <a href="#1802" id="1802">1802</a>
-<a href="#1803" id="1803">1803</a>
-<a href="#1804" id="1804">1804</a>
 </pre><pre class="rust"><code><span class="doccomment">/// 自動素数 mod・高速フーリエ変換ライブラリ
 ///
 </span><span class="kw">use </span>std::{
@@ -2165,9 +2163,7 @@
     /// assert_eq!(x, fp!(5));
     /// ```
     </span><span class="kw">pub fn </span>inv(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="kw">if </span><span class="self">self</span>.<span class="number">0 </span>== <span class="number">0 </span>{
-            <span class="macro">panic!</span>(<span class="string">&quot;Cannot invert `0`.&quot;</span>);
-        }
+        <span class="macro">assert_ne!</span>(<span class="self">self</span>.<span class="number">0</span>, <span class="number">0</span>, <span class="string">&quot;Cannot invert `0`.&quot;</span>);
         <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">Self</span>::P <span class="kw">as </span>i64;
         <span class="kw">let </span><span class="kw-2">mut </span>y = <span class="self">self</span>.<span class="number">0 </span><span class="kw">as </span>i64;
         <span class="kw">let </span><span class="kw-2">mut </span>u = <span class="number">0</span>;
