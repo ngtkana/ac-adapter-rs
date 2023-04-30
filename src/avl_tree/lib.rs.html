@@ -2161,8 +2161,8 @@
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=n {
                 <span class="kw">let </span><span class="kw-2">mut </span>result = (<span class="number">0</span>..n).collect::&lt;AvlTree&lt;<span class="kw">_</span>&gt;&gt;();
                 <span class="kw">let </span><span class="kw-2">mut </span>expected = (<span class="number">0</span>..n).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-                <span class="kw">let _ </span>= result.get_mut(i).map(|x| <span class="kw-2">*</span>x = n);
-                <span class="kw">let _ </span>= expected.get_mut(i).map(|x| <span class="kw-2">*</span>x = n);
+                <span class="kw">let _</span>: <span class="prelude-ty">Option</span>&lt;()&gt; = result.get_mut(i).map(|x| <span class="kw-2">*</span>x = n);
+                <span class="kw">let _</span>: <span class="prelude-ty">Option</span>&lt;()&gt; = expected.get_mut(i).map(|x| <span class="kw-2">*</span>x = n);
                 <span class="macro">assert_eq!</span>(result.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), expected);
             }
         }

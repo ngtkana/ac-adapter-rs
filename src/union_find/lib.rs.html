@@ -642,8 +642,8 @@
             <span class="kw">fn </span>add_edge(_x: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {}
             <span class="kw">fn </span>graft(_parent: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value, _child: <span class="self">Self</span>::Value) {}
         }
-        <span class="kw">let _ </span>= &lt;UnionFind&gt;::new(<span class="number">3</span>); <span class="comment">// requires `&lt;_&gt;`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/
-        </span><span class="kw">let _ </span>= UnionFind::&lt;()&gt;::new(<span class="number">3</span>);
+        <span class="kw">let _</span>: UnionFind&lt;()&gt; = &lt;UnionFind&gt;::new(<span class="number">3</span>); <span class="comment">// requires `&lt;_&gt;`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/
+        </span><span class="kw">let _</span>: UnionFind&lt;()&gt; = UnionFind::&lt;()&gt;::new(<span class="number">3</span>);
         &lt;UnionFind&gt;::new(<span class="number">3</span>).value(<span class="number">0</span>);
         <span class="kw">let _</span>: usize = UnionFind::&lt;EdgeCount&gt;::new(<span class="number">3</span>).value(<span class="number">0</span>);
         <span class="kw">let _</span>: (usize, usize) = UnionFind::&lt;(EdgeCount, VertexCount)&gt;::new(<span class="number">3</span>).value(<span class="number">0</span>);
