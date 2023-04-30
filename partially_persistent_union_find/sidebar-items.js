@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["PartiallyPersistentUnionFind","部分永続化された、素集合データ構造です。"]]};
+window.SIDEBAR_ITEMS = {"struct":["PartiallyPersistentUnionFind"]};

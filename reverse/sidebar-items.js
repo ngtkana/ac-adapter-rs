@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Reverse",""]]};
+window.SIDEBAR_ITEMS = {"struct":["Reverse"]};

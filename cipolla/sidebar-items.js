@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["cipolla_sqrt",""]],"trait":[["Unsigned",""]]};
+window.SIDEBAR_ITEMS = {"fn":["cipolla_sqrt"],"trait":["Unsigned"]};

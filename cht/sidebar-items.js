@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["X","変数"]],"enum":[["Concave","凹関数を管理する方であるというマーカー"],["Convex","凸関数を管理する方であるというマーカー"]],"struct":[["BTreeCht","ログがつく方"],["Quadratic","二次式"],["VecCht","ログがつかない方"]],"trait":[["ConvexOrConcave","[`BTreeCht`], [`VecCht`] が凸関数を管理するか、凹関数を管理するかを表すマーカーのトレイト"]]};
+window.SIDEBAR_ITEMS = {"constant":["X"],"enum":["Concave","Convex"],"struct":["BTreeCht","Quadratic","VecCht"],"trait":["ConvexOrConcave"]};

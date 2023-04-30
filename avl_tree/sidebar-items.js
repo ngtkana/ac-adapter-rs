@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["AvlTree","AVL 木本体です。"],["IntoIter","[`AvlTree`] の要素を前から順にすべて走査するイテレータです。"],["Iter","[`AvlTree`] の要素を前から順にすべて走査するイテレータです。"]]};
+window.SIDEBAR_ITEMS = {"struct":["AvlTree","IntoIter","Iter"]};

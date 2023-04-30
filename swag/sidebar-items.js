@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Swag","SWAG をします。"]]};
+window.SIDEBAR_ITEMS = {"struct":["Swag"]};

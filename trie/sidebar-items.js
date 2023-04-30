@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":[["DEGREE","Tries here have the fixed branching number 26."]],"struct":[["TrieMap","A map base on a trie."],["TrieSet","A set base on a trie."]]};
+window.SIDEBAR_ITEMS = {"constant":["DEGREE"],"struct":["TrieMap","TrieSet"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["combinations","Returns an iterator over k-subsets of `(T::one() << n) - T::one()`."],["subsets","Returns an iterator over subsets of `bs`."]],"struct":[["Combinations","See the document of `combinations`"],["Subsets","See the document of `subsets`"]],"trait":[["Unsigned","Adapter trait of this crate. Already implemented for all the unsigned integer types."]]};
+window.SIDEBAR_ITEMS = {"fn":["combinations","subsets"],"struct":["Combinations","Subsets"],"trait":["Unsigned"]};

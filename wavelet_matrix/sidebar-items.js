@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["SpanInNode","[`Spans`] のアイテム型です。詳しくは `WaveletMatrix::spans` をご覧ください。"],["Spans","イテレータです 詳しくは `WaveletMatrix::spans` をご覧ください。"],["StaticBitVec","累積和のできる静的なビットベクター"],["WaveletMatrix","ウェーブレット行列"]]};
+window.SIDEBAR_ITEMS = {"struct":["SpanInNode","Spans","StaticBitVec","WaveletMatrix"]};

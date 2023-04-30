@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["meld","2 つの `SkewHeap` から、その合併を構築します。"]],"struct":[["SkewHeap","Meld のできるヒープ"]]};
+window.SIDEBAR_ITEMS = {"fn":["meld"],"struct":["SkewHeap"]};

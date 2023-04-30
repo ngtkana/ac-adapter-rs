@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":[["EdgeCount","辺の本数"],["HasCycle","サイクルがあるとき、`true`"],["VertexCount","頂点の個数"]],"struct":[["UnionFind",""]],"trait":[["Op","頂点重みを自作したいときに使うトレイトです。"]]};
+window.SIDEBAR_ITEMS = {"enum":["EdgeCount","HasCycle","VertexCount"],"struct":["UnionFind"],"trait":["Op"]};

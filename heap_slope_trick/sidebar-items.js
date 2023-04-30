@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["merge","足し算をします。"]],"struct":[["HeapSlopeTrick","本体です。"],["Summary","[`HeapSlopeTrick::summary()`] の戻り値です。"]]};
+window.SIDEBAR_ITEMS = {"fn":["merge"],"struct":["HeapSlopeTrick","Summary"]};

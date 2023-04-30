@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":[["lg",""]]};
+window.SIDEBAR_ITEMS = {"macro":["lg"]};

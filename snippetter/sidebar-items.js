@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["find_project_root_path",""],["main",""],["parse_local_dependencies_from_cargo_toml",""]],"static":[["CRATE_METADATAS",""],["PROJECT_ROOT",""]],"struct":[["CrateMetadata",""]]};
+window.SIDEBAR_ITEMS = {"fn":["find_project_root_path","main","parse_local_dependencies_from_cargo_toml"],"static":["CRATE_METADATAS","PROJECT_ROOT"],"struct":["CrateMetadata"]};

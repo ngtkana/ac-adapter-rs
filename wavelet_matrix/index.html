@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="ウェーブレット行列"><meta name="keywords" content="rust, rustlang, rust-lang, wavelet_matrix"><title>wavelet_matrix - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-1f7d512b176f0f72.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-124a1ca42af929b6.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-93196c7a1c3542a8.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-4743e13df3dfe8c4.css"><link rel="stylesheet" disabled href="../static.files/dark-0e1b889528bd466b.css"><link rel="stylesheet" disabled href="../static.files/ayu-65289d5d067c7c66.css"><script id="default-settings" ></script><script src="../static.files/storage-d43fa987303ecbbb.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-3367e395607fafc1.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="ウェーブレット行列"><title>wavelet_matrix - Rust</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c4dbdcde0fbd8430.css" id="mainThemeStyle"><link rel="stylesheet" id="themeStyle" href="../static.files/light-db279b6232be9c13.css"><link rel="stylesheet" disabled href="../static.files/dark-cf923f49f397b216.css"><link rel="stylesheet" disabled href="../static.files/ayu-be46fdc453a55015.css"><script src="../static.files/storage-3891ce972e3a2bf8.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-98a684e84ae5b08b.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
     integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
 <script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
     integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
@@ -17,19 +17,19 @@
     });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../wavelet_matrix/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../wavelet_matrix/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate wavelet_matrix</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.1.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-5ec35bf9ca753509.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">wavelet_matrix</a><button id="copy-path" onclick="copy_path(this)" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/wavelet_matrix/lib.rs.html#1-802">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>ウェーブレット行列</p>
-<p>本体は <a href="struct.WaveletMatrix.html" title="WaveletMatrix"><code>WaveletMatrix</code></a> です。</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle">&#9776;</button><a class="logo-container" href="../wavelet_matrix/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2></h2></nav><nav class="sidebar"><a class="logo-container" href="../wavelet_matrix/index.html"><img class="rust-logo" src="../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><h2 class="location"><a href="#">Crate wavelet_matrix</a></h2><div class="sidebar-elems"><ul class="block"><li class="version">Version 0.1.0</li><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><main><div class="width-limiter"><nav class="sub"><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">wavelet_matrix</a><button id="copy-path" title="Copy item path to clipboard"><img src="../static.files/clipboard-7571035ce49a181d.svg" width="19" height="18" alt="Copy item path"></button></h1><span class="out-of-band"><a class="srclink" href="../src/wavelet_matrix/lib.rs.html#1-802">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>ウェーブレット行列</p>
+<p>本体は <a href="struct.WaveletMatrix.html" title="struct wavelet_matrix::WaveletMatrix"><code>WaveletMatrix</code></a> です。</p>
 <h2 id="パフォーマンスについての実験結果"><a href="#パフォーマンスについての実験結果">パフォーマンスについての実験結果</a></h2>
 <p>実はちゃんとした対照実験にはなっていませんが、気になったらそのとき
 頑張るということで……（あの？）</p>
 <h3 id="実験-1-sort_by_key-の代わりに-stable_partition_by_key-を自作"><a href="#実験-1-sort_by_key-の代わりに-stable_partition_by_key-を自作">実験 1: <code>sort_by_key</code> の代わりに <code>stable_partition_by_key</code> を自作</a></h3>
 <p>僅差ですが、自作のほうが若干速いようなので、そちらを採用しています。</p>
 <ul>
-<li><a href="https://doc.rust-lang.org/1.68.2/std/index.html" title="std"><code>std</code></a> の <code>sort_by_key</code> (26 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045</a></li>
+<li><a href="https://doc.rust-lang.org/1.69.0/std/index.html" title="mod std"><code>std</code></a> の <code>sort_by_key</code> (26 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045</a></li>
 <li>自作 <code>stable_partition_by_key</code> (22 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045</a></li>
 </ul>
 <h3 id="実験-2-再帰の代わりにスタックを管理するイテレータを自作"><a href="#実験-2-再帰の代わりにスタックを管理するイテレータを自作">実験 2: 再帰の代わりにスタックを管理するイテレータを自作</a></h3>
-<p>僅差で自作の方が早かったですが、これはどちらにしてもないと <a href="struct.WaveletMatrix.html#method.spans"><code>spans</code></a> の
+<p>僅差で自作の方が早かったですが、これはどちらにしてもないと <a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a> の
 実装がつらそうですから、致命的に遅くなければ使うつもりでした。</p>
 <ul>
 <li>AOJ 2674 - Disordered Data Detection
@@ -48,7 +48,7 @@
 <li>出題日: 2017-06-06</li>
 <li>難易度: そこそこ。</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
 <li>コメント: 様々な解法があるよう。
 <a href="https://blog.hamayanhamayan.com/entry/2017/06/13/103254">こちらのブログ</a>
 に各種手法お名前だけ言及ありです。</li>
@@ -61,11 +61,11 @@
 <li>出題日: 2018-09-28</li>
 <li>難易度: そこそこ。</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a>,
-<a href="struct.WaveletMatrix.html#method.spans"><code>spans</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a>,
+<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a></li>
 <li>コメント: ヒープ４本でも解けてそちらのほうが一般的？
 ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
-（<a href="struct.WaveletMatrix.html#method.spans">自由度の高いメソッド <code>spans</code> が活躍します。</a>）</li>
+（<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">自由度の高いメソッド <code>spans</code> が活躍します。</a>）</li>
 </ul>
 </li>
 <li>yukicoder No.919 - You Are A Project Manager
@@ -75,8 +75,8 @@
 <li>出題日: 2019-10-25</li>
 <li>難易度: そこそこ。</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a>,
-<a href="struct.WaveletMatrix.html#method.spans"><code>spans</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a>,
+<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a></li>
 <li>コメント: Mo でもできて、それもそれできれいです。</li>
 </ul>
 </li>
@@ -87,7 +87,7 @@
 <li>出題日: 2020-02-08</li>
 <li>難易度: 易しめ。</li>
 <li>制約: N, Q ≤ 200,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.quantile"><code>quantile</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.quantile" title="method wavelet_matrix::WaveletMatrix::quantile"><code>quantile</code></a></li>
 </ul>
 </li>
 <li>OUPC 2020 D - 仲良しスライム
@@ -97,8 +97,8 @@
 <li>出題日: 2020-12-12</li>
 <li>難易度: 簡単。</li>
 <li>制約: N ≤ 100,000</li>
-<li>使う構造体: <a href="struct.WaveletMatrix.html#method.quantile"><code>quantile</code></a>,
-<a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a></li>
+<li>使う構造体: <a href="struct.WaveletMatrix.html#method.quantile" title="method wavelet_matrix::WaveletMatrix::quantile"><code>quantile</code></a>,
+<a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
 <li>他の解法:
 <ul>
 <li>ヒープ４本 (90 ms): <a href="https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242">https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242</a></li>
@@ -114,7 +114,7 @@
 <li>出題日: 不明</li>
 <li>難易度: 易しめ。</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
 </ul>
 </li>
 <li>AOJ 1549 - Hard Beans
@@ -124,7 +124,7 @@
 <li>出題日: 不明</li>
 <li>難易度: 貼るだけ</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.next_value"><code>next_value</code></a>, <a href="struct.WaveletMatrix.html#method.prev_value"><code>prev_value</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.next_value" title="method wavelet_matrix::WaveletMatrix::next_value"><code>next_value</code></a>, <a href="struct.WaveletMatrix.html#method.prev_value" title="method wavelet_matrix::WaveletMatrix::prev_value"><code>prev_value</code></a></li>
 </ul>
 </li>
 <li>AtCoder 競プロ典型 90 問 017 - Crossing Segments（★7）
@@ -134,9 +134,9 @@
 <li>出題日: 2021-04-20</li>
 <li>難易度: 易しめ</li>
 <li>制約: N, Q ≤ 100,000</li>
-<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq"><code>range_freq</code></a></li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
 <li>コメント: 想定は余事象を考えて RSQ</li>
 </ul>
 </li>
 </ul>
-</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><div class="item-table"><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.SpanInNode.html" title="wavelet_matrix::SpanInNode struct">SpanInNode</a></div><div class="item-right docblock-short"><a href="struct.Spans.html" title="Spans"><code>Spans</code></a> のアイテム型です。<a href="struct.WaveletMatrix.html#method.spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.Spans.html" title="wavelet_matrix::Spans struct">Spans</a></div><div class="item-right docblock-short">イテレータです <a href="struct.WaveletMatrix.html#method.spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.StaticBitVec.html" title="wavelet_matrix::StaticBitVec struct">StaticBitVec</a></div><div class="item-right docblock-short">累積和のできる静的なビットベクター</div></div><div class="item-row"><div class="item-left module-item"><a class="struct" href="struct.WaveletMatrix.html" title="wavelet_matrix::WaveletMatrix struct">WaveletMatrix</a></div><div class="item-right docblock-short">ウェーブレット行列</div></div></div></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.68.2 (9eb3afe9e 2023-03-27)" data-search-js="search-98d53477a794af0b.js" data-settings-js="settings-c3c521c753752a1a.js" data-settings-css="settings-08ddfdda51b8ee2e.css" ></div></body></html>
+</div></details><h2 id="structs" class="small-section-header"><a href="#structs">Structs</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.SpanInNode.html" title="struct wavelet_matrix::SpanInNode">SpanInNode</a></div><div class="desc docblock-short"><a href="struct.Spans.html" title="struct wavelet_matrix::Spans"><code>Spans</code></a> のアイテム型です。<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></li><li><div class="item-name"><a class="struct" href="struct.Spans.html" title="struct wavelet_matrix::Spans">Spans</a></div><div class="desc docblock-short">イテレータです <a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></li><li><div class="item-name"><a class="struct" href="struct.StaticBitVec.html" title="struct wavelet_matrix::StaticBitVec">StaticBitVec</a></div><div class="desc docblock-short">累積和のできる静的なビットベクター</div></li><li><div class="item-name"><a class="struct" href="struct.WaveletMatrix.html" title="struct wavelet_matrix::WaveletMatrix">WaveletMatrix</a></div><div class="desc docblock-short">ウェーブレット行列</div></li></ul></section></div></main><div id="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0 (84c898d65 2023-04-16)" data-search-js="search-8a59a8356673ec1f.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>

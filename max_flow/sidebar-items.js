@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["MaxFlow","Dinic 法で最大流を求めます。"]],"trait":[["FlowTrait","流量型になれるものです。"]]};
+window.SIDEBAR_ITEMS = {"struct":["MaxFlow"],"trait":["FlowTrait"]};

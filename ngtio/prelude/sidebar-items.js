@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Usize1","`usize` 型にパースしたあとで `1` を引きます。"]],"trait":[["Parser","複合型を含め、いろいろとパースをします。"],["ParserTuple","`Parser` を実装した型の生タプルに実装されるトレイトです。"],["RawTuple","`Token` を実装した型の生タプルに実装されるトレイトです。"],["Token","主にプリミティブ型のパースをします。`FromStr` とは異なり、戻り値型が `Self` である必要はありません。"]]};
+window.SIDEBAR_ITEMS = {"struct":["Usize1"],"trait":["Parser","ParserTuple","RawTuple","Token"]};

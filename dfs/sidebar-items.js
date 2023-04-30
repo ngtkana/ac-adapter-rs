@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["calc_reachability","一点からの到達可能性配列を返します。"]]};
+window.SIDEBAR_ITEMS = {"fn":["calc_reachability"]};

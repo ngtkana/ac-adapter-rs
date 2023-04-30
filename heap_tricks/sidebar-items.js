@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["DoubleHeap","ヒープを４本使って中央値などを管理するデータ構造です。 [`Handler`] が必要ないときには [`DoubleHeap::new()`] で構築すると 勝手に [`Nop`] が採用されます。"],["Nop","何も集約しないことを表す型です。 [`Handler`] の一種です。 [`DoubleHeap::new()`] で構築すると自動的に採用されます。 Unit-like struct なので、同名の定数が自動定義されています。"],["RemovableHeap","論理削除のできるヒープです。"],["Sum","総和を集約するための型です。 [`Handler`] の一種です。 [`Sum::default()`] でデフォルト構築できます。"]],"trait":[["Handler","集約操作を指定するためのトレイトです。 単なるマーカートレイトではなく、集約結果を管理するための オブジェクトとして使用されます"]]};
+window.SIDEBAR_ITEMS = {"struct":["DoubleHeap","Nop","RemovableHeap","Sum"],"trait":["Handler"]};

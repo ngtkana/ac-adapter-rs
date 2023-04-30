@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Gco","A solver of graph cut optimization problems."],["GcoResult","The minimum value and and an argmin of $f$."]]};
+window.SIDEBAR_ITEMS = {"struct":["Gco","GcoResult"]};

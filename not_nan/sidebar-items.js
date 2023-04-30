@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["NotNaN",""]],"trait":[["Float",""]]};
+window.SIDEBAR_ITEMS = {"struct":["NotNaN"],"trait":["Float"]};

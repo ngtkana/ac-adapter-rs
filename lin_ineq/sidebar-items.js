@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["solve","基本形 ax <= b"],["solve_squeeze","挟み撃ち形 l <= ax + b <= r"]],"struct":[["Interval","閉区間を表す、`[T; 2]` の透明なラッパーです。"]],"trait":[["Signed","符号付き整数です。"]]};
+window.SIDEBAR_ITEMS = {"fn":["solve","solve_squeeze"],"struct":["Interval"],"trait":["Signed"]};

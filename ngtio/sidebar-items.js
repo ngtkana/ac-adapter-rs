@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["with_stdin","標準入力を受け取る `Tokenizer` を構築します。"],["with_str","文字列スライスを管理する `Tokenizer` を構築します。"]],"mod":[["prelude","たいせつ〜な〜も〜の〜は〜〜〜 ぜんぶこ〜こ〜に〜あ〜る〜〜〜"]]};
+window.SIDEBAR_ITEMS = {"fn":["with_stdin","with_str"],"mod":["prelude"]};

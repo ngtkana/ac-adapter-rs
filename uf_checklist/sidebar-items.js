@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":[["lg",""]],"struct":[["Iter","[`UfChecklist::range_check`] が返すイテレータです。"],["UfChecklist","「一度処理したところを処理しない」区間クエリを線形で処理するデータ構造です。"]]};
+window.SIDEBAR_ITEMS = {"macro":["lg"],"struct":["Iter","UfChecklist"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["BitVec","Boolean 配列を [`u64`] のベクターに詰め込んだものです。"],["Iter","ビットを順に [`bool`] を返すイテレータです。"]]};
+window.SIDEBAR_ITEMS = {"struct":["BitVec","Iter"]};

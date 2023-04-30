@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["caliper","凸包を求めます。 具体的には、辞書順最小の頂点から始めて、時計回りの凸包を作ります。 a が空のときには空配列を返します。"],["ccw","det(p1 - p0, p2 - p0) を求めます。"],["convex_hull","凸包を求めます。 具体的には、辞書順最小の頂点から始めて、時計回りの凸包を作ります。 a が空のときには空配列を返します。"],["is_convex","凸であれば true を返します。"],["sqmag","|p0 - p1| ^ 2 を求めます。"]]};
+window.SIDEBAR_ITEMS = {"fn":["caliper","ccw","convex_hull","is_convex","sqmag"]};

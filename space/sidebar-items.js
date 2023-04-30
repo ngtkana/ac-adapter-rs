@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["implode","`separator` 区切りの文字列にします。"],["implode_space","スペース区切りの文字列にします。"]]};
+window.SIDEBAR_ITEMS = {"fn":["implode","implode_space"]};

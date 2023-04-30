@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["Entry","[`Segtree`] のエントリー型です。"],["Segtree","セグツリー"]],"trait":[["Ops","[`Segtree`] に使う演算です。"]]};
+window.SIDEBAR_ITEMS = {"struct":["Entry","Segtree"],"trait":["Ops"]};

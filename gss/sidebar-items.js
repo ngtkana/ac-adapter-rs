@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["gss_by_absolute_eps","絶対誤差指定バージョン。真の答えとの差が `eps` 以内になる保証ができるまでイテレートします。"],["gss_by_count","回数指定バージョン。`count` 回イテレートします。"],["gss_integer","整数バージョン。正確な値を返します。"],["gss_on_slice","スライスの添字バージョン。正確な値を返します。"]],"trait":[["Float","[`gss_by_count`] の引数型のためのトレイトです。全ての整数型に実装されています。"],["Golden","黄金分割をする関数 `golden_sect` を提供します。すべての整数型、浮動小数点型に実装されています。"],["Int","[`gss_integer`] の引数型のためのトレイトです。全ての整数型に実装されています。"]]};
+window.SIDEBAR_ITEMS = {"fn":["gss_by_absolute_eps","gss_by_count","gss_integer","gss_on_slice"],"trait":["Float","Golden","Int"]};

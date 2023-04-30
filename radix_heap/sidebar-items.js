@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["RadixHeap",""]]};
+window.SIDEBAR_ITEMS = {"struct":["RadixHeap"]};

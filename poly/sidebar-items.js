@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":[["poly_add","足し算"],["poly_mul","掛け算"],["poly_sub","引き算"]],"struct":[["PolyAdd","`poly_add` の戻り値型ですので、そちらのドキュメントをご覧ください。"],["PolySub","`poly_sub` の戻り値型ですので、そちらのドキュメントをご覧ください。"]],"trait":[["Poly","自由関数 [`poly_add`], [`poly_sub`] を呼び出します。"]]};
+window.SIDEBAR_ITEMS = {"fn":["poly_add","poly_mul","poly_sub"],"struct":["PolyAdd","PolySub"],"trait":["Poly"]};

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":[["LowLink","Low-link を計算する構造体です。"]]};
+window.SIDEBAR_ITEMS = {"struct":["LowLink"]};
