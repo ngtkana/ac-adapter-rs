@@ -999,8 +999,8 @@ mod tests {
             for i in 0..=n {
                 let mut result = (0..n).collect::<AvlTree<_>>();
                 let mut expected = (0..n).collect::<Vec<_>>();
-                let _ = result.get_mut(i).map(|x| *x = n);
-                let _ = expected.get_mut(i).map(|x| *x = n);
+                let _: Option<()> = result.get_mut(i).map(|x| *x = n);
+                let _: Option<()> = expected.get_mut(i).map(|x| *x = n);
                 assert_eq!(result.iter().copied().collect::<Vec<_>>(), expected);
             }
         }
