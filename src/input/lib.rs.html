@@ -110,34 +110,34 @@
     }
 }
 <span class="kw">pub trait </span>ForceFromStr: FromStr {
-    <span class="kw">fn </span>force_parse(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self</span>;
+    <span class="kw">fn </span>force_from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self</span>;
 }
 <span class="kw">impl</span>&lt;T, E&gt; ForceFromStr <span class="kw">for </span>T
 <span class="kw">where
     </span>T: FromStr&lt;<span class="prelude-val">Err </span>= E&gt;,
     E: std::fmt::Debug,
 {
-    <span class="kw">fn </span>force_parse(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
+    <span class="kw">fn </span>force_from_str(s: <span class="kw-2">&amp;</span>str) -&gt; <span class="self">Self </span>{
         s.parse().unwrap()
     }
 }
-<span class="doccomment">/// Read a line from stdin and parse to [T; N].
+<span class="doccomment">/// Read a line from stdin and from_str to [T; N].
 </span><span class="kw">pub fn </span>input_array&lt;T: ForceFromStr, <span class="kw">const </span>N: usize&gt;() -&gt; [T; N]
 <span class="kw">where
     </span>T: std::fmt::Debug,
 {
     &lt;[<span class="kw">_</span>; N]&gt;::try_from(input_vec()).unwrap()
 }
-<span class="doccomment">/// Read a line from stdin and parse to Vec&lt;T&gt;.
+<span class="doccomment">/// Read a line from stdin and from_str to Vec&lt;T&gt;.
 </span><span class="kw">pub fn </span>input_vec&lt;T: ForceFromStr&gt;() -&gt; Vec&lt;T&gt; {
     line()
         .split_whitespace()
-        .map(T::force_parse)
+        .map(T::force_from_str)
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 }
-<span class="doccomment">/// Read a line from stdin and parse to T.
+<span class="doccomment">/// Read a line from stdin and from_str to T.
 </span><span class="kw">pub fn </span>input&lt;T: ForceFromStr&gt;() -&gt; T {
-    T::force_parse(<span class="kw-2">&amp;</span>line())
+    T::force_from_str(<span class="kw-2">&amp;</span>line())
 }
 </code></pre></div>
 </section></main><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="input" data-themes="" data-resource-suffix="" data-rustdoc-version="1.69.0 (84c898d65 2023-04-16)" data-search-js="search-8a59a8356673ec1f.js" data-settings-js="settings-f0c5c39777a9a2f6.js" data-settings-css="settings-0bcba95ff279c1db.css" ></div></body></html>
