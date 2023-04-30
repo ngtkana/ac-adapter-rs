@@ -342,9 +342,7 @@ impl<M: Mod> Fp<M> {
     /// assert_eq!(x, fp!(5));
     /// ```
     pub fn inv(self) -> Self {
-        if self.0 == 0 {
-            panic!("Cannot invert `0`.");
-        }
+        assert_ne!(self.0, 0, "Cannot invert `0`.");
         let mut x = Self::P as i64;
         let mut y = self.0 as i64;
         let mut u = 0;
