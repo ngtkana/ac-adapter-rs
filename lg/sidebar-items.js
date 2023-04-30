@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["lg"]};
+window.SIDEBAR_ITEMS = {"fn":["bools","table"],"macro":["lg"],"struct":["Table"]};

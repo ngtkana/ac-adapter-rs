@@ -39,8 +39,6 @@ var sourcesIndex = JSON.parse('{\
 "lazy_segbeats":["",[],["lib.rs"]],\
 "lazy_segtree":["",[],["lib.rs"]],\
 "lg":["",[],["lib.rs"]],\
-"lg_bools":["",[],["lib.rs"]],\
-"lg_max":["",[],["lib.rs"]],\
 "lin_ineq":["",[],["lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\
 "make_graph":["",[],["lib.rs"]],\
@@ -73,7 +71,6 @@ var sourcesIndex = JSON.parse('{\
 "splay_tree":["",[],["lib.rs","node.rs"]],\
 "suffix_array":["",[],["lib.rs"]],\
 "swag":["",[],["lib.rs"]],\
-"table":["",[],["lib.rs"]],\
 "tree_fold":["",[],["lib.rs"]],\
 "trial":["",[],["divisors.rs","lib.rs","prime_factors.rs"]],\
 "trie":["",[],["lib.rs","trie_map.rs","trie_set.rs"]],\
