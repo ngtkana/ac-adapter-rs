@@ -150,34 +150,32 @@ where
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let Self {
             __marker: _,
-            storage,
+            ref storage,
             index_width,
             column_width,
             heading_newlines,
-        } = self;
-        for _ in 0..*heading_newlines {
+        } = *self;
+        for _ in 0..heading_newlines {
             writeln!(f)?;
         }
         let ncols = storage.as_ref()[0].as_ref().len();
-        writeln!(
-            f,
-            "{:index_width$}|{}",
-            "",
-            (0..ncols)
-                .map(|j| format!("{:column_width$}", j))
-                .collect::<String>()
-        )?;
+        write!(f, "{}|", " ".repeat(index_width))?;
+        for j in 0..ncols {
+            write!(f, "{:column_width$}", j, column_width = column_width)?;
+        }
+        writeln!(f)?;
         writeln!(f, "{}", "-".repeat(index_width + 1 + column_width * ncols))?;
         for (i, row) in storage.as_ref().iter().enumerate() {
-            writeln!(
-                f,
-                "{:index_width$}|{}",
-                i,
-                row.as_ref()
-                    .iter()
-                    .map(|value| { format!("{:>column_width$}", __quiet(format!("{:?}", value)),) })
-                    .collect::<String>()
-            )?;
+            write!(f, "{:index_width$}|", i, index_width = index_width)?;
+            for value in row.as_ref() {
+                write!(
+                    f,
+                    "{:>column_width$}",
+                    __quiet(format!("{:?}", value)),
+                    column_width = column_width,
+                )?;
+            }
+            writeln!(f)?;
         }
         Ok(())
     }
