@@ -285,8 +285,6 @@
 <a href="#266" id="266">266</a>
 <a href="#267" id="267">267</a>
 <a href="#268" id="268">268</a>
-<a href="#269" id="269">269</a>
-<a href="#270" id="270">270</a>
 </pre><pre class="rust"><code><span class="doccomment">//! Provides a macro [`lg`] and formatting utils.
 </span><span class="kw">use </span>std::borrow::Borrow;
 <span class="kw">use </span>std::{fmt::Debug, marker::PhantomData};
@@ -439,34 +437,32 @@
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         <span class="kw">let </span><span class="self">Self </span>{
             __marker: <span class="kw">_</span>,
-            storage,
+            <span class="kw-2">ref </span>storage,
             index_width,
             column_width,
             heading_newlines,
-        } = <span class="self">self</span>;
-        <span class="kw">for _ in </span><span class="number">0</span>..<span class="kw-2">*</span>heading_newlines {
+        } = <span class="kw-2">*</span><span class="self">self</span>;
+        <span class="kw">for _ in </span><span class="number">0</span>..heading_newlines {
             <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         }
         <span class="kw">let </span>ncols = storage.as_ref()[<span class="number">0</span>].as_ref().len();
-        <span class="macro">writeln!</span>(
-            f,
-            <span class="string">&quot;{:index_width$}|{}&quot;</span>,
-            <span class="string">&quot;&quot;</span>,
-            (<span class="number">0</span>..ncols)
-                .map(|j| <span class="macro">format!</span>(<span class="string">&quot;{:column_width$}&quot;</span>, j))
-                .collect::&lt;String&gt;()
-        )<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">&quot;{}|&quot;</span>, <span class="string">&quot; &quot;</span>.repeat(index_width))<span class="question-mark">?</span>;
+        <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..ncols {
+            <span class="macro">write!</span>(f, <span class="string">&quot;{:column_width$}&quot;</span>, j, column_width = column_width)<span class="question-mark">?</span>;
+        }
+        <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="string">&quot;-&quot;</span>.repeat(index_width + <span class="number">1 </span>+ column_width * ncols))<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, row) <span class="kw">in </span>storage.as_ref().iter().enumerate() {
-            <span class="macro">writeln!</span>(
-                f,
-                <span class="string">&quot;{:index_width$}|{}&quot;</span>,
-                i,
-                row.as_ref()
-                    .iter()
-                    .map(|value| { <span class="macro">format!</span>(<span class="string">&quot;{:&gt;column_width$}&quot;</span>, __quiet(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, value)),) })
-                    .collect::&lt;String&gt;()
-            )<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;{:index_width$}|&quot;</span>, i, index_width = index_width)<span class="question-mark">?</span>;
+            <span class="kw">for </span>value <span class="kw">in </span>row.as_ref() {
+                <span class="macro">write!</span>(
+                    f,
+                    <span class="string">&quot;{:&gt;column_width$}&quot;</span>,
+                    __quiet(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, value)),
+                    column_width = column_width,
+                )<span class="question-mark">?</span>;
+            }
+            <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
