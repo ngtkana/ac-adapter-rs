@@ -1,32 +1,41 @@
-use std::cmp;
-
-/// Z-アルゴリズムをします。
+/// Z-algorithm
 ///
-/// # 戻り値
+/// # Parameters
 ///
-/// `s` と `s[i..]` の最長共通部分列の長さ `z[i]` を並べた長さ `n` の配列 `z` を返します。
-pub fn z_algorithm<T: Ord>(s: &[T]) -> Vec<usize> {
-    let n = s.len();
-    if n == 0 {
-        Vec::new()
-    } else {
-        let mut z = vec![0; n];
-        let mut j = 0;
-        for i in 1..n {
-            z[i] = (if j + z[j] <= i {
-                0
-            } else {
-                cmp::min(j + z[j] - i, z[i - j])
-            }..)
-                .find(|&k| i + k == n || s[k] != s[i + k])
-                .unwrap();
-            if j + z[j] < i + z[i] {
-                j = i;
-            }
-        }
-        z[0] = n;
-        z
+/// * `a`: An array to test
+///
+/// # Returns
+///
+/// The Z-array `z` of `a`.
+/// `z[i]` is the length of longest common prefix of `a` and `a[i..]`.
+///
+pub fn z_algo<T: Eq>(s: &[T]) -> Vec<usize> {
+    if s.is_empty() {
+        return Vec::new();
     }
+    let n = s.len();
+    let mut z = vec![0; n];
+    z[0] = n;
+    let mut left = 1;
+    let mut right = left;
+    while left < n {
+        while right < n && s[right - left] == s[right] {
+            right += 1;
+        }
+        z[left] = right - left;
+        if left == right {
+            left += 1;
+            right += 1;
+            continue;
+        }
+        let mut next = left + 1;
+        while next < n && next + z[next - left] < right {
+            z[next] = z[next - left];
+            next += 1;
+        }
+        left = next;
+    }
+    z
 }
 
 #[cfg(test)]
@@ -54,7 +63,7 @@ mod tests {
     #[test_case("mississippi")]
     fn test_hand(s: &str) {
         let expected = z_brute(s.as_bytes());
-        let result = z_algorithm(s.as_bytes());
+        let result = z_algo(s.as_bytes());
         assert_eq!(expected, result);
     }
 
@@ -70,7 +79,7 @@ mod tests {
             println!("s = {}", s);
 
             let expected = z_brute(s.as_bytes());
-            let result = z_algorithm(s.as_bytes());
+            let result = z_algo(s.as_bytes());
             assert_eq!(expected, result);
         }
     }
