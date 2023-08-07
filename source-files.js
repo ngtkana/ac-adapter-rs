@@ -79,7 +79,7 @@ var sourcesIndex = JSON.parse('{\
 "union_find":["",[],["lib.rs"]],\
 "vec_lines":["",[],["lib.rs"]],\
 "wavelet_matrix":["",[],["lib.rs"]],\
-"z_algorithm":["",[],["lib.rs"]],\
+"z_algo":["",[],["lib.rs"]],\
 "zeta":["",[],["lib.rs"]]\
 }');
 createSourceSidebar();
