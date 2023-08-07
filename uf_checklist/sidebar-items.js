@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["lg"],"struct":["Iter","UfChecklist"]};
+window.SIDEBAR_ITEMS = {"struct":["Iter","UfChecklist"]};
