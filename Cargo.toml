@@ -1,10 +1,13 @@
 [workspace]
+resolver = "2"
 members = ['libs/*', 'snippetter']
 
 [workspace.dependencies]
 approx = "0.5"
 assert-impl = "0.1.3"
 itertools = "0.10"
+num = "0.4.1"
 ordered-float = "3.4"
 rand = "0.8"
+rstest = "0.18.2"
 test-case = "3.0"
