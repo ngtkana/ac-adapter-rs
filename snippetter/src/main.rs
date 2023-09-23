@@ -26,7 +26,7 @@ fn main() {
             PROJECT_ROOT
                 .get()
                 .unwrap()
-                .join(Path::new("crates"))
+                .join(Path::new("libs"))
                 .read_dir()
                 .unwrap()
                 .filter_map(Result::ok)
