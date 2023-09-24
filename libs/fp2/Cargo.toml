@@ -8,3 +8,4 @@ edition = "2021"
 [dev-dependencies]
 num.workspace = true
 rand.workspace = true
+itertools.workspace = true

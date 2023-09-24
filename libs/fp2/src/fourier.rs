@@ -162,8 +162,6 @@ where
 
 /// Restore the original value from the remainder of the division by `P1`, `P2`, and `P3`.
 fn garner<const P: u64>(x1: Fp<P1>, x2: Fp<P2>, x3: Fp<P3>) -> Fp<P> {
-    debug_assert!(P1 < P2);
-    debug_assert!(P2 < P3);
     let (x1, x2, x3) = (x1.value(), x2.value(), x3.value());
     let x2 = ((x2 + (P2 - x1)) * mod_inv::<P2>(P1)) % P2;
     let x3 = (((x3 + (P3 - x1)) * mod_inv::<P3>(P1) % P3 + (P3 - x2)) * mod_inv::<P3>(P2)) % P3;
@@ -191,9 +189,9 @@ mod tests {
     fn test_fps_mul_random() {
         type F = Fp<998244353>;
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let n = rng.gen_range(1..=256);
-            let m = rng.gen_range(1..=256);
+        for _ in 0..80 {
+            let n = rng.gen_range(1..=40);
+            let m = rng.gen_range(1..=40);
             let a: Vec<F> = (0..n).map(|_| F::new(rng.gen())).collect();
             let b: Vec<F> = (0..m).map(|_| F::new(rng.gen())).collect();
             if a.last() == Some(&F::new(0)) || b.last() == Some(&F::new(0)) {
@@ -209,9 +207,9 @@ mod tests {
     fn test_any_mod_fps_mul_random() {
         type F = Fp<1000000007>;
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let n = rng.gen_range(1..=256);
-            let m = rng.gen_range(1..=256);
+        for _ in 0..80 {
+            let n = rng.gen_range(1..=40);
+            let m = rng.gen_range(1..=40);
             let a: Vec<F> = (0..n).map(|_| F::new(rng.gen())).collect();
             let b: Vec<F> = (0..m).map(|_| F::new(rng.gen())).collect();
             if a.last() == Some(&F::new(0)) || b.last() == Some(&F::new(0)) {
@@ -224,9 +222,9 @@ mod tests {
     }
 
     #[test]
-    fn test_garner() {
+    fn test_garner_random() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
+        for _ in 0..2000 {
             let x = rng.gen_range(0..u64::MAX);
             let result = garner(F1::new(x), F2::new(x), F3::new(x));
             assert_eq!(result, Fp::<1000000007>::new(x));

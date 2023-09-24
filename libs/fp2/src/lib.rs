@@ -1,16 +1,67 @@
+//! A library for modular arithmetic.
+//! # Examples
+//! ```
+//! use fp2::fp;
+//! use fp2::Fp;
+//! type F = Fp<998244353>;
+//! let a = F::new(3);
+//! let b = F::new(4);
+//! assert_eq!(a + b, F::new(7));
+//! assert_eq!(a - b, F::new(998244352));
+//! assert_eq!(a * b, F::new(12));
+//! assert_eq!(a / b * b, F::new(3));
+//! assert_eq!(a.pow(3), F::new(27));
+//! ```
+//!
+//! ## Factorials
+//! ```
+//! use fp2::fp;
+//! use fp2::Factorial;
+//! let f = Factorial::<998244353>::new(10);
+//! assert_eq!(f.fact(5), fp!(120));
+//! assert_eq!(f.inv_fact(5), fp!(120).inv());
+//! assert_eq!(f.perm(5, 3), fp!(60));
+//! assert_eq!(f.comb(5, 3), fp!(10));
+//! assert_eq!(f.comb_with_reputation(5, 3), fp!(35));
+//! ```
+//!
+//! ## Convolution by Fast Fourier transform (FFT)
+//! ```
+//! use fp2::Fp;
+//! use fp2::fps_mul;
+//! use fp2::fp;
+//! let a = vec![fp!(1; mod 998244353), fp!(2), fp!(3)];
+//! let b = vec![fp!(4), fp!(5), fp!(6)];
+//! let c = fps_mul(&a, &b);
+//! assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
+//! ```
+//! ## Formal Power Series (FPS) arithmetics by Number Theoretic Transform (NTT)
+//! Calculation is done modulo $x^{\text{precision}}$.
+//! ```
+//! use fp2::fp;
+//! use fp2::Fp;
+//! type Fps = fp2::Fps<998244353>;
+//! let a = Fps::new(vec![fp!(1), fp!(2), fp!(3)], 4);
+//! let b = Fps::new(vec![fp!(4), fp!(5), fp!(6)], 4);
+//! assert_eq!(
+//!     &a * &b,
+//!     Fps::new(vec![fp!(4), fp!(13), fp!(28), fp!(27)], 4)
+//! );
+//! assert_eq!(a.inv(), Fps::new(vec![fp!(1), fp!(-2), fp!(1), fp!(), 4));
+//! ```
 mod ext_gcd;
 mod factorial;
 mod fourier;
+mod fps;
 mod montgomery;
-mod newton;
 
 use ext_gcd::mod_inv;
 pub use factorial::Factorial;
 pub use fourier::any_mod_fps_mul;
 pub use fourier::fps_mul;
+pub use fps::Fps;
 use montgomery::oxidate;
 use montgomery::reduce;
-pub use newton::Fps;
 use std::iter::Product;
 use std::iter::Sum;
 use std::ops::Add;
@@ -28,36 +79,16 @@ use std::ops::SubAssign;
 /// ```
 /// use fp2::fp;
 /// use fp2::Fp;
-/// type F = Fp<998244353>;
-/// let a: F = fp!(42);
-/// assert_eq!(a, F::new(42));
-/// let a: F = fp!(42; if true);
-/// assert_eq!(a, F::new(42));
-/// let a: F = fp!(42; if false);
-/// assert_eq!(a, F::new(0));
-/// let a: F = fp!(3; 4);
-/// assert_eq!(a, F::new(3) / F::new(4));
+/// let a = fp!(42; mod 998244353);
+/// assert_eq!(a.value(), 42);
 /// ```
 #[macro_export]
 macro_rules! fp {
-    ($value:expr; if $cond:expr) => {
-        if $cond {
-            fp!($value)
-        } else {
-            fp!(0)
-        }
-    };
-    ($num:expr; $den:expr) => {
-        $crate::Fp::from($num) / $crate::Fp::from($den)
-    };
     ($value:expr) => {
         $crate::Fp::from($value)
     };
-}
-#[macro_export]
-macro_rules! fps {
-    ($($value:expr),* $(,)?) => {
-        $crate::Fps::new(vec![$($crate::fp!($value)),*])
+    ($value:expr; mod $p:expr) => {
+        $crate::Fp::<$p>::from($value)
     };
 }
 
@@ -209,6 +240,7 @@ impl<const P: u64> SubAssign<Fp<P>> for Fp<P> {
 impl<const P: u64> MulAssign<Fp<P>> for Fp<P> {
     fn mul_assign(&mut self, rhs: Fp<P>) { self.value = reduce::<P>(self.value * rhs.value); }
 }
+#[allow(clippy::suspicious_op_assign_impl)]
 impl<const P: u64> DivAssign<Fp<P>> for Fp<P> {
     fn div_assign(&mut self, rhs: Fp<P>) { self.value = reduce::<P>(self.value * rhs.inv().value); }
 }
