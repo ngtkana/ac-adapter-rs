@@ -1,4 +1,5 @@
 use super::Fp;
+use std::ops::Index;
 
 /// Precomputes the factorials and their inverses.
 /// # Examples
@@ -14,7 +15,7 @@ use super::Fp;
 /// ```
 pub struct Factorial<const P: u64> {
     fact: Vec<Fp<P>>,
-    inv: Vec<Fp<P>>,
+    inv_fact: Vec<Fp<P>>,
 }
 impl<const P: u64> Factorial<P> {
     /// Constructs a new instance.
@@ -27,18 +28,19 @@ impl<const P: u64> Factorial<P> {
     /// ```
     pub fn new(length: usize) -> Self {
         let mut fact = vec![Fp::<P>::new(1); length + 1];
-        let mut inv = vec![Fp::<P>::new(1); length + 1];
+        let mut inv_fact = vec![Fp::<P>::new(1); length + 1];
         for i in 1..=length {
             fact[i] = fact[i - 1] * Fp::<P>::new(i as u64);
         }
-        inv[length] = fact[length].inv();
+        inv_fact[length] = fact[length].inv();
         for i in (1..=length).rev() {
-            inv[i - 1] = inv[i] * Fp::<P>::new(i as u64);
+            inv_fact[i - 1] = inv_fact[i] * Fp::<P>::new(i as u64);
         }
-        Self { fact, inv }
+        Self { fact, inv_fact }
     }
 
     /// The factorial $n!$
+    /// [`Index`] is implemented for this method.
     /// # Requirements
     /// - $n \le \text{length}$
     /// # Examples
@@ -63,12 +65,12 @@ impl<const P: u64> Factorial<P> {
     /// use fp2::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
-    /// assert_eq!(fact.inv(0).value(), 1);
-    /// assert_eq!(fact.inv(1).value(), 1);
-    /// assert_eq!(fact.inv(2).value(), 499122177);
-    /// assert_eq!(fact.inv(3).value(), 166374059);
+    /// assert_eq!(fact.inv_fact(0).value(), 1);
+    /// assert_eq!(fact.inv_fact(1).value(), 1);
+    /// assert_eq!(fact.inv_fact(2).value(), 499122177);
+    /// assert_eq!(fact.inv_fact(3).value(), 166374059);
     /// ```
-    pub fn inv(&self, n: usize) -> Fp<P> { self.inv[n] }
+    pub fn inv_fact(&self, n: usize) -> Fp<P> { self.inv_fact[n] }
 
     /// The permutation $P(n, k)$
     /// # Requirements
@@ -81,7 +83,7 @@ impl<const P: u64> Factorial<P> {
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.perm(8, 3).value(), 336);
     /// ```
-    pub fn perm(&self, n: usize, k: usize) -> Fp<P> { self.fact[n] * self.inv[n - k] }
+    pub fn perm(&self, n: usize, k: usize) -> Fp<P> { self.fact[n] * self.inv_fact[n - k] }
 
     /// The binominal coefficient $n \choose k$
     /// # Requirements
@@ -94,7 +96,22 @@ impl<const P: u64> Factorial<P> {
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.comb(8, 3).value(), 56);
     /// ```
-    pub fn comb(&self, n: usize, k: usize) -> Fp<P> { self.fact[n] * self.inv[n - k] * self.inv[k] }
+    pub fn comb(&self, n: usize, k: usize) -> Fp<P> {
+        self.fact[n] * self.inv_fact[n - k] * self.inv_fact[k]
+    }
+
+    /// Another name for [`Factorial::comb`].
+    /// # Requirements
+    /// - $k \le n \le \text{length}$
+    /// # Examples
+    /// ```
+    /// use fp2::Factorial;
+    /// use fp2::Fp;
+    /// const P: u64 = 998244353;
+    /// let fact = Factorial::<P>::new(10);
+    /// assert_eq!(fact.binom(8, 3).value(), 56);
+    /// ```
+    pub fn binom(&self, n: usize, k: usize) -> Fp<P> { self.comb(n, k) }
 
     /// The binominal coefficient $n \choose k$, but zero if $k < 0$ or $k > n$
     /// # Requirements
@@ -132,6 +149,11 @@ impl<const P: u64> Factorial<P> {
         self.comb(n + k - 1, k)
     }
 }
+impl<const P: u64> Index<usize> for Factorial<P> {
+    type Output = Fp<P>;
+
+    fn index(&self, index: usize) -> &Self::Output { &self.fact[index] }
+}
 
 #[cfg(test)]
 mod tests {
@@ -151,10 +173,10 @@ mod tests {
     #[test]
     fn test_factorial_inv() {
         let fact = Factorial::<P>::new(10);
-        assert_eq!(fact.inv(0).value(), 1);
-        assert_eq!(fact.inv(1).value(), 1);
-        assert_eq!(fact.inv(2).value(), 499122177);
-        assert_eq!(fact.inv(3).value(), 166374059);
+        assert_eq!(fact.inv_fact(0).value(), 1);
+        assert_eq!(fact.inv_fact(1).value(), 1);
+        assert_eq!(fact.inv_fact(2).value(), 499122177);
+        assert_eq!(fact.inv_fact(3).value(), 166374059);
     }
 
     #[test]
