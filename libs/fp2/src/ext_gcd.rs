@@ -40,7 +40,7 @@ mod tests {
             if num::integer::gcd(a, m) != 1 {
                 continue;
             }
-            let c = mod_inv_signed(a as i64, m as i64);
+            let c = mod_inv_signed(a, m);
             assert_eq!(a * c % m, 1, "a = {a}, c = {c}, ");
             assert!((0..m).contains(&c));
         }
