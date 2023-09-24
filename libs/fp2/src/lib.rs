@@ -36,7 +36,7 @@
 //! assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
 //! ```
 //! ## Formal Power Series (FPS) arithmetics by Number Theoretic Transform (NTT)
-//! Calculation is done modulo $x^{\text{precision}}$.
+//! Calculation is done modulo $x^d$.
 //! ```
 //! use fp2::fp;
 //! use fp2::Fp;
@@ -47,7 +47,7 @@
 //!     &a * &b,
 //!     Fps::new(vec![fp!(4), fp!(13), fp!(28), fp!(27)], 4)
 //! );
-//! assert_eq!(a.inv(), Fps::new(vec![fp!(1), fp!(-2), fp!(1), fp!(), 4));
+//! assert_eq!(a.inv(), Fps::new(vec![fp!(1), fp!(-2), fp!(1), fp!(4)], 4));
 //! ```
 mod ext_gcd;
 mod factorial;
