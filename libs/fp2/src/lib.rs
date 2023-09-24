@@ -47,6 +47,7 @@ pub use fourier::fps_mul;
 pub use fourier::ifft;
 use std::iter::Product;
 use std::iter::Sum;
+use std::mem::swap;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Div;
@@ -166,7 +167,37 @@ impl<const P: u64> Fp<P> {
 }
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_tuple("Fp").field(&self.value()).finish()
+        pub fn berlekamp_massey_fp(a: i64, p: i64) -> [i64; 2] {
+            let mut u0 = 0_i64;
+            let mut v0 = 1_i64;
+            let mut w0 = a * u0 + p * v0;
+            let mut u1 = 1_i64;
+            let mut v1 = 0_i64;
+            let mut w1 = a * u1 + p * v1;
+            while p <= w0 * w0 {
+                let q = w0 / w1;
+                u0 -= q * u1;
+                v0 -= q * v1;
+                w0 -= q * w1;
+                swap(&mut u0, &mut u1);
+                swap(&mut v0, &mut v1);
+                swap(&mut w0, &mut w1);
+            }
+            [w0, u0]
+        }
+        if self.value == 0 {
+            return write!(f, "0");
+        }
+        let [mut num, mut den] = berlekamp_massey_fp(self.value as i64, P as i64);
+        if den < 0 {
+            num = -num;
+            den = -den;
+        }
+        if den == 1 {
+            write!(f, "{}", num)
+        } else {
+            write!(f, "{}/{}", num, den)
+        }
     }
 }
 impl<const P: u64> std::fmt::Display for Fp<P> {
