@@ -38,14 +38,11 @@
 mod ext_gcd;
 mod factorial;
 mod fourier;
-mod montgomery;
 
 use ext_gcd::mod_inv;
 pub use factorial::Factorial;
 pub use fourier::any_mod_fps_mul;
 pub use fourier::fps_mul;
-use montgomery::oxidate;
-use montgomery::reduce;
 use std::iter::Product;
 use std::iter::Sum;
 use std::ops::Add;
@@ -118,11 +115,7 @@ impl<const P: u64> Fp<P> {
     /// const P: u64 = 998244353;
     /// let a = Fp::<P>::new(42);
     /// ```
-    pub const fn new(value: u64) -> Self {
-        Self {
-            value: oxidate::<P>(value % P),
-        }
-    }
+    pub const fn new(value: u64) -> Self { Self { value: value % P } }
 
     /// Returns the value.
     /// # Examples
@@ -132,7 +125,7 @@ impl<const P: u64> Fp<P> {
     /// let a = Fp::<P>::new(42);
     /// assert_eq!(a.value(), 42);
     /// ```
-    pub const fn value(self) -> u64 { reduce::<P>(self.value) }
+    pub const fn value(self) -> u64 { self.value }
 
     /// Returns the multiplicative inverse.
     /// # Examples
@@ -144,7 +137,7 @@ impl<const P: u64> Fp<P> {
     /// ```
     pub fn inv(self) -> Self {
         Self {
-            value: oxidate::<P>(oxidate::<P>(mod_inv::<P>(self.value))),
+            value: mod_inv::<P>(self.value),
         }
     }
 
@@ -222,11 +215,11 @@ impl<const P: u64> SubAssign<Fp<P>> for Fp<P> {
     }
 }
 impl<const P: u64> MulAssign<Fp<P>> for Fp<P> {
-    fn mul_assign(&mut self, rhs: Fp<P>) { self.value = reduce::<P>(self.value * rhs.value); }
+    fn mul_assign(&mut self, rhs: Fp<P>) { self.value = self.value * rhs.value % P; }
 }
 #[allow(clippy::suspicious_op_assign_impl)]
 impl<const P: u64> DivAssign<Fp<P>> for Fp<P> {
-    fn div_assign(&mut self, rhs: Fp<P>) { self.value = reduce::<P>(self.value * rhs.inv().value); }
+    fn div_assign(&mut self, rhs: Fp<P>) { *self *= rhs.inv() }
 }
 macro_rules! fp_forward_ops {
     ($(
