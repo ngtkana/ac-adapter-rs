@@ -35,31 +35,15 @@
 //! let c = fps_mul(&a, &b);
 //! assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
 //! ```
-//! ## Formal Power Series (FPS) arithmetics by Number Theoretic Transform (NTT)
-//! Calculation is done modulo $x^d$.
-//! ```
-//! use fp2::fp;
-//! use fp2::Fp;
-//! type Fps = fp2::Fps<998244353>;
-//! let a = Fps::new(vec![fp!(1), fp!(2), fp!(3)], 4);
-//! let b = Fps::new(vec![fp!(4), fp!(5), fp!(6)], 4);
-//! assert_eq!(
-//!     &a * &b,
-//!     Fps::new(vec![fp!(4), fp!(13), fp!(28), fp!(27)], 4)
-//! );
-//! assert_eq!(a.inv(), Fps::new(vec![fp!(1), fp!(-2), fp!(1), fp!(4)], 4));
-//! ```
 mod ext_gcd;
 mod factorial;
 mod fourier;
-mod fps;
 mod montgomery;
 
 use ext_gcd::mod_inv;
 pub use factorial::Factorial;
 pub use fourier::any_mod_fps_mul;
 pub use fourier::fps_mul;
-pub use fps::Fps;
 use montgomery::oxidate;
 use montgomery::reduce;
 use std::iter::Product;

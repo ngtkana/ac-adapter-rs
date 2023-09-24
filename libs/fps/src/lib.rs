@@ -1,6 +1,18 @@
-use super::fps_mul;
-use super::Fp;
-use super::PrimitiveRoot;
+//! Formal power series.
+//! # Dependencies
+//! - `fp2`
+//! # Examples
+//! ```
+//! use fp2::fp;
+//! type Fps = fp2::Fps<998244353>;
+//! let f = Fps::new(vec![fp!(1), fp!(2)], 4);
+//! let g = f.inv();
+//! let expected = Fps::new(vec![fp!(1), fp!(-2), fp!(4), fp!(-8)], 4);
+//! assert_eq!(g, expected);
+//! ```
+use fp2::fps_mul;
+use fp2::Fp;
+use fp2::PrimitiveRoot;
 use std::ops::Add;
 use std::ops::AddAssign;
 use std::ops::Div;
@@ -65,11 +77,16 @@ impl<const P: u64> Fps<P> {
     /// assert_eq!(f.into_coeffs(), vec![fp!(1), fp!(2)]);
     /// ```
     pub fn polynominal(coeffs: Vec<Fp<P>>) -> Self {
-        assert!(coeffs.last() != Some(&Fp::new(0)));
-        Self {
+        let mut result = Self {
             coeffs,
             precision: usize::MAX,
-        }
+        };
+        result.__normalize();
+        result
+    }
+
+    pub fn at(&self, i: usize) -> Option<Fp<P>> {
+        (i < self.precision).then(|| self.coeffs.get(i).copied().unwrap_or(Fp::new(0)))
     }
 
     /// Returns the vector of coefficients.
@@ -267,6 +284,13 @@ where
         );
     }
 }
+#[allow(clippy::suspicious_op_assign_impl)]
+impl<const P: u64> DivAssign<&Self> for Fps<P>
+where
+    (): PrimitiveRoot<P>,
+{
+    fn div_assign(&mut self, rhs: &Self) { *self *= rhs.inv(); }
+}
 impl<const P: u64> Neg for Fps<P> {
     type Output = Self;
 
@@ -348,6 +372,7 @@ macro_rules! fps_forward_ops {
 fps_forward_ops!(Add, AddAssign, add, add_assign);
 fps_forward_ops!(Sub, SubAssign, sub, sub_assign);
 fps_forward_ops!(Mul, MulAssign, mul, mul_assign);
+fps_forward_ops!(Div, DivAssign, div, div_assign);
 impl<const P: u64, T: Into<Fp<P>>> AddAssign<T> for Fps<P> {
     fn add_assign(&mut self, rhs: T) {
         assert_ne!(self.precision, 0, "The precision must be positive.");
@@ -397,7 +422,7 @@ fps_forward_scalar_ops!(Div, DivAssign, div, div_assign);
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::fp;
+    use fp2::fp;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
