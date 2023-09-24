@@ -1,11 +1,23 @@
 /// Provids utility on stdin.
-use std::{
-    cell::Cell,
-    convert::TryFrom,
-    io::{stdin, BufRead, BufReader, Lines, Stdin},
-    str::FromStr,
-    sync::{Mutex, Once},
-};
+use std::cell::Cell;
+/// Provids utility on stdin.
+use std::convert::TryFrom;
+/// Provids utility on stdin.
+use std::io::stdin;
+/// Provids utility on stdin.
+use std::io::BufRead;
+/// Provids utility on stdin.
+use std::io::BufReader;
+/// Provids utility on stdin.
+use std::io::Lines;
+/// Provids utility on stdin.
+use std::io::Stdin;
+/// Provids utility on stdin.
+use std::str::FromStr;
+/// Provids utility on stdin.
+use std::sync::Mutex;
+/// Provids utility on stdin.
+use std::sync::Once;
 
 type Server = Mutex<Lines<BufReader<Stdin>>>;
 static ONCE: Once = Once::new();
@@ -37,9 +49,7 @@ where
     T: FromStr<Err = E>,
     E: std::fmt::Debug,
 {
-    fn force_from_str(s: &str) -> Self {
-        s.parse().unwrap()
-    }
+    fn force_from_str(s: &str) -> Self { s.parse().unwrap() }
 }
 /// Read a line from stdin and from_str to [T; N].
 pub fn input_array<T: ForceFromStr, const N: usize>() -> [T; N]
@@ -48,7 +58,7 @@ where
 {
     <[_; N]>::try_from(input_vec()).unwrap()
 }
-/// Read a line from stdin and from_str to Vec<T>.
+/// Read a line from stdin and from_str to [`Vec<T>`].
 pub fn input_vec<T: ForceFromStr>() -> Vec<T> {
     line()
         .split_whitespace()
@@ -56,6 +66,4 @@ pub fn input_vec<T: ForceFromStr>() -> Vec<T> {
         .collect::<Vec<_>>()
 }
 /// Read a line from stdin and from_str to T.
-pub fn input<T: ForceFromStr>() -> T {
-    T::force_from_str(&line())
-}
+pub fn input<T: ForceFromStr>() -> T { T::force_from_str(&line()) }
