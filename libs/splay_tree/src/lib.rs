@@ -19,7 +19,6 @@ mod node;
 /// # 提出 (3051 ms)
 ///
 /// https://judge.yosupo.jp/submission/55691
-///
 #[cfg(test)]
 mod test_dynamic_sequence_range_affine_range;
 
@@ -40,24 +39,30 @@ mod test_dynamic_sequence_range_affine_range;
 /// # 提出 (3157 ms)
 ///
 /// https://atcoder.jp/contests/soundhound2018-summer-final-open/submissions/24922921
-///
 #[cfg(test)]
 mod test_hash_swapping;
 
 #[cfg(test)]
 mod test_trivial;
 
-use self::node::{access_index, deep_free, merge, split_at, Node};
-use std::{
-    cell::Cell,
-    cmp::Ordering,
-    fmt::Debug,
-    hash::Hash,
-    iter::FromIterator,
-    marker::PhantomData,
-    ops::{Bound, Deref, DerefMut, Index, Range, RangeBounds},
-    ptr::null_mut,
-};
+use self::node::access_index;
+use self::node::deep_free;
+use self::node::merge;
+use self::node::split_at;
+use self::node::Node;
+use std::cell::Cell;
+use std::cmp::Ordering;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
+use std::ops::Bound;
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::ops::Index;
+use std::ops::Range;
+use std::ops::RangeBounds;
+use std::ptr::null_mut;
 
 /// [`Sized`], [`Debug`], [`Clone`] をまとめたトレイト
 pub trait Value: Sized + Debug + Clone {}
@@ -66,13 +71,18 @@ impl<T: Sized + Debug + Clone> Value for T {}
 /// 集約も作用もなしの場合に使うトレイト
 pub struct Nop<T: Value>(PhantomData<fn(T) -> T>);
 impl<T: Value> LazyOps for Nop<T> {
-    type Value = T;
     type Acc = ();
     type Lazy = ();
+    type Value = T;
+
     fn proj(_value: &Self::Value) -> Self::Acc {}
+
     fn op(&(): &Self::Acc, &(): &Self::Acc) -> Self::Acc {}
+
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
+
     fn act_acc(&(): &Self::Lazy, &mut (): &mut Self::Acc) {}
+
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
 /// 作用なしの場合に使うトレイト
@@ -89,17 +99,18 @@ pub trait Ops {
 /// [`Ops`] を実装する型をラップして [`LazyOps`] を実装する型
 pub struct NoLazy<O>(PhantomData<fn(O) -> O>);
 impl<O: Ops> LazyOps for NoLazy<O> {
-    type Value = O::Value;
     type Acc = O::Acc;
     type Lazy = ();
-    fn proj(value: &Self::Value) -> Self::Acc {
-        O::proj(value)
-    }
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
-        O::op(lhs, rhs)
-    }
+    type Value = O::Value;
+
+    fn proj(value: &Self::Value) -> Self::Acc { O::proj(value) }
+
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { O::op(lhs, rhs) }
+
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
+
     fn act_acc(&(): &Self::Lazy, _acc: &mut Self::Acc) {}
+
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
 
@@ -142,9 +153,8 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = SplayTree::<Nop<()>>::new();
     /// assert!(splay.is_empty());
     /// ```
-    pub fn new() -> Self {
-        Self(Cell::new(null_mut()))
-    }
+    pub fn new() -> Self { Self(Cell::new(null_mut())) }
+
     /// 空ならば `true` を返します。
     ///
     /// # Examples
@@ -154,9 +164,8 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = SplayTree::<Nop<()>>::new();
     /// assert!(splay.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.0.get().is_null()
-    }
+    pub fn is_empty(&self) -> bool { self.0.get().is_null() }
+
     /// 要素数を返します。
     ///
     /// # Examples
@@ -173,9 +182,8 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = repeat(()).take(3).collect::<SplayTree<Nop<()>>>();
     /// assert_eq!(splay.len(), 3);
     /// ```
-    pub fn len(&self) -> usize {
-        unsafe { self.0.get().as_ref() }.map_or(0, |root| root.len)
-    }
+    pub fn len(&self) -> usize { unsafe { self.0.get().as_ref() }.map_or(0, |root| root.len) }
+
     /// 指定した場所に挿入します。
     ///
     /// # Panics
@@ -188,11 +196,15 @@ impl<O: LazyOps> SplayTree<O> {
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::<SplayTree<Nop<i32>>>();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::<SplayTree<Nop<i32>>>();
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 12]);
     ///
     /// splay.insert(1, 20);
-    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 20, 11, 12]);
+    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+    ///     10, 20, 11, 12
+    /// ]);
     /// ```
     pub fn insert(&mut self, at: usize, value: O::Value) {
         if self.len() < at {
@@ -202,6 +214,7 @@ impl<O: LazyOps> SplayTree<O> {
         let node = Box::leak(Box::new(Node::new(value)));
         self.0.set(merge(merge(left, node), right));
     }
+
     /// 指定した場所の要素を削除します。
     ///
     /// # Panics
@@ -214,7 +227,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::<SplayTree<Nop<i32>>>();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::<SplayTree<Nop<i32>>>();
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 12]);
     ///
     /// splay.delete(1);
@@ -230,6 +245,7 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(merge(l, r));
         ans
     }
+
     /// 指定した範囲の要素を逆順にします。
     ///
     /// # Panics
@@ -243,10 +259,14 @@ impl<O: LazyOps> SplayTree<O> {
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
     /// let mut splay = (10..15).collect::<SplayTree<Nop<i32>>>();
-    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 12, 13, 14]);
+    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+    ///     10, 11, 12, 13, 14
+    /// ]);
     ///
     /// splay.reverse(1..4);
-    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 13, 12, 11, 14]);
+    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+    ///     10, 13, 12, 11, 14
+    /// ]);
     /// ```
     pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
         let Range { start, end } = into_range(self.len(), range);
@@ -258,6 +278,7 @@ impl<O: LazyOps> SplayTree<O> {
         }
         self.0.set(merge(merge(l, c), r));
     }
+
     /// 指定した範囲の要素を畳み込みます。
     ///
     /// # Panics
@@ -272,14 +293,12 @@ impl<O: LazyOps> SplayTree<O> {
     /// # use std::iter::repeat;
     /// enum Sum {}
     /// impl Ops for Sum {
-    ///     type Value = i32;
     ///     type Acc = i32;
-    ///     fn proj(&x: &i32) -> i32 {
-    ///         x
-    ///     }
-    ///     fn op(&x: &i32, &y: &i32) -> i32 {
-    ///         x + y
-    ///     }
+    ///     type Value = i32;
+    ///
+    ///     fn proj(&x: &i32) -> i32 { x }
+    ///
+    ///     fn op(&x: &i32, &y: &i32) -> i32 { x + y }
     /// }
     /// let splay = (10..15).collect::<SplayTree<NoLazy<Sum>>>();
     /// assert_eq!(splay.fold(2..), Some(12 + 13 + 14));
@@ -296,6 +315,7 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(merge(merge(l, c), r));
         ans
     }
+
     /// 指定した範囲の要素すべてに作用します。
     ///
     /// # Panics
@@ -310,23 +330,26 @@ impl<O: LazyOps> SplayTree<O> {
     /// # use std::iter::repeat;
     /// enum Update {}
     /// impl LazyOps for Update {
-    ///     type Value = i32;
     ///     type Acc = ();
     ///     type Lazy = i32;
+    ///     type Value = i32;
+    ///
     ///     fn proj(&x: &i32) {}
+    ///
     ///     fn op(&(): &(), &(): &()) {}
-    ///     fn act_value(&lazy: &Self::Lazy, value: &mut Self::Value) {
-    ///         *value = lazy;
-    ///     }
+    ///
+    ///     fn act_value(&lazy: &Self::Lazy, value: &mut Self::Value) { *value = lazy; }
+    ///
     ///     fn act_acc(&_lazy: &Self::Lazy, &mut (): &mut Self::Acc) {}
-    ///     fn compose(&x: &Self::Lazy, y: &mut Self::Lazy) {
-    ///         *y = x;
-    ///     }
+    ///
+    ///     fn compose(&x: &Self::Lazy, y: &mut Self::Lazy) { *y = x; }
     /// }
     ///
     /// let mut splay = (10..15).collect::<SplayTree<Update>>();
     /// splay.act(2..4, 20);
-    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 20, 20, 14]);
+    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+    ///     10, 11, 20, 20, 14
+    /// ]);
     /// ```
     pub fn act(&mut self, range: impl RangeBounds<usize>, lazy: O::Lazy) {
         let Range { start, end } = into_range(self.len(), range);
@@ -338,6 +361,7 @@ impl<O: LazyOps> SplayTree<O> {
         }
         self.0.set(merge(merge(l, c), r));
     }
+
     /// 指定した場所の要素への参照を返します。範囲外のときには `None` を返します。
     ///
     ///
@@ -346,7 +370,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let splay = vec![10, 11, 12].into_iter().collect::<SplayTree<Nop<i32>>>();
+    /// let splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::<SplayTree<Nop<i32>>>();
     /// assert_eq!(splay.get(0), Some(&10));
     /// assert_eq!(splay.get(5), None);
     /// ```
@@ -360,6 +386,7 @@ impl<O: LazyOps> SplayTree<O> {
         let ans = &root.value;
         Some(ans)
     }
+
     /// 指定した場所の要素への可変ハンドラを返します。範囲外のときには `None` を返します。
     ///
     ///
@@ -368,7 +395,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::<SplayTree<Nop<i32>>>();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::<SplayTree<Nop<i32>>>();
     /// *splay.entry(0).unwrap() += 10;
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![20, 11, 12]);
     /// ```
@@ -381,6 +410,7 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(root);
         Some(Entry(self))
     }
+
     /// 指定した場所以降を切り離して返します。
     ///
     ///
@@ -408,6 +438,7 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(left);
         Self(Cell::new(right))
     }
+
     /// 受け取ったスプレー木の値をすべて後ろにつなげます。
     ///
     ///
@@ -420,13 +451,16 @@ impl<O: LazyOps> SplayTree<O> {
     /// let mut other = (20..23).into_iter().collect::<SplayTree<Nop<i32>>>();
     /// splay.append(&mut other);
     ///
-    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 12, 20, 21, 22]);
+    /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+    ///     10, 11, 12, 20, 21, 22
+    /// ]);
     /// ```
-    pub fn append(&mut self, right: &mut Self) {
+    pub fn append(&mut self, right: &Self) {
         let root = merge(self.0.get(), right.0.get());
         self.0.set(root);
         right.0.set(null_mut());
     }
+
     /// 要素を順番に返すイテレータを返します。
     ///
     ///
@@ -450,6 +484,7 @@ impl<O: LazyOps> SplayTree<O> {
             end: self.len(),
         }
     }
+
     /// 指定した範囲の要素を順番に返すイテレータを返します。
     ///
     ///
@@ -474,6 +509,7 @@ impl<O: LazyOps> SplayTree<O> {
             end,
         }
     }
+
     /// 内部情報をダンプします。
     pub fn dump(&self) {
         println!("    === start dump ===    ");
@@ -509,14 +545,10 @@ impl<O: LazyOps> Debug for SplayTree<O> {
     }
 }
 impl<O: LazyOps> Clone for SplayTree<O> {
-    fn clone(&self) -> Self {
-        self.iter().cloned().collect()
-    }
+    fn clone(&self) -> Self { self.iter().cloned().collect() }
 }
 impl<O: LazyOps> Default for SplayTree<O> {
-    fn default() -> Self {
-        Self(Cell::new(null_mut()))
-    }
+    fn default() -> Self { Self(Cell::new(null_mut())) }
 }
 impl<O: LazyOps> PartialEq for SplayTree<O>
 where
@@ -559,13 +591,12 @@ impl<O: LazyOps> Hash for SplayTree<O>
 where
     O::Value: Hash,
 {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.iter().for_each(|x| x.hash(state))
-    }
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.iter().for_each(|x| x.hash(state)) }
 }
 
 impl<O: LazyOps> Index<usize> for SplayTree<O> {
     type Output = O::Value;
+
     fn index(&self, index: usize) -> &Self::Output {
         if self.len() <= index {
             splay_tree_index_out_of_range_fail(index, self.len());
@@ -582,6 +613,7 @@ pub struct Iter<'a, O: LazyOps> {
 }
 impl<'a, O: LazyOps> Iterator for Iter<'a, O> {
     type Item = &'a O::Value;
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.start == self.end {
             None
@@ -608,20 +640,15 @@ impl<'a, O: LazyOps> DoubleEndedIterator for Iter<'a, O> {
 pub struct Entry<'a, O: LazyOps>(&'a mut SplayTree<O>);
 impl<O: LazyOps> Deref for Entry<'_, O> {
     type Target = O::Value;
-    fn deref(&self) -> &Self::Target {
-        &unsafe { &*self.0 .0.get() }.value
-    }
+
+    fn deref(&self) -> &Self::Target { &unsafe { &*self.0 .0.get() }.value }
 }
 impl<O: LazyOps> DerefMut for Entry<'_, O> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut unsafe { &mut *self.0 .0.get() }.value
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut unsafe { &mut *self.0 .0.get() }.value }
 }
 
 impl<O: LazyOps> Drop for SplayTree<O> {
-    fn drop(&mut self) {
-        deep_free(self.0.get());
-    }
+    fn drop(&mut self) { deep_free(self.0.get()); }
 }
 fn into_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     let start = match range.start_bound() {

@@ -81,6 +81,7 @@ pub struct FilterPosition<I, F> {
 
 impl<I: Iterator, F: Fn(I::Item) -> bool> Iterator for FilterPosition<I, F> {
     type Item = usize;
+
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             if (self.f)(self.iter.next()?) {
@@ -95,13 +96,14 @@ impl<I: Iterator, F: Fn(I::Item) -> bool> Iterator for FilterPosition<I, F> {
 
 #[cfg(test)]
 mod tests {
-    use {super::TFilterPosition, itertools::assert_equal};
+    use super::TFilterPosition;
+    use itertools::assert_equal;
 
     #[test]
     fn test_filter_position() {
         assert_equal(
             [false, false, false].iter().copied().filter_position(),
-            Vec::<usize>::new().into_iter(),
+            Vec::<usize>::new(),
         );
         assert_equal(
             [true, false, false].iter().copied().filter_position(),
@@ -111,26 +113,22 @@ mod tests {
             [false, true, false].iter().copied().filter_position(),
             vec![1],
         );
-        assert_equal(
-            [true, true, false].iter().copied().filter_position(),
-            vec![0, 1],
-        );
+        assert_equal([true, true, false].iter().copied().filter_position(), vec![
+            0, 1,
+        ]);
         assert_equal(
             [false, false, true].iter().copied().filter_position(),
             vec![2],
         );
-        assert_equal(
-            [true, false, true].iter().copied().filter_position(),
-            vec![0, 2],
-        );
-        assert_equal(
-            [false, true, true].iter().copied().filter_position(),
-            vec![1, 2],
-        );
-        assert_equal(
-            [true, true, true].iter().copied().filter_position(),
-            vec![0, 1, 2],
-        );
+        assert_equal([true, false, true].iter().copied().filter_position(), vec![
+            0, 2,
+        ]);
+        assert_equal([false, true, true].iter().copied().filter_position(), vec![
+            1, 2,
+        ]);
+        assert_equal([true, true, true].iter().copied().filter_position(), vec![
+            0, 1, 2,
+        ]);
     }
 
     #[test]

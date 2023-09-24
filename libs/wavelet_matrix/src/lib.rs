@@ -99,22 +99,20 @@
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
 //!   - コメント: 想定は余事象を考えて RSQ
-//!
 #![allow(clippy::len_zero)]
 
-use std::{
-    fmt::Debug,
-    iter::FromIterator,
-    mem::size_of,
-    ops::{Bound, Range, RangeBounds},
-};
+use std::fmt::Debug;
+use std::iter::FromIterator;
+use std::mem::size_of;
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 const UNIT: usize = size_of::<usize>();
 
 /// ウェーブレット行列
 ///
 /// [問題例などは `wavelet_matrix` クレートのドキュメントにあります。](crate)
-///
 #[derive(Clone, Default, Hash, PartialEq, Eq)]
 pub struct WaveletMatrix {
     table: Vec<StaticBitVec>,
@@ -145,9 +143,8 @@ impl WaveletMatrix {
     /// let wm = WaveletMatrix::from_iter(vec![0]);
     /// assert!(!wm.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.table.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.table.is_empty() }
+
     /// 配列の長さを返します。
     ///
     /// # Examples
@@ -160,9 +157,8 @@ impl WaveletMatrix {
     /// assert_eq!(WaveletMatrix::from_iter(vec![42]).len(), 1);
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
-    pub fn len(&self) -> usize {
-        self.table.first().map_or(0, StaticBitVec::len)
-    }
+    pub fn len(&self) -> usize { self.table.first().map_or(0, StaticBitVec::len) }
+
     /// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///
     /// [用途は `spans` をご覧ください。](WaveletMatrix::spans)
@@ -175,11 +171,7 @@ impl WaveletMatrix {
     /// ```
     /// use wavelet_matrix::WaveletMatrix;
     /// let (_wm, table) = WaveletMatrix::from_iter_collect_vec2(vec![2, 1, 3, 0]);
-    /// let expected = vec![
-    ///     vec![2, 1, 3, 0],
-    ///     vec![1, 0, 2, 3],
-    ///     vec![0, 2, 1, 3],
-    /// ];
+    /// let expected = vec![vec![2, 1, 3, 0], vec![1, 0, 2, 3], vec![0, 2, 1, 3]];
     /// assert_eq!(table, expected);
     /// ```
     pub fn from_iter_collect_vec2(
@@ -190,6 +182,7 @@ impl WaveletMatrix {
         let wm = Self::from_slice_of_usize_mut(&mut slice, |row| table.push(row.to_vec()));
         (wm, table)
     }
+
     /// [特に高速化の意図がなければ、`FromIterator`
     /// を代わりにお使いください。](WaveletMatrix::from_iter)
     pub fn from_slice_of_usize_mut(
@@ -213,6 +206,7 @@ impl WaveletMatrix {
         callback(slice);
         Self { table }
     }
+
     /// `i` 番目の要素を返します。
     ///
     /// # Examples
@@ -233,6 +227,7 @@ impl WaveletMatrix {
         }
         ans
     }
+
     /// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている要素の個数を返します。
     ///
@@ -254,6 +249,7 @@ impl WaveletMatrix {
     ) -> usize {
         self.spans(index, value).map(|span| span.index.len()).sum()
     }
+
     /// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている最小の要素を返します。
     ///
@@ -273,6 +269,7 @@ impl WaveletMatrix {
         self.root(open(index, self.len()))
             .next_value(&open(value, self.lim()))
     }
+
     /// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている最小の要素を返します。
     ///
@@ -292,6 +289,7 @@ impl WaveletMatrix {
         self.root(open(index, self.len()))
             .prev_value(&open(value, self.lim()))
     }
+
     /// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている中で、
     /// 0-based index で `k` 番目に小さい要素を返します。
@@ -314,6 +312,7 @@ impl WaveletMatrix {
             .quantile(k, &open(value, self.lim()))
             .ok()
     }
+
     /// 対応する部分を、`(depth, index_range, value_range)` の形のものに分解します。
     ///
     /// [`Spans`] は [`SpanInNode`] を返すイテレータです。
@@ -337,7 +336,6 @@ impl WaveletMatrix {
     /// sorted.sort();
     /// assert_eq!(&sorted, &[3, 5, 5]);
     /// ```
-    ///
     pub fn spans(
         &self,
         index: impl RangeBounds<usize>,
@@ -365,9 +363,9 @@ impl WaveletMatrix {
         stack.push(current);
         Spans { stack, target }
     }
-    fn lim(&self) -> usize {
-        1 << self.table.len()
-    }
+
+    fn lim(&self) -> usize { 1 << self.table.len() }
+
     fn root(&self, index: Range<usize>) -> SpanInNode<'_> {
         SpanInNode {
             wm: self,
@@ -443,25 +441,25 @@ impl FromIterator<bool> for StaticBitVec {
 }
 impl StaticBitVec {
     /// `a.is_empty()`
-    pub fn is_empty(&self) -> bool {
-        self.len == 0
-    }
+    pub fn is_empty(&self) -> bool { self.len == 0 }
+
     /// `a.len()`
-    pub fn len(&self) -> usize {
-        self.len
-    }
+    pub fn len(&self) -> usize { self.len }
+
     /// `a[i]`
     pub fn access(&self, i: usize) -> bool {
         assert!(i < self.len);
         let (q, r) = divrem(i, UNIT);
         self.pattern[q] >> r & 1 == 1
     }
+
     /// `sum(a[..end])`
     pub fn rank(&self, end: usize) -> usize {
         assert!(end <= self.len);
         let (q, r) = divrem(end, UNIT);
         self.rank[q] + (self.pattern[q] & ((1 << r) - 1)).count_ones() as usize
     }
+
     /// min i s.t. `target <= sum(a[..i])`
     pub fn select(&self, target: usize) -> usize {
         if target == 0 {
@@ -470,11 +468,7 @@ impl StaticBitVec {
         let mut lr = 0..self.rank.len();
         while 1 < lr.len() {
             let c = midpoint(&lr);
-            *if self.rank[c] < target {
-                &mut lr.start
-            } else {
-                &mut lr.end
-            } = c;
+            *if self.rank[c] < target { &mut lr.start } else { &mut lr.end } = c;
         }
         let q = lr.start;
         let mut lr = 0..UNIT;
@@ -498,6 +492,7 @@ pub struct Spans<'a> {
 }
 impl<'a> Iterator for Spans<'a> {
     type Item = SpanInNode<'a>;
+
     fn next(&mut self) -> Option<Self::Item> {
         let ans = self.stack.pop()?;
         if ans.value.end == self.target.end {
@@ -535,6 +530,7 @@ impl<'a> SpanInNode<'a> {
             value: self.value.start..midpoint(&self.value),
         }
     }
+
     fn right_down(&self) -> Self {
         Self {
             wm: self.wm,
@@ -543,6 +539,7 @@ impl<'a> SpanInNode<'a> {
             value: midpoint(&self.value)..self.value.end,
         }
     }
+
     fn next_value(&self, target: &Range<usize>) -> Option<usize> {
         if is_disjoint_with(&self.value, target) || self.index.len() == 0 {
             None
@@ -554,6 +551,7 @@ impl<'a> SpanInNode<'a> {
                 .or_else(|| self.right_down().next_value(target))
         }
     }
+
     fn prev_value(&self, target: &Range<usize>) -> Option<usize> {
         if is_disjoint_with(&self.value, target) || self.index.len() == 0 {
             None
@@ -565,6 +563,7 @@ impl<'a> SpanInNode<'a> {
                 .or_else(|| self.left_down().prev_value(target))
         }
     }
+
     fn quantile(&self, k: usize, target: &Range<usize>) -> Result<usize, usize> {
         let ans = if is_disjoint_with(&self.value, target) {
             Err(0)
@@ -583,9 +582,7 @@ impl<'a> SpanInNode<'a> {
     }
 }
 
-fn midpoint(range: &Range<usize>) -> usize {
-    range.start + (range.end - range.start) / 2
-}
+fn midpoint(range: &Range<usize>) -> usize { range.start + (range.end - range.start) / 2 }
 
 fn is_disjoint_with(lhs: &Range<usize>, rhs: &Range<usize>) -> bool {
     lhs.end <= rhs.start || rhs.end <= lhs.start
@@ -614,8 +611,11 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use itertools::{iproduct, Itertools};
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use itertools::iproduct;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::iter::repeat_with;
 
     const H: usize = 3;
@@ -700,7 +700,7 @@ mod tests {
     #[test]
     fn test_wavelet_matrix_construction() {
         #[rustfmt::skip]
-        let expected = vec![
+        let expected = [
             "111100110010",
             "100100000010",
             "110101111010",

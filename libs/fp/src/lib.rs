@@ -1,15 +1,51 @@
 /// 自動素数 mod・高速フーリエ変換ライブラリ
-///
-use std::{
-    fmt::{Debug, Display},
-    hash::Hash,
-    iter::{once, repeat, successors, FromIterator, Product, Sum},
-    marker::PhantomData,
-    mem::{swap, take},
-    ops::{
-        Add, AddAssign, Deref, DerefMut, Div, DivAssign, Index, Mul, MulAssign, Neg, Sub, SubAssign,
-    },
-};
+use std::fmt::Debug;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::fmt::Display;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::hash::Hash;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::once;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::repeat;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::successors;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::FromIterator;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::Product;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::iter::Sum;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::marker::PhantomData;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::mem::swap;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::mem::take;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Add;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::AddAssign;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Deref;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::DerefMut;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Div;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::DivAssign;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Index;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Mul;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::MulAssign;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Neg;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::Sub;
+/// 自動素数 mod・高速フーリエ変換ライブラリ
+use std::ops::SubAssign;
 
 // TODO: マクロで定義するとバンドラさんに壊されしまいます。
 crate::define_fp! {
@@ -185,9 +221,9 @@ impl<M: Fft> Fp<M> {
 }
 impl<M: Mod> Fp<M> {
     pub const P: u64 = M::P;
-    pub fn new(value: u64) -> Self {
-        Self(value % Self::P, PhantomData)
-    }
+
+    pub fn new(value: u64) -> Self { Self(value % Self::P, PhantomData) }
+
     pub fn m1pow(pow: u32) -> Self {
         Self(
             match pow % 2 {
@@ -198,9 +234,9 @@ impl<M: Mod> Fp<M> {
             PhantomData,
         )
     }
-    pub fn value(self) -> u64 {
-        self.0
-    }
+
+    pub fn value(self) -> u64 { self.0 }
+
     pub fn inv(self) -> Self {
         assert_ne!(self.0, 0, "Cannot invert `0`.");
         let mut x = Self::P as i64;
@@ -222,6 +258,7 @@ impl<M: Mod> Fp<M> {
         }
         Self(u as u64, PhantomData)
     }
+
     pub fn pow(mut self, mut exp: u64) -> Self {
         let mut res = Self(1, PhantomData);
         if exp != 0 {
@@ -239,30 +276,20 @@ impl<M: Mod> Fp<M> {
 }
 impl<M: Mod> Copy for Fp<M> {}
 impl<M: Mod> Clone for Fp<M> {
-    fn clone(&self) -> Self {
-        Self(self.0, self.1)
-    }
+    fn clone(&self) -> Self { *self }
 }
 impl<M: Mod> PartialEq for Fp<M> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.eq(&other.0)
-    }
+    fn eq(&self, other: &Self) -> bool { self.0.eq(&other.0) }
 }
 impl<M: Mod> Display for Fp<M> {
-    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        Display::fmt(&self.0, f)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result { Display::fmt(&self.0, f) }
 }
 impl<M: Mod> Eq for Fp<M> {}
 impl<M: Mod> Default for Fp<M> {
-    fn default() -> Self {
-        Self(0, PhantomData)
-    }
+    fn default() -> Self { Self(0, PhantomData) }
 }
 impl<M: Mod> Hash for Fp<M> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state)
-    }
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.0.hash(state) }
 }
 impl<M: Mod> Debug for Fp<M> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -351,12 +378,11 @@ impl<M: Mod, T: Into<Fp<M>>> MulAssign<T> for Fp<M> {
 }
 #[allow(clippy::suspicious_op_assign_impl)]
 impl<M: Mod, T: Into<Fp<M>>> DivAssign<T> for Fp<M> {
-    fn div_assign(&mut self, rhs: T) {
-        *self *= rhs.into().inv();
-    }
+    fn div_assign(&mut self, rhs: T) { *self *= rhs.into().inv(); }
 }
 impl<M: Mod> Neg for Fp<M> {
     type Output = Fp<M>;
+
     fn neg(self) -> Self::Output {
         if self.0 == 0 {
             self
@@ -367,9 +393,8 @@ impl<M: Mod> Neg for Fp<M> {
 }
 impl<M: Mod> Neg for &Fp<M> {
     type Output = Fp<M>;
-    fn neg(self) -> Self::Output {
-        -*self
-    }
+
+    fn neg(self) -> Self::Output { -*self }
 }
 
 macro_rules! fp_forward_ops {
@@ -418,19 +443,13 @@ fp_forward_ops! {
     Div, DivAssign, div, div_assign,
 }
 impl<M: Mod> Sum for Fp<M> {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::new(0), |b, x| b + x)
-    }
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::new(0), |b, x| b + x) }
 }
 impl<M: Mod> Product for Fp<M> {
-    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::new(1), |b, x| b * x)
-    }
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::new(1), |b, x| b * x) }
 }
 impl<'a, M: Mod> Sum<&'a Self> for Fp<M> {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Self::new(0), |b, x| b + x)
-    }
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.fold(Self::new(0), |b, x| b + x) }
 }
 impl<'a, M: Mod> Product<&'a Self> for Fp<M> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
@@ -465,9 +484,8 @@ where
     Vec<Fp<M>>: Index<I>,
 {
     type Output = <Vec<Fp<M>> as Index<I>>::Output;
-    fn index(&self, index: I) -> &Self::Output {
-        &self.0[index]
-    }
+
+    fn index(&self, index: I) -> &Self::Output { &self.0[index] }
 }
 impl<M: Mod> FactTable<M> {
     pub fn binom(&self, n: usize, k: usize) -> Fp<M> {
@@ -475,9 +493,9 @@ impl<M: Mod> FactTable<M> {
         assert!(k <= n);
         self.0[n] * self.1[k] * self.1[n - k]
     }
-    pub fn binom2(&self, i: usize, j: usize) -> Fp<M> {
-        self.binom(i + j, i)
-    }
+
+    pub fn binom2(&self, i: usize, j: usize) -> Fp<M> { self.binom(i + j, i) }
+
     pub fn binom_inv(&self, n: u64, k: u64) -> Fp<M> {
         let n = n as usize;
         let k = k as usize;
@@ -485,6 +503,7 @@ impl<M: Mod> FactTable<M> {
         assert!(k <= n);
         self.1[n] * self.0[k] * self.0[n - k]
     }
+
     pub fn binom_or_zero(&self, n: usize, k: isize) -> Fp<M> {
         assert!(n < self.0.len());
         if (0..=n as isize).contains(&k) {
@@ -643,18 +662,14 @@ pub fn fft<M: Fft>(a: &mut [Fp<M>]) {
 
 pub struct Fpsp<M>(pub Vec<Fp<M>>);
 impl<M: Fft> Fpsp<M> {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
-    }
-    pub fn len(&self) -> usize {
-        self.0.len()
-    }
-    pub fn truncated(&self, len: usize) -> Self {
-        self.iter().copied().take(len).collect()
-    }
+    pub fn new() -> Self { Self::default() }
+
+    pub fn is_empty(&self) -> bool { self.0.is_empty() }
+
+    pub fn len(&self) -> usize { self.0.len() }
+
+    pub fn truncated(&self, len: usize) -> Self { self.iter().copied().take(len).collect() }
+
     pub fn resized(&self, len: usize) -> Self {
         self.iter()
             .copied()
@@ -662,6 +677,7 @@ impl<M: Fft> Fpsp<M> {
             .take(len)
             .collect()
     }
+
     pub fn derivative(&self) -> Self {
         self.iter()
             .enumerate()
@@ -669,11 +685,13 @@ impl<M: Fft> Fpsp<M> {
             .map(|(i, &x)| fp!(i) * x)
             .collect()
     }
+
     pub fn integral(&self) -> Self {
         once(fp!(0))
             .chain(self.iter().enumerate().map(|(i, &x)| x / fp!(i + 1)))
             .collect()
     }
+
     pub fn inv(&self, precision: usize) -> Self {
         assert!(
             !self.is_empty() && self[0] != fp!(0),
@@ -683,6 +701,7 @@ impl<M: Fft> Fpsp<M> {
             (-&g * self.truncated(d) + 2) * g
         })
     }
+
     pub fn log(&self, precision: usize) -> Self {
         assert!(
             !self.is_empty() && self[0] == fp!(1),
@@ -692,6 +711,7 @@ impl<M: Fft> Fpsp<M> {
             .integral()
             .resized(precision)
     }
+
     pub fn exp(&self, precision: usize) -> Self {
         assert!(
             !self.is_empty() && self[0] == fp!(0),
@@ -716,19 +736,14 @@ pub fn newton_by<M: Fft>(
 }
 impl<M: Fft> Deref for Fpsp<M> {
     type Target = Vec<Fp<M>>;
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+
+    fn deref(&self) -> &Self::Target { &self.0 }
 }
 impl<M: Fft> DerefMut for Fpsp<M> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.0 }
 }
 impl<M: Fft> Clone for Fpsp<M> {
-    fn clone(&self) -> Self {
-        Self(self.to_vec())
-    }
+    fn clone(&self) -> Self { Self(self.to_vec()) }
 }
 impl<M: Fft, T: Into<Fp<M>>> FromIterator<T> for Fpsp<M> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
@@ -771,6 +786,7 @@ impl<M: Fft> SubAssign<&Fp<M>> for Fpsp<M> {
 }
 impl<M: Fft> Neg for Fpsp<M> {
     type Output = Fpsp<M>;
+
     fn neg(mut self) -> Self::Output {
         self.0.iter_mut().for_each(|x| *x = -*x);
         self
@@ -778,9 +794,8 @@ impl<M: Fft> Neg for Fpsp<M> {
 }
 impl<M: Fft> Neg for &Fpsp<M> {
     type Output = Fpsp<M>;
-    fn neg(self) -> Self::Output {
-        self.0.iter().map(|&x| -x).collect()
-    }
+
+    fn neg(self) -> Self::Output { self.0.iter().map(|&x| -x).collect() }
 }
 macro_rules! fps_forward_ops_borrow {
     ($(
@@ -835,27 +850,21 @@ fps_forward_ops_borrow! {
 }
 impl<M: Fft> Mul<Fpsp<M>> for Fpsp<M> {
     type Output = Fpsp<M>;
-    fn mul(self, rhs: Fpsp<M>) -> Self::Output {
-        Fpsp(convolution(self.0, rhs.0))
-    }
+
+    fn mul(self, rhs: Fpsp<M>) -> Self::Output { Fpsp(convolution(self.0, rhs.0)) }
 }
 impl<M: Fft> MulAssign<&Fp<M>> for Fpsp<M> {
-    fn mul_assign(&mut self, rhs: &Fp<M>) {
-        self.0.iter_mut().for_each(|x| *x *= *rhs);
-    }
+    fn mul_assign(&mut self, rhs: &Fp<M>) { self.0.iter_mut().for_each(|x| *x *= *rhs); }
 }
 impl<M: Fft> MulAssign<Fpsp<M>> for Fpsp<M> {
-    fn mul_assign(&mut self, rhs: Fpsp<M>) {
-        *self = take(self).mul(rhs)
-    }
+    fn mul_assign(&mut self, rhs: Fpsp<M>) { *self = take(self).mul(rhs) }
 }
 impl<M: Fft, T: Into<Fp<M>>> MulAssign<T> for Fpsp<M> {
-    fn mul_assign(&mut self, rhs: T) {
-        self.mul_assign(&rhs.into());
-    }
+    fn mul_assign(&mut self, rhs: T) { self.mul_assign(&rhs.into()); }
 }
 impl<M: Fft> Mul<&Fp<M>> for Fpsp<M> {
     type Output = Fpsp<M>;
+
     fn mul(mut self, rhs: &Fp<M>) -> Self::Output {
         self.mul_assign(rhs);
         self
@@ -863,6 +872,7 @@ impl<M: Fft> Mul<&Fp<M>> for Fpsp<M> {
 }
 impl<M: Fft, T: Into<Fp<M>>> Mul<T> for Fpsp<M> {
     type Output = Fpsp<M>;
+
     fn mul(mut self, rhs: T) -> Self::Output {
         self.mul_assign(rhs);
         self
@@ -870,31 +880,25 @@ impl<M: Fft, T: Into<Fp<M>>> Mul<T> for Fpsp<M> {
 }
 
 impl<M: Fft> Debug for Fpsp<M> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.0.fmt(f) }
 }
 impl<M: Fft> PartialEq for Fpsp<M> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.eq(&other.0)
-    }
+    fn eq(&self, other: &Self) -> bool { self.0.eq(&other.0) }
 }
 impl<M: Fft> Eq for Fpsp<M> {}
 impl<M: Fft> Default for Fpsp<M> {
-    fn default() -> Self {
-        Self(Vec::new())
-    }
+    fn default() -> Self { Self(Vec::new()) }
 }
 impl<M: Fft> Hash for Fpsp<M> {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
-        self.0.hash(state)
-    }
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.0.hash(state) }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::iter::repeat_with;
     type Fps = Fps998244353;
 

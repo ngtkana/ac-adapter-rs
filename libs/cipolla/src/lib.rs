@@ -1,4 +1,8 @@
-use std::ops::{Add, Div, Mul, Rem, Sub};
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Rem;
+use std::ops::Sub;
 
 pub fn cipolla_sqrt<T: Unsigned>(a: T, p: T) -> Option<T> {
     let a = a % p;
@@ -82,7 +86,7 @@ mod tests {
 
     #[test]
     fn test_sqrt_all() {
-        let mut sieve = vec![false; 100];
+        let mut sieve = [false; 100];
         let sieve_len = sieve.len();
         for p in 2..sieve_len {
             if sieve[p] {
