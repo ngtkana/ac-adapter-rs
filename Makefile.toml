@@ -50,4 +50,5 @@ args = [
   "-Aclippy::semicolon-if-nothing-returned",
   "-Aclippy::similar-names",
   "-Aclippy::uninlined-format-args",
+  "-Aclippy::unreadable_literal",
 ]

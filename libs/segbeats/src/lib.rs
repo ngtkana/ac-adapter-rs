@@ -1,9 +1,12 @@
 use open::open;
-use std::{
-    cell::RefCell,
-    fmt::Debug,
-    ops::{Add, AddAssign, Range, RangeBounds, Sub, SubAssign},
-};
+use std::cell::RefCell;
+use std::fmt::Debug;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Range;
+use std::ops::RangeBounds;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Segbeats<T> {
@@ -29,26 +32,32 @@ impl<T: Elm> Segbeats<T> {
             table: RefCell::new(table),
         }
     }
+
     pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMin<T>>(range, x)
     }
+
     pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMax<T>>(range, x)
     }
+
     pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMin<T>>(range, ())
     }
+
     pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
     }
+
     pub fn query_sum(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QuerySum<T>>(range, ())
     }
+
     fn push(&self, i: usize) {
         let x = self.table.borrow()[i].max[0];
         for j in 2 * i..2 * i + 2 {
@@ -65,9 +74,11 @@ impl<T: Elm> Segbeats<T> {
             }
         }
     }
+
     fn dfs<D: Dfs<Value = T>>(&self, range: Range<usize>, x: D::Param) -> D::Output {
         self.dfs_impl::<D>(1, 0..self.len, range, x)
     }
+
     fn dfs_impl<D: Dfs<Value = T>>(
         &self,
         root: usize,
@@ -90,6 +101,7 @@ impl<T: Elm> Segbeats<T> {
             D::merge(l, r)
         }
     }
+
     fn update(&self, i: usize) {
         let x = Node::merge(self.table.borrow()[2 * i], self.table.borrow()[2 * i + 1]);
         self.table.borrow_mut()[i] = x;
@@ -101,96 +113,83 @@ trait Dfs {
     type Param: Copy + Debug;
     type Output: Debug;
     fn identity() -> Self::Output;
-    fn break_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
-        false
-    }
-    fn tag_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
-        true
-    }
+    fn break_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool { false }
+    fn tag_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool { true }
     fn tag(_node: &mut Node<Self::Value>, _x: Self::Param) {}
     fn merge(left: Self::Output, right: Self::Output) -> Self::Output;
     fn extract(node: Node<Self::Value>) -> Self::Output;
 }
 struct ChangeMin<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for ChangeMin<T> {
-    type Value = T;
-    type Param = T;
     type Output = ();
+    type Param = T;
+    type Value = T;
+
     fn identity() -> Self::Output {}
-    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
-        node.max[0] <= x
-    }
-    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
-        node.max[1] < x
-    }
-    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
-        node.change_min(x);
-    }
-    fn merge(_: (), _: ()) {}
+
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool { node.max[0] <= x }
+
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool { node.max[1] < x }
+
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) { node.change_min(x); }
+
+    fn merge((): (), (): ()) {}
+
     fn extract(_node: Node<T>) {}
 }
 struct ChangeMax<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for ChangeMax<T> {
-    type Value = T;
-    type Param = T;
     type Output = ();
+    type Param = T;
+    type Value = T;
+
     fn identity() -> Self::Output {}
-    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
-        x <= node.min[0]
-    }
-    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
-        x < node.min[1]
-    }
-    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
-        node.change_max(x);
-    }
-    fn merge(_: (), _: ()) {}
+
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool { x <= node.min[0] }
+
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool { x < node.min[1] }
+
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) { node.change_max(x); }
+
+    fn merge((): (), (): ()) {}
+
     fn extract(_node: Node<T>) {}
 }
 struct QueryMin<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QueryMin<T> {
-    type Value = T;
-    type Param = ();
     type Output = T;
-    fn identity() -> Self::Output {
-        T::max_value()
-    }
-    fn merge(left: T, right: T) -> T {
-        left.min(right)
-    }
-    fn extract(node: Node<T>) -> T {
-        node.min[0]
-    }
+    type Param = ();
+    type Value = T;
+
+    fn identity() -> Self::Output { T::max_value() }
+
+    fn merge(left: T, right: T) -> T { left.min(right) }
+
+    fn extract(node: Node<T>) -> T { node.min[0] }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QueryMax<T> {
-    type Value = T;
-    type Param = ();
     type Output = T;
-    fn identity() -> Self::Output {
-        T::min_value()
-    }
-    fn merge(left: T, right: T) -> T {
-        left.max(right)
-    }
-    fn extract(node: Node<T>) -> T {
-        node.max[0]
-    }
+    type Param = ();
+    type Value = T;
+
+    fn identity() -> Self::Output { T::min_value() }
+
+    fn merge(left: T, right: T) -> T { left.max(right) }
+
+    fn extract(node: Node<T>) -> T { node.max[0] }
 }
 struct QuerySum<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QuerySum<T> {
-    type Value = T;
-    type Param = ();
     type Output = T;
-    fn identity() -> Self::Output {
-        T::zero()
-    }
-    fn merge(left: T, right: T) -> T {
-        left + right
-    }
-    fn extract(node: Node<T>) -> T {
-        node.sum
-    }
+    type Param = ();
+    type Value = T;
+
+    fn identity() -> Self::Output { T::zero() }
+
+    fn merge(left: T, right: T) -> T { left + right }
+
+    fn extract(node: Node<T>) -> T { node.sum }
 }
 
 #[derive(Debug, Clone, PartialEq, Copy, Eq)]
@@ -211,6 +210,7 @@ impl<T: Elm> Node<T> {
             sum: T::zero(),
         }
     }
+
     fn single(x: T) -> Self {
         Self {
             max: [x, T::min_value()],
@@ -220,6 +220,7 @@ impl<T: Elm> Node<T> {
             sum: x,
         }
     }
+
     fn change_min(&mut self, x: T) {
         assert!(self.max[1] < x && x < self.max[0]);
         self.sum += (x - self.max[0]).mul_u32(self.c_max);
@@ -230,6 +231,7 @@ impl<T: Elm> Node<T> {
         }
         self.max[0] = x;
     }
+
     fn change_max(&mut self, x: T) {
         assert!(self.min[0] < x && x < self.min[1]);
         self.sum += (x - self.min[0]).mul_u32(self.c_min);
@@ -240,6 +242,7 @@ impl<T: Elm> Node<T> {
         }
         self.min[0] = x;
     }
+
     fn merge(left: Self, right: Self) -> Self {
         use std::cmp::Ordering;
         let (max, c_max) = {
@@ -270,12 +273,8 @@ impl<T: Elm> Node<T> {
     }
 }
 
-fn contains(i: &Range<usize>, j: &Range<usize>) -> bool {
-    i.start <= j.start && j.end <= i.end
-}
-fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
-    i.end <= j.start || j.end <= i.start
-}
+fn contains(i: &Range<usize>, j: &Range<usize>) -> bool { i.start <= j.start && j.end <= i.end }
+fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool { i.end <= j.start || j.end <= i.start }
 
 pub trait Elm:
     Sized

@@ -1,19 +1,22 @@
-use std::{iter::repeat_with, mem::swap};
-
+use super::NoLazy;
+use super::Ops;
+use super::SplayTree;
 use itertools::Itertools;
-use rand::{prelude::StdRng, Rng, SeedableRng};
-
-use super::{NoLazy, Ops, SplayTree};
+use rand::prelude::StdRng;
+use rand::Rng;
+use rand::SeedableRng;
+use std::iter::repeat_with;
+use std::mem::swap;
 
 const P: u64 = 998_244_353;
 
 enum StrHash {}
 impl Ops for StrHash {
-    type Value = u64;
     type Acc = [u64; 2];
-    fn proj(&value: &Self::Value) -> Self::Acc {
-        [value, 1_000_000]
-    }
+    type Value = u64;
+
+    fn proj(&value: &Self::Value) -> Self::Acc { [value, 1_000_000] }
+
     fn op(&lhs: &Self::Acc, &rhs: &Self::Acc) -> Self::Acc {
         [(lhs[0] + lhs[1] * rhs[0]) % P, lhs[1] * rhs[1] % P]
     }
@@ -47,14 +50,14 @@ fn test_hash_swapping() {
                         end += 1;
                     }
 
-                    let mut ir = splay[i].split_off(end);
-                    let mut ic = splay[i].split_off(start);
-                    let mut jr = splay[j].split_off(end);
-                    let mut jc = splay[j].split_off(start);
-                    splay[i].append(&mut jc);
-                    splay[i].append(&mut ir);
-                    splay[j].append(&mut ic);
-                    splay[j].append(&mut jr);
+                    let ir = splay[i].split_off(end);
+                    let ic = splay[i].split_off(start);
+                    let jr = splay[j].split_off(end);
+                    let jc = splay[j].split_off(start);
+                    splay[i].append(&jc);
+                    splay[i].append(&ir);
+                    splay[j].append(&ic);
+                    splay[j].append(&jr);
 
                     let mut ir = brute[i].split_off(end);
                     let mut ic = brute[i].split_off(start);

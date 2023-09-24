@@ -340,7 +340,7 @@ mod tests {
     fn test_from_u8_exhaustive() {
         for a in u8::MIN..u8::MAX {
             let b = Fp::<P>::from(a);
-            assert_eq!(a as u64 % P, b.value());
+            assert_eq!(u64::from(a) % P, b.value());
         }
     }
     #[test]
@@ -356,7 +356,7 @@ mod tests {
     fn test_from_i8_exhaustive() {
         for a in i8::MIN..i8::MAX {
             let b = Fp::<P>::from(a);
-            assert_eq!((a as i64).rem_euclid(P as i64) as u64, b.value());
+            assert_eq!(i64::from(a).rem_euclid(P as i64) as u64, b.value());
         }
     }
     #[test]

@@ -1,8 +1,10 @@
-use std::{
-    cell::RefCell,
-    fmt::{self, Debug, Formatter},
-    ops::{Bound, Range, RangeBounds},
-};
+use std::cell::RefCell;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::{self};
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 #[derive(Clone)]
 pub struct LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction> {
@@ -97,15 +99,16 @@ where
             id_action,
         }
     }
-    pub fn get(&self, i: usize) -> T {
-        self.table.borrow()[self.len + i].clone()
-    }
+
+    pub fn get(&self, i: usize) -> T { self.table.borrow()[self.len + i].clone() }
+
     pub fn modify(&mut self, i: usize, mut f: impl FnMut(&mut T)) {
         let i = self.len + i;
         (1..=self.lg).rev().for_each(|p| self.push(i >> p));
         f(&mut self.table.borrow_mut()[i]);
         (1..=self.lg).for_each(|p| self.update(i >> p));
     }
+
     pub fn fold(&self, range: impl RangeBounds<usize>) -> T {
         let Range { mut start, mut end } = open(range, self.len);
         start += self.len;
@@ -128,6 +131,7 @@ where
         }
         (self.op)(fl, fr)
     }
+
     pub fn apply(&mut self, range: impl RangeBounds<usize>, actor: U) {
         let Range { mut start, mut end } = open(range, self.len);
         start += self.len;
@@ -159,12 +163,14 @@ where
             }
         }
     }
+
     pub fn to_vec(&self) -> Vec<T>
     where
         Self: Clone,
     {
         self.clone().into_vec()
     }
+
     pub fn into_vec(self) -> Vec<T> {
         (1..self.len).for_each(|i| self.push(i));
         (1..self.len).rev().for_each(|i| self.update(i));
@@ -180,6 +186,7 @@ where
         );
         self.table.borrow_mut()[i] = x;
     }
+
     fn all_apply(&self, i: usize, f: U) {
         let x = (self.apply)(f.clone(), self.table.borrow()[i].clone());
         self.table.borrow_mut()[i] = x;
@@ -188,11 +195,13 @@ where
             self.lazy.borrow_mut()[i] = x;
         }
     }
+
     fn push(&self, i: usize) {
         let lazy = std::mem::replace(&mut self.lazy.borrow_mut()[i], (self.id_action)());
         self.all_apply(2 * i, lazy.clone());
         self.all_apply(2 * i + 1, lazy);
     }
+
     fn thrust(&self, i: usize) {
         (1..=self.lg)
             .rev()
@@ -215,6 +224,7 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<T, U, Op, Apply, Compose, Identity, IdAction> Debug
     for LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>
 where
@@ -236,12 +246,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{LazySegtree, LazySegtreeBuilder},
-        rand::prelude::*,
-        randtools::SubRange,
-        std::{fmt::Debug, iter},
-    };
+    use super::LazySegtree;
+    use super::LazySegtreeBuilder;
+    use rand::prelude::*;
+    use randtools::SubRange;
+    use std::fmt::Debug;
+    use std::iter;
 
     #[test]
     fn test_index() {
