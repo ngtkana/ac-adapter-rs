@@ -1,11 +1,11 @@
-use {super::Signed, std::mem::swap};
+use super::Signed;
+use std::mem::swap;
 
 /// Takes two integers `x, y` and returns `a, b, g` satisfying `ax + by = g, 0 < g`
 ///
 /// # Panics
 ///
 /// Panics if `x == 0 || y == 0`
-#[allow(clippy::many_single_char_names)]
 pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
     assert_ne!(x, T::zero());
     assert_ne!(y, T::zero());
@@ -34,7 +34,9 @@ pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
 
 #[cfg(test)]
 mod tests {
-    use {crate::ext_gcd, crate::gcd, test_case::test_case};
+    use crate::ext_gcd;
+    use crate::gcd;
+    use test_case::test_case;
 
     #[allow(clippy::unused_unit)]
     #[test_case(1, 1)]

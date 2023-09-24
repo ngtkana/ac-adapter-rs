@@ -1,4 +1,5 @@
-use super::{swap_size, Dihedral};
+use super::swap_size;
+use super::Dihedral;
 use std::mem::swap;
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
@@ -9,9 +10,15 @@ pub struct Coord {
     pub h: usize,
     pub w: usize,
 }
-#[allow(clippy::many_single_char_names)]
 pub fn coord(h: usize, w: usize, d: Dihedral) -> Coord {
-    use Dihedral::{R0, R0S, R1, R1S, R2, R2S, R3, R3S};
+    use Dihedral::R0;
+    use Dihedral::R0S;
+    use Dihedral::R1;
+    use Dihedral::R1S;
+    use Dihedral::R2;
+    use Dihedral::R2S;
+    use Dihedral::R3;
+    use Dihedral::R3S;
     let mut h = h as isize;
     let mut w = w as isize;
     let (origin, x, y) = match d {

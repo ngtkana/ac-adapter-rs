@@ -16,7 +16,8 @@
 //! # Examples
 //!
 //! ```
-//! use {swag::Swag, std::ops::Add};
+//! use std::ops::Add;
+//! use swag::Swag;
 //!
 //! // Vec 版
 //! let _swag = Swag::new(vec![0, 1, 2], Add::add);
@@ -28,19 +29,20 @@
 //! // 畳み込み
 //! assert_eq!(swag.fold(..), Some(3));
 //! ```
-use std::{
-    borrow::Borrow,
-    fmt::{self, Debug, Formatter},
-    marker::PhantomData,
-    ops::{Bound, Range, RangeBounds},
-};
+use std::borrow::Borrow;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::{self};
+use std::marker::PhantomData;
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 /// SWAG をします。
 ///
 /// # 計算量
 ///
 /// 長さ N の配列を管理しているとし、`fold` を Q 回呼ぶとき、Θ( N + Q ) です。
-///
 #[derive(Clone, Default, Hash, PartialEq, Eq)]
 pub struct Swag<T, V, F> {
     v: V,
@@ -83,7 +85,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use {swag::Swag, std::ops::Add};
+    /// use std::ops::Add;
+    /// use swag::Swag;
     ///
     /// // Vec 版
     /// let _swag = Swag::new(vec![0, 1, 2], Add::add);
@@ -103,6 +106,7 @@ where
             _marker: PhantomData,
         }
     }
+
     /// 与えられた区間における aggregation を返します。
     ///
     ///
@@ -114,37 +118,35 @@ where
     /// # 戻り値
     ///
     /// `range` が開区間 [l, r[ に対応するとき、 f { v_i: l <= i < r } を返します。
-    ///
     pub fn fold(&mut self, range: impl RangeBounds<usize>) -> Option<T> {
         let Range { start, end } = open(range, self.v.borrow().len());
         self.advance_end(end);
         self.advance_start(start);
         self.current_fold()
     }
+
     /// [`fold`](Swag::fold) + `unwrap_or`
     pub fn fold_or(&mut self, range: impl RangeBounds<usize>, default: T) -> T {
         self.fold(range).unwrap_or(default)
     }
+
     /// [`fold`](Swag::fold) + `unwrap_or_else`
     pub fn fold_or_else(&mut self, range: impl RangeBounds<usize>, f: impl FnOnce() -> T) -> T {
         self.fold(range).unwrap_or_else(f)
     }
+
     /// 現在の内部状態の始点を返します。
-    pub fn start(&self) -> usize {
-        self.center - self.stack.len()
-    }
+    pub fn start(&self) -> usize { self.center - self.stack.len() }
+
     /// 現在の内部状態の終点を返します。
-    pub fn end(&self) -> usize {
-        self.end
-    }
+    pub fn end(&self) -> usize { self.end }
+
     /// 現在の内部状態の始点・終点を `start..end` の形で返します。
-    pub fn current_index_range(&self) -> Range<usize> {
-        self.start()..self.end()
-    }
+    pub fn current_index_range(&self) -> Range<usize> { self.start()..self.end() }
+
     /// 現在の内部状態の window をスライスの形で返します。
-    pub fn current_window(&self) -> &[T] {
-        &self.v.borrow()[self.current_index_range()]
-    }
+    pub fn current_window(&self) -> &[T] { &self.v.borrow()[self.current_index_range()] }
+
     /// 現在の内部状態の window における aggregation を返します。
     pub fn current_fold(&self) -> Option<T> {
         match (self.stack.last(), self.accum) {
@@ -154,6 +156,7 @@ where
             (Some(&x), Some(y)) => Some((self.folder)(x, y)),
         }
     }
+
     fn advance_start(&mut self, start: usize) {
         debug_assert!(
             start <= self.v.borrow().len(),
@@ -192,6 +195,7 @@ where
             }
         }
     }
+
     fn advance_end(&mut self, end: usize) {
         debug_assert!(
             end <= self.v.borrow().len(),
@@ -215,7 +219,9 @@ where
     }
 }
 fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
-    use Bound::{Excluded, Included, Unbounded};
+    use Bound::Excluded;
+    use Bound::Included;
+    use Bound::Unbounded;
     let start = match range.start_bound() {
         Unbounded => 0,
         Included(&x) => x,
@@ -231,7 +237,9 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
 
 #[cfg(test)]
 mod tests {
-    use {super::Swag, itertools::Itertools, std::ops::Add};
+    use super::Swag;
+    use itertools::Itertools;
+    use std::ops::Add;
 
     #[test]
     fn test_vec() {

@@ -2,15 +2,17 @@
 //!
 //! [詳しくは `LowLink` 構造体をご覧ください。](LowLink)
 
-use std::mem::{replace, swap, take};
+use std::mem::replace;
+use std::mem::swap;
+use std::mem::take;
 
 /// Low-link を計算する構造体です。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct LowLink {
-    g: Vec<Vec<usize>>, // 隣接リストです。未ビルドならば無向グラフ、ビルド済みならば木辺と後退辺のみが入っています。
+    g: Vec<Vec<usize>>, /* 隣接リストです。未ビルドならば無向グラフ、ビルド済みならば木辺と後退辺のみが入っています。 */
     sorted: Vec<usize>, // [i]: pre-order で i 番目である頂点の番号
     ord: Vec<usize>,    // [i]: 頂点 i の pre-order における順位
-    low: Vec<usize>, // [i]: 頂点 i から木辺を任意回、後退辺を高々１回辿って行ける頂点の pre-order の最小値
+    low: Vec<usize>, /* [i]: 頂点 i から木辺を任意回、後退辺を高々１回辿って行ける頂点の pre-order の最小値 */
     parent: Vec<usize>, // [i]: 頂点 i が根なら i、さもなくの親頂点の番号
     built: bool,     // ビルド済みなら `true`
 }
@@ -29,6 +31,7 @@ impl LowLink {
             ..Default::default()
         }
     }
+
     /// 未ビルドのグラフに（無向）辺を追加します。
     ///
     /// # Examples
@@ -44,6 +47,7 @@ impl LowLink {
         self.g[i].push(j);
         self.g[j].push(i);
     }
+
     /// ビルドします。
     ///
     /// # Examples
@@ -92,6 +96,7 @@ impl LowLink {
             }
         }
     }
+
     /// 頂点 `x` が関節点なら `true` を返します。
     ///
     /// # Examples
@@ -118,6 +123,7 @@ impl LowLink {
                 .any(|&y| self.ord[x] < self.ord[y] && self.ord[x] <= self.low[y])
         }
     }
+
     /// 頂点 `x`, `y` を結ぶ（無向）辺があれば、それが橋であるときに `ture` を返します。
     /// 辺がないときの戻り値は未定義です。
     ///
@@ -142,6 +148,7 @@ impl LowLink {
         }
         self.parent[y] == x && self.ord[x] < self.low[y]
     }
+
     /// 2-連結成分分解をして、各成分に属する辺のリストのリストを返します。
     ///
     /// # Examples
@@ -172,6 +179,7 @@ impl LowLink {
         }
         cmp
     }
+
     fn __biconnected_components_dfs(
         &self,
         x: usize,
@@ -195,6 +203,7 @@ impl LowLink {
             }
         }
     }
+
     /// 2-辺連結成分分解をして、各成分に属する頂点のリストのリストを返します。
     ///
     /// # Examples
@@ -225,6 +234,7 @@ impl LowLink {
         }
         cmp
     }
+
     fn __two_edge_components_dfs(
         &self,
         x: usize,
@@ -250,7 +260,6 @@ impl LowLink {
     }
 }
 
-#[allow(clippy::many_single_char_names)]
 fn build(
     x: usize,
     p: usize,
@@ -283,14 +292,13 @@ fn build(
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::LowLink,
-        rand::{rngs::StdRng, Rng, SeedableRng},
-        std::{
-            collections::HashSet,
-            mem::{replace, take},
-        },
-    };
+    use super::LowLink;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::HashSet;
+    use std::mem::replace;
+    use std::mem::take;
 
     #[test]
     fn test_low_link() {

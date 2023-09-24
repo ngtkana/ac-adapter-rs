@@ -224,7 +224,6 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
     }
 }
 
-#[allow(clippy::missing_fields_in_debug)]
 impl<T, U, Op, Apply, Compose, Identity, IdAction> Debug
     for LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>
 where

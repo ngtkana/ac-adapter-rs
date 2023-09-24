@@ -19,9 +19,8 @@
 //! assert_eq!(bsgs.log(0), None);
 //! assert_eq!(bsgs.log(2), None);
 //!
-//!
 //! // 原子根でない場合も、位数さえちゃんとしていればうごきます。
-//! let bsgs = Bsgs::new(9, 2, |x, y| x * y % 10, |x| x * x * x %10, || 1);
+//! let bsgs = Bsgs::new(9, 2, |x, y| x * y % 10, |x| x * x * x % 10, || 1);
 //! assert_eq!(bsgs.log(1), Some(0));
 //! assert_eq!(bsgs.log(9), Some(1));
 //!
@@ -38,16 +37,14 @@
 //! * 群の演算は、モジュラス等が動的に与えられる可能性を考えて、型ではなくオブジェクトにしました。
 //! * たいてい ℤ / n ℤ
 //! の乗法群にしか使わない気がするのですが、それようのユーティルがうまく作れず……
-//!
-use std::{
-    collections::HashMap,
-    fmt::{Debug, Formatter, Result},
-    hash::Hash,
-    iter::successors,
-};
+use std::collections::HashMap;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result;
+use std::hash::Hash;
+use std::iter::successors;
 
 /// Baby-stpp giant-step のソルバーです。
-///
 #[derive(Clone)]
 pub struct Bsgs<T, Mul> {
     generator: T,
@@ -85,7 +82,6 @@ where
     /// * `sqrt`: `ord_upper_bound` の平方根
     /// * `map`: `generator` の `0..sqrt` 乗
     /// * `giant_step_inverse`: `generator` の `-sqrt` 乗
-    ///
     pub fn new<Inv, Id>(generator: T, ord_upper_bound: u64, mul: Mul, inv: Inv, id: Id) -> Self
     where
         Id: Fn() -> T,
@@ -107,12 +103,12 @@ where
             mul,
         }
     }
+
     /// `x` の離散対数が存在すれば返し、存在しなければ `None` を返します。
     ///
     /// # 計算量
     ///
     /// Θ ( √ ( `ord_upper_bound` ) ) 回の `mul` の呼び出し
-    ///
     pub fn log(&self, mut x: T) -> Option<u64> {
         let mut ans = 0;
         while ans < self.ord_upper_bound {
@@ -171,7 +167,8 @@ fn sqrt(a: u64) -> u64 {
 
 #[cfg(test)]
 mod tests {
-    use super::{binary, Bsgs};
+    use super::binary;
+    use super::Bsgs;
 
     #[test]
     fn test_additive() {
