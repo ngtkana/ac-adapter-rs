@@ -1,7 +1,31 @@
 //! Arithmetic of formal power series.
-//! # Complexity
-//! We may assume the dominant term of complexity of FFT/IFFT of length $d$ is equal to each other and we set it to $\mathcal{F}(d)$.
-//! For example, $\mathcal{M}(d) = 6\mathcal{F}(d) + O(d)$ because we need to perform $3$ FFT/IFFTs of length $2d$.
+//!
+//! # Note on complexity
+//! *We only consider cases where the precision is a power of 2.
+//! If the precision is not a power of 2, the complexity is twice as bad.*
+//!
+//! We may assume the complexity $\mathcal{M}(d)$ of multiplication of two polynomials of degree $d$ and
+//! the complexity $\mathcal{F}(d)$ of FFT/IFFT of length $d$ satisfies the following property:
+//!
+//! $$
+//! \begin{aligned}
+//! \mathcal{M}(d) &= \Theta(d\log d) , \mathcal{F}(d) = \Theta(d\log d), \\\\
+//! \mathcal{M}(d) &= 3 \mathcal{F}(2d) + O(d) \ \left( = 6 \mathcal{F}(d) + O(d) \right).
+//! \end{aligned}
+//! $$
+//!
+//! If each step in Newton's method is performed in $a\mathcal{M}(d)$ time (where $d$ is the resulting precision of each iteration),
+//! then the total complexity is $2a\mathcal{F}(d) + O(d)$.
+//!
+//! We omit $O(d)$ terms when it is not important.
+//!
+//! # Table of contents
+//! $O(d)$ is omitted here.
+//!
+//! | Name | Expression | Complexity |
+//! | ---- | ---------- | ---------- |
+//! | [`fps_inv`] | $f^{-1} \mod x^d$ | $2\mathcal{M}(d)$ |
+//! | [`fps_sqrt`] | $f^{1/2} \mod x^d$ | $6\mathcal{M}(d)$ |
 use fp2::fft;
 use fp2::fps_mul;
 use fp2::ifft;
@@ -10,12 +34,18 @@ use fp2::PrimitiveRoot;
 use std::iter::repeat;
 
 /// Inverse FPS of `f`.
+///
 /// # Requirements
 /// $f_0 \ne 0$
+///
 /// # Returns
 /// $f^{-1} \mod x^d$
+///
 /// # Complexity
-/// $6\mathcal{F} + O(d)$
+/// $2\mathcal{M}(d) + O(d)$.
+///
+/// It is because $3\mathcal{F}(2d)$ in each iteration.
+///
 /// # Examples
 /// ```
 /// use fp2::fp;
@@ -60,12 +90,37 @@ where
     g
 }
 /// Square root FPS of `f`.
+///
 /// # Requirements
 /// $f_0 = 1$
+///
 /// # Returns
 /// $f^{1/2} \mod x^d$
+///
 /// # Complexity
-/// $12\mathcal{F} + O(d)$
+/// $6\mathcal{M}(d) + O(d)$
+///
+/// It is because it takes
+/// - $\mathcal{M}(d): multiplication of polynomials of degree $d$,
+/// - $2\mathcal{M}(d): inverse of polynomials of degree $d$,
+///
+/// and the sum of the above is $3\mathcal{M}(d)$.
+///
+/// # Implementation
+/// In each iteration, it performs
+/// - an inverse of precision $d$; it takes $2\mathcal{M}(d) + O(d)$ time,
+/// - a multiplication of two FPSs of precision $d$; it takes $\mathcal{M}(d) + O(d)$ time,
+///
+/// The sum of the above is $3\mathcal{M}(d) + O(d)$, so it takes $6\mathcal{M}(d) + O(d)$ time in
+/// total.
+///
+/// # Examples
+/// ```
+/// use fp2::fp;
+/// use fps::fps_sqrt;
+/// let g = fps_sqrt::<998244353>(&[fp!(1), fp!(2)], 4);
+/// assert_eq!(g, vec![fp!(1), fp!(1), -fp!(2).inv(), fp!(2).inv()]);
+/// ```
 pub fn fps_sqrt<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>>
 where
     (): PrimitiveRoot<P>,
