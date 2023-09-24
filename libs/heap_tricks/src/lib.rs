@@ -139,14 +139,13 @@
 //!   - 使う構造体: [`DoubleHeap`] （らしいです。)
 //!   - コメント: むーん
 
-use std::{
-    cmp::Reverse,
-    collections::BinaryHeap,
-    fmt::Debug,
-    hash::Hash,
-    iter::FromIterator,
-    ops::{AddAssign, SubAssign},
-};
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::iter::FromIterator;
+use std::ops::AddAssign;
+use std::ops::SubAssign;
 
 /// 集約操作を指定するためのトレイトです。
 /// 単なるマーカートレイトではなく、集約結果を管理するための
@@ -154,7 +153,6 @@ use std::{
 ///
 /// [`Nop`] か [`Sum`] を使っておけばだいたい大丈夫ですが、
 /// 必要なら自分で定義することができます。
-///
 pub trait Handler<T> {
     /// 左側に挿入するときのコールバック関数
     fn push_left(&mut self, value: T);
@@ -173,8 +171,11 @@ pub trait Handler<T> {
 pub struct Nop;
 impl<T> Handler<T> for Nop {
     fn push_left(&mut self, _value: T) {}
+
     fn pop_left(&mut self, _value: T) {}
+
     fn push_right(&mut self, _value: T) {}
+
     fn pop_right(&mut self, _value: T) {}
 }
 /// 総和を集約するための型です。
@@ -189,18 +190,13 @@ impl<T> Handler<T> for Sum<T>
 where
     T: AddAssign<T> + SubAssign<T>,
 {
-    fn push_left(&mut self, value: T) {
-        self.left += value;
-    }
-    fn pop_left(&mut self, value: T) {
-        self.left -= value;
-    }
-    fn push_right(&mut self, value: T) {
-        self.right += value;
-    }
-    fn pop_right(&mut self, value: T) {
-        self.right -= value;
-    }
+    fn push_left(&mut self, value: T) { self.left += value; }
+
+    fn pop_left(&mut self, value: T) { self.left -= value; }
+
+    fn push_right(&mut self, value: T) { self.right += value; }
+
+    fn pop_right(&mut self, value: T) { self.right -= value; }
 }
 
 /// ヒープを４本使って中央値などを管理するデータ構造です。
@@ -219,13 +215,10 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
-            .field(
-                "elm",
-                &[
-                    self.collect_left_sorted_vec(),
-                    self.collect_right_sorted_vec(),
-                ],
-            )
+            .field("elm", &[
+                self.collect_left_sorted_vec(),
+                self.collect_right_sorted_vec(),
+            ])
             .field("handler", &self.handler)
             .finish()
     }
@@ -246,9 +239,7 @@ impl<T> DoubleHeap<T, Nop>
 where
     T: Copy + Ord + Hash,
 {
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
 }
 impl<T, H> DoubleHeap<T, H>
 where
@@ -272,6 +263,7 @@ where
             handler,
         }
     }
+
     /// ヒープが空ならば `true` を返します。
     ///
     /// # Examples
@@ -283,9 +275,8 @@ where
     /// heap.push_left(42);
     /// assert_eq!(heap.is_empty(), false);
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.left.is_empty() && self.right.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.left.is_empty() && self.right.is_empty() }
+
     /// 全体の要素数を返します。
     ///
     /// # Examples
@@ -297,9 +288,8 @@ where
     /// heap.push_left(42);
     /// assert_eq!(heap.len(), 1);
     /// ```
-    pub fn len(&self) -> usize {
-        self.left.len() + self.right.len()
-    }
+    pub fn len(&self) -> usize { self.left.len() + self.right.len() }
+
     /// 左側ヒープの要素数を返します。
     ///
     /// # Examples
@@ -313,9 +303,8 @@ where
     /// heap.push_right(42);
     /// assert_eq!(heap.left_len(), 1);
     /// ```
-    pub fn left_len(&self) -> usize {
-        self.left.len()
-    }
+    pub fn left_len(&self) -> usize { self.left.len() }
+
     /// 右側ヒープの要素数を返します。
     ///
     /// # Examples
@@ -329,9 +318,8 @@ where
     /// heap.push_right(42);
     /// assert_eq!(heap.right_len(), 2);
     /// ```
-    pub fn right_len(&self) -> usize {
-        self.right.len()
-    }
+    pub fn right_len(&self) -> usize { self.right.len() }
+
     /// 左側ヒープの要素数が１増加するように、要素を挿入します。
     ///
     /// # Examples
@@ -351,6 +339,7 @@ where
         self.left.push(elm);
         self.settle();
     }
+
     /// 右側ヒープの要素数が１増加するように、要素を挿入します。
     ///
     /// # Examples
@@ -370,6 +359,7 @@ where
         self.right.push(Reverse(elm));
         self.settle();
     }
+
     /// 左側ヒープの最大要素があれば返します。
     ///
     /// # Examples
@@ -382,9 +372,8 @@ where
     /// heap.push_right(13);
     /// assert_eq!(heap.peek_left(), Some(13));
     /// ```
-    pub fn peek_left(&self) -> Option<T> {
-        self.left.peek()
-    }
+    pub fn peek_left(&self) -> Option<T> { self.left.peek() }
+
     /// 右側ヒープの最大要素があれば返します。
     ///
     /// # Examples
@@ -399,9 +388,8 @@ where
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    pub fn peek_right(&self) -> Option<T> {
-        self.right.peek().map(|rev| rev.0)
-    }
+    pub fn peek_right(&self) -> Option<T> { self.right.peek().map(|rev| rev.0) }
+
     /// 左側ヒープの最大要素があれば削除して返します。
     ///
     /// # Examples
@@ -421,6 +409,7 @@ where
         self.settle();
         ans
     }
+
     /// 右側ヒープの最大要素があれば削除して返します。
     ///
     /// # Examples
@@ -440,6 +429,7 @@ where
         self.settle();
         ans
     }
+
     /// 左側ヒープの要素数が１増加するように、右側ヒープから要素を移動します
     ///
     /// # Panics
@@ -466,6 +456,7 @@ where
         self.left.push(elm);
         self.settle();
     }
+
     /// 右側ヒープの要素数が１増加するように、左側ヒープから要素を移動します
     ///
     /// # Panics
@@ -492,6 +483,7 @@ where
         self.right.push(Reverse(elm));
         self.settle();
     }
+
     /// ヒープに入っている要素を１つ指定して、左側ヒープの要素数が
     /// １減少するように削除します。
     ///
@@ -525,6 +517,7 @@ where
             self.move_right();
         }
     }
+
     /// ヒープに入っている要素を１つ指定して、右側ヒープの要素数が
     /// １減少するように削除します。
     ///
@@ -558,6 +551,7 @@ where
             self.settle();
         }
     }
+
     /// 左側ヒープの要素が `k` 個になるように動かします。
     ///
     /// # Panics
@@ -590,6 +584,7 @@ where
             self.move_right()
         }
     }
+
     /// 右側ヒープの要素が `k` 個になるように動かします。
     ///
     /// # Panics
@@ -622,6 +617,7 @@ where
             self.move_left()
         }
     }
+
     /// ハンドラへの参照を返します。
     ///
     /// # Panics
@@ -632,7 +628,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use heap_tricks::{DoubleHeap, Sum};
+    /// use heap_tricks::DoubleHeap;
+    /// use heap_tricks::Sum;
     /// let mut heap = DoubleHeap::with_handler(Sum::default());
     /// heap.push_left(10);
     /// heap.push_left(11);
@@ -645,9 +642,8 @@ where
     /// assert_eq!(heap.handler().left, 10);
     /// assert_eq!(heap.handler().right, 36);
     /// ```
-    pub fn handler(&self) -> &H {
-        &self.handler
-    }
+    pub fn handler(&self) -> &H { &self.handler }
+
     /// 左側ヒープの要素を昇順に格納したベクターを構築して返します。
     ///
     /// # Examples
@@ -661,9 +657,8 @@ where
     /// heap.push_right(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
     /// ```
-    pub fn collect_left_sorted_vec(&self) -> Vec<T> {
-        self.left.collect_sorted_vec()
-    }
+    pub fn collect_left_sorted_vec(&self) -> Vec<T> { self.left.collect_sorted_vec() }
+
     /// 右側ヒープの要素を昇順に格納したベクターを構築して返します。
     ///
     /// # Examples
@@ -685,6 +680,7 @@ where
             .map(|rev| rev.0)
             .collect()
     }
+
     /// すべての要素を昇順に格納したベクターを構築して返します。
     ///
     /// # Examples
@@ -704,6 +700,7 @@ where
         left.extend(right.into_iter().rev().map(|rev| rev.0));
         left
     }
+
     fn settle(&mut self) {
         while !self.left.is_empty()
             && !self.right.is_empty()
@@ -728,7 +725,6 @@ where
 /// ヒープに入っていない要素を削除すると
 /// **たとえその要素をすぐに挿入し直したとしても、
 /// その後の挙動がすべて未定義になります。**
-///
 #[derive(Clone)]
 pub struct RemovableHeap<T> {
     heap: BinaryHeap<T>,
@@ -769,9 +765,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// let heap = RemovableHeap::<()>::new();
     /// assert_eq!(heap.collect_sorted_vec(), Vec::new());
     /// ```
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
+
     /// ヒープが空ならば `true` を返します。
     ///
     /// # Examples
@@ -782,9 +777,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// assert_eq!(RemovableHeap::from_iter(Vec::<u32>::new()).is_empty(), true);
     /// assert_eq!(RemovableHeap::from_iter(vec![42]).is_empty(), false);
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.len() == 0
-    }
+    pub fn is_empty(&self) -> bool { self.len() == 0 }
+
     /// ヒープの長さを返します。
     ///
     /// # Examples
@@ -795,9 +789,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// assert_eq!(RemovableHeap::from_iter(Vec::<u32>::new()).len(), 0);
     /// assert_eq!(RemovableHeap::from_iter(vec![42, 45, 56]).len(), 3);
     /// ```
-    pub fn len(&self) -> usize {
-        self.len
-    }
+    pub fn len(&self) -> usize { self.len }
+
     /// ヒープに新しい要素 `x` を追加します。
     ///
     /// # Examples
@@ -813,6 +806,7 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.len += 1;
         self.heap.push(x);
     }
+
     /// ヒープに含まれる要素 `x` を削除します。
     /// ただし、ヒープに含まれない要素を指定した場合、このメソッドの呼び出し
     /// 及びその後の挙動は全て未定義になります。
@@ -832,6 +826,7 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.removed.push(x);
         self.settle();
     }
+
     /// ヒープの最大要素が存在すれば、削除して返します。
     ///
     /// # Examples
@@ -849,6 +844,7 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.settle();
         Some(ans)
     }
+
     /// ヒープの最大要素が存在すれば、返します。
     ///
     /// # Examples
@@ -860,9 +856,8 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// assert_eq!(heap.peek(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 45, 56]);
     /// ```
-    pub fn peek(&self) -> Option<T> {
-        self.heap.peek().copied()
-    }
+    pub fn peek(&self) -> Option<T> { self.heap.peek().copied() }
+
     /// ヒープの要素を昇順に格納したベクターを構築します。
     ///
     /// # Examples
@@ -887,6 +882,7 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         ans.reverse();
         ans
     }
+
     fn settle(&mut self) {
         while !self.heap.is_empty() && self.heap.peek() <= self.removed.peek() {
             self.heap.pop().unwrap();
@@ -898,7 +894,9 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
 
     #[test]
     fn test_removable_heap() {

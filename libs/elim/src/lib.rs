@@ -24,11 +24,9 @@
 /// ```
 /// use elim::column_reduce;
 ///
-/// let mut a = vec![
-///     vec![false, true, true],
-///     vec![false, true, true],
-///     vec![true, true, false],
-/// ];
+/// let mut a = vec![vec![false, true, true], vec![false, true, true], vec![
+///     true, true, false,
+/// ]];
 /// let r = column_reduce(&mut a);
 /// assert_eq!(r, 2);
 /// assert_eq!(a, vec![
@@ -38,8 +36,6 @@
 /// ]);
 /// ```
 ///
-///
-#[allow(clippy::many_single_char_names)]
 pub fn column_reduce(a: &mut [Vec<bool>]) -> usize {
     let h = a.len();
     let w = a[0].len();
@@ -68,12 +64,13 @@ pub fn column_reduce(a: &mut [Vec<bool>]) -> usize {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::column_reduce,
-        itertools::Itertools,
-        rand::{rngs::StdRng, Rng, SeedableRng},
-        std::{iter::repeat_with, ops::BitXor},
-    };
+    use super::column_reduce;
+    use itertools::Itertools;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::repeat_with;
+    use std::ops::BitXor;
 
     fn assert_column_reduced(a: &[Vec<bool>]) {
         let h = a.len();

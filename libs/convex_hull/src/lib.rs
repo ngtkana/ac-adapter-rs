@@ -68,7 +68,6 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
 /// 凸包を求めます。
 /// 具体的には、辞書順最小の頂点から始めて、時計回りの凸包を作ります。
 /// a が空のときには空配列を返します。
-#[allow(clippy::many_single_char_names)]
 pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
     assert!(!a.is_empty());
     let a = convex_hull(a);
@@ -111,26 +110,21 @@ pub fn is_convex(a: &[[i64; 2]]) -> bool {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{caliper, convex_hull, is_convex, sqmag},
-        rand::prelude::*,
-        std::iter,
-    };
+    use super::caliper;
+    use super::convex_hull;
+    use super::is_convex;
+    use super::sqmag;
+    use rand::prelude::*;
+    use std::iter;
 
     #[test]
-    fn test_convex_hull_small() {
-        test_convex_hull_base(4, 10, 2000);
-    }
+    fn test_convex_hull_small() { test_convex_hull_base(4, 10, 2000); }
 
     #[test]
-    fn test_convex_hull_middle() {
-        test_convex_hull_base(100, 100, 100);
-    }
+    fn test_convex_hull_middle() { test_convex_hull_base(100, 100, 100); }
 
     #[test]
-    fn test_convex_hull_large() {
-        test_convex_hull_base(1_000_000_000, 400, 20);
-    }
+    fn test_convex_hull_large() { test_convex_hull_base(1_000_000_000, 400, 20); }
 
     fn test_convex_hull_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         let mut rng = StdRng::seed_from_u64(42);
@@ -153,21 +147,14 @@ mod tests {
     }
 
     #[test]
-    fn test_caliper_small() {
-        test_caliper_base(4, 10, 2000);
-    }
+    fn test_caliper_small() { test_caliper_base(4, 10, 2000); }
 
     #[test]
-    fn test_caliper_middle() {
-        test_caliper_base(100, 100, 100);
-    }
+    fn test_caliper_middle() { test_caliper_base(100, 100, 100); }
 
     #[test]
-    fn test_caliper_large() {
-        test_caliper_base(1_000_000_000, 400, 20);
-    }
+    fn test_caliper_large() { test_caliper_base(1_000_000_000, 400, 20); }
 
-    #[allow(clippy::many_single_char_names)]
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         fn brute(a: &[[i64; 2]]) -> i64 {
             a.iter()

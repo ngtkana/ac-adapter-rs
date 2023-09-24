@@ -51,4 +51,5 @@ args = [
   "-Aclippy::similar-names",
   "-Aclippy::uninlined-format-args",
   "-Aclippy::unreadable_literal",
+  "-Aclippy::missing_fields_in_debug",
 ]

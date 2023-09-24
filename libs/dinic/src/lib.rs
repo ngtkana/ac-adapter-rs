@@ -42,7 +42,8 @@
 //! by [`add_edge`](Dinic::add_edge`) is necessary to query it.
 //!
 //! ```
-//! use dinic::{Edge, Dinic};
+//! use dinic::Dinic;
+//! use dinic::Edge;
 //!
 //! let mut dinic = Dinic::new(3);
 //! dinic.add_edge(0, 1, 10);
@@ -50,14 +51,20 @@
 //! dinic.add_edge(0, 2, 20);
 //! dinic.flow(0, 2);
 //!
-//! assert_eq!(dinic.get_edge(key), Edge { from: 1, to: 2, cap: 15, flow: 10 });
+//! assert_eq!(dinic.get_edge(key), Edge {
+//!     from: 1,
+//!     to: 2,
+//!     cap: 15,
+//!     flow: 10
+//! });
 //! ```
 //!
 //! Moreover [`get_edges`](Dinic::get_edges), [`get_network`](Dinic::get_network) will summarize the
 //! whole network.
 //!
 //! ```
-//! use dinic::{Edge, Dinic};
+//! use dinic::Dinic;
+//! use dinic::Edge;
 //!
 //! let mut dinic = Dinic::new(3);
 //! dinic.add_edge(0, 1, 10);
@@ -70,22 +77,38 @@
 //!
 //! // 0th edge
 //! assert_eq!(network[0][0], edges[0]);
-//! assert_eq!(edges[0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
+//! assert_eq!(edges[0], Edge {
+//!     from: 0,
+//!     to: 1,
+//!     cap: 10,
+//!     flow: 10
+//! });
 //!
 //! // 1st edge
 //! assert_eq!(network[1][0], edges[1]);
-//! assert_eq!(edges[1], Edge { from: 1, to: 2, cap: 15, flow: 10 });
+//! assert_eq!(edges[1], Edge {
+//!     from: 1,
+//!     to: 2,
+//!     cap: 15,
+//!     flow: 10
+//! });
 //!
 //! // 2nd edge
 //! assert_eq!(network[0][1], edges[2]);
-//! assert_eq!(edges[2], Edge { from: 0, to: 2, cap: 20, flow: 20 });
+//! assert_eq!(edges[2], Edge {
+//!     from: 0,
+//!     to: 2,
+//!     cap: 20,
+//!     flow: 20
+//! });
 //! ```
 //!
 //! You also can get the excess of vertices, but we do not provide an interface to get the excess of *a vertex* because
 //! it will take O ( m ) time.
 //!
 //! ```
-//! use dinic::{Edge, Dinic};
+//! use dinic::Dinic;
+//! use dinic::Edge;
 //!
 //! let mut dinic = Dinic::new(3);
 //! dinic.add_edge(0, 1, 10);
@@ -100,7 +123,8 @@
 //! excess of the source is almost always negative.
 //!
 //! ```should_panic
-//! use dinic::{Edge, Dinic};
+//! use dinic::Dinic;
+//! use dinic::Edge;
 //!
 //! let mut dinic = Dinic::<u32>::new(2); // Force to use `u32` instead of `i32`.
 //! dinic.add_edge(0, 1, 10);
@@ -136,17 +160,19 @@
 //! when solve a *maximum flow problem with lower limit*. [See the API document for detailed
 //! specs.](Dinic::change_edge)
 
-use std::{
-    collections::VecDeque,
-    fmt::{self, Debug, Formatter},
-    iter::Sum,
-    ops::{Add, AddAssign, Sub, SubAssign},
-};
+use std::collections::VecDeque;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::{self};
+use std::iter::Sum;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 /// An adapter trait of the capacity.
 ///
 /// This trait is implemented for all the integer types.
-///
 pub trait Value:
     Copy + Ord + Debug + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum
 {
@@ -218,7 +244,8 @@ where
     pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeKey {
         assert!(
             from < self.res.len() || to < self.res.len(),
-            "`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is {}",
+            "`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is \
+             {}",
             from,
             to,
             self.res.len()
@@ -228,11 +255,7 @@ where
             "`Dinic::add_edge` is called with a negative `cap`"
         );
         let size_from = self.res[from].len();
-        let size_to = if from == to {
-            self.res[to].len() + 1
-        } else {
-            self.res[to].len()
-        };
+        let size_to = if from == to { self.res[to].len() + 1 } else { self.res[to].len() };
         let edge_key = self.pos.len();
         self.pos.push(__EdgeIndexer {
             from,
@@ -325,7 +348,8 @@ where
     pub fn flow_with_limit(&mut self, s: usize, t: usize, flow_with_limit: T) -> T {
         assert!(
             s < self.res.len() && t < self.res.len(),
-            "`Dinic::flow_with_limit` is called with `s` = {}, `t` = {}, while the number of vertices is {}",
+            "`Dinic::flow_with_limit` is called with `s` = {}, `t` = {}, while the number of \
+             vertices is {}",
             s,
             t,
             self.res.len()
@@ -350,7 +374,6 @@ where
     /// dinic.flow(0, 2);
     /// assert_eq!(dinic.min_cut(0).as_slice(), &[true, false, false]);
     /// ```
-    ///
     pub fn min_cut(&self, s: usize) -> Vec<bool> {
         let mut visited = vec![false; self.res.len()];
         let mut queue = VecDeque::from(vec![s]);
@@ -414,7 +437,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use dinic::{Dinic, Edge};
+    /// use dinic::Dinic;
+    /// use dinic::Edge;
     ///
     /// let mut dinic = Dinic::new(3);
     /// dinic.add_edge(0, 1, 10);
@@ -423,9 +447,24 @@ where
     /// dinic.flow(0, 2);
     ///
     /// let edges = dinic.get_edges();
-    /// assert_eq!(edges[0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
-    /// assert_eq!(edges[1], Edge { from: 1, to: 2, cap: 15, flow: 10 });
-    /// assert_eq!(edges[2], Edge { from: 0, to: 2, cap: 20, flow: 20 });
+    /// assert_eq!(edges[0], Edge {
+    ///     from: 0,
+    ///     to: 1,
+    ///     cap: 10,
+    ///     flow: 10
+    /// });
+    /// assert_eq!(edges[1], Edge {
+    ///     from: 1,
+    ///     to: 2,
+    ///     cap: 15,
+    ///     flow: 10
+    /// });
+    /// assert_eq!(edges[2], Edge {
+    ///     from: 0,
+    ///     to: 2,
+    ///     cap: 20,
+    ///     flow: 20
+    /// });
     /// ```
     pub fn get_edges(&self) -> Vec<Edge<T>> {
         self.pos
@@ -445,7 +484,8 @@ where
     /// # Examples
     ///
     /// ```
-    /// use dinic::{Dinic, Edge};
+    /// use dinic::Dinic;
+    /// use dinic::Edge;
     ///
     /// let mut dinic = Dinic::new(3);
     /// dinic.add_edge(0, 1, 10);
@@ -454,9 +494,24 @@ where
     /// dinic.flow(0, 2);
     ///
     /// let network = dinic.get_network();
-    /// assert_eq!(network[0][0], Edge { from: 0, to: 1, cap: 10, flow: 10 });
-    /// assert_eq!(network[0][1], Edge { from: 0, to: 2, cap: 20, flow: 20 });
-    /// assert_eq!(network[1][0], Edge { from: 1, to: 2, cap: 15, flow: 10 });
+    /// assert_eq!(network[0][0], Edge {
+    ///     from: 0,
+    ///     to: 1,
+    ///     cap: 10,
+    ///     flow: 10
+    /// });
+    /// assert_eq!(network[0][1], Edge {
+    ///     from: 0,
+    ///     to: 2,
+    ///     cap: 20,
+    ///     flow: 20
+    /// });
+    /// assert_eq!(network[1][0], Edge {
+    ///     from: 1,
+    ///     to: 2,
+    ///     cap: 15,
+    ///     flow: 10
+    /// });
     /// ```
     pub fn get_network(&self) -> Vec<Vec<Edge<T>>> {
         let mut network = vec![Vec::new(); self.res.len()];
@@ -613,7 +668,6 @@ where
     /// #
     /// ```
     ///
-    ///
     pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         let EdgeKey(edge_key) = edge_key;
         assert!(
@@ -637,9 +691,7 @@ where
     }
 }
 impl<T: Value> Debug for Dinic<T> {
-    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
-        write!(w, "{:?}", self.get_network())
-    }
+    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result { write!(w, "{:?}", self.get_network()) }
 }
 
 /// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].
@@ -791,13 +843,13 @@ struct __EdgeIndexer {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{Dinic, Edge, EdgeKey},
-        rand::prelude::*,
-        randtools::DistinctTwo,
-        std::collections::HashSet,
-        test_case::test_case,
-    };
+    use super::Dinic;
+    use super::Edge;
+    use super::EdgeKey;
+    use rand::prelude::*;
+    use randtools::DistinctTwo;
+    use std::collections::HashSet;
+    use test_case::test_case;
 
     ////////////////////////////////////////////////////////////////////////////////
     // Max-flow min-cut theorem test
@@ -894,7 +946,6 @@ mod tests {
     }
 
     // https://misawa.github.io/others/flow/dinic_time_complexity.html
-    #[allow(clippy::many_single_char_names)]
     fn generate_hack(n: usize) -> (usize, usize, Vec<(usize, usize, u32)>) {
         let s = 0;
         let a = 1;
