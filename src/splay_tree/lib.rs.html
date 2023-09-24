@@ -1,20 +1,35 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/splay_tree/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
-    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
-    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
-    crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
-    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
-    crossorigin="anonymous"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/splay_tree/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        renderMathInElement(document.body, {
-            delimiters: [
-                {left: "$$", right: "$$", display: true},
-                {left: "$", right: "$", display: false}
-            ]
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
     });
+  });
 </script>
 
 </head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../splay_tree/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
@@ -685,6 +700,33 @@
 <a href="#666" id="666">666</a>
 <a href="#667" id="667">667</a>
 <a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! スプレー木です。
 
 </span><span class="kw">mod </span>node;
@@ -706,7 +748,6 @@
 /// # 提出 (3051 ms)
 ///
 /// https://judge.yosupo.jp/submission/55691
-///
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_dynamic_sequence_range_affine_range;
 
@@ -727,24 +768,30 @@
 /// # 提出 (3157 ms)
 ///
 /// https://atcoder.jp/contests/soundhound2018-summer-final-open/submissions/24922921
-///
 </span><span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_hash_swapping;
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test_trivial;
 
-<span class="kw">use </span><span class="self">self</span>::node::{access_index, deep_free, merge, split_at, Node};
-<span class="kw">use </span>std::{
-    cell::Cell,
-    cmp::Ordering,
-    fmt::Debug,
-    hash::Hash,
-    iter::FromIterator,
-    marker::PhantomData,
-    ops::{Bound, Deref, DerefMut, Index, Range, RangeBounds},
-    ptr::null_mut,
-};
+<span class="kw">use </span><span class="self">self</span>::node::access_index;
+<span class="kw">use </span><span class="self">self</span>::node::deep_free;
+<span class="kw">use </span><span class="self">self</span>::node::merge;
+<span class="kw">use </span><span class="self">self</span>::node::split_at;
+<span class="kw">use </span><span class="self">self</span>::node::Node;
+<span class="kw">use </span>std::cell::Cell;
+<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::hash::Hash;
+<span class="kw">use </span>std::iter::FromIterator;
+<span class="kw">use </span>std::marker::PhantomData;
+<span class="kw">use </span>std::ops::Bound;
+<span class="kw">use </span>std::ops::Deref;
+<span class="kw">use </span>std::ops::DerefMut;
+<span class="kw">use </span>std::ops::Index;
+<span class="kw">use </span>std::ops::Range;
+<span class="kw">use </span>std::ops::RangeBounds;
+<span class="kw">use </span>std::ptr::null_mut;
 
 <span class="doccomment">/// [`Sized`], [`Debug`], [`Clone`] をまとめたトレイト
 </span><span class="kw">pub trait </span>Value: Sized + Debug + Clone {}
@@ -753,13 +800,18 @@
 <span class="doccomment">/// 集約も作用もなしの場合に使うトレイト
 </span><span class="kw">pub struct </span>Nop&lt;T: Value&gt;(PhantomData&lt;<span class="kw">fn</span>(T) -&gt; T&gt;);
 <span class="kw">impl</span>&lt;T: Value&gt; LazyOps <span class="kw">for </span>Nop&lt;T&gt; {
-    <span class="kw">type </span>Value = T;
     <span class="kw">type </span>Acc = ();
     <span class="kw">type </span>Lazy = ();
+    <span class="kw">type </span>Value = T;
+
     <span class="kw">fn </span>proj(_value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Acc {}
+
     <span class="kw">fn </span>op(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc, <span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc) -&gt; <span class="self">Self</span>::Acc {}
+
     <span class="kw">fn </span>act_value(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, _value: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {}
+
     <span class="kw">fn </span>act_acc(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, <span class="kw-2">&amp;mut </span>(): <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Acc) {}
+
     <span class="kw">fn </span>compose(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, <span class="kw-2">&amp;mut </span>(): <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Lazy) {}
 }
 <span class="doccomment">/// 作用なしの場合に使うトレイト
@@ -776,17 +828,18 @@
 <span class="doccomment">/// [`Ops`] を実装する型をラップして [`LazyOps`] を実装する型
 </span><span class="kw">pub struct </span>NoLazy&lt;O&gt;(PhantomData&lt;<span class="kw">fn</span>(O) -&gt; O&gt;);
 <span class="kw">impl</span>&lt;O: Ops&gt; LazyOps <span class="kw">for </span>NoLazy&lt;O&gt; {
-    <span class="kw">type </span>Value = O::Value;
     <span class="kw">type </span>Acc = O::Acc;
     <span class="kw">type </span>Lazy = ();
-    <span class="kw">fn </span>proj(value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Acc {
-        O::proj(value)
-    }
-    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc) -&gt; <span class="self">Self</span>::Acc {
-        O::op(lhs, rhs)
-    }
+    <span class="kw">type </span>Value = O::Value;
+
+    <span class="kw">fn </span>proj(value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Acc { O::proj(value) }
+
+    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc) -&gt; <span class="self">Self</span>::Acc { O::op(lhs, rhs) }
+
     <span class="kw">fn </span>act_value(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, _value: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {}
+
     <span class="kw">fn </span>act_acc(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, _acc: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Acc) {}
+
     <span class="kw">fn </span>compose(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, <span class="kw-2">&amp;mut </span>(): <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Lazy) {}
 }
 
@@ -829,9 +882,8 @@
     /// let splay = SplayTree::&lt;Nop&lt;()&gt;&gt;::new();
     /// assert!(splay.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(Cell::new(null_mut()))
-    }
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(Cell::new(null_mut())) }
+
     <span class="doccomment">/// 空ならば `true` を返します。
     ///
     /// # Examples
@@ -841,9 +893,8 @@
     /// let splay = SplayTree::&lt;Nop&lt;()&gt;&gt;::new();
     /// assert!(splay.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.<span class="number">0</span>.get().is_null()
-    }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.<span class="number">0</span>.get().is_null() }
+
     <span class="doccomment">/// 要素数を返します。
     ///
     /// # Examples
@@ -860,9 +911,8 @@
     /// let splay = repeat(()).take(3).collect::&lt;SplayTree&lt;Nop&lt;()&gt;&gt;&gt;();
     /// assert_eq!(splay.len(), 3);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.get().as_ref() }.map_or(<span class="number">0</span>, |root| root.len)
-    }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.get().as_ref() }.map_or(<span class="number">0</span>, |root| root.len) }
+
     <span class="doccomment">/// 指定した場所に挿入します。
     ///
     /// # Panics
@@ -875,11 +925,15 @@
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
     /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 12]);
     ///
     /// splay.insert(1, 20);
-    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 20, 11, 12]);
+    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+    ///     10, 20, 11, 12
+    /// ]);
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize, value: O::Value) {
         <span class="kw">if </span><span class="self">self</span>.len() &lt; at {
@@ -889,6 +943,7 @@
         <span class="kw">let </span>node = Box::leak(Box::new(Node::new(value)));
         <span class="self">self</span>.<span class="number">0</span>.set(merge(merge(left, node), right));
     }
+
     <span class="doccomment">/// 指定した場所の要素を削除します。
     ///
     /// # Panics
@@ -901,7 +956,9 @@
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
     /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 12]);
     ///
     /// splay.delete(1);
@@ -917,6 +974,7 @@
         <span class="self">self</span>.<span class="number">0</span>.set(merge(l, r));
         ans
     }
+
     <span class="doccomment">/// 指定した範囲の要素を逆順にします。
     ///
     /// # Panics
@@ -930,10 +988,14 @@
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
     /// let mut splay = (10..15).collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
-    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 12, 13, 14]);
+    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+    ///     10, 11, 12, 13, 14
+    /// ]);
     ///
     /// splay.reverse(1..4);
-    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 13, 12, 11, 14]);
+    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+    ///     10, 13, 12, 11, 14
+    /// ]);
     /// ```
     </span><span class="kw">pub fn </span>reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) {
         <span class="kw">let </span>Range { start, end } = into_range(<span class="self">self</span>.len(), range);
@@ -945,6 +1007,7 @@
         }
         <span class="self">self</span>.<span class="number">0</span>.set(merge(merge(l, c), r));
     }
+
     <span class="doccomment">/// 指定した範囲の要素を畳み込みます。
     ///
     /// # Panics
@@ -959,14 +1022,12 @@
     /// # use std::iter::repeat;
     /// enum Sum {}
     /// impl Ops for Sum {
-    ///     type Value = i32;
     ///     type Acc = i32;
-    ///     fn proj(&amp;x: &amp;i32) -&gt; i32 {
-    ///         x
-    ///     }
-    ///     fn op(&amp;x: &amp;i32, &amp;y: &amp;i32) -&gt; i32 {
-    ///         x + y
-    ///     }
+    ///     type Value = i32;
+    ///
+    ///     fn proj(&amp;x: &amp;i32) -&gt; i32 { x }
+    ///
+    ///     fn op(&amp;x: &amp;i32, &amp;y: &amp;i32) -&gt; i32 { x + y }
     /// }
     /// let splay = (10..15).collect::&lt;SplayTree&lt;NoLazy&lt;Sum&gt;&gt;&gt;();
     /// assert_eq!(splay.fold(2..), Some(12 + 13 + 14));
@@ -983,6 +1044,7 @@
         <span class="self">self</span>.<span class="number">0</span>.set(merge(merge(l, c), r));
         ans
     }
+
     <span class="doccomment">/// 指定した範囲の要素すべてに作用します。
     ///
     /// # Panics
@@ -997,23 +1059,26 @@
     /// # use std::iter::repeat;
     /// enum Update {}
     /// impl LazyOps for Update {
-    ///     type Value = i32;
     ///     type Acc = ();
     ///     type Lazy = i32;
+    ///     type Value = i32;
+    ///
     ///     fn proj(&amp;x: &amp;i32) {}
+    ///
     ///     fn op(&amp;(): &amp;(), &amp;(): &amp;()) {}
-    ///     fn act_value(&amp;lazy: &amp;Self::Lazy, value: &amp;mut Self::Value) {
-    ///         *value = lazy;
-    ///     }
+    ///
+    ///     fn act_value(&amp;lazy: &amp;Self::Lazy, value: &amp;mut Self::Value) { *value = lazy; }
+    ///
     ///     fn act_acc(&amp;_lazy: &amp;Self::Lazy, &amp;mut (): &amp;mut Self::Acc) {}
-    ///     fn compose(&amp;x: &amp;Self::Lazy, y: &amp;mut Self::Lazy) {
-    ///         *y = x;
-    ///     }
+    ///
+    ///     fn compose(&amp;x: &amp;Self::Lazy, y: &amp;mut Self::Lazy) { *y = x; }
     /// }
     ///
     /// let mut splay = (10..15).collect::&lt;SplayTree&lt;Update&gt;&gt;();
     /// splay.act(2..4, 20);
-    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 20, 20, 14]);
+    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+    ///     10, 11, 20, 20, 14
+    /// ]);
     /// ```
     </span><span class="kw">pub fn </span>act(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, lazy: O::Lazy) {
         <span class="kw">let </span>Range { start, end } = into_range(<span class="self">self</span>.len(), range);
@@ -1025,6 +1090,7 @@
         }
         <span class="self">self</span>.<span class="number">0</span>.set(merge(merge(l, c), r));
     }
+
     <span class="doccomment">/// 指定した場所の要素への参照を返します。範囲外のときには `None` を返します。
     ///
     ///
@@ -1033,7 +1099,9 @@
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let splay = vec![10, 11, 12].into_iter().collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
+    /// let splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
     /// assert_eq!(splay.get(0), Some(&amp;10));
     /// assert_eq!(splay.get(5), None);
     /// ```
@@ -1047,6 +1115,7 @@
         <span class="kw">let </span>ans = <span class="kw-2">&amp;</span>root.value;
         <span class="prelude-val">Some</span>(ans)
     }
+
     <span class="doccomment">/// 指定した場所の要素への可変ハンドラを返します。範囲外のときには `None` を返します。
     ///
     ///
@@ -1055,7 +1124,9 @@
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
     /// # use std::iter::repeat;
-    /// let mut splay = vec![10, 11, 12].into_iter().collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
+    /// let mut splay = vec![10, 11, 12]
+    ///     .into_iter()
+    ///     .collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
     /// *splay.entry(0).unwrap() += 10;
     /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![20, 11, 12]);
     /// ```
@@ -1068,6 +1139,7 @@
         <span class="self">self</span>.<span class="number">0</span>.set(root);
         <span class="prelude-val">Some</span>(Entry(<span class="self">self</span>))
     }
+
     <span class="doccomment">/// 指定した場所以降を切り離して返します。
     ///
     ///
@@ -1095,6 +1167,7 @@
         <span class="self">self</span>.<span class="number">0</span>.set(left);
         <span class="self">Self</span>(Cell::new(right))
     }
+
     <span class="doccomment">/// 受け取ったスプレー木の値をすべて後ろにつなげます。
     ///
     ///
@@ -1107,13 +1180,16 @@
     /// let mut other = (20..23).into_iter().collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
     /// splay.append(&amp;mut other);
     ///
-    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 12, 20, 21, 22]);
+    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+    ///     10, 11, 12, 20, 21, 22
+    /// ]);
     /// ```
-    </span><span class="kw">pub fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, right: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
+    </span><span class="kw">pub fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, right: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
         <span class="kw">let </span>root = merge(<span class="self">self</span>.<span class="number">0</span>.get(), right.<span class="number">0</span>.get());
         <span class="self">self</span>.<span class="number">0</span>.set(root);
         right.<span class="number">0</span>.set(null_mut());
     }
+
     <span class="doccomment">/// 要素を順番に返すイテレータを返します。
     ///
     ///
@@ -1137,6 +1213,7 @@
             end: <span class="self">self</span>.len(),
         }
     }
+
     <span class="doccomment">/// 指定した範囲の要素を順番に返すイテレータを返します。
     ///
     ///
@@ -1161,6 +1238,7 @@
             end,
         }
     }
+
     <span class="doccomment">/// 内部情報をダンプします。
     </span><span class="kw">pub fn </span>dump(<span class="kw-2">&amp;</span><span class="self">self</span>) {
         <span class="macro">println!</span>(<span class="string">&quot;    === start dump ===    &quot;</span>);
@@ -1196,14 +1274,10 @@
     }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Clone <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="self">self</span>.iter().cloned().collect()
-    }
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self</span>.iter().cloned().collect() }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Default <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
-        <span class="self">Self</span>(Cell::new(null_mut()))
-    }
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(Cell::new(null_mut())) }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; PartialEq <span class="kw">for </span>SplayTree&lt;O&gt;
 <span class="kw">where
@@ -1246,13 +1320,12 @@
 <span class="kw">where
     </span>O::Value: Hash,
 {
-    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="self">self</span>.iter().for_each(|x| x.hash(state))
-    }
+    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) { <span class="self">self</span>.iter().for_each(|x| x.hash(state)) }
 }
 
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Index&lt;usize&gt; <span class="kw">for </span>SplayTree&lt;O&gt; {
     <span class="kw">type </span>Output = O::Value;
+
     <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
         <span class="kw">if </span><span class="self">self</span>.len() &lt;= index {
             splay_tree_index_out_of_range_fail(index, <span class="self">self</span>.len());
@@ -1269,6 +1342,7 @@
 }
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: LazyOps&gt; Iterator <span class="kw">for </span>Iter&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value;
+
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">if </span><span class="self">self</span>.start == <span class="self">self</span>.end {
             <span class="prelude-val">None
@@ -1295,20 +1369,15 @@
 </span><span class="kw">pub struct </span>Entry&lt;<span class="lifetime">&#39;a</span>, O: LazyOps&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>SplayTree&lt;O&gt;);
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Deref <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
     <span class="kw">type </span>Target = O::Value;
-    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
-        <span class="kw-2">&amp;</span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value
-    }
+
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target { <span class="kw-2">&amp;</span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; DerefMut <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
-    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
-        <span class="kw-2">&amp;mut </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value
-    }
+    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target { <span class="kw-2">&amp;mut </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value }
 }
 
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Drop <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        deep_free(<span class="self">self</span>.<span class="number">0</span>.get());
-    }
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) { deep_free(<span class="self">self</span>.<span class="number">0</span>.get()); }
 }
 <span class="kw">fn </span>into_range(len: usize, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; Range&lt;usize&gt; {
     <span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {

@@ -1,20 +1,35 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/wavelet_matrix/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
-    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
-    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
-    crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
-    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
-    crossorigin="anonymous"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/wavelet_matrix/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        renderMathInElement(document.body, {
-            delimiters: [
-                {left: "$$", right: "$$", display: true},
-                {left: "$", right: "$", display: false}
-            ]
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
     });
+  });
 </script>
 
 </head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../wavelet_matrix/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
@@ -920,22 +935,20 @@
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
 //!   - コメント: 想定は余事象を考えて RSQ
-//!
 </span><span class="attr">#![allow(clippy::len_zero)]
 
-</span><span class="kw">use </span>std::{
-    fmt::Debug,
-    iter::FromIterator,
-    mem::size_of,
-    ops::{Bound, Range, RangeBounds},
-};
+</span><span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::iter::FromIterator;
+<span class="kw">use </span>std::mem::size_of;
+<span class="kw">use </span>std::ops::Bound;
+<span class="kw">use </span>std::ops::Range;
+<span class="kw">use </span>std::ops::RangeBounds;
 
 <span class="kw">const </span>UNIT: usize = size_of::&lt;usize&gt;();
 
 <span class="doccomment">/// ウェーブレット行列
 ///
 /// [問題例などは `wavelet_matrix` クレートのドキュメントにあります。](crate)
-///
 </span><span class="attr">#[derive(Clone, Default, Hash, PartialEq, Eq)]
 </span><span class="kw">pub struct </span>WaveletMatrix {
     table: Vec&lt;StaticBitVec&gt;,
@@ -966,9 +979,8 @@
     /// let wm = WaveletMatrix::from_iter(vec![0]);
     /// assert!(!wm.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.table.is_empty()
-    }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.table.is_empty() }
+
     <span class="doccomment">/// 配列の長さを返します。
     ///
     /// # Examples
@@ -981,9 +993,8 @@
     /// assert_eq!(WaveletMatrix::from_iter(vec![42]).len(), 1);
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, StaticBitVec::len)
-    }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, StaticBitVec::len) }
+
     <span class="doccomment">/// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///
     /// [用途は `spans` をご覧ください。](WaveletMatrix::spans)
@@ -996,11 +1007,7 @@
     /// ```
     /// use wavelet_matrix::WaveletMatrix;
     /// let (_wm, table) = WaveletMatrix::from_iter_collect_vec2(vec![2, 1, 3, 0]);
-    /// let expected = vec![
-    ///     vec![2, 1, 3, 0],
-    ///     vec![1, 0, 2, 3],
-    ///     vec![0, 2, 1, 3],
-    /// ];
+    /// let expected = vec![vec![2, 1, 3, 0], vec![1, 0, 2, 3], vec![0, 2, 1, 3]];
     /// assert_eq!(table, expected);
     /// ```
     </span><span class="kw">pub fn </span>from_iter_collect_vec2(
@@ -1011,6 +1018,7 @@
         <span class="kw">let </span>wm = <span class="self">Self</span>::from_slice_of_usize_mut(<span class="kw-2">&amp;mut </span>slice, |row| table.push(row.to_vec()));
         (wm, table)
     }
+
     <span class="doccomment">/// [特に高速化の意図がなければ、`FromIterator`
     /// を代わりにお使いください。](WaveletMatrix::from_iter)
     </span><span class="kw">pub fn </span>from_slice_of_usize_mut(
@@ -1034,6 +1042,7 @@
         callback(slice);
         <span class="self">Self </span>{ table }
     }
+
     <span class="doccomment">/// `i` 番目の要素を返します。
     ///
     /// # Examples
@@ -1054,6 +1063,7 @@
         }
         ans
     }
+
     <span class="doccomment">/// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている要素の個数を返します。
     ///
@@ -1075,6 +1085,7 @@
     ) -&gt; usize {
         <span class="self">self</span>.spans(index, value).map(|span| span.index.len()).sum()
     }
+
     <span class="doccomment">/// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている最小の要素を返します。
     ///
@@ -1094,6 +1105,7 @@
         <span class="self">self</span>.root(open(index, <span class="self">self</span>.len()))
             .next_value(<span class="kw-2">&amp;</span>open(value, <span class="self">self</span>.lim()))
     }
+
     <span class="doccomment">/// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている最小の要素を返します。
     ///
@@ -1113,6 +1125,7 @@
         <span class="self">self</span>.root(open(index, <span class="self">self</span>.len()))
             .prev_value(<span class="kw-2">&amp;</span>open(value, <span class="self">self</span>.lim()))
     }
+
     <span class="doccomment">/// `index` により指定された部分列のうち、
     /// `value` により指定された範囲に入っている中で、
     /// 0-based index で `k` 番目に小さい要素を返します。
@@ -1135,6 +1148,7 @@
             .quantile(k, <span class="kw-2">&amp;</span>open(value, <span class="self">self</span>.lim()))
             .ok()
     }
+
     <span class="doccomment">/// 対応する部分を、`(depth, index_range, value_range)` の形のものに分解します。
     ///
     /// [`Spans`] は [`SpanInNode`] を返すイテレータです。
@@ -1158,7 +1172,6 @@
     /// sorted.sort();
     /// assert_eq!(&amp;sorted, &amp;[3, 5, 5]);
     /// ```
-    ///
     </span><span class="kw">pub fn </span>spans(
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         index: <span class="kw">impl </span>RangeBounds&lt;usize&gt;,
@@ -1186,9 +1199,9 @@
         stack.push(current);
         Spans { stack, target }
     }
-    <span class="kw">fn </span>lim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.table.len()
-    }
+
+    <span class="kw">fn </span>lim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.table.len() }
+
     <span class="kw">fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Range&lt;usize&gt;) -&gt; SpanInNode&lt;<span class="lifetime">&#39;_</span>&gt; {
         SpanInNode {
             wm: <span class="self">self</span>,
@@ -1264,25 +1277,25 @@
 }
 <span class="kw">impl </span>StaticBitVec {
     <span class="doccomment">/// `a.is_empty()`
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="self">self</span>.len == <span class="number">0
-    </span>}
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.len == <span class="number">0 </span>}
+
     <span class="doccomment">/// `a.len()`
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.len
-    }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.len }
+
     <span class="doccomment">/// `a[i]`
     </span><span class="kw">pub fn </span>access(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; bool {
         <span class="macro">assert!</span>(i &lt; <span class="self">self</span>.len);
         <span class="kw">let </span>(q, r) = divrem(i, UNIT);
         <span class="self">self</span>.pattern[q] &gt;&gt; r &amp; <span class="number">1 </span>== <span class="number">1
     </span>}
+
     <span class="doccomment">/// `sum(a[..end])`
     </span><span class="kw">pub fn </span>rank(<span class="kw-2">&amp;</span><span class="self">self</span>, end: usize) -&gt; usize {
         <span class="macro">assert!</span>(end &lt;= <span class="self">self</span>.len);
         <span class="kw">let </span>(q, r) = divrem(end, UNIT);
         <span class="self">self</span>.rank[q] + (<span class="self">self</span>.pattern[q] &amp; ((<span class="number">1 </span>&lt;&lt; r) - <span class="number">1</span>)).count_ones() <span class="kw">as </span>usize
     }
+
     <span class="doccomment">/// min i s.t. `target &lt;= sum(a[..i])`
     </span><span class="kw">pub fn </span>select(<span class="kw-2">&amp;</span><span class="self">self</span>, target: usize) -&gt; usize {
         <span class="kw">if </span>target == <span class="number">0 </span>{
@@ -1291,11 +1304,7 @@
         <span class="kw">let </span><span class="kw-2">mut </span>lr = <span class="number">0</span>..<span class="self">self</span>.rank.len();
         <span class="kw">while </span><span class="number">1 </span>&lt; lr.len() {
             <span class="kw">let </span>c = midpoint(<span class="kw-2">&amp;</span>lr);
-            <span class="kw-2">*</span><span class="kw">if </span><span class="self">self</span>.rank[c] &lt; target {
-                <span class="kw-2">&amp;mut </span>lr.start
-            } <span class="kw">else </span>{
-                <span class="kw-2">&amp;mut </span>lr.end
-            } = c;
+            <span class="kw-2">*</span><span class="kw">if </span><span class="self">self</span>.rank[c] &lt; target { <span class="kw-2">&amp;mut </span>lr.start } <span class="kw">else </span>{ <span class="kw-2">&amp;mut </span>lr.end } = c;
         }
         <span class="kw">let </span>q = lr.start;
         <span class="kw">let </span><span class="kw-2">mut </span>lr = <span class="number">0</span>..UNIT;
@@ -1319,6 +1328,7 @@
 }
 <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>Spans&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">type </span>Item = SpanInNode&lt;<span class="lifetime">&#39;a</span>&gt;;
+
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">let </span>ans = <span class="self">self</span>.stack.pop()<span class="question-mark">?</span>;
         <span class="kw">if </span>ans.value.end == <span class="self">self</span>.target.end {
@@ -1356,6 +1366,7 @@
             value: <span class="self">self</span>.value.start..midpoint(<span class="kw-2">&amp;</span><span class="self">self</span>.value),
         }
     }
+
     <span class="kw">fn </span>right_down(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             wm: <span class="self">self</span>.wm,
@@ -1364,6 +1375,7 @@
             value: midpoint(<span class="kw-2">&amp;</span><span class="self">self</span>.value)..<span class="self">self</span>.value.end,
         }
     }
+
     <span class="kw">fn </span>next_value(<span class="kw-2">&amp;</span><span class="self">self</span>, target: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="kw">if </span>is_disjoint_with(<span class="kw-2">&amp;</span><span class="self">self</span>.value, target) || <span class="self">self</span>.index.len() == <span class="number">0 </span>{
             <span class="prelude-val">None
@@ -1375,6 +1387,7 @@
                 .or_else(|| <span class="self">self</span>.right_down().next_value(target))
         }
     }
+
     <span class="kw">fn </span>prev_value(<span class="kw-2">&amp;</span><span class="self">self</span>, target: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="kw">if </span>is_disjoint_with(<span class="kw-2">&amp;</span><span class="self">self</span>.value, target) || <span class="self">self</span>.index.len() == <span class="number">0 </span>{
             <span class="prelude-val">None
@@ -1386,6 +1399,7 @@
                 .or_else(|| <span class="self">self</span>.left_down().prev_value(target))
         }
     }
+
     <span class="kw">fn </span>quantile(<span class="kw-2">&amp;</span><span class="self">self</span>, k: usize, target: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;usize, usize&gt; {
         <span class="kw">let </span>ans = <span class="kw">if </span>is_disjoint_with(<span class="kw-2">&amp;</span><span class="self">self</span>.value, target) {
             <span class="prelude-val">Err</span>(<span class="number">0</span>)
@@ -1404,9 +1418,7 @@
     }
 }
 
-<span class="kw">fn </span>midpoint(range: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; usize {
-    range.start + (range.end - range.start) / <span class="number">2
-</span>}
+<span class="kw">fn </span>midpoint(range: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; usize { range.start + (range.end - range.start) / <span class="number">2 </span>}
 
 <span class="kw">fn </span>is_disjoint_with(lhs: <span class="kw-2">&amp;</span>Range&lt;usize&gt;, rhs: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; bool {
     lhs.end &lt;= rhs.start || rhs.end &lt;= lhs.start
@@ -1435,8 +1447,11 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>itertools::{iproduct, Itertools};
-    <span class="kw">use </span>rand::{prelude::StdRng, Rng, SeedableRng};
+    <span class="kw">use </span>itertools::iproduct;
+    <span class="kw">use </span>itertools::Itertools;
+    <span class="kw">use </span>rand::prelude::StdRng;
+    <span class="kw">use </span>rand::Rng;
+    <span class="kw">use </span>rand::SeedableRng;
     <span class="kw">use </span>std::iter::repeat_with;
 
     <span class="kw">const </span>H: usize = <span class="number">3</span>;
@@ -1521,7 +1536,7 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_wavelet_matrix_construction() {
         <span class="attr">#[rustfmt::skip]
-        </span><span class="kw">let </span>expected = <span class="macro">vec!</span>[
+        </span><span class="kw">let </span>expected = [
             <span class="string">&quot;111100110010&quot;</span>,
             <span class="string">&quot;100100000010&quot;</span>,
             <span class="string">&quot;110101111010&quot;</span>,

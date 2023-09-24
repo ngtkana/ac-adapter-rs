@@ -1,20 +1,35 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/lazy_segtree/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lazy_segtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
-    integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous">
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
-    integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
-    crossorigin="anonymous"></script>
-<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
-    integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
-    crossorigin="anonymous"></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/lazy_segtree/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lazy_segtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.0 (5680fa18f 2023-08-23)" data-channel="1.72.0" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
 <script>
-    document.addEventListener("DOMContentLoaded", function () {
-        renderMathInElement(document.body, {
-            delimiters: [
-                {left: "$$", right: "$$", display: true},
-                {left: "$", right: "$", display: false}
-            ]
-        });
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
     });
+  });
 </script>
 
 </head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../lazy_segtree/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
@@ -443,11 +458,22 @@
 <a href="#424" id="424">424</a>
 <a href="#425" id="425">425</a>
 <a href="#426" id="426">426</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::{
-    cell::RefCell,
-    fmt::{<span class="self">self</span>, Debug, Formatter},
-    ops::{Bound, Range, RangeBounds},
-};
+<a href="#427" id="427">427</a>
+<a href="#428" id="428">428</a>
+<a href="#429" id="429">429</a>
+<a href="#430" id="430">430</a>
+<a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>std::cell::RefCell;
+<span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::fmt::Formatter;
+<span class="kw">use </span>std::fmt::{<span class="self">self</span>};
+<span class="kw">use </span>std::ops::Bound;
+<span class="kw">use </span>std::ops::Range;
+<span class="kw">use </span>std::ops::RangeBounds;
 
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">pub struct </span>LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt; {
@@ -542,15 +568,16 @@
             id_action,
         }
     }
-    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; T {
-        <span class="self">self</span>.table.borrow()[<span class="self">self</span>.len + i].clone()
-    }
+
+    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; T { <span class="self">self</span>.table.borrow()[<span class="self">self</span>.len + i].clone() }
+
     <span class="kw">pub fn </span>modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>T)) {
         <span class="kw">let </span>i = <span class="self">self</span>.len + i;
         (<span class="number">1</span>..=<span class="self">self</span>.lg).rev().for_each(|p| <span class="self">self</span>.push(i &gt;&gt; p));
         f(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i]);
         (<span class="number">1</span>..=<span class="self">self</span>.lg).for_each(|p| <span class="self">self</span>.update(i &gt;&gt; p));
     }
+
     <span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; T {
         <span class="kw">let </span>Range { <span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end } = open(range, <span class="self">self</span>.len);
         start += <span class="self">self</span>.len;
@@ -573,6 +600,7 @@
         }
         (<span class="self">self</span>.op)(fl, fr)
     }
+
     <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, actor: U) {
         <span class="kw">let </span>Range { <span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end } = open(range, <span class="self">self</span>.len);
         start += <span class="self">self</span>.len;
@@ -604,12 +632,14 @@
             }
         }
     }
+
     <span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt;
     <span class="kw">where
         </span><span class="self">Self</span>: Clone,
     {
         <span class="self">self</span>.clone().into_vec()
     }
+
     <span class="kw">pub fn </span>into_vec(<span class="self">self</span>) -&gt; Vec&lt;T&gt; {
         (<span class="number">1</span>..<span class="self">self</span>.len).for_each(|i| <span class="self">self</span>.push(i));
         (<span class="number">1</span>..<span class="self">self</span>.len).rev().for_each(|i| <span class="self">self</span>.update(i));
@@ -625,6 +655,7 @@
         );
         <span class="self">self</span>.table.borrow_mut()[i] = x;
     }
+
     <span class="kw">fn </span>all_apply(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, f: U) {
         <span class="kw">let </span>x = (<span class="self">self</span>.apply)(f.clone(), <span class="self">self</span>.table.borrow()[i].clone());
         <span class="self">self</span>.table.borrow_mut()[i] = x;
@@ -633,11 +664,13 @@
             <span class="self">self</span>.lazy.borrow_mut()[i] = x;
         }
     }
+
     <span class="kw">fn </span>push(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) {
         <span class="kw">let </span>lazy = std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.lazy.borrow_mut()[i], (<span class="self">self</span>.id_action)());
         <span class="self">self</span>.all_apply(<span class="number">2 </span>* i, lazy.clone());
         <span class="self">self</span>.all_apply(<span class="number">2 </span>* i + <span class="number">1</span>, lazy);
     }
+
     <span class="kw">fn </span>thrust(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) {
         (<span class="number">1</span>..=<span class="self">self</span>.lg)
             .rev()
@@ -681,12 +714,12 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>{
-        <span class="kw">super</span>::{LazySegtree, LazySegtreeBuilder},
-        rand::prelude::<span class="kw-2">*</span>,
-        randtools::SubRange,
-        std::{fmt::Debug, iter},
-    };
+    <span class="kw">use </span><span class="kw">super</span>::LazySegtree;
+    <span class="kw">use </span><span class="kw">super</span>::LazySegtreeBuilder;
+    <span class="kw">use </span>rand::prelude::<span class="kw-2">*</span>;
+    <span class="kw">use </span>randtools::SubRange;
+    <span class="kw">use </span>std::fmt::Debug;
+    <span class="kw">use </span>std::iter;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_index() {
