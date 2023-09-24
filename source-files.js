@@ -23,6 +23,8 @@ var sourcesIndex = JSON.parse('{\
 "euclid":["",[],["crt.rs","ext_gcd.rs","gcd.rs","lib.rs"]],\
 "filter_position":["",[],["lib.rs"]],\
 "fp":["",[],["lib.rs"]],\
+"fp2":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs"]],\
+"fps":["",[],["lib.rs"]],\
 "gco":["",[],["lib.rs"]],\
 "grid":["",[],["coord.rs","dihedral.rs","grid.rs","iter.rs","lib.rs"]],\
 "gridnei":["",[],["lib.rs"]],\
