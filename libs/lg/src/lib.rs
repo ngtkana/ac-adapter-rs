@@ -1,6 +1,7 @@
 //! Provides a macro [`lg`] and formatting utils.
 use std::borrow::Borrow;
-use std::{fmt::Debug, marker::PhantomData};
+use std::fmt::Debug;
+use std::marker::PhantomData;
 
 #[macro_export]
 macro_rules! lg {
@@ -13,7 +14,7 @@ macro_rules! lg {
         eprintln!();
     }};
     ($($expr:expr),* $(,)?) => {{
-        eprint!("[{}:{}]", file!(), line!());
+        eprint!("{}❯", line!());
         $crate::lg!(@contents $($expr),*)
     }};
 }
@@ -63,10 +64,7 @@ pub struct Table<T, Row, Storage> {
 ///
 /// ```
 /// # use lg::{table, Table};
-/// let a = vec![
-///     vec![0, 1, 2],
-///     vec![3, 4, 5],
-/// ];
+/// let a = vec![vec![0, 1, 2], vec![3, 4, 5]];
 ///
 /// let result = format!(
 ///     "{:?}",
@@ -76,12 +74,7 @@ pub struct Table<T, Row, Storage> {
 ///         .column_width(2), // Default: 3
 /// );
 ///
-/// let expected = r#"
-///  | 0 1 2
-/// --------
-/// 0| 0 1 2
-/// 1| 3 4 5
-/// "#;
+/// let expected = "\n\u{1b}[48;2;127;127;127;37m | 0 1 2\u{1b}[0m\n0| 0 1 2\n1| 3 4 5\n":
 ///
 /// assert_eq!(result, expected);
 /// ```
@@ -91,20 +84,10 @@ pub struct Table<T, Row, Storage> {
 ///
 /// ```
 /// # use lg::{table, Table};
-/// let result = format!(
-///     "{:?}",
-///     table(&[
-///         [0, 2147483647, 2],
-///         [3, 4, 5],
-///     ]),
-/// );
+/// let result = format!("{:?}", table(&[[0, 2147483647, 2], [3, 4, 5],]),);
 ///
-/// let expected = r#"
-///   |  0  1  2
-/// ------------
-///  0|  0  *  2
-///  1|  3  4  5
-/// "#;
+/// let expected =
+///     "\n\u{1b}[48;2;127;127;127;37m  |  0  1  2\u{1b}[0m\n 0|  0  *  2\n 1|  3  4  5\n";
 ///
 /// assert_eq!(result, expected);
 /// ```
@@ -128,14 +111,17 @@ where
             heading_newlines: 1,
         }
     }
+
     pub fn index_width(&mut self, index_width: usize) -> &mut Self {
         self.index_width = index_width;
         self
     }
+
     pub fn column_width(&mut self, column_width: usize) -> &mut Self {
         self.column_width = column_width;
         self
     }
+
     pub fn heading_newlines(&mut self, heading_newlines: usize) -> &mut Self {
         self.heading_newlines = heading_newlines;
         self
@@ -159,21 +145,16 @@ where
             writeln!(f)?;
         }
         let ncols = storage.as_ref()[0].as_ref().len();
+        write!(f, "\x1b[48;2;127;127;127;37m")?;
         write!(f, "{}|", " ".repeat(index_width))?;
         for j in 0..ncols {
-            write!(f, "{:column_width$}", j, column_width = column_width)?;
+            write!(f, "{j:column_width$}")?;
         }
-        writeln!(f)?;
-        writeln!(f, "{}", "-".repeat(index_width + 1 + column_width * ncols))?;
+        writeln!(f, "\x1b[0m")?;
         for (i, row) in storage.as_ref().iter().enumerate() {
             write!(f, "{:index_width$}|", i, index_width = index_width)?;
             for value in row.as_ref() {
-                write!(
-                    f,
-                    "{:>column_width$}",
-                    __quiet(format!("{:?}", value)),
-                    column_width = column_width,
-                )?;
+                write!(f, "{:>column_width$}", __quiet(format!("{:?}", value)),)?;
             }
             writeln!(f)?;
         }
@@ -198,7 +179,8 @@ where
 #[cfg(test)]
 mod test {
     use super::*;
-    use std::{collections::BTreeSet, iter::empty};
+    use std::collections::BTreeSet;
+    use std::iter::empty;
 
     #[test]
     fn test_invoke_lg() {
@@ -231,12 +213,7 @@ mod test {
         }
         assert_eq!(
             format([[0, std::i32::MIN, 2], [3, 4, 5]]),
-            r#"
-  |  0  1  2
-------------
- 0|  0  *  2
- 1|  3  4  5
-"#
+            "\n\u{1b}[48;2;127;127;127;37m  |  0  1  2\u{1b}[0m\n 0|  0  *  2\n 1|  3  4  5\n"
         );
     }
 
