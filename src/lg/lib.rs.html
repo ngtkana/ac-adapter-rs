@@ -286,23 +286,10 @@
 <a href="#252" id="252">252</a>
 <a href="#253" id="253">253</a>
 <a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-<a href="#258" id="258">258</a>
-<a href="#259" id="259">259</a>
-<a href="#260" id="260">260</a>
-<a href="#261" id="261">261</a>
-<a href="#262" id="262">262</a>
-<a href="#263" id="263">263</a>
-<a href="#264" id="264">264</a>
-<a href="#265" id="265">265</a>
-<a href="#266" id="266">266</a>
-<a href="#267" id="267">267</a>
-<a href="#268" id="268">268</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Provides a macro [`lg`] and formatting utils.
 </span><span class="kw">use </span>std::borrow::Borrow;
-<span class="kw">use </span>std::{fmt::Debug, marker::PhantomData};
+<span class="kw">use </span>std::fmt::Debug;
+<span class="kw">use </span>std::marker::PhantomData;
 
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>lg {
@@ -315,7 +302,7 @@
         <span class="macro">eprintln!</span>();
     }};
     ($(<span class="macro-nonterminal">$expr</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {{
-        <span class="macro">eprint!</span>(<span class="string">&quot;[{}:{}]&quot;</span>, <span class="macro">file!</span>(), <span class="macro">line!</span>());
+        <span class="macro">eprint!</span>(<span class="string">&quot;{}❯&quot;</span>, <span class="macro">line!</span>());
         <span class="macro-nonterminal">$</span><span class="macro">crate::lg!</span>(@<span class="macro-nonterminal">contents </span>$(<span class="macro-nonterminal">$expr</span>),<span class="kw-2">*</span>)
     }};
 }
@@ -365,10 +352,7 @@
 ///
 /// ```
 /// # use lg::{table, Table};
-/// let a = vec![
-///     vec![0, 1, 2],
-///     vec![3, 4, 5],
-/// ];
+/// let a = vec![vec![0, 1, 2], vec![3, 4, 5]];
 ///
 /// let result = format!(
 ///     &quot;{:?}&quot;,
@@ -393,13 +377,7 @@
 ///
 /// ```
 /// # use lg::{table, Table};
-/// let result = format!(
-///     &quot;{:?}&quot;,
-///     table(&amp;[
-///         [0, 2147483647, 2],
-///         [3, 4, 5],
-///     ]),
-/// );
+/// let result = format!(&quot;{:?}&quot;, table(&amp;[[0, 2147483647, 2], [3, 4, 5],]),);
 ///
 /// let expected = r#&quot;
 ///   |  0  1  2
@@ -430,14 +408,17 @@
             heading_newlines: <span class="number">1</span>,
         }
     }
+
     <span class="kw">pub fn </span>index_width(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index_width: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.index_width = index_width;
         <span class="self">self
     </span>}
+
     <span class="kw">pub fn </span>column_width(<span class="kw-2">&amp;mut </span><span class="self">self</span>, column_width: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.column_width = column_width;
         <span class="self">self
     </span>}
+
     <span class="kw">pub fn </span>heading_newlines(<span class="kw-2">&amp;mut </span><span class="self">self</span>, heading_newlines: usize) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self </span>{
         <span class="self">self</span>.heading_newlines = heading_newlines;
         <span class="self">self
@@ -461,21 +442,16 @@
             <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         }
         <span class="kw">let </span>ncols = storage.as_ref()[<span class="number">0</span>].as_ref().len();
+        <span class="macro">write!</span>(f, <span class="string">&quot;\x1b[48;2;127;127;127;37m&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">write!</span>(f, <span class="string">&quot;{}|&quot;</span>, <span class="string">&quot; &quot;</span>.repeat(index_width))<span class="question-mark">?</span>;
         <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..ncols {
-            <span class="macro">write!</span>(f, <span class="string">&quot;{:column_width$}&quot;</span>, j, column_width = column_width)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;{j:column_width$}&quot;</span>)<span class="question-mark">?</span>;
         }
-        <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
-        <span class="macro">writeln!</span>(f, <span class="string">&quot;{}&quot;</span>, <span class="string">&quot;-&quot;</span>.repeat(index_width + <span class="number">1 </span>+ column_width * ncols))<span class="question-mark">?</span>;
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;\x1b[0m&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, row) <span class="kw">in </span>storage.as_ref().iter().enumerate() {
             <span class="macro">write!</span>(f, <span class="string">&quot;{:index_width$}|&quot;</span>, i, index_width = index_width)<span class="question-mark">?</span>;
             <span class="kw">for </span>value <span class="kw">in </span>row.as_ref() {
-                <span class="macro">write!</span>(
-                    f,
-                    <span class="string">&quot;{:&gt;column_width$}&quot;</span>,
-                    __quiet(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, value)),
-                    column_width = column_width,
-                )<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">&quot;{:&gt;column_width$}&quot;</span>, __quiet(<span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, value)),)<span class="question-mark">?</span>;
             }
             <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         }
@@ -500,7 +476,8 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>test {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>std::{collections::BTreeSet, iter::empty};
+    <span class="kw">use </span>std::collections::BTreeSet;
+    <span class="kw">use </span>std::iter::empty;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_invoke_lg() {
@@ -533,12 +510,7 @@
         }
         <span class="macro">assert_eq!</span>(
             format([[<span class="number">0</span>, std::i32::MIN, <span class="number">2</span>], [<span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]]),
-            <span class="string">r#&quot;
-  |  0  1  2
-------------
- 0|  0  *  2
- 1|  3  4  5
-&quot;#
+            <span class="string">&quot;\n\u{1b}[48;2;127;127;127;37m  |  0  1  2\u{1b}[0m\n 0|  0  *  2\n 1|  3  4  5\n&quot;
         </span>);
     }
 
