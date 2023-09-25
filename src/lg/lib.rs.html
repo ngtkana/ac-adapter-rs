@@ -277,15 +277,6 @@
 <a href="#243" id="243">243</a>
 <a href="#244" id="244">244</a>
 <a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Provides a macro [`lg`] and formatting utils.
 </span><span class="kw">use </span>std::borrow::Borrow;
 <span class="kw">use </span>std::fmt::Debug;
@@ -362,12 +353,7 @@
 ///         .column_width(2), // Default: 3
 /// );
 ///
-/// let expected = r#&quot;
-///  | 0 1 2
-/// --------
-/// 0| 0 1 2
-/// 1| 3 4 5
-/// &quot;#;
+/// let expected = &quot;\n\u{1b}[48;2;127;127;127;37m | 0 1 2\u{1b}[0m\n0| 0 1 2\n1| 3 4 5\n&quot;:
 ///
 /// assert_eq!(result, expected);
 /// ```
@@ -379,12 +365,8 @@
 /// # use lg::{table, Table};
 /// let result = format!(&quot;{:?}&quot;, table(&amp;[[0, 2147483647, 2], [3, 4, 5],]),);
 ///
-/// let expected = r#&quot;
-///   |  0  1  2
-/// ------------
-///  0|  0  *  2
-///  1|  3  4  5
-/// &quot;#;
+/// let expected =
+///     &quot;\n\u{1b}[48;2;127;127;127;37m  |  0  1  2\u{1b}[0m\n 0|  0  *  2\n 1|  3  4  5\n&quot;;
 ///
 /// assert_eq!(result, expected);
 /// ```
