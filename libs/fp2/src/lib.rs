@@ -312,10 +312,16 @@ impl<const P: u64> Neg for Fp<P> {
 impl<const P: u64> Sum for Fp<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::new(0), |acc, x| acc + x) }
 }
+impl<'a, const P: u64> Sum<&'a Self> for Fp<P> {
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.copied().sum() }
+}
 impl<const P: u64> Product for Fp<P> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
         iter.fold(Self::new(1), |acc, x| acc * x)
     }
+}
+impl<'a, const P: u64> Product<&'a Self> for Fp<P> {
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.copied().product() }
 }
 
 #[cfg(test)]
