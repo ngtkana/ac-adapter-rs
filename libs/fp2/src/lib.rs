@@ -3,14 +3,14 @@
 //! ```
 //! use fp2::fp;
 //! use fp2::Fp;
-//! type F = Fp<998244353>;
-//! let a = F::new(3);
-//! let b = F::new(4);
-//! assert_eq!(a + b, F::new(7));
-//! assert_eq!(a - b, F::new(998244352));
-//! assert_eq!(a * b, F::new(12));
-//! assert_eq!(a / b * b, F::new(3));
-//! assert_eq!(a.pow(3), F::new(27));
+//! type Fp = Fp<998244353>;
+//! let a = Fp::new(3);
+//! let b = Fp::new(4);
+//! assert_eq!(a + b, Fp::new(7));
+//! assert_eq!(a - b, Fp::new(998244352));
+//! assert_eq!(a * b, Fp::new(12));
+//! assert_eq!(a / b * b, Fp::new(3));
+//! assert_eq!(a.pow(3), Fp::new(27));
 //! ```
 //!
 //! ## Factorials
@@ -91,19 +91,18 @@ impl PrimitiveRoot<924844033> for () {
     const VALUE: Fp<924844033> = Fp::new(5);
 }
 
-/// A value in $\mathbb{F}_p$.
+/// A value in $\mathbb{Fp}_p$.
 /// # Requirements
 /// - $P$ is odd and prime ($P \gt 2^{31}$)
 /// # Invariants
 /// - $0 \le \text{value} < P$
 /// # Examples
 /// ```
-/// use fp2::Fp;
-/// type F = Fp<998244353>;
-/// assert_eq!(F::new(3) + F::new(4), F::new(7));
-/// assert_eq!(F::new(3) - F::new(4), F::new(998244352));
-/// assert_eq!(F::new(3) * F::new(4), F::new(12));
-/// assert_eq!(F::new(3) / F::new(4) * F::new(4), F::new(3));
+/// type Fp = fp2::Fp<998244353>;
+/// assert_eq!(Fp::new(3) + Fp::new(4), Fp::new(7));
+/// assert_eq!(Fp::new(3) - Fp::new(4), Fp::new(998244352));
+/// assert_eq!(Fp::new(3) * Fp::new(4), Fp::new(12));
+/// assert_eq!(Fp::new(3) / Fp::new(4) * Fp::new(4), Fp::new(3));
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Fp<const P: u64> {
@@ -164,6 +163,19 @@ impl<const P: u64> Fp<P> {
         }
         result
     }
+
+    /// Returns $(-1)^{\text{pow}}$.
+    ///
+    /// # Examples
+    /// ```
+    /// use fp2::Fp;
+    /// type Fp = Fp<998244353>;
+    /// assert_eq!(Fp::sign(0), Fp::new(1));
+    /// assert_eq!(Fp::sign(1), Fp::new(-1));
+    /// assert_eq!(Fp::sign(2), Fp::new(1));
+    /// assert_eq!(Fp::sign(3), Fp::new(-1));
+    /// ```
+    pub fn sign(pow: usize) -> Self { Self::new(if pow % 2 == 0 { 1 } else { P - 1 }) }
 }
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
