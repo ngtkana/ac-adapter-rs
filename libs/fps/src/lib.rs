@@ -1,5 +1,21 @@
 //! Arithmetic of formal power series.
 //!
+//! # Data representation
+//!
+//! In fact a formal power series $f = f_0 x + f_1 x + f_2 x^2 + \dots \in \mathbb{F}\_p\[\[x\]\]$ has an infinite number of coefficients, but it is too hard for computers to handle it.
+//! Therefore, we represent a formal power series $f$ as a finite sequence $f_0, f_1, \dots, f_{d-1}$ of length $d$.
+//! This $d$ is called precision.
+//! Trailing zeros are also allowed in this representation.
+//!
+//! In conclution, the set of values that `Vec<Fp<P>>` can represent is exactly the same as the
+//! following set:
+//!
+//! $$
+//! \bigsqcup_{d=0}^\infty \mathbb{F}_p\[x\] / (x^d)
+//! $$
+//!
+//! Especially, any two FPSs of different precisions are not equal.
+//!
 //! # Note on complexity
 //! *We only consider cases where the precision is a power of 2.
 //! If the precision is not a power of 2, the complexity is twice as bad.*
@@ -33,7 +49,20 @@ use fp2::Fp;
 use fp2::PrimitiveRoot;
 use std::iter::repeat;
 
-/// Inverse FPS of `f`.
+#[macro_export]
+macro_rules! fps {
+    () => (
+        vec![]
+    );
+    ($elem:expr; $n:expr) => (
+        vec![Fp::new($elem); $n]
+    );
+    ($($x:expr),+ $(,)?) => (
+        vec![$(Fp::new($x)),+]
+    );
+}
+
+/// Multiplicative inverse of `f`.
 ///
 /// # Requirements
 /// $f_0 \ne 0$
@@ -156,6 +185,17 @@ where
     g.truncate(precision);
     g
 }
+/// Derivative of $f$.
+pub fn fps_deriv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>>
+where
+    (): PrimitiveRoot<P>,
+{
+    let mut g = vec![Fp::new(0); precision];
+    for (i, &f) in f.iter().enumerate().skip(1) {
+        g[i - 1] = f * Fp::new(i as u64);
+    }
+    g
+}
 
 #[cfg(test)]
 mod tests {
@@ -166,7 +206,8 @@ mod tests {
     use rand::SeedableRng;
     use std::iter;
 
-    type Fp = fp2::Fp<998244353>;
+    const P: u64 = 998244353;
+    type Fp = fp2::Fp<P>;
 
     fn random_fps_one(rng: &mut StdRng, precision: usize) -> Vec<Fp> {
         iter::once(Fp::new(1))
@@ -176,13 +217,28 @@ mod tests {
     }
 
     #[test]
+    fn test_fps_inv_hand() {
+        let fps_inv = fps_inv::<P>;
+        let inv2 = Fp::new(2).inv().value();
+        let minus_inv2 = Fp::from(-2).value();
+        assert_eq!(fps_inv(&fps![2], 1), fps![inv2]);
+        assert_eq!(fps_inv(&fps![2], 2), fps![inv2, 0]);
+        assert_eq!(fps_inv(&fps![2, 0], 1), fps![inv2]);
+        assert_eq!(fps_inv(&fps![2, 0], 2), fps![inv2, 0]);
+        assert_eq!(fps_inv(&fps![2, 0], 3), fps![inv2, 0, 0]);
+        assert_eq!(fps_inv(&fps![1, 2], 1), fps![1]);
+        assert_eq!(fps_inv(&fps![1, 2], 2), fps![1, minus_inv2]);
+        assert_eq!(fps_inv(&fps![1, 2], 3), fps![1, minus_inv2, 4]);
+    }
+
+    #[test]
     fn test_fps_inv_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let f = random_fps_one(&mut rng, PRECISION);
             let g = fps_inv(&f, PRECISION);
-            assert!(g.len() <= PRECISION);
+            assert_eq!(g.len(), PRECISION);
             let mut result = fps_mul(&f, &g);
             result.truncate(PRECISION);
             let mut expected = vec![Fp::new(0); PRECISION];
@@ -192,16 +248,52 @@ mod tests {
     }
 
     #[test]
+    fn test_fps_sqrt_hand() {
+        let fps_sqrt = fps_sqrt::<P>;
+        let minus2 = Fp::from(-2).value();
+        assert_eq!(fps_sqrt(&fps![1], 1), fps![1]);
+        assert_eq!(fps_sqrt(&fps![1], 2), fps![1, 0]);
+        assert_eq!(fps_sqrt(&fps![1, 4], 1), fps![1]);
+        assert_eq!(fps_sqrt(&fps![1, 4], 2), fps![1, 2]);
+        assert_eq!(fps_sqrt(&fps![1, 4], 3), fps![1, 2, minus2]);
+    }
+
+    #[test]
     fn test_fps_sqrt_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let f = random_fps_one(&mut rng, PRECISION);
             let g = fps_sqrt(&f, PRECISION);
-            assert!(g.len() <= PRECISION);
+            assert_eq!(g.len(), PRECISION);
             let mut result = fps_mul(&g, &g);
             result.truncate(PRECISION);
             assert_eq!(result, f);
+        }
+    }
+
+    #[test]
+    fn test_fps_deriv_hand() {
+        let fps_deriv = fps_deriv::<P>;
+        assert_eq!(fps_deriv(&fps![1], 1), fps![0]);
+        assert_eq!(fps_deriv(&fps![1], 2), fps![0, 0]);
+        assert_eq!(fps_deriv(&fps![1, 2], 1), fps![2]);
+        assert_eq!(fps_deriv(&fps![1, 2], 2), fps![2, 0]);
+        assert_eq!(fps_deriv(&fps![1, 2], 3), fps![2, 0, 0]);
+        assert_eq!(fps_deriv(&fps![1, 2, 3], 3), fps![2, 6, 0]);
+    }
+
+    #[test]
+    fn test_fps_deriv_random() {
+        const PRECISION: usize = 40;
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let f = random_fps_one(&mut rng, PRECISION);
+            let g = fps_deriv(&f, PRECISION);
+            for i in 1..PRECISION {
+                assert_eq!(g[i - 1], f[i] * Fp::new(i as u64));
+            }
+            assert_eq!(g.len(), PRECISION);
         }
     }
 }

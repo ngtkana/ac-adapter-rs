@@ -74,7 +74,7 @@ pub struct Table<T, Row, Storage> {
 ///         .column_width(2), // Default: 3
 /// );
 ///
-/// let expected = "\n\u{1b}[48;2;127;127;127;37m | 0 1 2\u{1b}[0m\n0| 0 1 2\n1| 3 4 5\n":
+/// let expected = "\n\u{1b}[48;2;127;127;127;37m | 0 1 2\u{1b}[0m\n0| 0 1 2\n1| 3 4 5\n";
 ///
 /// assert_eq!(result, expected);
 /// ```
