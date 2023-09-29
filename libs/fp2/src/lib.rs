@@ -2,8 +2,7 @@
 //! # Examples
 //! ```
 //! use fp2::fp;
-//! use fp2::Fp;
-//! type Fp = Fp<998244353>;
+//! type Fp = fp2::Fp<998244353>;
 //! let a = Fp::new(3);
 //! let b = Fp::new(4);
 //! assert_eq!(a + b, Fp::new(7));
@@ -168,12 +167,11 @@ impl<const P: u64> Fp<P> {
     ///
     /// # Examples
     /// ```
-    /// use fp2::Fp;
-    /// type Fp = Fp<998244353>;
-    /// assert_eq!(Fp::sign(0), Fp::new(1));
-    /// assert_eq!(Fp::sign(1), Fp::new(-1));
-    /// assert_eq!(Fp::sign(2), Fp::new(1));
-    /// assert_eq!(Fp::sign(3), Fp::new(-1));
+    /// type Fp = fp2::Fp<998244353>;
+    /// assert_eq!(Fp::sign(0), Fp::from(1));
+    /// assert_eq!(Fp::sign(1), Fp::from(-1));
+    /// assert_eq!(Fp::sign(2), Fp::from(1));
+    /// assert_eq!(Fp::sign(3), Fp::from(-1));
     /// ```
     pub fn sign(pow: usize) -> Self { Self::new(if pow % 2 == 0 { 1 } else { P - 1 }) }
 }
