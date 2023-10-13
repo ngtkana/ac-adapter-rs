@@ -1,175 +1,344 @@
 #![warn(missing_docs)]
-//! A list based on red-black tree.
+//! Containers for storing data in a red-black tree.
 
-use std::marker::PhantomData;
-use std::ops::RangeBounds;
+use std::cmp::Ordering;
+use std::mem;
+use std::ptr;
+use std::ptr::null_mut;
+use std::ptr::NonNull;
 
-/// A trait that represents an operation on a value.
-pub trait Op {
-    /// The type of the value.
-    type Value;
-    /// The type of the result of reduce.
-    type Reduce;
-
-    /// Reduct a single value.
-    fn once(value: &Self::Value) -> Self::Reduce;
-
-    /// The operation that is used to reduce the elements.
-    fn op(lhs: &Self::Reduce, rhs: &Self::Reduce) -> Self::Reduce;
+/// A node in a red-black tree.
+pub trait Listen<T>: Sized {
+    /// The type of the cache.
+    type Cache;
+    /// Callback for when the node is accessed down the tree.
+    fn push(node: &mut Node<T, Self>);
+    /// Callback for when the node is accessed up the tree.
+    fn update(node: &mut Node<T, Self>);
 }
 
-/// A type to represent no reduce operation.
-pub struct Nop<T> {
-    __marker: PhantomData<T>,
-}
-impl<T> Op for Nop<T> {
-    type Value = T;
-    type Reduce = ();
-    fn once(_: &Self::Value) {}
-    fn op(_: &Self::Reduce, _: &Self::Reduce) {}
-}
+/// A no-op callback.
+pub struct Len;
+impl<T> Listen<T> for Len {
+    type Cache = usize;
 
-/// A list based on red-black tree.
-pub struct Rblist<O: Op> {
-    __maker: std::marker::PhantomData<O>,
-}
-impl<O: Op> Rblist<O> {
-    /// Makes a new, empty `Rblist`.
-    /// Does not allocate anything on its own.
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Nop;
-    ///
-    /// let mut list = Rblist::<Nop<_>>::new();
-    /// list.push_back('a');
-    /// ```
-    pub fn new() -> Self {
-        Self::default()
-    }
+    fn push(_node: &mut Node<T, Self>) {}
 
-    /// Returns true if the list contains no elements.
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Nop;
-    ///
-    /// let mut list = Rblist::<Nop<_>>::new();
-    /// assert!(list.is_empty());
-    /// list.push_back('a');
-    /// assert!(!list.is_empty());
-    /// ```
-    pub fn is_empty(&self) -> bool {
-        todo!()
-    }
-
-    /// Returns the number of elements in the list.
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Nop;
-    ///
-    /// let mut list = Rblist::<Nop<_>>::new();
-    /// assert_eq!(list.len(), 0);
-    /// list.push_back('a');
-    /// assert_eq!(list.len(), 1);
-    /// ```
-    pub fn len(&self) -> usize {
-        todo!()
-    }
-
-    /// Reduces the elements to a single one, by repeatedly applying [`Op::op`].
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Op;
-    ///
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = char;
-    ///     type Reduce = String;
-    ///     fn once(value: &char) -> String {
-    ///         value.to_string()
-    ///     }
-    ///     fn op(lhs: &String, rhs: &String) -> String {
-    ///         format!("{lhs}{rhs}")
-    ///     }
-    /// }
-    ///
-    /// let mut list = Rblist::<O>::new();
-    /// list.push_back('a');
-    /// list.push_back('b');
-    /// assert_eq!(&list.reduce(..), "ab");
-    /// ```
-    pub fn reduce(&self, range: impl RangeBounds<usize>) -> O::Reduce {
-        drop(range);
-        todo!()
-    }
-
-    /// Returns the index of the partition point according to the given predicate (the index of the first element of the second partition).
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Op;
-    ///
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = char;
-    ///     type Reduce = String;
-    ///     fn once(value: &char) -> String {
-    ///         value.to_string()
-    ///     }
-    ///     fn op(lhs: &String, rhs: &String) -> String {
-    ///         format!("{lhs}{rhs}")
-    ///     }
-    /// }
-    ///
-    /// let mut list = Rblist::<O>::new();
-    /// list.push_back('a');
-    /// list.push_back('b');
-    /// assert_eq!(list.reduce_partition_point(.., |reduce| reduce.len() <= 1), 1);
-    /// ```
-    pub fn reduce_partition_point(
-        &self,
-        range: impl RangeBounds<usize>,
-        predicate: impl Fn(&O::Reduce) -> bool,
-    ) -> usize {
-        drop(range);
-        drop(predicate);
-        todo!()
-    }
-
-    /// Appends an element to the back of the list.
-    ///
-    /// # Examples
-    /// ```should_panic
-    /// use rb::Rblist;
-    /// use rb::Nop;
-    ///
-    /// let mut list = Rblist::<Nop<_>>::new();
-    /// list.push_back('a');
-    /// list.push_back('b');
-    /// assert_eq!(list.len(), 2);
-    /// ```
-    pub fn push_back(&mut self, value: O::Value) {
-        drop(value);
-        todo!()
+    fn update(node: &mut Node<T, Self>) {
+        unsafe {
+            node.cache = 1
+                + node.left.as_ref().map_or(0, |n| n.cache)
+                + node.right.as_ref().map_or(0, |n| n.cache);
+        }
     }
 }
 
-impl<O: Op> Default for Rblist<O> {
-    fn default() -> Self {
-        todo!()
-    }
+#[allow(dead_code)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+enum Color {
+    Red,
+    Black,
+}
+fn color<T, L: Listen<T>>(node: *const Node<T, L>) -> Color {
+    unsafe { node.as_ref().map_or(Color::Black, |n| n.color) }
 }
 
-impl<O: Op> FromIterator<O::Value> for Rblist<O> {
-    fn from_iter<I: IntoIterator<Item = O::Value>>(_iter: I) -> Self {
+/// A node in a red-black tree.
+#[allow(dead_code)]
+pub struct Node<T, L: Listen<T>> {
+    value: T,
+    left: *mut Node<T, L>,
+    right: *mut Node<T, L>,
+    parent: *mut Node<T, L>,
+    color: Color,
+    cache: L::Cache,
+}
+#[allow(dead_code)]
+impl<T, L: Listen<T>> Node<T, L> {
+    fn push(&mut self) { L::push(self); }
+
+    fn update(&mut self) { L::update(self); }
+}
+
+/// The most basic red-black tree.
+pub struct RbTree<T, L: Listen<T>> {
+    root: *mut Node<T, L>,
+}
+impl<T, L: Listen<T>> RbTree<T, L> {
+    /// Create a new empty tree.
+    pub fn new() -> Self { Self::default() }
+
+    /// Returns true if the tree is empty.
+    pub fn is_empty(&self) -> bool { self.root.is_null() }
+
+    /// Insert a node at the partition point according to the given predicate.
+    pub fn partition_point_insert(
+        &mut self,
+        mut node: NonNull<Node<T, L>>,
+        mut pred: impl FnMut(&Node<T, L>) -> bool,
+    ) {
+        unsafe {
+            let node = node.as_mut();
+            // Check the node.
+            debug_assert!(node.left.is_null());
+            debug_assert!(node.right.is_null());
+            debug_assert!(node.parent.is_null());
+            debug_assert!(node.color == Color::Red);
+
+            // Find the partition point.
+            let mut p = null_mut();
+            let mut x = self.root;
+            while !x.is_null() {
+                p = x;
+                x = if pred(&*x) { (*x).left } else { (*x).right }
+            }
+
+            // Insert the node.
+            node.parent = p;
+            *(if p.is_null() {
+                &mut self.root
+            } else if pred(&*p) {
+                &mut (*p).left
+            } else {
+                &mut (*p).right
+            }) = node;
+
+            // Fixup the tree.
+            self.insert_fixup(node);
+        }
+    }
+
+    /// Binary searches for a node according to the given predicate and removes it.
+    pub fn binary_search_remove(&mut self, _f: impl FnMut(&T) -> Ordering) -> Option<NonNull<T>> {
         todo!()
+    }
+
+    /// Split the tree into two trees according to the given predicate.
+    pub fn partition_point_split(&mut self, _pred: impl FnMut(&T) -> bool) -> Self { todo!() }
+
+    /// Merge two trees together.
+    pub fn append(&mut self, _other: &mut Self) { todo!() }
+
+    unsafe fn left_rotate(&mut self, node: *mut Node<T, L>) {
+        // Get the nodes.
+        let p = (*node).parent;
+        let l = node;
+        let r = (*l).right;
+        let c = (*r).left;
+
+        // Connect l and c.
+        (*l).right = c;
+        if !c.is_null() {
+            (*c).parent = l;
+        }
+
+        // Connect p and r.
+        if p.is_null() {
+            self.root = r;
+        } else if l == (*p).left {
+            (*p).left = r;
+        } else {
+            (*p).right = r;
+        }
+        (*r).parent = p;
+
+        // Connect l and r.
+        (*r).left = l;
+        (*l).parent = r;
+
+        // Update
+        (*l).update();
+        (*r).update();
+    }
+
+    unsafe fn right_rotate(&mut self, node: *mut Node<T, L>) {
+        // Get the nodes.
+        let p = (*node).parent;
+        let l = (*node).left;
+        let r = node;
+        let c = (*l).right;
+
+        // Connect r and c.
+        (*r).left = c;
+        if !c.is_null() {
+            (*c).parent = r;
+        }
+
+        // Connect p and l.
+        if p.is_null() {
+            self.root = l;
+        } else if r == (*p).left {
+            (*p).left = l;
+        } else {
+            (*p).right = l;
+        }
+        (*l).parent = p;
+
+        // Connect l and r.
+        (*l).right = r;
+        (*r).parent = l;
+
+        // Update
+        (*r).update();
+        (*l).update();
+    }
+
+    unsafe fn insert_fixup(&mut self, node: &mut Node<T, L>) {
+        let mut x = node;
+        while color(x.parent) == Color::Red {
+            debug_assert!(x.color == Color::Red);
+            let mut p = &mut (*x.parent);
+            let pp = &mut (*p.parent);
+            // Case 1: p is the left child of pp.
+            if ptr::eq(p, pp.left) {
+                // Case 1.1: p's sibling is red: split the 5-node.
+                if color(pp.right) == Color::Red {
+                    p.color = Color::Black;
+                    (*pp.right).color = Color::Black;
+                    pp.color = Color::Red;
+                    p.update();
+                    pp.update();
+                    x = pp;
+                }
+                // Case 1.2: p's sibling is black: balance the leaning 4-node.
+                else {
+                    if ptr::eq(x, p.right) {
+                        mem::swap(&mut x, &mut p);
+                        self.left_rotate(x);
+                    }
+                    self.right_rotate(pp);
+                    p.color = Color::Black;
+                    pp.color = Color::Red;
+                }
+            }
+            // Case 2: p is the right child of pp.
+            else {
+                // Case 2.1: p's sibling is red: split the 5-node.
+                if color(pp.left) == Color::Red {
+                    p.color = Color::Black;
+                    (*pp.left).color = Color::Black;
+                    pp.color = Color::Red;
+                    p.update();
+                    pp.update();
+                    x = pp;
+                }
+                // Case 2.2: p's sibling is black: balance the leaning 4-node.
+                else {
+                    if ptr::eq(x, p.left) {
+                        mem::swap(&mut x, &mut p);
+                        self.right_rotate(x);
+                    }
+                    self.left_rotate(pp);
+                    p.color = Color::Black;
+                    pp.color = Color::Red;
+                }
+            }
+        }
+
+        // Update the remaining nodes.
+        while let Some(p) = x.parent.as_mut() {
+            x = p;
+            x.update();
+        }
+
+        // Set the root to black.
+        (*self.root).color = Color::Black;
+    }
+}
+impl<T, L: Listen<T>> Default for RbTree<T, L> {
+    fn default() -> Self { Self { root: null_mut() } }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+
+    fn node(value: i32) -> NonNull<Node<i32, Len>> {
+        NonNull::from(Box::leak(Box::new(Node {
+            value,
+            left: null_mut(),
+            right: null_mut(),
+            parent: null_mut(),
+            color: Color::Red,
+            cache: 1,
+        })))
+    }
+
+    fn len(tree: &RbTree<i32, Len>) -> usize {
+        unsafe { tree.root.as_ref().map_or(0, |n| n.cache) }
+    }
+
+    #[allow(dead_code)]
+    fn print(tree: &RbTree<i32, Len>) {
+        unsafe fn node_to_string(node: *const Node<i32, Len>) {
+            let colour = match color(node) {
+                Color::Red => ansi_term::Colour::Red,
+                Color::Black => ansi_term::Colour::Black,
+            };
+            if let Some(node) = node.as_ref() {
+                print!("{}", colour.paint("("));
+                node_to_string(node.left);
+                print!("{}", colour.paint(&node.value.to_string()));
+                node_to_string(node.right);
+                print!("{}", colour.paint(")"));
+            }
+        }
+        unsafe {
+            if let Some(root) = tree.root.as_ref() {
+                node_to_string(root);
+            }
+        }
+        println!();
+    }
+
+    fn validate(tree: &RbTree<i32, Len>) {
+        unsafe fn validate_node(node: &Node<i32, Len>) {
+            if let Some(left) = node.left.as_ref() {
+                validate_node(left);
+                if node.color == Color::Red {
+                    assert_eq!(left.color, Color::Black);
+                }
+            }
+            if let Some(right) = node.right.as_ref() {
+                validate_node(right);
+                if node.color == Color::Red {
+                    assert_eq!(right.color, Color::Black);
+                }
+            }
+        }
+        unsafe {
+            if let Some(root) = tree.root.as_ref() {
+                assert_eq!(root.color, Color::Black);
+                validate_node(root);
+            }
+        }
+    }
+
+    #[test]
+    fn test_partition_point_insert() {
+        let mut tree = RbTree::<i32, Len>::new();
+        validate(&tree);
+        assert_eq!(len(&tree), 0);
+        let mut expected_len = 0;
+        for _ in 0..20 {
+            expected_len += 1;
+            tree.partition_point_insert(node(42), |_| true);
+            validate(&tree);
+            assert_eq!(len(&tree), expected_len);
+        }
+    }
+
+    #[test]
+    fn test_random() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let mut tree = RbTree::<i32, Len>::new();
+        for _ in 0..20 {
+            let value = rng.gen_range(0..100);
+            tree.partition_point_insert(node(value), |n| value < n.value);
+            validate(&tree);
+        }
     }
 }

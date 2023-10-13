@@ -13,9 +13,9 @@ type F3 = Fp<P3>;
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
-/// use fp2::fps_mul;
-/// use fp2::Fp;
+/// use fp::fp;
+/// use fp::fps_mul;
+/// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3)];
 /// let b: Vec<F> = vec![fp!(4), fp!(5), fp!(6)];
@@ -83,9 +83,9 @@ pub fn any_mod_fps_mul<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Vec<Fp<P>> {
 /// # Examples
 ///
 /// ```
-/// use fp2::fft;
-/// use fp2::fp;
-/// use fp2::Fp;
+/// use fp::fft;
+/// use fp::fp;
+/// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let mut f: Vec<F> = vec![fp!(1000), fp!(100), fp!(10), fp!(1)];
 /// fft(&mut f);
@@ -157,9 +157,9 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
-/// use fp2::ifft;
-/// use fp2::Fp;
+/// use fp::fp;
+/// use fp::ifft;
+/// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let i = fp!(3).pow(998244352 / 4);
 /// let mut f: Vec<F> = vec![
