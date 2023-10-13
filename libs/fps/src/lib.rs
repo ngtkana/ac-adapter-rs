@@ -49,11 +49,11 @@
 //! | [`fps_log`] | $3\mathcal{M}(d)$ |
 //! | [`fps_exp`] | $(10+2/3)\mathcal{M}(d)$ |
 
-use fp2::fft;
-use fp2::fps_mul;
-use fp2::ifft;
-use fp2::Fp;
-use fp2::PrimitiveRoot;
+use fp::fft;
+use fp::fps_mul;
+use fp::ifft;
+use fp::Fp;
+use fp::PrimitiveRoot;
 use std::iter::repeat;
 
 /// Define a formal power series in the same way as `vec!`.
@@ -62,8 +62,8 @@ use std::iter::repeat;
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
-/// use fp2::Fp;
+/// use fp::fp;
+/// use fp::Fp;
 /// use fps::fps;
 /// let f: Vec<Fp<998244353>> = fps![1, 2, 3];
 /// assert_eq!(f, vec![fp!(1), fp!(2), fp!(3)]);
@@ -92,7 +92,7 @@ macro_rules! fps {
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_inv;
 /// let g = fps_inv::<998244353>(&[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(1), fp!(-2), fp!(4), fp!(-8)]);
@@ -148,7 +148,7 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_sqrt;
 /// let g = fps_sqrt::<998244353>(&[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(1), fp!(1), -fp!(2).inv(), fp!(2).inv()]);
@@ -193,7 +193,7 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// let g = fps::fps_deriv::<998244353>(fps![1, 2], 4);
 /// assert_eq!(g, fps![2, 0, 0, 0]);
@@ -216,7 +216,7 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// let g = fps::fps_int::<998244353>(&fps![1, 2], 4);
 /// assert_eq!(g, fps![0, 1, 1, 0]);
@@ -261,7 +261,7 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_log;
 /// let g = fps_log::<998244353>(&[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(0), fp!(2), fp!(-2), fp!(8) / fp!(3)]);
@@ -357,7 +357,7 @@ where
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// use fps::fps_pow;
 /// let g = fps_pow::<998244353>([fp!(1), fp!(2)], 3, 4);
@@ -406,8 +406,8 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use fp2::fp;
-    use fp2::fps_mul;
+    use fp::fp;
+    use fp::fps_mul;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
@@ -415,7 +415,7 @@ mod tests {
     use std::iter::repeat_with;
 
     const P: u64 = 998244353;
-    type Fp = fp2::Fp<P>;
+    type Fp = fp::Fp<P>;
 
     fn random_fps(rng: &mut StdRng, head: Fp, precision: usize) -> Vec<Fp> {
         iter::once(head)
