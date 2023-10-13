@@ -109,8 +109,59 @@ impl<T, L: Listen<T>> RbTree<T, L> {
     }
 
     /// Binary searches for a node according to the given predicate and removes it.
-    pub fn binary_search_remove(&mut self, _f: impl FnMut(&T) -> Ordering) -> Option<NonNull<T>> {
-        todo!()
+    pub fn binary_search_remove(
+        &mut self,
+        mut f: impl FnMut(&Node<T, L>) -> Ordering,
+    ) -> *mut Node<T, L> {
+        unsafe {
+            // Find the node.
+            let mut z = self.root;
+            while !z.is_null() {
+                match f(&*z) {
+                    Ordering::Less => z = (*z).left,
+                    Ordering::Greater => z = (*z).right,
+                    Ordering::Equal => break,
+                }
+            }
+            let Some(mut y) = z.as_mut() else {
+                return null_mut();
+            };
+            let z = z.as_mut().unwrap();
+
+            // Find the replacement node.
+            let mut y_original_color = color(y);
+            let x;
+            if z.left.is_null() {
+                x = z.right;
+                self.transprant(z, x);
+            } else if z.right.is_null() {
+                x = z.left;
+                self.transprant(z, x);
+            } else {
+                let subtree = &mut *z.right;
+                y = &mut *z.right;
+                while !y.left.is_null() {
+                    y = &mut *y.left;
+                }
+                y_original_color = y.color;
+                x = y.right;
+                if !ptr::eq(y.parent, z) {
+                    self.transprant(y, x);
+                    // Connect `y` and `subtree`.
+                    subtree.parent = y;
+                    y.right = subtree;
+                }
+                self.transprant(z, y);
+                // Connect `z` and `y`.
+                y.left = z.left;
+                (*y.left).parent = y;
+                y.color = z.color;
+            }
+            if y_original_color == Color::Black {
+                self.remove_fixup(x);
+            }
+            z
+        }
     }
 
     /// Split the tree into two trees according to the given predicate.
@@ -183,6 +234,17 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         (*l).update();
     }
 
+    unsafe fn transprant(&mut self, position: &mut Node<T, L>, node: *mut Node<T, L>) {
+        if position.parent.is_null() {
+            self.root = node;
+        } else if ptr::eq(position, (*position.parent).left) {
+            (*position.parent).left = node;
+        } else {
+            (*position.parent).right = node;
+        }
+        (*node).parent = (*position).parent;
+    }
+
     unsafe fn insert_fixup(&mut self, node: &mut Node<T, L>) {
         let mut x = node;
         while color(x.parent) == Color::Red {
@@ -244,6 +306,8 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         // Set the root to black.
         (*self.root).color = Color::Black;
     }
+
+    unsafe fn remove_fixup(&mut self, _node: *mut Node<T, L>) { todo!() }
 }
 impl<T, L: Listen<T>> Default for RbTree<T, L> {
     fn default() -> Self { Self { root: null_mut() } }
