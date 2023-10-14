@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"enum":["M1000000007","M1012924417","M924844033","M998244353"],"fn":["anymod_convolution","binom_iter","convolution","fact_build","fact_iter","fft","ifft","newton_by"],"macro":["define_fp","fp","fps"],"struct":["FactTable","Fp","Fpsp"],"trait":["Fft","Mod"],"type":["F1000000007","F1012924417","F924844033","F998244353","Fps1012924417","Fps924844033","Fps998244353"]};
+window.SIDEBAR_ITEMS = {"fn":["any_mod_fps_mul","fft","fps_mul","ifft"],"macro":["fp"],"struct":["Factorial","Fp"],"trait":["PrimitiveRoot"]};

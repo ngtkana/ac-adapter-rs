@@ -39,8 +39,8 @@
 }</pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Define a formal power series in the same way as <code>vec!</code>.</p>
 <p>This calls [<code>Fp::from</code>] for each element.</p>
 <h2 id="examples"><a href="#examples">Examples</a></h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp2::fp;
-<span class="kw">use </span>fp2::Fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<span class="kw">use </span>fp::Fp;
 <span class="kw">use </span>fps::fps;
 <span class="kw">let </span>f: Vec&lt;Fp&lt;<span class="number">998244353</span>&gt;&gt; = <span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
 <span class="macro">assert_eq!</span>(f, <span class="macro">vec!</span>[<span class="macro">fp!</span>(<span class="number">1</span>), <span class="macro">fp!</span>(<span class="number">2</span>), <span class="macro">fp!</span>(<span class="number">3</span>)]);</code></pre></div>

@@ -774,11 +774,11 @@
 //! | [`fps_log`] | $3\mathcal{M}(d)$ |
 //! | [`fps_exp`] | $(10+2/3)\mathcal{M}(d)$ |
 
-</span><span class="kw">use </span>fp2::fft;
-<span class="kw">use </span>fp2::fps_mul;
-<span class="kw">use </span>fp2::ifft;
-<span class="kw">use </span>fp2::Fp;
-<span class="kw">use </span>fp2::PrimitiveRoot;
+</span><span class="kw">use </span>fp::fft;
+<span class="kw">use </span>fp::fps_mul;
+<span class="kw">use </span>fp::ifft;
+<span class="kw">use </span>fp::Fp;
+<span class="kw">use </span>fp::PrimitiveRoot;
 <span class="kw">use </span>std::iter::repeat;
 
 <span class="doccomment">/// Define a formal power series in the same way as `vec!`.
@@ -787,8 +787,8 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
-/// use fp2::Fp;
+/// use fp::fp;
+/// use fp::Fp;
 /// use fps::fps;
 /// let f: Vec&lt;Fp&lt;998244353&gt;&gt; = fps![1, 2, 3];
 /// assert_eq!(f, vec![fp!(1), fp!(2), fp!(3)]);
@@ -817,7 +817,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_inv;
 /// let g = fps_inv::&lt;998244353&gt;(&amp;[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(1), fp!(-2), fp!(4), fp!(-8)]);
@@ -873,7 +873,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_sqrt;
 /// let g = fps_sqrt::&lt;998244353&gt;(&amp;[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(1), fp!(1), -fp!(2).inv(), fp!(2).inv()]);
@@ -918,7 +918,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// let g = fps::fps_deriv::&lt;998244353&gt;(fps![1, 2], 4);
 /// assert_eq!(g, fps![2, 0, 0, 0]);
@@ -941,7 +941,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// let g = fps::fps_int::&lt;998244353&gt;(&amp;fps![1, 2], 4);
 /// assert_eq!(g, fps![0, 1, 1, 0]);
@@ -986,7 +986,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps_log;
 /// let g = fps_log::&lt;998244353&gt;(&amp;[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(0), fp!(2), fp!(-2), fp!(8) / fp!(3)]);
@@ -1082,7 +1082,7 @@
 ///
 /// # Examples
 /// ```
-/// use fp2::fp;
+/// use fp::fp;
 /// use fps::fps;
 /// use fps::fps_pow;
 /// let g = fps_pow::&lt;998244353&gt;([fp!(1), fp!(2)], 3, 4);
@@ -1131,8 +1131,8 @@
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>fp2::fp;
-    <span class="kw">use </span>fp2::fps_mul;
+    <span class="kw">use </span>fp::fp;
+    <span class="kw">use </span>fp::fps_mul;
     <span class="kw">use </span>rand::rngs::StdRng;
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
@@ -1140,7 +1140,7 @@
     <span class="kw">use </span>std::iter::repeat_with;
 
     <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
-    <span class="kw">type </span>Fp = fp2::Fp&lt;P&gt;;
+    <span class="kw">type </span>Fp = fp::Fp&lt;P&gt;;
 
     <span class="kw">fn </span>random_fps(rng: <span class="kw-2">&amp;mut </span>StdRng, head: Fp, precision: usize) -&gt; Vec&lt;Fp&gt; {
         iter::once(head)

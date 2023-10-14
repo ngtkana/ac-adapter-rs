@@ -43,7 +43,7 @@
 <p>It takes $2\mathcal{M}(d) + O(d)$ time because it performs
 three double-precision FFTs $(\mathcal{M}(d))$ in each iteration.</p>
 <h2 id="examples"><a href="#examples">Examples</a></h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp2::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
 <span class="kw">use </span>fps::fps_inv;
 <span class="kw">let </span>g = fps_inv::&lt;<span class="number">998244353</span>&gt;(<span class="kw-2">&amp;</span>[<span class="macro">fp!</span>(<span class="number">1</span>), <span class="macro">fp!</span>(<span class="number">2</span>)], <span class="number">4</span>);
 <span class="macro">assert_eq!</span>(g, <span class="macro">vec!</span>[<span class="macro">fp!</span>(<span class="number">1</span>), <span class="macro">fp!</span>(-<span class="number">2</span>), <span class="macro">fp!</span>(<span class="number">4</span>), <span class="macro">fp!</span>(-<span class="number">8</span>)]);</code></pre></div>

@@ -22,8 +22,7 @@ var sourcesIndex = JSON.parse('{\
 "erato":["",[],["converters.rs","int.rs","lib.rs","lpd_sieve.rs","sieve.rs","sieve_base.rs","sieve_kind.rs"]],\
 "euclid":["",[],["crt.rs","ext_gcd.rs","gcd.rs","lib.rs"]],\
 "filter_position":["",[],["lib.rs"]],\
-"fp":["",[],["lib.rs"]],\
-"fp2":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs"]],\
+"fp":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs"]],\
 "fps":["",[],["lib.rs"]],\
 "gco":["",[],["lib.rs"]],\
 "grid":["",[],["coord.rs","dihedral.rs","grid.rs","iter.rs","lib.rs"]],\
@@ -58,7 +57,7 @@ var sourcesIndex = JSON.parse('{\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
-"rb":["",[],["lib.rs"]],\
+"rb":["",[],["lib.rs","list.rs","tree.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
 "reverse":["",[],["lib.rs"]],\
 "scc":["",[],["lib.rs"]],\

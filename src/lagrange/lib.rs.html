@@ -334,6 +334,11 @@
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
 <a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! ラグランジュ補完
 //!
 //! # できること
@@ -354,7 +359,7 @@
 //!
 //! g ( x ) =  f ( a x + y ) と定めて、g に関して復元をするとできるので用意しません。
 
-</span><span class="kw">use </span>fp::{Fp, Mod};
+</span><span class="kw">use </span>fp::Fp;
 <span class="kw">use </span>std::iter::once;
 
 <span class="doccomment">/// 多項式の係数から 1 点での評価を計算します。
@@ -363,7 +368,7 @@
 ///
 /// ```
 /// use lagrange::evaluate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp&lt;998244353&gt;;
 ///
 /// // 13 ^ 2 = 169
 /// assert_eq!(
@@ -375,8 +380,7 @@
 /// # 計算量
 ///
 /// O ( N )
-///
-</span><span class="kw">pub fn </span>evaluate&lt;M: Mod&gt;(a: <span class="kw-2">&amp;</span>[Fp&lt;M&gt;], x: Fp&lt;M&gt;) -&gt; Fp&lt;M&gt; {
+</span><span class="kw">pub fn </span>evaluate&lt;<span class="kw">const </span>P: u64&gt;(a: <span class="kw-2">&amp;</span>[Fp&lt;P&gt;], x: Fp&lt;P&gt;) -&gt; Fp&lt;P&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>power = Fp::new(<span class="number">1</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>ans = Fp::new(<span class="number">0</span>);
     <span class="kw">for </span><span class="kw-2">&amp;</span>ai <span class="kw">in </span>a {
@@ -392,7 +396,7 @@
 ///
 /// ```
 /// use lagrange::interpolate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp&lt;998244353&gt;;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]] -&gt; x ^ 2
 /// let eval = [
@@ -416,8 +420,7 @@
 ///
 /// * evals が空のとき
 /// * x 座標が distinct でないとき
-///
-</span><span class="kw">pub fn </span>interpolate&lt;M: Mod&gt;(evals: <span class="kw-2">&amp;</span>[[Fp&lt;M&gt;; <span class="number">2</span>]]) -&gt; Vec&lt;Fp&lt;M&gt;&gt; {
+</span><span class="kw">pub fn </span>interpolate&lt;<span class="kw">const </span>P: u64&gt;(evals: <span class="kw-2">&amp;</span>[[Fp&lt;P&gt;; <span class="number">2</span>]]) -&gt; Vec&lt;Fp&lt;P&gt;&gt; {
     <span class="macro">assert!</span>(!evals.is_empty());
     evals
         .iter()
@@ -452,7 +455,7 @@
 ///
 /// ```
 /// use lagrange::interpolate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp&lt;998244353&gt;;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]] -&gt; x ^ 2
 /// let eval = [
@@ -474,8 +477,7 @@
 /// # Panics
 ///
 /// * evals が空のとき
-///
-</span><span class="kw">pub fn </span>interpolate_first_n&lt;M: Mod&gt;(evals: <span class="kw-2">&amp;</span>[Fp&lt;M&gt;]) -&gt; Vec&lt;Fp&lt;M&gt;&gt; {
+</span><span class="kw">pub fn </span>interpolate_first_n&lt;<span class="kw">const </span>P: u64&gt;(evals: <span class="kw-2">&amp;</span>[Fp&lt;P&gt;]) -&gt; Vec&lt;Fp&lt;P&gt;&gt; {
     <span class="macro">assert!</span>(!evals.is_empty());
     <span class="kw">let </span>n = evals.len();
     <span class="kw">if </span>n == <span class="number">1 </span>{
@@ -484,8 +486,8 @@
     <span class="kw">let </span><span class="kw-2">mut </span>inv = <span class="macro">vec!</span>[Fp::new(<span class="number">0</span>); n];
     inv[<span class="number">1</span>] = Fp::new(<span class="number">1</span>);
     <span class="kw">for </span>i <span class="kw">in </span><span class="number">2</span>..n {
-        <span class="kw">let </span>q = Fp::&lt;M&gt;::P <span class="kw">as </span>usize / i;
-        <span class="kw">let </span>r = Fp::&lt;M&gt;::P <span class="kw">as </span>usize - i * q;
+        <span class="kw">let </span>q = P <span class="kw">as </span>usize / i;
+        <span class="kw">let </span>r = P <span class="kw">as </span>usize - i * q;
         inv[i] = -Fp::from(q) * inv[r];
     }
     evals
@@ -518,11 +520,14 @@
 ///
 /// ```
 /// use lagrange::interpolate_one_point_first_n;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp&lt;998244353&gt;;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]], 13 -&gt; 13 ^ 2 = 169
 /// let eval = [Fp::new(0), Fp::new(1), Fp::new(4), Fp::new(9)];
-/// assert_eq!(interpolate_one_point_first_n(&amp;eval, Fp::new(13)), Fp::new(169));
+/// assert_eq!(
+///     interpolate_one_point_first_n(&amp;eval, Fp::new(13)),
+///     Fp::new(169)
+/// );
 /// ```
 ///
 /// # 計算量
@@ -533,8 +538,7 @@
 /// # Panics
 ///
 /// * evals が空のとき
-///
-</span><span class="kw">pub fn </span>interpolate_one_point_first_n&lt;M: Mod&gt;(evals: <span class="kw-2">&amp;</span>[Fp&lt;M&gt;], x: Fp&lt;M&gt;) -&gt; Fp&lt;M&gt; {
+</span><span class="kw">pub fn </span>interpolate_one_point_first_n&lt;<span class="kw">const </span>P: u64&gt;(evals: <span class="kw-2">&amp;</span>[Fp&lt;P&gt;], x: Fp&lt;P&gt;) -&gt; Fp&lt;P&gt; {
     <span class="macro">assert!</span>(!evals.is_empty());
     <span class="kw">if </span>(x.value() <span class="kw">as </span>usize) &lt; evals.len() {
         <span class="kw">return </span>evals[x.value() <span class="kw">as </span>usize];
@@ -542,7 +546,7 @@
     <span class="kw">let </span>n = evals.len();
     <span class="kw">let </span>init = (<span class="number">1</span>..n)
         .map(|j| (x - Fp::from(j)) / -Fp::from(j))
-        .product::&lt;Fp&lt;M&gt;&gt;();
+        .product::&lt;Fp&lt;P&gt;&gt;();
     evals
         .iter()
         .zip(once(init).chain((<span class="number">0</span>..n - <span class="number">1</span>).scan(init, |state, i| {
@@ -556,18 +560,24 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>{
-        <span class="kw">super</span>::{evaluate, interpolate, interpolate_first_n, interpolate_one_point_first_n},
-        fp::F998244353 <span class="kw">as </span>Fp,
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::{collections::HashSet, iter::repeat_with},
-        test_case::test_case,
-    };
+    <span class="kw">use </span><span class="kw">super</span>::evaluate;
+    <span class="kw">use </span><span class="kw">super</span>::interpolate;
+    <span class="kw">use </span><span class="kw">super</span>::interpolate_first_n;
+    <span class="kw">use </span><span class="kw">super</span>::interpolate_one_point_first_n;
+    <span class="kw">use </span>itertools::Itertools;
+    <span class="kw">use </span>rand::prelude::StdRng;
+    <span class="kw">use </span>rand::Rng;
+    <span class="kw">use </span>rand::SeedableRng;
+    <span class="kw">use </span>std::collections::HashSet;
+    <span class="kw">use </span>std::iter::repeat_with;
+    <span class="kw">use </span>test_case::test_case;
+
+    <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
+    <span class="kw">type </span>Fp = fp::Fp&lt;P&gt;;
 
     <span class="attr">#[test_case(<span class="number">3</span>; <span class="string">&quot;small&quot;</span>)]
     #[test_case(<span class="number">30</span>; <span class="string">&quot;medium&quot;</span>)]
-    #[test_case(Fp::P; <span class="string">&quot;maximum&quot;</span>)]
+    #[test_case(P; <span class="string">&quot;maximum&quot;</span>)]
     </span><span class="kw">fn </span>test_interpolate_rand(lim: u64) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
@@ -598,7 +608,7 @@
 
     <span class="attr">#[test_case(<span class="number">3</span>; <span class="string">&quot;small&quot;</span>)]
     #[test_case(<span class="number">30</span>; <span class="string">&quot;medium&quot;</span>)]
-    #[test_case(Fp::P; <span class="string">&quot;maximum&quot;</span>)]
+    #[test_case(P; <span class="string">&quot;maximum&quot;</span>)]
     </span><span class="kw">fn </span>test_interpolate_first_n_rand(lim: u64) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
@@ -615,7 +625,7 @@
 
     <span class="attr">#[test_case(<span class="number">3</span>; <span class="string">&quot;small&quot;</span>)]
     #[test_case(<span class="number">30</span>; <span class="string">&quot;medium&quot;</span>)]
-    #[test_case(Fp::P; <span class="string">&quot;maximum&quot;</span>)]
+    #[test_case(P; <span class="string">&quot;maximum&quot;</span>)]
     </span><span class="kw">fn </span>test_interpolate_one_point_rand(lim: u64) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{

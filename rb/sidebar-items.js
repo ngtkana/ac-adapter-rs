@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Nop","Rblist"],"trait":["Op"]};
+window.SIDEBAR_ITEMS = {"struct":["Rblist"]};
