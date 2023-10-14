@@ -6,6 +6,9 @@ mod list;
 /// A red-black tree.
 mod tree;
 
+/// [wip] `tree` with `NonNull`
+mod tree2;
+
 /// A list based on a red-black tree.
 pub use list::Rblist;
 

@@ -260,15 +260,8 @@ impl<T> Rblist<T> {
                 Ordering::Equal => Ordering::Equal,
                 Ordering::Greater => Ordering::Greater,
             });
-            if found.is_none() {
-                Err(index)
-            } else {
-                Ok(index
-                    + (*found.unwrap().inner())
-                        .left
-                        .as_ref()
-                        .map_or(0, |n| n.cache))
-            }
+            let found = found.ok_or(index)?;
+            Ok(index + (*found.inner()).left.as_ref().map_or(0, |n| n.cache))
         }
     }
 
