@@ -1,4 +1,5 @@
 //! A red-black tree with `NonNull` and `Callback`.
+use std::cmp::Ordering;
 use std::ops;
 use std::ptr::NonNull;
 use std::ptr::{self};
@@ -32,6 +33,22 @@ impl<C: Callback> Tree<C> {
     /// Returns `true` if the tree is empty.
     pub fn is_empty(&self) -> bool { self.0.is_none() }
 
+    /// Binary search the tree.
+    fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
+    where
+        F: FnMut(Ptr<C>) -> Ordering,
+    {
+        let mut p = self.0;
+        while let Some(p0) = p {
+            p = match f(p0) {
+                Ordering::Less => p0.right,
+                Ordering::Greater => p0.left,
+                Ordering::Equal => return Some(p0),
+            };
+        }
+        None
+    }
+
     /// Insert a new node into the tree.
     ///
     /// # Precondition
@@ -62,6 +79,12 @@ impl<C: Callback> Tree<C> {
         // Fixup the tree.
         self.insert_fixup(p, new);
     }
+
+    /// Remove the given node from the tree.
+    ///
+    /// # Precondition
+    /// The node must be in the tree.
+    fn remove(&mut self, _node: Ptr<C>) { todo!() }
 
     /// Insert a new node into the tree.
     fn insert_fixup(&mut self, mut p: Ptr<C>, mut x: Ptr<C>) {
@@ -204,6 +227,22 @@ impl<C: Callback> Tree<C> {
         // Connect `x` and `y`.
         y.right = Some(x);
         x.parent = Some(y);
+    }
+
+    /// Replace the subtree rooted at `u` with the subtree rooted at `v`.
+    pub fn transplant(&mut self, u: Ptr<C>, v: Option<Ptr<C>>) {
+        if let Some(mut p) = u.parent {
+            if ptr::eq(as_ptr(p.left), &*u) {
+                p.left = v;
+            } else {
+                p.right = v;
+            }
+        } else {
+            self.0 = v;
+        }
+        if let Some(mut v) = v {
+            v.parent = u.parent;
+        }
     }
 }
 impl<C: Callback> Default for Tree<C> {
