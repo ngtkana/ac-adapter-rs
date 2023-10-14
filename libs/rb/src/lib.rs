@@ -19,7 +19,10 @@ pub trait Listen<T>: Sized {
 
 /// A no-op callback.
 pub struct Len;
-impl<T> Listen<T> for Len {
+impl<T> Listen<T> for Len
+where
+    T: std::fmt::Display,
+{
     type Cache = usize;
 
     fn push(_node: &mut Node<T, Self>) {}
@@ -59,6 +62,15 @@ impl<T, L: Listen<T>> Node<T, L> {
     fn push(&mut self) { L::push(self); }
 
     fn update(&mut self) { L::update(self); }
+}
+
+fn update_up<T, L: Listen<T>>(mut node: *mut Node<T, L>) {
+    unsafe {
+        while let Some(x) = node.as_mut() {
+            x.update();
+            node = x.parent;
+        }
+    }
 }
 
 /// The most basic red-black tree.
@@ -174,6 +186,8 @@ impl<T, L: Listen<T>> RbTree<T, L> {
             }
             if removed_color == Color::Black {
                 self.remove_fixup(p, x);
+            } else {
+                update_up(p);
             }
             z
         }
@@ -315,10 +329,7 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         }
 
         // Update the remaining nodes.
-        while let Some(p) = x.parent.as_mut() {
-            x = p;
-            x.update();
-        }
+        update_up(x.parent);
 
         // Set the root to black.
         (*self.root).color = Color::Black;
@@ -345,6 +356,7 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                 if color((*s).left) == Color::Black && color((*s).right) == Color::Black {
                     (*s).color = Color::Red;
                     x = p;
+                    (*x).update();
                 }
                 // Case 1.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
                 else {
@@ -359,7 +371,8 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                     (*p).color = Color::Black;
                     (*(*s).right).color = Color::Black;
                     self.left_rotate(p);
-                    x = self.root; // FIXME: update the remaining nodes.
+                    update_up((*p).parent);
+                    x = self.root;
                 }
             }
             // Case 2: `x` is the right child of `p`.
@@ -376,6 +389,7 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                 if color((*s).left) == Color::Black && color((*s).right) == Color::Black {
                     (*s).color = Color::Red;
                     x = p;
+                    (*x).update();
                 }
                 // Case 2.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
                 else {
@@ -390,7 +404,8 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                     (*p).color = Color::Black;
                     (*(*s).left).color = Color::Black;
                     self.right_rotate(p);
-                    x = self.root; // FIXME: update the remaining nodes.
+                    update_up((*p).parent);
+                    x = self.root;
                 }
             }
             p = (*x).parent;
@@ -398,6 +413,7 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         if !x.is_null() {
             (*x).color = Color::Black;
         }
+        update_up(x);
     }
 
     #[allow(dead_code)]
@@ -462,7 +478,25 @@ mod tests {
     use rand::SeedableRng;
     use rstest::rstest;
 
-    fn node(value: i32) -> NonNull<Node<i32, Len>> {
+    struct Test;
+    impl<T> Listen<T> for Test
+    where
+        T: std::fmt::Display,
+    {
+        type Cache = usize;
+
+        fn push(_node: &mut Node<T, Self>) {}
+
+        fn update(node: &mut Node<T, Self>) {
+            unsafe {
+                node.cache = 1
+                    + node.left.as_ref().map_or(0, |n| n.cache)
+                    + node.right.as_ref().map_or(0, |n| n.cache);
+            }
+        }
+    }
+
+    fn node(value: i32) -> NonNull<Node<i32, Test>> {
         NonNull::from(Box::leak(Box::new(Node {
             value,
             left: null_mut(),
@@ -473,12 +507,12 @@ mod tests {
         })))
     }
 
-    fn len(tree: &RbTree<i32, Len>) -> usize {
+    fn len(tree: &RbTree<i32, Test>) -> usize {
         unsafe { tree.root.as_ref().map_or(0, |n| n.cache) }
     }
 
-    fn to_vec(tree: &RbTree<i32, Len>) -> Vec<i32> {
-        unsafe fn node_to_vec(node: *const Node<i32, Len>, vec: &mut Vec<i32>) {
+    fn to_vec(tree: &RbTree<i32, Test>) -> Vec<i32> {
+        unsafe fn node_to_vec(node: *const Node<i32, Test>, vec: &mut Vec<i32>) {
             if let Some(node) = node.as_ref() {
                 node_to_vec(node.left, vec);
                 vec.push(node.value);
@@ -494,8 +528,8 @@ mod tests {
         vec
     }
 
-    fn validate(tree: &RbTree<i32, Len>) {
-        unsafe fn validate_node(node: &Node<i32, Len>) -> usize {
+    fn validate(tree: &RbTree<i32, Test>) {
+        unsafe fn validate_node(node: &Node<i32, Test>) -> usize {
             let mut left_black_height = 0;
             if let Some(left) = node.left.as_ref() {
                 left_black_height = validate_node(left);
@@ -529,9 +563,9 @@ mod tests {
     #[case(0.5)]
     #[case(0.9)]
     fn test_insert_remove_random(#[case] remove_prob: f64) {
-        const VALUE_LIM: i32 = 40;
+        const VALUE_LIM: i32 = 100;
         let mut rng = StdRng::seed_from_u64(42);
-        let mut tree = RbTree::<i32, Len>::new();
+        let mut tree = RbTree::<i32, Test>::new();
         let mut expected = Vec::new();
         for _ in 0..200 {
             let value = rng.gen_range(0..VALUE_LIM);
@@ -552,6 +586,7 @@ mod tests {
                 tree.partition_point_insert(node(value), |n| value < n.value);
             }
             assert_eq!(to_vec(&tree), expected);
+            assert_eq!(len(&tree), expected.len());
             validate(&tree);
         }
     }
