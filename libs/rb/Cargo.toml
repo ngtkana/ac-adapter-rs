@@ -6,3 +6,4 @@ edition = "2021"
 [dev-dependencies]
 ansi_term.workspace = true
 rand.workspace = true
+rstest.workspace = true
