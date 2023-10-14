@@ -4,6 +4,7 @@ use super::tree::Tree;
 use super::Len;
 use core::fmt;
 use std::cmp::Ordering;
+use std::hash::Hash;
 use std::marker::PhantomData;
 
 /// A list based on a red-black tree.
@@ -176,6 +177,12 @@ impl<T> Rblist<T> {
     ///
     /// # Examples
     /// ```
+    /// use rb::Rblist;
+    ///
+    /// let mut list: Rblist<_> = [0, 1, 2].into();
+    /// list.insert(1, 9);
+    ///
+    /// assert_eq!(list, [0, 9, 1, 2].into());
     /// ```
     pub fn insert(&mut self, mut index: usize, element: T)
     where
@@ -224,6 +231,94 @@ impl<T> Rblist<T> {
         });
         unsafe { Box::from_raw(removed).value }
     }
+
+    /// Binary searches this list with a comparator function.
+    ///
+    /// # Examples
+    /// ```
+    /// use rb::Rblist;
+    ///
+    /// let list: Rblist<_> = [0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55].into();
+    ///
+    /// assert_eq!(list.binary_search_by(|x| x.cmp(&13)), Ok(9));
+    /// assert_eq!(list.binary_search_by(|x| x.cmp(&4)), Err(7));
+    /// assert_eq!(list.binary_search_by(|x| x.cmp(&100)), Err(13));
+    /// let r = list.binary_search_by(|x| x.cmp(&1));
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
+    pub fn binary_search_by<'a, F>(&'a self, mut f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&'a T) -> Ordering,
+    {
+        unsafe {
+            let mut index = 0;
+            let found = self.0.binary_search(|n| match f(&n.value) {
+                Ordering::Less => {
+                    index += 1 + n.left.as_ref().map_or(0, |n| n.cache);
+                    Ordering::Less
+                }
+                Ordering::Equal => Ordering::Equal,
+                Ordering::Greater => Ordering::Greater,
+            });
+            if found.is_null() {
+                Err(index)
+            } else {
+                Ok(index
+                    + found
+                        .0
+                        .as_ref()
+                        .unwrap()
+                        .left
+                        .as_ref()
+                        .map_or(0, |n| n.cache))
+            }
+        }
+    }
+
+    /// Binary searches this list with a key extraction function.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rb::Rblist;
+    ///
+    /// let list: Rblist<_> = [0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55].into();
+    ///
+    /// assert_eq!(list.binary_search(&13), Ok(9));
+    /// assert_eq!(list.binary_search(&4), Err(7));
+    /// assert_eq!(list.binary_search(&100), Err(13));
+    /// let r = list.binary_search(&1);
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
+    pub fn binary_search_by_key<'a, F, B>(&'a self, b: &B, mut f: F) -> Result<usize, usize>
+    where
+        F: FnMut(&'a T) -> B,
+        B: Ord,
+    {
+        self.binary_search_by(|k| f(k).cmp(b))
+    }
+
+    /// Binary searches this list for a given element.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use rb::Rblist;
+    ///
+    /// let list: Rblist<_> = [0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55].into();
+    ///
+    /// assert_eq!(list.binary_search(&13), Ok(9));
+    /// assert_eq!(list.binary_search(&4), Err(7));
+    /// assert_eq!(list.binary_search(&100), Err(13));
+    /// let r = list.binary_search(&1);
+    /// assert!(matches!(r, Ok(1..=4)));
+    /// ```
+    pub fn binary_search(&self, x: &T) -> Result<usize, usize>
+    where
+        T: Ord,
+    {
+        self.binary_search_by(|k| k.cmp(x))
+    }
 }
 
 impl<T> Default for Rblist<T> {
@@ -233,6 +328,52 @@ impl<T: fmt::Debug> fmt::Debug for Rblist<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
     }
+}
+impl<T: PartialEq> PartialEq for Rblist<T> {
+    fn eq(&self, other: &Self) -> bool { self.len() == other.len() && self.iter().eq(other) }
+}
+impl<T: Eq> Eq for Rblist<T> {}
+impl<T: PartialOrd> PartialOrd for Rblist<T> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.iter().partial_cmp(other) }
+}
+impl<T: Ord> Ord for Rblist<T> {
+    fn cmp(&self, other: &Self) -> Ordering { self.iter().cmp(other) }
+}
+impl<T: Hash> Hash for Rblist<T> {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.iter().for_each(|x| x.hash(state)) }
+}
+// TODO: Rewire with `merge`
+impl<T> FromIterator<T> for Rblist<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut list = Self::new();
+        for element in iter {
+            list.push_back(element);
+        }
+        list
+    }
+}
+impl<'a, T> IntoIterator for &'a Rblist<T> {
+    type IntoIter = Iter<'a, T>;
+    type Item = &'a T;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+// TODO: Rewire with `merge`
+impl<T> Extend<T> for Rblist<T> {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        iter.into_iter().for_each(|x| self.push_back(x))
+    }
+}
+impl<'a, T: 'a + Copy> Extend<&'a T> for Rblist<T> {
+    fn extend<I: IntoIterator<Item = &'a T>>(&mut self, iter: I) {
+        self.extend(iter.into_iter().copied())
+    }
+}
+impl<T, const N: usize> From<[T; N]> for Rblist<T> {
+    fn from(array: [T; N]) -> Self { array.into_iter().collect() }
+}
+impl<T> From<Vec<T>> for Rblist<T> {
+    fn from(vec: Vec<T>) -> Self { vec.into_iter().collect() }
 }
 
 /// An iterator over the elements of a list.
@@ -261,6 +402,12 @@ mod tests {
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
+
+    #[allow(dead_code)]
+    fn assert_covariance() {
+        // TODO: make `Iter` covariant
+        // fn b<'i, 'a>(x: Iter<'i, &'static str>) -> Iter<'i, &'a str> { x }
+    }
 
     fn random_vec_and_list(len: usize, rng: &mut StdRng) -> (Vec<i32>, Rblist<i32>) {
         let mut vec = Vec::new();
