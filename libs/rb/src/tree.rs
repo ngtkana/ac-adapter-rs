@@ -46,6 +46,21 @@ impl<T, L: Listen<T>> Tree<T, L> {
     /// Returns true if the tree is empty.
     pub fn is_empty(&self) -> bool { self.root.is_null() }
 
+    /// Returns the cursor pointing to the front of the tree.
+    /// If the tree is empty, the cursor is set to a null pointer.
+    pub fn front(&self) -> Cursor<T, L> {
+        unsafe {
+            if self.root.is_null() {
+                return Cursor(null_mut());
+            }
+            let mut node = self.root;
+            while !(*node).left.is_null() {
+                node = (*node).left;
+            }
+            Cursor(node)
+        }
+    }
+
     /// Insert a node at the partition point according to the given predicate.
     pub fn partition_point_insert(
         &mut self,
@@ -429,6 +444,33 @@ impl<T, L: Listen<T>> Default for Tree<T, L> {
     fn default() -> Self { Self { root: null_mut() } }
 }
 
+/// A cursor pointing to a node in a tree, or a null pointer.
+pub struct Cursor<T, L: Listen<T>>(*mut Node<T, L>);
+impl<T, L: Listen<T>> Cursor<T, L> {
+    /// Advance the cursor to the next node.
+    /// If there is no next node, the cursor is set to a null pointer.
+    pub fn move_next(&mut self) {
+        unsafe {
+            debug_assert!(!self.0.is_null());
+            let mut output;
+            if (*self.0).right.is_null() {
+                let mut child = self.0;
+                output = (*child).parent;
+                while !output.is_null() && ptr::eq(child, (*output).right) {
+                    child = output;
+                    output = (*output).parent;
+                }
+            } else {
+                output = (*self.0).right;
+                while !(*output).left.is_null() {
+                    output = (*output).left;
+                }
+            }
+            self.0 = output;
+        }
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -531,6 +573,32 @@ mod tests {
             assert_eq!(to_vec(&tree), expected);
             assert_eq!(len(&tree), expected.len());
             validate(&tree);
+        }
+    }
+
+    #[test]
+    fn test_cursor_random() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let len = rng.gen_range(0..20);
+            let mut tree = Tree::<i32, Test>::new();
+            let mut expected = Vec::new();
+            for _ in 0..len {
+                let value = rng.gen_range(0..100);
+                let lower_bound = expected
+                    .iter()
+                    .position(|&v| value <= v)
+                    .unwrap_or(expected.len());
+                expected.insert(lower_bound, value);
+                tree.partition_point_insert(node(value, 1), |n| n.value < value);
+            }
+            let mut cursor = tree.front();
+            for index in 0..len {
+                let value = unsafe { (*cursor.0).value };
+                assert_eq!(value, expected[index]);
+                cursor.move_next();
+            }
+            assert!(cursor.0.is_null());
         }
     }
 }

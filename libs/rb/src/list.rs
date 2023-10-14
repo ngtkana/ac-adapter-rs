@@ -57,18 +57,16 @@ impl<T> Rblist<T> {
         assert!(index < self.len());
         let removed = self.0.binary_search_remove(|n| {
             let len = unsafe { n.left.as_ref().map_or(0, |n| n.cache) };
-            // Go to the left subtree.
-            if index < len {
-                Ordering::Greater
-            }
-            // Remove the current node.
-            else if index == len {
-                Ordering::Equal
-            }
-            // Go to the right subtree.
-            else {
-                index -= len + 1;
-                Ordering::Less
+            match index.cmp(&len) {
+                // Go to the left subtree.
+                Ordering::Less => Ordering::Greater,
+                // Remove the current node.
+                Ordering::Equal => Ordering::Equal,
+                // Go to the right subtree.
+                Ordering::Greater => {
+                    index -= len + 1;
+                    Ordering::Less
+                }
             }
         });
         unsafe { Box::from_raw(removed).value }
