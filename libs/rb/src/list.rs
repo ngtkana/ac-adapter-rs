@@ -1,5 +1,5 @@
 use super::tree::node;
-use super::tree::Cursor;
+use super::tree::Ptr;
 use super::tree::Tree;
 use super::Len;
 use core::fmt;
@@ -24,7 +24,7 @@ impl<T> Rblist<T> {
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             __marker: PhantomData,
-            cursor: self.0.front(),
+            ptr: self.0.front(),
         }
     }
 
@@ -41,7 +41,7 @@ impl<T> Rblist<T> {
     /// list.push_back(2);
     /// assert_eq!(list.front(), Some(&1));
     /// ```
-    pub fn front(&self) -> Option<&T> { unsafe { Some(&self.0.front().0.as_ref()?.value) } }
+    pub fn front(&self) -> Option<&T> { unsafe { Some(&(*self.0.front()?.inner()).value) } }
 
     /// Provides a mutable reference to the front element, or None if the list is empty.
     ///
@@ -62,7 +62,7 @@ impl<T> Rblist<T> {
     /// assert_eq!(list.front(), Some(&9));
     /// ```
     pub fn front_mut(&mut self) -> Option<&mut T> {
-        unsafe { Some(&mut self.0.front().0.as_mut()?.value) }
+        unsafe { Some(&mut (*self.0.front()?.inner()).value) }
     }
 
     /// Provides a reference to the back element, or None if the list is empty.
@@ -78,7 +78,7 @@ impl<T> Rblist<T> {
     /// list.push_back(2);
     /// assert_eq!(list.back(), Some(&2));
     /// ```
-    pub fn back(&self) -> Option<&T> { unsafe { Some(&self.0.back().0.as_ref()?.value) } }
+    pub fn back(&self) -> Option<&T> { unsafe { Some(&(*self.0.back()?.inner()).value) } }
 
     /// Provides a mutable reference to the back element, or None if the list is empty.
     ///
@@ -98,7 +98,7 @@ impl<T> Rblist<T> {
     /// assert_eq!(list.back(), Some(&9));
     /// ```
     pub fn back_mut(&mut self) -> Option<&mut T> {
-        unsafe { Some(&mut self.0.back().0.as_mut()?.value) }
+        unsafe { Some(&mut (*self.0.back()?.inner()).value) }
     }
 
     /// Appends an element to the front of the list.
@@ -260,14 +260,11 @@ impl<T> Rblist<T> {
                 Ordering::Equal => Ordering::Equal,
                 Ordering::Greater => Ordering::Greater,
             });
-            if found.is_null() {
+            if found.is_none() {
                 Err(index)
             } else {
                 Ok(index
-                    + found
-                        .0
-                        .as_ref()
-                        .unwrap()
+                    + (*found.unwrap().inner())
                         .left
                         .as_ref()
                         .map_or(0, |n| n.cache))
@@ -379,18 +376,16 @@ impl<T> From<Vec<T>> for Rblist<T> {
 /// An iterator over the elements of a list.
 pub struct Iter<'a, T> {
     __marker: PhantomData<&'a T>,
-    cursor: Cursor<T, Len>,
+    ptr: Option<Ptr<T, Len>>,
 }
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.cursor.is_null() {
-            return None;
-        }
+        let ptr = self.ptr?;
         unsafe {
-            let output = &(*self.cursor.0).value;
-            self.cursor.move_next();
+            let output = &(*ptr.inner()).value;
+            self.ptr = ptr.next();
             Some(output)
         }
     }
