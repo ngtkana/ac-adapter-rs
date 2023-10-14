@@ -48,31 +48,27 @@ impl<T, L: Listen<T>> Tree<T, L> {
 
     /// Returns the cursor pointing to the front of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    pub fn front(&self) -> Ptr<T, L> {
+    pub fn front(&self) -> Option<Ptr<T, L>> {
         unsafe {
-            if self.root.is_null() {
-                return Ptr(null_mut());
-            }
+            (!self.root.is_null()).then_some(())?;
             let mut node = self.root;
             while !(*node).left.is_null() {
                 node = (*node).left;
             }
-            Ptr(node)
+            Some(Ptr(NonNull::from(node.as_mut().unwrap())))
         }
     }
 
     /// Returns the cursor pointing to the back of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    pub fn back(&self) -> Ptr<T, L> {
+    pub fn back(&self) -> Option<Ptr<T, L>> {
         unsafe {
-            if self.root.is_null() {
-                return Ptr(null_mut());
-            }
+            (!self.root.is_null()).then_some(())?;
             let mut node = self.root;
             while !(*node).right.is_null() {
                 node = (*node).right;
             }
-            Ptr(node)
+            Some(Ptr(NonNull::from(node.as_mut().unwrap())))
         }
     }
 
@@ -115,7 +111,7 @@ impl<T, L: Listen<T>> Tree<T, L> {
     }
 
     /// Binary searches for a node according to the given predicate and removes it.
-    pub fn binary_search<'a, F>(&'a self, mut f: F) -> Ptr<T, L>
+    pub fn binary_search<'a, F>(&'a self, mut f: F) -> Option<Ptr<T, L>>
     where
         F: FnMut(&'a Node<T, L>) -> Ordering,
     {
@@ -128,7 +124,7 @@ impl<T, L: Listen<T>> Tree<T, L> {
                     Ordering::Equal => break,
                 }
             }
-            Ptr(z)
+            z.as_mut().map(|n| Ptr(NonNull::from(n)))
         }
     }
 
@@ -139,10 +135,10 @@ impl<T, L: Listen<T>> Tree<T, L> {
     ) -> *mut Node<T, L> {
         unsafe {
             // Find the node `z` to remove.
-            let z = self.binary_search(f).0;
-            let Some(z) = z.as_mut() else {
+            let Some(Ptr(mut z)) = self.binary_search(f) else {
                 return null_mut();
             };
+            let z = z.as_mut();
 
             // Swap-and-remove the node `z`.
             let removed_color; // The color of the removed node.
@@ -469,34 +465,41 @@ impl<T, L: Listen<T>> Default for Tree<T, L> {
 }
 
 /// A cursor pointing to a node in a tree, or a null pointer.
-pub struct Ptr<T, L: Listen<T>>(pub *mut Node<T, L>);
+pub struct Ptr<T, L: Listen<T>>(NonNull<Node<T, L>>);
 impl<T, L: Listen<T>> Ptr<T, L> {
+    /// TODO: Remove this method.
+    pub fn inner(&self) -> *mut Node<T, L> { self.0.as_ptr() }
+
     /// Returns true if the cursor is a null pointer.
-    pub fn is_null(&self) -> bool { self.0.is_null() }
+    pub fn is_null(&self) -> bool { self.inner().is_null() }
 
     /// Advance the cursor to the next node.
     /// If there is no next node, the cursor is set to a null pointer.
-    pub fn move_next(&mut self) {
+    pub fn next(&self) -> Option<Self> {
         unsafe {
-            debug_assert!(!self.0.is_null());
+            debug_assert!(!self.inner().is_null());
             let mut output;
-            if (*self.0).right.is_null() {
-                let mut child = self.0;
+            if (*self.inner()).right.is_null() {
+                let mut child = self.inner();
                 output = (*child).parent;
                 while !output.is_null() && ptr::eq(child, (*output).right) {
                     child = output;
                     output = (*output).parent;
                 }
             } else {
-                output = (*self.0).right;
+                output = (*self.inner()).right;
                 while !(*output).left.is_null() {
                     output = (*output).left;
                 }
             }
-            self.0 = output;
+            output.as_mut().map(|n| Self(NonNull::from(n)))
         }
     }
 }
+impl<T, L: Listen<T>> Clone for Ptr<T, L> {
+    fn clone(&self) -> Self { *self }
+}
+impl<T, L: Listen<T>> Copy for Ptr<T, L> {}
 
 #[cfg(test)]
 mod tests {
@@ -619,13 +622,13 @@ mod tests {
                 expected.insert(lower_bound, value);
                 tree.partition_point_insert(node(value, 1), |n| n.value < value);
             }
-            let mut cursor = tree.front();
+            let mut ptr = tree.front();
             for index in 0..len {
-                let value = unsafe { (*cursor.0).value };
+                let value = unsafe { (*ptr.unwrap().inner()).value };
                 assert_eq!(value, expected[index]);
-                cursor.move_next();
+                ptr = ptr.unwrap().next();
             }
-            assert!(cursor.0.is_null());
+            assert!(ptr.is_none());
         }
     }
 }
