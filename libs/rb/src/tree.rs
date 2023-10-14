@@ -48,31 +48,31 @@ impl<T, L: Listen<T>> Tree<T, L> {
 
     /// Returns the cursor pointing to the front of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    pub fn front(&self) -> Cursor<T, L> {
+    pub fn front(&self) -> Ptr<T, L> {
         unsafe {
             if self.root.is_null() {
-                return Cursor(null_mut());
+                return Ptr(null_mut());
             }
             let mut node = self.root;
             while !(*node).left.is_null() {
                 node = (*node).left;
             }
-            Cursor(node)
+            Ptr(node)
         }
     }
 
     /// Returns the cursor pointing to the back of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    pub fn back(&self) -> Cursor<T, L> {
+    pub fn back(&self) -> Ptr<T, L> {
         unsafe {
             if self.root.is_null() {
-                return Cursor(null_mut());
+                return Ptr(null_mut());
             }
             let mut node = self.root;
             while !(*node).right.is_null() {
                 node = (*node).right;
             }
-            Cursor(node)
+            Ptr(node)
         }
     }
 
@@ -115,7 +115,7 @@ impl<T, L: Listen<T>> Tree<T, L> {
     }
 
     /// Binary searches for a node according to the given predicate and removes it.
-    pub fn binary_search<'a, F>(&'a self, mut f: F) -> Cursor<T, L>
+    pub fn binary_search<'a, F>(&'a self, mut f: F) -> Ptr<T, L>
     where
         F: FnMut(&'a Node<T, L>) -> Ordering,
     {
@@ -128,7 +128,7 @@ impl<T, L: Listen<T>> Tree<T, L> {
                     Ordering::Equal => break,
                 }
             }
-            Cursor(z)
+            Ptr(z)
         }
     }
 
@@ -469,8 +469,8 @@ impl<T, L: Listen<T>> Default for Tree<T, L> {
 }
 
 /// A cursor pointing to a node in a tree, or a null pointer.
-pub struct Cursor<T, L: Listen<T>>(pub *mut Node<T, L>);
-impl<T, L: Listen<T>> Cursor<T, L> {
+pub struct Ptr<T, L: Listen<T>>(pub *mut Node<T, L>);
+impl<T, L: Listen<T>> Ptr<T, L> {
     /// Returns true if the cursor is a null pointer.
     pub fn is_null(&self) -> bool { self.0.is_null() }
 
