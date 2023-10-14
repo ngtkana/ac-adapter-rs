@@ -1,8 +1,13 @@
 #![warn(missing_docs)]
 //! Containers for storing data in a red-black tree.
 
+/// A list based on a red-black tree.
+mod list;
 /// A red-black tree.
 mod tree;
+
+/// A list based on a red-black tree.
+pub use list::Rblist;
 
 #[allow(dead_code)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -39,8 +44,7 @@ impl<T, L: Listen<T>> Node<T, L> {
     fn update(&mut self) { L::update(self); }
 }
 
-/// A no-op callback.
-pub struct Len;
+struct Len;
 impl<T> Listen<T> for Len {
     type Cache = usize;
 
@@ -54,6 +58,3 @@ impl<T> Listen<T> for Len {
         }
     }
 }
-
-/// A list based on a red-black tree.
-pub struct Rblist<T>(tree::Tree<T, Len>);

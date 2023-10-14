@@ -23,9 +23,21 @@ fn update_up<T, L: Listen<T>>(mut node: *mut Node<T, L>) {
     }
 }
 
+/// Create a new node.
+pub fn node<T, L: Listen<T>>(value: T, cache: L::Cache) -> NonNull<Node<T, L>> {
+    NonNull::from(Box::leak(Box::new(Node {
+        value,
+        left: null_mut(),
+        right: null_mut(),
+        parent: null_mut(),
+        color: Color::Red,
+        cache,
+    })))
+}
+
 /// The most basic red-black tree.
 pub struct Tree<T, L: Listen<T>> {
-    root: *mut Node<T, L>,
+    pub root: *mut Node<T, L>, // TODO: Make this private, by providing `fold` method.
 }
 impl<T, L: Listen<T>> Tree<T, L> {
     /// Create a new empty tree.
@@ -39,7 +51,9 @@ impl<T, L: Listen<T>> Tree<T, L> {
         &mut self,
         mut node: NonNull<Node<T, L>>,
         mut pred: impl FnMut(&Node<T, L>) -> bool,
-    ) {
+    ) where
+        T: std::fmt::Display,
+    {
         unsafe {
             let node = node.as_mut();
             // Check the node.
@@ -48,23 +62,24 @@ impl<T, L: Listen<T>> Tree<T, L> {
             debug_assert!(node.parent.is_null());
             debug_assert!(node.color == Color::Red);
 
+            // Insert the node as the root.
+            if self.root.is_null() {
+                self.root = node;
+                (*self.root).color = Color::Black;
+                return;
+            }
+
             // Find the partition point.
-            let mut p = null_mut();
-            let mut x = self.root;
+            let mut p = self.root;
+            let mut x = if pred(&*p) { &mut (*p).right } else { &mut (*p).left };
             while !x.is_null() {
-                p = x;
-                x = if pred(&*x) { (*x).left } else { (*x).right }
+                p = *x;
+                x = if pred(&**x) { &mut (**x).right } else { &mut (**x).left };
             }
 
             // Insert the node.
             node.parent = p;
-            *(if p.is_null() {
-                &mut self.root
-            } else if pred(&*p) {
-                &mut (*p).left
-            } else {
-                &mut (*p).right
-            }) = node;
+            *x = node;
 
             // Fixup the tree.
             self.insert_fixup(node);
@@ -362,7 +377,7 @@ impl<T, L: Listen<T>> Tree<T, L> {
 
     #[allow(dead_code)]
     #[cfg(test)]
-    fn eprint(&self, fg: &[(&'static str, *const Node<T, L>, ansi_term::Color)])
+    pub fn eprint(&self, fg: &[(&'static str, *const Node<T, L>, ansi_term::Color)])
     where
         T: std::fmt::Display,
     {
@@ -437,17 +452,6 @@ mod tests {
         }
     }
 
-    fn node(value: i32) -> NonNull<Node<i32, Test>> {
-        NonNull::from(Box::leak(Box::new(Node {
-            value,
-            left: null_mut(),
-            right: null_mut(),
-            parent: null_mut(),
-            color: Color::Red,
-            cache: 1,
-        })))
-    }
-
     fn len(tree: &Tree<i32, Test>) -> usize { unsafe { tree.root.as_ref().map_or(0, |n| n.cache) } }
 
     fn to_vec(tree: &Tree<i32, Test>) -> Vec<i32> {
@@ -519,10 +523,10 @@ mod tests {
             } else {
                 let lower_bound = expected
                     .iter()
-                    .position(|&v| v >= value)
+                    .position(|&v| value <= v)
                     .unwrap_or(expected.len());
                 expected.insert(lower_bound, value);
-                tree.partition_point_insert(node(value), |n| value < n.value);
+                tree.partition_point_insert(node(value, 1), |n| n.value < value);
             }
             assert_eq!(to_vec(&tree), expected);
             assert_eq!(len(&tree), expected.len());
