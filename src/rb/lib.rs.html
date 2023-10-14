@@ -92,6 +92,9 @@
 <a href="#58" id="58">58</a>
 <a href="#59" id="59">59</a>
 <a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
+<a href="#62" id="62">62</a>
+<a href="#63" id="63">63</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(missing_docs)]
 </span><span class="doccomment">//! Containers for storing data in a red-black tree.
 
@@ -99,6 +102,9 @@
 </span><span class="kw">mod </span>list;
 <span class="doccomment">/// A red-black tree.
 </span><span class="kw">mod </span>tree;
+
+<span class="doccomment">/// [wip] `tree` with `NonNull`
+</span><span class="kw">mod </span>tree2;
 
 <span class="doccomment">/// A list based on a red-black tree.
 </span><span class="kw">pub use </span>list::Rblist;

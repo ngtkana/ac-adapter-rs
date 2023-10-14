@@ -652,6 +652,20 @@
 <a href="#618" id="618">618</a>
 <a href="#619" id="619">619</a>
 <a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(missing_docs)]
 #![allow(dead_code)]
 
@@ -702,31 +716,27 @@
 
     <span class="doccomment">/// Returns the cursor pointing to the front of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;T, L&gt; {
+    </span><span class="kw">pub fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt; {
         <span class="kw">unsafe </span>{
-            <span class="kw">if </span><span class="self">self</span>.root.is_null() {
-                <span class="kw">return </span>Cursor(null_mut());
-            }
+            (!<span class="self">self</span>.root.is_null()).then_some(())<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>node = <span class="self">self</span>.root;
             <span class="kw">while </span>!(<span class="kw-2">*</span>node).left.is_null() {
                 node = (<span class="kw-2">*</span>node).left;
             }
-            Cursor(node)
+            <span class="prelude-val">Some</span>(Ptr(NonNull::from(node.as_mut().unwrap())))
         }
     }
 
     <span class="doccomment">/// Returns the cursor pointing to the back of the tree.
     /// If the tree is empty, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Cursor&lt;T, L&gt; {
+    </span><span class="kw">pub fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt; {
         <span class="kw">unsafe </span>{
-            <span class="kw">if </span><span class="self">self</span>.root.is_null() {
-                <span class="kw">return </span>Cursor(null_mut());
-            }
+            (!<span class="self">self</span>.root.is_null()).then_some(())<span class="question-mark">?</span>;
             <span class="kw">let </span><span class="kw-2">mut </span>node = <span class="self">self</span>.root;
             <span class="kw">while </span>!(<span class="kw-2">*</span>node).right.is_null() {
                 node = (<span class="kw-2">*</span>node).right;
             }
-            Cursor(node)
+            <span class="prelude-val">Some</span>(Ptr(NonNull::from(node.as_mut().unwrap())))
         }
     }
 
@@ -769,13 +779,12 @@
     }
 
     <span class="doccomment">/// Binary searches for a node according to the given predicate and removes it.
-    </span><span class="kw">pub fn </span>binary_search_remove(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Node&lt;T, L&gt;) -&gt; Ordering,
-    ) -&gt; <span class="kw-2">*mut </span>Node&lt;T, L&gt; {
+    </span><span class="kw">pub fn </span>binary_search&lt;<span class="lifetime">&#39;a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt;
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Node&lt;T, L&gt;) -&gt; Ordering,
+    {
         <span class="kw">unsafe </span>{
-            <span class="comment">// Find the node `z` to remove.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>z = <span class="self">self</span>.root;
+            <span class="kw">let </span><span class="kw-2">mut </span>z = <span class="self">self</span>.root;
             <span class="kw">while </span>!z.is_null() {
                 <span class="kw">match </span>f(<span class="kw-2">&amp;*</span>z) {
                     Ordering::Less =&gt; z = (<span class="kw-2">*</span>z).right,
@@ -783,9 +792,21 @@
                     Ordering::Equal =&gt; <span class="kw">break</span>,
                 }
             }
-            <span class="kw">let </span><span class="prelude-val">Some</span>(z) = z.as_mut() <span class="kw">else </span>{
+            z.as_mut().map(|n| Ptr(NonNull::from(n)))
+        }
+    }
+
+    <span class="doccomment">/// Binary searches for a node according to the given predicate and removes it.
+    </span><span class="kw">pub fn </span>binary_search_remove(
+        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
+        f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Node&lt;T, L&gt;) -&gt; Ordering,
+    ) -&gt; <span class="kw-2">*mut </span>Node&lt;T, L&gt; {
+        <span class="kw">unsafe </span>{
+            <span class="comment">// Find the node `z` to remove.
+            </span><span class="kw">let </span><span class="prelude-val">Some</span>(Ptr(<span class="kw-2">mut </span>z)) = <span class="self">self</span>.binary_search(f) <span class="kw">else </span>{
                 <span class="kw">return </span>null_mut();
             };
+            <span class="kw">let </span>z = z.as_mut();
 
             <span class="comment">// Swap-and-remove the node `z`.
             </span><span class="kw">let </span>removed_color; <span class="comment">// The color of the removed node.
@@ -1112,34 +1133,41 @@
 }
 
 <span class="doccomment">/// A cursor pointing to a node in a tree, or a null pointer.
-</span><span class="kw">pub struct </span>Cursor&lt;T, L: Listen&lt;T&gt;&gt;(<span class="kw">pub </span><span class="kw-2">*mut </span>Node&lt;T, L&gt;);
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Cursor&lt;T, L&gt; {
+</span><span class="kw">pub struct </span>Ptr&lt;T, L: Listen&lt;T&gt;&gt;(NonNull&lt;Node&lt;T, L&gt;&gt;);
+<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Ptr&lt;T, L&gt; {
+    <span class="doccomment">/// TODO: Remove this method.
+    </span><span class="kw">pub fn </span>inner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>Node&lt;T, L&gt; { <span class="self">self</span>.<span class="number">0</span>.as_ptr() }
+
     <span class="doccomment">/// Returns true if the cursor is a null pointer.
-    </span><span class="kw">pub fn </span>is_null(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.<span class="number">0</span>.is_null() }
+    </span><span class="kw">pub fn </span>is_null(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.inner().is_null() }
 
     <span class="doccomment">/// Advance the cursor to the next node.
     /// If there is no next node, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>move_next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+    </span><span class="kw">pub fn </span>next(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="kw">unsafe </span>{
-            <span class="macro">debug_assert!</span>(!<span class="self">self</span>.<span class="number">0</span>.is_null());
+            <span class="macro">debug_assert!</span>(!<span class="self">self</span>.inner().is_null());
             <span class="kw">let </span><span class="kw-2">mut </span>output;
-            <span class="kw">if </span>(<span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>).right.is_null() {
-                <span class="kw">let </span><span class="kw-2">mut </span>child = <span class="self">self</span>.<span class="number">0</span>;
+            <span class="kw">if </span>(<span class="kw-2">*</span><span class="self">self</span>.inner()).right.is_null() {
+                <span class="kw">let </span><span class="kw-2">mut </span>child = <span class="self">self</span>.inner();
                 output = (<span class="kw-2">*</span>child).parent;
                 <span class="kw">while </span>!output.is_null() &amp;&amp; ptr::eq(child, (<span class="kw-2">*</span>output).right) {
                     child = output;
                     output = (<span class="kw-2">*</span>output).parent;
                 }
             } <span class="kw">else </span>{
-                output = (<span class="kw-2">*</span><span class="self">self</span>.<span class="number">0</span>).right;
+                output = (<span class="kw-2">*</span><span class="self">self</span>.inner()).right;
                 <span class="kw">while </span>!(<span class="kw-2">*</span>output).left.is_null() {
                     output = (<span class="kw-2">*</span>output).left;
                 }
             }
-            <span class="self">self</span>.<span class="number">0 </span>= output;
+            output.as_mut().map(|n| <span class="self">Self</span>(NonNull::from(n)))
         }
     }
 }
+<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Clone <span class="kw">for </span>Ptr&lt;T, L&gt; {
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="kw-2">*</span><span class="self">self </span>}
+}
+<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Copy <span class="kw">for </span>Ptr&lt;T, L&gt; {}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
@@ -1262,13 +1290,13 @@
                 expected.insert(lower_bound, value);
                 tree.partition_point_insert(node(value, <span class="number">1</span>), |n| n.value &lt; value);
             }
-            <span class="kw">let </span><span class="kw-2">mut </span>cursor = tree.front();
+            <span class="kw">let </span><span class="kw-2">mut </span>ptr = tree.front();
             <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..len {
-                <span class="kw">let </span>value = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>cursor.<span class="number">0</span>).value };
+                <span class="kw">let </span>value = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>ptr.unwrap().inner()).value };
                 <span class="macro">assert_eq!</span>(value, expected[index]);
-                cursor.move_next();
+                ptr = ptr.unwrap().next();
             }
-            <span class="macro">assert!</span>(cursor.<span class="number">0</span>.is_null());
+            <span class="macro">assert!</span>(ptr.is_none());
         }
     }
 }
