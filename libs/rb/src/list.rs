@@ -120,6 +120,55 @@ impl<T> Rblist<T> {
         self.0.partition_point_insert(node(element, 1), |_| true);
     }
 
+    /// Removes the first element from the list and returns it, or None if it is empty.
+    ///
+    /// # Examples
+    /// ```
+    /// use rb::Rblist;
+    ///
+    /// let mut list = Rblist::new();
+    /// list.push_back(1);
+    /// list.push_back(2);
+    /// assert_eq!(list.pop_front(), Some(1));
+    /// assert_eq!(list.pop_front(), Some(2));
+    /// assert_eq!(list.pop_front(), None);
+    /// ```
+    pub fn pop_front(&mut self) -> Option<T> {
+        // TODO: Implement this to `Tree`.
+        let removed = self.0.binary_search_remove(|n| {
+            if n.left.is_null() {
+                Ordering::Equal
+            } else {
+                Ordering::Greater
+            }
+        });
+        unsafe { removed.as_mut().map(|n| Box::from_raw(n).value) }
+    }
+
+    /// Removes the last element from the list and returns it, or None if it is empty.
+    ///
+    /// # Examples
+    /// ```
+    /// use rb::Rblist;
+    /// let mut list = Rblist::new();
+    /// list.push_back(1);
+    /// list.push_back(2);
+    /// assert_eq!(list.pop_back(), Some(2));
+    /// assert_eq!(list.pop_back(), Some(1));
+    /// assert_eq!(list.pop_back(), None);
+    /// ```
+    pub fn pop_back(&mut self) -> Option<T> {
+        // TODO: Implement this to `Tree`.
+        let removed = self.0.binary_search_remove(|n| {
+            if n.right.is_null() {
+                Ordering::Equal
+            } else {
+                Ordering::Less
+            }
+        });
+        unsafe { removed.as_mut().map(|n| Box::from_raw(n).value) }
+    }
+
     /// Inserts an element at position index within the vector, shifting all elements after it to the right.
     ///
     /// # Panics
@@ -226,19 +275,43 @@ mod tests {
     }
 
     #[test]
-    fn test_insert_remove_random() {
+    fn test_insert_remove_push_pop_random() {
         let mut rng = StdRng::seed_from_u64(42);
         let mut list = Rblist::new();
         let mut vec = Vec::new();
         for _ in 0..100 {
             let value = rng.gen_range(0..100);
-            let index = rng.gen_range(0..=vec.len());
-            if rng.gen_bool(0.5) {
-                list.insert(index, value);
-                vec.insert(index, value);
-            } else if !vec.is_empty() {
-                let index = rng.gen_range(0..vec.len());
-                assert_eq!(list.remove(index), vec.remove(index));
+            match rng.gen_range(0..10) {
+                0 => {
+                    list.push_front(value);
+                    vec.insert(0, value);
+                }
+                1 => {
+                    list.push_back(value);
+                    vec.push(value);
+                }
+                2 => {
+                    if !vec.is_empty() {
+                        assert_eq!(list.pop_front(), Some(vec.remove(0)));
+                    }
+                }
+                3 => {
+                    if !vec.is_empty() {
+                        assert_eq!(list.pop_back(), vec.pop());
+                    }
+                }
+                4..=6 => {
+                    let index = rng.gen_range(0..=vec.len());
+                    list.insert(index, value);
+                    vec.insert(index, value);
+                }
+                7..=9 => {
+                    if !vec.is_empty() {
+                        let index = rng.gen_range(0..vec.len());
+                        assert_eq!(list.remove(index), vec.remove(index));
+                    }
+                }
+                _ => unreachable!(),
             }
             assert_eq!(list.iter().copied().collect::<Vec<_>>(), vec);
         }
