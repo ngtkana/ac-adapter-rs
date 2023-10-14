@@ -115,15 +115,15 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         mut f: impl FnMut(&Node<T, L>) -> Ordering,
     ) -> *mut Node<T, L>
     where
-        T: std::fmt::Debug,
+        T: std::fmt::Display,
     {
         unsafe {
             // Find the node `z` to remove.
             let mut z = self.root;
             while !z.is_null() {
                 match f(&*z) {
-                    Ordering::Less => z = (*z).left,
-                    Ordering::Greater => z = (*z).right,
+                    Ordering::Less => z = (*z).right,
+                    Ordering::Greater => z = (*z).left,
                     Ordering::Equal => break,
                 }
             }
@@ -155,9 +155,11 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                     y
                 };
                 removed_color = y.color;
-                p = y.parent;
                 x = y.right;
-                if !ptr::eq(y.parent, z) {
+                if ptr::eq(y.parent, z) {
+                    p = y;
+                } else {
+                    p = y.parent;
                     self.transprant(y, x);
                     let subtree = &mut *z.right;
                     // Connect `y` and `subtree`.
@@ -322,7 +324,131 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         (*self.root).color = Color::Black;
     }
 
-    unsafe fn remove_fixup(&mut self, _parent: *mut Node<T, L>, _node: *mut Node<T, L>) {}
+    unsafe fn remove_fixup(&mut self, parent: *mut Node<T, L>, node: *mut Node<T, L>)
+    where
+        T: std::fmt::Display,
+    {
+        let mut x = node;
+        let mut p = parent;
+        while !p.is_null() && color(x) == Color::Black {
+            // Case 1: `x` is the left child of `p`.
+            if ptr::eq(x, (*p).left) {
+                let mut s = (*p).right;
+                // Lean the 3-node.
+                if color(s) == Color::Red {
+                    (*s).color = Color::Black;
+                    (*p).color = Color::Red;
+                    self.left_rotate(p);
+                    s = (*p).right;
+                }
+                // Case 1.1: `s` is a 2-node: join with it.
+                if color((*s).left) == Color::Black && color((*s).right) == Color::Black {
+                    (*s).color = Color::Red;
+                    x = p;
+                }
+                // Case 1.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
+                else {
+                    // Lean the 3-node.
+                    if color((*s).right) == Color::Black {
+                        (*s).color = Color::Red;
+                        (*(*s).left).color = Color::Black;
+                        self.right_rotate(s);
+                        s = (*p).right;
+                    }
+                    (*s).color = (*p).color;
+                    (*p).color = Color::Black;
+                    (*(*s).right).color = Color::Black;
+                    self.left_rotate(p);
+                    x = self.root; // FIXME: update the remaining nodes.
+                }
+            }
+            // Case 2: `x` is the right child of `p`.
+            else {
+                let mut s = (*p).left;
+                // Lean the 3-node.
+                if color(s) == Color::Red {
+                    (*s).color = Color::Black;
+                    (*p).color = Color::Red;
+                    self.right_rotate(p);
+                    s = (*p).left;
+                }
+                // Case 2.1: `s` is a 2-node: join with it.
+                if color((*s).left) == Color::Black && color((*s).right) == Color::Black {
+                    (*s).color = Color::Red;
+                    x = p;
+                }
+                // Case 2.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
+                else {
+                    // Lean the 3-node.
+                    if color((*s).left) == Color::Black {
+                        (*s).color = Color::Red;
+                        (*(*s).right).color = Color::Black;
+                        self.left_rotate(s);
+                        s = (*p).left;
+                    }
+                    (*s).color = (*p).color;
+                    (*p).color = Color::Black;
+                    (*(*s).left).color = Color::Black;
+                    self.right_rotate(p);
+                    x = self.root; // FIXME: update the remaining nodes.
+                }
+            }
+            p = (*x).parent;
+        }
+        if !x.is_null() {
+            (*x).color = Color::Black;
+        }
+    }
+
+    #[allow(dead_code)]
+    #[cfg(test)]
+    fn eprint(&self, fg: &[(&'static str, *const Node<T, L>, ansi_term::Color)])
+    where
+        T: std::fmt::Display,
+    {
+        unsafe fn print_node<T, L: Listen<T>>(
+            node: *const Node<T, L>,
+            fg: &[(&'static str, *const Node<T, L>, ansi_term::Color)],
+        ) where
+            T: std::fmt::Display,
+        {
+            let colour = match color(node) {
+                Color::Red => ansi_term::Colour::Red,
+                Color::Black => ansi_term::Colour::Black,
+            };
+            if let Some(node) = node.as_ref() {
+                eprint!("{}", colour.paint("("));
+                print_node(node.left, fg);
+                let mut style = ansi_term::Style::new();
+                for (_name, ptr, colour) in fg {
+                    if ptr::eq(node, *ptr) {
+                        style = style.on(*colour);
+                    }
+                }
+                style = style.fg(colour);
+                eprint!("{}", style.paint(&node.value.to_string()));
+                print_node(node.right, fg);
+                eprint!("{}", colour.paint(")"));
+            }
+        }
+        if !fg.is_empty() {
+            let mut i = 0;
+            for &(name, _ptr, colour) in fg {
+                if i > 0 {
+                    eprint!(", ");
+                }
+                eprint!("{}", ansi_term::Style::new().on(colour).paint(name));
+                i += 1;
+            }
+            eprint!(": ");
+        }
+        unsafe {
+            if let Some(root) = self.root.as_ref() {
+                print_node(root, fg);
+            }
+        }
+        eprintln!();
+    }
 }
 impl<T, L: Listen<T>> Default for RbTree<T, L> {
     fn default() -> Self { Self { root: null_mut() } }
@@ -334,6 +460,7 @@ mod tests {
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
+    use rstest::rstest;
 
     fn node(value: i32) -> NonNull<Node<i32, Len>> {
         NonNull::from(Box::leak(Box::new(Node {
@@ -348,29 +475,6 @@ mod tests {
 
     fn len(tree: &RbTree<i32, Len>) -> usize {
         unsafe { tree.root.as_ref().map_or(0, |n| n.cache) }
-    }
-
-    #[allow(dead_code)]
-    fn print(tree: &RbTree<i32, Len>) {
-        unsafe fn node_to_string(node: *const Node<i32, Len>) {
-            let colour = match color(node) {
-                Color::Red => ansi_term::Colour::Red,
-                Color::Black => ansi_term::Colour::Black,
-            };
-            if let Some(node) = node.as_ref() {
-                print!("{}", colour.paint("("));
-                node_to_string(node.left);
-                print!("{}", colour.paint(&node.value.to_string()));
-                node_to_string(node.right);
-                print!("{}", colour.paint(")"));
-            }
-        }
-        unsafe {
-            if let Some(root) = tree.root.as_ref() {
-                node_to_string(root);
-            }
-        }
-        println!();
     }
 
     fn to_vec(tree: &RbTree<i32, Len>) -> Vec<i32> {
@@ -391,19 +495,26 @@ mod tests {
     }
 
     fn validate(tree: &RbTree<i32, Len>) {
-        unsafe fn validate_node(node: &Node<i32, Len>) {
+        unsafe fn validate_node(node: &Node<i32, Len>) -> usize {
+            let mut left_black_height = 0;
             if let Some(left) = node.left.as_ref() {
-                validate_node(left);
+                left_black_height = validate_node(left);
                 if node.color == Color::Red {
                     assert_eq!(left.color, Color::Black);
                 }
             }
+            let mut right_black_height = 0;
             if let Some(right) = node.right.as_ref() {
-                validate_node(right);
+                right_black_height = validate_node(right);
                 if node.color == Color::Red {
                     assert_eq!(right.color, Color::Black);
                 }
             }
+            assert_eq!(left_black_height, right_black_height);
+            if node.color == Color::Black {
+                left_black_height += 1;
+            }
+            left_black_height
         }
         unsafe {
             if let Some(root) = tree.root.as_ref() {
@@ -413,61 +524,35 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_partition_point_insert() {
-        let mut tree = RbTree::<i32, Len>::new();
-        validate(&tree);
-        assert_eq!(len(&tree), 0);
-        let mut expected_len = 0;
-        for _ in 0..20 {
-            expected_len += 1;
-            tree.partition_point_insert(node(42), |_| true);
-            validate(&tree);
-            assert_eq!(len(&tree), expected_len);
-        }
-    }
-
-    #[test]
-    fn test_binary_search_remove() {
-        let mut tree = RbTree::<i32, Len>::new();
-        validate(&tree);
-        assert_eq!(len(&tree), 0);
-        let mut expected_len = 0;
-        for _ in 0..20 {
-            expected_len += 1;
-            tree.partition_point_insert(node(42), |_| true);
-            validate(&tree);
-            assert_eq!(len(&tree), expected_len);
-        }
-    }
-
-    #[test]
-    fn test_random() {
+    #[rstest]
+    #[case(0.1)]
+    #[case(0.5)]
+    #[case(0.9)]
+    fn test_insert_remove_random(#[case] remove_prob: f64) {
+        const VALUE_LIM: i32 = 40;
         let mut rng = StdRng::seed_from_u64(42);
         let mut tree = RbTree::<i32, Len>::new();
         let mut expected = Vec::new();
         for _ in 0..200 {
-            let value = rng.gen_range(0..4);
-            if rng.gen_bool(0.5) {
+            let value = rng.gen_range(0..VALUE_LIM);
+            if rng.gen_bool(remove_prob) {
+                let expected_output = expected
+                    .iter()
+                    .position(|&v| v == value)
+                    .map(|i| expected.remove(i));
+                let output = tree.binary_search_remove(|n| n.value.cmp(&value));
+                let output = unsafe { output.as_mut().map(|n| Box::from_raw(n).value) };
+                assert_eq!(output, expected_output);
+            } else {
                 let lower_bound = expected
                     .iter()
                     .position(|&v| v >= value)
                     .unwrap_or(expected.len());
                 expected.insert(lower_bound, value);
                 tree.partition_point_insert(node(value), |n| value < n.value);
-            } else {
-                let expected_output = expected
-                    .iter()
-                    .position(|&v| v == value)
-                    .map(|i| expected.remove(i));
-                let output = tree.binary_search_remove(|n| value.cmp(&n.value));
-                let output = unsafe { output.as_mut().map(|n| Box::from_raw(n).value) };
-                assert_eq!(output, expected_output);
             }
-            print(&tree);
             assert_eq!(to_vec(&tree), expected);
-            // TODO: validate the tree.
-            // validate(&tree);
+            validate(&tree);
         }
     }
 }
