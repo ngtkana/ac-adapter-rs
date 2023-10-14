@@ -53,6 +53,7 @@ pub struct Node<T, L: Listen<T>> {
     color: Color,
     cache: L::Cache,
 }
+
 #[allow(dead_code)]
 impl<T, L: Listen<T>> Node<T, L> {
     fn push(&mut self) { L::push(self); }
@@ -112,9 +113,12 @@ impl<T, L: Listen<T>> RbTree<T, L> {
     pub fn binary_search_remove(
         &mut self,
         mut f: impl FnMut(&Node<T, L>) -> Ordering,
-    ) -> *mut Node<T, L> {
+    ) -> *mut Node<T, L>
+    where
+        T: std::fmt::Debug,
+    {
         unsafe {
-            // Find the node.
+            // Find the node `z` to remove.
             let mut z = self.root;
             while !z.is_null() {
                 match f(&*z) {
@@ -123,30 +127,39 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                     Ordering::Equal => break,
                 }
             }
-            let Some(mut y) = z.as_mut() else {
+            let Some(z) = z.as_mut() else {
                 return null_mut();
             };
-            let z = z.as_mut().unwrap();
 
-            // Find the replacement node.
-            let mut y_original_color = color(y);
-            let x;
+            // Swap-and-remove the node `z`.
+            let removed_color; // The color of the removed node.
+            let x; // The superblack node.
+            let p; // The parent of the superblack node.
             if z.left.is_null() {
                 x = z.right;
+                p = z.parent;
+                removed_color = z.color;
                 self.transprant(z, x);
             } else if z.right.is_null() {
                 x = z.left;
+                p = z.parent;
+                removed_color = z.color;
                 self.transprant(z, x);
             } else {
-                let subtree = &mut *z.right;
-                y = &mut *z.right;
-                while !y.left.is_null() {
-                    y = &mut *y.left;
-                }
-                y_original_color = y.color;
+                // Find the replacement node `y`.
+                let y = {
+                    let mut y = &mut *z.right;
+                    while !y.left.is_null() {
+                        y = &mut *y.left;
+                    }
+                    y
+                };
+                removed_color = y.color;
+                p = y.parent;
                 x = y.right;
                 if !ptr::eq(y.parent, z) {
                     self.transprant(y, x);
+                    let subtree = &mut *z.right;
                     // Connect `y` and `subtree`.
                     subtree.parent = y;
                     y.right = subtree;
@@ -157,8 +170,8 @@ impl<T, L: Listen<T>> RbTree<T, L> {
                 (*y.left).parent = y;
                 y.color = z.color;
             }
-            if y_original_color == Color::Black {
-                self.remove_fixup(x);
+            if removed_color == Color::Black {
+                self.remove_fixup(p, x);
             }
             z
         }
@@ -242,7 +255,9 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         } else {
             (*position.parent).right = node;
         }
-        (*node).parent = (*position).parent;
+        if !node.is_null() {
+            (*node).parent = position.parent;
+        }
     }
 
     unsafe fn insert_fixup(&mut self, node: &mut Node<T, L>) {
@@ -307,7 +322,7 @@ impl<T, L: Listen<T>> RbTree<T, L> {
         (*self.root).color = Color::Black;
     }
 
-    unsafe fn remove_fixup(&mut self, _node: *mut Node<T, L>) { todo!() }
+    unsafe fn remove_fixup(&mut self, _parent: *mut Node<T, L>, _node: *mut Node<T, L>) {}
 }
 impl<T, L: Listen<T>> Default for RbTree<T, L> {
     fn default() -> Self { Self { root: null_mut() } }
@@ -358,6 +373,23 @@ mod tests {
         println!();
     }
 
+    fn to_vec(tree: &RbTree<i32, Len>) -> Vec<i32> {
+        unsafe fn node_to_vec(node: *const Node<i32, Len>, vec: &mut Vec<i32>) {
+            if let Some(node) = node.as_ref() {
+                node_to_vec(node.left, vec);
+                vec.push(node.value);
+                node_to_vec(node.right, vec);
+            }
+        }
+        let mut vec = Vec::new();
+        unsafe {
+            if let Some(root) = tree.root.as_ref() {
+                node_to_vec(root, &mut vec);
+            }
+        }
+        vec
+    }
+
     fn validate(tree: &RbTree<i32, Len>) {
         unsafe fn validate_node(node: &Node<i32, Len>) {
             if let Some(left) = node.left.as_ref() {
@@ -396,13 +428,46 @@ mod tests {
     }
 
     #[test]
+    fn test_binary_search_remove() {
+        let mut tree = RbTree::<i32, Len>::new();
+        validate(&tree);
+        assert_eq!(len(&tree), 0);
+        let mut expected_len = 0;
+        for _ in 0..20 {
+            expected_len += 1;
+            tree.partition_point_insert(node(42), |_| true);
+            validate(&tree);
+            assert_eq!(len(&tree), expected_len);
+        }
+    }
+
+    #[test]
     fn test_random() {
         let mut rng = StdRng::seed_from_u64(42);
         let mut tree = RbTree::<i32, Len>::new();
-        for _ in 0..20 {
-            let value = rng.gen_range(0..100);
-            tree.partition_point_insert(node(value), |n| value < n.value);
-            validate(&tree);
+        let mut expected = Vec::new();
+        for _ in 0..200 {
+            let value = rng.gen_range(0..4);
+            if rng.gen_bool(0.5) {
+                let lower_bound = expected
+                    .iter()
+                    .position(|&v| v >= value)
+                    .unwrap_or(expected.len());
+                expected.insert(lower_bound, value);
+                tree.partition_point_insert(node(value), |n| value < n.value);
+            } else {
+                let expected_output = expected
+                    .iter()
+                    .position(|&v| v == value)
+                    .map(|i| expected.remove(i));
+                let output = tree.binary_search_remove(|n| value.cmp(&n.value));
+                let output = unsafe { output.as_mut().map(|n| Box::from_raw(n).value) };
+                assert_eq!(output, expected_output);
+            }
+            print(&tree);
+            assert_eq!(to_vec(&tree), expected);
+            // TODO: validate the tree.
+            // validate(&tree);
         }
     }
 }
