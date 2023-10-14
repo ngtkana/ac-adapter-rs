@@ -115,12 +115,11 @@ impl<T, L: Listen<T>> Tree<T, L> {
     }
 
     /// Binary searches for a node according to the given predicate and removes it.
-    pub fn binary_search_remove(
-        &mut self,
-        mut f: impl FnMut(&Node<T, L>) -> Ordering,
-    ) -> *mut Node<T, L> {
+    pub fn binary_search<'a, F>(&'a self, mut f: F) -> Cursor<T, L>
+    where
+        F: FnMut(&'a Node<T, L>) -> Ordering,
+    {
         unsafe {
-            // Find the node `z` to remove.
             let mut z = self.root;
             while !z.is_null() {
                 match f(&*z) {
@@ -129,6 +128,18 @@ impl<T, L: Listen<T>> Tree<T, L> {
                     Ordering::Equal => break,
                 }
             }
+            Cursor(z)
+        }
+    }
+
+    /// Binary searches for a node according to the given predicate and removes it.
+    pub fn binary_search_remove(
+        &mut self,
+        f: impl FnMut(&Node<T, L>) -> Ordering,
+    ) -> *mut Node<T, L> {
+        unsafe {
+            // Find the node `z` to remove.
+            let z = self.binary_search(f).0;
             let Some(z) = z.as_mut() else {
                 return null_mut();
             };
