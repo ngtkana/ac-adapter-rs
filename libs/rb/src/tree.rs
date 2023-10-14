@@ -61,14 +61,27 @@ impl<T, L: Listen<T>> Tree<T, L> {
         }
     }
 
+    /// Returns the cursor pointing to the back of the tree.
+    /// If the tree is empty, the cursor is set to a null pointer.
+    pub fn back(&self) -> Cursor<T, L> {
+        unsafe {
+            if self.root.is_null() {
+                return Cursor(null_mut());
+            }
+            let mut node = self.root;
+            while !(*node).right.is_null() {
+                node = (*node).right;
+            }
+            Cursor(node)
+        }
+    }
+
     /// Insert a node at the partition point according to the given predicate.
     pub fn partition_point_insert(
         &mut self,
         mut node: NonNull<Node<T, L>>,
         mut pred: impl FnMut(&Node<T, L>) -> bool,
-    ) where
-        T: std::fmt::Display,
-    {
+    ) {
         unsafe {
             let node = node.as_mut();
             // Check the node.
@@ -445,8 +458,11 @@ impl<T, L: Listen<T>> Default for Tree<T, L> {
 }
 
 /// A cursor pointing to a node in a tree, or a null pointer.
-pub struct Cursor<T, L: Listen<T>>(*mut Node<T, L>);
+pub struct Cursor<T, L: Listen<T>>(pub *mut Node<T, L>);
 impl<T, L: Listen<T>> Cursor<T, L> {
+    /// Returns true if the cursor is a null pointer.
+    pub fn is_null(&self) -> bool { self.0.is_null() }
+
     /// Advance the cursor to the next node.
     /// If there is no next node, the cursor is set to a null pointer.
     pub fn move_next(&mut self) {
