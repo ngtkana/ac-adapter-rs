@@ -108,7 +108,7 @@ impl<C: Callback> Tree<C> {
                     p = match x.parent {
                         None => {
                             x.color = Color::Black;
-                            return;
+                            break;
                         }
                         Some(p) => p,
                     };
@@ -141,7 +141,7 @@ impl<C: Callback> Tree<C> {
                     p = match x.parent {
                         None => {
                             x.color = Color::Black;
-                            return;
+                            break;
                         }
                         Some(p) => p,
                     };
@@ -160,6 +160,11 @@ impl<C: Callback> Tree<C> {
                     pp.update();
                 }
             }
+        }
+        x.update();
+        while let Some(mut p) = x.parent {
+            p.update();
+            x = p;
         }
     }
 
@@ -341,12 +346,41 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
 
+    const MODULO: u64 = 998244353;
+
+    struct RollingHash {
+        hash: u64,
+        base: u64,
+    }
+    impl RollingHash {
+        fn new(value: u64) -> Self {
+            Self {
+                hash: value,
+                base: 100,
+            }
+        }
+
+        fn empty() -> Self { Self { hash: 0, base: 1 } }
+
+        fn append(&mut self, other: &Self) {
+            self.hash = (self.hash * other.base + other.hash) % MODULO;
+            self.base = self.base * other.base % MODULO;
+        }
+    }
+
     struct Data {
         len: usize,
-        value: u32,
+        value: u64,
+        hash: RollingHash,
     }
     impl Data {
-        fn new(value: u32) -> Self { Self { len: 1, value } }
+        fn new(value: u64) -> Self {
+            Self {
+                len: 1,
+                value,
+                hash: RollingHash::new(value),
+            }
+        }
     }
 
     struct TestCallback;
@@ -356,8 +390,25 @@ mod tests {
         fn push(_node: Ptr<Self>) {}
 
         fn update(mut node: Ptr<Self>) {
-            node.data.len =
-                1 + node.left.map_or(0, |p| p.data.len) + node.right.map_or(0, |p| p.data.len);
+            let value = node.data.value;
+
+            // Handle the left child.
+            node.data.len = 0;
+            node.data.hash = RollingHash::empty();
+            if let Some(left) = node.left {
+                node.data.len += left.data.len;
+                node.data.hash.append(&left.data.hash);
+            }
+
+            // Handle the current node.
+            node.data.len += 1;
+            node.data.hash.append(&RollingHash::new(value));
+
+            // Handle the right child.
+            if let Some(right) = node.right {
+                node.data.len += right.data.len;
+                node.data.hash.append(&right.data.hash);
+            }
         }
     }
 
@@ -365,7 +416,13 @@ mod tests {
         fn validate_ptr(ptr: Ptr<TestCallback>) -> Result<u8, String> {
             let node = ptr.as_ref();
             let mut left_black_height = 0;
+            let mut length = 0;
+            let mut hash = RollingHash::empty();
+
+            // Handle the left child.
             if let Some(left) = node.left {
+                length += left.data.len;
+                hash.append(&left.data.hash);
                 left_black_height = validate_ptr(left)?;
                 // Check the red-red property.
                 (ptr.color == Color::Black || left.color == Color::Black)
@@ -377,8 +434,16 @@ mod tests {
                         )
                     })?;
             }
+
+            // Handle the current node.
+            length += 1;
+            hash.append(&RollingHash::new(node.data.value));
+
+            // Handle the right child.
             let mut right_black_height = 0;
             if let Some(right) = node.right {
+                hash.append(&right.data.hash);
+                length += right.data.len;
                 right_black_height = validate_ptr(right)?;
                 // Check the red-red property.
                 (ptr.color == Color::Black || right.color == Color::Black)
@@ -401,6 +466,24 @@ mod tests {
                     )
                 })?;
 
+            // Make sure the length is correct.
+            (length == node.data.len).then_some(()).ok_or_else(|| {
+                format!(
+                    "Length violation at {}. Expected {}, got {}",
+                    ptr.data.value, length, node.data.len
+                )
+            })?;
+
+            // Make sure the hash is correct.
+            (hash.hash == node.data.hash.hash)
+                .then_some(())
+                .ok_or_else(|| {
+                    format!(
+                        "Hash violation at {}. Expected {}, got {}",
+                        ptr.data.value, hash.hash, node.data.hash.hash
+                    )
+                })?;
+
             Ok(left_black_height + (ptr.color == Color::Black) as u8)
         }
         if let Some(root) = tree.0 {
@@ -409,8 +492,8 @@ mod tests {
         Ok(())
     }
 
-    fn to_vec(tree: &Tree<TestCallback>) -> Vec<u32> {
-        fn extend(node: Ptr<TestCallback>, vec: &mut Vec<u32>) {
+    fn to_vec(tree: &Tree<TestCallback>) -> Vec<u64> {
+        fn extend(node: Ptr<TestCallback>, vec: &mut Vec<u64>) {
             if let Some(left) = node.left {
                 extend(left, vec);
             }
