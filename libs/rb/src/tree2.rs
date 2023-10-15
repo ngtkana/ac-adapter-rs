@@ -52,6 +52,24 @@ impl<C: Callback> Tree<C> {
         None
     }
 
+    /// Find the leftmost node.
+    pub fn front(&self) -> Option<Ptr<C>> {
+        let mut p = self.root;
+        while let Some(p0) = p {
+            p = p0.left;
+        }
+        p
+    }
+
+    /// Find the rightmost node.
+    pub fn back(&self) -> Option<Ptr<C>> {
+        let mut p = self.root;
+        while let Some(p0) = p {
+            p = p0.right;
+        }
+        p
+    }
+
     /// Insert a new node into the tree.
     ///
     /// # Precondition
@@ -62,8 +80,7 @@ impl<C: Callback> Tree<C> {
         mut pred: impl FnMut(Ptr<C>) -> bool,
     ) {
         // Make sure the new node is isolated and red.
-        debug_assert!(new.is_isolated());
-        debug_assert!(new.color == Color::Red);
+        debug_assert!(new.is_isolated_and_red());
 
         // Handle the empty tree case.
         let Some(root) = self.root else {
@@ -81,22 +98,106 @@ impl<C: Callback> Tree<C> {
         *(if result { &mut p.as_mut().right } else { &mut p.as_mut().left }) = Some(new);
         new.as_mut().parent = Some(p);
 
-        // Fixup the tree.
-        self.insert_fixup(p, new);
+        // Fixup the red-red violation.
+        self.fix_red(p, new);
     }
 
     /// Remove the given node from the tree.
     ///
     /// # Precondition
-    /// The node must be in the tree.
-    fn remove(&mut self, _node: Ptr<C>) { todo!() }
+    /// `remove` must be in the tree.
+    pub fn remove(&mut self, mut z: Ptr<C>) {
+        struct Removed<C: Callback> {
+            color: Color,
+            upper: Option<Ptr<C>>,
+            lower: Option<Ptr<C>>,
+        }
+        let removed;
 
-    /// Insert a new node into the tree.
-    fn insert_fixup(&mut self, mut p: Ptr<C>, mut x: Ptr<C>) {
-        // Invariants:
-        // - `x` and `p` is red
-        // - The red-black property holds except for the red-red violation between `x` and `p`.
-        // - The updated property holds except for the closed path from the root to `x`.
+        // Case 1: the left child is empty.
+        if z.left.is_none() {
+            removed = Removed {
+                color: z.color,
+                upper: z.parent,
+                lower: z.right,
+            };
+            self.transplant(z, removed.lower);
+        }
+        // Case 2: the right child is empty.
+        else if z.right.is_none() {
+            removed = Removed {
+                color: z.color,
+                upper: z.parent,
+                lower: z.left,
+            };
+            self.transplant(z, removed.lower);
+        }
+        // Case 3: both children are non-empty.
+        else {
+            // Find the successor.
+            let mut succ = z.right.unwrap();
+            while let Some(left) = succ.left {
+                succ = left;
+            }
+
+            // Case 3.1: the successor is the right child of `z`.
+            if ptr::eq(as_ptr(succ.parent), &*z) {
+                removed = Removed {
+                    color: succ.color,
+                    upper: Some(succ),
+                    lower: succ.right,
+                };
+            }
+            // Case 3.2: the successor is not the right child of `z`.
+            else {
+                removed = Removed {
+                    color: succ.color,
+                    upper: succ.parent,
+                    lower: succ.right,
+                };
+                self.transplant(succ, removed.lower);
+                succ.right = z.right;
+                succ.right.unwrap().parent = Some(succ);
+            }
+
+            // Substitute `z` with `succ`.
+            self.transplant(z, Some(succ));
+            succ.left = z.left;
+            succ.left.unwrap().parent = Some(succ);
+            succ.color = z.color;
+        }
+
+        // Cut the removed node from the tree.
+        z.isolate_and_red();
+
+        // Fixup the black-height violation.
+        if removed.color == Color::Black {
+            self.fix_black(removed.upper, removed.lower);
+        } else {
+            // Update the remaining node.
+            if let Some(mut x) = removed.upper {
+                x.update();
+                while let Some(mut p) = x.parent {
+                    p.update();
+                    x = p;
+                }
+            }
+        }
+    }
+
+    /// Fixup the red-red violation between `x` and `p` and non-updated property of `x`.
+    ///
+    /// # Precondition
+    ///
+    /// - `x` must be red.
+    /// - `x` must be a child of `p`.
+    /// - The red-black property holds except for the possible red-red violation between `x` and `p`.
+    /// - The updated property holds except for the closed path `[root, x]`.
+    ///
+    /// # Postcondition
+    /// - The red-black property holds.
+    /// - The updated property holds.
+    fn fix_red(&mut self, mut p: Ptr<C>, mut x: Ptr<C>) {
         while p.color == Color::Red {
             let mut pp = p.parent.unwrap();
             // Case 1: `p` is a left child.
@@ -172,6 +273,156 @@ impl<C: Callback> Tree<C> {
         while let Some(mut p) = x.parent {
             p.update();
             x = p;
+        }
+    }
+
+    /// Fixup the black-height violation between `x` and `p` and non-updated property of `x`.
+    ///
+    /// # Precondition
+    /// - The black height of `x` is missing one.
+    /// - `x` must be a child of `p`.
+    /// - The red-black property holds except for the black-height violation between `x` and `p`.
+    /// - The updated property holds except for the half-open path `[root, x[`.
+    ///
+    /// # Postcondition
+    /// - The red-black property holds.
+    /// - The updated property holds.
+    fn fix_black(&mut self, p: Option<Ptr<C>>, mut x: Option<Ptr<C>>) {
+        // Handle the case where `x` is the root (or the tree is empty).
+        let Some(mut p) = p else {
+            if color(x) == Color::Red {
+                x.unwrap().color = Color::Black;
+            } else {
+                self.black_height -= 1;
+            }
+            return;
+        };
+
+        while color(x) == Color::Black {
+            // Case 1: `x` is a left child.
+            if ptr::eq(as_ptr(p.left), as_ptr(x)) {
+                let mut s = p.right;
+
+                // Handle the case where `p` is a right-leaning 3-node.
+                if color(s) == Color::Red {
+                    p.color = Color::Red;
+                    s.unwrap().color = Color::Black;
+                    self.left_rotate(p);
+                    s = p.right;
+                }
+
+                let mut s = s.unwrap();
+
+                // Case 1.1: `s` is a 2-node.
+                if color(s.left) == Color::Black && color(s.right) == Color::Black {
+                    s.color = Color::Red;
+                    if let Some(mut x) = x {
+                        x.update();
+                    }
+                    p.update();
+                    x = Some(p);
+                    p = match p.parent {
+                        None => {
+                            match color(x) {
+                                Color::Red => x.unwrap().color = Color::Black,
+                                Color::Black => self.black_height -= 1,
+                            }
+                            break;
+                        }
+                        Some(p) => p,
+                    };
+                }
+                // Case 1.2: `s` is a 3 or 4-node.
+                else {
+                    // Handle the case where `s` is a left-leaning 3-node.
+                    if color(s.right) == Color::Black {
+                        let mut new_s = s.left.unwrap();
+                        s.color = Color::Red;
+                        new_s.color = Color::Black;
+                        self.right_rotate(s);
+                        s.update();
+                        new_s.update();
+                        s = new_s;
+                    }
+                    s.color = p.color;
+                    p.color = Color::Black;
+                    s.right.unwrap().color = Color::Black;
+                    self.left_rotate(p);
+                    if let Some(mut x) = x {
+                        x.update();
+                    }
+                    x = Some(p);
+                    break;
+                }
+            }
+            // Caes 2: `x` is a right child.
+            else {
+                let mut s = p.left;
+
+                // Handle the case where `p` is a left-leaning 3-node.
+                if color(s) == Color::Red {
+                    p.color = Color::Red;
+                    s.unwrap().color = Color::Black;
+                    self.right_rotate(p);
+                    s = p.left;
+                }
+
+                let mut s = s.unwrap();
+
+                // Case 2.1: `s` is a 2-node.
+                if color(s.left) == Color::Black && color(s.right) == Color::Black {
+                    s.color = Color::Red;
+                    if let Some(mut x) = x {
+                        x.update();
+                    }
+                    p.update();
+                    x = Some(p);
+                    p = match p.parent {
+                        None => {
+                            match color(x) {
+                                Color::Red => x.unwrap().color = Color::Black,
+                                Color::Black => self.black_height -= 1,
+                            }
+                            break;
+                        }
+                        Some(p) => p,
+                    };
+                }
+                // Case 2.2: `s` is a 3 or 4-node.
+                else {
+                    // Handle the case where `s` is a right-leaning 3-node.
+                    if color(s.left) == Color::Black {
+                        let mut new_s = s.right.unwrap();
+                        s.color = Color::Red;
+                        new_s.color = Color::Black;
+                        self.left_rotate(s);
+                        s.update();
+                        new_s.update();
+                        s = new_s;
+                    }
+                    s.color = p.color;
+                    p.color = Color::Black;
+                    s.left.unwrap().color = Color::Black;
+                    self.right_rotate(p);
+                    if let Some(mut x) = x {
+                        x.update();
+                    }
+                    x = Some(p);
+                    break;
+                }
+            }
+        }
+
+        // Cancel the black-height violation.
+        x.unwrap().color = Color::Black;
+
+        // Update the remaining node.
+        if let Some(mut x) = x {
+            x.update();
+            while let Some(mut p) = x.parent {
+                p.update();
+                x = p;
+            }
         }
     }
 
@@ -302,6 +553,9 @@ impl<C: Callback> Ptr<C> {
         )
     }
 
+    /// Give the ownership of the node to the caller.
+    pub fn into_box(self) -> Box<Node<C>> { unsafe { Box::from_raw(self.0.as_ptr()) } }
+
     /// Get the node as a reference.
     pub fn as_ref(&self) -> &Node<C> { unsafe { self.0.as_ref() } }
 
@@ -312,10 +566,19 @@ impl<C: Callback> Ptr<C> {
     pub fn update(&mut self) { C::update(*self); }
 
     /// Returns `true` if the node is isolated.
-    pub fn is_isolated(&self) -> bool {
+    pub fn is_isolated_and_red(&self) -> bool {
         self.as_ref().left.is_none()
             && self.as_ref().right.is_none()
             && self.as_ref().parent.is_none()
+            && self.as_ref().color == Color::Red
+    }
+
+    /// Change the node to an isolated red node.
+    pub fn isolate_and_red(&mut self) {
+        self.as_mut().left = None;
+        self.as_mut().right = None;
+        self.as_mut().parent = None;
+        self.as_mut().color = Color::Red;
     }
 
     /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
@@ -352,11 +615,13 @@ impl<C: Callback> PartialEq for Ptr<C> {
 impl<C: Callback> Eq for Ptr<C> {}
 
 #[cfg(test)]
-mod tests {
+pub mod tests {
     use super::*;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
+    use rstest::rstest;
+    use std::borrow::Cow;
 
     const MODULO: u64 = 998244353;
 
@@ -539,23 +804,33 @@ mod tests {
         vec
     }
 
-    fn write(
+    pub fn write<'a, C: Callback, F, S>(
         w: &mut impl std::io::Write,
-        tree: &Tree<TestCallback>,
-        fg: &[(&'static str, Ptr<TestCallback>, ansi_term::Color)],
-    ) -> std::io::Result<()> {
-        unsafe fn write_ptr(
+        tree: &Tree<C>,
+        mut to_string: F,
+        fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
+    ) -> std::io::Result<()>
+    where
+        F: FnMut(&C::Data) -> S,
+        S: Into<Cow<'a, str>>,
+    {
+        unsafe fn write_ptr<'a, C: Callback, F, S>(
             w: &mut impl std::io::Write,
-            current: Ptr<TestCallback>,
-            fg: &[(&'static str, Ptr<TestCallback>, ansi_term::Color)],
-        ) -> std::io::Result<()> {
+            current: Ptr<C>,
+            to_string: &mut F,
+            fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
+        ) -> std::io::Result<()>
+        where
+            F: FnMut(&C::Data) -> S,
+            S: Into<Cow<'a, str>>,
+        {
             let colour = match current.color {
                 Color::Red => ansi_term::Colour::Red,
                 Color::Black => ansi_term::Colour::Black,
             };
             write!(w, "{}", colour.paint("("))?;
             if let Some(left) = current.left {
-                write_ptr(w, left, fg)?;
+                write_ptr(w, left, to_string, fg)?;
             }
             let mut style = ansi_term::Style::new();
             for &(_name, ptr, colour) in fg {
@@ -564,9 +839,9 @@ mod tests {
                 }
             }
             style = style.fg(colour);
-            write!(w, "{}", style.paint(&current.data.value.to_string()))?;
+            write!(w, "{}", style.paint(to_string(&current.data)))?;
             if let Some(right) = current.right {
-                write_ptr(w, right, fg)?;
+                write_ptr(w, right, to_string, fg)?;
             }
             write!(w, "{}", colour.paint(")"))?;
             Ok(())
@@ -575,27 +850,32 @@ mod tests {
             let mut i = 0;
             for &(name, _ptr, colour) in fg {
                 if i > 0 {
-                    eprint!(", ");
+                    write!(w, ", ")?;
                 }
-                eprint!("{}", ansi_term::Style::new().on(colour).paint(name));
+                write!(w, "{}", ansi_term::Style::new().on(colour).paint(name))?;
                 i += 1;
             }
             write!(w, ": ")?;
         }
         unsafe {
             if let Some(root) = tree.root {
-                write_ptr(w, root, fg)?;
+                write_ptr(w, root, &mut to_string, fg)?;
             }
         }
         Ok(())
     }
 
-    fn format(
-        tree: &Tree<TestCallback>,
-        fg: &[(&'static str, Ptr<TestCallback>, ansi_term::Color)],
-    ) -> String {
+    pub fn format<'a, C: Callback, F, S>(
+        tree: &Tree<C>,
+        to_string: F,
+        fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
+    ) -> String
+    where
+        F: FnMut(&C::Data) -> S,
+        S: Into<Cow<'a, str>>,
+    {
         let mut buf = Vec::new();
-        write(&mut buf, tree, fg).unwrap();
+        write(&mut buf, tree, to_string, fg).unwrap();
         String::from_utf8(buf).unwrap()
     }
 
@@ -609,8 +889,64 @@ mod tests {
             let index = vec.partition_point(|&x| x < value);
             vec.insert(index, value);
             tree.partition_point_insert(Ptr::new(Data::new(value)), |p| p.data.value < value);
-            assert_eq!(to_vec(&tree), vec, "{}", format(&tree, &[]));
-            validate(&tree).unwrap_or_else(|err| panic!("{}\n{}", err, format(&tree, &[])));
+            assert_eq!(
+                to_vec(&tree),
+                vec,
+                "{}",
+                format(&tree, |data| data.value.to_string(), &[])
+            );
+            validate(&tree).unwrap_or_else(|err| {
+                panic!(
+                    "{}\n{}",
+                    err,
+                    format(&tree, |data| data.value.to_string(), &[])
+                )
+            });
+        }
+    }
+
+    #[rstest]
+    #[case(0.1)]
+    #[case(0.5)]
+    #[case(0.9)]
+    fn test_insert_remove_random(#[case] remove_prob: f64) {
+        const VALUE_LIM: u64 = 40;
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let mut tree = Tree::<TestCallback>::new();
+            let mut expected = Vec::new();
+            for _ in 0..200 {
+                let value = rng.gen_range(0..VALUE_LIM);
+                if rng.gen_bool(remove_prob) {
+                    let expected_output = expected
+                        .iter()
+                        .position(|&v| v == value)
+                        .map(|i| expected.remove(i));
+                    let output = tree.binary_search(|n| n.data.value.cmp(&value));
+                    if let Some(output) = output {
+                        tree.remove(output);
+                    }
+                    let output = output.map(|ptr| ptr.into_box().data.value);
+                    assert_eq!(output, expected_output);
+                } else {
+                    let lower_bound = expected
+                        .iter()
+                        .position(|&v| value <= v)
+                        .unwrap_or(expected.len());
+                    expected.insert(lower_bound, value);
+                    tree.partition_point_insert(Ptr::new(Data::new(value)), |n| {
+                        n.data.value < value
+                    });
+                }
+                assert_eq!(to_vec(&tree), expected);
+                validate(&tree).unwrap_or_else(|err| {
+                    panic!(
+                        "{}\n{}",
+                        err,
+                        format(&tree, |data| data.value.to_string(), &[])
+                    )
+                });
+            }
         }
     }
 }
