@@ -24,21 +24,24 @@ pub trait Callback: Sized {
 
 /// A red-black tree.
 #[allow(dead_code)]
-pub struct Tree<C: Callback>(Option<Ptr<C>>);
+pub struct Tree<C: Callback> {
+    root: Option<Ptr<C>>,
+    black_height: u8,
+}
 #[allow(dead_code)]
 impl<C: Callback> Tree<C> {
     /// Create a new empty tree.
     pub fn new() -> Self { Self::default() }
 
     /// Returns `true` if the tree is empty.
-    pub fn is_empty(&self) -> bool { self.0.is_none() }
+    pub fn is_empty(&self) -> bool { self.root.is_none() }
 
     /// Binary search the tree.
     fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
     where
         F: FnMut(Ptr<C>) -> Ordering,
     {
-        let mut p = self.0;
+        let mut p = self.root;
         while let Some(p0) = p {
             p = match f(p0) {
                 Ordering::Less => p0.right,
@@ -63,9 +66,11 @@ impl<C: Callback> Tree<C> {
         debug_assert!(new.color == Color::Red);
 
         // Handle the empty tree case.
-        let Some(root) = self.0 else {
+        let Some(root) = self.root else {
+            debug_assert!(self.black_height == 0);
+            self.black_height = 1;
             new.color = Color::Black;
-            self.0 = Some(new);
+            self.root = Some(new);
             return;
         };
 
@@ -108,6 +113,7 @@ impl<C: Callback> Tree<C> {
                     p = match x.parent {
                         None => {
                             x.color = Color::Black;
+                            self.black_height += 1;
                             break;
                         }
                         Some(p) => p,
@@ -141,6 +147,7 @@ impl<C: Callback> Tree<C> {
                     p = match x.parent {
                         None => {
                             x.color = Color::Black;
+                            self.black_height += 1;
                             break;
                         }
                         Some(p) => p,
@@ -193,7 +200,7 @@ impl<C: Callback> Tree<C> {
                 &mut p.right
             }
         } else {
-            &mut self.0
+            &mut self.root
         }) = Some(y);
 
         // Connect `x` and `y`.
@@ -226,7 +233,7 @@ impl<C: Callback> Tree<C> {
                 &mut p.right
             }
         } else {
-            &mut self.0
+            &mut self.root
         }) = Some(y);
 
         // Connect `x` and `y`.
@@ -243,7 +250,7 @@ impl<C: Callback> Tree<C> {
                 p.right = v;
             }
         } else {
-            self.0 = v;
+            self.root = v;
         }
         if let Some(mut v) = v {
             v.parent = u.parent;
@@ -251,7 +258,12 @@ impl<C: Callback> Tree<C> {
     }
 }
 impl<C: Callback> Default for Tree<C> {
-    fn default() -> Self { Tree(None) }
+    fn default() -> Self {
+        Tree {
+            root: None,
+            black_height: 0,
+        }
+    }
 }
 
 /// Get the color of a node.
@@ -486,8 +498,26 @@ mod tests {
 
             Ok(left_black_height + (ptr.color == Color::Black) as u8)
         }
-        if let Some(root) = tree.0 {
-            validate_ptr(root)?;
+        if let Some(root) = tree.root {
+            let black_height = validate_ptr(root)?;
+            // Make sure the root is black.
+            (root.color == Color::Black).then_some(()).ok_or_else(|| {
+                format!(
+                    "Root violation: expected {:?}, got {:?}",
+                    Color::Black,
+                    root.color
+                )
+            })?;
+
+            // Make sure the black-height is correct.
+            (black_height == tree.black_height)
+                .then_some(())
+                .ok_or_else(|| {
+                    format!(
+                        "Black-height violation: expected {}, got {}",
+                        black_height, tree.black_height,
+                    )
+                })?;
         }
         Ok(())
     }
@@ -503,7 +533,7 @@ mod tests {
             }
         }
         let mut vec = Vec::new();
-        if let Some(root) = tree.0 {
+        if let Some(root) = tree.root {
             extend(root, &mut vec);
         }
         vec
@@ -553,7 +583,7 @@ mod tests {
             write!(w, ": ")?;
         }
         unsafe {
-            if let Some(root) = tree.0 {
+            if let Some(root) = tree.root {
                 write_ptr(w, root, fg)?;
             }
         }
