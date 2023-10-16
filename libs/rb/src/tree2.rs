@@ -36,8 +36,24 @@ impl<C: Callback> Tree<C> {
     /// Returns `true` if the tree is empty.
     pub fn is_empty(&self) -> bool { self.root.is_none() }
 
+    /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
+    pub fn partition_point<P>(&self, mut pred: P) -> Option<(Ptr<C>, bool)>
+    where
+        P: FnMut(Ptr<C>) -> bool,
+    {
+        let mut p = self.root?;
+        let mut result = pred(p);
+        let mut option_x = if result { p.as_ref().right } else { p.as_ref().left };
+        while let Some(x) = option_x {
+            p = x;
+            result = pred(p);
+            option_x = if result { p.as_ref().right } else { p.as_ref().left };
+        }
+        Some((p, result))
+    }
+
     /// Binary search the tree.
-    fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
+    pub fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
     where
         F: FnMut(Ptr<C>) -> Ordering,
     {
@@ -54,45 +70,48 @@ impl<C: Callback> Tree<C> {
 
     /// Find the leftmost node.
     pub fn front(&self) -> Option<Ptr<C>> {
-        let mut p = self.root;
-        while let Some(p0) = p {
-            p = p0.left;
+        let mut x = self.root?;
+        while let Some(y) = x.left {
+            x = y;
         }
-        p
+        Some(x)
     }
 
     /// Find the rightmost node.
     pub fn back(&self) -> Option<Ptr<C>> {
-        let mut p = self.root;
-        while let Some(p0) = p {
-            p = p0.right;
+        let mut x = self.root?;
+        while let Some(y) = x.right {
+            x = y;
         }
-        p
+        Some(x)
     }
 
-    /// Insert a new node into the tree.
+    /// Insert a new node at the position specified by `position`.
+    ///
+    /// If `position` is `None`, the new node is inserted as the root.
+    /// Otherwise, the new node is inserted as the child of `position.0`.
+    ///
+    /// If `position.1` is:
+    /// - `true`: the new node is inserted as the right child.
+    /// - `false`: the new node is inserted as the left child.
+    ///
+    /// For example:
+    /// - `(tree.front(), false)`: insert the new node as the leftmost child.
+    /// - `(tree.back(), true)`: insert the new node as the rightmost child.
     ///
     /// # Precondition
-    /// The new node must be isolated and red.
-    pub fn partition_point_insert(
-        &mut self,
-        mut new: Ptr<C>,
-        mut pred: impl FnMut(Ptr<C>) -> bool,
-    ) {
-        // Make sure the new node is isolated and red.
+    /// `new` must be isolated and red.
+    pub fn insert(&mut self, mut new: Ptr<C>, position: Option<(Ptr<C>, bool)>) {
         debug_assert!(new.is_isolated_and_red());
 
         // Handle the empty tree case.
-        let Some(root) = self.root else {
-            debug_assert!(self.black_height == 0);
+        let Some((mut p, result)) = position else {
+            debug_assert!(self.root.is_none());
             self.black_height = 1;
             new.color = Color::Black;
             self.root = Some(new);
             return;
         };
-
-        // Find the insertion point.
-        let (mut p, result) = root.partition_point(&mut pred);
 
         // Insert the new node.
         *(if result { &mut p.as_mut().right } else { &mut p.as_mut().left }) = Some(new);
@@ -105,7 +124,7 @@ impl<C: Callback> Tree<C> {
     /// Remove the given node from the tree.
     ///
     /// # Precondition
-    /// `remove` must be in the tree.
+    /// `z` must be in the tree.
     pub fn remove(&mut self, mut z: Ptr<C>) {
         struct Removed<C: Callback> {
             color: Color,
@@ -183,6 +202,31 @@ impl<C: Callback> Tree<C> {
                 }
             }
         }
+    }
+
+    /// Move all nodes from `other` to `self`.
+    pub fn append(&mut self, other: &mut Self) {
+        // Handle the empty tree case.
+        if other.is_empty() {
+            return;
+        }
+        if self.is_empty() {
+            *self = std::mem::take(other);
+            return;
+        }
+
+        let c = other.front().unwrap();
+        other.remove(c);
+        // Handle the case where `c` was the only node in `other`.
+        if other.is_empty() {
+            self.insert(c, Some((self.back().unwrap(), true)));
+            return;
+        }
+
+        // Now `l` and `r` are non-empty.
+        let l = std::mem::take(self);
+        let r = std::mem::take(other);
+        *self = join(l, c, r);
     }
 
     /// Fixup the red-red violation between `x` and `p` and non-updated property of `x`.
@@ -525,6 +569,101 @@ fn as_ptr<C: Callback>(p: Option<Ptr<C>>) -> *mut Node<C> {
     p.map_or(ptr::null_mut(), |p| p.0.as_ptr())
 }
 
+/// Join two trees with a node `c`.
+///
+/// # Precondition
+/// - `l` and `r` must be non-empty.
+/// - `c` must be isolated and red.
+pub fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<C> {
+    debug_assert!(c.is_isolated_and_red());
+    debug_assert!(l.root.is_some());
+    debug_assert!(r.root.is_some());
+
+    // Merge three trees.
+    match l.black_height.cmp(&r.black_height) {
+        // When `l` and `r` are of the same height.
+        Ordering::Equal => {
+            c.left = Some(l.root.unwrap());
+            c.right = Some(r.root.unwrap());
+            c.color = Color::Black;
+            l.root.unwrap().parent = Some(c);
+            r.root.unwrap().parent = Some(c);
+            c.update();
+            Tree {
+                root: Some(c),
+                black_height: l.black_height + 1,
+            }
+        }
+        // When `l` is taller than `r`.
+        Ordering::Greater => {
+            // Find the merge point.
+            let (mut p, mut x) = {
+                let mut diff = l.black_height - r.black_height - 1;
+                let mut p = l.root.unwrap();
+                let mut x = p.right.unwrap();
+                loop {
+                    if x.color == Color::Black {
+                        if diff == 0 {
+                            break;
+                        }
+                        diff -= 1;
+                    }
+                    p = x;
+                    x = p.right.unwrap();
+                }
+                (p, x)
+            };
+
+            // Merge `x`, `c` and `r`, and set `p` as the parent.
+            p.right = Some(c);
+            c.parent = Some(p);
+            c.left = Some(x);
+            x.parent = Some(c);
+            c.right = Some(r.root.unwrap());
+            r.root.unwrap().parent = Some(c);
+            c.update();
+
+            // Fixup the red-red violation.
+            l.fix_red(p, c);
+
+            l
+        }
+        Ordering::Less => {
+            // Find the merge point.
+            let (mut p, mut x) = {
+                let mut diff = r.black_height - l.black_height - 1;
+                let mut p = r.root.unwrap();
+                let mut x = p.left.unwrap();
+                loop {
+                    if x.color == Color::Black {
+                        if diff == 0 {
+                            break;
+                        }
+                        diff -= 1;
+                    }
+                    p = x;
+                    x = p.left.unwrap();
+                }
+                (p, x)
+            };
+
+            // Merge `l`, `c` and `x`, and set `p` as the parent.
+            p.left = Some(c);
+            c.parent = Some(p);
+            c.right = Some(x);
+            x.parent = Some(c);
+            c.left = Some(l.root.unwrap());
+            l.root.unwrap().parent = Some(c);
+            c.update();
+
+            // Fixup the red-red violation.
+            r.fix_red(p, c);
+
+            r
+        }
+    }
+}
+
 /// A node in a red-black tree.
 #[allow(dead_code)]
 pub struct Node<C: Callback> {
@@ -539,7 +678,7 @@ pub struct Node<C: Callback> {
 pub struct Ptr<C: Callback>(NonNull<Node<C>>);
 #[allow(dead_code)]
 impl<C: Callback> Ptr<C> {
-    /// Create a new isolated red [`Ptr`] from a [`C::Data`].
+    /// Create a new isolated red [`Ptr`] from a [`Callback::Data`].
     pub fn new(data: C::Data) -> Self {
         Self(
             NonNull::new(Box::into_raw(Box::new(Node {
@@ -580,22 +719,6 @@ impl<C: Callback> Ptr<C> {
         self.as_mut().parent = None;
         self.as_mut().color = Color::Red;
     }
-
-    /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
-    pub fn partition_point<P>(&self, mut pred: P) -> (Ptr<C>, bool)
-    where
-        P: FnMut(Ptr<C>) -> bool,
-    {
-        let mut p = *self;
-        let mut result = pred(p);
-        let mut option_x = if result { p.as_ref().right } else { p.as_ref().left };
-        while let Some(x) = option_x {
-            p = x;
-            result = pred(p);
-            option_x = if result { p.as_ref().right } else { p.as_ref().left };
-        }
-        (p, result)
-    }
 }
 impl<C: Callback> Clone for Ptr<C> {
     fn clone(&self) -> Self { *self }
@@ -625,6 +748,7 @@ pub mod tests {
 
     const MODULO: u64 = 998244353;
 
+    #[derive(Debug)]
     struct RollingHash {
         hash: u64,
         base: u64,
@@ -645,6 +769,7 @@ pub mod tests {
         }
     }
 
+    #[derive(Debug)]
     struct Data {
         len: usize,
         value: u64,
@@ -689,7 +814,7 @@ pub mod tests {
         }
     }
 
-    fn validate(tree: &Tree<TestCallback>) -> Result<(), String> {
+    fn validate(tree: &Tree<TestCallback>) {
         fn validate_ptr(ptr: Ptr<TestCallback>) -> Result<u8, String> {
             let node = ptr.as_ref();
             let mut left_black_height = 0;
@@ -763,28 +888,37 @@ pub mod tests {
 
             Ok(left_black_height + (ptr.color == Color::Black) as u8)
         }
-        if let Some(root) = tree.root {
-            let black_height = validate_ptr(root)?;
-            // Make sure the root is black.
-            (root.color == Color::Black).then_some(()).ok_or_else(|| {
-                format!(
-                    "Root violation: expected {:?}, got {:?}",
-                    Color::Black,
-                    root.color
-                )
-            })?;
-
-            // Make sure the black-height is correct.
-            (black_height == tree.black_height)
-                .then_some(())
-                .ok_or_else(|| {
+        || -> Result<(), String> {
+            if let Some(root) = tree.root {
+                let black_height = validate_ptr(root)?;
+                // Make sure the root is black.
+                (root.color == Color::Black).then_some(()).ok_or_else(|| {
                     format!(
-                        "Black-height violation: expected {}, got {}",
-                        black_height, tree.black_height,
+                        "Root violation: expected {:?}, got {:?}",
+                        Color::Black,
+                        root.color
                     )
                 })?;
-        }
-        Ok(())
+
+                // Make sure the black-height is correct.
+                (black_height == tree.black_height)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        format!(
+                            "Black-height violation: expected {}, got {}",
+                            black_height, tree.black_height,
+                        )
+                    })?;
+            }
+            Ok(())
+        }()
+        .unwrap_or_else(|e| {
+            panic!(
+                "{}\n{}",
+                e,
+                format(&tree, |data| data.value.to_string(), &[])
+            )
+        })
     }
 
     fn to_vec(tree: &Tree<TestCallback>) -> Vec<u64> {
@@ -888,20 +1022,15 @@ pub mod tests {
             let value = rng.gen_range(0..20);
             let index = vec.partition_point(|&x| x < value);
             vec.insert(index, value);
-            tree.partition_point_insert(Ptr::new(Data::new(value)), |p| p.data.value < value);
+            let insert_position = tree.partition_point(|p| p.data.value < value);
+            tree.insert(Ptr::new(Data::new(value)), insert_position);
             assert_eq!(
                 to_vec(&tree),
                 vec,
                 "{}",
                 format(&tree, |data| data.value.to_string(), &[])
             );
-            validate(&tree).unwrap_or_else(|err| {
-                panic!(
-                    "{}\n{}",
-                    err,
-                    format(&tree, |data| data.value.to_string(), &[])
-                )
-            });
+            validate(&tree)
         }
     }
 
@@ -934,19 +1063,47 @@ pub mod tests {
                         .position(|&v| value <= v)
                         .unwrap_or(expected.len());
                     expected.insert(lower_bound, value);
-                    tree.partition_point_insert(Ptr::new(Data::new(value)), |n| {
-                        n.data.value < value
-                    });
+                    let insert_position = tree.partition_point(|n| n.data.value < value);
+                    tree.insert(Ptr::new(Data::new(value)), insert_position);
                 }
                 assert_eq!(to_vec(&tree), expected);
-                validate(&tree).unwrap_or_else(|err| {
-                    panic!(
-                        "{}\n{}",
-                        err,
-                        format(&tree, |data| data.value.to_string(), &[])
-                    )
-                });
+                validate(&tree);
             }
+        }
+    }
+
+    #[test]
+    fn test_append_random() {
+        fn random_tree(rng: &mut StdRng) -> (Tree<TestCallback>, Vec<u64>) {
+            const VALUE_LIM: u64 = 40;
+            const QUERY_LIM: usize = 20;
+            let query_number = rng.gen_range(0..QUERY_LIM);
+            let mut tree = Tree::<TestCallback>::new();
+            for _ in 0..query_number {
+                let value = rng.gen_range(0..VALUE_LIM);
+                if rng.gen_bool(0.5) {
+                    let insert_position = tree.partition_point(|n| n.data.value < value);
+                    tree.insert(Ptr::new(Data::new(value)), insert_position);
+                } else {
+                    let output = tree.binary_search(|n| n.data.value.cmp(&value));
+                    if let Some(output) = output {
+                        tree.remove(output);
+                    }
+                }
+            }
+            let vec = to_vec(&tree);
+            (tree, vec)
+        }
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..2000 {
+            let (mut tree1, mut vec1) = random_tree(&mut rng);
+            let (mut tree2, mut vec2) = random_tree(&mut rng);
+            tree1.append(&mut tree2);
+            vec1.append(&mut vec2);
+            assert!(tree2.is_empty());
+            assert_eq!(to_vec(&tree1), vec1);
+            validate(&tree1);
+            validate(&tree2);
         }
     }
 }

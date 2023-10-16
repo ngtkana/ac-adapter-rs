@@ -6,7 +6,7 @@ mod list;
 /// A red-black tree.
 mod tree;
 
-/// [wip] `tree` with `NonNull`
+/// `tree` with a different implementation.
 mod tree2;
 
 /// A list based on a red-black tree.

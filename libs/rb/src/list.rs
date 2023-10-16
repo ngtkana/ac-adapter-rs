@@ -209,10 +209,6 @@ impl<T> Rblist<T> {
     ///
     /// # Panics
     /// Panics if index is out of bounds.
-    ///
-    /// # Examples
-    /// ```
-    /// ```
     pub fn remove(&mut self, mut index: usize) -> T {
         assert!(index < self.len());
         let removed = self.0.binary_search_remove(|n| {
