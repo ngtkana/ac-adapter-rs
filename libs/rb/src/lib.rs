@@ -98,3 +98,11 @@ impl<C: Callback> PartialEq for Ptr<C> {
     fn eq(&self, other: &Self) -> bool { ptr::eq(self.as_ref(), other.as_ref()) }
 }
 impl<C: Callback> Eq for Ptr<C> {}
+
+/// Get the color of a node.
+fn color<C: Callback>(p: Option<Ptr<C>>) -> Color { p.map_or(Color::Black, |p| p.as_ref().color) }
+
+/// Get the pointer to a node.
+fn as_ptr<C: Callback>(p: Option<Ptr<C>>) -> *mut Node<C> {
+    p.map_or(ptr::null_mut(), |p| p.0.as_ptr())
+}
