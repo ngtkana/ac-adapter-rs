@@ -315,6 +315,7 @@ impl<C: Callback> Tree<C> {
     /// # Postcondition
     /// - The red-black property holds.
     /// - The updated property holds.
+    #[allow(clippy::too_many_lines)]
     fn fix_black(&mut self, p: Option<Ptr<C>>, mut x: Option<Ptr<C>>) {
         // Handle the case where `x` is the root (or the tree is empty).
         let Some(mut p) = p else {
@@ -797,7 +798,7 @@ pub mod tests {
                     )
                 })?;
 
-            Ok(left_black_height + (ptr.color == Color::Black) as u8)
+            Ok(left_black_height + u8::from(ptr.color == Color::Black))
         }
         || -> Result<(), String> {
             if let Some(root) = tree.root {
@@ -827,7 +828,7 @@ pub mod tests {
             panic!(
                 "{}\n{}",
                 e,
-                format(&tree, |data| data.value.to_string(), &[])
+                format(tree, |data| data.value.to_string(), &[])
             )
         })
     }
@@ -892,13 +893,11 @@ pub mod tests {
             Ok(())
         }
         if !fg.is_empty() {
-            let mut i = 0;
-            for &(name, _ptr, colour) in fg {
+            for (i, &(name, _ptr, colour)) in fg.iter().enumerate() {
                 if i > 0 {
                     write!(w, ", ")?;
                 }
                 write!(w, "{}", ansi_term::Style::new().on(colour).paint(name))?;
-                i += 1;
             }
             write!(w, ": ")?;
         }

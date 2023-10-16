@@ -67,7 +67,7 @@ impl<C: Callback> Ptr<C> {
     pub fn update(&mut self) { C::update(*self); }
 
     /// Returns `true` if the node is isolated.
-    pub fn is_isolated_and_red(&self) -> bool {
+    pub fn is_isolated_and_red(self) -> bool {
         self.as_ref().left.is_none()
             && self.as_ref().right.is_none()
             && self.as_ref().parent.is_none()
