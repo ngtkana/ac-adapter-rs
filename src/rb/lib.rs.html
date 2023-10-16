@@ -132,6 +132,14 @@
 <a href="#98" id="98">98</a>
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
 </pre></div><pre class="rust"><code><span class="attr">#![warn(missing_docs)]
 </span><span class="doccomment">//! Containers for storing data in a red-black tree.
 
@@ -232,4 +240,12 @@
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { ptr::eq(<span class="self">self</span>.as_ref(), other.as_ref()) }
 }
 <span class="kw">impl</span>&lt;C: Callback&gt; Eq <span class="kw">for </span>Ptr&lt;C&gt; {}
+
+<span class="doccomment">/// Get the color of a node.
+</span><span class="kw">fn </span>color&lt;C: Callback&gt;(p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) -&gt; Color { p.map_or(Color::Black, |p| p.as_ref().color) }
+
+<span class="doccomment">/// Get the pointer to a node.
+</span><span class="kw">fn </span>as_ptr&lt;C: Callback&gt;(p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) -&gt; <span class="kw-2">*mut </span>Node&lt;C&gt; {
+    p.map_or(ptr::null_mut(), |p| p.<span class="number">0</span>.as_ptr())
+}
 </code></pre></div></section></main></body></html>
