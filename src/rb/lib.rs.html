@@ -201,7 +201,7 @@
     </span><span class="kw">pub fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>) { C::update(<span class="kw-2">*</span><span class="self">self</span>); }
 
     <span class="doccomment">/// Returns `true` if the node is isolated.
-    </span><span class="kw">pub fn </span>is_isolated_and_red(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+    </span><span class="kw">pub fn </span>is_isolated_and_red(<span class="self">self</span>) -&gt; bool {
         <span class="self">self</span>.as_ref().left.is_none()
             &amp;&amp; <span class="self">self</span>.as_ref().right.is_none()
             &amp;&amp; <span class="self">self</span>.as_ref().parent.is_none()
