@@ -666,578 +666,1336 @@
 <a href="#632" id="632">632</a>
 <a href="#633" id="633">633</a>
 <a href="#634" id="634">634</a>
-</pre></div><pre class="rust"><code><span class="attr">#![warn(missing_docs)]
-#![allow(dead_code)]
-
-</span><span class="kw">use </span><span class="kw">super</span>::Color;
-<span class="kw">use </span><span class="kw">super</span>::Listen;
-<span class="kw">use </span><span class="kw">super</span>::Node;
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
+<a href="#662" id="662">662</a>
+<a href="#663" id="663">663</a>
+<a href="#664" id="664">664</a>
+<a href="#665" id="665">665</a>
+<a href="#666" id="666">666</a>
+<a href="#667" id="667">667</a>
+<a href="#668" id="668">668</a>
+<a href="#669" id="669">669</a>
+<a href="#670" id="670">670</a>
+<a href="#671" id="671">671</a>
+<a href="#672" id="672">672</a>
+<a href="#673" id="673">673</a>
+<a href="#674" id="674">674</a>
+<a href="#675" id="675">675</a>
+<a href="#676" id="676">676</a>
+<a href="#677" id="677">677</a>
+<a href="#678" id="678">678</a>
+<a href="#679" id="679">679</a>
+<a href="#680" id="680">680</a>
+<a href="#681" id="681">681</a>
+<a href="#682" id="682">682</a>
+<a href="#683" id="683">683</a>
+<a href="#684" id="684">684</a>
+<a href="#685" id="685">685</a>
+<a href="#686" id="686">686</a>
+<a href="#687" id="687">687</a>
+<a href="#688" id="688">688</a>
+<a href="#689" id="689">689</a>
+<a href="#690" id="690">690</a>
+<a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
+<a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+<a href="#889" id="889">889</a>
+<a href="#890" id="890">890</a>
+<a href="#891" id="891">891</a>
+<a href="#892" id="892">892</a>
+<a href="#893" id="893">893</a>
+<a href="#894" id="894">894</a>
+<a href="#895" id="895">895</a>
+<a href="#896" id="896">896</a>
+<a href="#897" id="897">897</a>
+<a href="#898" id="898">898</a>
+<a href="#899" id="899">899</a>
+<a href="#900" id="900">900</a>
+<a href="#901" id="901">901</a>
+<a href="#902" id="902">902</a>
+<a href="#903" id="903">903</a>
+<a href="#904" id="904">904</a>
+<a href="#905" id="905">905</a>
+<a href="#906" id="906">906</a>
+<a href="#907" id="907">907</a>
+<a href="#908" id="908">908</a>
+<a href="#909" id="909">909</a>
+<a href="#910" id="910">910</a>
+<a href="#911" id="911">911</a>
+<a href="#912" id="912">912</a>
+<a href="#913" id="913">913</a>
+<a href="#914" id="914">914</a>
+<a href="#915" id="915">915</a>
+<a href="#916" id="916">916</a>
+<a href="#917" id="917">917</a>
+<a href="#918" id="918">918</a>
+<a href="#919" id="919">919</a>
+<a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
+<a href="#999" id="999">999</a>
+<a href="#1000" id="1000">1000</a>
+<a href="#1001" id="1001">1001</a>
+<a href="#1002" id="1002">1002</a>
+<a href="#1003" id="1003">1003</a>
+<a href="#1004" id="1004">1004</a>
+<a href="#1005" id="1005">1005</a>
+<a href="#1006" id="1006">1006</a>
+<a href="#1007" id="1007">1007</a>
+<a href="#1008" id="1008">1008</a>
+<a href="#1009" id="1009">1009</a>
+<a href="#1010" id="1010">1010</a>
+<a href="#1011" id="1011">1011</a>
+<a href="#1012" id="1012">1012</a>
+<a href="#1013" id="1013">1013</a>
+<a href="#1014" id="1014">1014</a>
+<a href="#1015" id="1015">1015</a>
+<a href="#1016" id="1016">1016</a>
+<a href="#1017" id="1017">1017</a>
+<a href="#1018" id="1018">1018</a>
+<a href="#1019" id="1019">1019</a>
+<a href="#1020" id="1020">1020</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! A red-black tree with `NonNull` and `Callback`.
+</span><span class="kw">use </span><span class="kw">crate</span>::Callback;
+<span class="kw">use </span><span class="kw">crate</span>::Color;
+<span class="kw">use </span><span class="kw">crate</span>::Node;
+<span class="kw">use </span><span class="kw">crate</span>::Ptr;
 <span class="kw">use </span>std::cmp::Ordering;
-<span class="kw">use </span>std::mem;
 <span class="kw">use </span>std::ptr;
-<span class="kw">use </span>std::ptr::null_mut;
-<span class="kw">use </span>std::ptr::NonNull;
 
-<span class="kw">fn </span>color&lt;T, L: Listen&lt;T&gt;&gt;(node: <span class="kw-2">*const </span>Node&lt;T, L&gt;) -&gt; Color {
-    <span class="kw">unsafe </span>{ node.as_ref().map_or(Color::Black, |n| n.color) }
+<span class="doccomment">/// A red-black tree.
+</span><span class="attr">#[allow(dead_code)]
+</span><span class="kw">pub struct </span>Tree&lt;C: Callback&gt; {
+    root: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
+    black_height: u8,
 }
-
-<span class="kw">fn </span>update_up&lt;T, L: Listen&lt;T&gt;&gt;(<span class="kw-2">mut </span>node: <span class="kw-2">*mut </span>Node&lt;T, L&gt;) {
-    <span class="kw">unsafe </span>{
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = node.as_mut() {
-            x.update();
-            node = x.parent;
-        }
-    }
-}
-
-<span class="doccomment">/// Create a new node.
-</span><span class="kw">pub fn </span>node&lt;T, L: Listen&lt;T&gt;&gt;(value: T, cache: L::Cache) -&gt; NonNull&lt;Node&lt;T, L&gt;&gt; {
-    NonNull::from(Box::leak(Box::new(Node {
-        value,
-        left: null_mut(),
-        right: null_mut(),
-        parent: null_mut(),
-        color: Color::Red,
-        cache,
-    })))
-}
-
-<span class="doccomment">/// The most basic red-black tree.
-</span><span class="kw">pub struct </span>Tree&lt;T, L: Listen&lt;T&gt;&gt; {
-    <span class="kw">pub </span>root: <span class="kw-2">*mut </span>Node&lt;T, L&gt;, <span class="comment">// TODO: Make this private, by providing `fold` method.
-</span>}
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Tree&lt;T, L&gt; {
+<span class="attr">#[allow(dead_code)]
+</span><span class="kw">impl</span>&lt;C: Callback&gt; Tree&lt;C&gt; {
     <span class="doccomment">/// Create a new empty tree.
     </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::default() }
 
-    <span class="doccomment">/// Returns true if the tree is empty.
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.root.is_null() }
+    <span class="doccomment">/// Returns `true` if the tree is empty.
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.root.is_none() }
 
-    <span class="doccomment">/// Returns the cursor pointing to the front of the tree.
-    /// If the tree is empty, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt; {
-        <span class="kw">unsafe </span>{
-            (!<span class="self">self</span>.root.is_null()).then_some(())<span class="question-mark">?</span>;
-            <span class="kw">let </span><span class="kw-2">mut </span>node = <span class="self">self</span>.root;
-            <span class="kw">while </span>!(<span class="kw-2">*</span>node).left.is_null() {
-                node = (<span class="kw-2">*</span>node).left;
-            }
-            <span class="prelude-val">Some</span>(Ptr(NonNull::from(node.as_mut().unwrap())))
-        }
-    }
-
-    <span class="doccomment">/// Returns the cursor pointing to the back of the tree.
-    /// If the tree is empty, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt; {
-        <span class="kw">unsafe </span>{
-            (!<span class="self">self</span>.root.is_null()).then_some(())<span class="question-mark">?</span>;
-            <span class="kw">let </span><span class="kw-2">mut </span>node = <span class="self">self</span>.root;
-            <span class="kw">while </span>!(<span class="kw-2">*</span>node).right.is_null() {
-                node = (<span class="kw-2">*</span>node).right;
-            }
-            <span class="prelude-val">Some</span>(Ptr(NonNull::from(node.as_mut().unwrap())))
-        }
-    }
-
-    <span class="doccomment">/// Insert a node at the partition point according to the given predicate.
-    </span><span class="kw">pub fn </span>partition_point_insert(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        <span class="kw-2">mut </span>node: NonNull&lt;Node&lt;T, L&gt;&gt;,
-        <span class="kw-2">mut </span>pred: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Node&lt;T, L&gt;) -&gt; bool,
-    ) {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span>node = node.as_mut();
-            <span class="comment">// Check the node.
-            </span><span class="macro">debug_assert!</span>(node.left.is_null());
-            <span class="macro">debug_assert!</span>(node.right.is_null());
-            <span class="macro">debug_assert!</span>(node.parent.is_null());
-            <span class="macro">debug_assert!</span>(node.color == Color::Red);
-
-            <span class="comment">// Insert the node as the root.
-            </span><span class="kw">if </span><span class="self">self</span>.root.is_null() {
-                <span class="self">self</span>.root = node;
-                (<span class="kw-2">*</span><span class="self">self</span>.root).color = Color::Black;
-                <span class="kw">return</span>;
-            }
-
-            <span class="comment">// Find the partition point.
-            </span><span class="kw">let </span><span class="kw-2">mut </span>p = <span class="self">self</span>.root;
-            <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="kw">if </span>pred(<span class="kw-2">&amp;*</span>p) { <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>p).right } <span class="kw">else </span>{ <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>p).left };
-            <span class="kw">while </span>!x.is_null() {
-                p = <span class="kw-2">*</span>x;
-                x = <span class="kw">if </span>pred(<span class="kw-2">&amp;**</span>x) { <span class="kw-2">&amp;mut </span>(<span class="kw-2">**</span>x).right } <span class="kw">else </span>{ <span class="kw-2">&amp;mut </span>(<span class="kw-2">**</span>x).left };
-            }
-
-            <span class="comment">// Insert the node.
-            </span>node.parent = p;
-            <span class="kw-2">*</span>x = node;
-
-            <span class="comment">// Fixup the tree.
-            </span><span class="self">self</span>.insert_fixup(node);
-        }
-    }
-
-    <span class="doccomment">/// Binary searches for a node according to the given predicate and removes it.
-    </span><span class="kw">pub fn </span>binary_search&lt;<span class="lifetime">&#39;a</span>, F&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;T, L&gt;&gt;
+    <span class="doccomment">/// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
+    </span><span class="kw">pub fn </span>partition_point&lt;P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>pred: P) -&gt; <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;
     <span class="kw">where
-        </span>F: FnMut(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Node&lt;T, L&gt;) -&gt; Ordering,
+        </span>P: FnMut(Ptr&lt;C&gt;) -&gt; bool,
     {
-        <span class="kw">unsafe </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>z = <span class="self">self</span>.root;
-            <span class="kw">while </span>!z.is_null() {
-                <span class="kw">match </span>f(<span class="kw-2">&amp;*</span>z) {
-                    Ordering::Less =&gt; z = (<span class="kw-2">*</span>z).right,
-                    Ordering::Greater =&gt; z = (<span class="kw-2">*</span>z).left,
-                    Ordering::Equal =&gt; <span class="kw">break</span>,
-                }
-            }
-            z.as_mut().map(|n| Ptr(NonNull::from(n)))
+        <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="self">self</span>.root<span class="question-mark">?</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>result = pred(p);
+        <span class="kw">let </span><span class="kw-2">mut </span>option_x = <span class="kw">if </span>result { p.as_ref().right } <span class="kw">else </span>{ p.as_ref().left };
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = option_x {
+            p = x;
+            result = pred(p);
+            option_x = <span class="kw">if </span>result { p.as_ref().right } <span class="kw">else </span>{ p.as_ref().left };
         }
+        <span class="prelude-val">Some</span>((p, result))
     }
 
-    <span class="doccomment">/// Binary searches for a node according to the given predicate and removes it.
-    </span><span class="kw">pub fn </span>binary_search_remove(
-        <span class="kw-2">&amp;mut </span><span class="self">self</span>,
-        f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>Node&lt;T, L&gt;) -&gt; Ordering,
-    ) -&gt; <span class="kw-2">*mut </span>Node&lt;T, L&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="comment">// Find the node `z` to remove.
-            </span><span class="kw">let </span><span class="prelude-val">Some</span>(Ptr(<span class="kw-2">mut </span>z)) = <span class="self">self</span>.binary_search(f) <span class="kw">else </span>{
-                <span class="kw">return </span>null_mut();
+    <span class="doccomment">/// Binary search the tree.
+    </span><span class="kw">pub fn </span>binary_search&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;
+    <span class="kw">where
+        </span>F: FnMut(Ptr&lt;C&gt;) -&gt; Ordering,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="self">self</span>.root;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(p0) = p {
+            p = <span class="kw">match </span>f(p0) {
+                Ordering::Less =&gt; p0.right,
+                Ordering::Greater =&gt; p0.left,
+                Ordering::Equal =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(p0),
             };
-            <span class="kw">let </span>z = z.as_mut();
+        }
+        <span class="prelude-val">None
+    </span>}
 
-            <span class="comment">// Swap-and-remove the node `z`.
-            </span><span class="kw">let </span>removed_color; <span class="comment">// The color of the removed node.
-            </span><span class="kw">let </span>x; <span class="comment">// The superblack node.
-            </span><span class="kw">let </span>p; <span class="comment">// The parent of the superblack node.
-            </span><span class="kw">if </span>z.left.is_null() {
-                x = z.right;
-                p = z.parent;
-                removed_color = z.color;
-                <span class="self">self</span>.transprant(z, x);
-            } <span class="kw">else if </span>z.right.is_null() {
-                x = z.left;
-                p = z.parent;
-                removed_color = z.color;
-                <span class="self">self</span>.transprant(z, x);
-            } <span class="kw">else </span>{
-                <span class="comment">// Find the replacement node `y`.
-                </span><span class="kw">let </span>y = {
-                    <span class="kw">let </span><span class="kw-2">mut </span>y = <span class="kw-2">&amp;mut *</span>z.right;
-                    <span class="kw">while </span>!y.left.is_null() {
-                        y = <span class="kw-2">&amp;mut *</span>y.left;
-                    }
-                    y
+    <span class="doccomment">/// Find the leftmost node.
+    </span><span class="kw">pub fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">self</span>.root<span class="question-mark">?</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(y) = x.left {
+            x = y;
+        }
+        <span class="prelude-val">Some</span>(x)
+    }
+
+    <span class="doccomment">/// Find the rightmost node.
+    </span><span class="kw">pub fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
+        <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">self</span>.root<span class="question-mark">?</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(y) = x.right {
+            x = y;
+        }
+        <span class="prelude-val">Some</span>(x)
+    }
+
+    <span class="doccomment">/// Insert a new node at the position specified by `position`.
+    ///
+    /// If `position` is `None`, the new node is inserted as the root.
+    /// Otherwise, the new node is inserted as the child of `position.0`.
+    ///
+    /// If `position.1` is:
+    /// - `true`: the new node is inserted as the right child.
+    /// - `false`: the new node is inserted as the left child.
+    ///
+    /// For example:
+    /// - `(tree.front(), false)`: insert the new node as the leftmost child.
+    /// - `(tree.back(), true)`: insert the new node as the rightmost child.
+    ///
+    /// # Precondition
+    /// `new` must be isolated and red.
+    </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>new: Ptr&lt;C&gt;, position: <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;) {
+        <span class="macro">debug_assert!</span>(new.is_isolated_and_red());
+
+        <span class="comment">// Handle the empty tree case.
+        </span><span class="kw">let </span><span class="prelude-val">Some</span>((<span class="kw-2">mut </span>p, result)) = position <span class="kw">else </span>{
+            <span class="macro">debug_assert!</span>(<span class="self">self</span>.root.is_none());
+            <span class="self">self</span>.black_height = <span class="number">1</span>;
+            new.color = Color::Black;
+            <span class="self">self</span>.root = <span class="prelude-val">Some</span>(new);
+            <span class="kw">return</span>;
+        };
+
+        <span class="comment">// Insert the new node.
+        </span><span class="kw-2">*</span>(<span class="kw">if </span>result { <span class="kw-2">&amp;mut </span>p.as_mut().right } <span class="kw">else </span>{ <span class="kw-2">&amp;mut </span>p.as_mut().left }) = <span class="prelude-val">Some</span>(new);
+        new.as_mut().parent = <span class="prelude-val">Some</span>(p);
+
+        <span class="comment">// Fixup the red-red violation.
+        </span><span class="self">self</span>.fix_red(p, new);
+    }
+
+    <span class="doccomment">/// Remove the given node from the tree.
+    ///
+    /// # Precondition
+    /// `z` must be in the tree.
+    </span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>z: Ptr&lt;C&gt;) {
+        <span class="kw">struct </span>Removed&lt;C: Callback&gt; {
+            color: Color,
+            upper: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
+            lower: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
+        }
+        <span class="kw">let </span>removed;
+
+        <span class="comment">// Case 1: the left child is empty.
+        </span><span class="kw">if </span>z.left.is_none() {
+            removed = Removed {
+                color: z.color,
+                upper: z.parent,
+                lower: z.right,
+            };
+            <span class="self">self</span>.transplant(z, removed.lower);
+        }
+        <span class="comment">// Case 2: the right child is empty.
+        </span><span class="kw">else if </span>z.right.is_none() {
+            removed = Removed {
+                color: z.color,
+                upper: z.parent,
+                lower: z.left,
+            };
+            <span class="self">self</span>.transplant(z, removed.lower);
+        }
+        <span class="comment">// Case 3: both children are non-empty.
+        </span><span class="kw">else </span>{
+            <span class="comment">// Find the successor.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>succ = z.right.unwrap();
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(left) = succ.left {
+                succ = left;
+            }
+
+            <span class="comment">// Case 3.1: the successor is the right child of `z`.
+            </span><span class="kw">if </span>ptr::eq(as_ptr(succ.parent), <span class="kw-2">&amp;*</span>z) {
+                removed = Removed {
+                    color: succ.color,
+                    upper: <span class="prelude-val">Some</span>(succ),
+                    lower: succ.right,
                 };
-                removed_color = y.color;
-                x = y.right;
-                <span class="kw">if </span>ptr::eq(y.parent, z) {
-                    p = y;
-                } <span class="kw">else </span>{
-                    p = y.parent;
-                    <span class="self">self</span>.transprant(y, x);
-                    <span class="kw">let </span>subtree = <span class="kw-2">&amp;mut *</span>z.right;
-                    <span class="comment">// Connect `y` and `subtree`.
-                    </span>subtree.parent = y;
-                    y.right = subtree;
-                }
-                <span class="self">self</span>.transprant(z, y);
-                <span class="comment">// Connect `z` and `y`.
-                </span>y.left = z.left;
-                (<span class="kw-2">*</span>y.left).parent = y;
-                y.color = z.color;
             }
-            <span class="kw">if </span>removed_color == Color::Black {
-                <span class="self">self</span>.remove_fixup(p, x);
-            } <span class="kw">else </span>{
-                update_up(p);
+            <span class="comment">// Case 3.2: the successor is not the right child of `z`.
+            </span><span class="kw">else </span>{
+                removed = Removed {
+                    color: succ.color,
+                    upper: succ.parent,
+                    lower: succ.right,
+                };
+                <span class="self">self</span>.transplant(succ, removed.lower);
+                succ.right = z.right;
+                succ.right.unwrap().parent = <span class="prelude-val">Some</span>(succ);
             }
-            z
-        }
-    }
 
-    <span class="doccomment">/// Split the tree into two trees according to the given predicate.
-    </span><span class="kw">pub fn </span>partition_point_split(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _pred: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>T) -&gt; bool) -&gt; <span class="self">Self </span>{ <span class="macro">todo!</span>() }
-
-    <span class="doccomment">/// Merge two trees together.
-    </span><span class="kw">pub fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) { <span class="macro">todo!</span>() }
-
-    <span class="kw">unsafe fn </span>left_rotate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node: <span class="kw-2">*mut </span>Node&lt;T, L&gt;) {
-        <span class="comment">// Get the nodes.
-        </span><span class="kw">let </span>p = (<span class="kw-2">*</span>node).parent;
-        <span class="kw">let </span>l = node;
-        <span class="kw">let </span>r = (<span class="kw-2">*</span>l).right;
-        <span class="kw">let </span>c = (<span class="kw-2">*</span>r).left;
-
-        <span class="comment">// Connect l and c.
-        </span>(<span class="kw-2">*</span>l).right = c;
-        <span class="kw">if </span>!c.is_null() {
-            (<span class="kw-2">*</span>c).parent = l;
+            <span class="comment">// Substitute `z` with `succ`.
+            </span><span class="self">self</span>.transplant(z, <span class="prelude-val">Some</span>(succ));
+            succ.left = z.left;
+            succ.left.unwrap().parent = <span class="prelude-val">Some</span>(succ);
+            succ.color = z.color;
         }
 
-        <span class="comment">// Connect p and r.
-        </span><span class="kw">if </span>p.is_null() {
-            <span class="self">self</span>.root = r;
-        } <span class="kw">else if </span>l == (<span class="kw-2">*</span>p).left {
-            (<span class="kw-2">*</span>p).left = r;
+        <span class="comment">// Cut the removed node from the tree.
+        </span>z.isolate_and_red();
+
+        <span class="comment">// Fixup the black-height violation.
+        </span><span class="kw">if </span>removed.color == Color::Black {
+            <span class="self">self</span>.fix_black(removed.upper, removed.lower);
         } <span class="kw">else </span>{
-            (<span class="kw-2">*</span>p).right = r;
-        }
-        (<span class="kw-2">*</span>r).parent = p;
-
-        <span class="comment">// Connect l and r.
-        </span>(<span class="kw-2">*</span>r).left = l;
-        (<span class="kw-2">*</span>l).parent = r;
-
-        <span class="comment">// Update
-        </span>(<span class="kw-2">*</span>l).update();
-        (<span class="kw-2">*</span>r).update();
-    }
-
-    <span class="kw">unsafe fn </span>right_rotate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node: <span class="kw-2">*mut </span>Node&lt;T, L&gt;) {
-        <span class="comment">// Get the nodes.
-        </span><span class="kw">let </span>p = (<span class="kw-2">*</span>node).parent;
-        <span class="kw">let </span>l = (<span class="kw-2">*</span>node).left;
-        <span class="kw">let </span>r = node;
-        <span class="kw">let </span>c = (<span class="kw-2">*</span>l).right;
-
-        <span class="comment">// Connect r and c.
-        </span>(<span class="kw-2">*</span>r).left = c;
-        <span class="kw">if </span>!c.is_null() {
-            (<span class="kw-2">*</span>c).parent = r;
-        }
-
-        <span class="comment">// Connect p and l.
-        </span><span class="kw">if </span>p.is_null() {
-            <span class="self">self</span>.root = l;
-        } <span class="kw">else if </span>r == (<span class="kw-2">*</span>p).left {
-            (<span class="kw-2">*</span>p).left = l;
-        } <span class="kw">else </span>{
-            (<span class="kw-2">*</span>p).right = l;
-        }
-        (<span class="kw-2">*</span>l).parent = p;
-
-        <span class="comment">// Connect l and r.
-        </span>(<span class="kw-2">*</span>l).right = r;
-        (<span class="kw-2">*</span>r).parent = l;
-
-        <span class="comment">// Update
-        </span>(<span class="kw-2">*</span>r).update();
-        (<span class="kw-2">*</span>l).update();
-    }
-
-    <span class="kw">unsafe fn </span>transprant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, position: <span class="kw-2">&amp;mut </span>Node&lt;T, L&gt;, node: <span class="kw-2">*mut </span>Node&lt;T, L&gt;) {
-        <span class="kw">if </span>position.parent.is_null() {
-            <span class="self">self</span>.root = node;
-        } <span class="kw">else if </span>ptr::eq(position, (<span class="kw-2">*</span>position.parent).left) {
-            (<span class="kw-2">*</span>position.parent).left = node;
-        } <span class="kw">else </span>{
-            (<span class="kw-2">*</span>position.parent).right = node;
-        }
-        <span class="kw">if </span>!node.is_null() {
-            (<span class="kw-2">*</span>node).parent = position.parent;
-        }
-    }
-
-    <span class="kw">unsafe fn </span>insert_fixup(<span class="kw-2">&amp;mut </span><span class="self">self</span>, node: <span class="kw-2">&amp;mut </span>Node&lt;T, L&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>x = node;
-        <span class="kw">while </span>color(x.parent) == Color::Red {
-            <span class="macro">debug_assert!</span>(x.color == Color::Red);
-            <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>x.parent);
-            <span class="kw">let </span>pp = <span class="kw-2">&amp;mut </span>(<span class="kw-2">*</span>p.parent);
-            <span class="comment">// Case 1: p is the left child of pp.
-            </span><span class="kw">if </span>ptr::eq(p, pp.left) {
-                <span class="comment">// Case 1.1: p&#39;s sibling is red: split the 5-node.
-                </span><span class="kw">if </span>color(pp.right) == Color::Red {
-                    p.color = Color::Black;
-                    (<span class="kw-2">*</span>pp.right).color = Color::Black;
-                    pp.color = Color::Red;
+            <span class="comment">// Update the remaining node.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = removed.upper {
+                x.update();
+                <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
                     p.update();
-                    pp.update();
-                    x = pp;
+                    x = p;
                 }
-                <span class="comment">// Case 1.2: p&#39;s sibling is black: balance the leaning 4-node.
+            }
+        }
+    }
+
+    <span class="doccomment">/// Move all nodes from `other` to `self`.
+    </span><span class="kw">pub fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
+        <span class="comment">// Handle the empty tree case.
+        </span><span class="kw">if </span>other.is_empty() {
+            <span class="kw">return</span>;
+        }
+        <span class="kw">if </span><span class="self">self</span>.is_empty() {
+            <span class="kw-2">*</span><span class="self">self </span>= std::mem::take(other);
+            <span class="kw">return</span>;
+        }
+
+        <span class="kw">let </span>c = other.front().unwrap();
+        other.remove(c);
+        <span class="comment">// Handle the case where `c` was the only node in `other`.
+        </span><span class="kw">if </span>other.is_empty() {
+            <span class="self">self</span>.insert(c, <span class="prelude-val">Some</span>((<span class="self">self</span>.back().unwrap(), <span class="bool-val">true</span>)));
+            <span class="kw">return</span>;
+        }
+
+        <span class="comment">// Now `l` and `r` are non-empty.
+        </span><span class="kw">let </span>l = std::mem::take(<span class="self">self</span>);
+        <span class="kw">let </span>r = std::mem::take(other);
+        <span class="kw-2">*</span><span class="self">self </span>= join(l, c, r);
+    }
+
+    <span class="doccomment">/// Fixup the red-red violation between `x` and `p` and non-updated property of `x`.
+    ///
+    /// # Precondition
+    ///
+    /// - `x` must be red.
+    /// - `x` must be a child of `p`.
+    /// - The red-black property holds except for the possible red-red violation between `x` and `p`.
+    /// - The updated property holds except for the closed path `[root, x]`.
+    ///
+    /// # Postcondition
+    /// - The red-black property holds.
+    /// - The updated property holds.
+    </span><span class="kw">fn </span>fix_red(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>p: Ptr&lt;C&gt;, <span class="kw-2">mut </span>x: Ptr&lt;C&gt;) {
+        <span class="kw">while </span>p.color == Color::Red {
+            <span class="kw">let </span><span class="kw-2">mut </span>pp = p.parent.unwrap();
+            <span class="comment">// Case 1: `p` is a left child.
+            </span><span class="kw">if </span>ptr::eq(as_ptr(pp.left), <span class="kw-2">&amp;*</span>p) {
+                <span class="kw">let </span>s = pp.as_ref().right;
+                <span class="comment">// Case 1.1: Split the 5-node.
+                </span><span class="kw">if </span>color(s) == Color::Red {
+                    pp.color = Color::Red;
+                    p.color = Color::Black;
+                    pp.right.unwrap().color = Color::Black;
+                    x.update();
+                    p.update();
+                    x = pp;
+                    p = <span class="kw">match </span>x.parent {
+                        <span class="prelude-val">None </span>=&gt; {
+                            x.color = Color::Black;
+                            <span class="self">self</span>.black_height += <span class="number">1</span>;
+                            <span class="kw">break</span>;
+                        }
+                        <span class="prelude-val">Some</span>(p) =&gt; p,
+                    };
+                }
+                <span class="comment">// Case 1.2: Balance the 4-node
                 </span><span class="kw">else </span>{
-                    <span class="kw">if </span>ptr::eq(x, p.right) {
-                        mem::swap(<span class="kw-2">&amp;mut </span>x, <span class="kw-2">&amp;mut </span>p);
-                        <span class="self">self</span>.left_rotate(x);
+                    <span class="comment">// Handle the splayed 4-node case.
+                    </span><span class="kw">if </span>ptr::eq(as_ptr(p.right), <span class="kw-2">&amp;*</span>x) {
+                        <span class="self">self</span>.left_rotate(p);
+                        p = x;
+                        x = p.left.unwrap();
                     }
+                    p.color = Color::Black;
+                    pp.color = Color::Red;
                     <span class="self">self</span>.right_rotate(pp);
-                    p.color = Color::Black;
-                    pp.color = Color::Red;
-                }
-            }
-            <span class="comment">// Case 2: p is the right child of pp.
-            </span><span class="kw">else </span>{
-                <span class="comment">// Case 2.1: p&#39;s sibling is red: split the 5-node.
-                </span><span class="kw">if </span>color(pp.left) == Color::Red {
-                    p.color = Color::Black;
-                    (<span class="kw-2">*</span>pp.left).color = Color::Black;
-                    pp.color = Color::Red;
-                    p.update();
                     pp.update();
-                    x = pp;
                 }
-                <span class="comment">// Case 2.2: p&#39;s sibling is black: balance the leaning 4-node.
+            }
+            <span class="comment">// Case 2: `p` is a right child.
+            </span><span class="kw">else </span>{
+                <span class="kw">let </span>s = pp.as_ref().left;
+                <span class="comment">// Case 2.1: Split the 5-node.
+                </span><span class="kw">if </span>color(s) == Color::Red {
+                    pp.color = Color::Red;
+                    p.color = Color::Black;
+                    pp.left.unwrap().color = Color::Black;
+                    x.update();
+                    p.update();
+                    x = pp;
+                    p = <span class="kw">match </span>x.parent {
+                        <span class="prelude-val">None </span>=&gt; {
+                            x.color = Color::Black;
+                            <span class="self">self</span>.black_height += <span class="number">1</span>;
+                            <span class="kw">break</span>;
+                        }
+                        <span class="prelude-val">Some</span>(p) =&gt; p,
+                    };
+                }
+                <span class="comment">// Case 2.2: Balance the 4-node
                 </span><span class="kw">else </span>{
-                    <span class="kw">if </span>ptr::eq(x, p.left) {
-                        mem::swap(<span class="kw-2">&amp;mut </span>x, <span class="kw-2">&amp;mut </span>p);
-                        <span class="self">self</span>.right_rotate(x);
+                    <span class="comment">// Handle the splayed 4-node case.
+                    </span><span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+                        <span class="self">self</span>.right_rotate(p);
+                        p = x;
+                        x = p.right.unwrap();
                     }
-                    <span class="self">self</span>.left_rotate(pp);
                     p.color = Color::Black;
                     pp.color = Color::Red;
+                    <span class="self">self</span>.left_rotate(pp);
+                    pp.update();
                 }
             }
         }
-
-        <span class="comment">// Update the remaining nodes.
-        </span>update_up(x.parent);
-
-        <span class="comment">// Set the root to black.
-        </span>(<span class="kw-2">*</span><span class="self">self</span>.root).color = Color::Black;
+        x.update();
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
+            p.update();
+            x = p;
+        }
     }
 
-    <span class="kw">unsafe fn </span>remove_fixup(<span class="kw-2">&amp;mut </span><span class="self">self</span>, parent: <span class="kw-2">*mut </span>Node&lt;T, L&gt;, node: <span class="kw-2">*mut </span>Node&lt;T, L&gt;) {
-        <span class="kw">let </span><span class="kw-2">mut </span>x = node;
-        <span class="kw">let </span><span class="kw-2">mut </span>p = parent;
-        <span class="kw">while </span>!p.is_null() &amp;&amp; color(x) == Color::Black {
-            <span class="comment">// Case 1: `x` is the left child of `p`.
-            </span><span class="kw">if </span>ptr::eq(x, (<span class="kw-2">*</span>p).left) {
-                <span class="kw">let </span><span class="kw-2">mut </span>s = (<span class="kw-2">*</span>p).right;
-                <span class="comment">// Lean the 3-node.
-                </span><span class="kw">if </span>color(s) == Color::Red {
-                    (<span class="kw-2">*</span>s).color = Color::Black;
-                    (<span class="kw-2">*</span>p).color = Color::Red;
-                    <span class="self">self</span>.left_rotate(p);
-                    s = (<span class="kw-2">*</span>p).right;
-                }
-                <span class="comment">// Case 1.1: `s` is a 2-node: join with it.
-                </span><span class="kw">if </span>color((<span class="kw-2">*</span>s).left) == Color::Black &amp;&amp; color((<span class="kw-2">*</span>s).right) == Color::Black {
-                    (<span class="kw-2">*</span>s).color = Color::Red;
-                    x = p;
-                    (<span class="kw-2">*</span>x).update();
-                }
-                <span class="comment">// Case 1.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
-                </span><span class="kw">else </span>{
-                    <span class="comment">// Lean the 3-node.
-                    </span><span class="kw">if </span>color((<span class="kw-2">*</span>s).right) == Color::Black {
-                        (<span class="kw-2">*</span>s).color = Color::Red;
-                        (<span class="kw-2">*</span>(<span class="kw-2">*</span>s).left).color = Color::Black;
-                        <span class="self">self</span>.right_rotate(s);
-                        s = (<span class="kw-2">*</span>p).right;
-                    }
-                    (<span class="kw-2">*</span>s).color = (<span class="kw-2">*</span>p).color;
-                    (<span class="kw-2">*</span>p).color = Color::Black;
-                    (<span class="kw-2">*</span>(<span class="kw-2">*</span>s).right).color = Color::Black;
-                    <span class="self">self</span>.left_rotate(p);
-                    update_up((<span class="kw-2">*</span>p).parent);
-                    x = <span class="self">self</span>.root;
-                }
-            }
-            <span class="comment">// Case 2: `x` is the right child of `p`.
-            </span><span class="kw">else </span>{
-                <span class="kw">let </span><span class="kw-2">mut </span>s = (<span class="kw-2">*</span>p).left;
-                <span class="comment">// Lean the 3-node.
-                </span><span class="kw">if </span>color(s) == Color::Red {
-                    (<span class="kw-2">*</span>s).color = Color::Black;
-                    (<span class="kw-2">*</span>p).color = Color::Red;
-                    <span class="self">self</span>.right_rotate(p);
-                    s = (<span class="kw-2">*</span>p).left;
-                }
-                <span class="comment">// Case 2.1: `s` is a 2-node: join with it.
-                </span><span class="kw">if </span>color((<span class="kw-2">*</span>s).left) == Color::Black &amp;&amp; color((<span class="kw-2">*</span>s).right) == Color::Black {
-                    (<span class="kw-2">*</span>s).color = Color::Red;
-                    x = p;
-                    (<span class="kw-2">*</span>x).update();
-                }
-                <span class="comment">// Case 2.2: `s` is a 3-node or a 4-node: adopt one or two children from it.
-                </span><span class="kw">else </span>{
-                    <span class="comment">// Lean the 3-node.
-                    </span><span class="kw">if </span>color((<span class="kw-2">*</span>s).left) == Color::Black {
-                        (<span class="kw-2">*</span>s).color = Color::Red;
-                        (<span class="kw-2">*</span>(<span class="kw-2">*</span>s).right).color = Color::Black;
-                        <span class="self">self</span>.left_rotate(s);
-                        s = (<span class="kw-2">*</span>p).left;
-                    }
-                    (<span class="kw-2">*</span>s).color = (<span class="kw-2">*</span>p).color;
-                    (<span class="kw-2">*</span>p).color = Color::Black;
-                    (<span class="kw-2">*</span>(<span class="kw-2">*</span>s).left).color = Color::Black;
-                    <span class="self">self</span>.right_rotate(p);
-                    update_up((<span class="kw-2">*</span>p).parent);
-                    x = <span class="self">self</span>.root;
-                }
-            }
-            p = (<span class="kw-2">*</span>x).parent;
-        }
-        <span class="kw">if </span>!x.is_null() {
-            (<span class="kw-2">*</span>x).color = Color::Black;
-        }
-        update_up(x);
-    }
-
-    <span class="attr">#[allow(dead_code)]
-    #[cfg(test)]
-    </span><span class="kw">pub fn </span>eprint(<span class="kw-2">&amp;</span><span class="self">self</span>, fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">*const </span>Node&lt;T, L&gt;, ansi_term::Color)])
-    <span class="kw">where
-        </span>T: std::fmt::Display,
-    {
-        <span class="kw">unsafe fn </span>print_node&lt;T, L: Listen&lt;T&gt;&gt;(
-            node: <span class="kw-2">*const </span>Node&lt;T, L&gt;,
-            fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, <span class="kw-2">*const </span>Node&lt;T, L&gt;, ansi_term::Color)],
-        ) <span class="kw">where
-            </span>T: std::fmt::Display,
-        {
-            <span class="kw">let </span>colour = <span class="kw">match </span>color(node) {
-                Color::Red =&gt; ansi_term::Colour::Red,
-                Color::Black =&gt; ansi_term::Colour::Black,
-            };
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = node.as_ref() {
-                <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, colour.paint(<span class="string">&quot;(&quot;</span>));
-                print_node(node.left, fg);
-                <span class="kw">let </span><span class="kw-2">mut </span>style = ansi_term::Style::new();
-                <span class="kw">for </span>(_name, ptr, colour) <span class="kw">in </span>fg {
-                    <span class="kw">if </span>ptr::eq(node, <span class="kw-2">*</span>ptr) {
-                        style = style.on(<span class="kw-2">*</span>colour);
-                    }
-                }
-                style = style.fg(colour);
-                <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, style.paint(<span class="kw-2">&amp;</span>node.value.to_string()));
-                print_node(node.right, fg);
-                <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, colour.paint(<span class="string">&quot;)&quot;</span>));
-            }
-        }
-        <span class="kw">if </span>!fg.is_empty() {
-            <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
-            <span class="kw">for </span><span class="kw-2">&amp;</span>(name, _ptr, colour) <span class="kw">in </span>fg {
-                <span class="kw">if </span>i &gt; <span class="number">0 </span>{
-                    <span class="macro">eprint!</span>(<span class="string">&quot;, &quot;</span>);
-                }
-                <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, ansi_term::Style::new().on(colour).paint(name));
-                i += <span class="number">1</span>;
-            }
-            <span class="macro">eprint!</span>(<span class="string">&quot;: &quot;</span>);
-        }
-        <span class="kw">unsafe </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = <span class="self">self</span>.root.as_ref() {
-                print_node(root, fg);
-            }
-        }
-        <span class="macro">eprintln!</span>();
-    }
-}
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Default <span class="kw">for </span>Tree&lt;T, L&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self </span>{ root: null_mut() } }
-}
-
-<span class="doccomment">/// A cursor pointing to a node in a tree, or a null pointer.
-</span><span class="kw">pub struct </span>Ptr&lt;T, L: Listen&lt;T&gt;&gt;(NonNull&lt;Node&lt;T, L&gt;&gt;);
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Ptr&lt;T, L&gt; {
-    <span class="doccomment">/// TODO: Remove this method.
-    </span><span class="kw">pub fn </span>inner(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">*mut </span>Node&lt;T, L&gt; { <span class="self">self</span>.<span class="number">0</span>.as_ptr() }
-
-    <span class="doccomment">/// Returns true if the cursor is a null pointer.
-    </span><span class="kw">pub fn </span>is_null(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.inner().is_null() }
-
-    <span class="doccomment">/// Advance the cursor to the next node.
-    /// If there is no next node, the cursor is set to a null pointer.
-    </span><span class="kw">pub fn </span>next(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
-        <span class="kw">unsafe </span>{
-            <span class="macro">debug_assert!</span>(!<span class="self">self</span>.inner().is_null());
-            <span class="kw">let </span><span class="kw-2">mut </span>output;
-            <span class="kw">if </span>(<span class="kw-2">*</span><span class="self">self</span>.inner()).right.is_null() {
-                <span class="kw">let </span><span class="kw-2">mut </span>child = <span class="self">self</span>.inner();
-                output = (<span class="kw-2">*</span>child).parent;
-                <span class="kw">while </span>!output.is_null() &amp;&amp; ptr::eq(child, (<span class="kw-2">*</span>output).right) {
-                    child = output;
-                    output = (<span class="kw-2">*</span>output).parent;
-                }
+    <span class="doccomment">/// Fixup the black-height violation between `x` and `p` and non-updated property of `x`.
+    ///
+    /// # Precondition
+    /// - The black height of `x` is missing one.
+    /// - `x` must be a child of `p`.
+    /// - The red-black property holds except for the black-height violation between `x` and `p`.
+    /// - The updated property holds except for the half-open path `[root, x[`.
+    ///
+    /// # Postcondition
+    /// - The red-black property holds.
+    /// - The updated property holds.
+    </span><span class="kw">fn </span>fix_black(<span class="kw-2">&amp;mut </span><span class="self">self</span>, p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;, <span class="kw-2">mut </span>x: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) {
+        <span class="comment">// Handle the case where `x` is the root (or the tree is empty).
+        </span><span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = p <span class="kw">else </span>{
+            <span class="kw">if </span>color(x) == Color::Red {
+                x.unwrap().color = Color::Black;
             } <span class="kw">else </span>{
-                output = (<span class="kw-2">*</span><span class="self">self</span>.inner()).right;
-                <span class="kw">while </span>!(<span class="kw-2">*</span>output).left.is_null() {
-                    output = (<span class="kw-2">*</span>output).left;
+                <span class="self">self</span>.black_height -= <span class="number">1</span>;
+            }
+            <span class="kw">return</span>;
+        };
+
+        <span class="kw">while </span>color(x) == Color::Black {
+            <span class="comment">// Case 1: `x` is a left child.
+            </span><span class="kw">if </span>ptr::eq(as_ptr(p.left), as_ptr(x)) {
+                <span class="kw">let </span><span class="kw-2">mut </span>s = p.right;
+
+                <span class="comment">// Handle the case where `p` is a right-leaning 3-node.
+                </span><span class="kw">if </span>color(s) == Color::Red {
+                    p.color = Color::Red;
+                    s.unwrap().color = Color::Black;
+                    <span class="self">self</span>.left_rotate(p);
+                    s = p.right;
+                }
+
+                <span class="kw">let </span><span class="kw-2">mut </span>s = s.unwrap();
+
+                <span class="comment">// Case 1.1: `s` is a 2-node.
+                </span><span class="kw">if </span>color(s.left) == Color::Black &amp;&amp; color(s.right) == Color::Black {
+                    s.color = Color::Red;
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
+                        x.update();
+                    }
+                    p.update();
+                    x = <span class="prelude-val">Some</span>(p);
+                    p = <span class="kw">match </span>p.parent {
+                        <span class="prelude-val">None </span>=&gt; {
+                            <span class="kw">match </span>color(x) {
+                                Color::Red =&gt; x.unwrap().color = Color::Black,
+                                Color::Black =&gt; <span class="self">self</span>.black_height -= <span class="number">1</span>,
+                            }
+                            <span class="kw">break</span>;
+                        }
+                        <span class="prelude-val">Some</span>(p) =&gt; p,
+                    };
+                }
+                <span class="comment">// Case 1.2: `s` is a 3 or 4-node.
+                </span><span class="kw">else </span>{
+                    <span class="comment">// Handle the case where `s` is a left-leaning 3-node.
+                    </span><span class="kw">if </span>color(s.right) == Color::Black {
+                        <span class="kw">let </span><span class="kw-2">mut </span>new_s = s.left.unwrap();
+                        s.color = Color::Red;
+                        new_s.color = Color::Black;
+                        <span class="self">self</span>.right_rotate(s);
+                        s.update();
+                        new_s.update();
+                        s = new_s;
+                    }
+                    s.color = p.color;
+                    p.color = Color::Black;
+                    s.right.unwrap().color = Color::Black;
+                    <span class="self">self</span>.left_rotate(p);
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
+                        x.update();
+                    }
+                    x = <span class="prelude-val">Some</span>(p);
+                    <span class="kw">break</span>;
                 }
             }
-            output.as_mut().map(|n| <span class="self">Self</span>(NonNull::from(n)))
+            <span class="comment">// Caes 2: `x` is a right child.
+            </span><span class="kw">else </span>{
+                <span class="kw">let </span><span class="kw-2">mut </span>s = p.left;
+
+                <span class="comment">// Handle the case where `p` is a left-leaning 3-node.
+                </span><span class="kw">if </span>color(s) == Color::Red {
+                    p.color = Color::Red;
+                    s.unwrap().color = Color::Black;
+                    <span class="self">self</span>.right_rotate(p);
+                    s = p.left;
+                }
+
+                <span class="kw">let </span><span class="kw-2">mut </span>s = s.unwrap();
+
+                <span class="comment">// Case 2.1: `s` is a 2-node.
+                </span><span class="kw">if </span>color(s.left) == Color::Black &amp;&amp; color(s.right) == Color::Black {
+                    s.color = Color::Red;
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
+                        x.update();
+                    }
+                    p.update();
+                    x = <span class="prelude-val">Some</span>(p);
+                    p = <span class="kw">match </span>p.parent {
+                        <span class="prelude-val">None </span>=&gt; {
+                            <span class="kw">match </span>color(x) {
+                                Color::Red =&gt; x.unwrap().color = Color::Black,
+                                Color::Black =&gt; <span class="self">self</span>.black_height -= <span class="number">1</span>,
+                            }
+                            <span class="kw">break</span>;
+                        }
+                        <span class="prelude-val">Some</span>(p) =&gt; p,
+                    };
+                }
+                <span class="comment">// Case 2.2: `s` is a 3 or 4-node.
+                </span><span class="kw">else </span>{
+                    <span class="comment">// Handle the case where `s` is a right-leaning 3-node.
+                    </span><span class="kw">if </span>color(s.left) == Color::Black {
+                        <span class="kw">let </span><span class="kw-2">mut </span>new_s = s.right.unwrap();
+                        s.color = Color::Red;
+                        new_s.color = Color::Black;
+                        <span class="self">self</span>.left_rotate(s);
+                        s.update();
+                        new_s.update();
+                        s = new_s;
+                    }
+                    s.color = p.color;
+                    p.color = Color::Black;
+                    s.left.unwrap().color = Color::Black;
+                    <span class="self">self</span>.right_rotate(p);
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
+                        x.update();
+                    }
+                    x = <span class="prelude-val">Some</span>(p);
+                    <span class="kw">break</span>;
+                }
+            }
+        }
+
+        <span class="comment">// Cancel the black-height violation.
+        </span>x.unwrap().color = Color::Black;
+
+        <span class="comment">// Update the remaining node.
+        </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
+            x.update();
+            <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
+                p.update();
+                x = p;
+            }
+        }
+    }
+
+    <span class="doccomment">/// Change the root of the subtree rooted at `x` to `y = x.right.unwrap()`.
+    ///
+    /// # Precondition
+    /// `x.right` must be some.
+    </span><span class="kw">fn </span>left_rotate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>x: Ptr&lt;C&gt;) {
+        <span class="comment">// Get nodes.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>p = x.parent;
+        <span class="kw">let </span><span class="kw-2">mut </span>y = x.right.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>c = y.left;
+
+        <span class="comment">// Connect `x` and `c`.
+        </span>x.right = c;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>c) = c {
+            c.parent = <span class="prelude-val">Some</span>(x);
+        }
+
+        <span class="comment">// Connect `p` and `y`.
+        </span>y.parent = p;
+        <span class="kw-2">*</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>p) = p {
+            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+                <span class="kw-2">&amp;mut </span>p.left
+            } <span class="kw">else </span>{
+                <span class="kw-2">&amp;mut </span>p.right
+            }
+        } <span class="kw">else </span>{
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>.root
+        }) = <span class="prelude-val">Some</span>(y);
+
+        <span class="comment">// Connect `x` and `y`.
+        </span>y.left = <span class="prelude-val">Some</span>(x);
+        x.parent = <span class="prelude-val">Some</span>(y);
+    }
+
+    <span class="doccomment">/// Change the root of the subtree rooted at `x` to `y = x.left.unwrap()`.
+    ///
+    /// # Precondition
+    /// `x.left` must be some.
+    </span><span class="kw">fn </span>right_rotate(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>x: Ptr&lt;C&gt;) {
+        <span class="comment">// Get nodes.
+        </span><span class="kw">let </span><span class="kw-2">mut </span>p = x.parent;
+        <span class="kw">let </span><span class="kw-2">mut </span>y = x.left.unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>c = y.right;
+
+        <span class="comment">// Connect `x` and `c`.
+        </span>x.left = c;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>c) = c {
+            c.parent = <span class="prelude-val">Some</span>(x);
+        }
+
+        <span class="comment">// Connect `p` and `y`.
+        </span>y.parent = p;
+        <span class="kw-2">*</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>p) = p {
+            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+                <span class="kw-2">&amp;mut </span>p.left
+            } <span class="kw">else </span>{
+                <span class="kw-2">&amp;mut </span>p.right
+            }
+        } <span class="kw">else </span>{
+            <span class="kw-2">&amp;mut </span><span class="self">self</span>.root
+        }) = <span class="prelude-val">Some</span>(y);
+
+        <span class="comment">// Connect `x` and `y`.
+        </span>y.right = <span class="prelude-val">Some</span>(x);
+        x.parent = <span class="prelude-val">Some</span>(y);
+    }
+
+    <span class="doccomment">/// Replace the subtree rooted at `u` with the subtree rooted at `v`.
+    </span><span class="kw">pub fn </span>transplant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, u: Ptr&lt;C&gt;, v: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) {
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = u.parent {
+            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>u) {
+                p.left = v;
+            } <span class="kw">else </span>{
+                p.right = v;
+            }
+        } <span class="kw">else </span>{
+            <span class="self">self</span>.root = v;
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>v) = v {
+            v.parent = u.parent;
         }
     }
 }
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Clone <span class="kw">for </span>Ptr&lt;T, L&gt; {
-    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="kw-2">*</span><span class="self">self </span>}
+<span class="kw">impl</span>&lt;C: Callback&gt; Default <span class="kw">for </span>Tree&lt;C&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        Tree {
+            root: <span class="prelude-val">None</span>,
+            black_height: <span class="number">0</span>,
+        }
+    }
 }
-<span class="kw">impl</span>&lt;T, L: Listen&lt;T&gt;&gt; Copy <span class="kw">for </span>Ptr&lt;T, L&gt; {}
+
+<span class="doccomment">/// Get the color of a node.
+</span><span class="kw">fn </span>color&lt;C: Callback&gt;(p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) -&gt; Color { p.map_or(Color::Black, |p| p.as_ref().color) }
+
+<span class="doccomment">/// Get the pointer to a node.
+</span><span class="kw">fn </span>as_ptr&lt;C: Callback&gt;(p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) -&gt; <span class="kw-2">*mut </span>Node&lt;C&gt; {
+    p.map_or(ptr::null_mut(), |p| p.<span class="number">0</span>.as_ptr())
+}
+
+<span class="doccomment">/// Join two trees with a node `c`.
+///
+/// # Precondition
+/// - `l` and `r` must be non-empty.
+/// - `c` must be isolated and red.
+</span><span class="kw">pub fn </span>join&lt;C: Callback&gt;(<span class="kw-2">mut </span>l: Tree&lt;C&gt;, <span class="kw-2">mut </span>c: Ptr&lt;C&gt;, <span class="kw-2">mut </span>r: Tree&lt;C&gt;) -&gt; Tree&lt;C&gt; {
+    <span class="macro">debug_assert!</span>(c.is_isolated_and_red());
+    <span class="macro">debug_assert!</span>(l.root.is_some());
+    <span class="macro">debug_assert!</span>(r.root.is_some());
+
+    <span class="comment">// Merge three trees.
+    </span><span class="kw">match </span>l.black_height.cmp(<span class="kw-2">&amp;</span>r.black_height) {
+        <span class="comment">// When `l` and `r` are of the same height.
+        </span>Ordering::Equal =&gt; {
+            c.left = <span class="prelude-val">Some</span>(l.root.unwrap());
+            c.right = <span class="prelude-val">Some</span>(r.root.unwrap());
+            c.color = Color::Black;
+            l.root.unwrap().parent = <span class="prelude-val">Some</span>(c);
+            r.root.unwrap().parent = <span class="prelude-val">Some</span>(c);
+            c.update();
+            Tree {
+                root: <span class="prelude-val">Some</span>(c),
+                black_height: l.black_height + <span class="number">1</span>,
+            }
+        }
+        <span class="comment">// When `l` is taller than `r`.
+        </span>Ordering::Greater =&gt; {
+            <span class="comment">// Find the merge point.
+            </span><span class="kw">let </span>(<span class="kw-2">mut </span>p, <span class="kw-2">mut </span>x) = {
+                <span class="kw">let </span><span class="kw-2">mut </span>diff = l.black_height - r.black_height - <span class="number">1</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>p = l.root.unwrap();
+                <span class="kw">let </span><span class="kw-2">mut </span>x = p.right.unwrap();
+                <span class="kw">loop </span>{
+                    <span class="kw">if </span>x.color == Color::Black {
+                        <span class="kw">if </span>diff == <span class="number">0 </span>{
+                            <span class="kw">break</span>;
+                        }
+                        diff -= <span class="number">1</span>;
+                    }
+                    p = x;
+                    x = p.right.unwrap();
+                }
+                (p, x)
+            };
+
+            <span class="comment">// Merge `x`, `c` and `r`, and set `p` as the parent.
+            </span>p.right = <span class="prelude-val">Some</span>(c);
+            c.parent = <span class="prelude-val">Some</span>(p);
+            c.left = <span class="prelude-val">Some</span>(x);
+            x.parent = <span class="prelude-val">Some</span>(c);
+            c.right = <span class="prelude-val">Some</span>(r.root.unwrap());
+            r.root.unwrap().parent = <span class="prelude-val">Some</span>(c);
+            c.update();
+
+            <span class="comment">// Fixup the red-red violation.
+            </span>l.fix_red(p, c);
+
+            l
+        }
+        Ordering::Less =&gt; {
+            <span class="comment">// Find the merge point.
+            </span><span class="kw">let </span>(<span class="kw-2">mut </span>p, <span class="kw-2">mut </span>x) = {
+                <span class="kw">let </span><span class="kw-2">mut </span>diff = r.black_height - l.black_height - <span class="number">1</span>;
+                <span class="kw">let </span><span class="kw-2">mut </span>p = r.root.unwrap();
+                <span class="kw">let </span><span class="kw-2">mut </span>x = p.left.unwrap();
+                <span class="kw">loop </span>{
+                    <span class="kw">if </span>x.color == Color::Black {
+                        <span class="kw">if </span>diff == <span class="number">0 </span>{
+                            <span class="kw">break</span>;
+                        }
+                        diff -= <span class="number">1</span>;
+                    }
+                    p = x;
+                    x = p.left.unwrap();
+                }
+                (p, x)
+            };
+
+            <span class="comment">// Merge `l`, `c` and `x`, and set `p` as the parent.
+            </span>p.left = <span class="prelude-val">Some</span>(c);
+            c.parent = <span class="prelude-val">Some</span>(p);
+            c.right = <span class="prelude-val">Some</span>(x);
+            x.parent = <span class="prelude-val">Some</span>(c);
+            c.left = <span class="prelude-val">Some</span>(l.root.unwrap());
+            l.root.unwrap().parent = <span class="prelude-val">Some</span>(c);
+            c.update();
+
+            <span class="comment">// Fixup the red-red violation.
+            </span>r.fix_red(p, c);
+
+            r
+        }
+    }
+}
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
+</span><span class="kw">pub mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>rand::rngs::StdRng;
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
     <span class="kw">use </span>rstest::rstest;
+    <span class="kw">use </span>std::borrow::Cow;
 
-    <span class="kw">struct </span>Test;
-    <span class="kw">impl</span>&lt;T&gt; Listen&lt;T&gt; <span class="kw">for </span>Test {
-        <span class="kw">type </span>Cache = usize;
+    <span class="kw">const </span>MODULO: u64 = <span class="number">998244353</span>;
 
-        <span class="kw">fn </span>push(_node: <span class="kw-2">&amp;mut </span>Node&lt;T, <span class="self">Self</span>&gt;) {}
+    <span class="attr">#[derive(Debug)]
+    </span><span class="kw">struct </span>RollingHash {
+        hash: u64,
+        base: u64,
+    }
+    <span class="kw">impl </span>RollingHash {
+        <span class="kw">fn </span>new(value: u64) -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                hash: value,
+                base: <span class="number">100</span>,
+            }
+        }
 
-        <span class="kw">fn </span>update(node: <span class="kw-2">&amp;mut </span>Node&lt;T, <span class="self">Self</span>&gt;) {
-            <span class="kw">unsafe </span>{
-                node.cache = <span class="number">1
-                    </span>+ node.left.as_ref().map_or(<span class="number">0</span>, |n| n.cache)
-                    + node.right.as_ref().map_or(<span class="number">0</span>, |n| n.cache);
+        <span class="kw">fn </span>empty() -&gt; <span class="self">Self </span>{ <span class="self">Self </span>{ hash: <span class="number">0</span>, base: <span class="number">1 </span>} }
+
+        <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
+            <span class="self">self</span>.hash = (<span class="self">self</span>.hash * other.base + other.hash) % MODULO;
+            <span class="self">self</span>.base = <span class="self">self</span>.base * other.base % MODULO;
+        }
+    }
+
+    <span class="attr">#[derive(Debug)]
+    </span><span class="kw">struct </span>Data {
+        len: usize,
+        value: u64,
+        hash: RollingHash,
+    }
+    <span class="kw">impl </span>Data {
+        <span class="kw">fn </span>new(value: u64) -&gt; <span class="self">Self </span>{
+            <span class="self">Self </span>{
+                len: <span class="number">1</span>,
+                value,
+                hash: RollingHash::new(value),
             }
         }
     }
 
-    <span class="kw">fn </span>len(tree: <span class="kw-2">&amp;</span>Tree&lt;i32, Test&gt;) -&gt; usize { <span class="kw">unsafe </span>{ tree.root.as_ref().map_or(<span class="number">0</span>, |n| n.cache) } }
+    <span class="kw">struct </span>TestCallback;
+    <span class="kw">impl </span>Callback <span class="kw">for </span>TestCallback {
+        <span class="kw">type </span>Data = Data;
 
-    <span class="kw">fn </span>to_vec(tree: <span class="kw-2">&amp;</span>Tree&lt;i32, Test&gt;) -&gt; Vec&lt;i32&gt; {
-        <span class="kw">unsafe fn </span>node_to_vec(node: <span class="kw-2">*const </span>Node&lt;i32, Test&gt;, vec: <span class="kw-2">&amp;mut </span>Vec&lt;i32&gt;) {
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(node) = node.as_ref() {
-                node_to_vec(node.left, vec);
-                vec.push(node.value);
-                node_to_vec(node.right, vec);
+        <span class="kw">fn </span>push(_node: Ptr&lt;<span class="self">Self</span>&gt;) {}
+
+        <span class="kw">fn </span>update(<span class="kw-2">mut </span>node: Ptr&lt;<span class="self">Self</span>&gt;) {
+            <span class="kw">let </span>value = node.data.value;
+
+            <span class="comment">// Handle the left child.
+            </span>node.data.len = <span class="number">0</span>;
+            node.data.hash = RollingHash::empty();
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = node.left {
+                node.data.len += left.data.len;
+                node.data.hash.append(<span class="kw-2">&amp;</span>left.data.hash);
+            }
+
+            <span class="comment">// Handle the current node.
+            </span>node.data.len += <span class="number">1</span>;
+            node.data.hash.append(<span class="kw-2">&amp;</span>RollingHash::new(value));
+
+            <span class="comment">// Handle the right child.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(right) = node.right {
+                node.data.len += right.data.len;
+                node.data.hash.append(<span class="kw-2">&amp;</span>right.data.hash);
+            }
+        }
+    }
+
+    <span class="kw">fn </span>validate(tree: <span class="kw-2">&amp;</span>Tree&lt;TestCallback&gt;) {
+        <span class="kw">fn </span>validate_ptr(ptr: Ptr&lt;TestCallback&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8, String&gt; {
+            <span class="kw">let </span>node = ptr.as_ref();
+            <span class="kw">let </span><span class="kw-2">mut </span>left_black_height = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>length = <span class="number">0</span>;
+            <span class="kw">let </span><span class="kw-2">mut </span>hash = RollingHash::empty();
+
+            <span class="comment">// Handle the left child.
+            </span><span class="kw">if let </span><span class="prelude-val">Some</span>(left) = node.left {
+                length += left.data.len;
+                hash.append(<span class="kw-2">&amp;</span>left.data.hash);
+                left_black_height = validate_ptr(left)<span class="question-mark">?</span>;
+                <span class="comment">// Check the red-red property.
+                </span>(ptr.color == Color::Black || left.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        <span class="macro">format!</span>(
+                            <span class="string">&quot;Red-red violation: {:?} and {:?}&quot;</span>,
+                            ptr.data.value, left.data.value
+                        )
+                    })<span class="question-mark">?</span>;
+            }
+
+            <span class="comment">// Handle the current node.
+            </span>length += <span class="number">1</span>;
+            hash.append(<span class="kw-2">&amp;</span>RollingHash::new(node.data.value));
+
+            <span class="comment">// Handle the right child.
+            </span><span class="kw">let </span><span class="kw-2">mut </span>right_black_height = <span class="number">0</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = node.right {
+                hash.append(<span class="kw-2">&amp;</span>right.data.hash);
+                length += right.data.len;
+                right_black_height = validate_ptr(right)<span class="question-mark">?</span>;
+                <span class="comment">// Check the red-red property.
+                </span>(ptr.color == Color::Black || right.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        <span class="macro">format!</span>(
+                            <span class="string">&quot;Red-red violation: {:?} and {:?}&quot;</span>,
+                            ptr.data.value, right.data.value
+                        )
+                    })<span class="question-mark">?</span>;
+            }
+
+            <span class="comment">// Make sure the black-height is equal.
+            </span>(left_black_height == right_black_height)
+                .then_some(())
+                .ok_or_else(|| {
+                    <span class="macro">format!</span>(
+                        <span class="string">&quot;Black-height violation: {:?} and {:?}&quot;</span>,
+                        ptr.data.value, ptr.data.value
+                    )
+                })<span class="question-mark">?</span>;
+
+            <span class="comment">// Make sure the length is correct.
+            </span>(length == node.data.len).then_some(()).ok_or_else(|| {
+                <span class="macro">format!</span>(
+                    <span class="string">&quot;Length violation at {}. Expected {}, got {}&quot;</span>,
+                    ptr.data.value, length, node.data.len
+                )
+            })<span class="question-mark">?</span>;
+
+            <span class="comment">// Make sure the hash is correct.
+            </span>(hash.hash == node.data.hash.hash)
+                .then_some(())
+                .ok_or_else(|| {
+                    <span class="macro">format!</span>(
+                        <span class="string">&quot;Hash violation at {}. Expected {}, got {}&quot;</span>,
+                        ptr.data.value, hash.hash, node.data.hash.hash
+                    )
+                })<span class="question-mark">?</span>;
+
+            <span class="prelude-val">Ok</span>(left_black_height + (ptr.color == Color::Black) <span class="kw">as </span>u8)
+        }
+        || -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
+                <span class="kw">let </span>black_height = validate_ptr(root)<span class="question-mark">?</span>;
+                <span class="comment">// Make sure the root is black.
+                </span>(root.color == Color::Black).then_some(()).ok_or_else(|| {
+                    <span class="macro">format!</span>(
+                        <span class="string">&quot;Root violation: expected {:?}, got {:?}&quot;</span>,
+                        Color::Black,
+                        root.color
+                    )
+                })<span class="question-mark">?</span>;
+
+                <span class="comment">// Make sure the black-height is correct.
+                </span>(black_height == tree.black_height)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        <span class="macro">format!</span>(
+                            <span class="string">&quot;Black-height violation: expected {}, got {}&quot;</span>,
+                            black_height, tree.black_height,
+                        )
+                    })<span class="question-mark">?</span>;
+            }
+            <span class="prelude-val">Ok</span>(())
+        }()
+        .unwrap_or_else(|e| {
+            <span class="macro">panic!</span>(
+                <span class="string">&quot;{}\n{}&quot;</span>,
+                e,
+                format(<span class="kw-2">&amp;</span>tree, |data| data.value.to_string(), <span class="kw-2">&amp;</span>[])
+            )
+        })
+    }
+
+    <span class="kw">fn </span>to_vec(tree: <span class="kw-2">&amp;</span>Tree&lt;TestCallback&gt;) -&gt; Vec&lt;u64&gt; {
+        <span class="kw">fn </span>extend(node: Ptr&lt;TestCallback&gt;, vec: <span class="kw-2">&amp;mut </span>Vec&lt;u64&gt;) {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = node.left {
+                extend(left, vec);
+            }
+            vec.push(node.data.value);
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = node.right {
+                extend(right, vec);
             }
         }
         <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::new();
-        <span class="kw">unsafe </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root.as_ref() {
-                node_to_vec(root, <span class="kw-2">&amp;mut </span>vec);
-            }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
+            extend(root, <span class="kw-2">&amp;mut </span>vec);
         }
         vec
     }
 
-    <span class="kw">fn </span>validate(tree: <span class="kw-2">&amp;</span>Tree&lt;i32, Test&gt;) {
-        <span class="kw">unsafe fn </span>validate_node(node: <span class="kw-2">&amp;</span>Node&lt;i32, Test&gt;) -&gt; usize {
-            <span class="kw">let </span><span class="kw-2">mut </span>left_black_height = <span class="number">0</span>;
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = node.left.as_ref() {
-                left_black_height = validate_node(left);
-                <span class="kw">if </span>node.color == Color::Red {
-                    <span class="macro">assert_eq!</span>(left.color, Color::Black);
+    <span class="kw">pub fn </span>write&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+        w: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>std::io::Write,
+        tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
+        <span class="kw-2">mut </span>to_string: F,
+        fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Ptr&lt;C&gt;, ansi_term::Color)],
+    ) -&gt; std::io::Result&lt;()&gt;
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span>C::Data) -&gt; S,
+        S: Into&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt;,
+    {
+        <span class="kw">unsafe fn </span>write_ptr&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+            w: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>std::io::Write,
+            current: Ptr&lt;C&gt;,
+            to_string: <span class="kw-2">&amp;mut </span>F,
+            fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Ptr&lt;C&gt;, ansi_term::Color)],
+        ) -&gt; std::io::Result&lt;()&gt;
+        <span class="kw">where
+            </span>F: FnMut(<span class="kw-2">&amp;</span>C::Data) -&gt; S,
+            S: Into&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt;,
+        {
+            <span class="kw">let </span>colour = <span class="kw">match </span>current.color {
+                Color::Red =&gt; ansi_term::Colour::Red,
+                Color::Black =&gt; ansi_term::Colour::Black,
+            };
+            <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, colour.paint(<span class="string">&quot;(&quot;</span>))<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = current.left {
+                write_ptr(w, left, to_string, fg)<span class="question-mark">?</span>;
+            }
+            <span class="kw">let </span><span class="kw-2">mut </span>style = ansi_term::Style::new();
+            <span class="kw">for </span><span class="kw-2">&amp;</span>(_name, ptr, colour) <span class="kw">in </span>fg {
+                <span class="kw">if </span>ptr::eq(<span class="kw-2">&amp;*</span>current, <span class="kw-2">&amp;*</span>ptr) {
+                    style = style.on(colour);
                 }
             }
-            <span class="kw">let </span><span class="kw-2">mut </span>right_black_height = <span class="number">0</span>;
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = node.right.as_ref() {
-                right_black_height = validate_node(right);
-                <span class="kw">if </span>node.color == Color::Red {
-                    <span class="macro">assert_eq!</span>(right.color, Color::Black);
+            style = style.fg(colour);
+            <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, style.paint(to_string(<span class="kw-2">&amp;</span>current.data)))<span class="question-mark">?</span>;
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = current.right {
+                write_ptr(w, right, to_string, fg)<span class="question-mark">?</span>;
+            }
+            <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, colour.paint(<span class="string">&quot;)&quot;</span>))<span class="question-mark">?</span>;
+            <span class="prelude-val">Ok</span>(())
+        }
+        <span class="kw">if </span>!fg.is_empty() {
+            <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">0</span>;
+            <span class="kw">for </span><span class="kw-2">&amp;</span>(name, _ptr, colour) <span class="kw">in </span>fg {
+                <span class="kw">if </span>i &gt; <span class="number">0 </span>{
+                    <span class="macro">write!</span>(w, <span class="string">&quot;, &quot;</span>)<span class="question-mark">?</span>;
                 }
+                <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, ansi_term::Style::new().on(colour).paint(name))<span class="question-mark">?</span>;
+                i += <span class="number">1</span>;
             }
-            <span class="macro">assert_eq!</span>(left_black_height, right_black_height);
-            <span class="kw">if </span>node.color == Color::Black {
-                left_black_height += <span class="number">1</span>;
-            }
-            left_black_height
+            <span class="macro">write!</span>(w, <span class="string">&quot;: &quot;</span>)<span class="question-mark">?</span>;
         }
         <span class="kw">unsafe </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root.as_ref() {
-                <span class="macro">assert_eq!</span>(root.color, Color::Black);
-                validate_node(root);
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
+                write_ptr(w, root, <span class="kw-2">&amp;mut </span>to_string, fg)<span class="question-mark">?</span>;
             }
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>format&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+        tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
+        to_string: F,
+        fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Ptr&lt;C&gt;, ansi_term::Color)],
+    ) -&gt; String
+    <span class="kw">where
+        </span>F: FnMut(<span class="kw-2">&amp;</span>C::Data) -&gt; S,
+        S: Into&lt;Cow&lt;<span class="lifetime">&#39;a</span>, str&gt;&gt;,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>buf = Vec::new();
+        write(<span class="kw-2">&amp;mut </span>buf, tree, to_string, fg).unwrap();
+        String::from_utf8(buf).unwrap()
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_insert() {
+        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
+        <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;TestCallback&gt;::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::new();
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
+            <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..<span class="number">20</span>);
+            <span class="kw">let </span>index = vec.partition_point(|<span class="kw-2">&amp;</span>x| x &lt; value);
+            vec.insert(index, value);
+            <span class="kw">let </span>insert_position = tree.partition_point(|p| p.data.value &lt; value);
+            tree.insert(Ptr::new(Data::new(value)), insert_position);
+            <span class="macro">assert_eq!</span>(
+                to_vec(<span class="kw-2">&amp;</span>tree),
+                vec,
+                <span class="string">&quot;{}&quot;</span>,
+                format(<span class="kw-2">&amp;</span>tree, |data| data.value.to_string(), <span class="kw-2">&amp;</span>[])
+            );
+            validate(<span class="kw-2">&amp;</span>tree)
         }
     }
 
@@ -1246,57 +2004,71 @@
     #[case(<span class="number">0.5</span>)]
     #[case(<span class="number">0.9</span>)]
     </span><span class="kw">fn </span>test_insert_remove_random(<span class="attr">#[case] </span>remove_prob: f64) {
-        <span class="kw">const </span>VALUE_LIM: i32 = <span class="number">100</span>;
+        <span class="kw">const </span>VALUE_LIM: u64 = <span class="number">40</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;i32, Test&gt;::new();
-        <span class="kw">let </span><span class="kw-2">mut </span>expected = Vec::new();
-        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
-            <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..VALUE_LIM);
-            <span class="kw">if </span>rng.gen_bool(remove_prob) {
-                <span class="kw">let </span>expected_output = expected
-                    .iter()
-                    .position(|<span class="kw-2">&amp;</span>v| v == value)
-                    .map(|i| expected.remove(i));
-                <span class="kw">let </span>output = tree.binary_search_remove(|n| n.value.cmp(<span class="kw-2">&amp;</span>value));
-                <span class="kw">let </span>output = <span class="kw">unsafe </span>{ output.as_mut().map(|n| Box::from_raw(n).value) };
-                <span class="macro">assert_eq!</span>(output, expected_output);
-            } <span class="kw">else </span>{
-                <span class="kw">let </span>lower_bound = expected
-                    .iter()
-                    .position(|<span class="kw-2">&amp;</span>v| value &lt;= v)
-                    .unwrap_or(expected.len());
-                expected.insert(lower_bound, value);
-                tree.partition_point_insert(node(value, <span class="number">1</span>), |n| n.value &lt; value);
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
+            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;TestCallback&gt;::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>expected = Vec::new();
+            <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
+                <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..VALUE_LIM);
+                <span class="kw">if </span>rng.gen_bool(remove_prob) {
+                    <span class="kw">let </span>expected_output = expected
+                        .iter()
+                        .position(|<span class="kw-2">&amp;</span>v| v == value)
+                        .map(|i| expected.remove(i));
+                    <span class="kw">let </span>output = tree.binary_search(|n| n.data.value.cmp(<span class="kw-2">&amp;</span>value));
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(output) = output {
+                        tree.remove(output);
+                    }
+                    <span class="kw">let </span>output = output.map(|ptr| ptr.into_box().data.value);
+                    <span class="macro">assert_eq!</span>(output, expected_output);
+                } <span class="kw">else </span>{
+                    <span class="kw">let </span>lower_bound = expected
+                        .iter()
+                        .position(|<span class="kw-2">&amp;</span>v| value &lt;= v)
+                        .unwrap_or(expected.len());
+                    expected.insert(lower_bound, value);
+                    <span class="kw">let </span>insert_position = tree.partition_point(|n| n.data.value &lt; value);
+                    tree.insert(Ptr::new(Data::new(value)), insert_position);
+                }
+                <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree), expected);
+                validate(<span class="kw-2">&amp;</span>tree);
             }
-            <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree), expected);
-            <span class="macro">assert_eq!</span>(len(<span class="kw-2">&amp;</span>tree), expected.len());
-            validate(<span class="kw-2">&amp;</span>tree);
         }
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_cursor_random() {
+    </span><span class="kw">fn </span>test_append_random() {
+        <span class="kw">fn </span>random_tree(rng: <span class="kw-2">&amp;mut </span>StdRng) -&gt; (Tree&lt;TestCallback&gt;, Vec&lt;u64&gt;) {
+            <span class="kw">const </span>VALUE_LIM: u64 = <span class="number">40</span>;
+            <span class="kw">const </span>QUERY_LIM: usize = <span class="number">20</span>;
+            <span class="kw">let </span>query_number = rng.gen_range(<span class="number">0</span>..QUERY_LIM);
+            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;TestCallback&gt;::new();
+            <span class="kw">for _ in </span><span class="number">0</span>..query_number {
+                <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..VALUE_LIM);
+                <span class="kw">if </span>rng.gen_bool(<span class="number">0.5</span>) {
+                    <span class="kw">let </span>insert_position = tree.partition_point(|n| n.data.value &lt; value);
+                    tree.insert(Ptr::new(Data::new(value)), insert_position);
+                } <span class="kw">else </span>{
+                    <span class="kw">let </span>output = tree.binary_search(|n| n.data.value.cmp(<span class="kw-2">&amp;</span>value));
+                    <span class="kw">if let </span><span class="prelude-val">Some</span>(output) = output {
+                        tree.remove(output);
+                    }
+                }
+            }
+            <span class="kw">let </span>vec = to_vec(<span class="kw-2">&amp;</span>tree);
+            (tree, vec)
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-            <span class="kw">let </span>len = rng.gen_range(<span class="number">0</span>..<span class="number">20</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;i32, Test&gt;::new();
-            <span class="kw">let </span><span class="kw-2">mut </span>expected = Vec::new();
-            <span class="kw">for _ in </span><span class="number">0</span>..len {
-                <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..<span class="number">100</span>);
-                <span class="kw">let </span>lower_bound = expected
-                    .iter()
-                    .position(|<span class="kw-2">&amp;</span>v| value &lt;= v)
-                    .unwrap_or(expected.len());
-                expected.insert(lower_bound, value);
-                tree.partition_point_insert(node(value, <span class="number">1</span>), |n| n.value &lt; value);
-            }
-            <span class="kw">let </span><span class="kw-2">mut </span>ptr = tree.front();
-            <span class="kw">for </span>index <span class="kw">in </span><span class="number">0</span>..len {
-                <span class="kw">let </span>value = <span class="kw">unsafe </span>{ (<span class="kw-2">*</span>ptr.unwrap().inner()).value };
-                <span class="macro">assert_eq!</span>(value, expected[index]);
-                ptr = ptr.unwrap().next();
-            }
-            <span class="macro">assert!</span>(ptr.is_none());
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2000 </span>{
+            <span class="kw">let </span>(<span class="kw-2">mut </span>tree1, <span class="kw-2">mut </span>vec1) = random_tree(<span class="kw-2">&amp;mut </span>rng);
+            <span class="kw">let </span>(<span class="kw-2">mut </span>tree2, <span class="kw-2">mut </span>vec2) = random_tree(<span class="kw-2">&amp;mut </span>rng);
+            tree1.append(<span class="kw-2">&amp;mut </span>tree2);
+            vec1.append(<span class="kw-2">&amp;mut </span>vec2);
+            <span class="macro">assert!</span>(tree2.is_empty());
+            <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree1), vec1);
+            validate(<span class="kw-2">&amp;</span>tree1);
+            validate(<span class="kw-2">&amp;</span>tree2);
         }
     }
 }
