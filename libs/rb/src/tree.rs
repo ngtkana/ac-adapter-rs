@@ -8,20 +8,20 @@ use std::ptr;
 
 /// A red-black tree.
 #[allow(dead_code)]
-pub struct Tree<C: Callback> {
+pub(super) struct Tree<C: Callback> {
     root: Option<Ptr<C>>,
     black_height: u8,
 }
 #[allow(dead_code)]
 impl<C: Callback> Tree<C> {
     /// Create a new empty tree.
-    pub fn new() -> Self { Self::default() }
+    pub(super) fn new() -> Self { Self::default() }
 
     /// Returns `true` if the tree is empty.
-    pub fn is_empty(&self) -> bool { self.root.is_none() }
+    pub(super) fn is_empty(&self) -> bool { self.root.is_none() }
 
     /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
-    pub fn partition_point<P>(&self, mut pred: P) -> Option<(Ptr<C>, bool)>
+    pub(super) fn partition_point<P>(&self, mut pred: P) -> Option<(Ptr<C>, bool)>
     where
         P: FnMut(Ptr<C>) -> bool,
     {
@@ -37,7 +37,7 @@ impl<C: Callback> Tree<C> {
     }
 
     /// Binary search the tree.
-    pub fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
+    pub(super) fn binary_search<F>(&self, mut f: F) -> Option<Ptr<C>>
     where
         F: FnMut(Ptr<C>) -> Ordering,
     {
@@ -53,7 +53,7 @@ impl<C: Callback> Tree<C> {
     }
 
     /// Find the leftmost node.
-    pub fn front(&self) -> Option<Ptr<C>> {
+    pub(super) fn front(&self) -> Option<Ptr<C>> {
         let mut x = self.root?;
         while let Some(y) = x.left {
             x = y;
@@ -62,7 +62,7 @@ impl<C: Callback> Tree<C> {
     }
 
     /// Find the rightmost node.
-    pub fn back(&self) -> Option<Ptr<C>> {
+    pub(super) fn back(&self) -> Option<Ptr<C>> {
         let mut x = self.root?;
         while let Some(y) = x.right {
             x = y;
@@ -85,7 +85,7 @@ impl<C: Callback> Tree<C> {
     ///
     /// # Precondition
     /// `new` must be isolated and red.
-    pub fn insert(&mut self, mut new: Ptr<C>, position: Option<(Ptr<C>, bool)>) {
+    pub(super) fn insert(&mut self, mut new: Ptr<C>, position: Option<(Ptr<C>, bool)>) {
         debug_assert!(new.is_isolated_and_red());
 
         // Handle the empty tree case.
@@ -109,7 +109,7 @@ impl<C: Callback> Tree<C> {
     ///
     /// # Precondition
     /// `z` must be in the tree.
-    pub fn remove(&mut self, mut z: Ptr<C>) {
+    pub(super) fn remove(&mut self, mut z: Ptr<C>) {
         struct Removed<C: Callback> {
             color: Color,
             upper: Option<Ptr<C>>,
@@ -189,7 +189,7 @@ impl<C: Callback> Tree<C> {
     }
 
     /// Move all nodes from `other` to `self`.
-    pub fn append(&mut self, other: &mut Self) {
+    pub(super) fn append(&mut self, other: &mut Self) {
         // Handle the empty tree case.
         if other.is_empty() {
             return;
@@ -522,7 +522,7 @@ impl<C: Callback> Tree<C> {
     }
 
     /// Replace the subtree rooted at `u` with the subtree rooted at `v`.
-    pub fn transplant(&mut self, u: Ptr<C>, v: Option<Ptr<C>>) {
+    pub(super) fn transplant(&mut self, u: Ptr<C>, v: Option<Ptr<C>>) {
         if let Some(mut p) = u.parent {
             if ptr::eq(as_ptr(p.left), &*u) {
                 p.left = v;
@@ -559,7 +559,7 @@ fn as_ptr<C: Callback>(p: Option<Ptr<C>>) -> *mut Node<C> {
 /// # Precondition
 /// - `l` and `r` must be non-empty.
 /// - `c` must be isolated and red.
-pub fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<C> {
+fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<C> {
     debug_assert!(c.is_isolated_and_red());
     debug_assert!(l.root.is_some());
     debug_assert!(r.root.is_some());
@@ -650,7 +650,7 @@ pub fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<
 }
 
 #[cfg(test)]
-pub mod tests {
+mod tests {
     use super::*;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -850,7 +850,7 @@ pub mod tests {
         vec
     }
 
-    pub fn write<'a, C: Callback, F, S>(
+    pub(super) fn write<'a, C: Callback, F, S>(
         w: &mut impl std::io::Write,
         tree: &Tree<C>,
         mut to_string: F,
@@ -909,7 +909,7 @@ pub mod tests {
         Ok(())
     }
 
-    pub fn format<'a, C: Callback, F, S>(
+    pub(super) fn format<'a, C: Callback, F, S>(
         tree: &Tree<C>,
         to_string: F,
         fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
