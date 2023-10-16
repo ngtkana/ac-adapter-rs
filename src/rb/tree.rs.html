@@ -1061,20 +1061,20 @@
 
 <span class="doccomment">/// A red-black tree.
 </span><span class="attr">#[allow(dead_code)]
-</span><span class="kw">pub struct </span>Tree&lt;C: Callback&gt; {
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Tree&lt;C: Callback&gt; {
     root: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
     black_height: u8,
 }
 <span class="attr">#[allow(dead_code)]
 </span><span class="kw">impl</span>&lt;C: Callback&gt; Tree&lt;C&gt; {
     <span class="doccomment">/// Create a new empty tree.
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::default() }
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::default() }
 
     <span class="doccomment">/// Returns `true` if the tree is empty.
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.root.is_none() }
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.root.is_none() }
 
     <span class="doccomment">/// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
-    </span><span class="kw">pub fn </span>partition_point&lt;P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>pred: P) -&gt; <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>partition_point&lt;P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>pred: P) -&gt; <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;
     <span class="kw">where
         </span>P: FnMut(Ptr&lt;C&gt;) -&gt; bool,
     {
@@ -1090,7 +1090,7 @@
     }
 
     <span class="doccomment">/// Binary search the tree.
-    </span><span class="kw">pub fn </span>binary_search&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>binary_search&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;
     <span class="kw">where
         </span>F: FnMut(Ptr&lt;C&gt;) -&gt; Ordering,
     {
@@ -1106,7 +1106,7 @@
     </span>}
 
     <span class="doccomment">/// Find the leftmost node.
-    </span><span class="kw">pub fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">self</span>.root<span class="question-mark">?</span>;
         <span class="kw">while let </span><span class="prelude-val">Some</span>(y) = x.left {
             x = y;
@@ -1115,7 +1115,7 @@
     }
 
     <span class="doccomment">/// Find the rightmost node.
-    </span><span class="kw">pub fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">self</span>.root<span class="question-mark">?</span>;
         <span class="kw">while let </span><span class="prelude-val">Some</span>(y) = x.right {
             x = y;
@@ -1138,7 +1138,7 @@
     ///
     /// # Precondition
     /// `new` must be isolated and red.
-    </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>new: Ptr&lt;C&gt;, position: <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;) {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>new: Ptr&lt;C&gt;, position: <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;) {
         <span class="macro">debug_assert!</span>(new.is_isolated_and_red());
 
         <span class="comment">// Handle the empty tree case.
@@ -1162,7 +1162,7 @@
     ///
     /// # Precondition
     /// `z` must be in the tree.
-    </span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>z: Ptr&lt;C&gt;) {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>z: Ptr&lt;C&gt;) {
         <span class="kw">struct </span>Removed&lt;C: Callback&gt; {
             color: Color,
             upper: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
@@ -1242,7 +1242,7 @@
     }
 
     <span class="doccomment">/// Move all nodes from `other` to `self`.
-    </span><span class="kw">pub fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>append(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="kw-2">&amp;mut </span><span class="self">Self</span>) {
         <span class="comment">// Handle the empty tree case.
         </span><span class="kw">if </span>other.is_empty() {
             <span class="kw">return</span>;
@@ -1575,7 +1575,7 @@
     }
 
     <span class="doccomment">/// Replace the subtree rooted at `u` with the subtree rooted at `v`.
-    </span><span class="kw">pub fn </span>transplant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, u: Ptr&lt;C&gt;, v: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>transplant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, u: Ptr&lt;C&gt;, v: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = u.parent {
             <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>u) {
                 p.left = v;
@@ -1612,7 +1612,7 @@
 /// # Precondition
 /// - `l` and `r` must be non-empty.
 /// - `c` must be isolated and red.
-</span><span class="kw">pub fn </span>join&lt;C: Callback&gt;(<span class="kw-2">mut </span>l: Tree&lt;C&gt;, <span class="kw-2">mut </span>c: Ptr&lt;C&gt;, <span class="kw-2">mut </span>r: Tree&lt;C&gt;) -&gt; Tree&lt;C&gt; {
+</span><span class="kw">fn </span>join&lt;C: Callback&gt;(<span class="kw-2">mut </span>l: Tree&lt;C&gt;, <span class="kw-2">mut </span>c: Ptr&lt;C&gt;, <span class="kw-2">mut </span>r: Tree&lt;C&gt;) -&gt; Tree&lt;C&gt; {
     <span class="macro">debug_assert!</span>(c.is_isolated_and_red());
     <span class="macro">debug_assert!</span>(l.root.is_some());
     <span class="macro">debug_assert!</span>(r.root.is_some());
