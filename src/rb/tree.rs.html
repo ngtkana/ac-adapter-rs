@@ -1703,7 +1703,7 @@
 }
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">pub mod </span>tests {
+</span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>rand::rngs::StdRng;
     <span class="kw">use </span>rand::Rng;
@@ -1903,7 +1903,7 @@
         vec
     }
 
-    <span class="kw">pub fn </span>write&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>write&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
         w: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>std::io::Write,
         tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
         <span class="kw-2">mut </span>to_string: F,
@@ -1962,7 +1962,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub fn </span>format&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>format&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
         tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
         to_string: F,
         fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Ptr&lt;C&gt;, ansi_term::Color)],
