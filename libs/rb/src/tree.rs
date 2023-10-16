@@ -1,7 +1,8 @@
 //! A red-black tree with `NonNull` and `Callback`.
+use crate::as_ptr;
+use crate::color;
 use crate::Callback;
 use crate::Color;
-use crate::Node;
 use crate::Ptr;
 use std::cmp::Ordering;
 use std::mem;
@@ -602,12 +603,43 @@ impl<C: Callback> Default for Tree<C> {
     }
 }
 
-/// Get the color of a node.
-fn color<C: Callback>(p: Option<Ptr<C>>) -> Color { p.map_or(Color::Black, |p| p.as_ref().color) }
+#[allow(dead_code)]
+impl<C: Callback> Ptr<C> {
+    /// Get the next node in the tree.
+    pub fn next(&self) -> Option<Self> {
+        let mut x = *self;
+        if let Some(mut x) = x.right {
+            while let Some(l) = x.left {
+                x = l;
+            }
+            return Some(x);
+        }
+        while let Some(p) = x.parent {
+            if ptr::eq(as_ptr(p.left), &*x) {
+                return Some(p);
+            }
+            x = p;
+        }
+        None
+    }
 
-/// Get the pointer to a node.
-fn as_ptr<C: Callback>(p: Option<Ptr<C>>) -> *mut Node<C> {
-    p.map_or(ptr::null_mut(), |p| p.0.as_ptr())
+    /// Get the previous node in the tree.
+    pub fn prev(&self) -> Option<Self> {
+        let mut x = *self;
+        if let Some(mut x) = x.left {
+            while let Some(r) = x.right {
+                x = r;
+            }
+            return Some(x);
+        }
+        while let Some(p) = x.parent {
+            if ptr::eq(as_ptr(p.right), &*x) {
+                return Some(p);
+            }
+            x = p;
+        }
+        None
+    }
 }
 
 /// Join two trees with a node `c`.
@@ -1142,7 +1174,7 @@ mod tests {
     }
 
     #[test]
-    fn test_append_random() {
+    fn test_append_split_off_random() {
         fn random_tree(rng: &mut StdRng, range: Range<u64>) -> (Tree<TestCallback>, Vec<u64>) {
             const QUERY_LIM: usize = 20;
             let query_number = rng.gen_range(0..QUERY_LIM);
@@ -1183,6 +1215,52 @@ mod tests {
             let vec2 = vec1.split_off(split_index);
             assert_eq!(to_vec(&tree1), vec1);
             assert_eq!(to_vec(&tree2), vec2);
+        }
+    }
+
+    #[test]
+    fn test_next_prev_random() {
+        fn random_tree(rng: &mut StdRng) -> (Tree<TestCallback>, Vec<u64>) {
+            const VALUE_LIM: u64 = 40;
+            const QUERY_LIM: usize = 20;
+            let query_number = rng.gen_range(0..QUERY_LIM);
+            let mut tree = Tree::<TestCallback>::new();
+            for _ in 0..query_number {
+                let value = rng.gen_range(0..VALUE_LIM);
+                if rng.gen_bool(0.5) {
+                    let insert_position = tree.partition_point(|n| n.data.value < value);
+                    tree.insert(Ptr::new(Data::new(value)), insert_position);
+                } else {
+                    let output = tree.binary_search(|n| n.data.value.cmp(&value));
+                    if let Some(output) = output {
+                        tree.remove(output);
+                    }
+                }
+            }
+            let vec = to_vec(&tree);
+            (tree, vec)
+        }
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..2000 {
+            let (tree, vec) = random_tree(&mut rng);
+
+            // Test next.
+            let mut values = Vec::new();
+            let mut ptr = tree.front();
+            while let Some(p) = ptr {
+                values.push(p.data.value);
+                ptr = p.next();
+            }
+            assert_eq!(values, vec);
+
+            // Test prev.
+            let mut values = Vec::new();
+            let mut ptr = tree.back();
+            while let Some(p) = ptr {
+                values.push(p.data.value);
+                ptr = p.prev();
+            }
+            assert_eq!(values, vec.into_iter().rev().collect::<Vec<_>>());
         }
     }
 }
