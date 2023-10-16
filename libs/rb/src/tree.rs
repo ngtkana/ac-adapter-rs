@@ -4,7 +4,10 @@ use crate::Color;
 use crate::Node;
 use crate::Ptr;
 use std::cmp::Ordering;
+use std::mem;
 use std::ptr;
+
+// TODO: implmement `Drop` for `Tree`, and think about the ownership of the nodes.
 
 /// A red-black tree.
 #[allow(dead_code)]
@@ -105,6 +108,30 @@ impl<C: Callback> Tree<C> {
         self.fix_red(p, new);
     }
 
+    /// Pop the leftmost node.
+    pub(super) fn pop_front(&mut self) -> Option<Ptr<C>> {
+        let front = self.front()?;
+        self.remove(front);
+        Some(front)
+    }
+
+    /// Pop the rightmost node.
+    pub(super) fn pop_back(&mut self) -> Option<Ptr<C>> {
+        let back = self.back()?;
+        self.remove(back);
+        Some(back)
+    }
+
+    /// Push a new node to the leftmost position.
+    pub(super) fn push_front(&mut self, new: Ptr<C>) {
+        self.insert(new, self.front().map(|p| (p, false)));
+    }
+
+    /// Push a new node to the rightmost position.
+    pub(super) fn push_back(&mut self, new: Ptr<C>) {
+        self.insert(new, self.back().map(|p| (p, true)));
+    }
+
     /// Remove the given node from the tree.
     ///
     /// # Precondition
@@ -199,18 +226,47 @@ impl<C: Callback> Tree<C> {
             return;
         }
 
-        let c = other.front().unwrap();
-        other.remove(c);
+        // Pop the leftmost node from `other`.
+        let c = other.pop_front().unwrap();
+
         // Handle the case where `c` was the only node in `other`.
         if other.is_empty() {
-            self.insert(c, Some((self.back().unwrap(), true)));
+            self.push_back(c);
             return;
         }
 
         // Now `l` and `r` are non-empty.
-        let l = std::mem::take(self);
-        let r = std::mem::take(other);
+        let l = mem::take(self);
+        let r = mem::take(other);
         *self = join(l, c, r);
+    }
+
+    /// Split the tree into two trees at the position specified by `position`.
+    ///
+    /// If `position` is `None`, the tree is originally empty, and the two trees are empty.
+    /// If `position.1` is:
+    /// - `true`: `position.0` is contained in `self`
+    /// - `false`: `position.0` is contained in the returned tree.
+    ///
+    ///
+    /// # Precondition
+    /// - `position.0` must be in a leaf node of the 2-3-4 tree.
+    pub(super) fn split_off(&mut self, position: Option<(Ptr<C>, bool)>) -> Tree<C> {
+        // Handle the empty tree case.
+        let Some((p, result)) = position else {
+            debug_assert!(self.root.is_none());
+            return Tree::new();
+        };
+
+        // Split the tree.
+        let (mut l, mut r) = unjoin(self, p);
+        if result {
+            l.push_back(p);
+        } else {
+            r.push_front(p);
+        }
+        *self = l;
+        r
     }
 
     /// Fixup the red-red violation between `x` and `p` and non-updated property of `x`.
@@ -563,6 +619,8 @@ fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<C> {
     debug_assert!(c.is_isolated_and_red());
     debug_assert!(l.root.is_some());
     debug_assert!(r.root.is_some());
+    debug_assert!(l.root.unwrap().color == Color::Black);
+    debug_assert!(r.root.unwrap().color == Color::Black);
 
     // Merge three trees.
     match l.black_height.cmp(&r.black_height) {
@@ -649,6 +707,106 @@ fn join<C: Callback>(mut l: Tree<C>, mut c: Ptr<C>, mut r: Tree<C>) -> Tree<C> {
     }
 }
 
+/// Split a tree into two trees with a node `c`.
+///
+/// `black_height` is the black-height of `z`.
+///
+/// # Precondition
+/// - `z` must be in a leaf node of the 2-3-4 tree.
+#[allow(unused_variables)]
+#[allow(unused_mut)]
+#[allow(dead_code)]
+fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) {
+    // Initialize two trees.
+    let mut l = Tree::new();
+    let mut r = Tree::new();
+    if let Some(mut zl) = z.left.take() {
+        zl.parent = None;
+        debug_assert!(zl.is_isolated_and_red());
+        l.insert(zl, None);
+    }
+    if let Some(mut zr) = z.right.take() {
+        zr.parent = None;
+        debug_assert!(zr.is_isolated_and_red());
+        r.insert(zr, None);
+    }
+    let mut black_height = u8::from(z.color == Color::Black);
+    while let Some(mut p) = z.parent {
+        let p_original_color = p.color;
+        // Case 1: `z` is a left child: `r <- join(r, p, p.right)`.
+        if ptr::eq(&*z, as_ptr(p.left)) {
+            // Get the right child of `p`.
+            let mut x = Tree {
+                root: p.right,
+                black_height,
+            };
+
+            // Transplant `p` with `z`.
+            tree.transplant(p, Some(z));
+            if let Some(mut x) = x.root {
+                x.parent = None;
+            }
+            p.isolate_and_red();
+
+            // Fix the red-root violation.
+            if color(x.root) == Color::Red {
+                x.root.unwrap().color = Color::Black;
+                x.black_height += 1;
+            }
+
+            // Join `r` and `x`.
+            if r.is_empty() {
+                x.push_front(p);
+                r = x;
+            } else if x.is_empty() {
+                r.push_back(p);
+            } else {
+                r = join(r, p, x);
+            }
+        }
+        // Case 2: `z` is a right child: `l <- join(p.left, p, l)`.
+        else {
+            // Get the left child of `p`.
+            let mut x = Tree {
+                root: p.left,
+                black_height,
+            };
+
+            // Transplant `p` with `z`.
+            tree.transplant(p, Some(z));
+            if let Some(mut x) = x.root {
+                x.parent = None;
+            }
+            p.isolate_and_red();
+
+            // Fix the red-root violation.
+            if color(x.root) == Color::Red {
+                x.root.unwrap().color = Color::Black;
+                x.black_height += 1;
+            }
+
+            // Join `x` and `l`.
+            if l.is_empty() {
+                x.push_back(p);
+                l = x;
+            } else if x.is_empty() {
+                l.push_front(p);
+            } else {
+                l = join(x, p, l);
+            }
+        }
+        // Update the black-height.
+        if p_original_color == Color::Black {
+            black_height += 1;
+        }
+    }
+    debug_assert!(ptr::eq(as_ptr(tree.root), &*z));
+    *tree = Tree::new();
+    z.color = Color::Red;
+    debug_assert!(z.is_isolated_and_red());
+    (l, r)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -657,6 +815,7 @@ mod tests {
     use rand::SeedableRng;
     use rstest::rstest;
     use std::borrow::Cow;
+    use std::ops::Range;
 
     const MODULO: u64 = 998244353;
 
@@ -984,13 +1143,12 @@ mod tests {
 
     #[test]
     fn test_append_random() {
-        fn random_tree(rng: &mut StdRng) -> (Tree<TestCallback>, Vec<u64>) {
-            const VALUE_LIM: u64 = 40;
+        fn random_tree(rng: &mut StdRng, range: Range<u64>) -> (Tree<TestCallback>, Vec<u64>) {
             const QUERY_LIM: usize = 20;
             let query_number = rng.gen_range(0..QUERY_LIM);
             let mut tree = Tree::<TestCallback>::new();
             for _ in 0..query_number {
-                let value = rng.gen_range(0..VALUE_LIM);
+                let value = rng.gen_range(range.clone());
                 if rng.gen_bool(0.5) {
                     let insert_position = tree.partition_point(|n| n.data.value < value);
                     tree.insert(Ptr::new(Data::new(value)), insert_position);
@@ -1006,14 +1164,25 @@ mod tests {
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
-            let (mut tree1, mut vec1) = random_tree(&mut rng);
-            let (mut tree2, mut vec2) = random_tree(&mut rng);
+            let (mut tree1, mut vec1) = random_tree(&mut rng, 0..20);
+            let (mut tree2, mut vec2) = random_tree(&mut rng, 21..40);
+
+            // Test append.
             tree1.append(&mut tree2);
             vec1.append(&mut vec2);
             assert!(tree2.is_empty());
             assert_eq!(to_vec(&tree1), vec1);
             validate(&tree1);
             validate(&tree2);
+
+            // Test split_off.
+            let lb_value = rng.gen_range(0..=40);
+            let split_index = vec1.partition_point(|&v| v < lb_value);
+            let split_position = tree1.partition_point(|n| n.data.value < lb_value);
+            let tree2 = tree1.split_off(split_position);
+            let vec2 = vec1.split_off(split_index);
+            assert_eq!(to_vec(&tree1), vec1);
+            assert_eq!(to_vec(&tree2), vec2);
         }
     }
 }
