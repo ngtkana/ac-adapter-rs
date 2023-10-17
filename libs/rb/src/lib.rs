@@ -102,9 +102,9 @@ fn node_ptr_eq<C: Callback>(
 ) -> bool {
     ptr::eq(
         lhs.into()
-            .map_or_else(|| ptr::null(), |p| p.as_ref() as *const _),
+            .map_or_else(ptr::null, |p| p.as_ref() as *const _),
         rhs.into()
-            .map_or_else(|| ptr::null(), |p| p.as_ref() as *const _),
+            .map_or_else(ptr::null, |p| p.as_ref() as *const _),
     )
 }
 /// Non-dangling pointer to a node in a red-black tree.
