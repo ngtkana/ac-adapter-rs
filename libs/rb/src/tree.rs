@@ -1,17 +1,19 @@
 //! A red-black tree with `NonNull` and `Callback`.
-use crate::as_ptr;
 use crate::color;
+use crate::node_ptr_eq;
 use crate::Callback;
 use crate::Color;
 use crate::Len;
 use crate::Ptr;
 use std::cmp::Ordering;
 use std::mem;
-use std::ptr;
 
 // TODO: implmement `Drop` for `Tree`, and think about the ownership of the nodes.
 
 /// A red-black tree.
+///
+/// Almost all methods of this struct does not do any allocation or deallocation.
+/// The only exception is [`Tree::drop_all_nodes`].
 #[allow(dead_code)]
 pub(super) struct Tree<C: Callback> {
     root: Option<Ptr<C>>,
@@ -24,6 +26,45 @@ impl<C: Callback> Tree<C> {
 
     /// Returns `true` if the tree is empty.
     pub(super) fn is_empty(&self) -> bool { self.root.is_none() }
+
+    /// Drop all nodes in the tree.
+    pub(super) fn drop_all_nodes(&mut self) {
+        let mut stack = self.root.into_iter().collect::<Vec<_>>();
+        while let Some(x) = stack.pop() {
+            if let Some(left) = x.as_ref().left {
+                stack.push(left);
+            }
+            if let Some(right) = x.as_ref().right {
+                stack.push(right);
+            }
+            x.drop_this();
+        }
+    }
+
+    pub(super) fn from_slice(slice: &[Ptr<C>]) -> Self {
+        match slice.len() {
+            0 => Self::new(),
+            1 => {
+                let mut result = Self::new();
+                result.push_back(slice[0]);
+                result
+            }
+            2 => {
+                let mut result = Self::new();
+                result.push_back(slice[0]);
+                result.push_back(slice[1]);
+                result
+            }
+            _ => {
+                let mid = slice.len() / 2;
+                join(
+                    Self::from_slice(&slice[..mid]),
+                    slice[mid],
+                    Self::from_slice(&slice[mid + 1..]),
+                )
+            }
+        }
+    }
 
     /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
     pub(super) fn partition_point<P>(&self, mut pred: P) -> Option<(Ptr<C>, bool)>
@@ -173,7 +214,7 @@ impl<C: Callback> Tree<C> {
             }
 
             // Case 3.1: the successor is the right child of `z`.
-            if ptr::eq(as_ptr(succ.parent), &*z) {
+            if node_ptr_eq(succ.parent, z) {
                 removed = Removed {
                     color: succ.color,
                     upper: Some(succ),
@@ -287,7 +328,7 @@ impl<C: Callback> Tree<C> {
         while p.color == Color::Red {
             let mut pp = p.parent.unwrap();
             // Case 1: `p` is a left child.
-            if ptr::eq(as_ptr(pp.left), &*p) {
+            if node_ptr_eq(pp.left, p) {
                 let s = pp.as_ref().right;
                 // Case 1.1: Split the 5-node.
                 if color(s) == Color::Red {
@@ -309,7 +350,7 @@ impl<C: Callback> Tree<C> {
                 // Case 1.2: Balance the 4-node
                 else {
                     // Handle the splayed 4-node case.
-                    if ptr::eq(as_ptr(p.right), &*x) {
+                    if node_ptr_eq(p.right, x) {
                         self.left_rotate(p);
                         p = x;
                         x = p.left.unwrap();
@@ -343,7 +384,7 @@ impl<C: Callback> Tree<C> {
                 // Case 2.2: Balance the 4-node
                 else {
                     // Handle the splayed 4-node case.
-                    if ptr::eq(as_ptr(p.left), &*x) {
+                    if node_ptr_eq(p.left, x) {
                         self.right_rotate(p);
                         p = x;
                         x = p.right.unwrap();
@@ -387,7 +428,7 @@ impl<C: Callback> Tree<C> {
 
         while color(x) == Color::Black {
             // Case 1: `x` is a left child.
-            if ptr::eq(as_ptr(p.left), as_ptr(x)) {
+            if node_ptr_eq(p.left, x) {
                 let mut s = p.right;
 
                 // Handle the case where `p` is a right-leaning 3-node.
@@ -532,7 +573,7 @@ impl<C: Callback> Tree<C> {
         // Connect `p` and `y`.
         y.parent = p;
         *(if let Some(ref mut p) = p {
-            if ptr::eq(as_ptr(p.left), &*x) {
+            if node_ptr_eq(p.left, x) {
                 &mut p.left
             } else {
                 &mut p.right
@@ -565,7 +606,7 @@ impl<C: Callback> Tree<C> {
         // Connect `p` and `y`.
         y.parent = p;
         *(if let Some(ref mut p) = p {
-            if ptr::eq(as_ptr(p.left), &*x) {
+            if node_ptr_eq(p.left, x) {
                 &mut p.left
             } else {
                 &mut p.right
@@ -582,7 +623,7 @@ impl<C: Callback> Tree<C> {
     /// Replace the subtree rooted at `u` with the subtree rooted at `v`.
     pub(super) fn transplant(&mut self, u: Ptr<C>, v: Option<Ptr<C>>) {
         if let Some(mut p) = u.parent {
-            if ptr::eq(as_ptr(p.left), &*u) {
+            if node_ptr_eq(p.left, u) {
                 p.left = v;
             } else {
                 p.right = v;
@@ -720,7 +761,7 @@ impl<C: Callback> Ptr<C> {
             return Some(x);
         }
         while let Some(p) = x.parent {
-            if ptr::eq(as_ptr(p.left), &*x) {
+            if node_ptr_eq(p.left, x) {
                 return Some(p);
             }
             x = p;
@@ -738,7 +779,7 @@ impl<C: Callback> Ptr<C> {
             return Some(x);
         }
         while let Some(p) = x.parent {
-            if ptr::eq(as_ptr(p.right), &*x) {
+            if node_ptr_eq(p.right, x) {
                 return Some(p);
             }
             x = p;
@@ -759,7 +800,7 @@ where
         let mut x = *self;
         while x.data.len() <= n {
             let p = x.parent?;
-            if ptr::eq(as_ptr(p.right), &*x) {
+            if node_ptr_eq(p.right, x) {
                 n += p.left.map_or(0, |l| l.data.len()) + 1;
             }
             x = p;
@@ -786,7 +827,7 @@ where
         let mut x = *self;
         while x.data.len() <= n {
             let p = x.parent?;
-            if ptr::eq(as_ptr(p.left), &*x) {
+            if node_ptr_eq(p.left, x) {
                 n += p.right.map_or(0, |r| r.data.len()) + 1;
             }
             x = p;
@@ -930,7 +971,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
     while let Some(mut p) = z.parent {
         let p_original_color = p.color;
         // Case 1: `z` is a left child: `r <- join(r, p, p.right)`.
-        if ptr::eq(&*z, as_ptr(p.left)) {
+        if node_ptr_eq(z, p.left) {
             // Get the right child of `p`.
             let mut x = Tree {
                 root: p.right,
@@ -996,7 +1037,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
             black_height += 1;
         }
     }
-    debug_assert!(ptr::eq(as_ptr(tree.root), &*z));
+    debug_assert!(node_ptr_eq(tree.root, z));
     *tree = Tree::new();
     z.color = Color::Red;
     debug_assert!(z.is_isolated_and_red());
@@ -1012,6 +1053,7 @@ mod tests {
     use rstest::rstest;
     use std::borrow::Cow;
     use std::ops::Range;
+    use std::rc::Rc;
 
     const MODULO: u64 = 998244353;
 
@@ -1238,7 +1280,7 @@ mod tests {
             }
             let mut style = ansi_term::Style::new();
             for &(_name, ptr, colour) in fg {
-                if ptr::eq(&*current, &*ptr) {
+                if node_ptr_eq(current, ptr) {
                     style = style.on(colour);
                 }
             }
@@ -1299,6 +1341,48 @@ mod tests {
         }
         let vec = to_vec(&tree);
         (tree, vec)
+    }
+
+    #[test]
+    fn test_alloc_dealloc() {
+        enum AllocCallback {}
+        impl Callback for AllocCallback {
+            type Data = Rc<()>;
+
+            fn push(_node: Ptr<Self>) {}
+
+            fn update(_node: Ptr<Self>) {}
+        }
+        let rcs = std::iter::repeat_with(|| Rc::new(()))
+            .take(10)
+            .collect::<Vec<_>>();
+        for rc in &rcs {
+            assert_eq!(Rc::strong_count(rc), 1);
+        }
+        {
+            let slice = rcs
+                .iter()
+                .map(|rc| Ptr::new(Rc::clone(rc)))
+                .collect::<Vec<_>>();
+
+            for rc in &rcs {
+                assert_eq!(Rc::strong_count(rc), 2);
+            }
+
+            let mut tree = Tree::<AllocCallback>::from_slice(&slice);
+
+            for rc in &rcs {
+                assert_eq!(Rc::strong_count(rc), 2);
+            }
+
+            tree.drop_all_nodes();
+            for rc in &rcs {
+                assert_eq!(Rc::strong_count(rc), 1);
+            }
+        }
+        for rc in &rcs {
+            assert_eq!(Rc::strong_count(rc), 1);
+        }
     }
 
     #[rstest]

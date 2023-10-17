@@ -14,6 +14,12 @@ mod list;
 pub use list::RbList;
 pub use list::RbReversibleList;
 
+/// Iterators for a list based on a red-black tree.
+pub mod list_iter {
+    use super::*;
+    pub use list::Range;
+}
+
 /// The trait for specifying the operation of a red-black tree.
 ///
 /// # Notation
@@ -37,7 +43,7 @@ pub trait Op {
     /// The type of the accumulated value of a node.
     type Acc;
     /// The type of the lazy action of a node.
-    type Lazy;
+    type Action;
 
     /// Convert a value to an accumulated value.
     fn to_acc(value: &Self::Value) -> Self::Acc;
@@ -46,13 +52,16 @@ pub trait Op {
     fn mul(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc;
 
     /// Apply a lazy action to a value.
-    fn apply(value: &mut Self::Value, lazy: &Self::Lazy);
+    fn apply(value: &mut Self::Value, lazy: &Self::Action);
 
     /// Apply a lazy action to an accumulated value.
-    fn apply_acc(acc: &mut Self::Acc, lazy: &Self::Lazy);
+    fn apply_acc(acc: &mut Self::Acc, lazy: &Self::Action);
 
     /// Compose two lazy actions.
-    fn compose(lhs: &Self::Lazy, rhs: &Self::Lazy) -> Self::Lazy;
+    fn compose(lhs: &Self::Action, rhs: &Self::Action) -> Self::Action;
+
+    /// The identity of an accumulated value.
+    fn identity_action() -> Self::Action;
 }
 
 /// A color of a node in a red-black tree.
@@ -87,6 +96,17 @@ struct Node<C: Callback> {
     parent: Option<Ptr<C>>,
     color: Color,
 }
+fn node_ptr_eq<C: Callback>(
+    lhs: impl Into<Option<Ptr<C>>>,
+    rhs: impl Into<Option<Ptr<C>>>,
+) -> bool {
+    ptr::eq(
+        lhs.into()
+            .map_or_else(|| ptr::null(), |p| p.as_ref() as *const _),
+        rhs.into()
+            .map_or_else(|| ptr::null(), |p| p.as_ref() as *const _),
+    )
+}
 /// Non-dangling pointer to a node in a red-black tree.
 #[allow(dead_code)]
 struct Ptr<C: Callback>(NonNull<Node<C>>);
@@ -109,11 +129,24 @@ impl<C: Callback> Ptr<C> {
     /// Give the ownership of the node to the caller.
     pub fn into_box(self) -> Box<Node<C>> { unsafe { Box::from_raw(self.0.as_ptr()) } }
 
+    /// Drop the node.
+    pub fn drop_this(self) { unsafe { drop(Box::from_raw(self.0.as_ptr())) }; }
+
     /// Get the node as a reference.
     pub fn as_ref(&self) -> &Node<C> { unsafe { self.0.as_ref() } }
 
     /// Get the node as a mutable reference.
     pub fn as_mut(&mut self) -> &mut Node<C> { unsafe { self.0.as_mut() } }
+
+    /// Get a node as a reference with a long lifetime.
+    pub fn as_ref_longlife<'a>(self) -> &'a Node<C> {
+        unsafe { &*(self.as_ref() as *const Node<C>) }
+    }
+
+    /// Get a node as a mutable reference with a long lifetime.
+    pub fn as_mut_longlife<'a>(mut self) -> &'a mut Node<C> {
+        unsafe { &mut *(self.as_mut() as *mut Node<C>) }
+    }
 
     /// Update the node.
     pub fn update(&mut self) { C::update(*self); }
@@ -146,15 +179,6 @@ impl<C: Callback> ops::Deref for Ptr<C> {
 impl<C: Callback> ops::DerefMut for Ptr<C> {
     fn deref_mut(&mut self) -> &mut Self::Target { self.as_mut() }
 }
-impl<C: Callback> PartialEq for Ptr<C> {
-    fn eq(&self, other: &Self) -> bool { ptr::eq(self.as_ref(), other.as_ref()) }
-}
-impl<C: Callback> Eq for Ptr<C> {}
 
 /// Get the color of a node.
 fn color<C: Callback>(p: Option<Ptr<C>>) -> Color { p.map_or(Color::Black, |p| p.as_ref().color) }
-
-/// Get the pointer to a node.
-fn as_ptr<C: Callback>(p: Option<Ptr<C>>) -> *mut Node<C> {
-    p.map_or(ptr::null_mut(), |p| p.0.as_ptr())
-}
