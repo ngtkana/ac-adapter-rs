@@ -718,7 +718,7 @@ where
     }
 
     /// Get the index of the given node.
-    pub(super) fn insert_at(&mut self, new: Ptr<C>, index: usize) {
+    pub(super) fn insert_at(&mut self, index: usize, new: Ptr<C>) {
         debug_assert!(new.is_isolated_and_red());
         debug_assert!(index <= self.len());
         self.insert(new, self.position_at(index));
@@ -965,6 +965,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
         debug_assert!(zr.is_isolated_and_red());
         r.insert(zr, None);
     }
+    z.update();
     let mut black_height = u8::from(z.color == Color::Black);
     while let Some(mut p) = z.parent {
         let p_original_color = p.color;
@@ -982,6 +983,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
                 x.parent = None;
             }
             p.isolate_and_red();
+            p.update();
 
             // Fix the red-root violation.
             if color(x.root) == Color::Red {
@@ -1013,6 +1015,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
                 x.parent = None;
             }
             p.isolate_and_red();
+            p.update();
 
             // Fix the red-root violation.
             if color(x.root) == Color::Red {
@@ -1496,25 +1499,11 @@ pub(super) mod tests {
                     let index = rng.gen_range(0..=expected.len());
                     let value = rng.gen_range(0..VALUE_LIM);
                     expected.insert(index, value);
-                    tree.insert_at(Ptr::new(Data::new(value)), index);
+                    tree.insert_at(index, Ptr::new(Data::new(value)));
                 }
                 assert_eq!(to_vec(&tree), expected);
                 validate(&tree);
             }
-        }
-    }
-
-    #[test]
-    fn test_split_off_at_random() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..2000 {
-            let (mut tree, mut vec) = random_tree(&mut rng, 0..40);
-            // Test split_off_at.
-            let index = rng.gen_range(0..=vec.len());
-            let tree2 = tree.split_off_at(index);
-            let vec2 = vec.split_off(index);
-            assert_eq!(to_vec(&tree), vec);
-            assert_eq!(to_vec(&tree2), vec2);
         }
     }
 

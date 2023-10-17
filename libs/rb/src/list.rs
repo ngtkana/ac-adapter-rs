@@ -155,6 +155,17 @@ impl<O: Op> RbList<O> {
         self.tree.pop_back().map(|p| p.into_box().data.value)
     }
 
+    /// Inserts an element at the given index.
+    pub fn insert(&mut self, index: usize, value: O::Value) {
+        self.tree
+            .insert_at(index, Ptr::new(IrreversibleData::new(value)));
+    }
+
+    /// Removes the element at the given index.
+    pub fn remove(&mut self, index: usize) -> O::Value {
+        self.tree.remove_at(index).into_box().data.value
+    }
+
     /// Moves all elements from other into `self`, leaving `other` empty.
     pub fn append(&mut self, other: &mut Self) { self.tree.append(&mut other.tree); }
 
@@ -431,7 +442,30 @@ mod tests {
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
+    use rstest::rstest;
+    use std::iter::repeat_with;
     use std::rc::Rc;
+
+    struct ConcatOp;
+    impl Op for ConcatOp {
+        type Acc = String;
+        type Action = ();
+        type Value = char;
+
+        fn mul(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+            lhs.chars().chain(rhs.chars()).collect()
+        }
+
+        fn to_acc(value: &Self::Value) -> Self::Acc { value.to_string() }
+
+        fn apply(_value: &mut Self::Value, _lazy: &Self::Action) {}
+
+        fn apply_acc(_acc: &mut Self::Acc, _lazy: &Self::Action) {}
+
+        fn compose(_lhs: &Self::Action, _rhs: &Self::Action) -> Self::Action {}
+
+        fn identity_action() -> Self::Action {}
+    }
 
     #[test]
     fn test_drop() {
@@ -543,39 +577,82 @@ mod tests {
         }
     }
 
-    #[test]
-    fn test_fold_random() {
-        struct ConcatOp;
-        impl Op for ConcatOp {
-            type Acc = String;
-            type Action = ();
-            type Value = char;
-
-            fn mul(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
-                lhs.chars().chain(rhs.chars()).collect()
-            }
-
-            fn to_acc(value: &Self::Value) -> Self::Acc { value.to_string() }
-
-            fn apply(_value: &mut Self::Value, _lazy: &Self::Action) {}
-
-            fn apply_acc(_acc: &mut Self::Acc, _lazy: &Self::Action) {}
-
-            fn compose(_lhs: &Self::Action, _rhs: &Self::Action) -> Self::Action {}
-
-            fn identity_action() -> Self::Action {}
-        }
-
+    #[rstest]
+    #[case(0.1)]
+    #[case(0.5)]
+    #[case(0.9)]
+    fn test_insert_remove_fold_random(#[case] remove_ratio: f64) {
         let mut rng = StdRng::seed_from_u64(42);
+        let mut list = RbList::<ConcatOp>::new();
         for _ in 0..200 {
-            let len = rng.gen_range(0..10);
-            let list = ('a'..='z').take(len).collect::<RbList<ConcatOp>>();
-            let start = rng.gen_range(0..=len);
-            let end = rng.gen_range(0..=len);
+            // Remove
+            if rng.gen_bool(remove_ratio) && !list.is_empty() {
+                let index = rng.gen_range(0..list.len());
+                list.tree.remove_at(index);
+            }
+            // Insert
+            else {
+                let index = rng.gen_range(0..=list.len());
+                list.insert(index, rng.gen_range('a'..='z'));
+            }
+            // Fold
+            let start = rng.gen_range(0..=list.len());
+            let end = rng.gen_range(0..=list.len());
             let (start, end) = (start.min(end), start.max(end));
-            let expected = list.range(start..end).map(|&x| x).collect::<String>();
+            let expected = list.range(start..end).collect::<String>();
             let result = list.fold(start..end).unwrap_or_default();
             assert_eq!(result, expected, "{:?}.fold({}..{})", &list, start, end,);
+        }
+    }
+
+    #[test]
+    // https://atcoder.jp/contests/soundhound2018-summer-final-open/tasks/soundhound2018_summer_final_e
+    fn test_hash_swapping() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = 5;
+            let mut s = repeat_with(|| rng.gen_range(b'a'..=b'z') as char)
+                .take(n)
+                .collect::<String>();
+            let mut list = s.chars().collect::<RbList<ConcatOp>>();
+            for _ in 0..100 {
+                // Rebuild
+                {
+                    let mut l = rng.gen_range(0..n - 1);
+                    let mut r = rng.gen_range(0..n);
+                    if l >= r {
+                        std::mem::swap(&mut l, &mut r);
+                        r += 1;
+                    }
+                    // String
+                    {
+                        let i2 = s.split_off(r);
+                        let i1 = s.split_off(l);
+                        s.push_str(&i1);
+                        s.push_str(&i2);
+                    }
+                    // Tree
+                    {
+                        let mut list2 = list.split_off(r);
+                        let mut list1 = list.split_off(l);
+                        list.append(&mut list1);
+                        list.append(&mut list2);
+                    }
+                }
+                assert_eq!(list.iter().collect::<String>(), s);
+                // Fold
+                for _ in 0..10 {
+                    let mut l = rng.gen_range(0..n - 1);
+                    let mut r = rng.gen_range(0..n);
+                    if l >= r {
+                        std::mem::swap(&mut l, &mut r);
+                        r += 1;
+                    }
+                    let ans = list.fold(l..r).unwrap_or_default();
+                    let expected = s.chars().skip(l).take(r - l).collect::<String>();
+                    assert_eq!(ans, expected);
+                }
+            }
         }
     }
 }
