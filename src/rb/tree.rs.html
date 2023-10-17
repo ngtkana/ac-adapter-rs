@@ -1499,20 +1499,102 @@
 <a href="#1465" id="1465">1465</a>
 <a href="#1466" id="1466">1466</a>
 <a href="#1467" id="1467">1467</a>
+<a href="#1468" id="1468">1468</a>
+<a href="#1469" id="1469">1469</a>
+<a href="#1470" id="1470">1470</a>
+<a href="#1471" id="1471">1471</a>
+<a href="#1472" id="1472">1472</a>
+<a href="#1473" id="1473">1473</a>
+<a href="#1474" id="1474">1474</a>
+<a href="#1475" id="1475">1475</a>
+<a href="#1476" id="1476">1476</a>
+<a href="#1477" id="1477">1477</a>
+<a href="#1478" id="1478">1478</a>
+<a href="#1479" id="1479">1479</a>
+<a href="#1480" id="1480">1480</a>
+<a href="#1481" id="1481">1481</a>
+<a href="#1482" id="1482">1482</a>
+<a href="#1483" id="1483">1483</a>
+<a href="#1484" id="1484">1484</a>
+<a href="#1485" id="1485">1485</a>
+<a href="#1486" id="1486">1486</a>
+<a href="#1487" id="1487">1487</a>
+<a href="#1488" id="1488">1488</a>
+<a href="#1489" id="1489">1489</a>
+<a href="#1490" id="1490">1490</a>
+<a href="#1491" id="1491">1491</a>
+<a href="#1492" id="1492">1492</a>
+<a href="#1493" id="1493">1493</a>
+<a href="#1494" id="1494">1494</a>
+<a href="#1495" id="1495">1495</a>
+<a href="#1496" id="1496">1496</a>
+<a href="#1497" id="1497">1497</a>
+<a href="#1498" id="1498">1498</a>
+<a href="#1499" id="1499">1499</a>
+<a href="#1500" id="1500">1500</a>
+<a href="#1501" id="1501">1501</a>
+<a href="#1502" id="1502">1502</a>
+<a href="#1503" id="1503">1503</a>
+<a href="#1504" id="1504">1504</a>
+<a href="#1505" id="1505">1505</a>
+<a href="#1506" id="1506">1506</a>
+<a href="#1507" id="1507">1507</a>
+<a href="#1508" id="1508">1508</a>
+<a href="#1509" id="1509">1509</a>
+<a href="#1510" id="1510">1510</a>
+<a href="#1511" id="1511">1511</a>
+<a href="#1512" id="1512">1512</a>
+<a href="#1513" id="1513">1513</a>
+<a href="#1514" id="1514">1514</a>
+<a href="#1515" id="1515">1515</a>
+<a href="#1516" id="1516">1516</a>
+<a href="#1517" id="1517">1517</a>
+<a href="#1518" id="1518">1518</a>
+<a href="#1519" id="1519">1519</a>
+<a href="#1520" id="1520">1520</a>
+<a href="#1521" id="1521">1521</a>
+<a href="#1522" id="1522">1522</a>
+<a href="#1523" id="1523">1523</a>
+<a href="#1524" id="1524">1524</a>
+<a href="#1525" id="1525">1525</a>
+<a href="#1526" id="1526">1526</a>
+<a href="#1527" id="1527">1527</a>
+<a href="#1528" id="1528">1528</a>
+<a href="#1529" id="1529">1529</a>
+<a href="#1530" id="1530">1530</a>
+<a href="#1531" id="1531">1531</a>
+<a href="#1532" id="1532">1532</a>
+<a href="#1533" id="1533">1533</a>
+<a href="#1534" id="1534">1534</a>
+<a href="#1535" id="1535">1535</a>
+<a href="#1536" id="1536">1536</a>
+<a href="#1537" id="1537">1537</a>
+<a href="#1538" id="1538">1538</a>
+<a href="#1539" id="1539">1539</a>
+<a href="#1540" id="1540">1540</a>
+<a href="#1541" id="1541">1541</a>
+<a href="#1542" id="1542">1542</a>
+<a href="#1543" id="1543">1543</a>
+<a href="#1544" id="1544">1544</a>
+<a href="#1545" id="1545">1545</a>
+<a href="#1546" id="1546">1546</a>
+<a href="#1547" id="1547">1547</a>
+<a href="#1548" id="1548">1548</a>
+<a href="#1549" id="1549">1549</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A red-black tree with `NonNull` and `Callback`.
-</span><span class="kw">use </span><span class="kw">crate</span>::as_ptr;
-<span class="kw">use </span><span class="kw">crate</span>::color;
+</span><span class="kw">use </span><span class="kw">crate</span>::color;
+<span class="kw">use </span><span class="kw">crate</span>::node_ptr_eq;
 <span class="kw">use </span><span class="kw">crate</span>::Callback;
 <span class="kw">use </span><span class="kw">crate</span>::Color;
 <span class="kw">use </span><span class="kw">crate</span>::Len;
 <span class="kw">use </span><span class="kw">crate</span>::Ptr;
 <span class="kw">use </span>std::cmp::Ordering;
 <span class="kw">use </span>std::mem;
-<span class="kw">use </span>std::ptr;
 
-<span class="comment">// TODO: implmement `Drop` for `Tree`, and think about the ownership of the nodes.
-
-</span><span class="doccomment">/// A red-black tree.
+<span class="doccomment">/// A red-black tree.
+///
+/// Almost all methods of this struct does not do any allocation or deallocation.
+/// The only exception is [`Tree::drop_all_nodes`].
 </span><span class="attr">#[allow(dead_code)]
 </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">struct </span>Tree&lt;C: Callback&gt; {
     root: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;,
@@ -1525,6 +1607,45 @@
 
     <span class="doccomment">/// Returns `true` if the tree is empty.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.root.is_none() }
+
+    <span class="doccomment">/// Drop all nodes in the tree.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>drop_all_nodes(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="self">self</span>.root.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = stack.pop() {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = x.as_ref().left {
+                stack.push(left);
+            }
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = x.as_ref().right {
+                stack.push(right);
+            }
+            x.drop_this();
+        }
+    }
+
+    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>from_slice(slice: <span class="kw-2">&amp;</span>[Ptr&lt;C&gt;]) -&gt; <span class="self">Self </span>{
+        <span class="kw">match </span>slice.len() {
+            <span class="number">0 </span>=&gt; <span class="self">Self</span>::new(),
+            <span class="number">1 </span>=&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::new();
+                result.push_back(slice[<span class="number">0</span>]);
+                result
+            }
+            <span class="number">2 </span>=&gt; {
+                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::new();
+                result.push_back(slice[<span class="number">0</span>]);
+                result.push_back(slice[<span class="number">1</span>]);
+                result
+            }
+            <span class="kw">_ </span>=&gt; {
+                <span class="kw">let </span>mid = slice.len() / <span class="number">2</span>;
+                join(
+                    <span class="self">Self</span>::from_slice(<span class="kw-2">&amp;</span>slice[..mid]),
+                    slice[mid],
+                    <span class="self">Self</span>::from_slice(<span class="kw-2">&amp;</span>slice[mid + <span class="number">1</span>..]),
+                )
+            }
+        }
+    }
 
     <span class="doccomment">/// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>partition_point&lt;P&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>pred: P) -&gt; <span class="prelude-ty">Option</span>&lt;(Ptr&lt;C&gt;, bool)&gt;
@@ -1674,7 +1795,7 @@
             }
 
             <span class="comment">// Case 3.1: the successor is the right child of `z`.
-            </span><span class="kw">if </span>ptr::eq(as_ptr(succ.parent), <span class="kw-2">&amp;*</span>z) {
+            </span><span class="kw">if </span>node_ptr_eq(succ.parent, z) {
                 removed = Removed {
                     color: succ.color,
                     upper: <span class="prelude-val">Some</span>(succ),
@@ -1788,7 +1909,7 @@
         <span class="kw">while </span>p.color == Color::Red {
             <span class="kw">let </span><span class="kw-2">mut </span>pp = p.parent.unwrap();
             <span class="comment">// Case 1: `p` is a left child.
-            </span><span class="kw">if </span>ptr::eq(as_ptr(pp.left), <span class="kw-2">&amp;*</span>p) {
+            </span><span class="kw">if </span>node_ptr_eq(pp.left, p) {
                 <span class="kw">let </span>s = pp.as_ref().right;
                 <span class="comment">// Case 1.1: Split the 5-node.
                 </span><span class="kw">if </span>color(s) == Color::Red {
@@ -1810,7 +1931,7 @@
                 <span class="comment">// Case 1.2: Balance the 4-node
                 </span><span class="kw">else </span>{
                     <span class="comment">// Handle the splayed 4-node case.
-                    </span><span class="kw">if </span>ptr::eq(as_ptr(p.right), <span class="kw-2">&amp;*</span>x) {
+                    </span><span class="kw">if </span>node_ptr_eq(p.right, x) {
                         <span class="self">self</span>.left_rotate(p);
                         p = x;
                         x = p.left.unwrap();
@@ -1844,7 +1965,7 @@
                 <span class="comment">// Case 2.2: Balance the 4-node
                 </span><span class="kw">else </span>{
                     <span class="comment">// Handle the splayed 4-node case.
-                    </span><span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+                    </span><span class="kw">if </span>node_ptr_eq(p.left, x) {
                         <span class="self">self</span>.right_rotate(p);
                         p = x;
                         x = p.right.unwrap();
@@ -1888,7 +2009,7 @@
 
         <span class="kw">while </span>color(x) == Color::Black {
             <span class="comment">// Case 1: `x` is a left child.
-            </span><span class="kw">if </span>ptr::eq(as_ptr(p.left), as_ptr(x)) {
+            </span><span class="kw">if </span>node_ptr_eq(p.left, x) {
                 <span class="kw">let </span><span class="kw-2">mut </span>s = p.right;
 
                 <span class="comment">// Handle the case where `p` is a right-leaning 3-node.
@@ -2033,7 +2154,7 @@
         <span class="comment">// Connect `p` and `y`.
         </span>y.parent = p;
         <span class="kw-2">*</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>p) = p {
-            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.left, x) {
                 <span class="kw-2">&amp;mut </span>p.left
             } <span class="kw">else </span>{
                 <span class="kw-2">&amp;mut </span>p.right
@@ -2066,7 +2187,7 @@
         <span class="comment">// Connect `p` and `y`.
         </span>y.parent = p;
         <span class="kw-2">*</span>(<span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">ref mut </span>p) = p {
-            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.left, x) {
                 <span class="kw-2">&amp;mut </span>p.left
             } <span class="kw">else </span>{
                 <span class="kw-2">&amp;mut </span>p.right
@@ -2083,7 +2204,7 @@
     <span class="doccomment">/// Replace the subtree rooted at `u` with the subtree rooted at `v`.
     </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>transplant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, u: Ptr&lt;C&gt;, v: <span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;) {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = u.parent {
-            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>u) {
+            <span class="kw">if </span>node_ptr_eq(p.left, u) {
                 p.left = v;
             } <span class="kw">else </span>{
                 p.right = v;
@@ -2221,7 +2342,7 @@
             <span class="kw">return </span><span class="prelude-val">Some</span>(x);
         }
         <span class="kw">while let </span><span class="prelude-val">Some</span>(p) = x.parent {
-            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.left, x) {
                 <span class="kw">return </span><span class="prelude-val">Some</span>(p);
             }
             x = p;
@@ -2239,7 +2360,7 @@
             <span class="kw">return </span><span class="prelude-val">Some</span>(x);
         }
         <span class="kw">while let </span><span class="prelude-val">Some</span>(p) = x.parent {
-            <span class="kw">if </span>ptr::eq(as_ptr(p.right), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.right, x) {
                 <span class="kw">return </span><span class="prelude-val">Some</span>(p);
             }
             x = p;
@@ -2260,7 +2381,7 @@
         </span><span class="kw">let </span><span class="kw-2">mut </span>x = <span class="kw-2">*</span><span class="self">self</span>;
         <span class="kw">while </span>x.data.len() &lt;= n {
             <span class="kw">let </span>p = x.parent<span class="question-mark">?</span>;
-            <span class="kw">if </span>ptr::eq(as_ptr(p.right), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.right, x) {
                 n += p.left.map_or(<span class="number">0</span>, |l| l.data.len()) + <span class="number">1</span>;
             }
             x = p;
@@ -2287,7 +2408,7 @@
         </span><span class="kw">let </span><span class="kw-2">mut </span>x = <span class="kw-2">*</span><span class="self">self</span>;
         <span class="kw">while </span>x.data.len() &lt;= n {
             <span class="kw">let </span>p = x.parent<span class="question-mark">?</span>;
-            <span class="kw">if </span>ptr::eq(as_ptr(p.left), <span class="kw-2">&amp;*</span>x) {
+            <span class="kw">if </span>node_ptr_eq(p.left, x) {
                 n += p.right.map_or(<span class="number">0</span>, |r| r.data.len()) + <span class="number">1</span>;
             }
             x = p;
@@ -2431,7 +2552,7 @@
     <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = z.parent {
         <span class="kw">let </span>p_original_color = p.color;
         <span class="comment">// Case 1: `z` is a left child: `r &lt;- join(r, p, p.right)`.
-        </span><span class="kw">if </span>ptr::eq(<span class="kw-2">&amp;*</span>z, as_ptr(p.left)) {
+        </span><span class="kw">if </span>node_ptr_eq(z, p.left) {
             <span class="comment">// Get the right child of `p`.
             </span><span class="kw">let </span><span class="kw-2">mut </span>x = Tree {
                 root: p.right,
@@ -2497,7 +2618,7 @@
             black_height += <span class="number">1</span>;
         }
     }
-    <span class="macro">debug_assert!</span>(ptr::eq(as_ptr(tree.root), <span class="kw-2">&amp;*</span>z));
+    <span class="macro">debug_assert!</span>(node_ptr_eq(tree.root, z));
     <span class="kw-2">*</span>tree = Tree::new();
     z.color = Color::Red;
     <span class="macro">debug_assert!</span>(z.is_isolated_and_red());
@@ -2505,7 +2626,7 @@
 }
 
 <span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
+</span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>rand::rngs::StdRng;
     <span class="kw">use </span>rand::Rng;
@@ -2513,6 +2634,7 @@
     <span class="kw">use </span>rstest::rstest;
     <span class="kw">use </span>std::borrow::Cow;
     <span class="kw">use </span>std::ops::Range;
+    <span class="kw">use </span>std::rc::Rc;
 
     <span class="kw">const </span>MODULO: u64 = <span class="number">998244353</span>;
 
@@ -2709,7 +2831,7 @@
         vec
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>write&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+    <span class="kw">pub fn </span>write&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
         w: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>std::io::Write,
         tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
         <span class="kw-2">mut </span>to_string: F,
@@ -2739,7 +2861,7 @@
             }
             <span class="kw">let </span><span class="kw-2">mut </span>style = ansi_term::Style::new();
             <span class="kw">for </span><span class="kw-2">&amp;</span>(_name, ptr, colour) <span class="kw">in </span>fg {
-                <span class="kw">if </span>ptr::eq(<span class="kw-2">&amp;*</span>current, <span class="kw-2">&amp;*</span>ptr) {
+                <span class="kw">if </span>node_ptr_eq(current, ptr) {
                     style = style.on(colour);
                 }
             }
@@ -2768,7 +2890,7 @@
         <span class="prelude-val">Ok</span>(())
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>format&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
+    <span class="kw">pub fn </span>format&lt;<span class="lifetime">&#39;a</span>, C: Callback, F, S&gt;(
         tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;,
         to_string: F,
         fg: <span class="kw-2">&amp;</span>[(<span class="kw-2">&amp;</span><span class="lifetime">&#39;static </span>str, Ptr&lt;C&gt;, ansi_term::Color)],
@@ -2800,6 +2922,48 @@
         }
         <span class="kw">let </span>vec = to_vec(<span class="kw-2">&amp;</span>tree);
         (tree, vec)
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_alloc_dealloc() {
+        <span class="kw">enum </span>AllocCallback {}
+        <span class="kw">impl </span>Callback <span class="kw">for </span>AllocCallback {
+            <span class="kw">type </span>Data = Rc&lt;()&gt;;
+
+            <span class="kw">fn </span>push(_node: Ptr&lt;<span class="self">Self</span>&gt;) {}
+
+            <span class="kw">fn </span>update(_node: Ptr&lt;<span class="self">Self</span>&gt;) {}
+        }
+        <span class="kw">let </span>rcs = std::iter::repeat_with(|| Rc::new(()))
+            .take(<span class="number">10</span>)
+            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
+            <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">1</span>);
+        }
+        {
+            <span class="kw">let </span>slice = rcs
+                .iter()
+                .map(|rc| Ptr::new(Rc::clone(rc)))
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+
+            <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
+                <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">2</span>);
+            }
+
+            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;AllocCallback&gt;::from_slice(<span class="kw-2">&amp;</span>slice);
+
+            <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
+                <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">2</span>);
+            }
+
+            tree.drop_all_nodes();
+            <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
+                <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">1</span>);
+            }
+        }
+        <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
+            <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">1</span>);
+        }
     }
 
     <span class="attr">#[rstest]
