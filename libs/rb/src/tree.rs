@@ -3,6 +3,7 @@ use crate::as_ptr;
 use crate::color;
 use crate::Callback;
 use crate::Color;
+use crate::Len;
 use crate::Ptr;
 use std::cmp::Ordering;
 use std::mem;
@@ -594,6 +595,110 @@ impl<C: Callback> Tree<C> {
         }
     }
 }
+#[allow(dead_code)]
+impl<C: Callback> Tree<C>
+where
+    C::Data: Len,
+{
+    /// Get the length of the tree.
+    pub(super) fn len(&self) -> usize { self.root.map_or(0, |p| p.as_ref().data.len()) }
+
+    /// Returns the index of the partition point according to the given predicate.
+    pub(super) fn partition_point_index<P>(&self, mut pred: P) -> usize
+    where
+        P: FnMut(Ptr<C>) -> bool,
+    {
+        let mut index = 0;
+        let Some((_p, result)) = self.partition_point(|p| {
+            let result = pred(p);
+            if result {
+                index += p.left.map_or(0, |p| p.data.len()) + 1;
+            }
+            result
+        }) else {
+            return 0;
+        };
+        if result {
+            index += 1;
+        }
+        index
+    }
+
+    /// Binary search the tree and returns the index of the node if found, or the index where the node should be inserted.
+    pub(super) fn binary_search_index<F>(&self, mut f: F) -> Result<usize, usize>
+    where
+        F: FnMut(Ptr<C>) -> Ordering,
+    {
+        let mut index = 0;
+        let mut p = self.root;
+        while let Some(p0) = p {
+            match f(p0) {
+                Ordering::Less => {
+                    index += p0.left.map_or(0, |p| p.data.len()) + 1;
+                    p = p0.right;
+                }
+                Ordering::Greater => p = p0.left,
+                Ordering::Equal => {
+                    index += p0.left.map_or(0, |p| p.data.len());
+                    return Ok(index);
+                }
+            }
+        }
+        Err(index)
+    }
+
+    /// Get the position of the node at the given index.
+    pub(super) fn position_at(&self, mut index: usize) -> Option<(Ptr<C>, bool)> {
+        debug_assert!(index <= self.len());
+        self.partition_point(|p| {
+            let len = p.left.map_or(0, |p| p.data.len());
+            if index <= len {
+                false
+            } else {
+                index -= len + 1;
+                true
+            }
+        })
+    }
+
+    /// Get the node at the given index.
+    pub(super) fn get_at(&self, mut index: usize) -> Ptr<C> {
+        debug_assert!(index < self.len());
+        self.binary_search(|p| {
+            let len = p.left.map_or(0, |p| p.data.len());
+            match index.cmp(&len) {
+                Ordering::Less => Ordering::Greater,
+                Ordering::Greater => {
+                    index -= len + 1;
+                    Ordering::Less
+                }
+                Ordering::Equal => Ordering::Equal,
+            }
+        })
+        .unwrap()
+    }
+
+    /// Get the index of the given node.
+    pub(super) fn insert_at(&mut self, new: Ptr<C>, index: usize) {
+        debug_assert!(new.is_isolated_and_red());
+        debug_assert!(index <= self.len());
+        self.insert(new, self.position_at(index));
+    }
+
+    /// Remove the node at the given index.
+    pub(super) fn remove_at(&mut self, index: usize) -> Ptr<C> {
+        debug_assert!(index < self.len());
+        let p = self.get_at(index);
+        self.remove(p);
+        p
+    }
+
+    /// Split the tree into two trees at the given index.
+    pub(super) fn split_off_at(&mut self, index: usize) -> Tree<C> {
+        debug_assert!(index <= self.len());
+        self.split_off(self.position_at(index))
+    }
+}
 impl<C: Callback> Default for Tree<C> {
     fn default() -> Self {
         Tree {
@@ -606,7 +711,7 @@ impl<C: Callback> Default for Tree<C> {
 #[allow(dead_code)]
 impl<C: Callback> Ptr<C> {
     /// Get the next node in the tree.
-    pub fn next(&self) -> Option<Self> {
+    pub(super) fn next(&self) -> Option<Self> {
         let mut x = *self;
         if let Some(mut x) = x.right {
             while let Some(l) = x.left {
@@ -624,7 +729,7 @@ impl<C: Callback> Ptr<C> {
     }
 
     /// Get the previous node in the tree.
-    pub fn prev(&self) -> Option<Self> {
+    pub(super) fn prev(&self) -> Option<Self> {
         let mut x = *self;
         if let Some(mut x) = x.left {
             while let Some(r) = x.right {
@@ -639,6 +744,65 @@ impl<C: Callback> Ptr<C> {
             x = p;
         }
         None
+    }
+}
+#[allow(dead_code)]
+impl<C: Callback> Ptr<C>
+where
+    C::Data: Len,
+{
+    /// Get the n-th next node in the tree.
+    pub(super) fn advance_by(&self, mut n: usize) -> Option<Self> {
+        // Convert the problem to finding the `n`-th node in the tree.
+        n += self.left.map_or(0, |l| l.data.len());
+        // Search up the tree.
+        let mut x = *self;
+        while x.data.len() <= n {
+            let p = x.parent?;
+            if ptr::eq(as_ptr(p.right), &*x) {
+                n += p.left.map_or(0, |l| l.data.len()) + 1;
+            }
+            x = p;
+        }
+        // Find the `n`-th node.
+        loop {
+            let len = x.left.map_or(0, |l| l.data.len());
+            match n.cmp(&len) {
+                Ordering::Less => x = x.left.unwrap(),
+                Ordering::Greater => {
+                    n -= len + 1;
+                    x = x.right.unwrap();
+                }
+                Ordering::Equal => return Some(x),
+            }
+        }
+    }
+
+    /// Get the n-th previous node in the tree.
+    pub(super) fn retreat_by(&self, mut n: usize) -> Option<Self> {
+        // Convert the problem to finding the backward-`n`-th node in the tree.
+        n += self.right.map_or(0, |r| r.data.len());
+        // Search up the tree.
+        let mut x = *self;
+        while x.data.len() <= n {
+            let p = x.parent?;
+            if ptr::eq(as_ptr(p.left), &*x) {
+                n += p.right.map_or(0, |r| r.data.len()) + 1;
+            }
+            x = p;
+        }
+        // Find the `n`-th node.
+        loop {
+            let len = x.right.map_or(0, |r| r.data.len());
+            match n.cmp(&len) {
+                Ordering::Less => x = x.right.unwrap(),
+                Ordering::Greater => {
+                    n -= len + 1;
+                    x = x.left.unwrap();
+                }
+                Ordering::Equal => return Some(x),
+            }
+        }
     }
 }
 
@@ -887,6 +1051,9 @@ mod tests {
             }
         }
     }
+    impl Len for Data {
+        fn len(&self) -> usize { self.len }
+    }
 
     struct TestCallback;
     impl Callback for TestCallback {
@@ -1114,25 +1281,24 @@ mod tests {
         String::from_utf8(buf).unwrap()
     }
 
-    #[test]
-    fn test_insert() {
-        let mut rng = StdRng::seed_from_u64(42);
+    fn random_tree(rng: &mut StdRng, range: Range<u64>) -> (Tree<TestCallback>, Vec<u64>) {
+        const QUERY_LIM: usize = 20;
+        let query_number = rng.gen_range(0..QUERY_LIM);
         let mut tree = Tree::<TestCallback>::new();
-        let mut vec = Vec::new();
-        for _ in 0..200 {
-            let value = rng.gen_range(0..20);
-            let index = vec.partition_point(|&x| x < value);
-            vec.insert(index, value);
-            let insert_position = tree.partition_point(|p| p.data.value < value);
-            tree.insert(Ptr::new(Data::new(value)), insert_position);
-            assert_eq!(
-                to_vec(&tree),
-                vec,
-                "{}",
-                format(&tree, |data| data.value.to_string(), &[])
-            );
-            validate(&tree)
+        for _ in 0..query_number {
+            let value = rng.gen_range(range.clone());
+            if rng.gen_bool(0.5) {
+                let insert_position = tree.partition_point(|n| n.data.value < value);
+                tree.insert(Ptr::new(Data::new(value)), insert_position);
+            } else {
+                let output = tree.binary_search(|n| n.data.value.cmp(&value));
+                if let Some(output) = output {
+                    tree.remove(output);
+                }
+            }
         }
+        let vec = to_vec(&tree);
+        (tree, vec)
     }
 
     #[rstest]
@@ -1175,25 +1341,6 @@ mod tests {
 
     #[test]
     fn test_append_split_off_random() {
-        fn random_tree(rng: &mut StdRng, range: Range<u64>) -> (Tree<TestCallback>, Vec<u64>) {
-            const QUERY_LIM: usize = 20;
-            let query_number = rng.gen_range(0..QUERY_LIM);
-            let mut tree = Tree::<TestCallback>::new();
-            for _ in 0..query_number {
-                let value = rng.gen_range(range.clone());
-                if rng.gen_bool(0.5) {
-                    let insert_position = tree.partition_point(|n| n.data.value < value);
-                    tree.insert(Ptr::new(Data::new(value)), insert_position);
-                } else {
-                    let output = tree.binary_search(|n| n.data.value.cmp(&value));
-                    if let Some(output) = output {
-                        tree.remove(output);
-                    }
-                }
-            }
-            let vec = to_vec(&tree);
-            (tree, vec)
-        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
             let (mut tree1, mut vec1) = random_tree(&mut rng, 0..20);
@@ -1220,29 +1367,9 @@ mod tests {
 
     #[test]
     fn test_next_prev_random() {
-        fn random_tree(rng: &mut StdRng) -> (Tree<TestCallback>, Vec<u64>) {
-            const VALUE_LIM: u64 = 40;
-            const QUERY_LIM: usize = 20;
-            let query_number = rng.gen_range(0..QUERY_LIM);
-            let mut tree = Tree::<TestCallback>::new();
-            for _ in 0..query_number {
-                let value = rng.gen_range(0..VALUE_LIM);
-                if rng.gen_bool(0.5) {
-                    let insert_position = tree.partition_point(|n| n.data.value < value);
-                    tree.insert(Ptr::new(Data::new(value)), insert_position);
-                } else {
-                    let output = tree.binary_search(|n| n.data.value.cmp(&value));
-                    if let Some(output) = output {
-                        tree.remove(output);
-                    }
-                }
-            }
-            let vec = to_vec(&tree);
-            (tree, vec)
-        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
-            let (tree, vec) = random_tree(&mut rng);
+            let (tree, vec) = random_tree(&mut rng, 0..40);
 
             // Test next.
             let mut values = Vec::new();
@@ -1261,6 +1388,80 @@ mod tests {
                 ptr = p.prev();
             }
             assert_eq!(values, vec.into_iter().rev().collect::<Vec<_>>());
+        }
+    }
+
+    #[rstest]
+    #[case(0.1)]
+    #[case(0.5)]
+    #[case(0.9)]
+    fn test_insert_at_remove_at_random(#[case] remove_prob: f64) {
+        const VALUE_LIM: u64 = 40;
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let mut tree = Tree::<TestCallback>::new();
+            let mut expected = Vec::new();
+            for _ in 0..200 {
+                // Test remove_at.
+                if rng.gen_bool(remove_prob) && !expected.is_empty() {
+                    let index = rng.gen_range(0..expected.len());
+                    let expected_output = expected.remove(index);
+                    let output = tree.remove_at(index).data.value;
+                    assert_eq!(output, expected_output);
+                }
+                // Test insert_at.
+                else {
+                    let index = rng.gen_range(0..=expected.len());
+                    let value = rng.gen_range(0..VALUE_LIM);
+                    expected.insert(index, value);
+                    tree.insert_at(Ptr::new(Data::new(value)), index);
+                }
+                assert_eq!(to_vec(&tree), expected);
+                validate(&tree);
+            }
+        }
+    }
+
+    #[test]
+    fn test_split_off_at_random() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..2000 {
+            let (mut tree, mut vec) = random_tree(&mut rng, 0..40);
+            // Test split_off_at.
+            let index = rng.gen_range(0..=vec.len());
+            let tree2 = tree.split_off_at(index);
+            let vec2 = vec.split_off(index);
+            assert_eq!(to_vec(&tree), vec);
+            assert_eq!(to_vec(&tree2), vec2);
+        }
+    }
+
+    #[test]
+    fn test_advance_by_retreat_by_random() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..2000 {
+            let (tree, vec) = random_tree(&mut rng, 0..40);
+            if vec.is_empty() {
+                continue;
+            }
+            let index = rng.gen_range(0..vec.len());
+            let ptr = tree.get_at(index);
+
+            // Test advance_by.
+            {
+                let n = rng.gen_range(0..=vec.len());
+                let result = ptr.advance_by(n).map(|ptr| ptr.data.value);
+                let expected = vec.get(index + n).copied();
+                assert_eq!(result, expected);
+            }
+
+            // Test retreat_by.
+            {
+                let n = rng.gen_range(0..=index);
+                let result = ptr.retreat_by(n).map(|ptr| ptr.data.value);
+                let expected = index.checked_sub(n).map(|i| vec[i]);
+                assert_eq!(result, expected);
+            }
         }
     }
 }

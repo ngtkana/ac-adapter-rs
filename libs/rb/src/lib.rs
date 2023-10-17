@@ -26,6 +26,11 @@ trait Callback: Sized {
     fn update(node: Ptr<Self>);
 }
 
+/// A trait for getting the length of a node in a red-black tree.
+trait Len {
+    fn len(&self) -> usize;
+}
+
 /// A node in a red-black tree.
 #[allow(dead_code)]
 struct Node<C: Callback> {
