@@ -8,6 +8,53 @@ use std::ptr::NonNull;
 /// The core implementation of a red-black tree.
 mod tree;
 
+/// A list based on a red-black tree.
+mod list;
+
+pub use list::RbList;
+pub use list::RbReversibleList;
+
+/// The trait for specifying the operation of a red-black tree.
+///
+/// # Notation
+///
+/// - $xy$ denotes the multiplication of two accumulated values.
+/// - $a \circ b$ denotes the composition of two lazy actions.
+/// - $x \cdot a$ denotes the application of a lazy action to an accumulated value.
+///
+/// # Laws
+///
+/// For [`RbList`]:
+/// - `mul` is associative. ($(xy)z = x(yz)$)
+/// - `compose` is associative. ($(a \circ b) \circ c = a \circ (b \circ c)$)
+/// - `apply` is an action of a semigroup on a semigroup. ($(xy) \cdot a = (x \cdot a)(y \cdot a)$, $x \cdot (a \circ b) = (x \cdot a) \cdot b$)
+///
+/// Furthermore, for [`RbReversibleList`]:
+/// - `mul` is commutative. ($xy = yx$)
+pub trait Op {
+    /// The type of the value stored in a node.
+    type Value;
+    /// The type of the accumulated value of a node.
+    type Acc;
+    /// The type of the lazy action of a node.
+    type Lazy;
+
+    /// Convert a value to an accumulated value.
+    fn to_acc(value: &Self::Value) -> Self::Acc;
+
+    /// Multiply two accumulated values.
+    fn mul(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc;
+
+    /// Apply a lazy action to a value.
+    fn apply(value: &mut Self::Value, lazy: &Self::Lazy);
+
+    /// Apply a lazy action to an accumulated value.
+    fn apply_acc(acc: &mut Self::Acc, lazy: &Self::Lazy);
+
+    /// Compose two lazy actions.
+    fn compose(lhs: &Self::Lazy, rhs: &Self::Lazy) -> Self::Lazy;
+}
+
 /// A color of a node in a red-black tree.
 #[allow(dead_code)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
