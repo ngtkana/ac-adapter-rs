@@ -1497,6 +1497,8 @@
 <a href="#1463" id="1463">1463</a>
 <a href="#1464" id="1464">1464</a>
 <a href="#1465" id="1465">1465</a>
+<a href="#1466" id="1466">1466</a>
+<a href="#1467" id="1467">1467</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A red-black tree with `NonNull` and `Callback`.
 </span><span class="kw">use </span><span class="kw">crate</span>::as_ptr;
 <span class="kw">use </span><span class="kw">crate</span>::color;
@@ -2250,7 +2252,8 @@
 <span class="kw">where
     </span>C::Data: Len,
 {
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>advance_by(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="doccomment">/// Get the n-th next node in the tree.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>advance_by(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="comment">// Convert the problem to finding the `n`-th node in the tree.
         </span>n += <span class="self">self</span>.left.map_or(<span class="number">0</span>, |l| l.data.len());
         <span class="comment">// Search up the tree.
@@ -2276,7 +2279,8 @@
         }
     }
 
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>retreat_by(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
+    <span class="doccomment">/// Get the n-th previous node in the tree.
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>retreat_by(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>n: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>&gt; {
         <span class="comment">// Convert the problem to finding the backward-`n`-th node in the tree.
         </span>n += <span class="self">self</span>.right.map_or(<span class="number">0</span>, |r| r.data.len());
         <span class="comment">// Search up the tree.
