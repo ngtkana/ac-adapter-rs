@@ -1,9 +1,11 @@
+use crate::node_ptr_eq;
 use crate::tree::Tree;
 use crate::Callback;
 use crate::Len;
 use crate::Op;
 use crate::Ptr;
 use std::cmp::Ordering;
+use std::fmt;
 use std::marker::PhantomData;
 use std::ops;
 use std::ops::RangeBounds;
@@ -41,7 +43,6 @@ pub(super) struct ReversibleData<O: Op> {
     len: usize,
     value: O::Value,
     acc: O::Acc,
-    #[allow(dead_code)]
     lazy: O::Action,
     reverse: bool,
 }
@@ -191,11 +192,81 @@ impl<O: Op> RbList<O> {
         }
     }
 
+    /// Returns an iterator over the given range.
+    pub fn range(&self, range: impl RangeBounds<usize>) -> Range<'_, O> {
+        let Some((start, end)) = into_range_inclusive(self.len(), range) else {
+            return Range {
+                len: 0,
+                start: None,
+                end: None,
+                marker: PhantomData,
+            };
+        };
+        debug_assert!(start <= end);
+        assert!(end < self.len());
+        Range {
+            len: end - start + 1,
+            start: Some(self.tree.get_at(start)),
+            end: Some(self.tree.get_at(end)),
+            marker: PhantomData,
+        }
+    }
+
     /// Returns the product of all the elements within the `range`.
+    // TODO: stop use the internal structure of `Tree` here.
     pub fn fold<R: RangeBounds<usize>>(&self, range: R) -> Option<O::Acc> {
-        let _range = into_slice_range(self.len(), range);
-        // TODO: Implement `fold()`.
-        todo!()
+        let (start, end) = into_range_inclusive(self.len(), range)?;
+        debug_assert!(start <= end);
+        assert!(end < self.len());
+        // Invariants:
+        // * fold: [start, z]
+        // * len: ]z, end]
+        let mut z = self.tree.get_at(start);
+        let mut fold = O::to_acc(&z.data.value);
+        let mut len = end - start;
+        // Search up.
+        while len > 0 {
+            // 1. Try to append the right subtree.
+            if let Some(r) = z.right {
+                if len <= r.data.len {
+                    break;
+                }
+                fold = O::mul(&fold, &r.data.acc);
+                len -= r.data.len;
+            }
+            // 2. Move to the first right ancestor.
+            loop {
+                let p = z.parent.unwrap();
+                if node_ptr_eq(p.left, z) {
+                    z = p;
+                    break;
+                }
+                z = p;
+            }
+            // 3. Push back the value of the node.
+            fold = O::mul(&fold, &O::to_acc(&z.data.value));
+            len -= 1;
+        }
+        // Search down.
+        while len > 0 {
+            // 1. Move to the right.
+            z = z.right.unwrap();
+            // 2. Repeatedly move to the left.
+            while let Some(l) = z.left {
+                if l.data.len < len {
+                    break;
+                }
+                z = l;
+            }
+            // 3. Append the left subtree and push front the value of the node.
+            if let Some(l) = z.left {
+                fold = O::mul(&fold, &l.data.acc);
+                len -= l.data.len;
+            }
+            fold = O::mul(&fold, &O::to_acc(&z.data.value));
+            len -= 1;
+        }
+        Some(fold)
     }
 }
 impl<O: Op> Drop for RbList<O> {
@@ -208,6 +279,21 @@ impl<O: Op> Default for RbList<O> {
         }
     }
 }
+impl<O: Op> fmt::Debug for RbList<O>
+where
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
+    }
+}
+impl<O: Op> PartialEq for RbList<O>
+where
+    O::Value: PartialEq,
+{
+    fn eq(&self, other: &Self) -> bool { self.iter().eq(other.iter()) }
+}
+impl<O: Op> Eq for RbList<O> where O::Value: Eq {}
 impl<O: Op> FromIterator<O::Value> for RbList<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let nodes = iter
@@ -239,7 +325,7 @@ impl<'a, O: Op> Iterator for Range<'a, O> {
     type Item = &'a O::Value;
 
     fn next(&mut self) -> Option<Self::Item> {
-        let start = self.start.as_ref()?.clone();
+        let start = self.start?;
         self.len -= 1;
         if self.len == 0 {
             self.start = None;
@@ -255,7 +341,7 @@ impl<'a, O: Op> Iterator for Range<'a, O> {
     fn count(self) -> usize { self.len }
 
     fn nth(&mut self, n: usize) -> Option<Self::Item> {
-        let mut start = self.start.as_ref()?.clone();
+        let mut start = self.start?;
         if n < self.len {
             start = start.advance_by(n).unwrap();
             self.len -= n + 1;
@@ -276,7 +362,7 @@ impl<'a, O: Op> Iterator for Range<'a, O> {
 }
 impl<'a, O: Op> DoubleEndedIterator for Range<'a, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        let end = self.end.as_ref()?.clone();
+        let end = self.end?;
         self.len -= 1;
         if self.len == 0 {
             self.start = None;
@@ -288,7 +374,7 @@ impl<'a, O: Op> DoubleEndedIterator for Range<'a, O> {
     }
 
     fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
-        let mut end = self.end.as_ref()?.clone();
+        let mut end = self.end?;
         if n < self.len {
             end = end.retreat_by(n).unwrap();
             self.len -= n + 1;
@@ -316,34 +402,27 @@ pub struct RbReversibleList<O: Op> {
     root: Tree<Reversible<O>>,
 }
 
-fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> ops::Range<usize> {
+/// Converts a range to a range inclusive.
+/// If the range is invalid, returns `None`.
+fn into_range_inclusive(len: usize, range: impl RangeBounds<usize>) -> Option<(usize, usize)> {
     use ops::Bound;
     let start = match range.start_bound() {
         Bound::Included(&start) => start,
-        Bound::Excluded(&start) => start
-            .checked_add(1)
-            .unwrap_or_else(|| slice_start_index_overflow_fail()),
+        Bound::Excluded(&start) => start + 1,
         Bound::Unbounded => 0,
     };
 
     let end = match range.end_bound() {
-        Bound::Included(&end) => end
-            .checked_add(1)
-            .unwrap_or_else(|| slice_end_index_overflow_fail()),
-        Bound::Excluded(&end) => end,
+        Bound::Included(&end) => end,
+        Bound::Excluded(&end) => end.checked_sub(1)?,
         Bound::Unbounded => len,
     };
 
-    // Don't bother with checking `start < end` and `end <= len`
-    // since these checks are handled by `Range` impls
+    if start > end {
+        return None;
+    }
 
-    start..end
-}
-const fn slice_start_index_overflow_fail() -> ! {
-    panic!("attempted to index slice from after maximum usize");
-}
-const fn slice_end_index_overflow_fail() -> ! {
-    panic!("attempted to index slice up to maximum usize");
+    Some((start, end))
 }
 
 #[cfg(test)]
@@ -353,25 +432,6 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
     use std::rc::Rc;
-
-    struct TestOp;
-    impl Op for TestOp {
-        type Acc = ();
-        type Action = ();
-        type Value = usize;
-
-        fn mul(_lhs: &Self::Acc, _rhs: &Self::Acc) -> Self::Acc {}
-
-        fn to_acc(_value: &Self::Value) -> Self::Acc {}
-
-        fn apply(_value: &mut Self::Value, _lazy: &Self::Action) {}
-
-        fn apply_acc(_acc: &mut Self::Acc, _lazy: &Self::Action) {}
-
-        fn compose(_lhs: &Self::Action, _rhs: &Self::Action) -> Self::Action {}
-
-        fn identity_action() -> Self::Action {}
-    }
 
     #[test]
     fn test_drop() {
@@ -405,10 +465,29 @@ mod tests {
 
     #[test]
     fn test_iterator() {
+        struct UsizeOp;
+        impl Op for UsizeOp {
+            type Acc = ();
+            type Action = ();
+            type Value = usize;
+
+            fn mul(_lhs: &Self::Acc, _rhs: &Self::Acc) -> Self::Acc {}
+
+            fn to_acc(_value: &Self::Value) -> Self::Acc {}
+
+            fn apply(_value: &mut Self::Value, _lazy: &Self::Action) {}
+
+            fn apply_acc(_acc: &mut Self::Acc, _lazy: &Self::Action) {}
+
+            fn compose(_lhs: &Self::Action, _rhs: &Self::Action) -> Self::Action {}
+
+            fn identity_action() -> Self::Action {}
+        }
+
         let mut rng = StdRng::seed_from_u64(42);
         for len in 0..10 {
             // Test `next()`.
-            let list = (0..len).collect::<RbList<TestOp>>();
+            let list = (0..len).collect::<RbList<UsizeOp>>();
             let mut iter = list.iter();
             for i in 0..len {
                 assert_eq!(iter.next(), Some(&i));
@@ -451,6 +530,52 @@ mod tests {
                 assert_eq!(iter.nth_back(m), len.checked_sub(m + n + 2).as_ref());
                 assert_eq!(iter.len(), len.saturating_sub(m + n + 2)); // Test `size_hint()`.
             }
+
+            // Test `range()`
+            for _ in 0..4 * len {
+                let start = rng.gen_range(0..=len);
+                let end = rng.gen_range(0..=len);
+                let (start, end) = (start.min(end), start.max(end));
+                let result = list.range(start..end).copied().collect::<Vec<_>>();
+                let expected = (start..end).collect::<Vec<_>>();
+                assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_fold_random() {
+        struct ConcatOp;
+        impl Op for ConcatOp {
+            type Acc = String;
+            type Action = ();
+            type Value = char;
+
+            fn mul(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+                lhs.chars().chain(rhs.chars()).collect()
+            }
+
+            fn to_acc(value: &Self::Value) -> Self::Acc { value.to_string() }
+
+            fn apply(_value: &mut Self::Value, _lazy: &Self::Action) {}
+
+            fn apply_acc(_acc: &mut Self::Acc, _lazy: &Self::Action) {}
+
+            fn compose(_lhs: &Self::Action, _rhs: &Self::Action) -> Self::Action {}
+
+            fn identity_action() -> Self::Action {}
+        }
+
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let len = rng.gen_range(0..10);
+            let list = ('a'..='z').take(len).collect::<RbList<ConcatOp>>();
+            let start = rng.gen_range(0..=len);
+            let end = rng.gen_range(0..=len);
+            let (start, end) = (start.min(end), start.max(end));
+            let expected = list.range(start..end).map(|&x| x).collect::<String>();
+            let result = list.fold(start..end).unwrap_or_default();
+            assert_eq!(result, expected, "{:?}.fold({}..{})", &list, start, end,);
         }
     }
 }

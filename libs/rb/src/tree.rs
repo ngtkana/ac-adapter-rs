@@ -8,8 +8,6 @@ use crate::Ptr;
 use std::cmp::Ordering;
 use std::mem;
 
-// TODO: implmement `Drop` for `Tree`, and think about the ownership of the nodes.
-
 /// A red-black tree.
 ///
 /// Almost all methods of this struct does not do any allocation or deallocation.
@@ -1045,7 +1043,7 @@ fn unjoin<C: Callback>(tree: &mut Tree<C>, mut z: Ptr<C>) -> (Tree<C>, Tree<C>) 
 }
 
 #[cfg(test)]
-mod tests {
+pub(super) mod tests {
     use super::*;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -1250,7 +1248,7 @@ mod tests {
         vec
     }
 
-    pub(super) fn write<'a, C: Callback, F, S>(
+    pub fn write<'a, C: Callback, F, S>(
         w: &mut impl std::io::Write,
         tree: &Tree<C>,
         mut to_string: F,
@@ -1309,7 +1307,7 @@ mod tests {
         Ok(())
     }
 
-    pub(super) fn format<'a, C: Callback, F, S>(
+    pub fn format<'a, C: Callback, F, S>(
         tree: &Tree<C>,
         to_string: F,
         fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
