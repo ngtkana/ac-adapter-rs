@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/tree.rs`."><title>tree.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.1 (d5c2e9c34 2023-09-13)" data-channel="1.72.1" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/tree.rs`."><title>tree.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-cb6f1f67f1bcd037.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0 (cc66ad468 2023-10-03)" data-channel="1.73.0" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-1596385f77d47ef2.css" data-theme-dark-css="dark-0a43001d3fc2282c.css" data-theme-ayu-css="ayu-fd19013d6ce078bf.css" ><script src="../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-1596385f77d47ef2.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-0a43001d3fc2282c.css"><link rel="stylesheet" href="../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rb/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rb/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1581,6 +1581,38 @@
 <a href="#1547" id="1547">1547</a>
 <a href="#1548" id="1548">1548</a>
 <a href="#1549" id="1549">1549</a>
+<a href="#1550" id="1550">1550</a>
+<a href="#1551" id="1551">1551</a>
+<a href="#1552" id="1552">1552</a>
+<a href="#1553" id="1553">1553</a>
+<a href="#1554" id="1554">1554</a>
+<a href="#1555" id="1555">1555</a>
+<a href="#1556" id="1556">1556</a>
+<a href="#1557" id="1557">1557</a>
+<a href="#1558" id="1558">1558</a>
+<a href="#1559" id="1559">1559</a>
+<a href="#1560" id="1560">1560</a>
+<a href="#1561" id="1561">1561</a>
+<a href="#1562" id="1562">1562</a>
+<a href="#1563" id="1563">1563</a>
+<a href="#1564" id="1564">1564</a>
+<a href="#1565" id="1565">1565</a>
+<a href="#1566" id="1566">1566</a>
+<a href="#1567" id="1567">1567</a>
+<a href="#1568" id="1568">1568</a>
+<a href="#1569" id="1569">1569</a>
+<a href="#1570" id="1570">1570</a>
+<a href="#1571" id="1571">1571</a>
+<a href="#1572" id="1572">1572</a>
+<a href="#1573" id="1573">1573</a>
+<a href="#1574" id="1574">1574</a>
+<a href="#1575" id="1575">1575</a>
+<a href="#1576" id="1576">1576</a>
+<a href="#1577" id="1577">1577</a>
+<a href="#1578" id="1578">1578</a>
+<a href="#1579" id="1579">1579</a>
+<a href="#1580" id="1580">1580</a>
+<a href="#1581" id="1581">1581</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A red-black tree with `NonNull` and `Callback`.
 </span><span class="kw">use </span><span class="kw">crate</span>::color;
 <span class="kw">use </span><span class="kw">crate</span>::node_ptr_eq;
@@ -1619,31 +1651,6 @@
                 stack.push(right);
             }
             x.drop_this();
-        }
-    }
-
-    <span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>from_slice(slice: <span class="kw-2">&amp;</span>[Ptr&lt;C&gt;]) -&gt; <span class="self">Self </span>{
-        <span class="kw">match </span>slice.len() {
-            <span class="number">0 </span>=&gt; <span class="self">Self</span>::new(),
-            <span class="number">1 </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::new();
-                result.push_back(slice[<span class="number">0</span>]);
-                result
-            }
-            <span class="number">2 </span>=&gt; {
-                <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::new();
-                result.push_back(slice[<span class="number">0</span>]);
-                result.push_back(slice[<span class="number">1</span>]);
-                result
-            }
-            <span class="kw">_ </span>=&gt; {
-                <span class="kw">let </span>mid = slice.len() / <span class="number">2</span>;
-                join(
-                    <span class="self">Self</span>::from_slice(<span class="kw-2">&amp;</span>slice[..mid]),
-                    slice[mid],
-                    <span class="self">Self</span>::from_slice(<span class="kw-2">&amp;</span>slice[mid + <span class="number">1</span>..]),
-                )
-            }
         }
     }
 
@@ -1831,10 +1838,7 @@
             <span class="comment">// Update the remaining node.
             </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = removed.upper {
                 x.update();
-                <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
-                    p.update();
-                    x = p;
-                }
+                x.update_ancestors();
             }
         }
     }
@@ -1978,10 +1982,7 @@
             }
         }
         x.update();
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
-            p.update();
-            x = p;
-        }
+        x.update_ancestors();
     }
 
     <span class="doccomment">/// Fixup the black-height violation between `x` and `p` and non-updated property of `x`.
@@ -2128,10 +2129,7 @@
         <span class="comment">// Update the remaining node.
         </span><span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
             x.update();
-            <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent {
-                p.update();
-                x = p;
-            }
+            x.update_ancestors();
         }
     }
 
@@ -2231,18 +2229,13 @@
         </span>P: FnMut(Ptr&lt;C&gt;) -&gt; bool,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="number">0</span>;
-        <span class="kw">let </span><span class="prelude-val">Some</span>((_p, result)) = <span class="self">self</span>.partition_point(|p| {
+        <span class="self">self</span>.partition_point(|p| {
             <span class="kw">let </span>result = pred(p);
             <span class="kw">if </span>result {
                 index += p.left.map_or(<span class="number">0</span>, |p| p.data.len()) + <span class="number">1</span>;
             }
             result
-        }) <span class="kw">else </span>{
-            <span class="kw">return </span><span class="number">0</span>;
-        };
-        <span class="kw">if </span>result {
-            index += <span class="number">1</span>;
-        }
+        });
         index
     }
 
@@ -2301,7 +2294,7 @@
     }
 
     <span class="doccomment">/// Get the index of the given node.
-    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>insert_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, new: Ptr&lt;C&gt;, index: usize) {
+    </span><span class="kw">pub</span>(<span class="kw">super</span>) <span class="kw">fn </span>insert_at(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize, new: Ptr&lt;C&gt;) {
         <span class="macro">debug_assert!</span>(new.is_isolated_and_red());
         <span class="macro">debug_assert!</span>(index &lt;= <span class="self">self</span>.len());
         <span class="self">self</span>.insert(new, <span class="self">self</span>.position_at(index));
@@ -2327,6 +2320,60 @@
             root: <span class="prelude-val">None</span>,
             black_height: <span class="number">0</span>,
         }
+    }
+}
+<span class="kw">impl</span>&lt;C: Callback&gt; FromIterator&lt;Ptr&lt;C&gt;&gt; <span class="kw">for </span>Tree&lt;C&gt; {
+    <span class="kw">fn </span>from_iter&lt;I: IntoIterator&lt;Item = Ptr&lt;C&gt;&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>stack = Vec::new();
+        <span class="kw">for </span><span class="kw-2">mut </span>x <span class="kw">in </span>iter {
+            <span class="macro">debug_assert!</span>(x.is_isolated_and_red());
+            <span class="kw">if </span>stack.len() % <span class="number">2 </span>== <span class="number">0 </span>{
+                x.color = Color::Black;
+            }
+            stack.push((x, <span class="number">1</span>));
+            <span class="kw">let </span>len = stack.len();
+            <span class="kw">if </span>len % <span class="number">2 </span>== <span class="number">1 </span>&amp;&amp; len &gt;= <span class="number">3 </span>&amp;&amp; stack[len - <span class="number">3</span>].<span class="number">1 </span>== stack[len - <span class="number">1</span>].<span class="number">1 </span>{
+                <span class="kw">let </span>(<span class="kw-2">mut </span>r, r_bh) = stack.pop().unwrap();
+                <span class="kw">let </span>(<span class="kw-2">mut </span>c, c_bh) = stack.pop().unwrap();
+                <span class="kw">let </span>(<span class="kw-2">mut </span>l, l_bh) = stack.pop().unwrap();
+                <span class="macro">debug_assert_eq!</span>(l_bh, r_bh);
+                <span class="macro">debug_assert_eq!</span>(c_bh, <span class="number">1</span>);
+                <span class="comment">// Join the three trees.
+                </span>c.left = <span class="prelude-val">Some</span>(l);
+                c.right = <span class="prelude-val">Some</span>(r);
+                c.color = Color::Black;
+                l.parent = <span class="prelude-val">Some</span>(c);
+                r.parent = <span class="prelude-val">Some</span>(c);
+                c.update();
+                stack.push((c, l_bh + <span class="number">1</span>));
+            }
+        }
+        <span class="kw">if </span>stack.is_empty() {
+            <span class="kw">return </span><span class="self">Self</span>::new();
+        }
+        <span class="kw">let </span>tail = (stack.len() % <span class="number">2 </span>== <span class="number">0</span>).then(|| stack.pop().unwrap());
+        <span class="kw">let </span>tree = stack.pop().unwrap();
+        <span class="kw">let </span><span class="kw-2">mut </span>r = Tree {
+            root: <span class="prelude-val">Some</span>(tree.<span class="number">0</span>),
+            black_height: tree.<span class="number">1</span>,
+        };
+        <span class="kw">while </span>!stack.is_empty() {
+            <span class="kw">let </span>(c, c_bh) = stack.pop().unwrap();
+            <span class="macro">debug_assert_eq!</span>(c_bh, <span class="number">1</span>);
+            <span class="kw">let </span>(l, l_bh) = stack.pop().unwrap();
+            r = join(
+                Tree {
+                    root: <span class="prelude-val">Some</span>(l),
+                    black_height: l_bh,
+                },
+                c,
+                r,
+            );
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(tail) = tail {
+            r.push_back(tail.<span class="number">0</span>);
+        }
+        r
     }
 }
 
@@ -2548,6 +2595,7 @@
         <span class="macro">debug_assert!</span>(zr.is_isolated_and_red());
         r.insert(zr, <span class="prelude-val">None</span>);
     }
+    z.update();
     <span class="kw">let </span><span class="kw-2">mut </span>black_height = u8::from(z.color == Color::Black);
     <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = z.parent {
         <span class="kw">let </span>p_original_color = p.color;
@@ -2565,6 +2613,7 @@
                 x.parent = <span class="prelude-val">None</span>;
             }
             p.isolate_and_red();
+            p.update();
 
             <span class="comment">// Fix the red-root violation.
             </span><span class="kw">if </span>color(x.root) == Color::Red {
@@ -2596,6 +2645,7 @@
                 x.parent = <span class="prelude-val">None</span>;
             }
             p.isolate_and_red();
+            p.update();
 
             <span class="comment">// Fix the red-root violation.
             </span><span class="kw">if </span>color(x.root) == Color::Red {
@@ -2925,6 +2975,17 @@
     }
 
     <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_from_iterator_of_ptrs() {
+        <span class="kw">for </span>len <span class="kw">in </span><span class="number">0</span>..<span class="number">100 </span>{
+            <span class="kw">let </span>tree =
+                Tree::&lt;TestCallback&gt;::from_iter((<span class="number">0</span>..len).map(|i| Ptr::new(Data::new(i <span class="kw">as </span>u64))));
+            <span class="macro">assert_eq!</span>(tree.len(), len);
+            validate(<span class="kw-2">&amp;</span>tree);
+            <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree), (<span class="number">0</span>..len <span class="kw">as </span>u64).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;());
+        }
+    }
+
+    <span class="attr">#[test]
     </span><span class="kw">fn </span>test_alloc_dealloc() {
         <span class="kw">enum </span>AllocCallback {}
         <span class="kw">impl </span>Callback <span class="kw">for </span>AllocCallback {
@@ -2941,7 +3002,7 @@
             <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">1</span>);
         }
         {
-            <span class="kw">let </span>slice = rcs
+            <span class="kw">let </span>ptrs = rcs
                 .iter()
                 .map(|rc| Ptr::new(Rc::clone(rc)))
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
@@ -2950,7 +3011,7 @@
                 <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">2</span>);
             }
 
-            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;AllocCallback&gt;::from_slice(<span class="kw-2">&amp;</span>slice);
+            <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;AllocCallback&gt;::from_iter(ptrs.into_iter());
 
             <span class="kw">for </span>rc <span class="kw">in </span><span class="kw-2">&amp;</span>rcs {
                 <span class="macro">assert_eq!</span>(Rc::strong_count(rc), <span class="number">2</span>);
@@ -3079,7 +3140,7 @@
                     <span class="kw">let </span>index = rng.gen_range(<span class="number">0</span>..=expected.len());
                     <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..VALUE_LIM);
                     expected.insert(index, value);
-                    tree.insert_at(Ptr::new(Data::new(value)), index);
+                    tree.insert_at(index, Ptr::new(Data::new(value)));
                 }
                 <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree), expected);
                 validate(<span class="kw-2">&amp;</span>tree);
@@ -3088,16 +3149,19 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_split_off_at_random() {
+    </span><span class="kw">fn </span>test_partition_point_index() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2000 </span>{
-            <span class="kw">let </span>(<span class="kw-2">mut </span>tree, <span class="kw-2">mut </span>vec) = random_tree(<span class="kw-2">&amp;mut </span>rng, <span class="number">0</span>..<span class="number">40</span>);
-            <span class="comment">// Test split_off_at.
-            </span><span class="kw">let </span>index = rng.gen_range(<span class="number">0</span>..=vec.len());
-            <span class="kw">let </span>tree2 = tree.split_off_at(index);
-            <span class="kw">let </span>vec2 = vec.split_off(index);
-            <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree), vec);
-            <span class="macro">assert_eq!</span>(to_vec(<span class="kw-2">&amp;</span>tree2), vec2);
+        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
+            <span class="kw">let </span>len = rng.gen_range(<span class="number">0</span>..<span class="number">100usize</span>);
+            <span class="kw">let </span>tree =
+                Tree::&lt;TestCallback&gt;::from_iter((<span class="number">0</span>..len <span class="kw">as </span>u64).map(|i| Ptr::new(Data::new(i))));
+            <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, format(<span class="kw-2">&amp;</span>tree, |data| data.value.to_string(), <span class="kw-2">&amp;</span>[]));
+            <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
+                <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..=len <span class="kw">as </span>u64);
+                <span class="kw">let </span>partition_point = tree.partition_point_index(|n| n.data.value &lt; value);
+                <span class="macro">eprintln!</span>(<span class="string">&quot;{} {}&quot;</span>, value, partition_point);
+                <span class="macro">assert_eq!</span>(partition_point, value <span class="kw">as </span>usize);
+            }
         }
     }
 
