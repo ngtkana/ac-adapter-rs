@@ -8,10 +8,18 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops;
+use std::ops::Deref;
+use std::ops::DerefMut;
 use std::ops::Index;
 use std::ops::RangeBounds;
 
 // TODO: add `RbSortedList`?
+// This problem:
+// https://atcoder.jp/contests/arc033/tasks/arc033_3
+//
+// TODO: add .max_right()
+// Example:
+// https://atcoder.jp/contests/arc033/submissions/46249626
 
 pub(super) struct Irreversible<O: Op> {
     marker: PhantomData<O>,
@@ -146,6 +154,15 @@ impl<O: Op> RbList<O> {
     /// Appends an element to `self`.
     pub fn push_back(&mut self, value: O::Value) {
         self.tree.push_back(Ptr::new(IrreversibleData::new(value)));
+    }
+
+    /// Returns a deligated entry, which is a mutable reference to the element at the given index.
+    pub fn entry(&mut self, index: usize) -> Entry<'_, O> {
+        debug_assert!(index < self.len());
+        Entry {
+            ptr: self.tree.get_at(index),
+            marker: PhantomData,
+        }
     }
 
     /// Removes the first element and returns it, or `None` if the deque is empty.
@@ -331,6 +348,27 @@ impl<O: Op> From<Vec<O::Value>> for RbList<O> {
 }
 impl<const N: usize, O: Op> From<[O::Value; N]> for RbList<O> {
     fn from(values: [O::Value; N]) -> Self { values.into_iter().collect() }
+}
+
+/// An entry in a list.
+/// The node and its ancestors are updated when the entry is dropped.
+pub struct Entry<'a, O: Op> {
+    ptr: Ptr<Irreversible<O>>,
+    marker: PhantomData<&'a O>,
+}
+impl<'a, O: Op> Drop for Entry<'a, O> {
+    fn drop(&mut self) {
+        self.ptr.update();
+        self.ptr.update_ancestors();
+    }
+}
+impl<'a, O: Op> Deref for Entry<'a, O> {
+    type Target = O::Value;
+
+    fn deref(&self) -> &Self::Target { &self.ptr.as_ref_longlife().data.value }
+}
+impl<'a, O: Op> DerefMut for Entry<'a, O> {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.ptr.as_mut_longlife().data.value }
 }
 
 /// An iterator over a list.
