@@ -539,6 +539,13 @@ impl<O: LazyOps> FromIterator<O::Value> for SplayTree<O> {
     }
 }
 
+impl<'a, O: LazyOps> IntoIterator for &'a SplayTree<O> {
+    type IntoIter = Iter<'a, O>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+
 impl<O: LazyOps> Debug for SplayTree<O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries(self.iter()).finish()

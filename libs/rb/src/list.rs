@@ -318,7 +318,6 @@ where
         f.debug_list().entries(self.iter()).finish()
     }
 }
-// TODO: add `entry`
 impl<O: Op> Index<usize> for RbList<O> {
     type Output = O::Value;
 
@@ -342,6 +341,12 @@ impl<O: Op> FromIterator<O::Value> for RbList<O> {
             ),
         }
     }
+}
+impl<'a, O: Op> IntoIterator for &'a RbList<O> {
+    type IntoIter = Range<'a, O>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 impl<O: Op> From<Vec<O::Value>> for RbList<O> {
     fn from(values: Vec<O::Value>) -> Self { values.into_iter().collect() }
