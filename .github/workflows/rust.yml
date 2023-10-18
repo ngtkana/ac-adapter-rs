@@ -60,6 +60,24 @@ jobs:
         working-directory: .
         run: cargo make test-doc
 
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.trigger == 'true'
+    steps:
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Test
+        working-directory: .
+        run: cargo make test
+
   docs:
     runs-on: ubuntu-latest
     timeout-minutes: 20

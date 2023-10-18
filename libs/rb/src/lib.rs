@@ -16,8 +16,7 @@ pub use list::RbReversibleList;
 
 /// Iterators for a list based on a red-black tree.
 pub mod list_iter {
-    use super::*;
-    pub use list::Range;
+    pub use super::list::RbList;
 }
 
 /// The trait for specifying the operation of a red-black tree.

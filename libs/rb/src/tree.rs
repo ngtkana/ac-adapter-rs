@@ -1265,7 +1265,7 @@ pub(super) mod tests {
         vec
     }
 
-    pub fn write<'a, C: Callback, F, S>(
+    pub(super) fn write<'a, C: Callback, F, S>(
         w: &mut impl std::io::Write,
         tree: &Tree<C>,
         mut to_string: F,
@@ -1324,7 +1324,7 @@ pub(super) mod tests {
         Ok(())
     }
 
-    pub fn format<'a, C: Callback, F, S>(
+    pub(super) fn format<'a, C: Callback, F, S>(
         tree: &Tree<C>,
         to_string: F,
         fg: &[(&'static str, Ptr<C>, ansi_term::Color)],
@@ -1538,8 +1538,9 @@ pub(super) mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let len = rng.gen_range(0..100usize);
-            let tree =
-                Tree::<TestCallback>::from_iter((0..len as u64).map(|i| Ptr::new(Data::new(i))));
+            let tree = (0..len as u64)
+                .map(|i| Ptr::new(Data::new(i)))
+                .collect::<Tree<TestCallback>>();
             eprintln!("{}", format(&tree, |data| data.value.to_string(), &[]));
             for _ in 0..20 {
                 let value = rng.gen_range(0..=len as u64);
