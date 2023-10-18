@@ -8,7 +8,10 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::marker::PhantomData;
 use std::ops;
+use std::ops::Index;
 use std::ops::RangeBounds;
+
+// TODO: add `RbSortedList`?
 
 pub(super) struct Irreversible<O: Op> {
     marker: PhantomData<O>,
@@ -296,6 +299,14 @@ where
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_list().entries(self.iter()).finish()
+    }
+}
+// TODO: add `entry`
+impl<O: Op> Index<usize> for RbList<O> {
+    type Output = O::Value;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.tree.get_at(index).as_ref_longlife().data.value
     }
 }
 impl<O: Op> PartialEq for RbList<O>
