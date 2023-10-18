@@ -223,10 +223,7 @@ impl<C: Callback> Tree<C> {
             // Update the remaining node.
             if let Some(mut x) = removed.upper {
                 x.update();
-                while let Some(mut p) = x.parent {
-                    p.update();
-                    x = p;
-                }
+                x.update_ancestors();
             }
         }
     }
@@ -370,10 +367,7 @@ impl<C: Callback> Tree<C> {
             }
         }
         x.update();
-        while let Some(mut p) = x.parent {
-            p.update();
-            x = p;
-        }
+        x.update_ancestors();
     }
 
     /// Fixup the black-height violation between `x` and `p` and non-updated property of `x`.
@@ -520,10 +514,7 @@ impl<C: Callback> Tree<C> {
         // Update the remaining node.
         if let Some(mut x) = x {
             x.update();
-            while let Some(mut p) = x.parent {
-                p.update();
-                x = p;
-            }
+            x.update_ancestors();
         }
     }
 

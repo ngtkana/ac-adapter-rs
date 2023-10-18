@@ -151,6 +151,15 @@ impl<C: Callback> Ptr<C> {
     /// Update the node.
     pub fn update(&mut self) { C::update(*self); }
 
+    /// Update the ancestors of the node, but not the node itself.
+    pub fn update_ancestors(&mut self) {
+        let mut p = self.as_ref().parent;
+        while let Some(q) = p {
+            C::update(q);
+            p = q.as_ref().parent;
+        }
+    }
+
     /// Returns `true` if the node is isolated.
     pub fn is_isolated_and_red(self) -> bool {
         self.as_ref().left.is_none()
