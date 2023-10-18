@@ -1,12 +1,23 @@
-use std::{
-    cmp::{Ord, Ordering},
-    fmt::{Debug, Formatter},
-    hash::Hash,
-    iter::{Product, Sum},
-    mem::swap,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign},
-    str::FromStr,
-};
+use std::cmp::Ord;
+use std::cmp::Ordering;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::hash::Hash;
+use std::iter::Product;
+use std::iter::Sum;
+use std::mem::swap;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Neg;
+use std::ops::Rem;
+use std::ops::RemAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
+use std::str::FromStr;
 
 #[derive(Clone, Default, Copy)]
 pub struct Rational<T: Signed>(T, T);
@@ -16,9 +27,9 @@ impl<T: Signed> Rational<T> {
         let g = gcd(num, den).generic_abs() * den.generic_signum();
         Self(num / g, den / g)
     }
-    pub fn decompose(self) -> [T; 2] {
-        [self.0, self.1]
-    }
+
+    pub fn decompose(self) -> [T; 2] { [self.0, self.1] }
+
     pub fn into_f64(self) -> f64
     where
         f64: From<T>,
@@ -27,20 +38,14 @@ impl<T: Signed> Rational<T> {
     }
 }
 impl<T: Signed> PartialEq for Rational<T> {
-    fn eq(&self, other: &Self) -> bool {
-        self.0 * other.1 == self.1 * other.0
-    }
+    fn eq(&self, other: &Self) -> bool { self.0 * other.1 == self.1 * other.0 }
 }
 impl<T: Signed> Eq for Rational<T> {}
 impl<T: Signed> Ord for Rational<T> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        (self.0 * other.1).cmp(&(self.1 * other.0))
-    }
+    fn cmp(&self, other: &Self) -> Ordering { (self.0 * other.1).cmp(&(self.1 * other.0)) }
 }
 impl<T: Signed> PartialOrd for Rational<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        Some(self.cmp(other))
-    }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
 }
 impl<T: Signed> Debug for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -53,6 +58,7 @@ impl<T: Signed> Debug for Rational<T> {
 }
 impl<T: Signed> FromStr for Rational<T> {
     type Err = T::Err;
+
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut s = s.split('/');
         let num = match s.next() {
@@ -81,9 +87,7 @@ impl<T: Signed> SubAssign for Rational<T> {
     }
 }
 impl<T: Signed> MulAssign for Rational<T> {
-    fn mul_assign(&mut self, rhs: Self) {
-        *self = Self::new(self.0 * rhs.0, self.1 * rhs.1)
-    }
+    fn mul_assign(&mut self, rhs: Self) { *self = Self::new(self.0 * rhs.0, self.1 * rhs.1) }
 }
 impl<T: Signed> DivAssign for Rational<T> {
     fn div_assign(&mut self, rhs: Self) {
@@ -99,9 +103,8 @@ impl<T: Signed> DivAssign for Rational<T> {
 }
 impl<T: Signed> Neg for Rational<T> {
     type Output = Self;
-    fn neg(self) -> Self::Output {
-        Self(-self.0, self.1)
-    }
+
+    fn neg(self) -> Self::Output { Self(-self.0, self.1) }
 }
 impl<T: Signed> Sum for Rational<T> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
@@ -215,14 +218,13 @@ fn gcd<T: Signed>(mut x: T, mut y: T) -> T {
 
 #[cfg(test)]
 mod tests {
+    use super::Rational;
+    use approx::assert_abs_diff_eq;
+    use ordered_float::OrderedFloat;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::iter::repeat_with;
-
-    use {
-        super::Rational,
-        approx::assert_abs_diff_eq,
-        ordered_float::OrderedFloat,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-    };
 
     #[test]
     fn test_add() {

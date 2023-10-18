@@ -6,13 +6,18 @@
 //! - The classic binary search never fails, even if the partition function is not monotone.
 //! - We do not have to know the limit values to use the exponential search.
 //! - The running time of the exponential search is output-sensitively fast.
-//!
 
-use std::{
-    fmt::Debug,
-    mem::size_of,
-    ops::{Add, BitAnd, BitOr, Div, Mul, Neg, Shl, Shr, Sub},
-};
+use std::fmt::Debug;
+use std::mem::size_of;
+use std::ops::Add;
+use std::ops::BitAnd;
+use std::ops::BitOr;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Neg;
+use std::ops::Shl;
+use std::ops::Shr;
+use std::ops::Sub;
 
 /// Floating pont number.
 pub trait Float:
@@ -38,22 +43,20 @@ pub trait Float:
     fn sqrt(self) -> Self;
 }
 impl Float for f32 {
-    const ZERO: Self = 0.0;
-    const ONE: Self = 1.0;
     const INFINITY: Self = std::f32::INFINITY;
     const NEG_INFINITY: Self = std::f32::NEG_INFINITY;
-    fn sqrt(self) -> Self {
-        self.sqrt()
-    }
+    const ONE: Self = 1.0;
+    const ZERO: Self = 0.0;
+
+    fn sqrt(self) -> Self { self.sqrt() }
 }
 impl Float for f64 {
-    const ZERO: Self = 0.0;
-    const ONE: Self = 1.0;
     const INFINITY: Self = std::f64::INFINITY;
     const NEG_INFINITY: Self = std::f64::NEG_INFINITY;
-    fn sqrt(self) -> Self {
-        self.sqrt()
-    }
+    const ONE: Self = 1.0;
+    const ZERO: Self = 0.0;
+
+    fn sqrt(self) -> Self { self.sqrt() }
 }
 
 /// Run an exponential search on floating point numbers.
@@ -240,7 +243,6 @@ pub fn exp_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<
 /// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
 /// ```
-///
 pub fn binary_search_unsigned<T: Unsigned>(
     mut lower: T,
     mut upper: T,
@@ -362,7 +364,6 @@ pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
 /// # use numeric_search::binary_search_unsigned;
 /// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
 /// ```
-///
 pub fn binary_search_signed<T: Signed>(
     mut lower: T,
     mut upper: T,
@@ -389,12 +390,19 @@ pub fn binary_search_signed<T: Signed>(
 mod tests {
     #![allow(clippy::float_cmp)]
     use super::*;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
-    use std::{collections::HashMap, mem::swap};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::HashMap;
+    use std::mem::swap;
 
     #[test]
     fn test_exponential_search_f64() {
-        use std::f64::{EPSILON, INFINITY, MAX, MIN_POSITIVE, NEG_INFINITY};
+        use std::f64::EPSILON;
+        use std::f64::INFINITY;
+        use std::f64::MAX;
+        use std::f64::MIN_POSITIVE;
+        use std::f64::NEG_INFINITY;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
@@ -431,7 +439,11 @@ mod tests {
 
     #[test]
     fn test_exponential_search_f32() {
-        use std::f32::{EPSILON, INFINITY, MAX, MIN_POSITIVE, NEG_INFINITY};
+        use std::f32::EPSILON;
+        use std::f32::INFINITY;
+        use std::f32::MAX;
+        use std::f32::MIN_POSITIVE;
+        use std::f32::NEG_INFINITY;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {

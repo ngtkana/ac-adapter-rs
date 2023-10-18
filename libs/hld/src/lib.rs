@@ -44,12 +44,7 @@
 //! let root = 0;
 //! let n = 4;
 //! let edges = [[0, 1], [0, 2], [2, 3]];
-//! let g = vec![
-//!     vec![1, 2],
-//!     vec![0],
-//!     vec![0, 3],
-//!     vec![2],
-//! ];
+//! let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
 //! let hld = Hld::new(root, &g);
 //!
 //! assert_eq!(hld.child(), &[vec![2, 1], Vec::new(), vec![3], Vec::new()]);
@@ -58,7 +53,8 @@
 //! assert_eq!(hld.parent(), &[0, 0, 0, 2]);
 //! assert_eq!(hld.head(), &[0, 1, 0, 0]);
 //! ```
-use std::{mem::swap, usize::MAX};
+use std::mem::swap;
+use std::usize::MAX;
 
 /// 重軽分解
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
@@ -76,7 +72,6 @@ impl Hld {
     /// # 制約
     ///
     /// 入力は木である（根をひとつしか指定しないことからもわかるように、森はだめです。）
-    ///
     pub fn new(root: usize, g: &[Vec<usize>]) -> Self {
         let (child, [size, time, ord, parent, head]) = hld(root, g);
         Self {
@@ -88,32 +83,27 @@ impl Hld {
             head,
         }
     }
+
     /// 親を消したグラフを返します。
-    pub fn child(&self) -> &[Vec<usize>] {
-        &self.child
-    }
+    pub fn child(&self) -> &[Vec<usize>] { &self.child }
+
     /// 頂点番号から部分木のサイズを引くテーブルを返します。
-    pub fn size(&self) -> &[usize] {
-        &self.size
-    }
+    pub fn size(&self) -> &[usize] { &self.size }
+
     /// 頂点番号から訪問時刻を引くテーブルを返します。
-    pub fn time(&self) -> &[usize] {
-        &self.time
-    }
+    pub fn time(&self) -> &[usize] { &self.time }
+
     /// 訪問時刻から頂点番号を引くテーブルを返します。
-    pub fn ord(&self) -> &[usize] {
-        &self.ord
-    }
+    pub fn ord(&self) -> &[usize] { &self.ord }
+
     /// 頂点番号から、親の頂点番号を引くテーブルを返します。
     ///
     /// ただし、根の親は自分自身です。
-    pub fn parent(&self) -> &[usize] {
-        &self.parent
-    }
+    pub fn parent(&self) -> &[usize] { &self.parent }
+
     /// 頂点番号から、Heavy path の先頭の頂点番号を引くテーブルを返します。
-    pub fn head(&self) -> &[usize] {
-        &self.head
-    }
+    pub fn head(&self) -> &[usize] { &self.head }
+
     /// 頂点 `u`, `v` が隣接頂点であれば `true`、さもなくば `false` を返します。
     ///
     /// # Panics
@@ -124,12 +114,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &g);
     /// assert_eq!(hld.is_adjacent(0, 3), false); // 1 -- 0 -- 2 -- 3
@@ -141,6 +126,7 @@ impl Hld {
         assert!(v < self.child.len(), "範囲外です。");
         self.parent[u] == v || u == self.parent[v]
     }
+
     /// `x` の隣接頂点のうち、`toward` との間にあるものを返します。
     ///
     /// # Panics
@@ -153,12 +139,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &g);
     /// assert_eq!(hld.adjacent_toward(0, 3), 2); // 1 -- 0 -- 2 -- 3
@@ -182,6 +163,7 @@ impl Hld {
             self.parent[x]
         }
     }
+
     /// 2 つの頂点番号から、その間の距離を返します。
     ///
     /// # Panics
@@ -193,12 +175,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let mut g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &mut g);
     /// assert_eq!(hld.dist(1, 3), 3); // 1 -- 0 -- 2 -- 3
@@ -206,6 +183,7 @@ impl Hld {
     pub fn dist(&self, u: usize, v: usize) -> usize {
         self.iter_e(u, v).map(|(l, r)| r - l + 1).sum::<usize>()
     }
+
     /// 2 つの頂点番号から、LCA の頂点番号を返します。
     ///
     /// # Panics
@@ -218,12 +196,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let mut g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let mut g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &mut g);
     /// assert_eq!(hld.lca(1, 3), 0);
@@ -232,6 +205,7 @@ impl Hld {
         let (u, v) = self.iter_v(u, v).last().unwrap();
         self.ord[u.min(v)]
     }
+
     /// `p` が `u` の祖先であれば `true`、さもなくば `false` です。
     ///
     /// # Panics
@@ -243,21 +217,15 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &g);
-    /// assert_eq!(hld.is_ancestor_of(0, 3), true);;
+    /// assert_eq!(hld.is_ancestor_of(0, 3), true);
     /// assert_eq!(hld.is_ancestor_of(1, 3), false);
     /// assert_eq!(hld.is_ancestor_of(3, 0), false);
     /// ```
-    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool {
-        self.lca(p, u) == p
-    }
+    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool { self.lca(p, u) == p }
+
     /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
     ///   `true`、さもなくば `false` を返します。
     ///
@@ -271,12 +239,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// // 1 -- 0 -- 2 -- 3
     /// let hld = Hld::new(0, &g);
@@ -289,6 +252,7 @@ impl Hld {
         self.iter_v(a, c)
             .any(|(left, right)| (left..=right).contains(&mid))
     }
+
     /// 2 つの頂点番号から、その間のパスを Heavy path
     /// に分解して、各々両端の頂点**の訪問時刻**を返すイテレータを作ります。
     /// つまり、`f` の引数は閉区間です。
@@ -303,12 +267,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// // 1 -- 0 -- 2 -- 3
     /// let hld = Hld::new(0, &g);
@@ -329,6 +288,7 @@ impl Hld {
             finish: false,
         }
     }
+
     /// [`Self::iter_v`] とほぼ同様ですが、LCA だけスキップします。
     ///
     /// # Panics
@@ -341,12 +301,7 @@ impl Hld {
     /// ```
     /// use hld::Hld;
     ///
-    /// let g = vec![
-    ///     vec![1, 2],
-    ///     vec![0],
-    ///     vec![0, 3],
-    ///     vec![2],
-    /// ];
+    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
     ///
     /// let hld = Hld::new(0, &g);
     /// let vtx = hld
@@ -377,6 +332,7 @@ pub struct IterV<'a> {
 }
 impl Iterator for IterV<'_> {
     type Item = (usize, usize);
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.finish {
             return None;
@@ -406,6 +362,7 @@ pub struct IterE<'a> {
 }
 impl Iterator for IterE<'_> {
     type Item = (usize, usize);
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.finish {
             return None;
@@ -485,18 +442,18 @@ fn efs(
 
 #[cfg(test)]
 mod tests {
-    use {
-        bfs::{calc_dist, find_path},
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::Tree,
-        std::mem::swap,
-        std::usize::MAX,
-        {
-            super::{hld, Hld},
-            make_graph::array_make_undirected,
-        },
-    };
+    use super::hld;
+    use super::Hld;
+    use bfs::calc_dist;
+    use bfs::find_path;
+    use itertools::Itertools;
+    use make_graph::array_make_undirected;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::Tree;
+    use std::mem::swap;
+    use std::usize::MAX;
 
     #[test]
     fn test_tree_parent() {
@@ -672,31 +629,21 @@ mod tests {
     #[test]
     fn test_hand_9vtx() {
         let n = 9;
-        let edges = [
-            [0, 2],
-            [0, 3],
-            [1, 2],
-            [2, 5],
-            [3, 8],
-            [4, 6],
-            [5, 6],
-            [5, 7],
-        ];
+        let edges = [[0, 2], [0, 3], [1, 2], [2, 5], [3, 8], [4, 6], [5, 6], [
+            5, 7,
+        ]];
         let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
-        assert_eq!(
-            g,
-            vec![
-                vec![2, 3], // 0
-                Vec::new(), // 1
-                vec![5, 1], // 2
-                vec![8],    // 3
-                Vec::new(), // 4
-                vec![6, 7], // 5
-                vec![4],    // 6
-                Vec::new(), // 7
-                Vec::new(), // 8
-            ]
-        );
+        assert_eq!(g, vec![
+            vec![2, 3], // 0
+            Vec::new(), // 1
+            vec![5, 1], // 2
+            vec![8],    // 3
+            Vec::new(), // 4
+            vec![6, 7], // 5
+            vec![4],    // 6
+            Vec::new(), // 7
+            Vec::new(), // 8
+        ]);
         assert_eq!(size, vec![9, 1, 6, 2, 1, 4, 2, 1, 1]);
         assert_eq!(time, vec![0, 6, 1, 7, 4, 2, 3, 5, 8]);
         assert_eq!(ord, vec![0, 2, 5, 6, 4, 7, 1, 3, 8]);

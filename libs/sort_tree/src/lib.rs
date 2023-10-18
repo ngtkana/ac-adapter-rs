@@ -17,9 +17,7 @@ pub fn sort_tree_remove_parent(root: usize, g: &mut [Vec<usize>]) -> [Vec<usize>
 }
 
 /// 根付き木をトポロジカルソートします。
-pub fn sort_tree(root: usize, g: &[Vec<usize>]) -> [Vec<usize>; 2] {
-    sort_tree_by(root, g, |x| *x)
-}
+pub fn sort_tree(root: usize, g: &[Vec<usize>]) -> [Vec<usize>; 2] { sort_tree_by(root, g, |x| *x) }
 
 /// 根付き木をトポロジカルソートします。
 pub fn sort_tree_by<E>(root: usize, g: &[Vec<E>], to: impl Fn(&E) -> usize) -> [Vec<usize>; 2] {
@@ -47,12 +45,12 @@ fn sort_tree_impl<E>(
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::sort_tree_remove_parent,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::Tree,
-        std::usize::MAX,
-    };
+    use super::sort_tree_remove_parent;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::Tree;
+    use std::usize::MAX;
 
     #[test]
     fn test_sort_tree_remove_parent() {

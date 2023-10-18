@@ -1,14 +1,13 @@
 //! 傾き単調な直線の列を `Vec` で管理します。
 //!
 //! [基本的な使い方は `VecLines` をご覧ください。](VecLines)
-//!
-use std::{
-    convert::TryFrom,
-    fmt::Debug,
-    hash::Hash,
-    marker::PhantomData,
-    ops::{Add, Mul, Sub},
-};
+use std::convert::TryFrom;
+use std::fmt::Debug;
+use std::hash::Hash;
+use std::marker::PhantomData;
+use std::ops::Add;
+use std::ops::Mul;
+use std::ops::Sub;
 
 /// 傾きが単調減少な直線の列を管理します。
 pub type VecLinesDecreasing<T> = VecLines<T, DecreasingTilt>;
@@ -31,9 +30,9 @@ pub type VecLinesIncreasing<T> = VecLines<T, IncreasingTilt>;
 /// assert_eq!(lines.len(), 3);
 ///
 /// // 黄金分割探索で最適値を計算できます。
-/// assert_eq!(lines.eval_gcc(-10), Some(-10));     // x
-/// assert_eq!(lines.eval_gcc(15), Some(10));       // 10
-/// assert_eq!(lines.eval_gcc(40), Some(-10));      // -x + 30
+/// assert_eq!(lines.eval_gcc(-10), Some(-10)); // x
+/// assert_eq!(lines.eval_gcc(15), Some(10)); // 10
+/// assert_eq!(lines.eval_gcc(40), Some(-10)); // -x + 30
 ///
 /// // 直線番号指定でも評価します。（しゃくとり法などのため）
 /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
@@ -109,6 +108,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
             _marker: PhantomData,
         }
     }
+
     /// 管理している直線が 0 本のとき `true`、さもなくば `false` を返します。
     ///
     /// # 使い方
@@ -117,10 +117,8 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// let lines = VecLinesDecreasing::<i32>::new();
     /// assert!(lines.is_empty());
     /// ```
-    ///
-    pub fn is_empty(&self) -> bool {
-        self.lines.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.lines.is_empty() }
+
     /// 管理している直線の本数を返します。
     ///
     /// 不要な直線が自動的に削除されると、このメソッドの返す値も減少します。
@@ -133,10 +131,8 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     ///
     /// lines.push([0, 0]);
     /// ```
-    ///
-    pub fn len(&self) -> usize {
-        self.lines.len()
-    }
+    pub fn len(&self) -> usize { self.lines.len() }
+
     /// index 番目の直線を返します。
     ///
     /// # 使い方
@@ -151,9 +147,8 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// // 直線を手に入れたら、次は `Line::eval` で評価です。
     /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
     /// ```
-    pub fn get(&self, index: usize) -> Option<Line<T>> {
-        self.lines.get(index).copied()
-    }
+    pub fn get(&self, index: usize) -> Option<Line<T>> { self.lines.get(index).copied() }
+
     /// 後ろに直線を挿入します。
     ///
     /// # Panics
@@ -205,6 +200,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
             self.lines.push(p);
         }
     }
+
     /// 黄金分割探索で最適値を計算します。
     ///
     /// # 計算量
@@ -221,9 +217,9 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// lines.push([0, 10]);
     /// lines.push([-1, 30]);
     ///
-    /// assert_eq!(lines.eval_gcc(-10), Some(-10));     // x
-    /// assert_eq!(lines.eval_gcc(15), Some(10));       // 10
-    /// assert_eq!(lines.eval_gcc(40), Some(-10));      // -x + 30
+    /// assert_eq!(lines.eval_gcc(-10), Some(-10)); // x
+    /// assert_eq!(lines.eval_gcc(15), Some(10)); // 10
+    /// assert_eq!(lines.eval_gcc(40), Some(-10)); // -x + 30
     /// ```
     pub fn eval_gcc(&self, x: T) -> Option<T> {
         if self.lines.is_empty() {
@@ -247,6 +243,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
         let y2 = self.lines[(i3 - 1) as usize].eval(x);
         Some(if C::strictly_better(y1, y2) { y1 } else { y2 })
     }
+
     /// 管理している直線を順番に返すイテレータを返します。
     ///
     /// # 使い方
@@ -258,12 +255,13 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// lines.push([0, 10]);
     /// lines.push([-1, 30]);
     ///
-    /// let lines = lines.iter_copied().map(Line::into_coeff).collect::<Vec<_>>();
+    /// let lines = lines
+    ///     .iter_copied()
+    ///     .map(Line::into_coeff)
+    ///     .collect::<Vec<_>>();
     /// assert_eq!(lines, vec![[1, 0], [0, 10], [-1, 30]]);
     /// ```
-    pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> {
-        self.lines.iter().copied()
-    }
+    pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> { self.lines.iter().copied() }
 }
 
 /// 一次関数 $ax + b$ を、`[a, b]` の形で管理します。
@@ -280,9 +278,8 @@ impl<T: Signed> Line<T> {
     /// let line = Line([2, 10]);
     /// assert_eq!(line.eval(2), 14);
     /// ```
-    pub fn eval(self, x: T) -> T {
-        self.0[0] * x + self.0[1]
-    }
+    pub fn eval(self, x: T) -> T { self.0[0] * x + self.0[1] }
+
     /// 係数を返します。
     ///
     /// # 使い方
@@ -291,9 +288,7 @@ impl<T: Signed> Line<T> {
     /// let line = Line([2, 10]);
     /// assert_eq!(line.into_coeff(), [2, 10]);
     /// ```
-    pub fn into_coeff(self) -> [T; 2] {
-        self.0
-    }
+    pub fn into_coeff(self) -> [T; 2] { self.0 }
 }
 
 fn weakly_convex<T: Signed>(
@@ -319,20 +314,14 @@ pub enum DecreasingTilt {}
 /// 傾き単調増加を意味するマーカー
 pub enum IncreasingTilt {}
 impl Constraint for DecreasingTilt {
-    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
-        a0 >= a1
-    }
-    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
-        x < y
-    }
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool { a0 >= a1 }
+
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool { x < y }
 }
 impl Constraint for IncreasingTilt {
-    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
-        a0 <= a1
-    }
-    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
-        x > y
-    }
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool { a0 <= a1 }
+
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool { x > y }
 }
 
 /// 符号つき整数
@@ -356,28 +345,25 @@ macro_rules! impl_signed {
 impl_signed! { i8, i16, i32, i64, i128, isize }
 
 impl<T: Signed, C: Constraint> Default for VecLines<T, C> {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::golden_section,
-        super::{VecLinesDecreasing, VecLinesIncreasing},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        test_case::test_case,
-    };
+    use super::golden_section;
+    use super::VecLinesDecreasing;
+    use super::VecLinesIncreasing;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use test_case::test_case;
 
     #[test_case([0, 3] => [1, 2])]
     #[test_case([0, 4] => [1, 3])]
     #[test_case([0, 5] => [1, 4])]
     #[test_case([0, 6] => [2, 4])]
     #[test_case([0, 7] => [2, 5])]
-    fn test_golden_section(x: [isize; 2]) -> [isize; 2] {
-        golden_section(x)
-    }
+    fn test_golden_section(x: [isize; 2]) -> [isize; 2] { golden_section(x) }
 
     /*
     こちらの問題の本質部分です。

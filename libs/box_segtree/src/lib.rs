@@ -6,20 +6,18 @@
 //! 次のコードは、[`u32`] 型の加法による例です。
 //!
 //! ```
-//! use box_segtree::{Segtree, Ops};
+//! use box_segtree::Ops;
+//! use box_segtree::Segtree;
 //! enum O {}
 //! impl Ops for O {
 //!     type Value = u32;
-//!     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
-//!         lhs + rhs
-//!     }
-//!     fn id() -> Self::Value {
-//!         0
-//!     }
+//!
+//!     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value { lhs + rhs }
+//!
+//!     fn id() -> Self::Value { 0 }
+//!
 //!     // init(len) = id() がデフォルト実装です。
-//!     fn init(_len: usize) -> Self::Value {
-//!         0
-//!     }
+//!     fn init(_len: usize) -> Self::Value { 0 }
 //! }
 //! ```
 //!
@@ -54,14 +52,17 @@
 //!
 //! * `op` が結合的
 //! * `id` がその単位元
-//!
 
-use std::{
-    fmt::{Debug, DebugList, DebugMap, Formatter, Result},
-    iter::repeat_with,
-    marker::PhantomData,
-    ops::{Bound, Range, RangeBounds},
-};
+use std::fmt::Debug;
+use std::fmt::DebugList;
+use std::fmt::DebugMap;
+use std::fmt::Formatter;
+use std::fmt::Result;
+use std::iter::repeat_with;
+use std::marker::PhantomData;
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 /// セグツリーです。
 ///
@@ -83,15 +84,16 @@ impl<T: Clone, O: Ops<Value = T>> Segtree<T, O> {
             len,
         }
     }
+
     /// [`Self::modify`] を呼んで第 `i` 項に `x` を代入します。
-    pub fn set(&mut self, i: usize, x: T) {
-        self.modify(i, move |y| *y = x);
-    }
+    pub fn set(&mut self, i: usize, x: T) { self.modify(i, move |y| *y = x); }
+
     /// 第 `i` 項を `f` で編集し、それに従ってその祖先の `value` を再計算します。
     pub fn modify(&mut self, i: usize, f: impl FnOnce(&mut T)) {
         assert!(i < self.len, "範囲外です。 i = {}, len = {}", i, self.len);
         __internal_modify_recurse(self.seg.as_mut().unwrap(), i, f);
     }
+
     /// `range` の範囲の `value` を、[`Ops::op`] で畳み込みます。
     ///
     /// # Examples
@@ -123,12 +125,14 @@ impl<T: Clone, O: Ops<Value = T>> Segtree<T, O> {
         );
         __internal_fold_recurse(&self.seg, start, end)
     }
+
     pub fn iter(&self) -> Iter<'_, T, O> {
         Iter(match &self.seg {
             None => Vec::new(),
             Some(seg) => vec![(0, seg)],
         })
     }
+
     /// [`self`] を型に包んで [`Debug`] トレイトを上書きし、存在しないノードも [`Ops::id`]
     /// で埋めた感じのリスト形式で出力するようにします。
     ///
@@ -156,9 +160,7 @@ impl<T: Clone, O: Ops<Value = T>> Segtree<T, O> {
     ///     "[0, 0, 0, 10, 0, 20, 0]".to_string(),
     /// );
     /// ```
-    pub fn debug_list(&self) -> SegtreeDebugList<'_, T, O> {
-        SegtreeDebugList(self)
-    }
+    pub fn debug_list(&self) -> SegtreeDebugList<'_, T, O> { SegtreeDebugList(self) }
 }
 
 #[derive(Clone, Default, Hash, PartialEq)]
@@ -214,11 +216,7 @@ fn __internal_modify_recurse<T: Clone, O: Ops<Value = T>>(
     if len == 1 {
         f(&mut seg.value);
     } else {
-        let (e, i) = if len / 2 <= i {
-            (1, i - len / 2)
-        } else {
-            (0, i)
-        };
+        let (e, i) = if len / 2 <= i { (1, i - len / 2) } else { (0, i) };
         __internal_modify_recurse(
             seg.child[e].get_or_insert_with(|| Box::new(__internal_new(len / 2))),
             i,
@@ -302,6 +300,7 @@ fn __internal_debug_list_recurse<T: Clone + Debug, O: Ops<Value = T>>(
 pub struct Iter<'a, T: Clone, O: Ops<Value = T>>(Vec<(usize, &'a Nonempty<T, O>)>);
 impl<'a, T: Clone, O: Ops<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = (usize, &'a T);
+
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.0.pop() {
@@ -323,9 +322,8 @@ impl<'a, T: Clone, O: Ops<Value = T>> Iterator for Iter<'a, T, O> {
 impl<'a, T: 'a + Clone, O: 'a + Ops<Value = T>> IntoIterator for &'a Segtree<T, O> {
     type IntoIter = Iter<'a, T, O>;
     type Item = <Self::IntoIter as Iterator>::Item;
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
 fn __internal_open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
@@ -359,32 +357,30 @@ pub trait Ops {
     /// 単位元
     fn id() -> Self::Value;
     /// 初期状態の `len` セル分の値の畳み込み
-    fn init(_len: usize) -> Self::Value {
-        Self::id()
-    }
+    fn init(_len: usize) -> Self::Value { Self::id() }
 }
 
 #[cfg(test)]
 mod tests {
 
-    use {
-        super::{Ops, Segtree},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::SubRange,
-    };
+    use super::Ops;
+    use super::Segtree;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::SubRange;
 
     enum Cat {}
     impl Ops for Cat {
         type Value = String;
+
         fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
             lhs.chars().chain(rhs.chars()).collect::<String>()
         }
-        fn id() -> Self::Value {
-            String::new()
-        }
-        fn init(len: usize) -> Self::Value {
-            "?".repeat(len)
-        }
+
+        fn id() -> Self::Value { String::new() }
+
+        fn init(len: usize) -> Self::Value { "?".repeat(len) }
     }
 
     #[test]

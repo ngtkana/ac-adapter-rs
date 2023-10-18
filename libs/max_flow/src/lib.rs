@@ -7,10 +7,12 @@
 //!
 //! [`Ord`]: https://doc.rust-lang.org/stable/std/cmp/trait.Ord.html
 
-use std::{
-    fmt::{Debug, Display},
-    ops::{Add, AddAssign, Sub, SubAssign},
-};
+use std::fmt::Debug;
+use std::fmt::Display;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 ////////////////////////////////////////////////////////////////////////////////
 // FlowTrait
@@ -86,9 +88,7 @@ pub struct MaxFlow<Value: FlowTrait> {
 }
 
 impl<Value: FlowTrait> MaxFlow<Value> {
-    fn len(&self) -> usize {
-        self.network.len()
-    }
+    fn len(&self) -> usize { self.network.len() }
 
     /// 構築です。
     ///

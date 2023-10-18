@@ -82,9 +82,7 @@ pub trait CmpMore: PartialOrd + Sized {
     /// x.change_min(2);
     /// assert_eq!(x, 2);
     /// ```
-    fn change_min(&mut self, rhs: Self) {
-        change_min(self, rhs)
-    }
+    fn change_min(&mut self, rhs: Self) { change_min(self, rhs) }
 
     /// If `self` is smaller than `rhs`, override `self` by `rhs`.
     ///
@@ -96,9 +94,7 @@ pub trait CmpMore: PartialOrd + Sized {
     /// x.change_max(4);
     /// assert_eq!(x, 4);
     /// ```
-    fn change_max(&mut self, rhs: Self) {
-        change_max(self, rhs)
-    }
+    fn change_max(&mut self, rhs: Self) { change_max(self, rhs) }
 }
 
 impl<T: PartialOrd + Sized> CmpMore for T {}

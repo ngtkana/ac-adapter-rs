@@ -47,11 +47,10 @@ pub fn calc_dist_restore(s: usize, g: &[Vec<(usize, u32)>]) -> (Vec<u32>, Vec<us
 
 #[cfg(test)]
 mod tests {
-    use {
-        rand::prelude::*,
-        randtools::{LogUniform, SimpleDigraph},
-        std::collections::HashMap,
-    };
+    use rand::prelude::*;
+    use randtools::LogUniform;
+    use randtools::SimpleDigraph;
+    use std::collections::HashMap;
 
     #[test]
     fn test_graph() {

@@ -667,7 +667,6 @@ where
     /// # assert_eq!(dinic.get_edge(edge_5).flow, 0);
     /// #
     /// ```
-    ///
     pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         let EdgeKey(edge_key) = edge_key;
         assert!(

@@ -17,11 +17,10 @@ pub fn calc_reachability(s: usize, g: &[Vec<usize>]) -> Vec<bool> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::calc_reachability,
-        rand::prelude::*,
-        randtools::{LogUniform, SimpleGraph},
-    };
+    use super::calc_reachability;
+    use rand::prelude::*;
+    use randtools::LogUniform;
+    use randtools::SimpleGraph;
 
     // -- graph
     #[test]

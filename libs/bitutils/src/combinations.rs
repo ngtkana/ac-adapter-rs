@@ -8,10 +8,7 @@ use super::Unsigned;
 /// ```
 /// use bitutils::combinations;
 ///
-/// assert_eq!(
-///     combinations::<u32>(3, 2).collect::<Vec<_>>(),
-///     vec![3, 5, 6],
-/// );
+/// assert_eq!(combinations::<u32>(3, 2).collect::<Vec<_>>(), vec![3, 5, 6],);
 /// ```
 pub fn combinations<T: Unsigned>(n: u32, k: u32) -> Combinations<T> {
     assert!(k < T::bit_length() && k < T::bit_length());
@@ -29,6 +26,7 @@ pub struct Combinations<T> {
 }
 impl<T: Unsigned> Iterator for Combinations<T> {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         if (T::one() << self.n) <= self.bs {
             return None;
@@ -47,7 +45,9 @@ impl<T: Unsigned> Iterator for Combinations<T> {
 
 #[cfg(test)]
 mod tests {
-    use {super::combinations, itertools::Itertools, test_case::test_case};
+    use super::combinations;
+    use itertools::Itertools;
+    use test_case::test_case;
 
     #[test_case(0, 0 => vec![0])]
     #[test_case(1, 0 => vec![0])]
@@ -59,7 +59,5 @@ mod tests {
     #[test_case(3, 1 => vec![1, 2, 4])]
     #[test_case(3, 2 => vec![3, 5, 6])]
     #[test_case(3, 3 => vec![7])]
-    fn test_combinations(n: u32, k: u32) -> Vec<u32> {
-        combinations(n, k).collect_vec()
-    }
+    fn test_combinations(n: u32, k: u32) -> Vec<u32> { combinations(n, k).collect_vec() }
 }

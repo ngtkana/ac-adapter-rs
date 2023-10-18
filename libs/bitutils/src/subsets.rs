@@ -8,10 +8,7 @@ use super::Unsigned;
 /// ```
 /// use bitutils::subsets;
 ///
-/// assert_eq!(
-///     subsets(10u32).collect::<Vec<_>>(),
-///     vec![0, 2, 8, 10],
-/// );
+/// assert_eq!(subsets(10u32).collect::<Vec<_>>(), vec![0, 2, 8, 10],);
 /// ```
 pub fn subsets<T: Unsigned>(bs: T) -> Subsets<T> {
     Subsets {
@@ -30,6 +27,7 @@ pub struct Subsets<T> {
 }
 impl<T: Unsigned> Iterator for Subsets<T> {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.finished {
             return None;
@@ -47,7 +45,9 @@ impl<T: Unsigned> Iterator for Subsets<T> {
 
 #[cfg(test)]
 mod tests {
-    use {super::subsets, itertools::Itertools, test_case::test_case};
+    use super::subsets;
+    use itertools::Itertools;
+    use test_case::test_case;
 
     #[test_case(0 => vec![0])]
     #[test_case(1 => vec![0, 1])]
@@ -65,7 +65,5 @@ mod tests {
     #[test_case(13 => vec![0, 1, 4, 5, 8, 9, 12, 13])]
     #[test_case(14 => vec![0, 2, 4, 6, 8, 10, 12, 14])]
     #[test_case(15 => vec![0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])]
-    fn test_subsets(bs: u32) -> Vec<u32> {
-        subsets(bs).collect_vec()
-    }
+    fn test_subsets(bs: u32) -> Vec<u32> { subsets(bs).collect_vec() }
 }

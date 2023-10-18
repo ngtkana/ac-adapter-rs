@@ -1,7 +1,7 @@
-use {
-    super::TrieMap,
-    std::fmt::{self, Debug, Formatter},
-};
+use super::TrieMap;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::{self};
 
 /// A set base on a trie.
 #[derive(Clone, PartialEq)]
@@ -20,9 +20,7 @@ impl Debug for TrieSet {
 }
 
 impl Default for TrieSet {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl TrieSet {
@@ -35,8 +33,8 @@ impl TrieSet {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieSet;
     /// use std::iter::once;
+    /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
     ///
@@ -54,8 +52,8 @@ impl TrieSet {
     /// # Examples
     ///
     /// ```
-    /// use trie::TrieSet;
     /// use std::iter::once;
+    /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
     /// set.insert(once(1));
@@ -119,8 +117,8 @@ impl TrieSet {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieSet;
     /// use std::iter::once;
+    /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
     /// set.insert(vec![1]);
@@ -162,8 +160,8 @@ impl TrieSet {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieSet;
     /// use std::iter::once;
+    /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
     /// set.insert(vec![1, 2, 2]);
@@ -171,12 +169,7 @@ impl TrieSet {
     /// set.insert(vec![1]);
     /// set.insert(vec![1, 1, 1]);
     ///
-    /// let mut expected = vec![
-    ///     vec![1],
-    ///     vec![1, 1, 1],
-    ///     vec![1, 2, 2],
-    ///     vec![2],
-    /// ].into_iter();
+    /// let mut expected = vec![vec![1], vec![1, 1, 1], vec![1, 2, 2], vec![2]].into_iter();
     /// set.for_each(|k| {
     ///     let ek = expected.next().unwrap();
     ///     assert_eq!(k, ek.as_slice());
@@ -189,7 +182,10 @@ impl TrieSet {
 
 #[cfg(test)]
 mod tests {
-    use {super::TrieSet, rand::prelude::*, std::collections::BTreeSet, test_case::test_case};
+    use super::TrieSet;
+    use rand::prelude::*;
+    use std::collections::BTreeSet;
+    use test_case::test_case;
 
     #[allow(clippy::unused_unit)]
     #[test_case(200, 2; "short")]

@@ -10,7 +10,10 @@
 //! ```
 //! # use next_permutation::next_permutation;
 //! let mut a = vec![1, 0, 2, 1];
-//! assert_eq!(next_permutation(&mut a).map(|a| a.to_vec()), Some(vec![1, 1, 0, 2]));
+//! assert_eq!(
+//!     next_permutation(&mut a).map(|a| a.to_vec()),
+//!     Some(vec![1, 1, 0, 2])
+//! );
 //! assert_eq!(a.as_slice(), &[1, 1, 0, 2]);
 //! ```
 //!
@@ -42,7 +45,8 @@
 //! let n = 3;
 //! let value_lim = 3;
 //!
-//! let result = iter_by_next(vec![0; n], |state: &mut [_]| { // `state` に型注釈が必要です。
+//! let result = iter_by_next(vec![0; n], |state: &mut [_]| {
+//!     // `state` に型注釈が必要です。
 //!     state.iter().rposition(|&x| x + 1 != value_lim).map(|i| {
 //!         state[i] += 1;
 //!         state[i + 1..].iter_mut().for_each(|x| *x = 0);
@@ -54,20 +58,18 @@
 //! let mut expected = Vec::new();
 //! for i in 0..value_lim {
 //!     for j in 0..value_lim {
-//!        for k in 0..value_lim {
+//!         for k in 0..value_lim {
 //!             expected.push(vec![i, j, k]);
-//!        }
+//!         }
 //!     }
 //! }
 //! assert_eq!(result, expected);
 //! ```
-//!
 
-use std::{
-    borrow::BorrowMut,
-    cmp::Ordering,
-    iter::{once, repeat},
-};
+use std::borrow::BorrowMut;
+use std::cmp::Ordering;
+use std::iter::once;
+use std::iter::repeat;
 
 /// 遷移関数からイテレータを作ります。
 pub fn iter_by_next<T, U: ?Sized>(
@@ -93,7 +95,6 @@ where
 ///
 /// 次の置換が存在した場合、次の置換に遷移します。
 /// さもなくば何も起こりません。
-///
 pub fn next_permutation<T: Ord>(state: &mut [T]) -> Option<&mut [T]> {
     next_permutation_by(state, Ord::cmp)
 }
@@ -116,7 +117,6 @@ where
 ///
 /// 次の置換が存在した場合、次の置換に遷移します。
 /// さもなくば何も起こりません。
-///
 pub fn next_permutation_by<T>(
     state: &mut [T],
     mut cmp: impl FnMut(&T, &T) -> Ordering,
@@ -140,7 +140,6 @@ pub fn next_permutation_by<T>(
 ///
 /// 引数 `state` は必ずしもソートされていなくてもよいです。
 /// （この関数の実装の最初に、自動的にソートされます。）
-///
 pub fn permutations<T>(mut state: Vec<T>) -> impl Iterator<Item = Vec<T>>
 where
     T: Clone + Ord,
@@ -154,7 +153,6 @@ where
 ///
 /// 引数 `state` は必ずしもソートされていなくてもよいです。
 /// （この関数の実装の最初に、自動的にソートされます。）
-///
 pub fn permutations_by_key<T, U, F>(mut state: Vec<T>, f: F) -> impl Iterator<Item = Vec<T>>
 where
     T: Clone,
@@ -169,7 +167,6 @@ where
 ///
 /// 引数 `state` は必ずしもソートされていなくてもよいです。
 /// （この関数の実装の最初に、自動的にソートされます。）
-///
 pub fn permutations_by<T, C>(mut state: Vec<T>, cmp: C) -> impl Iterator<Item = Vec<T>>
 where
     T: Clone,

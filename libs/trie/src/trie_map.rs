@@ -1,7 +1,7 @@
-use {
-    super::DEGREE,
-    std::fmt::{self, Debug, Formatter},
-};
+use super::DEGREE;
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::{self};
 
 /// A map base on a trie.
 #[derive(Clone, PartialEq)]
@@ -18,9 +18,7 @@ impl<V: Debug> Debug for TrieMap<V> {
 }
 
 impl<V> Default for TrieMap<V> {
-    fn default() -> Self {
-        Self(None)
-    }
+    fn default() -> Self { Self(None) }
 }
 
 impl<V> TrieMap<V> {
@@ -33,17 +31,15 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     ///
     /// // entries can now be inserted into the empty map
     /// map.insert(once(1), "a");
     /// ```
-    pub fn new() -> Self {
-        Self(None)
-    }
+    pub fn new() -> Self { Self(None) }
 
     /// Inserts a key-value pair into the map.
     ///
@@ -57,8 +53,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// assert_eq!(map.insert(once(17), "a"), None);
@@ -85,8 +81,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// map.insert(once(1), "a");
@@ -111,8 +107,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// map.insert(once(1), "a");
@@ -135,8 +131,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// map.insert(once(1), "a");
@@ -226,8 +222,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// map.insert(vec![1], "a");
@@ -276,8 +272,8 @@ impl<V> TrieMap<V> {
     /// Basic usage:
     ///
     /// ```
-    /// use trie::TrieMap;
     /// use std::iter::once;
+    /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
     /// map.insert(vec![1, 2, 2], "a");
@@ -289,8 +285,9 @@ impl<V> TrieMap<V> {
     ///     (vec![1], "c"),
     ///     (vec![1, 1, 1], "d"),
     ///     (vec![1, 2, 2], "a"),
-    ///     (vec![2], "b")
-    /// ].into_iter();
+    ///     (vec![2], "b"),
+    /// ]
+    /// .into_iter();
     /// map.for_each_kv(|k, &v| {
     ///     let (ek, ev) = expected.next().unwrap();
     ///     assert_eq!(k, ek.as_slice());
@@ -302,6 +299,7 @@ impl<V> TrieMap<V> {
         self.for_each_kv_impl(&mut prefix, &mut visit);
         assert!(prefix.is_empty());
     }
+
     fn for_each_kv_impl(&self, prefix: &mut Vec<usize>, visit: &mut impl FnMut(&[usize], &V)) {
         if let Some(me) = self.0.as_deref() {
             if let Some(value) = me.value.as_ref() {
@@ -330,14 +328,15 @@ impl<V> Node<V> {
     }
 }
 impl<V> Default for Node<V> {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 #[cfg(test)]
 mod tests {
-    use {super::TrieMap, rand::prelude::*, std::collections::BTreeMap, test_case::test_case};
+    use super::TrieMap;
+    use rand::prelude::*;
+    use std::collections::BTreeMap;
+    use test_case::test_case;
 
     #[allow(clippy::unused_unit)]
     #[test_case(200, 2; "short")]

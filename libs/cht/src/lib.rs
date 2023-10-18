@@ -35,7 +35,9 @@
 //! # Examples
 //!
 //! ```
-//! use cht::{BTreeCht, Concave, X};
+//! use cht::BTreeCht;
+//! use cht::Concave;
+//! use cht::X;
 //!
 //! // 初期化
 //! // この時点で `eval`, `multieval` を呼ぶとパニックします。
@@ -50,16 +52,17 @@
 //! assert_eq!(cht.multieval(0..5), vec![1, -3, -5, -5, -3]);
 //! assert_eq!(cht.eval(-1), 1);
 //! ```
-//!
 
-use std::{
-    borrow::Borrow,
-    collections::BTreeSet,
-    fmt::Debug,
-    i64::{MAX, MIN},
-    marker::PhantomData,
-    ops::{Add, Mul, Neg, Sub},
-};
+use std::borrow::Borrow;
+use std::collections::BTreeSet;
+use std::fmt::Debug;
+use std::i64::MAX;
+use std::i64::MIN;
+use std::marker::PhantomData;
+use std::ops::Add;
+use std::ops::Mul;
+use std::ops::Neg;
+use std::ops::Sub;
 
 /// [`BTreeCht`], [`VecCht`] が凸関数を管理するか、凹関数を管理するかを表すマーカーのトレイト
 pub trait ConvexOrConcave: Copy {
@@ -72,14 +75,10 @@ pub enum Convex {}
 /// 凹関数を管理する方であるというマーカー
 pub enum Concave {}
 impl ConvexOrConcave for Convex {
-    fn negate_if_concave(x: i64) -> i64 {
-        x
-    }
+    fn negate_if_concave(x: i64) -> i64 { x }
 }
 impl ConvexOrConcave for Concave {
-    fn negate_if_concave(x: i64) -> i64 {
-        -x
-    }
+    fn negate_if_concave(x: i64) -> i64 { -x }
 }
 
 /// ログがつかない方
@@ -99,6 +98,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
             __marker: PhantomData,
         }
     }
+
     pub fn multieval(&mut self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         let orig_current = self.current;
         self.current = 0;
@@ -106,6 +106,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
         self.current = orig_current;
         res
     }
+
     pub fn eval(&mut self, x: i64) -> i64 {
         assert!(!self.vec.is_empty(), "cannot eval an empty cht");
         while self
@@ -120,6 +121,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
         }
         C::negate_if_concave(self.vec[self.current].line.eval(x)) + self.coeff_at_two * x * x
     }
+
     pub fn add(&mut self, quadratic: Quadratic) {
         let Quadratic([zeroth, first, second]) = quadratic;
         if self.vec.is_empty() {
@@ -188,14 +190,17 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
             __marker: PhantomData,
         }
     }
+
     pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         xs.map(|x| self.eval(x)).collect()
     }
+
     pub fn eval(&self, x: i64) -> i64 {
         assert!(!self.set.is_empty(), "cannot eval an empty cht");
         C::negate_if_concave(self.set.range(Max(x)..).next().unwrap().line.eval(x))
             + self.coeff_at_two * x * x
     }
+
     pub fn add(&mut self, quadratic: Quadratic) {
         let Quadratic([zeroth, first, second]) = quadratic;
         if self.set.is_empty() {
@@ -279,26 +284,21 @@ pub const X: Quadratic = Quadratic([0, 1, 0]);
 /// 二次式
 pub struct Quadratic([i64; 3]);
 impl Quadratic {
-    pub fn eval(self, x: i64) -> i64 {
-        self.0[0] + (self.0[1] + self.0[2] * x) * x
-    }
-    pub fn square(self) -> Self {
-        self * self
-    }
+    pub fn eval(self, x: i64) -> i64 { self.0[0] + (self.0[1] + self.0[2] * x) * x }
+
+    pub fn square(self) -> Self { self * self }
 }
 impl From<i64> for Quadratic {
-    fn from(x: i64) -> Self {
-        Self([x, 0, 0])
-    }
+    fn from(x: i64) -> Self { Self([x, 0, 0]) }
 }
 impl Neg for Quadratic {
     type Output = Self;
-    fn neg(self) -> Self::Output {
-        Self([-self.0[0], -self.0[1], -self.0[2]])
-    }
+
+    fn neg(self) -> Self::Output { Self([-self.0[0], -self.0[1], -self.0[2]]) }
 }
 impl<T: Into<Self>> Add<T> for Quadratic {
     type Output = Self;
+
     fn add(self, rhs: T) -> Self::Output {
         let rhs = rhs.into();
         Self([
@@ -310,12 +310,12 @@ impl<T: Into<Self>> Add<T> for Quadratic {
 }
 impl Add<Quadratic> for i64 {
     type Output = Quadratic;
-    fn add(self, rhs: Quadratic) -> Self::Output {
-        rhs.add(self)
-    }
+
+    fn add(self, rhs: Quadratic) -> Self::Output { rhs.add(self) }
 }
 impl<T: Into<Self>> Sub<T> for Quadratic {
     type Output = Self;
+
     fn sub(self, rhs: T) -> Self::Output {
         let rhs = rhs.into();
         Self([
@@ -327,6 +327,7 @@ impl<T: Into<Self>> Sub<T> for Quadratic {
 }
 impl Sub<Quadratic> for i64 {
     type Output = Quadratic;
+
     fn sub(self, rhs: Quadratic) -> Self::Output {
         let lhs: Quadratic = self.into();
         Quadratic([
@@ -338,6 +339,7 @@ impl Sub<Quadratic> for i64 {
 }
 impl<T: Into<Self>> Mul<T> for Quadratic {
     type Output = Self;
+
     fn mul(self, rhs: T) -> Self::Output {
         let rhs = rhs.into();
         assert_eq!(self.0[1] * rhs.0[2] + self.0[2] * rhs.0[1], 0);
@@ -351,9 +353,8 @@ impl<T: Into<Self>> Mul<T> for Quadratic {
 }
 impl Mul<Quadratic> for i64 {
     type Output = Quadratic;
-    fn mul(self, rhs: Quadratic) -> Self::Output {
-        rhs.mul(self)
-    }
+
+    fn mul(self, rhs: Quadratic) -> Self::Output { rhs.mul(self) }
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Copy)]
@@ -366,9 +367,7 @@ struct Line {
     q: i64,
 }
 impl Line {
-    fn eval(&self, x: i64) -> i64 {
-        self.p * x - self.q
-    }
+    fn eval(&self, x: i64) -> i64 { self.p * x - self.q }
 }
 fn brace(l0: Line, l1: Line) -> Result<Segment, i64> {
     let Line { p: p0, q: q0 } = l0;
@@ -394,21 +393,19 @@ struct Segment {
     max: Max,
 }
 impl Borrow<i64> for Segment {
-    fn borrow(&self) -> &i64 {
-        &self.line.p
-    }
+    fn borrow(&self) -> &i64 { &self.line.p }
 }
 impl Borrow<Max> for Segment {
-    fn borrow(&self) -> &Max {
-        &self.max
-    }
+    fn borrow(&self) -> &Max { &self.max }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
     use itertools::Itertools;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::iter::from_fn;
 
     #[test]

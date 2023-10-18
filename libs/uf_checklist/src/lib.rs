@@ -67,13 +67,19 @@
 //! assert_eq!(range_set.seq, vec![None, Some(0), Some(0), Some(1), None]);
 //!
 //! range_set.set(0, 5, 2);
-//! assert_eq!(range_set.seq, vec![Some(2), Some(0), Some(0), Some(1), Some(2)]);
+//! assert_eq!(range_set.seq, vec![
+//!     Some(2),
+//!     Some(0),
+//!     Some(0),
+//!     Some(1),
+//!     Some(2)
+//! ]);
 //! ```
 
-use {
-    std::ops::{Bound, Range, RangeBounds},
-    union_find::UnionFind,
-};
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
+use union_find::UnionFind;
 
 /// 「一度処理したところを処理しない」区間クエリを線形で処理するデータ構造です。
 #[derive(Clone, Debug)]
@@ -97,6 +103,7 @@ impl UfChecklist {
             rightmost: (0..=n).collect::<Vec<_>>(),
         }
     }
+
     /// 区間 `range` をチェックして、未チェックだった場所をすべて返すイテレータを作ります。
     ///
     /// # Panics
@@ -118,7 +125,6 @@ impl UfChecklist {
     /// assert_eq!(rc.range_check(3..5).collect::<Vec<_>>(), vec![3, 4]);
     /// assert_eq!(rc.range_check(4..6).collect::<Vec<_>>(), vec![5]);
     /// ```
-    ///
     pub fn range_check(&mut self, range: impl RangeBounds<usize>) -> Iter<'_> {
         let n = self.rightmost.len() - 1;
         let Range { mut start, end } = open(range, n);
@@ -136,6 +142,7 @@ impl UfChecklist {
             end,
         }
     }
+
     /// 指定した場所かそれより右の未チェックな位置が、存在すれば返し、なければ [`None`]
     /// を返します。
     ///
@@ -164,7 +171,6 @@ impl UfChecklist {
     /// assert_eq!(rc.lower_bound(6), Some(6));
     /// assert_eq!(rc.lower_bound(8), None);
     /// ```
-    ///
     pub fn lower_bound(&self, i: usize) -> Option<usize> {
         let n = self.rightmost.len() - 1;
         assert!(i < n, "範囲外です。 i = {}, n = {}", i, n);
@@ -175,6 +181,7 @@ impl UfChecklist {
             Some(i)
         }
     }
+
     /// 指定した場所がチェック済みならば `true` を、さもなくば `false` を返します。
     ///
     ///
@@ -202,12 +209,12 @@ impl UfChecklist {
     /// assert_eq!(rc.is_checked(3), true);
     /// assert_eq!(rc.is_checked(6), false);
     /// ```
-    ///
     pub fn is_checked(&self, i: usize) -> bool {
         let n = self.rightmost.len() - 1;
         assert!(i < n, "範囲外です。 i = {}, n = {}", i, n);
         self.rightmost[self.uf.find(i)] != i
     }
+
     /// 指定した場所をチェックします。
     ///
     /// # Panics
@@ -268,6 +275,7 @@ pub struct Iter<'a> {
 }
 impl Iterator for Iter<'_> {
     type Item = usize;
+
     fn next(&mut self) -> Option<Self::Item> {
         let Self {
             range_check,
@@ -301,12 +309,12 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::UfChecklist,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::SubRange,
-        std::mem::replace,
-    };
+    use super::UfChecklist;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::SubRange;
+    use std::mem::replace;
 
     #[test]
     fn test_range_check() {

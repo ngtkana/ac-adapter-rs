@@ -5,7 +5,8 @@
 //! ## ヒープ
 //!
 //! ```
-//! use skew_heap::{SkewHeap, meld};
+//! use skew_heap::meld;
+//! use skew_heap::SkewHeap;
 //!
 //! let mut heap = SkewHeap::new(); // new で構築
 //! heap.push(3); // push で挿入
@@ -24,7 +25,8 @@
 //! ## Meld
 //!
 //! ```
-//! use skew_heap::{SkewHeap, meld};
+//! use skew_heap::meld;
+//! use skew_heap::SkewHeap;
 //!
 //! // フリー関数 `meld` を使う方法
 //! let heap_a = [0, 2, 4, 6].iter().copied().collect::<SkewHeap<_>>();
@@ -44,19 +46,20 @@
 //! * `iter()`, `into_iter()`, `into_iter_sorted()`, `drain()`, `drain_sorted()`: 親ポインタないので面倒です。
 //! * `len(), is_empty()`: 長さ保持するの面倒です。
 //! * `peek_mut()`: 再挿入面倒です。
-use std::{
-    fmt::{self, DebugList, Formatter},
-    iter::{Extend, FromIterator, IntoIterator},
-    mem::{swap, take},
-};
+use std::fmt::DebugList;
+use std::fmt::Formatter;
+use std::fmt::{self};
+use std::iter::Extend;
+use std::iter::FromIterator;
+use std::iter::IntoIterator;
+use std::mem::swap;
+use std::mem::take;
 
 /// Meld のできるヒープ
 #[derive(Clone, Hash, PartialEq)]
 pub struct SkewHeap<T>(Option<Box<SkeyHeapNode<T>>>);
 impl<T: Ord> Default for SkewHeap<T> {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 impl<'a, A: 'a + Copy + Ord> Extend<&'a A> for SkewHeap<A> {
     fn extend<T: IntoIterator<Item = &'a A>>(&mut self, iter: T) {
@@ -86,17 +89,14 @@ impl<T: fmt::Debug + Ord> fmt::Debug for SkewHeap<T> {
 }
 impl<T: Ord> SkewHeap<T> {
     /// 新しく構築します。
-    pub fn new() -> Self {
-        Self(None)
-    }
+    pub fn new() -> Self { Self(None) }
+
     /// 中身を殻にします。
-    pub fn clear(&mut self) {
-        *self = Self::new();
-    }
+    pub fn clear(&mut self) { *self = Self::new(); }
+
     /// 要素一つからなる `SkewHeap` を構築します。
-    pub fn singleton(value: T) -> Self {
-        Self(Some(Box::new(SkeyHeapNode::singleton(value))))
-    }
+    pub fn singleton(value: T) -> Self { Self(Some(Box::new(SkeyHeapNode::singleton(value)))) }
+
     /// 2 つの `SkewHeap` から、その合併を構築します。
     ///
     /// # 計算量
@@ -104,17 +104,14 @@ impl<T: Ord> SkewHeap<T> {
     /// O ( lg ( self.len(), rhs.len() ) )
     ///
     /// ただし `SkewHeap::len` メソッドはありません。（あの！？）
-    pub fn meld(&mut self, rhs: Self) {
-        *self = meld(take(self), rhs);
-    }
+    pub fn meld(&mut self, rhs: Self) { *self = meld(take(self), rhs); }
+
     /// 要素を一つ、追加します。
-    pub fn push(&mut self, value: T) {
-        self.meld(Self::singleton(value));
-    }
+    pub fn push(&mut self, value: T) { self.meld(Self::singleton(value)); }
+
     /// 含んでいる最大の要素への参照を返します。
-    pub fn peek(&self) -> Option<&T> {
-        self.0.as_ref().map(|heap| &heap.value)
-    }
+    pub fn peek(&self) -> Option<&T> { self.0.as_ref().map(|heap| &heap.value) }
+
     /// 含んでいる最大の要素を取り除き、それを返します。
     pub fn pop(&mut self) -> Option<T> {
         let me = take(self);
@@ -122,6 +119,7 @@ impl<T: Ord> SkewHeap<T> {
         *self = Self(meld_node(left, right));
         Some(value)
     }
+
     /// ソート済みの `Vec` に変換します。
     pub fn into_sorted_vec(mut self) -> Vec<T> {
         let mut vec = Vec::new();
@@ -139,9 +137,7 @@ impl<T: Ord> SkewHeap<T> {
 /// O ( lg ( self.len(), rhs.len() ) )
 ///
 /// ただし `SkewHeap::len` メソッドはありません。（あの！？）
-pub fn meld<T: Ord>(a: SkewHeap<T>, b: SkewHeap<T>) -> SkewHeap<T> {
-    SkewHeap(meld_node(a.0, b.0))
-}
+pub fn meld<T: Ord>(a: SkewHeap<T>, b: SkewHeap<T>) -> SkewHeap<T> { SkewHeap(meld_node(a.0, b.0)) }
 
 #[derive(Clone, Default, Hash, PartialEq)]
 struct SkeyHeapNode<T> {
@@ -194,13 +190,14 @@ fn meld_node<T: Ord>(
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{meld, SkewHeap},
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::collections::BinaryHeap,
-        std::iter::repeat_with,
-    };
+    use super::meld;
+    use super::SkewHeap;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::BinaryHeap;
+    use std::iter::repeat_with;
 
     #[test]
     fn test_heap() {
