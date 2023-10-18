@@ -39,31 +39,6 @@ impl<C: Callback> Tree<C> {
         }
     }
 
-    pub(super) fn from_slice(slice: &[Ptr<C>]) -> Self {
-        match slice.len() {
-            0 => Self::new(),
-            1 => {
-                let mut result = Self::new();
-                result.push_back(slice[0]);
-                result
-            }
-            2 => {
-                let mut result = Self::new();
-                result.push_back(slice[0]);
-                result.push_back(slice[1]);
-                result
-            }
-            _ => {
-                let mid = slice.len() / 2;
-                join(
-                    Self::from_slice(&slice[..mid]),
-                    slice[mid],
-                    Self::from_slice(&slice[mid + 1..]),
-                )
-            }
-        }
-    }
-
     /// Returns the parent `p` of the partition point according to the given predicate, and `pred(p)`.
     pub(super) fn partition_point<P>(&self, mut pred: P) -> Option<(Ptr<C>, bool)>
     where
@@ -746,6 +721,60 @@ impl<C: Callback> Default for Tree<C> {
         }
     }
 }
+impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
+    fn from_iter<I: IntoIterator<Item = Ptr<C>>>(iter: I) -> Self {
+        let mut stack = Vec::new();
+        for mut x in iter {
+            debug_assert!(x.is_isolated_and_red());
+            if stack.len() % 2 == 0 {
+                x.color = Color::Black;
+            }
+            stack.push((x, 1));
+            let len = stack.len();
+            if len % 2 == 1 && len >= 3 && stack[len - 3].1 == stack[len - 1].1 {
+                let (mut r, r_bh) = stack.pop().unwrap();
+                let (mut c, c_bh) = stack.pop().unwrap();
+                let (mut l, l_bh) = stack.pop().unwrap();
+                debug_assert_eq!(l_bh, r_bh);
+                debug_assert_eq!(c_bh, 1);
+                // Join the three trees.
+                c.left = Some(l);
+                c.right = Some(r);
+                c.color = Color::Black;
+                l.parent = Some(c);
+                r.parent = Some(c);
+                c.update();
+                stack.push((c, l_bh + 1));
+            }
+        }
+        if stack.is_empty() {
+            return Self::new();
+        }
+        let tail = (stack.len() % 2 == 0).then(|| stack.pop().unwrap());
+        let tree = stack.pop().unwrap();
+        let mut r = Tree {
+            root: Some(tree.0),
+            black_height: tree.1,
+        };
+        while !stack.is_empty() {
+            let (c, c_bh) = stack.pop().unwrap();
+            debug_assert_eq!(c_bh, 1);
+            let (l, l_bh) = stack.pop().unwrap();
+            r = join(
+                Tree {
+                    root: Some(l),
+                    black_height: l_bh,
+                },
+                c,
+                r,
+            );
+        }
+        if let Some(tail) = tail {
+            r.push_back(tail.0);
+        }
+        r
+    }
+}
 
 #[allow(dead_code)]
 impl<C: Callback> Ptr<C> {
@@ -1345,6 +1374,17 @@ pub(super) mod tests {
     }
 
     #[test]
+    fn test_from_iterator_of_ptrs() {
+        for len in 0..100 {
+            let tree =
+                Tree::<TestCallback>::from_iter((0..len).map(|i| Ptr::new(Data::new(i as u64))));
+            assert_eq!(tree.len(), len);
+            validate(&tree);
+            assert_eq!(to_vec(&tree), (0..len as u64).collect::<Vec<_>>());
+        }
+    }
+
+    #[test]
     fn test_alloc_dealloc() {
         enum AllocCallback {}
         impl Callback for AllocCallback {
@@ -1361,7 +1401,7 @@ pub(super) mod tests {
             assert_eq!(Rc::strong_count(rc), 1);
         }
         {
-            let slice = rcs
+            let ptrs = rcs
                 .iter()
                 .map(|rc| Ptr::new(Rc::clone(rc)))
                 .collect::<Vec<_>>();
@@ -1370,7 +1410,7 @@ pub(super) mod tests {
                 assert_eq!(Rc::strong_count(rc), 2);
             }
 
-            let mut tree = Tree::<AllocCallback>::from_slice(&slice);
+            let mut tree = Tree::<AllocCallback>::from_iter(ptrs.into_iter());
 
             for rc in &rcs {
                 assert_eq!(Rc::strong_count(rc), 2);
