@@ -2,12 +2,14 @@
 //!
 //! [詳しくは `BitVec` のドキュメントをご覧ください。](BitVec)
 
-use std::{
-    fmt::Debug,
-    iter::FromIterator,
-    mem::replace,
-    ops::{BitAndAssign, BitOrAssign, BitXorAssign, ShlAssign, ShrAssign},
-};
+use std::fmt::Debug;
+use std::iter::FromIterator;
+use std::mem::replace;
+use std::ops::BitAndAssign;
+use std::ops::BitOrAssign;
+use std::ops::BitXorAssign;
+use std::ops::ShlAssign;
+use std::ops::ShrAssign;
 
 /// Boolean 配列を [`u64`] のベクターに詰め込んだものです。
 ///
@@ -69,9 +71,8 @@ impl BitVec {
     /// let mut bv = BitVec::new(10);
     /// assert_eq!(&bv, &BitVec::from_01str("0000000000"));
     /// ```
-    pub fn new(len: usize) -> Self {
-        Self::from_raw(vec![0; div_ceil(len, 64)], len)
-    }
+    pub fn new(len: usize) -> Self { Self::from_raw(vec![0; div_ceil(len, 64)], len) }
+
     /// "01" 文字列から構築します。
     ///
     /// # Panics
@@ -97,6 +98,7 @@ impl BitVec {
             })
             .collect()
     }
+
     /// 長さを返します。
     ///
     /// # Example
@@ -106,9 +108,8 @@ impl BitVec {
     /// assert!(BitVec::new(0).is_empty());
     /// assert!(!BitVec::new(1).is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.vec.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.vec.is_empty() }
+
     /// 長さを返します。
     ///
     /// # Example
@@ -118,9 +119,8 @@ impl BitVec {
     /// let mut bv = BitVec::from_01str("010");
     /// assert_eq!(bv.len(), 3);
     /// ```
-    pub fn len(&self) -> usize {
-        self.len
-    }
+    pub fn len(&self) -> usize { self.len }
+
     /// 後ろに要素を追架します。
     ///
     /// # Example
@@ -141,6 +141,7 @@ impl BitVec {
             self.set(i);
         }
     }
+
     /// 特定のビットが立っていれば `true` を返します。
     ///
     /// # Example
@@ -156,6 +157,7 @@ impl BitVec {
         debug_assert!(i < self.len);
         self.vec[i / 64] >> (i % 64) & 1 == 1
     }
+
     /// 特定のビットを立てます。
     ///
     /// もともと立っているときにも立ったままです。
@@ -172,6 +174,7 @@ impl BitVec {
         debug_assert!(i < self.len);
         self.vec[i / 64] |= 1_u64 << (i % 64);
     }
+
     /// 特定のビットをおろします。
     ///
     /// もともと立っていないときにも立っていないままです。
@@ -188,17 +191,16 @@ impl BitVec {
         debug_assert!(i < self.len);
         self.vec[i / 64] &= !(1_u64 << (i % 64));
     }
+
     /// 指定したフォーマットの [`String`] に変換します。
     pub fn format(&self, t: char, f: char) -> String {
         self.iter().map(|b| if b { t } else { f }).collect()
     }
+
     /// ビットを順に [`bool`] を返すイテレータを作ります。
-    pub fn iter(&self) -> Iter<'_> {
-        Iter { bv: self, i: 0 }
-    }
-    fn from_raw(vec: Vec<u64>, len: usize) -> Self {
-        Self { vec, len }
-    }
+    pub fn iter(&self) -> Iter<'_> { Iter { bv: self, i: 0 } }
+
+    fn from_raw(vec: Vec<u64>, len: usize) -> Self { Self { vec, len } }
 }
 
 /// ビットを順に [`bool`] を返すイテレータです。
@@ -208,6 +210,7 @@ pub struct Iter<'a> {
 }
 impl<'a> Iterator for Iter<'a> {
     type Item = bool;
+
     fn next(&mut self) -> Option<bool> {
         if self.bv.len() == self.i {
             None
@@ -220,9 +223,7 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 impl Default for BitVec {
-    fn default() -> Self {
-        Self::from_raw(Vec::new(), 0)
-    }
+    fn default() -> Self { Self::from_raw(Vec::new(), 0) }
 }
 
 impl FromIterator<bool> for BitVec {
@@ -247,15 +248,19 @@ impl FromIterator<bool> for BitVec {
         Self::from_raw(vec, len)
     }
 }
+impl<'a> IntoIterator for &'a BitVec {
+    type IntoIter = Iter<'a>;
+    type Item = bool;
+
+    fn into_iter(self) -> Iter<'a> { self.iter() }
+}
 impl Debug for BitVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}", self.to_string())
     }
 }
 impl ToString for BitVec {
-    fn to_string(&self) -> String {
-        self.format('1', '0')
-    }
+    fn to_string(&self) -> String { self.format('1', '0') }
 }
 
 impl BitAndAssign<&Self> for BitVec {
@@ -345,11 +350,13 @@ fn div_ceil(x: usize, y: usize) -> usize {
 #[cfg(test)]
 mod tests {
     use super::BitVec;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::iter::repeat_with;
 
     macro_rules! assert_eq_bs {
-        ($bv: expr, $slice: expr) => {
+        ($bv:expr, $slice:expr) => {
             let bv: &BitVec = $bv;
             let slice: &[bool] = $slice;
             assert_eq!(bv.len(), slice.len(), "different size",);

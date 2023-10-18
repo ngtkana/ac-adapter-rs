@@ -742,8 +742,7 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
             root: Some(tree.0),
             black_height: tree.1,
         };
-        while !stack.is_empty() {
-            let (c, c_bh) = stack.pop().unwrap();
+        while let Some((c, c_bh)) = stack.pop() {
             debug_assert_eq!(c_bh, 1);
             let (l, l_bh) = stack.pop().unwrap();
             r = join(
@@ -765,8 +764,8 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
 #[allow(dead_code)]
 impl<C: Callback> Ptr<C> {
     /// Get the next node in the tree.
-    pub(super) fn next(&self) -> Option<Self> {
-        let mut x = *self;
+    pub(super) fn next(self) -> Option<Self> {
+        let mut x = self;
         if let Some(mut x) = x.right {
             while let Some(l) = x.left {
                 x = l;
@@ -783,8 +782,8 @@ impl<C: Callback> Ptr<C> {
     }
 
     /// Get the previous node in the tree.
-    pub(super) fn prev(&self) -> Option<Self> {
-        let mut x = *self;
+    pub(super) fn prev(self) -> Option<Self> {
+        let mut x = self;
         if let Some(mut x) = x.left {
             while let Some(r) = x.right {
                 x = r;
@@ -806,11 +805,11 @@ where
     C::Data: Len,
 {
     /// Get the n-th next node in the tree.
-    pub(super) fn advance_by(&self, mut n: usize) -> Option<Self> {
+    pub(super) fn advance_by(self, mut n: usize) -> Option<Self> {
         // Convert the problem to finding the `n`-th node in the tree.
         n += self.left.map_or(0, |l| l.data.len());
         // Search up the tree.
-        let mut x = *self;
+        let mut x = self;
         while x.data.len() <= n {
             let p = x.parent?;
             if node_ptr_eq(p.right, x) {
@@ -833,11 +832,11 @@ where
     }
 
     /// Get the n-th previous node in the tree.
-    pub(super) fn retreat_by(&self, mut n: usize) -> Option<Self> {
+    pub(super) fn retreat_by(self, mut n: usize) -> Option<Self> {
         // Convert the problem to finding the backward-`n`-th node in the tree.
         n += self.right.map_or(0, |r| r.data.len());
         // Search up the tree.
-        let mut x = *self;
+        let mut x = self;
         while x.data.len() <= n {
             let p = x.parent?;
             if node_ptr_eq(p.left, x) {
@@ -1362,8 +1361,9 @@ pub(super) mod tests {
     #[test]
     fn test_from_iterator_of_ptrs() {
         for len in 0..100 {
-            let tree =
-                Tree::<TestCallback>::from_iter((0..len).map(|i| Ptr::new(Data::new(i as u64))));
+            let tree = (0..len)
+                .map(|i| Ptr::new(Data::new(i as u64)))
+                .collect::<Tree<TestCallback>>();
             assert_eq!(tree.len(), len);
             validate(&tree);
             assert_eq!(to_vec(&tree), (0..len as u64).collect::<Vec<_>>());
@@ -1396,7 +1396,7 @@ pub(super) mod tests {
                 assert_eq!(Rc::strong_count(rc), 2);
             }
 
-            let mut tree = Tree::<AllocCallback>::from_iter(ptrs.into_iter());
+            let mut tree = ptrs.into_iter().collect::<Tree<AllocCallback>>();
 
             for rc in &rcs {
                 assert_eq!(Rc::strong_count(rc), 2);
