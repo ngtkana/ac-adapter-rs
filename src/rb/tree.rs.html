@@ -1613,6 +1613,7 @@
 <a href="#1579" id="1579">1579</a>
 <a href="#1580" id="1580">1580</a>
 <a href="#1581" id="1581">1581</a>
+<a href="#1582" id="1582">1582</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A red-black tree with `NonNull` and `Callback`.
 </span><span class="kw">use </span><span class="kw">crate</span>::color;
 <span class="kw">use </span><span class="kw">crate</span>::node_ptr_eq;
@@ -3153,8 +3154,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
             <span class="kw">let </span>len = rng.gen_range(<span class="number">0</span>..<span class="number">100usize</span>);
-            <span class="kw">let </span>tree =
-                Tree::&lt;TestCallback&gt;::from_iter((<span class="number">0</span>..len <span class="kw">as </span>u64).map(|i| Ptr::new(Data::new(i))));
+            <span class="kw">let </span>tree = (<span class="number">0</span>..len <span class="kw">as </span>u64)
+                .map(|i| Ptr::new(Data::new(i)))
+                .collect::&lt;Tree&lt;TestCallback&gt;&gt;();
             <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, format(<span class="kw-2">&amp;</span>tree, |data| data.value.to_string(), <span class="kw-2">&amp;</span>[]));
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
                 <span class="kw">let </span>value = rng.gen_range(<span class="number">0</span>..=len <span class="kw">as </span>u64);
