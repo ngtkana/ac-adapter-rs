@@ -1,7 +1,8 @@
-use {
-    super::{Int, PrimeFactorsByLookup, PrimeFactorsByTrialDivision},
-    std::{iter::Peekable, marker::PhantomData},
-};
+use super::Int;
+use super::PrimeFactorsByLookup;
+use super::PrimeFactorsByTrialDivision;
+use std::iter::Peekable;
+use std::marker::PhantomData;
 
 /// An abstraction of prime factor generator.
 ///
@@ -55,6 +56,7 @@ pub struct Unique<T: Int, P: PrimeFactors<T>> {
 }
 impl<T: Int, P: PrimeFactors<T>> Iterator for Unique<T, P> {
     type Item = P::Item;
+
     fn next(&mut self) -> Option<Self::Item> {
         let prev = self.prev;
         let res = self.iter.find(|&p| Some(p) != prev);
@@ -70,6 +72,7 @@ pub struct Rle<T: Int, P: PrimeFactors<T>> {
 }
 impl<T: Int, P: PrimeFactors<T>> Iterator for Rle<T, P> {
     type Item = (P::Item, usize);
+
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(p) = self.iter.next() {
             let mut multi = 1;

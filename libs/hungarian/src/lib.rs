@@ -7,21 +7,18 @@
 //! ```
 //! use hungarian::hungarian;
 //!
-//! let result = hungarian(&[
-//!     vec![2, 100, 10],
-//!     vec![10, 100, 15],
-//! ]);
+//! let result = hungarian(&[vec![2, 100, 10], vec![10, 100, 15]]);
 //!
 //! assert_eq!(result.value, 17);
 //! assert_eq!(&*result.forward, vec![0, 2].as_slice());
 //! assert_eq!(&*result.backward, vec![Some(0), None, Some(1)].as_slice());
 //! ```
-//!
 
-use std::{
-    iter::Sum,
-    ops::{Add, AddAssign, Sub, SubAssign},
-};
+use std::iter::Sum;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 /// [See the crate level documentation](crate)
 pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
@@ -182,19 +179,23 @@ impl_value_float!(f32, f64);
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{hungarian, HungarianResult, Value},
-        approx::{assert_abs_diff_eq, AbsDiffEq},
-        itertools::Itertools,
-        next_permutation::permutations,
-        rand::{
-            distributions::uniform::SampleUniform,
-            prelude::{Rng, StdRng},
-            SeedableRng,
-        },
-        std::{assert_eq, fmt::Debug, iter::repeat_with, mem::swap, ops::RangeInclusive},
-        test_case::test_case,
-    };
+    use super::hungarian;
+    use super::HungarianResult;
+    use super::Value;
+    use approx::assert_abs_diff_eq;
+    use approx::AbsDiffEq;
+    use itertools::Itertools;
+    use next_permutation::permutations;
+    use rand::distributions::uniform::SampleUniform;
+    use rand::prelude::Rng;
+    use rand::prelude::StdRng;
+    use rand::SeedableRng;
+    use std::assert_eq;
+    use std::fmt::Debug;
+    use std::iter::repeat_with;
+    use std::mem::swap;
+    use std::ops::RangeInclusive;
+    use test_case::test_case;
 
     #[test_case(&[vec![4, 3, 5], vec![3, 5, 9], vec![4, 1, 4]] => (vec![2, 0, 1], 9); "yosupo sample")]
     #[test_case(&[vec![4, 3, 5], vec![3, 5, 0], vec![4, 1, 4]] => (vec![0, 2, 1], 5); "handmade")]
@@ -212,14 +213,10 @@ mod tests {
     }
 
     #[test]
-    fn test_rand_i32() {
-        test_rand_impl::<i32>(5, 5, 1000, false, -100..=100);
-    }
+    fn test_rand_i32() { test_rand_impl::<i32>(5, 5, 1000, false, -100..=100); }
 
     #[test]
-    fn test_rand_f64() {
-        test_rand_impl::<f64>(5, 5, 1000, false, -100.0..=100.);
-    }
+    fn test_rand_f64() { test_rand_impl::<f64>(5, 5, 1000, false, -100.0..=100.); }
 
     fn test_rand_impl<T: Value + Debug + Epsilon + SampleUniform>(
         h: usize,

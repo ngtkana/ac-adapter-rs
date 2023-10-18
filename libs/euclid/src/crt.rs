@@ -27,10 +27,10 @@ pub fn crt<T: Signed>(res0: T, mod0: T, res1: T, mod1: T) -> Option<(T, T)> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::crt,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-    };
+    use super::crt;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
 
     #[test]
     fn test_crt_impl_rand_validate() {

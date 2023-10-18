@@ -1,9 +1,9 @@
 //! 部分永続化された、素集合データ構造です。
 //!
 //! [構造体 `PartiallyPersistentUnionFind` のドキュメントをご覧ください。](PartiallyPersistentUnionFind)
-//!
 
-use std::{mem::swap, usize::MAX};
+use std::mem::swap;
+use std::usize::MAX;
 
 /// 部分永続化された、素集合データ構造です。
 ///
@@ -26,10 +26,10 @@ use std::{mem::swap, usize::MAX};
 /// let mut uf = PartiallyPersistentUnionFind::new(5);
 ///
 /// // 時刻を指定して union
-/// assert!( uf.union(0, 1, 10));
-/// assert!( uf.union(2, 3, 20));
+/// assert!(uf.union(0, 1, 10));
+/// assert!(uf.union(2, 3, 20));
 /// assert!(!uf.union(3, 2, 30)); // すでに結ばれている場合は `false`
-/// assert!( uf.union(3, 4, 40));
+/// assert!(uf.union(3, 4, 40));
 /// assert!(!uf.union(3, 3, 30)); // すでに結ばれている場合は `false`
 ///
 /// // 時刻を指定して find
@@ -40,7 +40,7 @@ use std::{mem::swap, usize::MAX};
 ///
 /// // 時刻を指定して same
 /// assert!(!uf.same(0, 1, 9));
-/// assert!( uf.same(0, 1, 10));
+/// assert!(uf.same(0, 1, 10));
 ///
 /// // 1 以上の時刻を指定して size
 /// assert_eq!(uf.size(0, 9), 1);
@@ -72,7 +72,7 @@ use std::{mem::swap, usize::MAX};
 /// assert!(!uf.same(0, 1, MAX - 1));
 ///
 /// // 適用後を参照
-/// assert!( uf.same(0, 1, MAX));
+/// assert!(uf.same(0, 1, MAX));
 /// ```
 ///
 ///
@@ -81,7 +81,6 @@ use std::{mem::swap, usize::MAX};
 /// * [`size`](PartiallyPersistentUnionFind::size) を実現するために n
 /// 回程度の動的メモリ確保の必要なフィールド `size_history` を管理しているため、
 /// 定数倍が重くなっています。
-///
 #[derive(Clone, Debug)]
 pub struct PartiallyPersistentUnionFind {
     parent: Vec<isize>,
@@ -103,7 +102,6 @@ impl PartiallyPersistentUnionFind {
     /// # use partially_persistent_union_find::PartiallyPersistentUnionFind;
     /// let uf = PartiallyPersistentUnionFind::new(5);
     /// ```
-    ///
     pub fn new(n: usize) -> Self {
         assert!(n < std::isize::MAX as usize);
         Self {
@@ -113,6 +111,7 @@ impl PartiallyPersistentUnionFind {
             last_stamp: 0,
         }
     }
+
     /// 時刻 time の代表の頂点番号を返します。
     ///
     /// [See `PartiallyPersistentUnionFind` for examples.](PartiallyPersistentUnionFind)
@@ -137,6 +136,7 @@ impl PartiallyPersistentUnionFind {
             self.find(self.parent[index] as usize, time)
         }
     }
+
     /// 時刻 time に i と j が同じ成分に属するならば `true`、属さないならば `false` を返します。
     ///
     /// # Examples
@@ -150,6 +150,7 @@ impl PartiallyPersistentUnionFind {
     pub fn same(&self, i: usize, j: usize, time: usize) -> bool {
         self.find(i, time) == self.find(j, time)
     }
+
     /// 2 頂点が結合された時刻を返します。
     ///
     /// `i == j` の場合は 0 を返します。
@@ -177,6 +178,7 @@ impl PartiallyPersistentUnionFind {
             None
         }
     }
+
     /// 時刻 time の i の属する成分の要素数を返します。
     ///
     /// # Examples
@@ -197,14 +199,11 @@ impl PartiallyPersistentUnionFind {
         let mut r = size_history.len();
         while 1 < r - l {
             let c = l + (r - l) / 2;
-            *if size_history[c][0] <= time {
-                &mut l
-            } else {
-                &mut r
-            } = c;
+            *if size_history[c][0] <= time { &mut l } else { &mut r } = c;
         }
         size_history[l][1]
     }
+
     /// 今までのどのクエリ時刻よりも真に大きな時刻 time を指定して、頂点 i, j を結合します。
     ///
     /// ただし、初回クエリ時刻は 1 以上である必要があります。
@@ -248,13 +247,13 @@ impl PartiallyPersistentUnionFind {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::PartiallyPersistentUnionFind,
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::DistinctTwo,
-        std::usize::MAX,
-    };
+    use super::PartiallyPersistentUnionFind;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::DistinctTwo;
+    use std::usize::MAX;
 
     #[test]
     fn test_rand() {
@@ -314,11 +313,7 @@ mod tests {
         }
         while 1 < right - left {
             let center = left + (right - left) / 2;
-            *if uf.find(u, center) == uf.find(v, center) {
-                &mut right
-            } else {
-                &mut left
-            } = center;
+            *if uf.find(u, center) == uf.find(v, center) { &mut right } else { &mut left } = center;
         }
         Some(right)
     }

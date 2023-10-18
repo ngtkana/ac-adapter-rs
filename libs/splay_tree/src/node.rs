@@ -1,10 +1,10 @@
 use super::LazyOps;
-use std::{
-    cmp::Ordering,
-    fmt::Debug,
-    mem::{replace, swap},
-    ptr::{self, null_mut},
-};
+use std::cmp::Ordering;
+use std::fmt::Debug;
+use std::mem::replace;
+use std::mem::swap;
+use std::ptr::null_mut;
+use std::ptr::{self};
 
 #[allow(unused_must_use)]
 pub fn deep_free<O: LazyOps>(root: *mut Node<O>) {
@@ -101,6 +101,7 @@ impl<O: LazyOps> Node<O> {
             lazy: None,
         }
     }
+
     pub fn dump(&self)
     where
         O::Value: Debug,
@@ -111,14 +112,23 @@ impl<O: LazyOps> Node<O> {
             left.dump();
         }
         println!(
-            "{:?}: parent = {:?},  left = {:?}, right = {:?}, len = {}, rev = {}, value = {:?}, acc = {:?}, lazy = {:?}",
-            self as *const _, self.parent, self.left, self.right, self.len, self.rev,self.value,
-            self.acc, self.lazy
+            "{:?}: parent = {:?},  left = {:?}, right = {:?}, len = {}, rev = {}, value = {:?}, \
+             acc = {:?}, lazy = {:?}",
+            self as *const _,
+            self.parent,
+            self.left,
+            self.right,
+            self.len,
+            self.rev,
+            self.value,
+            self.acc,
+            self.lazy
         );
         if let Some(right) = unsafe { self.right.as_ref() } {
             right.dump();
         }
     }
+
     pub fn update(&mut self) {
         self.len = 1;
         self.acc = O::proj(&self.value);
@@ -133,6 +143,7 @@ impl<O: LazyOps> Node<O> {
             self.acc = O::op(&self.acc, &right.acc);
         }
     }
+
     pub fn push(&mut self) {
         if let Some(lazy) = self.lazy.take() {
             O::act_value(&lazy, &mut self.value);
@@ -154,6 +165,7 @@ impl<O: LazyOps> Node<O> {
             }
         }
     }
+
     pub fn rotate(&mut self) {
         let p = unsafe { &mut *self.parent };
         let g = p.parent;
@@ -183,6 +195,7 @@ impl<O: LazyOps> Node<O> {
         p.update();
         self.update();
     }
+
     pub fn splay(&mut self) {
         while let Some(p) = unsafe { self.parent.as_mut() } {
             if let Some(g) = unsafe { p.parent.as_mut() } {

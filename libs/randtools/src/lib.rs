@@ -1,7 +1,10 @@
 mod algo;
 
 use rand::prelude::*;
-use std::{collections::HashSet, iter, mem, ops::Range};
+use std::collections::HashSet;
+use std::iter;
+use std::mem;
+use std::ops::Range;
 
 #[derive(Debug)]
 pub struct LogUniform(pub Range<usize>);
@@ -146,11 +149,12 @@ impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{LogUniform, NonEmptySubRange, SubRange, Tree},
-        rand::prelude::*,
-        std::ops::Range,
-    };
+    use super::LogUniform;
+    use super::NonEmptySubRange;
+    use super::SubRange;
+    use super::Tree;
+    use rand::prelude::*;
+    use std::ops::Range;
     mod algo;
 
     #[test]

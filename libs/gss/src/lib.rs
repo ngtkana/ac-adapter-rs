@@ -33,10 +33,11 @@
 //!     * 普通バージョン: [`gss_integer`]
 //!     * スライス添字バージョン: [`gss_on_slice`]
 
-use std::{
-    fmt::Debug,
-    ops::{Add, Div, Mul, Sub},
-};
+use std::fmt::Debug;
+use std::ops::Add;
+use std::ops::Div;
+use std::ops::Mul;
+use std::ops::Sub;
 
 /// スライスの添字バージョン。正確な値を返します。
 pub fn gss_on_slice<T: PartialOrd + Debug>(a: &[T]) -> usize {
@@ -56,11 +57,7 @@ pub fn gss_integer<T: Int + Golden, U: PartialOrd + Debug>(
     if lower + T::one() == upper {
         let value_left = f(lower);
         let value_right = f(upper);
-        return if value_left <= value_right {
-            lower
-        } else {
-            upper
-        };
+        return if value_left <= value_right { lower } else { upper };
     }
     let kv = gss_base(lower, upper, f, |x, y| x != y);
     debug_assert_eq!(kv[0].0 + T::one(), kv[1].0);
@@ -97,7 +94,6 @@ pub fn gss_by_count<T: Float + Golden, U: PartialOrd + Debug>(
 /// # 追加要件
 ///
 /// `T::zero() < eps && eps / lower.abs().max(upper.abs()) != T::zero()`
-///
 pub fn gss_by_absolute_eps<T: Float + Golden, U: PartialOrd + Debug>(
     lower: T,
     upper: T,
@@ -270,20 +266,26 @@ impl_float! { f32, f64 }
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{gss_by_absolute_eps, gss_by_count, gss_integer, gss_on_slice, Float, Golden, Int},
-        approx::assert_abs_diff_eq,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::NonEmptySubRange,
-        std::{iter::repeat_with, mem::swap, ops::Range},
-        test_case::test_case,
-    };
+    use super::gss_by_absolute_eps;
+    use super::gss_by_count;
+    use super::gss_integer;
+    use super::gss_on_slice;
+    use super::Float;
+    use super::Golden;
+    use super::Int;
+    use approx::assert_abs_diff_eq;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::NonEmptySubRange;
+    use std::iter::repeat_with;
+    use std::mem::swap;
+    use std::ops::Range;
+    use test_case::test_case;
 
     #[test_case(3, 0 => 2)]
     #[test_case(0, 3 => 1)]
-    fn test_near_mid(x: u32, y: u32) -> u32 {
-        x.golden_sect(y)
-    }
+    fn test_near_mid(x: u32, y: u32) -> u32 { x.golden_sect(y) }
 
     ////////////////////////////////////////////////////////////////////////////////
     // 内部実装

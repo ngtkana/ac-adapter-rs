@@ -86,12 +86,14 @@ pub fn find_path(start: usize, end: usize, g: &[Vec<usize>]) -> Option<Vec<usize
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{calc_dist, calc_dist_restore, find_path},
-        rand::prelude::*,
-        randtools::{LogUniform, SimpleGraph, Tree},
-        std::collections::HashSet,
-    };
+    use super::calc_dist;
+    use super::calc_dist_restore;
+    use super::find_path;
+    use rand::prelude::*;
+    use randtools::LogUniform;
+    use randtools::SimpleGraph;
+    use randtools::Tree;
+    use std::collections::HashSet;
 
     // -- graph
     #[test]

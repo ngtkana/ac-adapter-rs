@@ -15,7 +15,8 @@
 //! It can be used to check if an integer is a prime number.
 //!
 //! ```
-//! use erato::{Sieve, LpdSieve};
+//! use erato::LpdSieve;
+//! use erato::Sieve;
 //!
 //! let mut sieve = Sieve::new();
 //! assert!(sieve.is_prime(2));
@@ -30,7 +31,8 @@
 //! And it can enumerate all the prime numbers.
 //!
 //! ```
-//! use erato::{Sieve, LpdSieve};
+//! use erato::LpdSieve;
+//! use erato::Sieve;
 //!
 //! let mut sieve = Sieve::new();
 //! let mut prime_numbers = sieve.prime_numbers();
@@ -73,12 +75,13 @@ mod sieve;
 mod sieve_base;
 mod sieve_kind;
 
-pub use {
-    converters::{PrimeFactors, Rle, Unique},
-    int::Int,
-    lpd_sieve::LpdSieve,
-    sieve::Sieve,
-    sieve_base::{PrimeFactorsByLookup, PrimeFactorsByTrialDivision, PrimeNumbers},
-};
-
+pub use converters::PrimeFactors;
+pub use converters::Rle;
+pub use converters::Unique;
+pub use int::Int;
+pub use lpd_sieve::LpdSieve;
+pub use sieve::Sieve;
+pub use sieve_base::PrimeFactorsByLookup;
+pub use sieve_base::PrimeFactorsByTrialDivision;
+pub use sieve_base::PrimeNumbers;
 use sieve_base::SieveBase;

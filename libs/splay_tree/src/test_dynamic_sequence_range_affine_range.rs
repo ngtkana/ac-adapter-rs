@@ -1,29 +1,32 @@
-use {
-    super::{LazyOps, SplayTree},
-    itertools::Itertools,
-    rand::{prelude::StdRng, Rng, SeedableRng},
-    std::{iter::repeat_with, mem::swap},
-};
+use super::LazyOps;
+use super::SplayTree;
+use itertools::Itertools;
+use rand::prelude::StdRng;
+use rand::Rng;
+use rand::SeedableRng;
+use std::iter::repeat_with;
+use std::mem::swap;
 
 const P: i64 = 998_244_353;
 
 enum Affine {}
 impl LazyOps for Affine {
-    type Value = i64;
     type Acc = (i64, usize);
     type Lazy = [i64; 2];
-    fn proj(&value: &Self::Value) -> Self::Acc {
-        (value, 1)
-    }
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
-        ((lhs.0 + rhs.0) % P, lhs.1 + rhs.1)
-    }
+    type Value = i64;
+
+    fn proj(&value: &Self::Value) -> Self::Acc { (value, 1) }
+
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { ((lhs.0 + rhs.0) % P, lhs.1 + rhs.1) }
+
     fn act_value(lazy: &Self::Lazy, value: &mut Self::Value) {
         *value = (lazy[0] * *value + lazy[1]) % P;
     }
+
     fn act_acc(lazy: &Self::Lazy, acc: &mut Self::Acc) {
         acc.0 = (lazy[0] * acc.0 + lazy[1] * acc.1 as i64) % P;
     }
+
     fn compose(upper: &Self::Lazy, lower: &mut Self::Lazy) {
         *lower = [
             (upper[0] * lower[0]) % P,

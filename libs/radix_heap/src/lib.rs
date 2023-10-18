@@ -1,7 +1,8 @@
 //! CAUTION: Failing in tests!
 
 #![allow(deprecated, unused_imports)]
-use std::fmt::{self, Debug};
+use std::fmt::Debug;
+use std::fmt::{self};
 
 const RADIX_HEAP_LEN: usize = 32;
 
@@ -20,11 +21,13 @@ impl<T> RadixHeap<T> {
             len: 0,
         }
     }
+
     pub fn push(&mut self, key: u32, value: T) {
         assert!(self.last <= key);
         self.len += 1;
         self.stacks[Self::index(key ^ self.last)].push((key, value));
     }
+
     pub fn pop(&mut self) -> Option<(u32, T)> {
         if self.len == 0 {
             None
@@ -45,15 +48,12 @@ impl<T> RadixHeap<T> {
             Some(self.stacks[0].pop().unwrap())
         }
     }
-    fn index(x: u32) -> usize {
-        RADIX_HEAP_LEN - x.leading_zeros() as usize
-    }
+
+    fn index(x: u32) -> usize { RADIX_HEAP_LEN - x.leading_zeros() as usize }
 }
 
 impl<T: Debug> Default for RadixHeap<T> {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 impl<T: Debug> Debug for RadixHeap<T> {
@@ -66,10 +66,9 @@ impl<T: Debug> Debug for RadixHeap<T> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        rand::prelude::*,
-        std::{cmp::Reverse, collections::BinaryHeap},
-    };
+    use rand::prelude::*;
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
 
     // #[test]
     // fn test_heap() {

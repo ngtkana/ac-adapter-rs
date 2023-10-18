@@ -35,7 +35,6 @@
 ///     vec![false, true, false],
 /// ]);
 /// ```
-///
 pub fn column_reduce(a: &mut [Vec<bool>]) -> usize {
     let h = a.len();
     let w = a[0].len();

@@ -1,4 +1,5 @@
-use std::fmt::{Display, Write};
+use std::fmt::Display;
+use std::fmt::Write;
 
 /// スペース区切りの文字列にします。
 pub fn implode_space<I>(iter: I) -> String
@@ -28,15 +29,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {super::implode_space, std::fmt::Display, test_case::test_case};
+    use super::implode_space;
+    use std::fmt::Display;
+    use test_case::test_case;
 
     #[test_case(&Vec::new() => "")]
     #[test_case(&[42] => "42")]
     #[test_case(&[42, 43] => "42 43")]
     #[test_case(&[42, 43, 44] => "42 43 44")]
-    fn test_space(slice: &[i32]) -> String {
-        implode_space(slice.iter())
-    }
+    fn test_space(slice: &[i32]) -> String { implode_space(slice.iter()) }
 
     struct MaybeEmpty(Option<i32>);
     impl Display for MaybeEmpty {
@@ -52,7 +53,5 @@ mod tests {
     #[test_case(&[MaybeEmpty(None), MaybeEmpty(None)] => " ")]
     #[test_case(&[MaybeEmpty(Some(42)), MaybeEmpty(None)] => "42 ")]
     #[test_case(&[MaybeEmpty(None), MaybeEmpty(Some(42))] => " 42")]
-    fn test_space_maybe_empty(slice: &[MaybeEmpty]) -> String {
-        implode_space(slice.iter())
-    }
+    fn test_space_maybe_empty(slice: &[MaybeEmpty]) -> String { implode_space(slice.iter()) }
 }

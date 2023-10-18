@@ -11,7 +11,8 @@
 //!     - N ≤ 10,000
 //!     - M ≤ 30,000
 //!     - Q ≤ 100,000
-use std::{collections::HashSet, mem::replace};
+use std::collections::HashSet;
+use std::mem::replace;
 
 /// 本体です。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
@@ -37,9 +38,8 @@ impl Scc {
     /// let scc = Scc::new(1);
     /// assert!(!scc.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.g.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.g.is_empty() }
+
     /// 管理しているグラフの頂点数を返します。
     ///
     /// # Example
@@ -53,9 +53,8 @@ impl Scc {
     /// let scc = Scc::new(1);
     /// assert_eq!(scc.len(), 1);
     /// ```
-    pub fn len(&self) -> usize {
-        self.g.len()
-    }
+    pub fn len(&self) -> usize { self.g.len() }
+
     /// 頂点数 `n` の辺のない未ビルドのグラフを構築します。
     ///
     /// # Example
@@ -75,6 +74,7 @@ impl Scc {
             built: false,
         }
     }
+
     /// 【Require: 未ビルド】
     /// 辺 (from, to) を追加します。
     ///
@@ -94,6 +94,7 @@ impl Scc {
         self.g[from].push(to);
         self.rg[to].push(from);
     }
+
     /// 正向きのグラフの隣接リストを返します。
     ///
     /// # Example
@@ -107,9 +108,8 @@ impl Scc {
     /// assert_eq!(&scc.g()[13], &[18, 6]);
     /// assert_eq!(&scc.g()[6], &[]);
     /// ```
-    pub fn g(&self) -> &[Vec<usize>] {
-        &self.g
-    }
+    pub fn g(&self) -> &[Vec<usize>] { &self.g }
+
     /// 逆向きのグラフの隣接リストを返します。
     ///
     /// # Example
@@ -123,9 +123,8 @@ impl Scc {
     /// assert_eq!(&scc.rg()[13], &[]);
     /// assert_eq!(&scc.rg()[6], &[13]);
     /// ```
-    pub fn rg(&self) -> &[Vec<usize>] {
-        &self.rg
-    }
+    pub fn rg(&self) -> &[Vec<usize>] { &self.rg }
+
     /// 【Require: ビルド済み】
     /// 商グラフにおけるトポロジカル順序に従って頂点番号の入ったスライスを返します。
     ///
@@ -147,6 +146,7 @@ impl Scc {
         assert!(self.built);
         &self.ord
     }
+
     /// 【Require: ビルド済み】
     /// 強連結成分の個数を返します。
     ///
@@ -168,6 +168,7 @@ impl Scc {
         assert!(self.built);
         self.cmp_count
     }
+
     /// 【Require: ビルド済み】
     /// 頂点 `x` の属する強連結成分の番号を返します。
     ///
@@ -190,6 +191,7 @@ impl Scc {
         assert!(self.built);
         self.cmp_of[x]
     }
+
     /// 【Require: ビルド済み】
     /// 頂点番号から、その属する強連結成分の番号を検索できる
     /// スライスを返します。
@@ -213,6 +215,7 @@ impl Scc {
         assert!(self.built);
         &self.cmp_of
     }
+
     /// 【Require: ビルド済み】
     /// 辺の重複と自己辺を除いた商グラフを構築して返します。
     ///
@@ -234,13 +237,7 @@ impl Scc {
     /// scc.build();
     ///
     /// let g = scc.quotient_graph();
-    /// let expected = vec![
-    ///     vec![1],
-    ///     vec![],
-    ///     vec![4],
-    ///     vec![4],
-    ///     vec![],
-    /// ];
+    /// let expected = vec![vec![1], vec![], vec![4], vec![4], vec![]];
     /// assert_eq!(g, expected);
     /// ```
     pub fn quotient_graph(&self) -> Vec<Vec<usize>> {
@@ -258,6 +255,7 @@ impl Scc {
         }
         ans
     }
+
     /// 【Require: ビルド済み】
     /// 各強連結成分に属する頂点全体の集合を、[`Self::ord()`]  と同じ
     /// トポロジカル順序順序で返します。
@@ -280,13 +278,7 @@ impl Scc {
     /// scc.build();
     ///
     /// let g = scc.quotient_set();
-    /// let expected = vec![
-    ///     vec![3],
-    ///     vec![4, 5],
-    ///     vec![2],
-    ///     vec![1],
-    ///     vec![0],
-    /// ];
+    /// let expected = vec![vec![3], vec![4, 5], vec![2], vec![1], vec![0]];
     /// assert_eq!(g, expected);
     /// ```
     pub fn quotient_set(&self) -> Vec<Vec<usize>> {
@@ -297,6 +289,7 @@ impl Scc {
         }
         ans
     }
+
     /// 【Require: 未ビルド】
     /// ビルドします。
     ///
@@ -329,12 +322,14 @@ impl Scc {
         self.cmp_of = cmp_of;
         self.ord = ord;
     }
+
     fn dfs1(&self, x: usize, cmp_of: &mut [usize], ord: &mut Vec<usize>) {
         if replace(&mut cmp_of[x], !0) == 0 {
             self.g[x].iter().for_each(|&y| self.dfs1(y, cmp_of, ord));
             ord.push(x);
         }
     }
+
     fn dfs2(&self, x: usize, cmp_of: &mut [usize]) {
         cmp_of[x] = self.cmp_count;
         for &y in &self.rg[x] {
@@ -348,7 +343,9 @@ impl Scc {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
 
     #[test]
     fn test_scc() {

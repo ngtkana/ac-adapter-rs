@@ -7,7 +7,8 @@
 //! 隣接４マスの取得だけ、専用の関数を用意しています。
 //!
 //! ```
-//! use gridnei::{grid4, grid4encode};
+//! use gridnei::grid4;
+//! use gridnei::grid4encode;
 //!
 //! let result = grid4(1, 0, 3, 10).collect::<Vec<_>>();
 //! let expected = vec![(0, 0), (1, 1), (2, 0)];
@@ -23,7 +24,8 @@
 //! ８マス以下ならこのように作れます。
 //!
 //! ```
-//! use gridnei::{Grid8, Encode};
+//! use gridnei::Encode;
+//! use gridnei::Grid8;
 //!
 //! fn knight(i: isize, j: isize) -> [(isize, isize); 8] {
 //!     [
@@ -79,11 +81,12 @@
 ///         (i, j + 15),
 ///         (i, j + 15),
 ///     ]
-/// }).collect::<Vec<_>>();
+/// })
+/// .collect::<Vec<_>>();
 /// ```
 #[macro_export]
 macro_rules! grid_iter {
-    ($len:expr, $iter:ident$(,)?) => {
+    ($len:expr, $iter:ident $(,)?) => {
         pub struct $iter {
             data: [(isize, isize); $len],
             alive: std::ops::Range<usize>,
@@ -99,6 +102,7 @@ macro_rules! grid_iter {
                     w: w as isize,
                 }
             }
+
             pub fn from_fn(
                 i: usize,
                 j: usize,
@@ -108,12 +112,12 @@ macro_rules! grid_iter {
             ) -> Self {
                 Self::new(f(i as isize, j as isize), h, w)
             }
-            pub fn encode(self) -> $crate::Encode<Self> {
-                $crate::Encode::new(self)
-            }
+
+            pub fn encode(self) -> $crate::Encode<Self> { $crate::Encode::new(self) }
         }
         impl Iterator for $iter {
             type Item = (usize, usize);
+
             fn next(&mut self) -> Option<Self::Item> {
                 for t in &mut self.alive {
                     let &(i, j) = unsafe { self.data.get_unchecked(t) };
@@ -123,9 +127,8 @@ macro_rules! grid_iter {
                 }
                 None
             }
-            fn size_hint(&self) -> (usize, Option<usize>) {
-                (0, Some($len))
-            }
+
+            fn size_hint(&self) -> (usize, Option<usize>) { (0, Some($len)) }
         }
         impl DoubleEndedIterator for $iter {
             fn next_back(&mut self) -> Option<Self::Item> {
@@ -139,11 +142,12 @@ macro_rules! grid_iter {
             }
         }
         impl $crate::GridIterator for $iter {
-            const LEN: usize = $len;
             type Array = [(isize, isize); $len];
-            fn w(&self) -> usize {
-                self.w as usize
-            }
+
+            const LEN: usize = $len;
+
+            fn w(&self) -> usize { self.w as usize }
+
             fn from_fn<F>(i: usize, j: usize, h: usize, w: usize, f: F) -> Self
             where
                 F: FnMut(isize, isize) -> Self::Array,
@@ -182,20 +186,18 @@ pub trait GridIterator: DoubleEndedIterator<Item = (usize, usize)> {
 /// # Examples
 ///
 /// ```
-/// use gridnei::{Encode, Grid2};
+/// use gridnei::Encode;
+/// use gridnei::Grid2;
 ///
-/// let result = Encode::<Grid2>::from_fn(42, 1, 100, |i, j| {
-///     [(i, j - 1), (i, j + 1)]
-/// }).collect::<Vec<_>>();
+/// let result =
+///     Encode::<Grid2>::from_fn(42, 1, 100, |i, j| [(i, j - 1), (i, j + 1)]).collect::<Vec<_>>();
 /// let expected = vec![41, 43];
 /// assert_eq!(&result, &expected);
 /// ```
-///
 pub struct Encode<I>(I);
 impl<I: GridIterator> Encode<I> {
-    pub fn new(i: I) -> Self {
-        Self(i)
-    }
+    pub fn new(i: I) -> Self { Self(i) }
+
     pub fn from_fn<F>(x: usize, h: usize, w: usize, f: F) -> Self
     where
         F: FnMut(isize, isize) -> I::Array,
@@ -205,12 +207,10 @@ impl<I: GridIterator> Encode<I> {
 }
 impl<I: GridIterator> Iterator for Encode<I> {
     type Item = usize;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.0.next().map(move |(i, j)| i * self.0.w() + j)
-    }
-    fn size_hint(&self) -> (usize, Option<usize>) {
-        (0, Some(I::LEN))
-    }
+
+    fn next(&mut self) -> Option<Self::Item> { self.0.next().map(move |(i, j)| i * self.0.w() + j) }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { (0, Some(I::LEN)) }
 }
 impl<I: GridIterator> DoubleEndedIterator for Encode<I> {
     fn next_back(&mut self) -> Option<Self::Item> {

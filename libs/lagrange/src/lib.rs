@@ -18,7 +18,7 @@
 //!
 //! g ( x ) =  f ( a x + y ) と定めて、g に関して復元をするとできるので用意しません。
 
-use fp::{Fp, Mod};
+use fp::Fp;
 use std::iter::once;
 
 /// 多項式の係数から 1 点での評価を計算します。
@@ -27,7 +27,7 @@ use std::iter::once;
 ///
 /// ```
 /// use lagrange::evaluate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp<998244353>;
 ///
 /// // 13 ^ 2 = 169
 /// assert_eq!(
@@ -39,8 +39,7 @@ use std::iter::once;
 /// # 計算量
 ///
 /// O ( N )
-///
-pub fn evaluate<M: Mod>(a: &[Fp<M>], x: Fp<M>) -> Fp<M> {
+pub fn evaluate<const P: u64>(a: &[Fp<P>], x: Fp<P>) -> Fp<P> {
     let mut power = Fp::new(1);
     let mut ans = Fp::new(0);
     for &ai in a {
@@ -56,7 +55,7 @@ pub fn evaluate<M: Mod>(a: &[Fp<M>], x: Fp<M>) -> Fp<M> {
 ///
 /// ```
 /// use lagrange::interpolate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp<998244353>;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]] -> x ^ 2
 /// let eval = [
@@ -80,8 +79,7 @@ pub fn evaluate<M: Mod>(a: &[Fp<M>], x: Fp<M>) -> Fp<M> {
 ///
 /// * evals が空のとき
 /// * x 座標が distinct でないとき
-///
-pub fn interpolate<M: Mod>(evals: &[[Fp<M>; 2]]) -> Vec<Fp<M>> {
+pub fn interpolate<const P: u64>(evals: &[[Fp<P>; 2]]) -> Vec<Fp<P>> {
     assert!(!evals.is_empty());
     evals
         .iter()
@@ -116,7 +114,7 @@ pub fn interpolate<M: Mod>(evals: &[[Fp<M>; 2]]) -> Vec<Fp<M>> {
 ///
 /// ```
 /// use lagrange::interpolate;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp<998244353>;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]] -> x ^ 2
 /// let eval = [
@@ -138,8 +136,7 @@ pub fn interpolate<M: Mod>(evals: &[[Fp<M>; 2]]) -> Vec<Fp<M>> {
 /// # Panics
 ///
 /// * evals が空のとき
-///
-pub fn interpolate_first_n<M: Mod>(evals: &[Fp<M>]) -> Vec<Fp<M>> {
+pub fn interpolate_first_n<const P: u64>(evals: &[Fp<P>]) -> Vec<Fp<P>> {
     assert!(!evals.is_empty());
     let n = evals.len();
     if n == 1 {
@@ -148,8 +145,8 @@ pub fn interpolate_first_n<M: Mod>(evals: &[Fp<M>]) -> Vec<Fp<M>> {
     let mut inv = vec![Fp::new(0); n];
     inv[1] = Fp::new(1);
     for i in 2..n {
-        let q = Fp::<M>::P as usize / i;
-        let r = Fp::<M>::P as usize - i * q;
+        let q = P as usize / i;
+        let r = P as usize - i * q;
         inv[i] = -Fp::from(q) * inv[r];
     }
     evals
@@ -182,11 +179,14 @@ pub fn interpolate_first_n<M: Mod>(evals: &[Fp<M>]) -> Vec<Fp<M>> {
 ///
 /// ```
 /// use lagrange::interpolate_one_point_first_n;
-/// use fp::F998244353 as Fp;
+/// type Fp = fp::Fp<998244353>;
 ///
 /// // [[0, 0], [1, 1], [2, 4], [3, 9]], 13 -> 13 ^ 2 = 169
 /// let eval = [Fp::new(0), Fp::new(1), Fp::new(4), Fp::new(9)];
-/// assert_eq!(interpolate_one_point_first_n(&eval, Fp::new(13)), Fp::new(169));
+/// assert_eq!(
+///     interpolate_one_point_first_n(&eval, Fp::new(13)),
+///     Fp::new(169)
+/// );
 /// ```
 ///
 /// # 計算量
@@ -197,8 +197,7 @@ pub fn interpolate_first_n<M: Mod>(evals: &[Fp<M>]) -> Vec<Fp<M>> {
 /// # Panics
 ///
 /// * evals が空のとき
-///
-pub fn interpolate_one_point_first_n<M: Mod>(evals: &[Fp<M>], x: Fp<M>) -> Fp<M> {
+pub fn interpolate_one_point_first_n<const P: u64>(evals: &[Fp<P>], x: Fp<P>) -> Fp<P> {
     assert!(!evals.is_empty());
     if (x.value() as usize) < evals.len() {
         return evals[x.value() as usize];
@@ -206,7 +205,7 @@ pub fn interpolate_one_point_first_n<M: Mod>(evals: &[Fp<M>], x: Fp<M>) -> Fp<M>
     let n = evals.len();
     let init = (1..n)
         .map(|j| (x - Fp::from(j)) / -Fp::from(j))
-        .product::<Fp<M>>();
+        .product::<Fp<P>>();
     evals
         .iter()
         .zip(once(init).chain((0..n - 1).scan(init, |state, i| {
@@ -220,18 +219,24 @@ pub fn interpolate_one_point_first_n<M: Mod>(evals: &[Fp<M>], x: Fp<M>) -> Fp<M>
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{evaluate, interpolate, interpolate_first_n, interpolate_one_point_first_n},
-        fp::F998244353 as Fp,
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::{collections::HashSet, iter::repeat_with},
-        test_case::test_case,
-    };
+    use super::evaluate;
+    use super::interpolate;
+    use super::interpolate_first_n;
+    use super::interpolate_one_point_first_n;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::HashSet;
+    use std::iter::repeat_with;
+    use test_case::test_case;
+
+    const P: u64 = 998244353;
+    type Fp = fp::Fp<P>;
 
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
-    #[test_case(Fp::P; "maximum")]
+    #[test_case(P; "maximum")]
     fn test_interpolate_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
@@ -262,7 +267,7 @@ mod tests {
 
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
-    #[test_case(Fp::P; "maximum")]
+    #[test_case(P; "maximum")]
     fn test_interpolate_first_n_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
@@ -279,7 +284,7 @@ mod tests {
 
     #[test_case(3; "small")]
     #[test_case(30; "medium")]
-    #[test_case(Fp::P; "maximum")]
+    #[test_case(P; "maximum")]
     fn test_interpolate_one_point_rand(lim: u64) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
