@@ -42,7 +42,6 @@ pub trait Pow {
 /// let result = operator_binary(a, n, x, |&i| i * i, |&i, j| i * j);
 /// assert_eq!(result, 32 * x);
 /// ```
-///
 pub fn operator_binary<T, U>(
     mut a: T,
     mut n: impl Pow,
@@ -130,9 +129,7 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    fn cat(s: &str, t: &str) -> String {
-        s.chars().chain(t.chars()).collect()
-    }
+    fn cat(s: &str, t: &str) -> String { s.chars().chain(t.chars()).collect() }
 
     #[test_case(0 => "x".to_owned())]
     #[test_case(1 => "abx".to_owned())]

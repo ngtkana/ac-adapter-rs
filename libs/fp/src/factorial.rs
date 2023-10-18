@@ -4,8 +4,8 @@ use std::ops::Index;
 /// Precomputes the factorials and their inverses.
 /// # Examples
 /// ```
-/// use fp2::Factorial;
-/// use fp2::Fp;
+/// use fp::Factorial;
+/// use fp::Fp;
 /// const P: u64 = 998244353;
 /// let fact = Factorial::<P>::new(10);
 /// assert_eq!(fact.fact(0).value(), 1);
@@ -21,8 +21,8 @@ impl<const P: u64> Factorial<P> {
     /// Constructs a new instance.
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// ```
@@ -45,8 +45,8 @@ impl<const P: u64> Factorial<P> {
     /// - $n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.fact(0).value(), 1);
@@ -61,8 +61,8 @@ impl<const P: u64> Factorial<P> {
     /// - $n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.inv_fact(0).value(), 1);
@@ -77,8 +77,8 @@ impl<const P: u64> Factorial<P> {
     /// - $k \le n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.perm(8, 3).value(), 336);
@@ -90,8 +90,8 @@ impl<const P: u64> Factorial<P> {
     /// - $k \le n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.comb(8, 3).value(), 56);
@@ -105,8 +105,8 @@ impl<const P: u64> Factorial<P> {
     /// - $k \le n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.binom(8, 3).value(), 56);
@@ -118,8 +118,8 @@ impl<const P: u64> Factorial<P> {
     /// - $n \le \text{length}$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.comb_or_zero(8, 3).value(), 56);
@@ -138,8 +138,8 @@ impl<const P: u64> Factorial<P> {
     /// - $k \gt 0$ or $n \gt 0$
     /// # Examples
     /// ```
-    /// use fp2::Factorial;
-    /// use fp2::Fp;
+    /// use fp::Factorial;
+    /// use fp::Fp;
     /// const P: u64 = 998244353;
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.comb_with_reputation(8, 3).value(), 120);

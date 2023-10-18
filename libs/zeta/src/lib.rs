@@ -29,7 +29,8 @@
 //! [`add`] で + に関するゼータ変換ができます。
 //!
 //! ```
-//! use zeta::{add, add_inv};
+//! use zeta::add;
+//! use zeta::add_inv;
 //!
 //! let mut a = [1, 2, 4, 8];
 //! add(&mut a);
@@ -45,12 +46,14 @@
 //! assert_eq!(a, [1, 2, 4, 8]);
 //! ```
 //!
-//!
 
-use std::{
-    cmp::{self, Ord},
-    ops::{Add, BitAnd, BitOr, BitXor, Sub},
-};
+use std::cmp::Ord;
+use std::cmp::{self};
+use std::ops::Add;
+use std::ops::BitAnd;
+use std::ops::BitOr;
+use std::ops::BitXor;
+use std::ops::Sub;
 
 /// ゼータ変換・メビウス変換のための基本関数
 pub fn for_each<T>(a: &mut [T], f: impl Fn(&mut T, &mut T)) {
@@ -94,9 +97,7 @@ pub fn for_each<T>(a: &mut [T], f: impl Fn(&mut T, &mut T)) {
 /// zeta(&mut a, |x, y| x + y);
 /// assert_eq!(a, [1, 3, 5, 15]);
 /// ```
-pub fn zeta<T: Copy>(a: &mut [T], f: impl Fn(T, T) -> T) {
-    for_each(a, |x, y| *y = f(*x, *y));
-}
+pub fn zeta<T: Copy>(a: &mut [T], f: impl Fn(T, T) -> T) { for_each(a, |x, y| *y = f(*x, *y)); }
 
 /// 反転束において、`f` を加法とするゼータ変換をします。
 ///
@@ -126,65 +127,35 @@ pub fn zeta<T: Copy>(a: &mut [T], f: impl Fn(T, T) -> T) {
 /// rzeta(&mut a, |x, y| x + y);
 /// assert_eq!(a, [15, 10, 12, 8]);
 /// ```
-pub fn rzeta<T: Copy>(a: &mut [T], f: impl Fn(T, T) -> T) {
-    for_each(a, |x, y| *x = f(*x, *y));
-}
+pub fn rzeta<T: Copy>(a: &mut [T], f: impl Fn(T, T) -> T) { for_each(a, |x, y| *x = f(*x, *y)); }
 /// \+ でゼータ変換
-pub fn add<T: Copy + Add<Output = T>>(a: &mut [T]) {
-    zeta(a, Add::add);
-}
+pub fn add<T: Copy + Add<Output = T>>(a: &mut [T]) { zeta(a, Add::add); }
 /// 反転束において \+ でゼータ変換
-pub fn radd<T: Copy + Add<Output = T>>(a: &mut [T]) {
-    rzeta(a, Add::add);
-}
+pub fn radd<T: Copy + Add<Output = T>>(a: &mut [T]) { rzeta(a, Add::add); }
 /// (+, -) でメビウス変換
-pub fn add_inv<T: Copy + Sub<Output = T>>(a: &mut [T]) {
-    zeta(a, |x, y| y - x)
-}
+pub fn add_inv<T: Copy + Sub<Output = T>>(a: &mut [T]) { zeta(a, |x, y| y - x) }
 /// 反転束において (+, -) でメビウス変換
-pub fn add_rinv<T: Copy + Sub<Output = T>>(a: &mut [T]) {
-    rzeta(a, |x, y| y - x)
-}
+pub fn add_rinv<T: Copy + Sub<Output = T>>(a: &mut [T]) { rzeta(a, |x, y| y - x) }
 /// max でゼータ変換
-pub fn max<T: Copy + Ord>(a: &mut [T]) {
-    zeta(a, cmp::max);
-}
+pub fn max<T: Copy + Ord>(a: &mut [T]) { zeta(a, cmp::max); }
 /// 反転束において max でメビウス変換
-pub fn rmax<T: Copy + Ord>(a: &mut [T]) {
-    rzeta(a, cmp::max);
-}
+pub fn rmax<T: Copy + Ord>(a: &mut [T]) { rzeta(a, cmp::max); }
 /// min でゼータ変換
-pub fn min<T: Copy + Ord>(a: &mut [T]) {
-    zeta(a, cmp::min);
-}
+pub fn min<T: Copy + Ord>(a: &mut [T]) { zeta(a, cmp::min); }
 /// 反転束において min でメビウス変換
-pub fn rmin<T: Copy + Ord>(a: &mut [T]) {
-    rzeta(a, cmp::min);
-}
+pub fn rmin<T: Copy + Ord>(a: &mut [T]) { rzeta(a, cmp::min); }
 /// bit-xor でゼータ変換
-pub fn bitxor<T: Copy + BitXor<Output = T>>(a: &mut [T]) {
-    zeta(a, BitXor::bitxor);
-}
+pub fn bitxor<T: Copy + BitXor<Output = T>>(a: &mut [T]) { zeta(a, BitXor::bitxor); }
 /// 反転束において bit-xor でメビウス変換
-pub fn rbitxor<T: Copy + BitXor<Output = T>>(a: &mut [T]) {
-    rzeta(a, BitXor::bitxor);
-}
+pub fn rbitxor<T: Copy + BitXor<Output = T>>(a: &mut [T]) { rzeta(a, BitXor::bitxor); }
 /// bit-or でゼータ変換
-pub fn bitor<T: Copy + BitOr<Output = T>>(a: &mut [T]) {
-    zeta(a, BitOr::bitor);
-}
+pub fn bitor<T: Copy + BitOr<Output = T>>(a: &mut [T]) { zeta(a, BitOr::bitor); }
 /// 反転束において bit-or でメビウス変換
-pub fn rbitor<T: Copy + BitOr<Output = T>>(a: &mut [T]) {
-    rzeta(a, BitOr::bitor);
-}
+pub fn rbitor<T: Copy + BitOr<Output = T>>(a: &mut [T]) { rzeta(a, BitOr::bitor); }
 /// bit-and でゼータ変換
-pub fn bitand<T: Copy + BitAnd<Output = T>>(a: &mut [T]) {
-    zeta(a, BitAnd::bitand);
-}
+pub fn bitand<T: Copy + BitAnd<Output = T>>(a: &mut [T]) { zeta(a, BitAnd::bitand); }
 /// 反転束において bit-and でメビウス変換
-pub fn rbitand<T: Copy + BitAnd<Output = T>>(a: &mut [T]) {
-    rzeta(a, BitAnd::bitand);
-}
+pub fn rbitand<T: Copy + BitAnd<Output = T>>(a: &mut [T]) { rzeta(a, BitAnd::bitand); }
 
 /// すべての添字集合に関して (二項演算 f, 単位元 e) で畳み込んだ結果を構築します。
 pub fn aggr<T: Copy>(a: &[T], f: impl Fn(T, T) -> T, e: T) -> Vec<T> {
@@ -196,20 +167,30 @@ pub fn aggr<T: Copy>(a: &[T], f: impl Fn(T, T) -> T, e: T) -> Vec<T> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{
-            add, aggr, bitand, bitor, bitxor, max, min, radd, rbitand, rbitor, rbitxor, rmax, rmin,
-        },
-        itertools::Itertools,
-        rand::Rng,
-        rand::{prelude::StdRng, SeedableRng},
-        std::{
-            cmp,
-            iter::repeat_with,
-            ops::{Add, BitAnd, BitOr, BitXor},
-        },
-        test_case::test_case,
-    };
+    use super::add;
+    use super::aggr;
+    use super::bitand;
+    use super::bitor;
+    use super::bitxor;
+    use super::max;
+    use super::min;
+    use super::radd;
+    use super::rbitand;
+    use super::rbitor;
+    use super::rbitxor;
+    use super::rmax;
+    use super::rmin;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::cmp;
+    use std::iter::repeat_with;
+    use std::ops::Add;
+    use std::ops::BitAnd;
+    use std::ops::BitOr;
+    use std::ops::BitXor;
+    use test_case::test_case;
 
     #[derive(Clone, Copy)]
     enum Dir {

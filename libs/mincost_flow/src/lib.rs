@@ -2,7 +2,11 @@
 //!
 //! [See the document of `MinCostFlow`](MinCostFlow)
 
-use std::{cmp::Reverse, collections::BinaryHeap, fmt::Debug, i64::MAX, mem::replace};
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::fmt::Debug;
+use std::i64::MAX;
+use std::mem::replace;
 
 /// [`MinCostFlow::get_edge`] の戻り値型
 #[derive(Clone, Default, Hash, PartialEq, Eq, Copy)]
@@ -69,7 +73,6 @@ struct __InternalEdge {
 ///
 ///
 /// また [`Debug`] トレイトを独自実装しています。
-///
 #[derive(Clone, Default, Hash, PartialEq)]
 pub struct MinCostFlow {
     g: Vec<Vec<__InternalEdge>>,
@@ -91,6 +94,7 @@ impl MinCostFlow {
             edge_position: Vec::new(),
         }
     }
+
     /// 辺を追加します。
     pub fn add_edge(&mut self, u: usize, v: usize, cap: i64, cost: i64) -> usize {
         let res = self.edge_position.len();
@@ -111,6 +115,7 @@ impl MinCostFlow {
         self.edge_position.push([u, su]);
         res
     }
+
     /// `i` 番目に挿入した辺を取得します。
     pub fn get_edge(&self, i: usize) -> Edge {
         assert!(i < self.edge_position.len());
@@ -126,21 +131,21 @@ impl MinCostFlow {
             cost: e.cost,
         }
     }
+
     /// 解きます
     ///
     /// # 出力形式
     ///
     /// `(flow, cost)`
-    ///
     pub fn flow(&mut self, source: usize, sink: usize, flow_limit: i64) -> (i64, i64) {
         self.slope(source, sink, flow_limit).pop().unwrap()
     }
+
     /// 解きます
     ///
     /// # 出力形式
     ///
     /// `(flow, cost)`
-    ///
     pub fn slope(&mut self, source: usize, sink: usize, flow_limit: i64) -> Vec<(i64, i64)> {
         let n = self.g.len();
         let mut slope = vec![(0, 0)];
@@ -185,6 +190,7 @@ impl MinCostFlow {
         }
         slope
     }
+
     fn refine_dual_dijkstra(
         &self,
         source: usize,
@@ -229,7 +235,8 @@ impl MinCostFlow {
 
 #[cfg(test)]
 mod tests {
-    use {super::MinCostFlow, std::i64::MAX};
+    use super::MinCostFlow;
+    use std::i64::MAX;
 
     #[test]
     fn test_mincost_flow() {

@@ -1,5 +1,4 @@
 //! 辺全体のスライスから、グラフの隣接リストを作ります。
-//!
 
 /// `(u, v)` の形の辺から無向グラフを構築します。
 pub fn tuple_make_undirected(n: usize, edges: &[(usize, usize)]) -> Vec<Vec<usize>> {
@@ -96,11 +95,14 @@ pub fn make_directed_weighted_by<E, T: Copy>(
 
 #[cfg(test)]
 mod tests {
-    use super::{
-        array_make_directed, array_make_directed_weighted, array_make_undirected,
-        array_make_undirected_weighted, tuple_make_directed, tuple_make_directed_weighted,
-        tuple_make_undirected, tuple_make_undirected_weighted,
-    };
+    use super::array_make_directed;
+    use super::array_make_directed_weighted;
+    use super::array_make_undirected;
+    use super::array_make_undirected_weighted;
+    use super::tuple_make_directed;
+    use super::tuple_make_directed_weighted;
+    use super::tuple_make_undirected;
+    use super::tuple_make_undirected_weighted;
 
     #[test]
     fn test_array_make_undirected() {
@@ -135,56 +137,44 @@ mod tests {
     #[test]
     fn test_array_make_undirected_weighted() {
         let g = array_make_undirected_weighted(4, &[([0, 1], 10), ([0, 2], 20), ([2, 3], 30)]);
-        assert_eq!(
-            g.as_slice(),
-            &[
-                vec![(1, 10), (2, 20)],
-                vec![(0, 10)],
-                vec![(0, 20), (3, 30)],
-                vec![(2, 30)],
-            ]
-        );
+        assert_eq!(g.as_slice(), &[
+            vec![(1, 10), (2, 20)],
+            vec![(0, 10)],
+            vec![(0, 20), (3, 30)],
+            vec![(2, 30)],
+        ]);
     }
 
     #[test]
     fn test_tuple_make_undirected_weighted() {
         let g = tuple_make_undirected_weighted(4, &[(0, 1, 10), (0, 2, 20), (2, 3, 30)]);
-        assert_eq!(
-            g.as_slice(),
-            &[
-                vec![(1, 10), (2, 20)],
-                vec![(0, 10)],
-                vec![(0, 20), (3, 30)],
-                vec![(2, 30)],
-            ]
-        );
+        assert_eq!(g.as_slice(), &[
+            vec![(1, 10), (2, 20)],
+            vec![(0, 10)],
+            vec![(0, 20), (3, 30)],
+            vec![(2, 30)],
+        ]);
     }
 
     #[test]
     fn test_array_make_directed_weighted() {
         let g = array_make_directed_weighted(4, &[([0, 1], 10), ([0, 2], 20), ([2, 3], 30)]);
-        assert_eq!(
-            g.as_slice(),
-            &[
-                vec![(1, 10), (2, 20)],
-                Vec::new(),
-                vec![(3, 30)],
-                Vec::new(),
-            ]
-        );
+        assert_eq!(g.as_slice(), &[
+            vec![(1, 10), (2, 20)],
+            Vec::new(),
+            vec![(3, 30)],
+            Vec::new(),
+        ]);
     }
 
     #[test]
     fn test_tuple_make_directed_weighted() {
         let g = tuple_make_directed_weighted(4, &[(0, 1, 10), (0, 2, 20), (2, 3, 30)]);
-        assert_eq!(
-            g.as_slice(),
-            &[
-                vec![(1, 10), (2, 20)],
-                Vec::new(),
-                vec![(3, 30)],
-                Vec::new(),
-            ]
-        );
+        assert_eq!(g.as_slice(), &[
+            vec![(1, 10), (2, 20)],
+            Vec::new(),
+            vec![(3, 30)],
+            Vec::new(),
+        ]);
     }
 }

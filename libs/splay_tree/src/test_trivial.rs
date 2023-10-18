@@ -1,22 +1,25 @@
-use {
-    super::{LazyOps, Nop, SplayTree},
-    itertools::assert_equal,
-    std::{cmp::Ordering, collections::HashSet, fmt::Debug},
-};
+use super::LazyOps;
+use super::Nop;
+use super::SplayTree;
+use itertools::assert_equal;
+use std::cmp::Ordering;
+use std::collections::HashSet;
+use std::fmt::Debug;
 
 enum I32Add {}
 impl LazyOps for I32Add {
-    type Value = i32;
     type Acc = i32;
     type Lazy = ();
-    fn proj(&value: &Self::Value) -> Self::Acc {
-        value
-    }
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
-        lhs + rhs
-    }
+    type Value = i32;
+
+    fn proj(&value: &Self::Value) -> Self::Acc { value }
+
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { lhs + rhs }
+
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
+
     fn act_acc(&(): &Self::Lazy, _acc: &mut Self::Acc) {}
+
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
 
@@ -38,9 +41,7 @@ fn test_default() {
     assert!(splay.is_empty());
 }
 
-fn from_slice<T: Copy + Sized + Debug>(a: &[T]) -> SplayTree<Nop<T>> {
-    a.iter().copied().collect()
-}
+fn from_slice<T: Copy + Sized + Debug>(a: &[T]) -> SplayTree<Nop<T>> { a.iter().copied().collect() }
 
 #[test]
 fn test_eq() {

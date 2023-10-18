@@ -1,7 +1,6 @@
 //! 木 DP をします。
 //!
 //! [詳しくは `Ops` のドキュメントへどうぞです。](Ops)
-//!
 
 use std::fmt::Debug;
 
@@ -27,7 +26,6 @@ use std::fmt::Debug;
 ///     - `identity()` を `None` とかにして頑張るしかないですかね
 /// - 辺重み
 ///     - `頂点重みで代用できませんかね。
-///
 ///
 pub trait Ops: Sized {
     type Value: Clone + Debug + Default;
@@ -166,35 +164,31 @@ struct SortedTree {
     ord: Vec<usize>,
 }
 impl SortedTree {
-    fn len(&self) -> usize {
-        self.child.len()
-    }
+    fn len(&self) -> usize { self.child.len() }
 }
 
 #[cfg(test)]
 mod tests {
     use super::Ops;
-    use rand::{prelude::StdRng, Rng, SeedableRng};
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use randtools::Tree;
 
     #[test]
     fn test_size() {
         struct Size {}
         impl Ops for Size {
-            type Value = usize;
             type Acc = usize;
-            fn proj(&self, value: Self::Value) -> Self::Acc {
-                value
-            }
-            fn identity(&self) -> Self::Acc {
-                0
-            }
-            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
-                acc + value
-            }
-            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value {
-                acc + 1
-            }
+            type Value = usize;
+
+            fn proj(&self, value: Self::Value) -> Self::Acc { value }
+
+            fn identity(&self) -> Self::Acc { 0 }
+
+            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc { acc + value }
+
+            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value { acc + 1 }
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
@@ -218,23 +212,25 @@ mod tests {
     fn test_tdpc_v() {
         struct O {}
         impl Ops for O {
-            type Value = Value;
             type Acc = Acc;
+            type Value = Value;
+
             fn proj(&self, value: Self::Value) -> Self::Acc {
                 Acc {
                     white: value.white,
                     all: value.black + value.white,
                 }
             }
-            fn identity(&self) -> Self::Acc {
-                Acc { white: 1, all: 1 }
-            }
+
+            fn identity(&self) -> Self::Acc { Acc { white: 1, all: 1 } }
+
             fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
                 Acc {
                     white: acc.white * value.white,
                     all: acc.all * value.all,
                 }
             }
+
             fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value {
                 Value {
                     black: acc.all,

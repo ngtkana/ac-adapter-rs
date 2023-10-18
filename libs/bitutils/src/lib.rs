@@ -3,17 +3,31 @@
 mod combinations;
 mod subsets;
 
-pub use combinations::{combinations, Combinations};
-pub use subsets::{subsets, Subsets};
-
-use std::{
-    fmt::Debug,
-    mem::size_of,
-    ops::{
-        Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div,
-        DivAssign, Mul, MulAssign, Not, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
-    },
-};
+pub use combinations::combinations;
+pub use combinations::Combinations;
+use std::fmt::Debug;
+use std::mem::size_of;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::BitAnd;
+use std::ops::BitAndAssign;
+use std::ops::BitOr;
+use std::ops::BitOrAssign;
+use std::ops::BitXor;
+use std::ops::BitXorAssign;
+use std::ops::Div;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Not;
+use std::ops::Shl;
+use std::ops::ShlAssign;
+use std::ops::Shr;
+use std::ops::ShrAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
+pub use subsets::subsets;
+pub use subsets::Subsets;
 
 /// Adapter trait of this crate. Already implemented for all the unsigned integer types.
 pub trait Unsigned:
@@ -46,9 +60,7 @@ pub trait Unsigned:
     fn zero() -> Self;
     fn one() -> Self;
     fn wrapping_neg(self) -> Self;
-    fn bit_length() -> u32 {
-        size_of::<Self>() as u32 * 8
-    }
+    fn bit_length() -> u32 { size_of::<Self>() as u32 * 8 }
 }
 
 macro_rules! impl_unsigned {

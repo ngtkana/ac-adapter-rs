@@ -26,7 +26,8 @@
 //! ```
 
 use scc::Scc;
-use std::{cmp::Ordering, fmt::Debug};
+use std::cmp::Ordering;
+use std::fmt::Debug;
 
 /// 2-SAT の本体です。
 #[derive(Clone, Default, Hash, PartialEq, Eq)]
@@ -40,6 +41,7 @@ impl TwoSat {
             scc: Scc::new(2 * n),
         }
     }
+
     /// `(x == a) -> (y == b)` をかつでつなぎます。
     pub fn implies(&mut self, x: usize, a: bool, y: usize, b: bool) {
         let x = 2 * x + usize::from(a);
@@ -47,6 +49,7 @@ impl TwoSat {
         self.scc.add_edge(x, y);
         self.scc.add_edge(y ^ 1, x ^ 1);
     }
+
     /// 充足する割り当てがあれば返し、なければ `None` を返します。
     pub fn solve(&self) -> Option<Vec<bool>> {
         self.scc
@@ -59,9 +62,8 @@ impl TwoSat {
             })
             .collect()
     }
-    pub fn build(&mut self) {
-        self.scc.build();
-    }
+
+    pub fn build(&mut self) { self.scc.build(); }
 }
 impl Debug for TwoSat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -96,11 +98,11 @@ impl Debug for DebugImplication {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::TwoSat,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::iter::repeat_with,
-    };
+    use super::TwoSat;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::repeat_with;
 
     #[test]
     fn test_rand() {

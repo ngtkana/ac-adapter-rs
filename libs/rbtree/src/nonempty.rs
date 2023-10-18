@@ -1,12 +1,10 @@
-use {
-    super::{Nop, Op},
-    std::{
-        cmp::Ordering,
-        hash::{Hash, Hasher},
-        marker::PhantomData,
-        mem::swap,
-    },
-};
+use super::Nop;
+use super::Op;
+use std::cmp::Ordering;
+use std::hash::Hash;
+use std::hash::Hasher;
+use std::marker::PhantomData;
+use std::mem::swap;
 
 pub enum Nonempty<T, O: Op<Value = T> = Nop<T>> {
     Nil(Nil<T>),
@@ -35,6 +33,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             Self::Internal(node) => node.len,
         }
     }
+
     pub fn not_all_partition_point<F>(&self, init: Option<O::Summary>, f: F) -> usize
     where
         O::Summary: Clone,
@@ -62,6 +61,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             }
         }
     }
+
     pub fn fold(&self, start: usize, end: usize) -> O::Summary {
         debug_assert!(start < end && end <= self.len());
         match self {
@@ -83,6 +83,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             }
         }
     }
+
     pub fn split(self, i: usize) -> [Self; 2] {
         let node = self.into_node().unwrap();
         let left_len = node.left.len();
@@ -98,6 +99,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             }
         }
     }
+
     pub fn merge(mut lhs: Self, mut rhs: Self) -> Self {
         let h = lhs.height();
         match h.cmp(&rhs.height()) {
@@ -112,6 +114,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             }
         }
     }
+
     pub fn merge_front(&mut self, other: Self) {
         let h = self.height();
         if other.height() == self.node().unwrap().left.height() {
@@ -135,6 +138,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
         }
         self.node_mut().unwrap().update();
     }
+
     pub fn merge_back(&mut self, other: Self) {
         let h = self.height();
         if other.height() == self.node().unwrap().right.height() {
@@ -158,30 +162,35 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
         }
         self.node_mut().unwrap().update();
     }
+
     pub fn node(&self) -> Option<&Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Internal(node) => Some(node),
         }
     }
+
     pub fn node_mut(&mut self) -> Option<&mut Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Internal(node) => Some(node),
         }
     }
+
     pub fn summary(&self) -> O::Summary {
         match self {
             Self::Nil(Nil(x)) => O::summarize(x),
             Self::Internal(node) => node.summary.clone(),
         }
     }
+
     fn into_node(self) -> Option<Internal<T, O>> {
         match self {
             Self::Nil(_) => None,
             Self::Internal(node) => Some(*node),
         }
     }
+
     #[allow(clippy::wrong_self_convention)]
     fn from_children(lhs: Self, rhs: Self, height: usize) -> Self {
         Self::Internal(Box::new(Internal {
@@ -193,6 +202,7 @@ impl<T, O: Op<Value = T>> Nonempty<T, O> {
             __marker: PhantomData,
         }))
     }
+
     fn height(&self) -> usize {
         match self {
             Self::Nil(_) => 0,
@@ -281,10 +291,10 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{Nil, Nonempty, Op},
-        test_case::test_case,
-    };
+    use super::Nil;
+    use super::Nonempty;
+    use super::Op;
+    use test_case::test_case;
 
     fn to_structure_sring<T, O: Op<Value = T>>(root: &Nonempty<T, O>) -> String {
         let mut s = String::new();
@@ -321,9 +331,7 @@ mod tests {
         }
     }
 
-    fn nil() -> Nonempty<()> {
-        Nonempty::Nil(Nil(()))
-    }
+    fn nil() -> Nonempty<()> { Nonempty::Nil(Nil(())) }
     fn n2(
         x: impl Fn() -> Nonempty<()>,
         y: impl Fn() -> Nonempty<()>,
@@ -356,27 +364,17 @@ mod tests {
     ) -> impl Fn() -> Nonempty<()> {
         n2(n2(x, y, height), n2(z, w, height), height)
     }
-    fn n2nil() -> Nonempty<()> {
-        n2(nil, nil, 1)()
-    }
-    fn l3nil() -> Nonempty<()> {
-        l3(nil, nil, nil, 1)()
-    }
-    fn r3nil() -> Nonempty<()> {
-        r3(nil, nil, nil, 1)()
-    }
-    fn n4nil() -> Nonempty<()> {
-        n4(nil, nil, nil, nil, 1)()
-    }
+    fn n2nil() -> Nonempty<()> { n2(nil, nil, 1)() }
+    fn l3nil() -> Nonempty<()> { l3(nil, nil, nil, 1)() }
+    fn r3nil() -> Nonempty<()> { r3(nil, nil, nil, 1)() }
+    fn n4nil() -> Nonempty<()> { n4(nil, nil, nil, nil, 1)() }
 
     #[test_case(nil => "()".to_owned())]
     #[test_case(n2nil => "(()1,2())".to_owned())]
     #[test_case(l3nil => "((()1,2())1,3())".to_owned())]
     #[test_case(r3nil => "(()1,3(()1,2()))".to_owned())]
     #[test_case(n4nil => "((()1,2())1,4(()1,2()))".to_owned())]
-    fn test_to_structure_string(x: impl Fn() -> Nonempty<()>) -> String {
-        to_structure_sring(&x())
-    }
+    fn test_to_structure_string(x: impl Fn() -> Nonempty<()>) -> String { to_structure_sring(&x()) }
 
     #[test_case(nil, nil => to_structure_sring(&n2nil()))]
     #[test_case(nil, n2nil => to_structure_sring(&l3nil()))]

@@ -26,31 +26,21 @@
 //! a.insert(1, 11);
 //! a.push_back(13);
 //! a.delete(2);
-//! assert_eq!(
-//!     a.iter().copied().collect::<Vec<_>>(),
-//!     vec![10, 11, 13]
-//! );
+//! assert_eq!(a.iter().copied().collect::<Vec<_>>(), vec![10, 11, 13]);
 //! assert_eq!(a.get(0), 10);
 //! assert_eq!(a.get(1), 11);
 //! assert_eq!(a.get(2), 13);
 //!
 //! // マージ
 //! let a = RbTree::merge(a.clone(), a);
-//! assert_eq!(
-//!     a.iter().copied().collect::<Vec<_>>(),
-//!     vec![10, 11, 13, 10, 11, 13]
-//! );
+//! assert_eq!(a.iter().copied().collect::<Vec<_>>(), vec![
+//!     10, 11, 13, 10, 11, 13
+//! ]);
 //!
 //! // スプリット
 //! let [b, c] = a.split(4);
-//! assert_eq!(
-//!     b.iter().copied().collect::<Vec<_>>(),
-//!     vec![10, 11, 13, 10]
-//! );
-//! assert_eq!(
-//!     c.iter().copied().collect::<Vec<_>>(),
-//!     vec![11, 13]
-//! );
+//! assert_eq!(b.iter().copied().collect::<Vec<_>>(), vec![10, 11, 13, 10]);
+//! assert_eq!(c.iter().copied().collect::<Vec<_>>(), vec![11, 13]);
 //! ```
 //!
 //!
@@ -59,19 +49,18 @@
 //! [`Op`] トレイトを実装した型を作って入れましょう。（これめんどくさいですね……）
 //!
 //! ```
-//! use rbtree::{RbTree, Op};
+//! use rbtree::Op;
+//! use rbtree::RbTree;
 //!
 //! // 加法を実現する型を定義です。
 //! enum O {}
 //! impl Op for O {
 //!     type Summary = i32;
 //!     type Value = i32;
-//!     fn summarize(value: &i32) -> i32 {
-//!         *value
-//!     }
-//!     fn op(lhs: i32, rhs: i32) -> i32 {
-//!         lhs + rhs
-//!     }
+//!
+//!     fn summarize(value: &i32) -> i32 { *value }
+//!
+//!     fn op(lhs: i32, rhs: i32) -> i32 { lhs + rhs }
 //! }
 //!
 //! let mut a = (0..10).collect::<RbTree<_, O>>(); // これは mut ないといけません。
@@ -92,21 +81,21 @@
 //! # 愚痴
 //!
 //! [`Clone`], [`Hash`], [`PartialEq`] をて実装するはめになったのですが！？
-//!
 
 mod nonempty;
 
-use {
-    nonempty::{Nil, Nonempty},
-    std::{
-        fmt::{self, Debug},
-        hash::{Hash, Hasher},
-        iter::FromIterator,
-        marker::PhantomData,
-        mem::take,
-        ops::{Bound, Range, RangeBounds},
-    },
-};
+use nonempty::Nil;
+use nonempty::Nonempty;
+use std::fmt::Debug;
+use std::fmt::{self};
+use std::hash::Hash;
+use std::hash::Hasher;
+use std::iter::FromIterator;
+use std::marker::PhantomData;
+use std::mem::take;
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 /// 赤黒木です。
 pub struct RbTree<T, O: Op<Value = T> = Nop<T>>(Option<Nonempty<T, O>>);
@@ -126,9 +115,11 @@ pub struct Nop<T> {
     __marker: PhantomData<fn(T) -> T>,
 }
 impl<T> Op for Nop<T> {
-    type Value = T;
     type Summary = ();
+    type Value = T;
+
     fn summarize(_value: &Self::Value) -> Self::Summary {}
+
     fn op(_lhs: Self::Summary, _rhs: Self::Summary) -> Self::Summary {}
 }
 
@@ -138,7 +129,6 @@ impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
     /// # 計算量
     ///
     /// N を要素数として、Θ( N )
-    ///
     fn from_iter<T: IntoIterator<Item = A>>(iter: T) -> Self {
         let mut nodes = iter.into_iter().map(Self::singleton).collect::<Vec<_>>();
         if nodes.is_empty() {
@@ -155,10 +145,18 @@ impl<A, O: Op<Value = A>> FromIterator<A> for RbTree<A, O> {
     }
 }
 
+impl<'a, O: Op> IntoIterator for &'a RbTree<O::Value, O> {
+    type IntoIter = Iter<'a, O::Value, O>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+
 /// [`iter`](RbTree::iter) の返す型
 pub struct Iter<'a, T, O: Op<Value = T>>(Vec<&'a Nonempty<T, O>>);
 impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
     type Item = &'a T;
+
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match self.0.pop() {
@@ -175,13 +173,11 @@ impl<'a, T, O: Op<Value = T>> Iterator for Iter<'a, T, O> {
 
 impl<T, O: Op<Value = T>> RbTree<T, O> {
     /// 空の赤黒木を生成します。
-    pub fn new() -> Self {
-        Self(None)
-    }
+    pub fn new() -> Self { Self(None) }
+
     /// 空ならば `true`、さもなくば `false` を返します。
-    pub fn is_empty(&self) -> bool {
-        self.0.is_none()
-    }
+    pub fn is_empty(&self) -> bool { self.0.is_none() }
+
     /// 長さ、すなわち Nil ノードの個数を返します。
     pub fn len(&self) -> usize {
         match &self.0 {
@@ -189,6 +185,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             Some(node) => node.len(),
         }
     }
+
     /// 要素を左から順に辿るイテレータを返します。（`rev`, `nth` など未実装です。）
     pub fn iter(&self) -> Iter<'_, T, O> {
         Iter(match &self.0 {
@@ -196,6 +193,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             Some(node) => vec![node],
         })
     }
+
     /// `i` 番目の要素をコピーして返します。
     ///
     /// # Panics
@@ -216,6 +214,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         *self = Self::merge(Self::merge(l, c), r);
         res
     }
+
     /// 中間ノードの情報で二分探索します。
     ///
     /// 0 ≦ i ≦ n に依存する命題 P ( i ) を次のように定めます。
@@ -245,7 +244,6 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
     ///
     /// 戻り値の範囲は [0, n] です。
     /// i が 1 以上に対して、P ( i ) が全て `false` ならば 0 を、全て `true` ならば n を返します。
-    ///
     pub fn partition_point<F>(&self, f: F) -> usize
     where
         O::Summary: Clone,
@@ -262,6 +260,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             }
         }
     }
+
     /// `range` の範囲で畳み込みます。
     ///
     /// # Panics
@@ -276,18 +275,16 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             Some(self.0.as_ref().unwrap().fold(start, end))
         }
     }
+
     /// Nil ノード一つのみからなる新しい赤黒木を構築します。
-    pub fn singleton(x: T) -> Self {
-        Self(Some(Nonempty::Nil(Nil(x))))
-    }
+    pub fn singleton(x: T) -> Self { Self(Some(Nonempty::Nil(Nil(x)))) }
+
     /// 新しいノードを先頭に挿入します。
-    pub fn push_front(&mut self, x: T) {
-        *self = Self::merge(Self::singleton(x), take(self));
-    }
+    pub fn push_front(&mut self, x: T) { *self = Self::merge(Self::singleton(x), take(self)); }
+
     /// 新しいノードを末尾に挿入します。
-    pub fn push_back(&mut self, x: T) {
-        *self = Self::merge(take(self), Self::singleton(x));
-    }
+    pub fn push_back(&mut self, x: T) { *self = Self::merge(take(self), Self::singleton(x)); }
+
     /// `i` 番目に新しい Nil ノードを挿入します。
     ///
     /// # Panics
@@ -298,6 +295,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
         let [l, r] = take(self).split(i);
         *self = Self::merge3(l, Self::singleton(x), r);
     }
+
     /// `i` 番目の Nil ノードを削除して、保持していたデータを返します。
     ///
     /// # Panics
@@ -312,6 +310,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             Some(Nonempty::Nil(Nil(value))) => value,
         }
     }
+
     /// 2 つの赤黒木をマージします。
     pub fn merge(lhs: Self, rhs: Self) -> Self {
         match [lhs.0, rhs.0] {
@@ -321,10 +320,10 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             [Some(l), Some(r)] => Self(Some(Nonempty::merge(l, r))),
         }
     }
+
     /// 3 つの赤黒木をマージします。
-    pub fn merge3(x: Self, y: Self, z: Self) -> Self {
-        Self::merge(Self::merge(x, y), z)
-    }
+    pub fn merge3(x: Self, y: Self, z: Self) -> Self { Self::merge(Self::merge(x, y), z) }
+
     /// `i` 番目で分割します。
     ///
     /// # Panics
@@ -341,6 +340,7 @@ impl<T, O: Op<Value = T>> RbTree<T, O> {
             [Self(Some(l)), Self(Some(r))]
         }
     }
+
     /// `l, r` 番目で 3 つに分割します。
     ///
     /// # Panics
@@ -357,25 +357,19 @@ impl<T: Clone, O: Op<Value = T>> Clone for RbTree<T, O>
 where
     O::Summary: Clone,
 {
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
-    }
+    fn clone(&self) -> Self { Self(self.0.clone()) }
 }
 impl<T: PartialEq, O: Op<Value = T>> PartialEq for RbTree<T, O>
 where
     O::Summary: PartialEq,
 {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.eq(&other.0)
-    }
+    fn eq(&self, other: &Self) -> bool { self.0.eq(&other.0) }
 }
 impl<T: Hash, O: Op<Value = T>> Hash for RbTree<T, O>
 where
     O::Summary: Hash,
 {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
-    }
+    fn hash<H: Hasher>(&self, state: &mut H) { self.0.hash(state); }
 }
 impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -383,9 +377,7 @@ impl<T: Debug, O: Op<Value = T>> Debug for RbTree<T, O> {
     }
 }
 impl<T, O: Op<Value = T>> Default for RbTree<T, O> {
-    fn default() -> Self {
-        Self::new()
-    }
+    fn default() -> Self { Self::new() }
 }
 
 fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
@@ -402,13 +394,17 @@ fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{Nonempty, Op, RbTree},
-        itertools::Itertools,
-        rand::{distributions::Alphanumeric, prelude::StdRng, Rng, SeedableRng},
-        randtools::SubRange,
-        std::{fmt::Debug, iter::repeat_with},
-    };
+    use super::Nonempty;
+    use super::Op;
+    use super::RbTree;
+    use itertools::Itertools;
+    use rand::distributions::Alphanumeric;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::SubRange;
+    use std::fmt::Debug;
+    use std::iter::repeat_with;
 
     fn validate<T: Debug, O: Op<Value = T>>(tree: &RbTree<T, O>) {
         match &tree.0 {
@@ -485,9 +481,9 @@ mod tests {
     impl Op for O {
         type Summary = String;
         type Value = char;
-        fn summarize(value: &Self::Value) -> Self::Summary {
-            value.to_string()
-        }
+
+        fn summarize(value: &Self::Value) -> Self::Summary { value.to_string() }
+
         fn op(lhs: Self::Summary, rhs: Self::Summary) -> Self::Summary {
             lhs.chars().chain(rhs.chars()).collect()
         }

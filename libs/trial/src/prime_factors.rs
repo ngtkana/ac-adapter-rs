@@ -1,4 +1,5 @@
-use {super::Value, std::mem::replace};
+use super::Value;
+use std::mem::replace;
 
 /// Takes an unsigned integer and returns an iterator to yield all the pairs of a prime factor of
 /// it and the multiplicity of it, in ascending order.
@@ -28,6 +29,7 @@ pub struct PrimeFactorsRle<T> {
 }
 impl<T: Value> Iterator for PrimeFactorsRle<T> {
     type Item = (T, usize);
+
     fn next(&mut self) -> Option<Self::Item> {
         let Self { n, p } = self;
         if *n == T::one() {
@@ -82,6 +84,7 @@ pub struct PrimeFactors<T> {
 }
 impl<T: Value> Iterator for PrimeFactors<T> {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         let Self { n, p } = self;
         if *n == T::one() {
@@ -106,10 +109,9 @@ impl<T: Value> Iterator for PrimeFactors<T> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{prime_factors, prime_factors_rle},
-        test_case::test_case,
-    };
+    use super::prime_factors;
+    use super::prime_factors_rle;
+    use test_case::test_case;
 
     #[test_case(1 => Vec::<u32>::new())]
     #[test_case(2 => vec![2])]
@@ -119,9 +121,7 @@ mod tests {
     #[test_case(6 => vec![2, 3])]
     #[test_case(12 => vec![2, 3])]
     #[test_case(36 => vec![2, 3])]
-    fn test_factors_unique(n: u32) -> Vec<u32> {
-        prime_factors(n).collect()
-    }
+    fn test_factors_unique(n: u32) -> Vec<u32> { prime_factors(n).collect() }
 
     #[test_case(1 => Vec::<(u32, usize)>::new())]
     #[test_case(2 => vec![(2, 1)])]
@@ -131,7 +131,5 @@ mod tests {
     #[test_case(6 => vec![(2, 1), (3, 1)])]
     #[test_case(12 => vec![(2, 2), (3, 1)])]
     #[test_case(36 => vec![(2, 2), (3, 2)])]
-    fn test_factors(n: u32) -> Vec<(u32, usize)> {
-        prime_factors_rle(n).collect()
-    }
+    fn test_factors(n: u32) -> Vec<(u32, usize)> { prime_factors_rle(n).collect() }
 }

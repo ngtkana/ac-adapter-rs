@@ -12,28 +12,22 @@ pub enum Usize {}
 
 impl SieveKind for Boolean {
     type SieveValue = bool;
-    fn new() -> Vec<Self::SieveValue> {
-        Vec::new()
-    }
-    fn construct(len: usize) -> Vec<Self::SieveValue> {
-        construct_is_prime_table(len)
-    }
-    fn is_prime(_index: usize, b: Self::SieveValue) -> bool {
-        b
-    }
+
+    fn new() -> Vec<Self::SieveValue> { Vec::new() }
+
+    fn construct(len: usize) -> Vec<Self::SieveValue> { construct_is_prime_table(len) }
+
+    fn is_prime(_index: usize, b: Self::SieveValue) -> bool { b }
 }
 
 impl SieveKind for Usize {
     type SieveValue = usize;
-    fn new() -> Vec<Self::SieveValue> {
-        Vec::new()
-    }
-    fn construct(len: usize) -> Vec<Self::SieveValue> {
-        construct_lpd_table(len)
-    }
-    fn is_prime(index: usize, b: Self::SieveValue) -> bool {
-        index == b
-    }
+
+    fn new() -> Vec<Self::SieveValue> { Vec::new() }
+
+    fn construct(len: usize) -> Vec<Self::SieveValue> { construct_lpd_table(len) }
+
+    fn is_prime(index: usize, b: Self::SieveValue) -> bool { index == b }
 }
 
 pub fn construct_is_prime_table(n: usize) -> Vec<bool> {
@@ -72,10 +66,9 @@ fn construct_lpd_table(n: usize) -> Vec<usize> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{construct_is_prime_table, construct_lpd_table},
-        test_case::test_case,
-    };
+    use super::construct_is_prime_table;
+    use super::construct_lpd_table;
+    use test_case::test_case;
 
     #[test_case(0 => Vec::<bool>::new())]
     #[test_case(1 => vec![false])]
@@ -83,9 +76,7 @@ mod tests {
     #[test_case(3 => vec![false, false, true])]
     #[test_case(4 => vec![false, false, true, true])]
     #[test_case(5 => vec![false, false, true, true, false])]
-    fn test_construct_is_prime_table(n: usize) -> Vec<bool> {
-        construct_is_prime_table(n)
-    }
+    fn test_construct_is_prime_table(n: usize) -> Vec<bool> { construct_is_prime_table(n) }
 
     #[test_case(0 => Vec::<usize>::new())]
     #[test_case(1 => vec![std::usize::MAX])]
@@ -93,7 +84,5 @@ mod tests {
     #[test_case(3 => vec![std::usize::MAX, std::usize::MAX, 2])]
     #[test_case(4 => vec![std::usize::MAX, std::usize::MAX, 2, 3])]
     #[test_case(5 => vec![std::usize::MAX, std::usize::MAX, 2, 3, 2])]
-    fn test_construct_lpd_table(n: usize) -> Vec<usize> {
-        construct_lpd_table(n)
-    }
+    fn test_construct_lpd_table(n: usize) -> Vec<usize> { construct_lpd_table(n) }
 }

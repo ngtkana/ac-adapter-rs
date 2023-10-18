@@ -14,7 +14,6 @@
 //! let result = hopkarp(2, &g);
 //! assert_eq!(result.count, 2);
 //! ```
-//!
 use std::collections::VecDeque;
 
 /// Summary of the result of Hopcroft―Karp's algorithm.
@@ -151,13 +150,15 @@ fn bfs(graph: &[Vec<usize>], forward: &[Option<usize>], backward: &[Option<usize
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{hopkarp, HopkarpResult},
-        itertools::Itertools as _,
-        rand::{distributions::Bernoulli, prelude::StdRng, Rng, SeedableRng},
-        std::iter::repeat_with,
-        test_case::test_case,
-    };
+    use super::hopkarp;
+    use super::HopkarpResult;
+    use itertools::Itertools as _;
+    use rand::distributions::Bernoulli;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::repeat_with;
+    use test_case::test_case;
 
     #[test]
     fn test_hopkarp_rand() {

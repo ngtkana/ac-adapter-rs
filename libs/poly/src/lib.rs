@@ -8,14 +8,16 @@
 //! | [`poly_add`]   | Θ ( max ( l, m ) )   | 足し算    |
 //! | [`poly_sub`]   | Θ ( max ( l, m ) )   | 引き算    |
 //! | [`poly_mul`]   | Θ ( l + m )          | 掛け算    |
-//!
 
-use std::{
-    fmt::Debug,
-    iter::{repeat_with, Fuse},
-    marker::PhantomData,
-    ops::{Add, AddAssign, Mul, Neg, Sub},
-};
+use std::fmt::Debug;
+use std::iter::repeat_with;
+use std::iter::Fuse;
+use std::marker::PhantomData;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Mul;
+use std::ops::Neg;
+use std::ops::Sub;
 
 /// 自由関数 [`poly_add`], [`poly_sub`] を呼び出します。
 ///
@@ -102,6 +104,7 @@ where
     B: Iterator<Item = T>,
 {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         match (self.a.next(), self.b.next()) {
             (None, None) => None,
@@ -110,6 +113,7 @@ where
             (Some(a), Some(b)) => Some(a + b),
         }
     }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         let (a_lower, a_upper) = self.a.size_hint();
         let (b_lower, b_upper) = self.b.size_hint();
@@ -166,6 +170,7 @@ where
     B: Iterator<Item = T>,
 {
     type Item = T;
+
     fn next(&mut self) -> Option<Self::Item> {
         match (self.a.next(), self.b.next()) {
             (None, None) => None,
@@ -174,6 +179,7 @@ where
             (Some(a), Some(b)) => Some(a - b),
         }
     }
+
     fn size_hint(&self) -> (usize, Option<usize>) {
         let (a_lower, a_upper) = self.a.size_hint();
         let (b_lower, b_upper) = self.b.size_hint();
@@ -221,11 +227,13 @@ pub fn poly_mul<T: AddAssign + Mul<Output = T> + Debug + Copy>(
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{poly_add, poly_mul, poly_sub},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::iter::repeat_with,
-    };
+    use super::poly_add;
+    use super::poly_mul;
+    use super::poly_sub;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::repeat_with;
 
     #[test]
     fn test_add() {

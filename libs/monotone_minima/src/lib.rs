@@ -3,11 +3,9 @@
 //! # 問題例
 //!
 //! - [ABC 218 H - Red and Blue Lamps](https://atcoder.jp/contests/abc218/tasks/abc218_h)
-//!
-use std::{
-    cmp::{Ordering, Reverse},
-    ops::Add,
-};
+use std::cmp::Ordering;
+use std::cmp::Reverse;
+use std::ops::Add;
 
 ////////////////////////////////////////////////////////////////////////////////
 // Monotone minima
@@ -94,11 +92,14 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{concave_maxplus_convolution, convex_minplus_convolution, monotone_minima},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::iter::{once, repeat_with},
-    };
+    use super::concave_maxplus_convolution;
+    use super::convex_minplus_convolution;
+    use super::monotone_minima;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::once;
+    use std::iter::repeat_with;
 
     ////////////////////////////////////////////////////////////////////////////////
     // Monotone minima
