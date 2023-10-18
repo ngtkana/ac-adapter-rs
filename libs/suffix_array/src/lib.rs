@@ -18,11 +18,7 @@ pub fn suffix_array<T: Ord>(s: &[T]) -> Vec<usize> {
     ord.sort_by_key(|&i| &s[i]);
     let mut cmp = vec![0; n];
     for i in 1..n {
-        cmp[i] = if s[ord[i - 1]] == s[ord[i]] {
-            cmp[i - 1]
-        } else {
-            cmp[i - 1] + 1
-        };
+        cmp[i] = if s[ord[i - 1]] == s[ord[i]] { cmp[i - 1] } else { cmp[i - 1] + 1 };
     }
     for d in std::iter::successors(Some(1), |x| Some(x * 2)).take_while(|&x| x <= n) {
         let mut ord_inverse = vec![0; n];

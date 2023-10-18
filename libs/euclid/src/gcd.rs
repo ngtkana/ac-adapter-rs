@@ -1,4 +1,5 @@
-use {super::Int, std::mem::swap};
+use super::Int;
+use std::mem::swap;
 
 /// Returns the greatest common divisor of `x` and `y`.
 pub fn gcd<T: Int>(mut x: T, mut y: T) -> T {
@@ -11,7 +12,8 @@ pub fn gcd<T: Int>(mut x: T, mut y: T) -> T {
 
 #[cfg(test)]
 mod tests {
-    use {super::gcd, test_case::test_case};
+    use super::gcd;
+    use test_case::test_case;
 
     #[test_case(0, 0 => 0)]
     #[test_case(0, 1 => 1)]

@@ -2,7 +2,9 @@
 //!
 //! [詳しくは `HeapSlopeTrick` をご覧ください。](HeapSlopeTrick)
 
-use std::{cmp::Reverse, collections::BinaryHeap, mem::swap};
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::mem::swap;
 
 /// 足し算をします。
 ///
@@ -13,7 +15,6 @@ use std::{cmp::Reverse, collections::BinaryHeap, mem::swap};
 /// # 計算量
 ///
 /// O ( N lg N )、ただし N は a と b のうち大きい方長さ
-///
 pub fn merge(mut a: HeapSlopeTrick, mut b: HeapSlopeTrick) -> HeapSlopeTrick {
     if a.small.len() + a.large.len() < b.small.len() + b.large.len() {
         swap(&mut a, &mut b);
@@ -73,9 +74,8 @@ pub struct HeapSlopeTrick {
 }
 impl HeapSlopeTrick {
     /// 零関数 f(x) = 0
-    pub fn new() -> Self {
-        Self::default()
-    }
+    pub fn new() -> Self { Self::default() }
+
     /// 一点評価 f(x)
     pub fn eval(&self, x: i64) -> i64 {
         self.minimum
@@ -92,6 +92,7 @@ impl HeapSlopeTrick {
                 )
                 .sum::<i64>()
     }
+
     /// 最小値を取る x の集合（と [MIN, MAX] の交差）を取得 argmin { f(x) | x in ]-∞, ∞[ }
     pub fn get_argmin(&self) -> [i64; 2] {
         [
@@ -103,14 +104,13 @@ impl HeapSlopeTrick {
                 .map_or(std::i64::MAX, |&Reverse(x)| x + self.shift_large),
         ]
     }
+
     /// 最小値取得 min { f(x) | x in ]-∞, ∞[ }
-    pub fn get_minimum(&self) -> i64 {
-        self.minimum
-    }
+    pub fn get_minimum(&self) -> i64 { self.minimum }
+
     /// 定数関数加算 g(x) = f(x) + c
-    pub fn add_const(&mut self, c: i64) {
-        self.minimum += c;
-    }
+    pub fn add_const(&mut self, c: i64) { self.minimum += c; }
+
     /// 傾き +1 のカットオフ一次関数加算 g(x) = f(x) + max(x - a, 0)
     pub fn add_cutoff_diagonal(&mut self, a: i64) {
         self.small.push(a - self.shift_small);
@@ -119,6 +119,7 @@ impl HeapSlopeTrick {
         ));
         self.minimum += (self.large.peek().unwrap().0 + self.shift_large - a).max(0);
     }
+
     /// 傾き -1 のカットオフ一次関数加算 g(x) = f(x) + max(a - x, 0)
     pub fn add_cutoff_anti_diagonal(&mut self, a: i64) {
         self.large.push(Reverse(a - self.shift_large));
@@ -126,38 +127,38 @@ impl HeapSlopeTrick {
             .push(self.large.pop().unwrap().0 + self.shift_large - self.shift_small);
         self.minimum += (a - (self.small.peek().unwrap() + self.shift_small)).max(0);
     }
+
     /// 絶対値関数加算 g(x) = f(x) + |x - a|
     pub fn add_abs(&mut self, a: i64) {
         self.add_cutoff_diagonal(a);
         self.add_cutoff_anti_diagonal(a);
     }
+
     /// 左から累積最小値 g(x) = min { f(y) | y ∈ ]-∞, x] }
-    pub fn cumulative_min_from_left(&mut self) {
-        self.large.clear();
-    }
+    pub fn cumulative_min_from_left(&mut self) { self.large.clear(); }
+
     /// 右から累積最小値 g(x) = min { f(y) | y ∈ [x, ∞[ }
-    pub fn cumulative_min_from_right(&mut self) {
-        self.small.clear();
-    }
+    pub fn cumulative_min_from_right(&mut self) { self.small.clear(); }
+
     /// 平行移動 g(x) = f ( x - a )
     pub fn shift(&mut self, a: i64) {
         self.shift_small += a;
         self.shift_large += a;
     }
+
     /// スライド最小値 g(x) = min { f(y) |  y ∈ [x - b, x - a]  }
     pub fn sliding_window_minimum(&mut self, a: i64, b: i64) {
         assert!(a <= b);
         self.shift_small += a;
         self.shift_large += b;
     }
+
     /// 差分の最小値 min { f(x + 1) - f(x) | x ∈ ]-∞, ∞[ }
-    pub fn get_tilt_minimum(&self) -> i64 {
-        -(self.small.len() as i64)
-    }
+    pub fn get_tilt_minimum(&self) -> i64 { -(self.small.len() as i64) }
+
     /// 差分の最大値 max { f(x + 1) - f(x) | x ∈ ]-∞, ∞[ }
-    pub fn get_tilt_maximum(&self) -> i64 {
-        self.large.len() as i64
-    }
+    pub fn get_tilt_maximum(&self) -> i64 { self.large.len() as i64 }
+
     /// 関節点（二階差分が正である点）全体の列 { (x, f(x)) | f(x) + f(x) < f(x - 1) + f(x + 1) }
     pub fn articulation_points(&self) -> Vec<[i64; 2]> {
         let mut xs = self
@@ -176,6 +177,7 @@ impl HeapSlopeTrick {
         xs.dedup();
         xs.iter().map(|&x| [x, self.eval(x)]).collect()
     }
+
     /// 関節点と差分の範囲を返します。
     pub fn summary(&self) -> Summary {
         Summary {
@@ -194,13 +196,12 @@ pub struct Summary {
 
 #[cfg(test)]
 mod tests {
+    use super::HeapSlopeTrick;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
     use std::cmp::Ordering;
-
-    use {
-        super::HeapSlopeTrick,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::mem::swap,
-    };
+    use std::mem::swap;
 
     const XMAX: i64 = 1_000;
     const XMIN: i64 = -XMAX;
@@ -318,10 +319,12 @@ mod tests {
                 values: vec![0; (XMAX - XMIN + 1) as usize],
             }
         }
+
         fn eval(&self, x: i64) -> i64 {
             assert!((XMIN..=XMAX).contains(&x));
             self.values[(x - XMIN) as usize]
         }
+
         fn get_argmin(&self) -> [i64; 2] {
             let n = self.values.len();
             let min = self.get_minimum();
@@ -340,48 +343,41 @@ mod tests {
                 },
             ]
         }
-        fn get_minimum(&self) -> i64 {
-            self.values.iter().copied().min().unwrap()
-        }
+
+        fn get_minimum(&self) -> i64 { self.values.iter().copied().min().unwrap() }
+
         fn add_const(&mut self, c: i64) {
-            self.values.iter_mut().for_each(|x| {
-                *x = if *x == std::i64::MAX {
-                    std::i64::MAX
-                } else {
-                    *x + c
-                }
-            });
+            self.values
+                .iter_mut()
+                .for_each(|x| *x = if *x == std::i64::MAX { std::i64::MAX } else { *x + c });
         }
+
         fn add_fn(&mut self, f: impl Fn(i64) -> i64) {
             for x in XMIN..=XMAX {
                 let i = (x - XMIN) as usize;
                 let orig = self.values[i];
-                self.values[i] = if orig == std::i64::MAX {
-                    std::i64::MAX
-                } else {
-                    orig + f(x)
-                };
+                self.values[i] = if orig == std::i64::MAX { std::i64::MAX } else { orig + f(x) };
             }
         }
-        fn add_abs(&mut self, a: i64) {
-            self.add_fn(|x| (x - a).abs());
-        }
-        fn add_cutoff_diagonal(&mut self, a: i64) {
-            self.add_fn(|x| (x - a).max(0));
-        }
-        fn add_cutoff_anti_diagonal(&mut self, a: i64) {
-            self.add_fn(|x| (a - x).max(0));
-        }
+
+        fn add_abs(&mut self, a: i64) { self.add_fn(|x| (x - a).abs()); }
+
+        fn add_cutoff_diagonal(&mut self, a: i64) { self.add_fn(|x| (x - a).max(0)); }
+
+        fn add_cutoff_anti_diagonal(&mut self, a: i64) { self.add_fn(|x| (a - x).max(0)); }
+
         fn cumulative_min_from_left(&mut self) {
             for i in 0..self.values.len() - 1 {
                 self.values[i + 1] = self.values[i + 1].min(self.values[i]);
             }
         }
+
         fn cumulative_min_from_right(&mut self) {
             for i in (0..self.values.len() - 1).rev() {
                 self.values[i] = self.values[i].min(self.values[i + 1]);
             }
         }
+
         fn shift(&mut self, a: i64) {
             match a.cmp(&0) {
                 Ordering::Less => {
@@ -400,6 +396,7 @@ mod tests {
                 Ordering::Equal => (),
             }
         }
+
         fn sliding_window_minimum(&mut self, a: i64, b: i64) {
             let n = self.values.len() as i64;
             self.values = (0..n)
@@ -411,6 +408,7 @@ mod tests {
                 })
                 .collect();
         }
+
         fn get_tilt_minimum(&self) -> i64 {
             self.values
                 .windows(2)
@@ -419,6 +417,7 @@ mod tests {
                 .min()
                 .unwrap()
         }
+
         fn get_tilt_maximum(&self) -> i64 {
             self.values
                 .windows(2)
@@ -427,6 +426,7 @@ mod tests {
                 .max()
                 .unwrap()
         }
+
         fn articulation_points(&self) -> Vec<[i64; 2]> {
             self.values
                 .windows(3)

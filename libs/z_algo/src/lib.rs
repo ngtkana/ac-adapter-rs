@@ -8,7 +8,6 @@
 ///
 /// The Z-array `z` of `a`.
 /// `z[i]` is the length of longest common prefix of `a` and `a[i..]`.
-///
 pub fn z_algo<T: Eq>(s: &[T]) -> Vec<usize> {
     if s.is_empty() {
         return Vec::new();

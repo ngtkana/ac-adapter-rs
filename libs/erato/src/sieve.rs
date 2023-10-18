@@ -1,7 +1,8 @@
-use super::{
-    sieve_base::{PrimeFactorsByTrialDivision, PrimeNumbers},
-    sieve_kind, Int, SieveBase,
-};
+use super::sieve_base::PrimeFactorsByTrialDivision;
+use super::sieve_base::PrimeNumbers;
+use super::sieve_kind;
+use super::Int;
+use super::SieveBase;
 
 /// Is-prime table.
 ///
@@ -12,7 +13,6 @@ use super::{
 /// - Construction: Θ ( n / lg lg n )
 /// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than
 /// n.
-///
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sieve {
     base: SieveBase<sieve_kind::Boolean>,
@@ -34,6 +34,7 @@ impl Sieve {
             base: SieveBase::new(),
         }
     }
+
     /// Returns `true` if a sieve is empty.
     ///
     /// # Examples
@@ -43,9 +44,8 @@ impl Sieve {
     /// assert!(Sieve::with_len(0).is_empty());
     /// assert!(!Sieve::with_len(1).is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool {
-        self.base.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.base.is_empty() }
+
     /// Returns the length of a sieve.
     ///
     /// # Examples
@@ -55,9 +55,8 @@ impl Sieve {
     /// let sieve = Sieve::with_len(42);
     /// assert_eq!(sieve.len(), 42);
     /// ```
-    pub fn len(&self) -> usize {
-        self.base.len()
-    }
+    pub fn len(&self) -> usize { self.base.len() }
+
     /// Construct a sieve of given length.
     ///
     ///
@@ -79,6 +78,7 @@ impl Sieve {
             base: SieveBase::with_len(n),
         }
     }
+
     /// Returns `true` if `x` is a prime number.
     ///
     /// # Panics
@@ -100,9 +100,8 @@ impl Sieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
-    pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
-        self.base.is_prime(x)
-    }
+    pub fn is_prime<T: Int>(&mut self, x: T) -> bool { self.base.is_prime(x) }
+
     /// Returns an iterator to generate all the prime numbers in ascending order, extending
     /// itself repeatedly.
     ///
@@ -128,6 +127,7 @@ impl Sieve {
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Boolean, T> {
         self.base.prime_numbers()
     }
+
     /// Use trial-division algorithm to iterate over all the prime divisors of `x`, extending itself repeatedly.
     ///
     /// # Complexity
@@ -150,7 +150,8 @@ impl Sieve {
 
 #[cfg(test)]
 mod tests {
-    use {super::Sieve, test_case::test_case};
+    use super::Sieve;
+    use test_case::test_case;
 
     #[test]
     fn test_is_prime_via_new() {

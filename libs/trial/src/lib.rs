@@ -8,14 +8,24 @@
 mod divisors;
 mod prime_factors;
 
-use std::{
-    fmt::Debug,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Rem, RemAssign, Sub, SubAssign},
-};
-pub use {
-    divisors::{divisors, divisors_unordered, Divisors},
-    prime_factors::{prime_factors, prime_factors_rle, PrimeFactors, PrimeFactorsRle},
-};
+pub use divisors::divisors;
+pub use divisors::divisors_unordered;
+pub use divisors::Divisors;
+pub use prime_factors::prime_factors;
+pub use prime_factors::prime_factors_rle;
+pub use prime_factors::PrimeFactors;
+pub use prime_factors::PrimeFactorsRle;
+use std::fmt::Debug;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Rem;
+use std::ops::RemAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 /// Abstraction of unsigned integers.
 pub trait Value:
@@ -40,9 +50,7 @@ pub trait Value:
     /// Increment `self`.
     fn increment(&mut self);
     /// Returns `true` if and only if `self` divides `n`.
-    fn divides(self, n: Self) -> bool {
-        n % self == Self::zero()
-    }
+    fn divides(self, n: Self) -> bool { n % self == Self::zero() }
 }
 
 macro_rules! impl_value {

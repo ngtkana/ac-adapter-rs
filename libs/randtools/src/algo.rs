@@ -1,4 +1,6 @@
-use std::{cmp::Reverse, collections::BinaryHeap, iter};
+use std::cmp::Reverse;
+use std::collections::BinaryHeap;
+use std::iter;
 
 pub fn prufer2tree(prufer: &[usize]) -> Vec<Vec<usize>> {
     let n = prufer.len() + 2;

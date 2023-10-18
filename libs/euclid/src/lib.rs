@@ -2,12 +2,21 @@ mod crt;
 mod ext_gcd;
 mod gcd;
 
-pub use {crt::crt, ext_gcd::ext_gcd, gcd::gcd};
-
-use std::{
-    fmt::Debug,
-    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign},
-};
+pub use crt::crt;
+pub use ext_gcd::ext_gcd;
+pub use gcd::gcd;
+use std::fmt::Debug;
+use std::ops::Add;
+use std::ops::AddAssign;
+use std::ops::Div;
+use std::ops::DivAssign;
+use std::ops::Mul;
+use std::ops::MulAssign;
+use std::ops::Neg;
+use std::ops::Rem;
+use std::ops::RemAssign;
+use std::ops::Sub;
+use std::ops::SubAssign;
 
 /// Abstraction of integers.
 pub trait Int:
@@ -38,9 +47,7 @@ pub trait Int:
     /// Calculates the least nonnegative remainder of `self (mod rhs)`.
     fn rem_euclid(self, rhs: Self) -> Self;
     /// Returns `true` if and only if `self` divides `n`.
-    fn divides(self, n: Self) -> bool {
-        n.rem_euclid(self) == Self::zero()
-    }
+    fn divides(self, n: Self) -> bool { n.rem_euclid(self) == Self::zero() }
 }
 
 /// Abstraction of unsigned integers.

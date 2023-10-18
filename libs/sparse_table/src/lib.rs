@@ -69,16 +69,16 @@ where
 {
     type Output = I::Output;
 
-    fn index(&self, index: I) -> &I::Output {
-        self.seq.index(index)
-    }
+    fn index(&self, index: I) -> &I::Output { self.seq.index(index) }
 }
 
 fn convert_to_range<T>(len: usize, range_bound: T) -> ops::Range<usize>
 where
     T: ops::RangeBounds<usize>,
 {
-    use ops::Bound::{Excluded, Included, Unbounded};
+    use ops::Bound::Excluded;
+    use ops::Bound::Included;
+    use ops::Bound::Unbounded;
     ops::Range {
         start: match range_bound.start_bound() {
             Excluded(&x) => x + 1,

@@ -41,7 +41,10 @@
 //!
 //! // `Debug` トレイトを実装しています。
 //! // (重み, メンバー) の形でプリントします。
-//! assert_eq!(&format!("{:?}", &uf), "[((0, false), [0]), ((0, false), [1]), ((0, false), [2])]");
+//! assert_eq!(
+//!     &format!("{:?}", &uf),
+//!     "[((0, false), [0]), ((0, false), [1]), ((0, false), [2])]"
+//! );
 //!
 //! // union-find 操作と、頂点重みの取得です。
 //! assert_eq!(uf.union(0, 1), true);
@@ -53,13 +56,14 @@
 //! *uf.value_mut(0) = (100, false);
 //! assert_eq!(uf.value(0), (100, false));
 //! ```
-//!
-use std::{
-    fmt::{Debug, Formatter, Result},
-    iter::repeat_with,
-    marker::PhantomData,
-    mem::{replace, swap, take},
-};
+use std::fmt::Debug;
+use std::fmt::Formatter;
+use std::fmt::Result;
+use std::iter::repeat_with;
+use std::marker::PhantomData;
+use std::mem::replace;
+use std::mem::swap;
+use std::mem::take;
 
 /// 頂点重みを自作したいときに使うトレイトです。
 pub trait Op {
@@ -74,19 +78,23 @@ pub trait Op {
 }
 impl Op for () {
     type Value = ();
+
     fn singleton() -> Self::Value {}
+
     fn add_edge(_x: &mut Self::Value) {}
+
     fn graft(_parent: &mut Self::Value, _child: Self::Value) {}
 }
 impl<T: Op, U: Op> Op for (T, U) {
     type Value = (T::Value, U::Value);
-    fn singleton() -> Self::Value {
-        (T::singleton(), U::singleton())
-    }
+
+    fn singleton() -> Self::Value { (T::singleton(), U::singleton()) }
+
     fn add_edge(x: &mut Self::Value) {
         T::add_edge(&mut x.0);
         U::add_edge(&mut x.1);
     }
+
     fn graft(parent: &mut Self::Value, child: Self::Value) {
         T::graft(&mut parent.0, child.0);
         U::graft(&mut parent.1, child.1);
@@ -94,14 +102,15 @@ impl<T: Op, U: Op> Op for (T, U) {
 }
 impl<T: Op, U: Op, V: Op> Op for (T, U, V) {
     type Value = (T::Value, U::Value, V::Value);
-    fn singleton() -> Self::Value {
-        (T::singleton(), U::singleton(), V::singleton())
-    }
+
+    fn singleton() -> Self::Value { (T::singleton(), U::singleton(), V::singleton()) }
+
     fn add_edge(x: &mut Self::Value) {
         T::add_edge(&mut x.0);
         U::add_edge(&mut x.1);
         V::add_edge(&mut x.2);
     }
+
     fn graft(parent: &mut Self::Value, child: Self::Value) {
         T::graft(&mut parent.0, child.0);
         U::graft(&mut parent.1, child.1);
@@ -112,41 +121,34 @@ impl<T: Op, U: Op, V: Op> Op for (T, U, V) {
 pub enum EdgeCount {}
 impl Op for EdgeCount {
     type Value = usize;
-    fn singleton() -> Self::Value {
-        0
-    }
-    fn add_edge(x: &mut Self::Value) {
-        *x += 1;
-    }
-    fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent += child + 1
-    }
+
+    fn singleton() -> Self::Value { 0 }
+
+    fn add_edge(x: &mut Self::Value) { *x += 1; }
+
+    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent += child + 1 }
 }
 /// 頂点の個数
 pub enum VertexCount {}
 impl Op for VertexCount {
     type Value = usize;
-    fn singleton() -> Self::Value {
-        1
-    }
+
+    fn singleton() -> Self::Value { 1 }
+
     fn add_edge(_x: &mut Self::Value) {}
-    fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent += child
-    }
+
+    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent += child }
 }
 /// サイクルがあるとき、`true`
 pub enum HasCycle {}
 impl Op for HasCycle {
     type Value = bool;
-    fn singleton() -> Self::Value {
-        false
-    }
-    fn add_edge(x: &mut Self::Value) {
-        *x = true
-    }
-    fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent |= child
-    }
+
+    fn singleton() -> Self::Value { false }
+
+    fn add_edge(x: &mut Self::Value) { *x = true }
+
+    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent |= child }
 }
 
 #[derive(Clone, Default, Hash, PartialEq)]
@@ -159,6 +161,7 @@ impl<O: Op> UnionFind<O> {
     pub fn new(n: usize) -> Self {
         Self::from_values(repeat_with(|| O::singleton()).take(n).collect())
     }
+
     pub fn from_values(values: Vec<O::Value>) -> Self {
         let n = values.len();
         assert!(n <= std::usize::MAX / 2);
@@ -168,6 +171,7 @@ impl<O: Op> UnionFind<O> {
             __marker: PhantomData,
         }
     }
+
     pub fn find_mut(&mut self, mut x: usize) -> usize {
         assert!(x < self.parent_or_size.len());
         let mut p = self.parent_or_size[x];
@@ -180,6 +184,7 @@ impl<O: Op> UnionFind<O> {
         }
         x
     }
+
     pub fn find(&self, mut x: usize) -> usize {
         assert!(x < self.parent_or_size.len());
         let mut p = self.parent_or_size[x];
@@ -189,21 +194,22 @@ impl<O: Op> UnionFind<O> {
         }
         x
     }
-    pub fn same(&self, x: usize, y: usize) -> bool {
-        self.find(x) == self.find(y)
-    }
-    pub fn is_root(&self, x: usize) -> bool {
-        x == self.find(x)
-    }
+
+    pub fn same(&self, x: usize, y: usize) -> bool { self.find(x) == self.find(y) }
+
+    pub fn is_root(&self, x: usize) -> bool { x == self.find(x) }
+
     pub fn get_value(&self, x: usize) -> &O::Value {
         assert!(x < self.parent_or_size.len());
         &self.values[self.find(x)]
     }
+
     pub fn value_mut(&mut self, x: usize) -> &mut O::Value {
         assert!(x < self.parent_or_size.len());
         let x = self.find(x);
         &mut self.values[x]
     }
+
     pub fn value(&self, x: usize) -> O::Value
     where
         O::Value: Copy,
@@ -211,6 +217,7 @@ impl<O: Op> UnionFind<O> {
         assert!(x < self.parent_or_size.len());
         self.values[self.find(x)]
     }
+
     pub fn union(&mut self, mut x: usize, mut y: usize) -> bool {
         assert!(x < self.parent_or_size.len());
         assert!(y < self.parent_or_size.len());
@@ -254,23 +261,29 @@ where
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{EdgeCount, HasCycle, Op, UnionFind, VertexCount},
-        itertools::Itertools,
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        randtools::DistinctTwo,
-        std::{marker::PhantomData, mem::take},
-    };
+    use super::EdgeCount;
+    use super::HasCycle;
+    use super::Op;
+    use super::UnionFind;
+    use super::VertexCount;
+    use itertools::Itertools;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use randtools::DistinctTwo;
+    use std::marker::PhantomData;
+    use std::mem::take;
 
     #[test]
     fn test_union_find_smoke() {
         enum O {}
         impl Op for O {
             type Value = PhantomData<()>;
-            fn singleton() -> Self::Value {
-                PhantomData
-            }
+
+            fn singleton() -> Self::Value { PhantomData }
+
             fn add_edge(_x: &mut Self::Value) {}
+
             fn graft(_parent: &mut Self::Value, _child: Self::Value) {}
         }
         let _: UnionFind<()> = <UnionFind>::new(3); // requires `<_>`. cf: https://www.reddit.com/r/rust/comments/ek6w5g/default_generic_type_inference/

@@ -11,12 +11,10 @@
 //! enum O {}
 //! impl Ops for O {
 //!     type Value = [i32; 2];
-//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -> [i32; 2] {
-//!         [a.min(b + c), b + d]
-//!     }
-//!     fn identity() -> [i32; 2] {
-//!         [0, 0]
-//!     }
+//!
+//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -> [i32; 2] { [a.min(b + c), b + d] }
+//!
+//!     fn identity() -> [i32; 2] { [0, 0] }
 //! }
 //!
 //! // 構築
@@ -28,16 +26,15 @@
 //! assert_eq!(seg.collect_vec(), vec![[-2, -2], [0, 0]]);
 //! seg.apply(0..1, &[0, 3]); // +3
 //! assert_eq!(seg.collect_vec(), vec![[-2, 1], [0, 0]]);
-//!
-//!
 //! ```
-use std::{
-    collections::VecDeque,
-    fmt::Debug,
-    iter::{repeat_with, FromIterator},
-    mem::replace,
-    ops::{Bound, Range, RangeBounds},
-};
+use std::collections::VecDeque;
+use std::fmt::Debug;
+use std::iter::repeat_with;
+use std::iter::FromIterator;
+use std::mem::replace;
+use std::ops::Bound;
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 /// 双対セグメント木（右作用）
 #[derive(Clone, Default, PartialEq)]
@@ -73,14 +70,13 @@ impl<O: Ops> DualSegtree<O> {
                 .collect::<Vec<_>>(),
         }
     }
+
     /// 空なら `true` を返します。
-    pub fn is_empty(&self) -> bool {
-        self.table.is_empty()
-    }
+    pub fn is_empty(&self) -> bool { self.table.is_empty() }
+
     /// 管理している配列の長さを返します。
-    pub fn len(&self) -> usize {
-        self.table.len() / 2
-    }
+    pub fn len(&self) -> usize { self.table.len() / 2 }
+
     /// `range` に `x` を作用させます。（右作用）
     pub fn apply(&mut self, range: impl RangeBounds<usize>, x: &O::Value) {
         let Range { mut start, mut end } = into_slice_range(self.len(), range);
@@ -107,6 +103,7 @@ impl<O: Ops> DualSegtree<O> {
             end /= 2;
         }
     }
+
     /// `i` 番目の要素への可変参照を返します。
     pub fn get_mut(&mut self, i: usize) -> &mut O::Value {
         if self.len() <= i {
@@ -116,10 +113,10 @@ impl<O: Ops> DualSegtree<O> {
         (1..=self.lg()).rev().for_each(|p| self.push(i >> p));
         &mut self.table[i]
     }
+
     /// `i` 番目の要素への参照を返します。
-    pub fn get(&mut self, i: usize) -> &O::Value {
-        self.get_mut(i)
-    }
+    pub fn get(&mut self, i: usize) -> &O::Value { self.get_mut(i) }
+
     /// `i` 番目の要素をコピーして返します。
     pub fn get_copied(&mut self, i: usize) -> O::Value
     where
@@ -127,6 +124,7 @@ impl<O: Ops> DualSegtree<O> {
     {
         *self.get_mut(i)
     }
+
     /// `i` 番目の要素をクローンして返します。
     pub fn get_cloned(&mut self, i: usize) -> O::Value
     where
@@ -134,31 +132,35 @@ impl<O: Ops> DualSegtree<O> {
     {
         self.get_mut(i).clone()
     }
+
     /// [`Vec`] に変換します。
     pub fn collect_vec(&mut self) -> Vec<O::Value> {
         update_all::<O>(&mut self.table);
         self.table[self.len()..].to_vec()
     }
+
     /// [`Vec`] に変換します。
     pub fn into_vec(mut self) -> Vec<O::Value> {
         update_all::<O>(&mut self.table);
         self.table[self.len()..].to_vec()
     }
-    fn lg(&self) -> u32 {
-        self.len().next_power_of_two().trailing_zeros()
-    }
+
+    fn lg(&self) -> u32 { self.len().next_power_of_two().trailing_zeros() }
+
     fn thrust(&mut self, i: usize) {
         (1..=self.lg())
             .rev()
             .filter(|&p| (i >> p) << p != i)
             .for_each(|p| self.push(i >> p));
     }
+
     fn push(&mut self, i: usize) {
         let x = replace(&mut self.table[i], O::identity());
         self.table[2 * i..2 * i + 2]
             .iter_mut()
             .for_each(|y| O::op_assign_from_right(y, x.clone()));
     }
+
     fn silent_collect(&self) -> Vec<O::Value> {
         let mut res = self.table.clone();
         update_all::<O>(&mut res);
@@ -227,9 +229,7 @@ fn slice_end_index_overflow_fail() -> ! {
 // 変換
 ////////////////////////////////////////////////////////////////////////////////
 impl<O: Ops> From<Vec<O::Value>> for DualSegtree<O> {
-    fn from(v: Vec<O::Value>) -> Self {
-        Self::new(v)
-    }
+    fn from(v: Vec<O::Value>) -> Self { Self::new(v) }
 }
 impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
@@ -242,14 +242,14 @@ impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
 
 #[cfg(test)]
 mod tests {
-    use {
-        super::{DualSegtree, Ops},
-        rand::{prelude::StdRng, Rng, SeedableRng},
-        std::{
-            ops::Range,
-            {iter::repeat_with, mem::swap},
-        },
-    };
+    use super::DualSegtree;
+    use super::Ops;
+    use rand::prelude::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::iter::repeat_with;
+    use std::mem::swap;
+    use std::ops::Range;
 
     #[derive(Clone, Debug, Default, Hash, PartialEq)]
     struct Brute<O: Ops> {
@@ -261,11 +261,13 @@ mod tests {
                 table: iter.into_iter().collect::<Vec<_>>(),
             }
         }
+
         pub fn apply(&mut self, range: Range<usize>, x: &O::Value) {
             self.table[range]
                 .iter_mut()
                 .for_each(|y| O::op_assign_from_right(y, x.clone()));
         }
+
         pub fn get_cloned(&self, i: usize) -> O::Value
         where
             O::Value: Clone,
@@ -279,12 +281,12 @@ mod tests {
         enum O {}
         impl Ops for O {
             type Value = String;
+
             fn op(lhs: Self::Value, rhs: Self::Value) -> Self::Value {
                 lhs.chars().chain(rhs.chars()).collect::<String>()
             }
-            fn identity() -> Self::Value {
-                String::new()
-            }
+
+            fn identity() -> Self::Value { String::new() }
         }
         let mut rng = StdRng::seed_from_u64(42);
         let new_value = |rng: &mut StdRng| rng.gen_range('a'..='z').to_string();

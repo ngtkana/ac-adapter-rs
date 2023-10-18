@@ -1,5 +1,6 @@
 //! An extension trait of [`Iterator`]
-use std::ops::{AddAssign, Sub};
+use std::ops::AddAssign;
+use std::ops::Sub;
 
 /// Returns $\sum \left \lbrace a _ j \vert 0 \le j \lt i \right \rbrace$.
 ///
@@ -7,10 +8,7 @@ use std::ops::{AddAssign, Sub};
 /// ```
 /// # use itermore::open_prefix_sum;
 /// # use itertools::assert_equal;
-/// assert_equal(
-///     open_prefix_sum(vec![10, 11, 12], 0),
-///     vec![0, 10, 21],
-/// );
+/// assert_equal(open_prefix_sum(vec![10, 11, 12], 0), vec![0, 10, 21]);
 /// ```
 pub fn open_prefix_sum<I: IntoIterator<Item = T>, T>(
     iter: I,
@@ -28,10 +26,7 @@ pub fn open_prefix_sum<I: IntoIterator<Item = T>, T>(
 /// ```
 /// # use itermore::closed_prefix_sum;
 /// # use itertools::assert_equal;
-/// assert_equal(
-///     closed_prefix_sum(vec![10, 11, 12], 0),
-///     vec![10, 21, 33],
-/// );
+/// assert_equal(closed_prefix_sum(vec![10, 11, 12], 0), vec![10, 21, 33]);
 /// ```
 pub fn closed_prefix_sum<I: IntoIterator<Item = T>, T>(
     iter: I,
@@ -91,18 +86,21 @@ impl<I: Iterator> IterMore for I {
             iter: self,
         }
     }
+
     fn closed_prefix_sum(self, zero: Self::Item) -> ClosedPrefixSum<Self> {
         ClosedPrefixSum {
             sum: zero,
             iter: self,
         }
     }
+
     fn max_increase(self, max: Self::Item) -> MaxIncrease<Self> {
         MaxIncrease {
             min: max,
             iter: self,
         }
     }
+
     fn max_decrease(self, min: Self::Item) -> MaxDecrease<Self> {
         MaxDecrease {
             max: min,
@@ -120,6 +118,7 @@ where
     I::Item: AddAssign + Copy,
 {
     type Item = I::Item;
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(key) => {
@@ -141,6 +140,7 @@ where
     I::Item: AddAssign + Copy,
 {
     type Item = I::Item;
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(key) => {
@@ -161,6 +161,7 @@ where
     I::Item: Sub<Output = I::Item> + Ord + Copy,
 {
     type Item = I::Item;
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(key) => {
@@ -181,6 +182,7 @@ where
     I::Item: Sub<Output = I::Item> + Ord + Copy,
 {
     type Item = I::Item;
+
     fn next(&mut self) -> Option<Self::Item> {
         match self.iter.next() {
             Some(key) => {

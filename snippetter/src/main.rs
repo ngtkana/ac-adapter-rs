@@ -1,11 +1,10 @@
 use itertools::Itertools;
 use once_cell::sync::OnceCell;
-use std::{
-    collections::HashMap,
-    ffi::OsStr,
-    fs,
-    path::{Path, PathBuf},
-};
+use std::collections::HashMap;
+use std::ffi::OsStr;
+use std::fs;
+use std::path::Path;
+use std::path::PathBuf;
 
 static PROJECT_ROOT: OnceCell<PathBuf> = OnceCell::new();
 static CRATE_METADATAS: OnceCell<HashMap<String, CrateMetadata>> = OnceCell::new();
