@@ -1,4 +1,4 @@
-var srcIndex = JSON.parse('{\
+var sourcesIndex = JSON.parse('{\
 "accum":["",[],["lib.rs"]],\
 "advance":["",[],["lib.rs"]],\
 "avl_tree":["",[],["lib.rs"]],\
@@ -25,7 +25,6 @@ var srcIndex = JSON.parse('{\
 "fp":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs"]],\
 "fps":["",[],["lib.rs"]],\
 "gco":["",[],["lib.rs"]],\
-"grid":["",[],["coord.rs","dihedral.rs","grid.rs","iter.rs","lib.rs"]],\
 "gridnei":["",[],["lib.rs"]],\
 "gss":["",[],["lib.rs"]],\
 "heap_slope_trick":["",[],["lib.rs"]],\
@@ -84,4 +83,4 @@ var srcIndex = JSON.parse('{\
 "z_algo":["",[],["lib.rs"]],\
 "zeta":["",[],["lib.rs"]]\
 }');
-createSrcSidebar();
+createSourceSidebar();

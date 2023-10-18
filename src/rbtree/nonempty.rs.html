@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rbtree/src/nonempty.rs`."><title>nonempty.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-cb6f1f67f1bcd037.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rbtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.73.0 (cc66ad468 2023-10-03)" data-channel="1.73.0" data-search-js="search-6dfdfced5eff6596.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-1596385f77d47ef2.css" data-theme-dark-css="dark-0a43001d3fc2282c.css" data-theme-ayu-css="ayu-fd19013d6ce078bf.css" ><script src="../../static.files/storage-db41da1a38ea3cb8.js"></script><script defer src="../../static.files/src-script-3280b574d94e47b4.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-1596385f77d47ef2.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-0a43001d3fc2282c.css"><link rel="stylesheet" href="../../static.files/noscript-cffde32267a19fd6.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rbtree/src/nonempty.rs`."><title>nonempty.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-9bb858ba049f1f21.css" id="mainThemeStyle"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rbtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.72.1 (d5c2e9c34 2023-09-13)" data-channel="1.72.1" data-search-js="search-f6292fe389d70017.js" data-settings-js="settings-de11bff964e9d4e5.js" data-settings-css="settings-8c76f75bfb6bd192.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ><script src="../../static.files/storage-59fd9b8ccb335783.js"></script><script defer src="../../static.files/source-script-106908c7a7964ba4.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-0795b7d26be81095.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rbtree/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rbtree/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -429,17 +429,13 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>{
-    <span class="kw">super</span>::{Nop, Op},
-    std::{
-        cmp::Ordering,
-        hash::{Hash, Hasher},
-        marker::PhantomData,
-        mem::swap,
-    },
-};
+</pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Nop;
+<span class="kw">use </span><span class="kw">super</span>::Op;
+<span class="kw">use </span>std::cmp::Ordering;
+<span class="kw">use </span>std::hash::Hash;
+<span class="kw">use </span>std::hash::Hasher;
+<span class="kw">use </span>std::marker::PhantomData;
+<span class="kw">use </span>std::mem::swap;
 
 <span class="kw">pub enum </span>Nonempty&lt;T, O: Op&lt;Value = T&gt; = Nop&lt;T&gt;&gt; {
     Nil(Nil&lt;T&gt;),
@@ -468,6 +464,7 @@
             <span class="self">Self</span>::Internal(node) =&gt; node.len,
         }
     }
+
     <span class="kw">pub fn </span>not_all_partition_point&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, init: <span class="prelude-ty">Option</span>&lt;O::Summary&gt;, f: F) -&gt; usize
     <span class="kw">where
         </span>O::Summary: Clone,
@@ -495,6 +492,7 @@
             }
         }
     }
+
     <span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, start: usize, end: usize) -&gt; O::Summary {
         <span class="macro">debug_assert!</span>(start &lt; end &amp;&amp; end &lt;= <span class="self">self</span>.len());
         <span class="kw">match </span><span class="self">self </span>{
@@ -516,6 +514,7 @@
             }
         }
     }
+
     <span class="kw">pub fn </span>split(<span class="self">self</span>, i: usize) -&gt; [<span class="self">Self</span>; <span class="number">2</span>] {
         <span class="kw">let </span>node = <span class="self">self</span>.into_node().unwrap();
         <span class="kw">let </span>left_len = node.left.len();
@@ -531,6 +530,7 @@
             }
         }
     }
+
     <span class="kw">pub fn </span>merge(<span class="kw-2">mut </span>lhs: <span class="self">Self</span>, <span class="kw-2">mut </span>rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>h = lhs.height();
         <span class="kw">match </span>h.cmp(<span class="kw-2">&amp;</span>rhs.height()) {
@@ -545,6 +545,7 @@
             }
         }
     }
+
     <span class="kw">pub fn </span>merge_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
         <span class="kw">let </span>h = <span class="self">self</span>.height();
         <span class="kw">if </span>other.height() == <span class="self">self</span>.node().unwrap().left.height() {
@@ -568,6 +569,7 @@
         }
         <span class="self">self</span>.node_mut().unwrap().update();
     }
+
     <span class="kw">pub fn </span>merge_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, other: <span class="self">Self</span>) {
         <span class="kw">let </span>h = <span class="self">self</span>.height();
         <span class="kw">if </span>other.height() == <span class="self">self</span>.node().unwrap().right.height() {
@@ -591,30 +593,35 @@
         }
         <span class="self">self</span>.node_mut().unwrap().update();
     }
+
     <span class="kw">pub fn </span>node(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Internal&lt;T, O&gt;&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Nil(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             <span class="self">Self</span>::Internal(node) =&gt; <span class="prelude-val">Some</span>(node),
         }
     }
+
     <span class="kw">pub fn </span>node_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>Internal&lt;T, O&gt;&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Nil(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             <span class="self">Self</span>::Internal(node) =&gt; <span class="prelude-val">Some</span>(node),
         }
     }
+
     <span class="kw">pub fn </span>summary(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; O::Summary {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Nil(Nil(x)) =&gt; O::summarize(x),
             <span class="self">Self</span>::Internal(node) =&gt; node.summary.clone(),
         }
     }
+
     <span class="kw">fn </span>into_node(<span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Internal&lt;T, O&gt;&gt; {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Nil(<span class="kw">_</span>) =&gt; <span class="prelude-val">None</span>,
             <span class="self">Self</span>::Internal(node) =&gt; <span class="prelude-val">Some</span>(<span class="kw-2">*</span>node),
         }
     }
+
     <span class="attr">#[allow(clippy::wrong_self_convention)]
     </span><span class="kw">fn </span>from_children(lhs: <span class="self">Self</span>, rhs: <span class="self">Self</span>, height: usize) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>::Internal(Box::new(Internal {
@@ -626,6 +633,7 @@
             __marker: PhantomData,
         }))
     }
+
     <span class="kw">fn </span>height(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
         <span class="kw">match </span><span class="self">self </span>{
             <span class="self">Self</span>::Nil(<span class="kw">_</span>) =&gt; <span class="number">0</span>,
@@ -714,10 +722,10 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span>{
-        <span class="kw">super</span>::{Nil, Nonempty, Op},
-        test_case::test_case,
-    };
+    <span class="kw">use </span><span class="kw">super</span>::Nil;
+    <span class="kw">use </span><span class="kw">super</span>::Nonempty;
+    <span class="kw">use </span><span class="kw">super</span>::Op;
+    <span class="kw">use </span>test_case::test_case;
 
     <span class="kw">fn </span>to_structure_sring&lt;T, O: Op&lt;Value = T&gt;&gt;(root: <span class="kw-2">&amp;</span>Nonempty&lt;T, O&gt;) -&gt; String {
         <span class="kw">let </span><span class="kw-2">mut </span>s = String::new();
@@ -754,9 +762,7 @@
         }
     }
 
-    <span class="kw">fn </span>nil() -&gt; Nonempty&lt;()&gt; {
-        Nonempty::Nil(Nil(()))
-    }
+    <span class="kw">fn </span>nil() -&gt; Nonempty&lt;()&gt; { Nonempty::Nil(Nil(())) }
     <span class="kw">fn </span>n2(
         x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;,
         y: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;,
@@ -789,27 +795,17 @@
     ) -&gt; <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt; {
         n2(n2(x, y, height), n2(z, w, height), height)
     }
-    <span class="kw">fn </span>n2nil() -&gt; Nonempty&lt;()&gt; {
-        n2(nil, nil, <span class="number">1</span>)()
-    }
-    <span class="kw">fn </span>l3nil() -&gt; Nonempty&lt;()&gt; {
-        l3(nil, nil, nil, <span class="number">1</span>)()
-    }
-    <span class="kw">fn </span>r3nil() -&gt; Nonempty&lt;()&gt; {
-        r3(nil, nil, nil, <span class="number">1</span>)()
-    }
-    <span class="kw">fn </span>n4nil() -&gt; Nonempty&lt;()&gt; {
-        n4(nil, nil, nil, nil, <span class="number">1</span>)()
-    }
+    <span class="kw">fn </span>n2nil() -&gt; Nonempty&lt;()&gt; { n2(nil, nil, <span class="number">1</span>)() }
+    <span class="kw">fn </span>l3nil() -&gt; Nonempty&lt;()&gt; { l3(nil, nil, nil, <span class="number">1</span>)() }
+    <span class="kw">fn </span>r3nil() -&gt; Nonempty&lt;()&gt; { r3(nil, nil, nil, <span class="number">1</span>)() }
+    <span class="kw">fn </span>n4nil() -&gt; Nonempty&lt;()&gt; { n4(nil, nil, nil, nil, <span class="number">1</span>)() }
 
     <span class="attr">#[test_case(nil =&gt; <span class="string">&quot;()&quot;</span>.to_owned())]
     #[test_case(n2nil =&gt; <span class="string">&quot;(()1,2())&quot;</span>.to_owned())]
     #[test_case(l3nil =&gt; <span class="string">&quot;((()1,2())1,3())&quot;</span>.to_owned())]
     #[test_case(r3nil =&gt; <span class="string">&quot;(()1,3(()1,2()))&quot;</span>.to_owned())]
     #[test_case(n4nil =&gt; <span class="string">&quot;((()1,2())1,4(()1,2()))&quot;</span>.to_owned())]
-    </span><span class="kw">fn </span>test_to_structure_string(x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;) -&gt; String {
-        to_structure_sring(<span class="kw-2">&amp;</span>x())
-    }
+    </span><span class="kw">fn </span>test_to_structure_string(x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;) -&gt; String { to_structure_sring(<span class="kw-2">&amp;</span>x()) }
 
     <span class="attr">#[test_case(nil, nil =&gt; to_structure_sring(<span class="kw-2">&amp;</span>n2nil()))]
     #[test_case(nil, n2nil =&gt; to_structure_sring(<span class="kw-2">&amp;</span>l3nil()))]
