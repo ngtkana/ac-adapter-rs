@@ -335,10 +335,10 @@ impl<O: Op> Eq for RbList<O> where O::Value: Eq {}
 impl<O: Op> FromIterator<O::Value> for RbList<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         Self {
-            tree: Tree::from_iter(
-                iter.into_iter()
-                    .map(|value| Ptr::new(IrreversibleData::new(value))),
-            ),
+            tree: iter
+                .into_iter()
+                .map(|value| Ptr::new(IrreversibleData::new(value)))
+                .collect(),
         }
     }
 }
