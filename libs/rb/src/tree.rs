@@ -623,18 +623,13 @@ where
         P: FnMut(Ptr<C>) -> bool,
     {
         let mut index = 0;
-        let Some((_p, result)) = self.partition_point(|p| {
+        self.partition_point(|p| {
             let result = pred(p);
             if result {
                 index += p.left.map_or(0, |p| p.data.len()) + 1;
             }
             result
-        }) else {
-            return 0;
-        };
-        if result {
-            index += 1;
-        }
+        });
         index
     }
 
@@ -1543,6 +1538,23 @@ pub(super) mod tests {
                 }
                 assert_eq!(to_vec(&tree), expected);
                 validate(&tree);
+            }
+        }
+    }
+
+    #[test]
+    fn test_partition_point_index() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let len = rng.gen_range(0..100usize);
+            let tree =
+                Tree::<TestCallback>::from_iter((0..len as u64).map(|i| Ptr::new(Data::new(i))));
+            eprintln!("{}", format(&tree, |data| data.value.to_string(), &[]));
+            for _ in 0..20 {
+                let value = rng.gen_range(0..=len as u64);
+                let partition_point = tree.partition_point_index(|n| n.data.value < value);
+                eprintln!("{} {}", value, partition_point);
+                assert_eq!(partition_point, value as usize);
             }
         }
     }
