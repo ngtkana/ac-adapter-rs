@@ -248,7 +248,13 @@ impl<O: Op> RbList<O> {
     pub fn fold<R: RangeBounds<usize>>(&self, range: R) -> Option<O::Acc> {
         let (start, end) = into_range_inclusive(self.len(), range)?;
         debug_assert!(start <= end);
-        assert!(end < self.len());
+        assert!(
+            end < self.len(),
+            "Out of range: {}..={}, while len={}",
+            start,
+            end,
+            self.len()
+        );
         // Invariants:
         // * fold: [start, z]
         // * len: ]z, end]
@@ -479,13 +485,9 @@ fn into_range_inclusive(len: usize, range: impl RangeBounds<usize>) -> Option<(u
     let end = match range.end_bound() {
         Bound::Included(&end) => end,
         Bound::Excluded(&end) => end.checked_sub(1)?,
-        Bound::Unbounded => len,
+        Bound::Unbounded => len.checked_sub(1)?,
     };
-
-    if start > end {
-        return None;
-    }
-
+    (start <= end).then_some(())?;
     Some((start, end))
 }
 
