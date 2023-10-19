@@ -716,8 +716,10 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
                 x.color = Color::Black;
             }
             stack.push((x, 1));
-            let len = stack.len();
-            if len % 2 == 1 && len >= 3 && stack[len - 3].1 == stack[len - 1].1 {
+            while stack.len() % 2 == 1
+                && stack.len() >= 3
+                && stack[stack.len() - 3].1 == stack[stack.len() - 1].1
+            {
                 let (mut r, r_bh) = stack.pop().unwrap();
                 let (mut c, c_bh) = stack.pop().unwrap();
                 let (mut l, l_bh) = stack.pop().unwrap();
