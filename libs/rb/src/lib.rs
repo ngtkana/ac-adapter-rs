@@ -8,6 +8,9 @@ use std::ptr::NonNull;
 /// The core implementation of a red-black tree.
 mod tree;
 
+/// Another implementation of `tree` using laef-tree.
+mod leaftree;
+
 /// A list based on a red-black tree.
 mod list;
 
