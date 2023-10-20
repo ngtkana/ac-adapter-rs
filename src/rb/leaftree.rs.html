@@ -584,6 +584,115 @@
 <a href="#550" id="550">550</a>
 <a href="#551" id="551">551</a>
 <a href="#552" id="552">552</a>
+<a href="#553" id="553">553</a>
+<a href="#554" id="554">554</a>
+<a href="#555" id="555">555</a>
+<a href="#556" id="556">556</a>
+<a href="#557" id="557">557</a>
+<a href="#558" id="558">558</a>
+<a href="#559" id="559">559</a>
+<a href="#560" id="560">560</a>
+<a href="#561" id="561">561</a>
+<a href="#562" id="562">562</a>
+<a href="#563" id="563">563</a>
+<a href="#564" id="564">564</a>
+<a href="#565" id="565">565</a>
+<a href="#566" id="566">566</a>
+<a href="#567" id="567">567</a>
+<a href="#568" id="568">568</a>
+<a href="#569" id="569">569</a>
+<a href="#570" id="570">570</a>
+<a href="#571" id="571">571</a>
+<a href="#572" id="572">572</a>
+<a href="#573" id="573">573</a>
+<a href="#574" id="574">574</a>
+<a href="#575" id="575">575</a>
+<a href="#576" id="576">576</a>
+<a href="#577" id="577">577</a>
+<a href="#578" id="578">578</a>
+<a href="#579" id="579">579</a>
+<a href="#580" id="580">580</a>
+<a href="#581" id="581">581</a>
+<a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
+<a href="#607" id="607">607</a>
+<a href="#608" id="608">608</a>
+<a href="#609" id="609">609</a>
+<a href="#610" id="610">610</a>
+<a href="#611" id="611">611</a>
+<a href="#612" id="612">612</a>
+<a href="#613" id="613">613</a>
+<a href="#614" id="614">614</a>
+<a href="#615" id="615">615</a>
+<a href="#616" id="616">616</a>
+<a href="#617" id="617">617</a>
+<a href="#618" id="618">618</a>
+<a href="#619" id="619">619</a>
+<a href="#620" id="620">620</a>
+<a href="#621" id="621">621</a>
+<a href="#622" id="622">622</a>
+<a href="#623" id="623">623</a>
+<a href="#624" id="624">624</a>
+<a href="#625" id="625">625</a>
+<a href="#626" id="626">626</a>
+<a href="#627" id="627">627</a>
+<a href="#628" id="628">628</a>
+<a href="#629" id="629">629</a>
+<a href="#630" id="630">630</a>
+<a href="#631" id="631">631</a>
+<a href="#632" id="632">632</a>
+<a href="#633" id="633">633</a>
+<a href="#634" id="634">634</a>
+<a href="#635" id="635">635</a>
+<a href="#636" id="636">636</a>
+<a href="#637" id="637">637</a>
+<a href="#638" id="638">638</a>
+<a href="#639" id="639">639</a>
+<a href="#640" id="640">640</a>
+<a href="#641" id="641">641</a>
+<a href="#642" id="642">642</a>
+<a href="#643" id="643">643</a>
+<a href="#644" id="644">644</a>
+<a href="#645" id="645">645</a>
+<a href="#646" id="646">646</a>
+<a href="#647" id="647">647</a>
+<a href="#648" id="648">648</a>
+<a href="#649" id="649">649</a>
+<a href="#650" id="650">650</a>
+<a href="#651" id="651">651</a>
+<a href="#652" id="652">652</a>
+<a href="#653" id="653">653</a>
+<a href="#654" id="654">654</a>
+<a href="#655" id="655">655</a>
+<a href="#656" id="656">656</a>
+<a href="#657" id="657">657</a>
+<a href="#658" id="658">658</a>
+<a href="#659" id="659">659</a>
+<a href="#660" id="660">660</a>
+<a href="#661" id="661">661</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code)]
 #![allow(missing_docs)]
 </span><span class="kw">use </span>std::ops::Deref;
@@ -596,12 +705,9 @@
     <span class="doccomment">/// The data stored in the inner nodes.
     </span><span class="kw">type </span>BeefData;
     <span class="doccomment">/// The callback function called when it goes down the tree.
-    </span><span class="kw">fn </span>push(node: BeefPtr&lt;<span class="self">Self</span>&gt;);
+    </span><span class="kw">fn </span>push(beef: BeefPtr&lt;<span class="self">Self</span>&gt;);
     <span class="doccomment">/// The callback function called when it goes up the tree.
-    </span><span class="kw">fn </span>update(node: BeefPtr&lt;<span class="self">Self</span>&gt;);
-}
-<span class="kw">trait </span>Len {
-    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize;
+    </span><span class="kw">fn </span>update(beef: BeefPtr&lt;<span class="self">Self</span>&gt;);
 }
 
 <span class="attr">#[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -647,6 +753,19 @@
 <span class="kw">impl</span>&lt;C: Callback&gt; Copy <span class="kw">for </span>LeafPtr&lt;C&gt; {}
 
 <span class="kw">struct </span>BeefPtr&lt;C: Callback&gt;(NonNull&lt;Beef&lt;C&gt;&gt;);
+<span class="kw">impl</span>&lt;C: Callback&gt; BeefPtr&lt;C&gt; {
+    <span class="doccomment">/// Call `C::update` on the node.
+    </span><span class="kw">fn </span>update(<span class="self">self</span>) { C::update(<span class="self">self</span>); }
+
+    <span class="doccomment">/// Call `C::update` on its ancestors.
+    </span><span class="kw">fn </span>update_ancestors(<span class="self">self</span>) {
+        <span class="kw">let </span><span class="kw-2">mut </span>x = <span class="self">self</span>;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(p) = x.parent {
+            p.update();
+            x = p;
+        }
+    }
+}
 <span class="kw">impl</span>&lt;C: Callback&gt; PartialEq <span class="kw">for </span>BeefPtr&lt;C&gt; {
     <span class="kw">fn </span>eq(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { <span class="self">self</span>.<span class="number">0</span>.as_ptr() == other.<span class="number">0</span>.as_ptr() }
 }
@@ -712,19 +831,16 @@
     <span class="doccomment">/// Binary searches the tree.
     </span><span class="kw">fn </span>binary_search&lt;F&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;LeafPtr&lt;C&gt;&gt;
     <span class="kw">where
-        </span>F: FnMut(BeefPtr&lt;C&gt;) -&gt; bool,
+        </span>F: FnMut(BeefPtr&lt;C&gt;) -&gt; Direction,
     {
         <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="self">self</span>.root<span class="question-mark">?</span>;
         <span class="kw">loop </span>{
             p = <span class="kw">match </span>p {
                 Ptr::Leaf(leaf) =&gt; <span class="kw">return </span><span class="prelude-val">Some</span>(leaf),
-                Ptr::Beef(beef) =&gt; {
-                    <span class="kw">if </span>f(beef) {
-                        beef.left
-                    } <span class="kw">else </span>{
-                        beef.right
-                    }
-                }
+                Ptr::Beef(beef) =&gt; <span class="kw">match </span>f(beef) {
+                    Direction::Left =&gt; beef.left,
+                    Direction::Right =&gt; beef.right,
+                },
             };
         }
     }
@@ -762,12 +878,14 @@
         <span class="kw">let </span>p = z.parent;
         z.parent = <span class="prelude-val">Some</span>(beef);
         new.parent = <span class="prelude-val">Some</span>(beef);
+
         <span class="comment">// Transplant `beef` to the original place of `z`.
         </span><span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = p <span class="kw">else </span>{
             <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.black_height, <span class="number">1</span>);
-            <span class="self">self</span>.black_height = <span class="number">2</span>;
             beef.color = Color::Black;
+            beef.update();
             <span class="self">self</span>.root = <span class="prelude-val">Some</span>(Ptr::Beef(beef));
+            <span class="self">self</span>.black_height = <span class="number">2</span>;
             <span class="kw">return</span>;
         };
         <span class="kw">if </span>p.left == z {
@@ -776,14 +894,33 @@
             p.right = Ptr::Beef(beef);
         }
         beef.parent = <span class="prelude-val">Some</span>(p);
+
         <span class="comment">// Fix the tree
-        </span><span class="kw">if </span>p.color == Color::Red {
-            <span class="self">self</span>.fix_red(p, beef);
-        }
+        </span><span class="self">self</span>.fix_red(beef);
     }
 
-    <span class="kw">fn </span>fix_red(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>p: BeefPtr&lt;C&gt;, <span class="kw-2">mut </span>x: BeefPtr&lt;C&gt;) {
-        <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>pp) = p.parent {
+    <span class="doccomment">/// Fix the red-red violation.
+    ///
+    /// # Precondition
+    /// - `x` is red.
+    /// - `x.parent` maight be red, but this is only possible violation of rb constraint.
+    /// - Fully updated except for `x` and its ancestors.
+    ///
+    /// # Note
+    /// Why do we let `x` be unupdated? It is because, otherwise, we may have to update `x` twice.
+    </span><span class="kw">fn </span>fix_red(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>x: BeefPtr&lt;C&gt;) {
+        <span class="kw">loop </span>{
+            <span class="macro">debug_assert_eq!</span>(x.color, Color::Red);
+            <span class="comment">// Handle the case where `x` is the root.
+            </span><span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>p) = x.parent <span class="kw">else </span>{
+                x.color = Color::Black;
+                <span class="self">self</span>.black_height += <span class="number">1</span>;
+                <span class="kw">return</span>;
+            };
+            <span class="kw">if </span>p.color == Color::Black {
+                <span class="kw">break</span>;
+            }
+            <span class="kw">let </span><span class="kw-2">mut </span>pp = p.parent.unwrap();
             <span class="comment">// Case 1: `p` is the left child of `pp`.
             </span><span class="kw">if </span>pp.left == p {
                 <span class="comment">// Case 1.1: Finish by fixing the leaning 4-node.
@@ -798,6 +935,9 @@
                     </span>p.color = Color::Black;
                     pp.color = Color::Red;
                     <span class="self">self</span>.rotate_right(pp);
+                    x.update();
+                    pp.update();
+                    x = p;
                     <span class="kw">break</span>;
                 }
                 <span class="comment">// Case 1.2: split the 5-node.
@@ -806,7 +946,8 @@
                     p.color = Color::Black;
                     s.color = Color::Black;
                     pp.color = Color::Red;
-                    p = pp;
+                    x.update();
+                    p.update();
                     x = pp;
                 }
             }
@@ -824,6 +965,9 @@
                     </span>p.color = Color::Black;
                     pp.color = Color::Red;
                     <span class="self">self</span>.rotate_left(pp);
+                    x.update();
+                    pp.update();
+                    x = p;
                     <span class="kw">break</span>;
                 }
                 <span class="comment">// Case 2.2: split the 5-node.
@@ -832,11 +976,15 @@
                     p.color = Color::Black;
                     s.color = Color::Black;
                     pp.color = Color::Red;
-                    p = pp;
+                    x.update();
+                    p.update();
                     x = pp;
                 }
             }
         }
+        <span class="comment">// Update the remaining part of the path [root, x].
+        </span>x.update();
+        x.update_ancestors();
     }
 
     <span class="doccomment">/// Rotate `l + c * r` to `l * c + r`.
@@ -901,37 +1049,12 @@
         }
     }
 }
-<span class="kw">impl</span>&lt;C: Callback&gt; Tree&lt;C&gt;
-<span class="kw">where
-    </span>C::BeefData: Len,
-{
-    <span class="kw">fn </span>get_at(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;LeafPtr&lt;C&gt;&gt; {
-        <span class="self">self</span>.binary_search(|beef| {
-            <span class="kw">let </span>len = len(beef.left);
-            <span class="kw">if </span>i &lt; len {
-                <span class="bool-val">true
-            </span>} <span class="kw">else </span>{
-                i -= len;
-                <span class="bool-val">false
-            </span>}
-        })
-    }
-}
 <span class="kw">impl</span>&lt;C: Callback&gt; Default <span class="kw">for </span>Tree&lt;C&gt; {
     <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             root: <span class="prelude-val">None</span>,
             black_height: <span class="number">0</span>,
         }
-    }
-}
-<span class="kw">fn </span>len&lt;C: Callback&gt;(p: Ptr&lt;C&gt;) -&gt; usize
-<span class="kw">where
-    </span>C::BeefData: Len,
-{
-    <span class="kw">match </span>p {
-        Ptr::Leaf(<span class="kw">_</span>) =&gt; <span class="number">1</span>,
-        Ptr::Beef(beef) =&gt; beef.data.len(),
     }
 }
 <span class="kw">fn </span>color&lt;C: Callback&gt;(p: Ptr&lt;C&gt;) -&gt; Color {
@@ -943,172 +1066,108 @@
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
+    <span class="kw">use </span><span class="kw">super</span>::test_utils::<span class="kw-2">*</span>;
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
-    <span class="kw">use </span>core::fmt;
     <span class="kw">use </span>rand::rngs::StdRng;
     <span class="kw">use </span>rand::seq::SliceRandom;
     <span class="kw">use </span>rand::SeedableRng;
-    <span class="kw">use </span>std::ops::RangeInclusive;
-
-    <span class="kw">fn </span>write&lt;C, W, F&gt;(w: <span class="kw-2">&amp;mut </span>W, tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;, format: F) -&gt; fmt::Result
-    <span class="kw">where
-        </span>C: Callback,
-        W: fmt::Write,
-        F: Copy + FnMut(LeafPtr&lt;C&gt;) -&gt; String,
-    {
-        <span class="kw">fn </span>write&lt;C, W, F&gt;(w: <span class="kw-2">&amp;mut </span>W, ptr: Ptr&lt;C&gt;, <span class="kw-2">mut </span>format: F) -&gt; fmt::Result
-        <span class="kw">where
-            </span>C: Callback,
-            W: fmt::Write,
-            F: Copy + FnMut(LeafPtr&lt;C&gt;) -&gt; String,
-        {
-            <span class="kw">match </span>ptr {
-                Ptr::Leaf(leaf) =&gt; <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, format(leaf))<span class="question-mark">?</span>,
-                Ptr::Beef(beef) =&gt; {
-                    <span class="kw">if </span>beef.color == Color::Black {
-                        <span class="macro">write!</span>(w, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
-                    }
-                    write(w, beef.left, format)<span class="question-mark">?</span>;
-                    <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, <span class="kw">match </span>beef.color {
-                        Color::Red =&gt; <span class="string">&quot; * &quot;</span>,
-                        Color::Black =&gt; <span class="string">&quot; + &quot;</span>,
-                    })<span class="question-mark">?</span>;
-                    write(w, beef.right, format)<span class="question-mark">?</span>;
-                    <span class="kw">if </span>beef.color == Color::Black {
-                        <span class="macro">write!</span>(w, <span class="string">&quot;]&quot;</span>)<span class="question-mark">?</span>;
-                    }
-                }
-            }
-            <span class="prelude-val">Ok</span>(())
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
-            <span class="macro">write!</span>(w, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
-            write(w, root, format)<span class="question-mark">?</span>;
-            <span class="macro">write!</span>(w, <span class="string">&quot;]&quot;</span>)<span class="question-mark">?</span>;
-        }
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">fn </span>validate&lt;C: Callback&gt;(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
-        <span class="kw">fn </span>validate&lt;C: Callback&gt;(node: Ptr&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8, String&gt; {
-            <span class="kw">match </span>node {
-                Ptr::Leaf(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="number">1</span>),
-                Ptr::Beef(beef) =&gt; {
-                    <span class="comment">// Check the black-height.
-                    </span><span class="kw">let </span>left_black_height = validate(beef.left)<span class="question-mark">?</span>;
-                    <span class="kw">let </span>right_black_height = validate(beef.right)<span class="question-mark">?</span>;
-                    (left_black_height == right_black_height)
-                        .then(|| left_black_height + (beef.color == Color::Black) <span class="kw">as </span>u8)
-                        .ok_or_else(|| {
-                            <span class="macro">format!</span>(
-                                <span class="string">&quot;black height mismatch at {:?}: {} vs {}&quot;</span>,
-                                beef.<span class="number">0</span>.as_ptr(),
-                                left_black_height,
-                                right_black_height
-                            )
-                        })<span class="question-mark">?</span>;
-
-                    <span class="comment">// Check the red-red violation with the left child.
-                    </span>(beef.color == Color::Black || color(beef.left) == Color::Black)
-                        .then(|| ())
-                        .ok_or_else(|| {
-                            <span class="macro">format!</span>(
-                                <span class="string">&quot;red-red violation at {:?} and its left child {:?}&quot;</span>,
-                                beef.<span class="number">0</span>.as_ptr(),
-                                <span class="kw">match </span>beef.left {
-                                    Ptr::Leaf(leaf) =&gt; leaf.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize,
-                                    Ptr::Beef(beef) =&gt; beef.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize,
-                                }
-                            )
-                        })<span class="question-mark">?</span>;
-
-                    <span class="comment">// Check the red-red violation with the right child.
-                    </span>(beef.color == Color::Black || color(beef.right) == Color::Black)
-                        .then(|| ())
-                        .ok_or_else(|| {
-                            <span class="macro">format!</span>(
-                                <span class="string">&quot;red-red violation at {:?} and its right child {:?}&quot;</span>,
-                                beef.<span class="number">0</span>.as_ptr(),
-                                <span class="kw">match </span>beef.right {
-                                    Ptr::Leaf(leaf) =&gt; leaf.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize,
-                                    Ptr::Beef(beef) =&gt; beef.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize,
-                                }
-                            )
-                        })<span class="question-mark">?</span>;
-                    <span class="prelude-val">Ok</span>(left_black_height)
-                }
-            }
-        }
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
-            validate(root)<span class="question-mark">?</span>;
-        }
-        <span class="prelude-val">Ok</span>(())
-    }
-
-    <span class="kw">fn </span>format&lt;C, F&gt;(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;, format: F) -&gt; String
-    <span class="kw">where
-        </span>C: Callback,
-        F: Copy + FnMut(LeafPtr&lt;C&gt;) -&gt; String,
-    {
-        <span class="kw">let </span><span class="kw-2">mut </span>result = String::new();
-        write(<span class="kw-2">&amp;mut </span>result, tree, format).unwrap();
-        result
-    }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_insert() {
+        <span class="kw">static </span><span class="kw-2">mut </span>TIMER: usize = <span class="number">0</span>;
+        <span class="kw">struct </span>BeefData {
+            start: usize,
+            end: usize,
+            updated_at: usize,
+        }
         <span class="kw">enum </span>C {}
         <span class="kw">impl </span>Callback <span class="kw">for </span>C {
-            <span class="kw">type </span>BeefData = RangeInclusive&lt;usize&gt;;
+            <span class="kw">type </span>BeefData = BeefData;
             <span class="kw">type </span>LeafData = usize;
 
             <span class="kw">fn </span>push(<span class="kw">_</span>: BeefPtr&lt;<span class="self">Self</span>&gt;) {}
 
             <span class="kw">fn </span>update(<span class="kw-2">mut </span>beef: BeefPtr&lt;<span class="self">Self</span>&gt;) {
-                beef.data = (<span class="kw">match </span>beef.left {
+                beef.data.start = <span class="kw">match </span>beef.left {
                     Ptr::Leaf(leaf) =&gt; leaf.data,
-                    Ptr::Beef(beef) =&gt; <span class="kw-2">*</span>beef.data.start(),
-                })..=(<span class="kw">match </span>beef.right {
+                    Ptr::Beef(beef) =&gt; beef.data.start,
+                };
+                beef.data.end = <span class="kw">match </span>beef.right {
                     Ptr::Leaf(leaf) =&gt; leaf.data,
-                    Ptr::Beef(beef) =&gt; <span class="kw-2">*</span>beef.data.end(),
-                });
+                    Ptr::Beef(beef) =&gt; beef.data.end,
+                };
+                <span class="kw">unsafe </span>{ TIMER += <span class="number">1 </span>};
+                beef.data.updated_at = <span class="kw">unsafe </span>{ TIMER };
             }
         }
-        <span class="kw">fn </span>f(leaf: LeafPtr&lt;C&gt;) -&gt; String { <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, leaf.data) }
+        <span class="kw">fn </span>f(leaf: Ptr&lt;C&gt;) -&gt; String {
+            <span class="kw">match </span>leaf {
+                Ptr::Leaf(leaf) =&gt; <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, leaf.data),
+                Ptr::Beef(_beef) =&gt; String::new(),
+            }
+        }
+        <span class="kw">fn </span>to_vec(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;) -&gt; Vec&lt;usize&gt; {
+            <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+            for_each(tree, |leaf| result.push(leaf.data));
+            result
+        }
         <span class="kw">fn </span>new_leaf(data: usize) -&gt; LeafPtr&lt;C&gt; {
             LeafPtr(NonNull::new(Box::into_raw(Box::new(Leaf { data, parent: <span class="prelude-val">None </span>}))).unwrap())
         }
         <span class="kw">fn </span>new_beef() -&gt; BeefPtr&lt;C&gt; {
-            BeefPtr(
+            <span class="kw">let </span>beef = BeefPtr(
                 NonNull::new(Box::into_raw(Box::new(Beef {
-                    data: usize::MAX..=usize::MIN,
+                    data: BeefData {
+                        start: usize::MAX,
+                        end: usize::MAX,
+                        updated_at: usize::MAX,
+                    },
                     left: Ptr::Leaf(new_leaf(<span class="number">0</span>)),
                     right: Ptr::Leaf(new_leaf(<span class="number">0</span>)),
                     parent: <span class="prelude-val">None</span>,
                     color: Color::Red,
                 })))
                 .unwrap(),
-            )
+            );
+            beef
         }
 
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;C&gt;::new();
+            <span class="kw">let </span><span class="kw-2">mut </span>expected = Vec::new();
             <span class="kw">let </span><span class="kw-2">mut </span>nodes = (<span class="number">0</span>..<span class="number">20</span>).map(new_leaf).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             nodes.shuffle(<span class="kw-2">&amp;mut </span>rng);
 
             <span class="kw">for </span>node <span class="kw">in </span>nodes {
                 <span class="kw">let </span>position = tree
                     .binary_search(|beef| {
-                        (<span class="kw">match </span>beef.right {
+                        <span class="kw">if </span>(<span class="kw">match </span>beef.right {
                             Ptr::Leaf(leaf) =&gt; leaf.data,
-                            Ptr::Beef(beef) =&gt; <span class="kw-2">*</span>beef.data.end(),
+                            Ptr::Beef(beef) =&gt; beef.data.start,
                         }) &lt; node.data
+                        {
+                            Direction::Right
+                        } <span class="kw">else </span>{
+                            Direction::Left
+                        }
                     })
-                    .map(|leaf| (leaf, Direction::Left));
+                    .map(|leaf| {
+                        (
+                            leaf,
+                            <span class="kw">if </span>leaf.data &lt; node.data { Direction::Right } <span class="kw">else </span>{ Direction::Left },
+                        )
+                    });
                 tree.insert(position, node, new_beef);
-                <span class="macro">eprintln!</span>(<span class="string">&quot;tree: {}&quot;</span>, format(<span class="kw-2">&amp;</span>tree, f));
-                validate(<span class="kw-2">&amp;</span>tree).unwrap();
+                validate(<span class="kw-2">&amp;</span>tree).unwrap_or_else(|err| <span class="macro">panic!</span>(<span class="string">&quot;{}\n{}&quot;</span>, format(<span class="kw-2">&amp;</span>tree, f), err));
+
+                <span class="comment">// Check the ordering of the tree.
+                </span><span class="kw">let </span>lower_bound = expected
+                    .binary_search(<span class="kw-2">&amp;</span>node.data)
+                    .map_or_else(|i| i, |i| i + <span class="number">1</span>);
+                expected.insert(lower_bound, node.data);
+                <span class="kw">let </span>result = to_vec(<span class="kw-2">&amp;</span>tree);
+                <span class="macro">assert_eq!</span>(result, expected);
             }
         }
     }
@@ -1134,6 +1193,165 @@
         <span class="macro">assert_eq!</span>(std::mem::size_of::&lt;<span class="prelude-ty">Option</span>&lt;BeefPtr&lt;C&gt;&gt;&gt;(), <span class="number">8</span>);
         <span class="macro">assert_eq!</span>(std::mem::size_of::&lt;<span class="prelude-ty">Option</span>&lt;Ptr&lt;C&gt;&gt;&gt;(), <span class="number">16</span>);
         <span class="macro">assert_eq!</span>(std::mem::size_of::&lt;Tree&lt;C&gt;&gt;(), <span class="number">24</span>);
+    }
+}
+
+<span class="attr">#[cfg(test)]
+</span><span class="kw">mod </span>test_utils {
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>core::fmt;
+
+    <span class="kw">impl</span>&lt;C: Callback&gt; LeafPtr&lt;C&gt; {
+        <span class="kw">pub fn </span>debug_ptr(<span class="self">self</span>) -&gt; String {
+            <span class="macro">format!</span>(<span class="string">&quot;0x{:02x}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize % <span class="number">0x1000 </span>/ <span class="number">0x10</span>)
+        }
+    }
+    <span class="kw">impl</span>&lt;C: Callback&gt; BeefPtr&lt;C&gt; {
+        <span class="kw">pub fn </span>debug_ptr(<span class="self">self</span>) -&gt; String {
+            <span class="macro">format!</span>(<span class="string">&quot;0x{:02x}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize % <span class="number">0x1000 </span>/ <span class="number">0x10</span>)
+        }
+    }
+    <span class="kw">impl</span>&lt;C: Callback&gt; Ptr&lt;C&gt; {
+        <span class="kw">pub fn </span>debug_ptr(<span class="self">self</span>) -&gt; String {
+            <span class="kw">match </span><span class="self">self </span>{
+                Ptr::Leaf(leaf) =&gt; leaf.debug_ptr(),
+                Ptr::Beef(beef) =&gt; beef.debug_ptr(),
+            }
+        }
+    }
+
+    <span class="kw">fn </span>write&lt;C, W, F&gt;(w: <span class="kw-2">&amp;mut </span>W, tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;, format: F) -&gt; fmt::Result
+    <span class="kw">where
+        </span>C: Callback,
+        W: fmt::Write,
+        F: Copy + FnMut(Ptr&lt;C&gt;) -&gt; String,
+    {
+        <span class="kw">fn </span>write&lt;C, W, F&gt;(w: <span class="kw-2">&amp;mut </span>W, ptr: Ptr&lt;C&gt;, <span class="kw-2">mut </span>format: F) -&gt; fmt::Result
+        <span class="kw">where
+            </span>C: Callback,
+            W: fmt::Write,
+            F: Copy + FnMut(Ptr&lt;C&gt;) -&gt; String,
+        {
+            <span class="kw">match </span>ptr {
+                Ptr::Leaf(leaf) =&gt; <span class="macro">write!</span>(w, <span class="string">&quot;{}&quot;</span>, format(Ptr::Leaf(leaf)))<span class="question-mark">?</span>,
+                Ptr::Beef(beef) =&gt; {
+                    <span class="kw">if </span>beef.color == Color::Black {
+                        <span class="macro">write!</span>(w, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
+                    }
+                    write(w, beef.left, format)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(
+                        w,
+                        <span class="string">&quot; {}{} &quot;</span>,
+                        <span class="kw">match </span>beef.color {
+                            Color::Red =&gt; <span class="string">&quot;*&quot;</span>,
+                            Color::Black =&gt; <span class="string">&quot;+&quot;</span>,
+                        },
+                        <span class="kw">match </span>format(Ptr::Beef(beef)).as_str() {
+                            <span class="string">&quot;&quot; </span>=&gt; String::new(),
+                            s =&gt; <span class="macro">format!</span>(<span class="string">&quot;({})&quot;</span>, s),
+                        }
+                    )<span class="question-mark">?</span>;
+                    write(w, beef.right, format)<span class="question-mark">?</span>;
+                    <span class="kw">if </span>beef.color == Color::Black {
+                        <span class="macro">write!</span>(w, <span class="string">&quot;]&quot;</span>)<span class="question-mark">?</span>;
+                    }
+                }
+            }
+            <span class="prelude-val">Ok</span>(())
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
+            <span class="macro">write!</span>(w, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?</span>;
+            write(w, root, format)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(w, <span class="string">&quot;]&quot;</span>)<span class="question-mark">?</span>;
+        }
+        <span class="prelude-val">Ok</span>(())
+    }
+
+    <span class="kw">pub fn </span>format&lt;C, F&gt;(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;, format: F) -&gt; String
+    <span class="kw">where
+        </span>C: Callback,
+        F: Copy + FnMut(Ptr&lt;C&gt;) -&gt; String,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>result = String::new();
+        write(<span class="kw-2">&amp;mut </span>result, tree, format).unwrap();
+        result
+    }
+
+    <span class="kw">pub fn </span>for_each&lt;C: Callback, F: FnMut(LeafPtr&lt;C&gt;)&gt;(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;, <span class="kw-2">mut </span>f: F) {
+        <span class="kw">fn </span>for_each&lt;C: Callback, F: FnMut(LeafPtr&lt;C&gt;)&gt;(ptr: Ptr&lt;C&gt;, f: <span class="kw-2">&amp;mut </span>F) {
+            <span class="kw">match </span>ptr {
+                Ptr::Leaf(leaf) =&gt; f(leaf),
+                Ptr::Beef(beef) =&gt; {
+                    for_each(beef.left, f);
+                    for_each(beef.right, f);
+                }
+            }
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = tree.root {
+            for_each(root, <span class="kw-2">&amp;mut </span>f);
+        }
+    }
+
+    <span class="kw">pub fn </span>validate&lt;C: Callback&gt;(tree: <span class="kw-2">&amp;</span>Tree&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;(), String&gt; {
+        <span class="kw">fn </span>validate&lt;C: Callback&gt;(node: Ptr&lt;C&gt;) -&gt; <span class="prelude-ty">Result</span>&lt;u8, String&gt; {
+            <span class="kw">match </span>node {
+                Ptr::Leaf(<span class="kw">_</span>) =&gt; <span class="prelude-val">Ok</span>(<span class="number">1</span>),
+                Ptr::Beef(beef) =&gt; {
+                    <span class="comment">// Check the black-height.
+                    </span><span class="kw">let </span>left_black_height = validate(beef.left)<span class="question-mark">?</span>;
+                    <span class="kw">let </span>right_black_height = validate(beef.right)<span class="question-mark">?</span>;
+                    (left_black_height == right_black_height)
+                        .then(|| left_black_height + (beef.color == Color::Black) <span class="kw">as </span>u8)
+                        .ok_or_else(|| {
+                            <span class="macro">format!</span>(
+                                <span class="string">&quot;black height mismatch at {}: {} vs {}&quot;</span>,
+                                beef.debug_ptr(),
+                                left_black_height,
+                                right_black_height
+                            )
+                        })<span class="question-mark">?</span>;
+
+                    <span class="comment">// Check the red-red violation with the left child.
+                    </span>(beef.color == Color::Black || color(beef.left) == Color::Black)
+                        .then(|| ())
+                        .ok_or_else(|| {
+                            <span class="macro">format!</span>(
+                                <span class="string">&quot;red-red violation at {} and its left child {}&quot;</span>,
+                                beef.debug_ptr(),
+                                <span class="kw">match </span>beef.left {
+                                    Ptr::Leaf(leaf) =&gt; leaf.debug_ptr(),
+                                    Ptr::Beef(beef) =&gt; beef.debug_ptr(),
+                                }
+                            )
+                        })<span class="question-mark">?</span>;
+
+                    <span class="comment">// Check the red-red violation with the right child.
+                    </span>(beef.color == Color::Black || color(beef.right) == Color::Black)
+                        .then(|| ())
+                        .ok_or_else(|| {
+                            <span class="macro">format!</span>(
+                                <span class="string">&quot;red-red violation at {} and its right child {}&quot;</span>,
+                                beef.debug_ptr(),
+                                <span class="kw">match </span>beef.right {
+                                    Ptr::Leaf(leaf) =&gt; leaf.debug_ptr(),
+                                    Ptr::Beef(beef) =&gt; beef.debug_ptr(),
+                                }
+                            )
+                        })<span class="question-mark">?</span>;
+                    <span class="prelude-val">Ok</span>(left_black_height + (beef.color == Color::Black) <span class="kw">as </span>u8)
+                }
+            }
+        }
+        <span class="kw">let </span>black_height = tree.root.map_or(<span class="prelude-val">Ok</span>(<span class="number">0</span>), |root| validate(root))<span class="question-mark">?</span>;
+        (black_height == tree.black_height)
+            .then(|| ())
+            .ok_or_else(|| {
+                <span class="macro">format!</span>(
+                    <span class="string">&quot;black height mismatch.\n calculated: {}\n     cached: {}&quot;</span>,
+                    black_height, tree.black_height
+                )
+            })<span class="question-mark">?</span>;
+        <span class="prelude-val">Ok</span>(())
     }
 }
 </code></pre></div></section></main></body></html>
