@@ -207,14 +207,21 @@ impl<C: Callback> Tree<C> {
     /// Fix the red-red violation.
     ///
     /// # Precondition
-    /// - `x` and its parent are two successive red nodes.
-    /// - Rbtree conditions are satisfied except for the red-red violation.
-    /// - Fully updated except for the path [root, x].
+    /// - `x` is red.
+    /// - `x.parent` maight be red, but this is only possible violation of rb constraint.
+    /// - Fully updated except for `x` and its ancestors.
     ///
     /// # Note
     /// Why do we let `x` be unupdated? It is because, otherwise, we may have to update `x` twice.
     fn fix_red(&mut self, mut x: BeefPtr<C>) {
-        while let Some(mut p) = x.parent {
+        loop {
+            debug_assert_eq!(x.color, Color::Red);
+            // Handle the case where `x` is the root.
+            let Some(mut p) = x.parent else {
+                x.color = Color::Black;
+                self.black_height += 1;
+                return;
+            };
             if p.color == Color::Black {
                 break;
             }
@@ -279,11 +286,6 @@ impl<C: Callback> Tree<C> {
                     x = pp;
                 }
             }
-        }
-        // Increase the black-height.
-        if x.parent.is_none() {
-            x.color = Color::Black;
-            self.black_height += 1;
         }
         // Update the remaining part of the path [root, x].
         x.update();
@@ -462,8 +464,7 @@ mod tests {
                         )
                     });
                 tree.insert(position, node, new_beef);
-                eprintln!("tree: {}", format(&tree, f));
-                validate(&tree).unwrap();
+                validate(&tree).unwrap_or_else(|err| panic!("{}\n{}", format(&tree, f), err));
 
                 // Check the ordering of the tree.
                 let lower_bound = expected
@@ -642,13 +643,19 @@ mod test_utils {
                                 }
                             )
                         })?;
-                    Ok(left_black_height)
+                    Ok(left_black_height + (beef.color == Color::Black) as u8)
                 }
             }
         }
-        if let Some(root) = tree.root {
-            validate(root)?;
-        }
+        let black_height = tree.root.map_or(Ok(0), |root| validate(root))?;
+        (black_height == tree.black_height)
+            .then(|| ())
+            .ok_or_else(|| {
+                format!(
+                    "black height mismatch.\n calculated: {}\n     cached: {}",
+                    black_height, tree.black_height
+                )
+            })?;
         Ok(())
     }
 }
