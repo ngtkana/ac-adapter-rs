@@ -1,4 +1,4 @@
-var sourcesIndex = JSON.parse('{\
+var srcIndex = JSON.parse('{\
 "accum":["",[],["lib.rs"]],\
 "advance":["",[],["lib.rs"]],\
 "avl_tree":["",[],["lib.rs"]],\
@@ -56,7 +56,7 @@ var sourcesIndex = JSON.parse('{\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
-"rb":["",[],["lib.rs","list.rs","tree.rs"]],\
+"rb":["",[],["leaftree.rs","lib.rs","list.rs","tree.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
 "reverse":["",[],["lib.rs"]],\
 "scc":["",[],["lib.rs"]],\
@@ -83,4 +83,4 @@ var sourcesIndex = JSON.parse('{\
 "z_algo":["",[],["lib.rs"]],\
 "zeta":["",[],["lib.rs"]]\
 }');
-createSourceSidebar();
+createSrcSidebar();

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["RbList"]};
+window.SIDEBAR_ITEMS = {"struct":["Range"]};
