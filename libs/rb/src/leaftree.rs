@@ -10,12 +10,9 @@ trait Callback: Sized {
     /// The data stored in the inner nodes.
     type BeefData;
     /// The callback function called when it goes down the tree.
-    fn push(node: BeefPtr<Self>);
+    fn push(beef: BeefPtr<Self>);
     /// The callback function called when it goes up the tree.
-    fn update(node: BeefPtr<Self>);
-}
-trait Len {
-    fn len(&self) -> usize;
+    fn update(beef: BeefPtr<Self>);
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -61,6 +58,19 @@ impl<C: Callback> Clone for LeafPtr<C> {
 impl<C: Callback> Copy for LeafPtr<C> {}
 
 struct BeefPtr<C: Callback>(NonNull<Beef<C>>);
+impl<C: Callback> BeefPtr<C> {
+    /// Call `C::update` on the node.
+    fn update(self) { C::update(self); }
+
+    /// Call `C::update` on its ancestors.
+    fn update_ancestors(self) {
+        let mut x = self;
+        while let Some(p) = x.parent {
+            p.update();
+            x = p;
+        }
+    }
+}
 impl<C: Callback> PartialEq for BeefPtr<C> {
     fn eq(&self, other: &Self) -> bool { self.0.as_ptr() == other.0.as_ptr() }
 }
@@ -126,19 +136,16 @@ impl<C: Callback> Tree<C> {
     /// Binary searches the tree.
     fn binary_search<F>(&self, mut f: F) -> Option<LeafPtr<C>>
     where
-        F: FnMut(BeefPtr<C>) -> bool,
+        F: FnMut(BeefPtr<C>) -> Direction,
     {
         let mut p = self.root?;
         loop {
             p = match p {
                 Ptr::Leaf(leaf) => return Some(leaf),
-                Ptr::Beef(beef) => {
-                    if f(beef) {
-                        beef.left
-                    } else {
-                        beef.right
-                    }
-                }
+                Ptr::Beef(beef) => match f(beef) {
+                    Direction::Left => beef.left,
+                    Direction::Right => beef.right,
+                },
             };
         }
     }
@@ -176,12 +183,14 @@ impl<C: Callback> Tree<C> {
         let p = z.parent;
         z.parent = Some(beef);
         new.parent = Some(beef);
+
         // Transplant `beef` to the original place of `z`.
         let Some(mut p) = p else {
             debug_assert_eq!(self.black_height, 1);
-            self.black_height = 2;
             beef.color = Color::Black;
+            beef.update();
             self.root = Some(Ptr::Beef(beef));
+            self.black_height = 2;
             return;
         };
         if p.left == z {
@@ -190,14 +199,26 @@ impl<C: Callback> Tree<C> {
             p.right = Ptr::Beef(beef);
         }
         beef.parent = Some(p);
+
         // Fix the tree
-        if p.color == Color::Red {
-            self.fix_red(p, beef);
-        }
+        self.fix_red(beef);
     }
 
-    fn fix_red(&mut self, mut p: BeefPtr<C>, mut x: BeefPtr<C>) {
-        while let Some(mut pp) = p.parent {
+    /// Fix the red-red violation.
+    ///
+    /// # Precondition
+    /// - `x` and its parent are two successive red nodes.
+    /// - Rbtree conditions are satisfied except for the red-red violation.
+    /// - Fully updated except for the path [root, x].
+    ///
+    /// # Note
+    /// Why do we let `x` be unupdated? It is because, otherwise, we may have to update `x` twice.
+    fn fix_red(&mut self, mut x: BeefPtr<C>) {
+        while let Some(mut p) = x.parent {
+            if p.color == Color::Black {
+                break;
+            }
+            let mut pp = p.parent.unwrap();
             // Case 1: `p` is the left child of `pp`.
             if pp.left == p {
                 // Case 1.1: Finish by fixing the leaning 4-node.
@@ -212,6 +233,9 @@ impl<C: Callback> Tree<C> {
                     p.color = Color::Black;
                     pp.color = Color::Red;
                     self.rotate_right(pp);
+                    x.update();
+                    pp.update();
+                    x = p;
                     break;
                 }
                 // Case 1.2: split the 5-node.
@@ -220,7 +244,8 @@ impl<C: Callback> Tree<C> {
                     p.color = Color::Black;
                     s.color = Color::Black;
                     pp.color = Color::Red;
-                    p = pp;
+                    x.update();
+                    p.update();
                     x = pp;
                 }
             }
@@ -238,6 +263,9 @@ impl<C: Callback> Tree<C> {
                     p.color = Color::Black;
                     pp.color = Color::Red;
                     self.rotate_left(pp);
+                    x.update();
+                    pp.update();
+                    x = p;
                     break;
                 }
                 // Case 2.2: split the 5-node.
@@ -246,11 +274,20 @@ impl<C: Callback> Tree<C> {
                     p.color = Color::Black;
                     s.color = Color::Black;
                     pp.color = Color::Red;
-                    p = pp;
+                    x.update();
+                    p.update();
                     x = pp;
                 }
             }
         }
+        // Increase the black-height.
+        if x.parent.is_none() {
+            x.color = Color::Black;
+            self.black_height += 1;
+        }
+        // Update the remaining part of the path [root, x].
+        x.update();
+        x.update_ancestors();
     }
 
     /// Rotate `l + c * r` to `l * c + r`.
@@ -315,37 +352,12 @@ impl<C: Callback> Tree<C> {
         }
     }
 }
-impl<C: Callback> Tree<C>
-where
-    C::BeefData: Len,
-{
-    fn get_at(&self, mut i: usize) -> Option<LeafPtr<C>> {
-        self.binary_search(|beef| {
-            let len = len(beef.left);
-            if i < len {
-                true
-            } else {
-                i -= len;
-                false
-            }
-        })
-    }
-}
 impl<C: Callback> Default for Tree<C> {
     fn default() -> Self {
         Self {
             root: None,
             black_height: 0,
         }
-    }
-}
-fn len<C: Callback>(p: Ptr<C>) -> usize
-where
-    C::BeefData: Len,
-{
-    match p {
-        Ptr::Leaf(_) => 1,
-        Ptr::Beef(beef) => beef.data.len(),
     }
 }
 fn color<C: Callback>(p: Ptr<C>) -> Color {
@@ -357,172 +369,109 @@ fn color<C: Callback>(p: Ptr<C>) -> Color {
 
 #[cfg(test)]
 mod tests {
+    use super::test_utils::*;
     use super::*;
-    use core::fmt;
     use rand::rngs::StdRng;
     use rand::seq::SliceRandom;
     use rand::SeedableRng;
-    use std::ops::RangeInclusive;
-
-    fn write<C, W, F>(w: &mut W, tree: &Tree<C>, format: F) -> fmt::Result
-    where
-        C: Callback,
-        W: fmt::Write,
-        F: Copy + FnMut(LeafPtr<C>) -> String,
-    {
-        fn write<C, W, F>(w: &mut W, ptr: Ptr<C>, mut format: F) -> fmt::Result
-        where
-            C: Callback,
-            W: fmt::Write,
-            F: Copy + FnMut(LeafPtr<C>) -> String,
-        {
-            match ptr {
-                Ptr::Leaf(leaf) => write!(w, "{}", format(leaf))?,
-                Ptr::Beef(beef) => {
-                    if beef.color == Color::Black {
-                        write!(w, "[")?;
-                    }
-                    write(w, beef.left, format)?;
-                    write!(w, "{}", match beef.color {
-                        Color::Red => " * ",
-                        Color::Black => " + ",
-                    })?;
-                    write(w, beef.right, format)?;
-                    if beef.color == Color::Black {
-                        write!(w, "]")?;
-                    }
-                }
-            }
-            Ok(())
-        }
-        if let Some(root) = tree.root {
-            write!(w, "[")?;
-            write(w, root, format)?;
-            write!(w, "]")?;
-        }
-        Ok(())
-    }
-
-    fn validate<C: Callback>(tree: &Tree<C>) -> Result<(), String> {
-        fn validate<C: Callback>(node: Ptr<C>) -> Result<u8, String> {
-            match node {
-                Ptr::Leaf(_) => Ok(1),
-                Ptr::Beef(beef) => {
-                    // Check the black-height.
-                    let left_black_height = validate(beef.left)?;
-                    let right_black_height = validate(beef.right)?;
-                    (left_black_height == right_black_height)
-                        .then(|| left_black_height + (beef.color == Color::Black) as u8)
-                        .ok_or_else(|| {
-                            format!(
-                                "black height mismatch at {:?}: {} vs {}",
-                                beef.0.as_ptr(),
-                                left_black_height,
-                                right_black_height
-                            )
-                        })?;
-
-                    // Check the red-red violation with the left child.
-                    (beef.color == Color::Black || color(beef.left) == Color::Black)
-                        .then(|| ())
-                        .ok_or_else(|| {
-                            format!(
-                                "red-red violation at {:?} and its left child {:?}",
-                                beef.0.as_ptr(),
-                                match beef.left {
-                                    Ptr::Leaf(leaf) => leaf.0.as_ptr() as usize,
-                                    Ptr::Beef(beef) => beef.0.as_ptr() as usize,
-                                }
-                            )
-                        })?;
-
-                    // Check the red-red violation with the right child.
-                    (beef.color == Color::Black || color(beef.right) == Color::Black)
-                        .then(|| ())
-                        .ok_or_else(|| {
-                            format!(
-                                "red-red violation at {:?} and its right child {:?}",
-                                beef.0.as_ptr(),
-                                match beef.right {
-                                    Ptr::Leaf(leaf) => leaf.0.as_ptr() as usize,
-                                    Ptr::Beef(beef) => beef.0.as_ptr() as usize,
-                                }
-                            )
-                        })?;
-                    Ok(left_black_height)
-                }
-            }
-        }
-        if let Some(root) = tree.root {
-            validate(root)?;
-        }
-        Ok(())
-    }
-
-    fn format<C, F>(tree: &Tree<C>, format: F) -> String
-    where
-        C: Callback,
-        F: Copy + FnMut(LeafPtr<C>) -> String,
-    {
-        let mut result = String::new();
-        write(&mut result, tree, format).unwrap();
-        result
-    }
 
     #[test]
     fn test_insert() {
+        static mut TIMER: usize = 0;
+        struct BeefData {
+            start: usize,
+            end: usize,
+            updated_at: usize,
+        }
         enum C {}
         impl Callback for C {
-            type BeefData = RangeInclusive<usize>;
+            type BeefData = BeefData;
             type LeafData = usize;
 
             fn push(_: BeefPtr<Self>) {}
 
             fn update(mut beef: BeefPtr<Self>) {
-                beef.data = (match beef.left {
+                beef.data.start = match beef.left {
                     Ptr::Leaf(leaf) => leaf.data,
-                    Ptr::Beef(beef) => *beef.data.start(),
-                })..=(match beef.right {
+                    Ptr::Beef(beef) => beef.data.start,
+                };
+                beef.data.end = match beef.right {
                     Ptr::Leaf(leaf) => leaf.data,
-                    Ptr::Beef(beef) => *beef.data.end(),
-                });
+                    Ptr::Beef(beef) => beef.data.end,
+                };
+                unsafe { TIMER += 1 };
+                beef.data.updated_at = unsafe { TIMER };
             }
         }
-        fn f(leaf: LeafPtr<C>) -> String { format!("{}", leaf.data) }
+        fn f(leaf: Ptr<C>) -> String {
+            match leaf {
+                Ptr::Leaf(leaf) => format!("{}", leaf.data),
+                Ptr::Beef(_beef) => String::new(),
+            }
+        }
+        fn to_vec(tree: &Tree<C>) -> Vec<usize> {
+            let mut result = Vec::new();
+            for_each(tree, |leaf| result.push(leaf.data));
+            result
+        }
         fn new_leaf(data: usize) -> LeafPtr<C> {
             LeafPtr(NonNull::new(Box::into_raw(Box::new(Leaf { data, parent: None }))).unwrap())
         }
         fn new_beef() -> BeefPtr<C> {
-            BeefPtr(
+            let beef = BeefPtr(
                 NonNull::new(Box::into_raw(Box::new(Beef {
-                    data: usize::MAX..=usize::MIN,
+                    data: BeefData {
+                        start: usize::MAX,
+                        end: usize::MAX,
+                        updated_at: usize::MAX,
+                    },
                     left: Ptr::Leaf(new_leaf(0)),
                     right: Ptr::Leaf(new_leaf(0)),
                     parent: None,
                     color: Color::Red,
                 })))
                 .unwrap(),
-            )
+            );
+            beef
         }
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let mut tree = Tree::<C>::new();
+            let mut expected = Vec::new();
             let mut nodes = (0..20).map(new_leaf).collect::<Vec<_>>();
             nodes.shuffle(&mut rng);
 
             for node in nodes {
                 let position = tree
                     .binary_search(|beef| {
-                        (match beef.right {
+                        if (match beef.right {
                             Ptr::Leaf(leaf) => leaf.data,
-                            Ptr::Beef(beef) => *beef.data.end(),
+                            Ptr::Beef(beef) => beef.data.start,
                         }) < node.data
+                        {
+                            Direction::Right
+                        } else {
+                            Direction::Left
+                        }
                     })
-                    .map(|leaf| (leaf, Direction::Left));
+                    .map(|leaf| {
+                        (
+                            leaf,
+                            if leaf.data < node.data { Direction::Right } else { Direction::Left },
+                        )
+                    });
                 tree.insert(position, node, new_beef);
                 eprintln!("tree: {}", format(&tree, f));
                 validate(&tree).unwrap();
+
+                // Check the ordering of the tree.
+                let lower_bound = expected
+                    .binary_search(&node.data)
+                    .map_or_else(|i| i, |i| i + 1);
+                expected.insert(lower_bound, node.data);
+                let result = to_vec(&tree);
+                assert_eq!(result, expected);
             }
         }
     }
@@ -548,5 +497,158 @@ mod tests {
         assert_eq!(std::mem::size_of::<Option<BeefPtr<C>>>(), 8);
         assert_eq!(std::mem::size_of::<Option<Ptr<C>>>(), 16);
         assert_eq!(std::mem::size_of::<Tree<C>>(), 24);
+    }
+}
+
+#[cfg(test)]
+mod test_utils {
+    use super::*;
+    use core::fmt;
+
+    impl<C: Callback> LeafPtr<C> {
+        pub fn debug_ptr(self) -> String {
+            format!("0x{:02x}", self.0.as_ptr() as usize % 0x1000 / 0x10)
+        }
+    }
+    impl<C: Callback> BeefPtr<C> {
+        pub fn debug_ptr(self) -> String {
+            format!("0x{:02x}", self.0.as_ptr() as usize % 0x1000 / 0x10)
+        }
+    }
+    impl<C: Callback> Ptr<C> {
+        pub fn debug_ptr(self) -> String {
+            match self {
+                Ptr::Leaf(leaf) => leaf.debug_ptr(),
+                Ptr::Beef(beef) => beef.debug_ptr(),
+            }
+        }
+    }
+
+    fn write<C, W, F>(w: &mut W, tree: &Tree<C>, format: F) -> fmt::Result
+    where
+        C: Callback,
+        W: fmt::Write,
+        F: Copy + FnMut(Ptr<C>) -> String,
+    {
+        fn write<C, W, F>(w: &mut W, ptr: Ptr<C>, mut format: F) -> fmt::Result
+        where
+            C: Callback,
+            W: fmt::Write,
+            F: Copy + FnMut(Ptr<C>) -> String,
+        {
+            match ptr {
+                Ptr::Leaf(leaf) => write!(w, "{}", format(Ptr::Leaf(leaf)))?,
+                Ptr::Beef(beef) => {
+                    if beef.color == Color::Black {
+                        write!(w, "[")?;
+                    }
+                    write(w, beef.left, format)?;
+                    write!(
+                        w,
+                        " {}{} ",
+                        match beef.color {
+                            Color::Red => "*",
+                            Color::Black => "+",
+                        },
+                        match format(Ptr::Beef(beef)).as_str() {
+                            "" => String::new(),
+                            s => format!("({})", s),
+                        }
+                    )?;
+                    write(w, beef.right, format)?;
+                    if beef.color == Color::Black {
+                        write!(w, "]")?;
+                    }
+                }
+            }
+            Ok(())
+        }
+        if let Some(root) = tree.root {
+            write!(w, "[")?;
+            write(w, root, format)?;
+            write!(w, "]")?;
+        }
+        Ok(())
+    }
+
+    pub fn format<C, F>(tree: &Tree<C>, format: F) -> String
+    where
+        C: Callback,
+        F: Copy + FnMut(Ptr<C>) -> String,
+    {
+        let mut result = String::new();
+        write(&mut result, tree, format).unwrap();
+        result
+    }
+
+    pub fn for_each<C: Callback, F: FnMut(LeafPtr<C>)>(tree: &Tree<C>, mut f: F) {
+        fn for_each<C: Callback, F: FnMut(LeafPtr<C>)>(ptr: Ptr<C>, f: &mut F) {
+            match ptr {
+                Ptr::Leaf(leaf) => f(leaf),
+                Ptr::Beef(beef) => {
+                    for_each(beef.left, f);
+                    for_each(beef.right, f);
+                }
+            }
+        }
+        if let Some(root) = tree.root {
+            for_each(root, &mut f);
+        }
+    }
+
+    pub fn validate<C: Callback>(tree: &Tree<C>) -> Result<(), String> {
+        fn validate<C: Callback>(node: Ptr<C>) -> Result<u8, String> {
+            match node {
+                Ptr::Leaf(_) => Ok(1),
+                Ptr::Beef(beef) => {
+                    // Check the black-height.
+                    let left_black_height = validate(beef.left)?;
+                    let right_black_height = validate(beef.right)?;
+                    (left_black_height == right_black_height)
+                        .then(|| left_black_height + (beef.color == Color::Black) as u8)
+                        .ok_or_else(|| {
+                            format!(
+                                "black height mismatch at {}: {} vs {}",
+                                beef.debug_ptr(),
+                                left_black_height,
+                                right_black_height
+                            )
+                        })?;
+
+                    // Check the red-red violation with the left child.
+                    (beef.color == Color::Black || color(beef.left) == Color::Black)
+                        .then(|| ())
+                        .ok_or_else(|| {
+                            format!(
+                                "red-red violation at {} and its left child {}",
+                                beef.debug_ptr(),
+                                match beef.left {
+                                    Ptr::Leaf(leaf) => leaf.debug_ptr(),
+                                    Ptr::Beef(beef) => beef.debug_ptr(),
+                                }
+                            )
+                        })?;
+
+                    // Check the red-red violation with the right child.
+                    (beef.color == Color::Black || color(beef.right) == Color::Black)
+                        .then(|| ())
+                        .ok_or_else(|| {
+                            format!(
+                                "red-red violation at {} and its right child {}",
+                                beef.debug_ptr(),
+                                match beef.right {
+                                    Ptr::Leaf(leaf) => leaf.debug_ptr(),
+                                    Ptr::Beef(beef) => beef.debug_ptr(),
+                                }
+                            )
+                        })?;
+                    Ok(left_black_height)
+                }
+            }
+        }
+        if let Some(root) = tree.root {
+            validate(root)?;
+        }
+        Ok(())
     }
 }
