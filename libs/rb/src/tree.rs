@@ -712,9 +712,7 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
         let mut stack = Vec::new();
         for mut x in iter {
             debug_assert!(x.is_isolated_and_red());
-            if stack.len() % 2 == 0 {
-                x.color = Color::Black;
-            }
+            x.color = Color::Black;
             stack.push((x, 1));
             while stack.len() % 2 == 1
                 && stack.len() >= 3
@@ -728,10 +726,8 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
                 // Join the three trees.
                 c.left = Some(l);
                 c.right = Some(r);
-                c.color = Color::Black;
                 l.parent = Some(c);
                 r.parent = Some(c);
-                c.update();
                 stack.push((c, l_bh + 1));
             }
         }
@@ -739,27 +735,63 @@ impl<C: Callback> FromIterator<Ptr<C>> for Tree<C> {
             return Self::new();
         }
         let tail = (stack.len() % 2 == 0).then(|| stack.pop().unwrap());
-        let tree = stack.pop().unwrap();
-        let mut r = Tree {
-            root: Some(tree.0),
-            black_height: tree.1,
-        };
-        while let Some((c, c_bh)) = stack.pop() {
+        let (mut r, mut r_bh) = stack.pop().unwrap();
+        while let Some((mut c, c_bh)) = stack.pop() {
             debug_assert_eq!(c_bh, 1);
             let (l, l_bh) = stack.pop().unwrap();
-            r = join(
-                Tree {
-                    root: Some(l),
-                    black_height: l_bh,
-                },
-                c,
-                r,
-            );
+            // Join l, c, r, taking care not to increase the height.
+            // (Just calling `join` would be simpler, but it would increase the height.)
+            let mut p = None;
+            let mut x = l;
+            for _ in 0..l_bh - r_bh - 1 {
+                p = Some(x);
+                x = x.right.unwrap();
+            }
+            // Connect p and c
+            if let Some(mut p) = p {
+                p.right = Some(c);
+            }
+            c.parent = p;
+            // Connect c and x
+            c.left = Some(x);
+            x.parent = Some(c);
+            // Connect c and r
+            c.right = Some(r);
+            r.parent = Some(c);
+            // Recolor x
+            x.color = Color::Red;
+            r = if l_bh == r_bh + 1 { c } else { l };
+            r_bh = l_bh;
         }
-        if let Some(tail) = tail {
-            r.push_back(tail.0);
+        let mut result = Tree {
+            root: Some(r),
+            black_height: r_bh,
+        };
+        // Call `update` for all the internal nodes.
+        let mut stack = vec![result.root.unwrap()];
+        let mut order = Vec::new();
+        while let Some(x) = stack.pop() {
+            if let Some(l) = x.left {
+                stack.push(l);
+            }
+            if let Some(r) = x.right {
+                stack.push(r);
+            }
+            if x.left.is_some() || x.right.is_some() {
+                order.push(x);
+            }
         }
-        r
+        for mut p in order.into_iter().rev() {
+            p.update();
+        }
+
+        // Inserting this may increase the height, but I have no idea how to avoid it.
+        if let Some((mut tail, _)) = tail {
+            tail.color = Color::Red;
+            result.push_back(tail);
+        }
+
+        result
     }
 }
 
@@ -1366,6 +1398,7 @@ pub(super) mod tests {
             let tree = (0..len)
                 .map(|i| Ptr::new(Data::new(i as u64)))
                 .collect::<Tree<TestCallback>>();
+            validate(&tree);
             assert_eq!(tree.len(), len);
             validate(&tree);
             assert_eq!(to_vec(&tree), (0..len as u64).collect::<Vec<_>>());
