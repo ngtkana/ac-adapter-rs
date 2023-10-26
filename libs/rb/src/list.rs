@@ -70,6 +70,21 @@ impl<O: Op> List<O> {
         });
     }
 
+    pub fn append(&mut self, other: &mut Self) {
+        let other = &mut other.tree;
+        self.tree.append(other, |left, right| {
+            BeefPtr::new(
+                BeefData {
+                    len: left.len() + right.len(),
+                    acc: O::mul(left.acc(), right.acc()),
+                    lazy: O::identity(),
+                },
+                left,
+                right,
+            )
+        });
+    }
+
     /// Remove the `i`th value and return it.
     ///
     /// # Panics
@@ -166,10 +181,12 @@ impl<O: Op> Ptr<ListCallback<O>> {
 mod tests {
     use super::*;
     use crate::tree::test_util;
+    use crate::tree::test_util::validate;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
     use rstest::rstest;
+    use std::iter;
 
     const P: u64 = 998244353;
 
@@ -215,6 +232,7 @@ mod tests {
 
         fn apply_on_value(_: &mut Self::Value, _: &Self::Lazy) {}
     }
+    type C = ListCallback<RollingHash>;
 
     fn to_vec<O: Op>(list: &List<O>) -> Vec<O::Value>
     where
@@ -243,7 +261,7 @@ mod tests {
     #[case(3)]
     #[case(40)]
     #[case(200)]
-    fn test_insert(#[case] max_length: usize) {
+    fn test_insert_remove(#[case] max_length: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let mut list = List::<RollingHash>::new();
@@ -271,6 +289,58 @@ mod tests {
                 }
                 assert_eq!(&to_vec(&list), &vec);
                 test_util::validate(&list.tree);
+            }
+        }
+    }
+
+    #[test]
+    fn test_append() {
+        fn new_value(rng: &mut StdRng) -> LeafData<RollingHash> {
+            let value = rng.gen_range(0..20);
+            LeafData {
+                value,
+                acc: HashnBase::from_value(value),
+            }
+        }
+        fn new_beef(left: Ptr<C>, right: Ptr<C>) -> BeefData<RollingHash> {
+            BeefData {
+                len: left.len() + right.len(),
+                acc: HashnBase::mul(left.acc(), right.acc()),
+                lazy: (),
+            }
+        }
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let n = 8;
+            let mut lists = iter::repeat_with(|| {
+                let h = rng.gen_range(0..=6);
+                let tree = test_util::random_tree(&mut rng, h, new_value, new_beef);
+                test_util::validate(&tree);
+                List { tree }
+            })
+            .take(n)
+            .collect::<Vec<_>>();
+            let mut vecs = lists.iter().map(to_vec).collect::<Vec<_>>();
+            while lists.len() > 1 {
+                let i = rng.gen_range(0..=lists.len() - 2);
+                let list = {
+                    let mut lhs = lists.remove(i);
+                    let mut rhs = lists.remove(i);
+                    lhs.append(&mut rhs);
+                    assert!(rhs.is_empty());
+                    validate(&lhs.tree);
+                    lhs
+                };
+                let vec = {
+                    let mut lhs = vecs.remove(i);
+                    let mut rhs = vecs.remove(i);
+                    lhs.append(&mut rhs);
+                    assert!(rhs.is_empty());
+                    lhs
+                };
+                assert_eq!(to_vec(&list), vec);
+                lists.insert(i, list);
+                vecs.insert(i, vec);
             }
         }
     }

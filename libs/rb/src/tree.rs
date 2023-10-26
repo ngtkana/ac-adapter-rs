@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use std::cmp::Ordering;
 use std::fmt;
 use std::hint::unreachable_unchecked;
 use std::ops::Deref;
@@ -69,6 +70,85 @@ impl<C: Callback> Tree<C> {
 
         // Fix the red-red violation.
         self.fix_red(b);
+    }
+
+    pub fn append(
+        &mut self,
+        other: &mut Self,
+        feed_beef: impl FnOnce(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+    ) {
+        let Some(mut left) = self.root else {
+            std::mem::swap(self, other);
+            return;
+        };
+        let Some(mut right) = other.root else {
+            return;
+        };
+        match self.black_height.cmp(&other.black_height) {
+            // Case 1: Two trees have the same black height.
+            // Join the roots.
+            Ordering::Equal => {
+                let mut b = feed_beef(left, right);
+                left.parent = Some(b);
+                right.parent = Some(b);
+                b.color = Color::Black;
+                self.root = Some(b.upcast());
+                self.black_height += 1;
+            }
+            // Case 2: The left tree has a smaller black height.
+            // Slide down along the left spine of the right tree, join, and fix the red-red violation.
+            Ordering::Less => {
+                let mut h = other.black_height;
+                loop {
+                    if right.color == Color::Black {
+                        if h == self.black_height {
+                            break;
+                        }
+                        h -= 1;
+                    }
+                    right = right.as_beef_ptr().left();
+                }
+                let mut p = right.parent.unwrap();
+                let mut b = feed_beef(left, right);
+                b.color = Color::Red;
+                *p.left_mut() = b.upcast();
+                *b.left_mut() = left;
+                *b.right_mut() = right;
+                left.parent = Some(b);
+                right.parent = Some(b);
+                b.parent = Some(p);
+                self.root = other.root;
+                self.black_height = other.black_height;
+                self.fix_red(b);
+            }
+            // Case 3: The right tree has a smaller black height.
+            // Slide down along the right spine of the left tree, join, and fix the red-red violation.
+            Ordering::Greater => {
+                let mut h = self.black_height;
+                loop {
+                    if left.color == Color::Black {
+                        if h == other.black_height {
+                            break;
+                        }
+                        h -= 1;
+                    }
+                    left = left.as_beef_ptr().right();
+                }
+                let mut p = left.parent.unwrap();
+                let mut b = feed_beef(left, right);
+                b.color = Color::Red;
+                *p.right_mut() = b.upcast();
+                *b.left_mut() = left;
+                *b.right_mut() = right;
+                left.parent = Some(b);
+                right.parent = Some(b);
+                b.parent = Some(p);
+                self.fix_red(b);
+            }
+        }
+        // I don't forget to clear the other tree.
+        other.root = None;
+        other.black_height = 0;
     }
 
     /// Remove a leaf node.
@@ -567,15 +647,10 @@ impl<C: Callback> PartialEq<Ptr<C>> for BeefPtr<C> {
 
 #[cfg(test)]
 mod tests {
-    use super::test_util::for_each;
-    use super::test_util::validate;
     use super::*;
-    use rand::rngs::StdRng;
-    use rand::Rng;
-    use rand::SeedableRng;
 
     #[test]
-    fn test_optimal_size() {
+    fn test_size() {
         use std::mem::size_of;
         enum O {}
         impl Callback for O {
@@ -592,83 +667,6 @@ mod tests {
         assert_eq!(size_of::<BeefSteak<O>>(), 16);
         assert_eq!(size_of::<Tree<O>>(), 16);
     }
-
-    #[test]
-    fn test_insert_remove() {
-        #[derive(Clone, Copy, Debug, PartialEq)]
-        struct BeefData {
-            start: usize,
-            end: usize,
-        }
-        enum C {}
-        impl Callback for C {
-            type BeefData = BeefData;
-            type LeafData = usize;
-
-            fn update(x: &mut BeefSteak<Self>) {
-                x.data.start = match &x.left.steak {
-                    Steak::Leaf(leaf) => *leaf,
-                    Steak::Beef(beef) => beef.data.start,
-                };
-                x.data.end = match &x.right.steak {
-                    Steak::Leaf(leaf) => *leaf,
-                    Steak::Beef(beef) => beef.data.end,
-                };
-            }
-
-            fn push(_: &mut BeefSteak<Self>) {}
-        }
-        fn feed_beef(left: LeafPtr<C>, right: LeafPtr<C>) -> BeefPtr<C> {
-            BeefPtr::new(
-                BeefData {
-                    start: *left.data(),
-                    end: *right.data(),
-                },
-                left.upcast(),
-                right.upcast(),
-            )
-        }
-        fn eat_beef(beef: BeefPtr<C>) { unsafe { drop(Box::from_raw(beef.0.as_ptr())) }; }
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let nodes = (0..20).map(LeafPtr::new).collect::<Vec<_>>();
-            let mut used = vec![false; nodes.len()];
-            let mut tree = Tree::<C>::new();
-            for _ in 0..20 {
-                let i = rng.gen_range(0..nodes.len());
-                if used[i] {
-                    tree.remove(nodes[i], eat_beef);
-                    used[i] = false;
-                } else {
-                    let position = tree
-                        .binary_search(|beef| {
-                            let start = match &beef.right().steak {
-                                Steak::Leaf(leaf) => *leaf,
-                                Steak::Beef(beef) => beef.data.start,
-                            };
-                            i < start
-                        })
-                        .map(|leaf| {
-                            let start = *leaf.data();
-                            (leaf, i < start)
-                        });
-                    tree.insert(position, nodes[i], feed_beef);
-                    used[i] = true;
-                }
-                let mut values = Vec::new();
-                for_each(&tree, |p| match &p.steak {
-                    Steak::Leaf(leaf) => values.push(*leaf),
-                    Steak::Beef(_beef) => {}
-                });
-                let expected_values = (0..nodes.len())
-                    .filter(|&i| used[i])
-                    .map(|i| *nodes[i].data())
-                    .collect::<Vec<_>>();
-                assert_eq!(values, expected_values);
-                validate(&tree);
-            }
-        }
-    }
 }
 
 #[cfg(test)]
@@ -676,22 +674,6 @@ pub mod test_util {
     use super::*;
     use rand::rngs::StdRng;
     use rand::Rng;
-
-    pub fn for_each<C: Callback, F: FnMut(Ptr<C>)>(tree: &Tree<C>, mut f: F) {
-        fn for_each<C: Callback, F: FnMut(Ptr<C>)>(p: Ptr<C>, f: &mut F) {
-            match &p.steak {
-                Steak::Leaf(_) => f(p),
-                Steak::Beef(beef) => {
-                    for_each(beef.left, f);
-                    f(p);
-                    for_each(beef.right, f);
-                }
-            }
-        }
-        if let Some(root) = tree.root {
-            for_each(root, &mut f);
-        }
-    }
 
     pub fn write<C: Callback, W: fmt::Write, F: FnMut(Ptr<C>) -> T, T: AsRef<str>>(
         w: &mut W,
@@ -755,6 +737,26 @@ pub mod test_util {
                     let right = b.right;
                     let left_height = validate(left)?;
                     let right_height = validate(right)?;
+                    // Check the left parent pointers.
+                    (left.parent == Some(p.as_beef_ptr()))
+                        .then_some(())
+                        .ok_or_else(|| {
+                            format!(
+                                "The parent of the left child is self:\n  `p`: {:?}\n  `left`: \
+                                 {:?}\n  `left.parent`: {:?}",
+                                p, left, left.parent
+                            )
+                        })?;
+                    // Check the right parent pointers.
+                    (right.parent == Some(p.as_beef_ptr()))
+                        .then_some(())
+                        .ok_or_else(|| {
+                            format!(
+                                "The parent of the right child is self:\n  `p`: {:?}\n  `right`: \
+                                 {:?}\n  `right.parent`: {:?}",
+                                p, right, right.parent
+                            )
+                        })?;
                     // Check the black height.
                     (left_height == right_height).then_some(()).ok_or_else(|| {
                         format!(
@@ -787,7 +789,13 @@ pub mod test_util {
                         data: b.data,
                     };
                     C::update(&mut b_copied);
-                    assert_eq!(b.data, b_copied.data);
+                    (b.data == b_copied.data).then_some(()).ok_or_else(|| {
+                        format!(
+                            "The beef data is not fully-updated at {:?}:\n    Cached: {:?} \n  \
+                             Expected: {:?}",
+                            p, b.data, b_copied.data
+                        )
+                    })?;
                     Ok(left_height + u8::from(p.color == Color::Black))
                 }
             }
@@ -806,58 +814,75 @@ pub mod test_util {
     pub fn random_tree<C: Callback>(
         rng: &mut StdRng,
         black_height: u8,
-        mut new_leaf: impl FnMut() -> LeafPtr<C>,
-        mut new_beef: impl FnMut(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+        mut new_value: impl FnMut(&mut StdRng) -> C::LeafData,
+        mut mul: impl FnMut(Ptr<C>, Ptr<C>) -> C::BeefData,
     ) -> Tree<C> {
         pub fn random_tree<C: Callback>(
             rng: &mut StdRng,
             black_height: u8,
-            mut new_leaf: &mut impl FnMut() -> LeafPtr<C>,
-            mut new_beef: &mut impl FnMut(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+            new_value: &mut impl FnMut(&mut StdRng) -> C::LeafData,
+            mul: &mut impl FnMut(Ptr<C>, Ptr<C>) -> C::BeefData,
         ) -> Ptr<C> {
             if black_height == 1 {
-                return new_leaf().upcast();
+                return LeafPtr::new(new_value(rng)).upcast();
             }
             match rng.gen_range(0..4) {
                 // 2-node
                 0 => {
-                    let p0 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p1 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let mut p01 = new_beef(p0, p1).upcast();
+                    let mut p0 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p1 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p01 = BeefPtr::new(mul(p0, p1), p0, p1);
+                    p0.parent = Some(p01);
+                    p1.parent = Some(p01);
                     p01.color = Color::Black;
-                    p01
+                    p01.upcast()
                 }
                 // Left-leaning 3-node
                 1 => {
-                    let p0 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p1 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p2 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p01 = new_beef(p0, p1).upcast();
-                    let mut p012 = new_beef(p01, p2).upcast();
+                    let mut p0 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p1 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p2 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p01 = BeefPtr::new(mul(p0, p1), p0, p1);
+                    let mut p012 = BeefPtr::new(mul(p01.upcast(), p2), p01.upcast(), p2);
+                    p0.parent = Some(p01);
+                    p1.parent = Some(p01);
+                    p2.parent = Some(p012);
+                    p01.parent = Some(p012);
                     p012.color = Color::Black;
-                    p012
+                    p012.upcast()
                 }
                 // Right-leaning 3-node
                 2 => {
-                    let p0 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p1 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p2 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p12 = new_beef(p1, p2).upcast();
-                    let mut p012 = new_beef(p0, p12).upcast();
+                    let mut p0 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p1 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p2 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p12 = BeefPtr::new(mul(p1, p2), p1, p2);
+                    let mut p012 = BeefPtr::new(mul(p0, p12.upcast()), p0, p12.upcast());
+                    p0.parent = Some(p012);
+                    p1.parent = Some(p12);
+                    p2.parent = Some(p12);
+                    p12.parent = Some(p012);
                     p012.color = Color::Black;
-                    p012
+                    p012.upcast()
                 }
                 // 4-node
                 3 => {
-                    let p0 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p1 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p2 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p3 = random_tree(rng, black_height - 1, &mut new_leaf, &mut new_beef);
-                    let p01 = new_beef(p0, p1).upcast();
-                    let p23 = new_beef(p2, p3).upcast();
-                    let mut p0123 = new_beef(p01, p23).upcast();
+                    let mut p0 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p1 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p2 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p3 = random_tree(rng, black_height - 1, new_value, mul);
+                    let mut p01 = BeefPtr::new(mul(p0, p1), p0, p1);
+                    let mut p23 = BeefPtr::new(mul(p2, p3), p2, p3);
+                    let mut p0123 =
+                        BeefPtr::new(mul(p01.upcast(), p23.upcast()), p01.upcast(), p23.upcast());
+                    p0.parent = Some(p01);
+                    p1.parent = Some(p01);
+                    p2.parent = Some(p23);
+                    p3.parent = Some(p23);
+                    p01.parent = Some(p0123);
+                    p23.parent = Some(p0123);
                     p0123.color = Color::Black;
-                    p0123
+                    p0123.upcast()
                 }
                 _ => unreachable!(),
             }
@@ -866,7 +891,7 @@ pub mod test_util {
             root: if black_height == 0 {
                 None
             } else {
-                Some(random_tree(rng, black_height, &mut new_leaf, &mut new_beef))
+                Some(random_tree(rng, black_height, &mut new_value, &mut mul))
             },
             black_height,
         }
