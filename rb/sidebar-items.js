@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"mod":["list_iter"],"struct":["RbList","RbReversibleList"],"trait":["Op"]};
+window.SIDEBAR_ITEMS = {"trait":["Op"]};

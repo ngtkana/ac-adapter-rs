@@ -56,7 +56,7 @@ var sourcesIndex = JSON.parse('{\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
-"rb":["",[],["leaftree.rs","lib.rs","list.rs","tree.rs"]],\
+"rb":["",[],["lib.rs","list.rs","tree.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
 "reverse":["",[],["lib.rs"]],\
 "scc":["",[],["lib.rs"]],\
