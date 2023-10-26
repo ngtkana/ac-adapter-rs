@@ -45,7 +45,6 @@
 //! add_inv(&mut a);
 //! assert_eq!(a, [1, 2, 4, 8]);
 //! ```
-//!
 
 use std::cmp::Ord;
 use std::cmp::{self};

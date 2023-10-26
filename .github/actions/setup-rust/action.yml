@@ -1,0 +1,14 @@
+name: Setup Rust
+description: "Set up your GitHub Actions"
+
+runs:
+  using: composite
+  steps:
+    - name: Rust Toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: "1.70.0"
+
+    - uses: taiki-e/install-action@nextest
+
+    - uses: taiki-e/install-action@cargo-make

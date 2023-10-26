@@ -26,7 +26,6 @@ use std::fmt::Debug;
 ///     - `identity()` を `None` とかにして頑張るしかないですかね
 /// - 辺重み
 ///     - `頂点重みで代用できませんかね。
-///
 pub trait Ops: Sized {
     type Value: Clone + Debug + Default;
     type Acc: Clone + Debug;
