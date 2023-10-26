@@ -2,50 +2,105 @@ name: Rust
 
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
 
 env:
   CARGO_TERM_COLOR: always
 
 jobs:
-  check:
+  changes:
     runs-on: ubuntu-latest
+    outputs:
+      trigger: ${{ steps.changes.outputs.triggers }}
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers check
-      run: cargo make check
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            triggers:
+              - 'rust/**'
+              - '.github/workflows/rust.yml'
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.trigger == 'true'
+    steps:
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Clippy
+        working-directory: .
+        run: cargo make clippy
+
+  doctest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.trigger == 'true'
+    steps:
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
+
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Doctest
+        working-directory: .
+        run: cargo make test-doc
 
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.trigger == 'true'
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers test
-      run: cargo make test
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
 
-  clippy:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers clippy
-      run: cargo make clippy
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+
+      - name: Test
+        working-directory: .
+        run: cargo make test
 
   docs:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: changes
+    if: needs.changes.outputs.trigger == 'true'
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers docs
-      run: cargo make docs
-    - name: Check that crates.js is surely copied
-      run: test -e target/doc/crates.js
-    - name: Deploy GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: target/doc
+      - name: Clone Project
+        uses: actions/checkout@v4
+        with:
+          lfs: false
 
+      - name: Setup Rust
+        uses: ./.github/actions/setup-rust
+      - uses: davidB/rust-cargo-make@v1
+
+      - name: Run makers docs
+        run: cargo make docs
+
+      - name: Check that crates.js is surely copied
+        run: test -e target/doc/crates.js
+
+      - name: Deploy GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/doc

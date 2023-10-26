@@ -24,10 +24,11 @@ impl LazyOps for I32Add {
 }
 
 #[test]
+#[allow(clippy::redundant_clone)]
 fn test_clone() {
     let splay = (0..10).collect::<SplayTree<Nop<i32>>>();
     let new = splay.clone();
-    assert_eq!(splay, new);
+    assert_eq!(&splay, &new);
     for i in 0..10 {
         splay.get(i);
         new.get(i);
