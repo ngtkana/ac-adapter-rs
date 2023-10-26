@@ -2,9 +2,9 @@ name: Rust
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 env:
   CARGO_TERM_COLOR: always
@@ -13,39 +13,38 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers check
-      run: cargo make check
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v1
+      - name: Run makers check
+        run: cargo make check
 
   test:
     runs-on: ubuntu-latest
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers test
-      run: cargo make test
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v1
+      - name: Run makers test
+        run: cargo make test
 
   clippy:
     runs-on: ubuntu-latest
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers clippy
-      run: cargo make clippy
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v1
+      - name: Run makers clippy
+        run: cargo make clippy
 
   docs:
     runs-on: ubuntu-latest
     steps:
-    - uses: davidB/rust-cargo-make@v1
-    - uses: actions/checkout@v1
-    - name: Run makers docs
-      run: cargo make docs
-    - name: Check that crates.js is surely copied
-      run: test -e target/doc/crates.js
-    - name: Deploy GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: target/doc
-
+      - uses: davidB/rust-cargo-make@v1
+      - uses: actions/checkout@v1
+      - name: Run makers docs
+        run: cargo make docs
+      - name: Check that crates.js is surely copied
+        run: test -e target/doc/crates.js
+      - name: Deploy GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: target/doc
