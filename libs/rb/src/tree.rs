@@ -429,21 +429,37 @@ impl<C: Callback> Tree<C> {
         where
             F: FnMut(Ptr<C>, Ptr<C>) -> Ptr<C>,
         {
-            if leaves.len() == 1 {
-                return (leaves[0], 1);
+            let mut leaves = leaves.to_vec();
+            let mut black_height = 1;
+            let mut n = leaves.len();
+            while n != 1 {
+                for i in 0..n / 2 {
+                    if 2 * i + 3 == n {
+                        let mut left = leaves[2 * i];
+                        let mut center = leaves[2 * i + 1];
+                        let mut right = leaves[2 * i + 2];
+                        let mut b0 = feed_beef(left, center);
+                        left.parent = Some(b0);
+                        center.parent = Some(b0);
+                        let mut b1 = feed_beef(b0, right);
+                        b1.color = Color::Black;
+                        b0.parent = Some(b1);
+                        right.parent = Some(b1);
+                        leaves[i] = b1;
+                    } else {
+                        let mut left = leaves[2 * i];
+                        let mut right = leaves[2 * i + 1];
+                        let mut b = feed_beef(left, right);
+                        b.color = Color::Black;
+                        left.parent = Some(b);
+                        right.parent = Some(b);
+                        leaves[i] = b;
+                    }
+                }
+                black_height += 1;
+                n /= 2;
             }
-            let (left, right) = leaves.split_at(leaves.len() / 2);
-            let (mut left, left_height) = from_slice_of_leaves(left, feed_beef);
-            let (mut right, right_height) = from_slice_of_leaves(right, feed_beef);
-            debug_assert!(left_height == right_height || left_height + 1 == right_height);
-            if left_height < right_height {
-                right.color = Color::Red;
-            }
-            let mut b = feed_beef(left, right);
-            left.parent = Some(b);
-            right.parent = Some(b);
-            b.color = Color::Black;
-            (b, left_height + 1)
+            (leaves[0], black_height)
         }
         if leaves.is_empty() {
             return Self::new();
