@@ -178,7 +178,6 @@ impl<C: Callback> Tree<C> {
     /// - `x` and its parent may be a red-red pair, but this is the only violation.
     /// - `x`'s proper ancestors may not be fully-updatated, but other nodes are fully-updated.
     fn fix_red(&mut self, mut x: Ptr<C>) {
-        // TODO: do not update `x`
         while x.color == Color::Red {
             // Handle the case where `x` is the root.
             let Some(mut p) = x.parent else {
