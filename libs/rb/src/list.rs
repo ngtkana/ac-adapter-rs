@@ -390,7 +390,6 @@ mod tests {
                     x if vec.len() <= x => {
                         let i = rng.gen_range(0..=vec.len());
                         let value = HashnBase::from_value(rng.gen_range(0..20));
-                        eprintln!("insert {} at {}", value.hash, i);
                         list.insert(i, value);
                         vec.insert(i, value);
                     }
@@ -400,7 +399,6 @@ mod tests {
                             continue;
                         }
                         let i = rng.gen_range(0..vec.len());
-                        eprintln!("remove {} at {}", vec[i].hash, i);
                         let result = list.remove(i);
                         let expected = vec.remove(i);
                         assert_eq!(result, expected);
@@ -409,7 +407,6 @@ mod tests {
                 }
                 assert_eq!(&to_vec(&list), &vec);
                 test_util::validate(&list.tree);
-                eprintln!("{}", test_util::format(&list.tree));
             }
         }
     }
