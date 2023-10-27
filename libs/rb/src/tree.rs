@@ -434,7 +434,7 @@ impl<C: Callback> Default for Tree<C> {
 }
 
 pub struct Node<C: Callback> {
-    parent: Option<BeefPtr<C>>,
+    pub parent: Option<BeefPtr<C>>,
     color: Color,
     pub steak: Steak<C>,
 }
@@ -459,7 +459,7 @@ impl<C: Callback> Ptr<C> {
 
     /// Downcast to [`BeefPtr`].
     /// This is needed in `fix_black()`.
-    fn as_beef_ptr(self) -> BeefPtr<C> {
+    pub fn as_beef_ptr(self) -> BeefPtr<C> {
         debug_assert!(matches!(self.steak, Steak::Beef(_)));
         BeefPtr(self.0)
     }
@@ -568,7 +568,7 @@ impl<C: Callback> BeefPtr<C> {
 
     pub fn free(self) { unsafe { drop(Box::from_raw(self.0.as_ptr())) }; }
 
-    fn upcast(self) -> Ptr<C> { Ptr(self.0) }
+    pub fn upcast(self) -> Ptr<C> { Ptr(self.0) }
 
     fn update(mut self) { C::update(self.steak_mut()); }
 
