@@ -423,6 +423,117 @@ impl<C: Callback> Tree<C> {
             self.root = Some(new);
         }
     }
+
+    pub fn from_slice_of_leaves<F>(leaves: &[LeafPtr<C>], mut feed_beef: F) -> Self
+    where
+        F: FnMut(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+    {
+        fn from_slice_of_leaves<C: Callback, F>(
+            leaves: &[LeafPtr<C>],
+            feed_beef: &mut F,
+        ) -> (Ptr<C>, u8)
+        where
+            F: FnMut(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+        {
+            if leaves.len() == 1 {
+                return (leaves[0].upcast(), 1);
+            }
+            let (left, right) = leaves.split_at(leaves.len() / 2);
+            let (mut left, left_height) = from_slice_of_leaves(left, feed_beef);
+            let (mut right, right_height) = from_slice_of_leaves(right, feed_beef);
+            debug_assert!(left_height == right_height || left_height + 1 == right_height);
+            if left_height < right_height {
+                right.color = Color::Red;
+            }
+            let mut b = feed_beef(left, right);
+            b.color = Color::Black;
+            left.parent = Some(b);
+            right.parent = Some(b);
+            (b.upcast(), left_height + 1)
+        }
+        if leaves.is_empty() {
+            return Self::new();
+        }
+        let (root, black_height) = from_slice_of_leaves(leaves, &mut feed_beef);
+        Self {
+            root: Some(root),
+            black_height,
+        }
+    }
+
+    pub fn from_iter<I, F>(iter: I, mut feed_beef: F) -> Self
+    where
+        I: IntoIterator<Item = LeafPtr<C>>,
+        F: FnMut(Ptr<C>, Ptr<C>) -> BeefPtr<C>,
+    {
+        let mut stack = Vec::new();
+        for leaf in iter {
+            stack.push((leaf.upcast(), 1));
+            while stack.len() >= 2 && stack[stack.len() - 2].1 == stack[stack.len() - 1].1 {
+                let (mut right, black_height) = stack.pop().unwrap();
+                let (mut left, _) = stack.pop().unwrap();
+                let mut b = feed_beef(left, right);
+                left.parent = Some(b);
+                right.parent = Some(b);
+                b.color = Color::Black;
+                stack.push((b.upcast(), black_height + 1));
+            }
+        }
+        let Some((mut root, mut black_height)) = stack.pop() else {
+            return Self::new();
+        };
+        while let Some((left, left_black_height)) = stack.pop() {
+            #[cfg(test)]
+            eprintln!(
+                "left: {}",
+                test_util::format(
+                    &Tree {
+                        root: Some(left),
+                        black_height: left_black_height,
+                    },
+                    |p| format!("{:?}", p)
+                )
+            );
+            let mut x = left;
+            for _ in 0..left_black_height - black_height - 1 {
+                x = x.as_beef_ptr().right();
+            }
+            let p = x.parent;
+            let mut b = feed_beef(x, root);
+            b.color = Color::Black;
+            x.parent = Some(b);
+            root.parent = Some(b);
+            b.parent = p;
+            x.color = Color::Red;
+            if left_black_height == black_height + 1 {
+                debug_assert!(p.is_none());
+                root = b.upcast();
+            } else {
+                let mut p = p.unwrap();
+                *p.right_mut() = b.upcast();
+                // TODO: Avoid calling `update()` in `from_iter()`
+                p.update();
+                p.upcast().update_ancestors();
+                root = left;
+            }
+            black_height = left_black_height;
+            #[cfg(test)]
+            eprintln!(
+                "merged: {}",
+                test_util::format(
+                    &Tree {
+                        root: Some(root),
+                        black_height
+                    },
+                    |p| format!("{:?}", p)
+                )
+            );
+        }
+        Tree {
+            root: Some(root),
+            black_height,
+        }
+    }
 }
 impl<C: Callback> Default for Tree<C> {
     fn default() -> Self {

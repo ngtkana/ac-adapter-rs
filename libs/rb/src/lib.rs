@@ -7,6 +7,9 @@ mod tree;
 /// A list based on a red-black tree.
 mod list;
 
+/// A list based on a red-black tree.
+pub use list::List;
+
 /// A trait for algebraic operations.
 pub trait Op {
     /// The type of the value stored in the leaf nodes.

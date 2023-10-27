@@ -104,10 +104,7 @@ impl<O: Op> List<O> {
     pub fn insert(&mut self, i: usize, x: O::Value) {
         assert!(i <= self.len(), "index out of bounds");
         let position = self.get_leaf_ptr(i).map(|p| (p, i < self.len()));
-        let leaf = LeafPtr::new(LeafData {
-            acc: O::to_acc(&x),
-            value: x,
-        });
+        let leaf = LeafPtr::new(LeafData::new(x));
         self.tree.insert(position, leaf, |left, right| {
             BeefPtr::new(
                 BeefData {
@@ -121,6 +118,7 @@ impl<O: Op> List<O> {
         });
     }
 
+    /// Append all the elements in `other`, leaving `other` empty.
     pub fn append(&mut self, other: &mut Self) {
         let other = &mut other.tree;
         self.tree.append(other, |left, right| {
@@ -184,9 +182,41 @@ impl<O: Op> Default for List<O> {
     }
 }
 
+impl<O: Op> FromIterator<O::Value> for List<O> {
+    fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
+        let leaves = iter
+            .into_iter()
+            .map(|value| LeafPtr::new(LeafData::new(value)))
+            .collect::<Vec<_>>();
+        List {
+            tree: Tree::from_slice_of_leaves(&leaves, |left, right| {
+                BeefPtr::new(
+                    BeefData {
+                        len: left.len() + right.len(),
+                        acc: O::mul(left.acc(), right.acc()),
+                        lazy: O::identity(),
+                    },
+                    left,
+                    right,
+                )
+            }),
+        }
+    }
+}
+
 struct LeafData<O: Op> {
+    len: usize,
     value: O::Value,
     acc: O::Acc,
+}
+impl<O: Op> LeafData<O> {
+    fn new(value: O::Value) -> Self {
+        Self {
+            len: 1,
+            acc: O::to_acc(&value),
+            value,
+        }
+    }
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
@@ -221,7 +251,7 @@ impl<O: Op> Callback for ListCallback<O> {
 impl<O: Op> Ptr<ListCallback<O>> {
     fn len(self) -> usize {
         match &self.steak {
-            Steak::Leaf(_) => 1,
+            Steak::Leaf(x) => x.len,
             Steak::Beef(x) => x.data.len,
         }
     }
@@ -303,11 +333,7 @@ mod tests {
 
     fn random_list(rng: &mut StdRng, black_height: u8) -> List<RollingHash> {
         fn new_value(rng: &mut StdRng) -> LeafData<RollingHash> {
-            let value = rng.gen_range(0..20);
-            LeafData {
-                value,
-                acc: HashnBase::from_value(value),
-            }
+            LeafData::new(rng.gen_range(0..20))
         }
         fn new_beef(left: Ptr<C>, right: Ptr<C>) -> BeefData<RollingHash> {
             BeefData {
@@ -355,6 +381,33 @@ mod tests {
         }
         assert!(start <= i && i <= j && j < end);
         (i, j)
+    }
+
+    #[test]
+    fn test_from_iter() {
+        fn height(ptr: Ptr<C>) -> u8 {
+            match &ptr.steak {
+                Steak::Leaf(_) => 1,
+                Steak::Beef(b) => height(b.left).max(height(b.right)) + 1,
+            }
+        }
+        for n in 0..100 {
+            let list = (0..n).collect::<List<RollingHash>>();
+            validate(&list.tree);
+            let vec = (0..n).collect::<Vec<_>>();
+            assert_eq!(to_vec(&list), vec);
+            let height = list.tree.root().map_or(0, height);
+            let expected_height = if n == 0 { 0 } else { (2 * n - 1).ilog2() as u8 + 1 };
+            assert_eq!(
+                height,
+                expected_height,
+                "Expected height for length {} is {}, but the actual height is {}:\n{}\n",
+                n,
+                expected_height,
+                height,
+                test_util::format(&list.tree, |p| format!("{:?}", p)),
+            );
+        }
     }
 
     #[test]
