@@ -161,14 +161,12 @@ impl<O: Op> Default for List<O> {
 
 impl<O: Op> FromIterator<O::Value> for List<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
-        let leaves = iter
+        let mut leaves = iter
             .into_iter()
             .map(|value| Ptr::new_leaf(Data::new(value)))
             .collect::<Vec<_>>();
         List {
-            tree: Tree::from_slice_of_leaves(&leaves, |left, right| {
-                Ptr::new_red_beef(Data::mul, left, right)
-            }),
+            tree: Tree::from_slice_of_leaves(&mut leaves, Data::mul),
         }
     }
 }

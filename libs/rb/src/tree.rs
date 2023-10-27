@@ -62,9 +62,9 @@ impl<C: Callback> Tree<C> {
 
         // Join `leaf` and `s` with `b`, and transplant `b` at the original position of `s`.
         let b = if result {
-            Ptr::new_red_beef(mul, new, s)
+            Ptr::new_beef(mul, Color::Red, new, s)
         } else {
-            Ptr::new_red_beef(mul, s, new)
+            Ptr::new_beef(mul, Color::Red, s, new)
         };
         self.transplant(s, b);
         s.parent = Some(b);
@@ -86,10 +86,9 @@ impl<C: Callback> Tree<C> {
             // Case 1: Two trees have the same black height.
             // Join the roots.
             Ordering::Equal => {
-                let mut b = Ptr::new_red_beef(mul, left, right);
+                let b = Ptr::new_beef(mul, Color::Black, left, right);
                 left.parent = Some(b);
                 right.parent = Some(b);
-                b.color = Color::Black;
                 self.root = Some(b);
                 self.black_height += 1;
             }
@@ -107,10 +106,9 @@ impl<C: Callback> Tree<C> {
                     right = right.left.unwrap();
                 }
                 let mut p = right.parent.unwrap();
-                let mut b = Ptr::new_red_beef(mul, left, right);
+                let mut b = Ptr::new_beef(mul, Color::Red, left, right);
                 left.parent = Some(b);
                 right.parent = Some(b);
-                b.color = Color::Red;
                 *p.left.as_mut().unwrap() = b;
                 b.parent = Some(p);
                 self.root = other.root;
@@ -131,10 +129,9 @@ impl<C: Callback> Tree<C> {
                     left = left.right.unwrap();
                 }
                 let mut p = left.parent.unwrap();
-                let mut b = Ptr::new_red_beef(mul, left, right);
+                let mut b = Ptr::new_beef(mul, Color::Red, left, right);
                 left.parent = Some(b);
                 right.parent = Some(b);
-                b.color = Color::Red;
                 *p.right.as_mut().unwrap() = b;
                 b.parent = Some(p);
                 self.fix_red(b);
@@ -418,18 +415,14 @@ impl<C: Callback> Tree<C> {
         }
     }
 
-    pub fn from_slice_of_leaves<F>(leaves: &[Ptr<C>], mut feed_beef: F) -> Self
+    pub fn from_slice_of_leaves<F>(leaves: &mut [Ptr<C>], mut mul: F) -> Self
     where
-        F: FnMut(Ptr<C>, Ptr<C>) -> Ptr<C>,
+        F: FnMut(&C::Data, &C::Data) -> C::Data,
     {
-        fn from_slice_of_leaves<C: Callback, F>(
-            leaves: &[Ptr<C>],
-            feed_beef: &mut F,
-        ) -> (Ptr<C>, u8)
+        fn from_slice_of_leaves<C: Callback, F>(leaves: &mut [Ptr<C>], mul: &mut F) -> (Ptr<C>, u8)
         where
-            F: FnMut(Ptr<C>, Ptr<C>) -> Ptr<C>,
+            F: FnMut(&C::Data, &C::Data) -> C::Data,
         {
-            let mut leaves = leaves.to_vec();
             let mut black_height = 1;
             let mut n = leaves.len();
             while n != 1 {
@@ -438,19 +431,17 @@ impl<C: Callback> Tree<C> {
                         let mut left = leaves[2 * i];
                         let mut center = leaves[2 * i + 1];
                         let mut right = leaves[2 * i + 2];
-                        let mut b0 = feed_beef(left, center);
+                        let mut b0 = Ptr::new_beef(&mut *mul, Color::Red, left, center);
                         left.parent = Some(b0);
                         center.parent = Some(b0);
-                        let mut b1 = feed_beef(b0, right);
-                        b1.color = Color::Black;
+                        let b1 = Ptr::new_beef(&mut *mul, Color::Black, b0, right);
                         b0.parent = Some(b1);
                         right.parent = Some(b1);
                         leaves[i] = b1;
                     } else {
                         let mut left = leaves[2 * i];
                         let mut right = leaves[2 * i + 1];
-                        let mut b = feed_beef(left, right);
-                        b.color = Color::Black;
+                        let b = Ptr::new_beef(&mut *mul, Color::Black, left, right);
                         left.parent = Some(b);
                         right.parent = Some(b);
                         leaves[i] = b;
@@ -464,7 +455,7 @@ impl<C: Callback> Tree<C> {
         if leaves.is_empty() {
             return Self::new();
         }
-        let (root, black_height) = from_slice_of_leaves(leaves, &mut feed_beef);
+        let (root, black_height) = from_slice_of_leaves(leaves, &mut mul);
         Self {
             root: Some(root),
             black_height,
@@ -520,8 +511,9 @@ impl<C: Callback> Ptr<C> {
         }))))
     }
 
-    pub fn new_red_beef(
+    pub fn new_beef(
         mul: impl FnOnce(&C::Data, &C::Data) -> C::Data,
+        color: Color,
         left: Self,
         right: Self,
     ) -> Self {
@@ -530,7 +522,7 @@ impl<C: Callback> Ptr<C> {
         // It will delete the information that is needed to transplant the new node.
         Self(NonNull::from(Box::leak(Box::new(Node {
             parent: None,
-            color: Color::Red,
+            color,
             left: Some(left),
             right: Some(right),
             data,
@@ -730,10 +722,9 @@ pub mod test_util {
                 0 => {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p01 = Ptr::new_red_beef(&mut *mul, p0, p1);
+                    let p01 = Ptr::new_beef(&mut *mul, Color::Black, p0, p1);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
-                    p01.color = Color::Black;
                     p01
                 }
                 // Left-leaning 3-node
@@ -741,13 +732,12 @@ pub mod test_util {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p01 = Ptr::new_red_beef(&mut *mul, p0, p1);
-                    let mut p012 = Ptr::new_red_beef(&mut *mul, p01, p2);
+                    let mut p01 = Ptr::new_beef(&mut *mul, Color::Red, p0, p1);
+                    let p012 = Ptr::new_beef(&mut *mul, Color::Black, p01, p2);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
                     p2.parent = Some(p012);
                     p01.parent = Some(p012);
-                    p012.color = Color::Black;
                     p012
                 }
                 // Right-leaning 3-node
@@ -755,13 +745,12 @@ pub mod test_util {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p12 = Ptr::new_red_beef(&mut *mul, p1, p2);
-                    let mut p012 = Ptr::new_red_beef(&mut *mul, p0, p12);
+                    let mut p12 = Ptr::new_beef(&mut *mul, Color::Red, p1, p2);
+                    let p012 = Ptr::new_beef(&mut *mul, Color::Black, p0, p12);
                     p0.parent = Some(p012);
                     p1.parent = Some(p12);
                     p2.parent = Some(p12);
                     p12.parent = Some(p012);
-                    p012.color = Color::Black;
                     p012
                 }
                 // 4-node
@@ -770,16 +759,15 @@ pub mod test_util {
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p3 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p01 = Ptr::new_red_beef(&mut *mul, p0, p1);
-                    let mut p23 = Ptr::new_red_beef(&mut *mul, p2, p3);
-                    let mut p0123 = Ptr::new_red_beef(&mut *mul, p01, p23);
+                    let mut p01 = Ptr::new_beef(&mut *mul, Color::Red, p0, p1);
+                    let mut p23 = Ptr::new_beef(&mut *mul, Color::Red, p2, p3);
+                    let p0123 = Ptr::new_beef(&mut *mul, Color::Black, p01, p23);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
                     p2.parent = Some(p23);
                     p3.parent = Some(p23);
                     p01.parent = Some(p0123);
                     p23.parent = Some(p0123);
-                    p0123.color = Color::Black;
                     p0123
                 }
                 _ => unreachable!(),
