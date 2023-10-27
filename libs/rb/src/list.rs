@@ -1,10 +1,7 @@
 #![allow(dead_code)]
-use crate::tree::BeefPtr;
-use crate::tree::BeefSteak;
 use crate::tree::Callback;
-use crate::tree::LeafPtr;
+use crate::tree::Node;
 use crate::tree::Ptr;
-use crate::tree::Steak;
 use crate::tree::Tree;
 use crate::Op;
 use std::marker::PhantomData;
@@ -22,7 +19,7 @@ impl<O: Op> List<O> {
     /// Returns the length of the list.
     pub fn len(&self) -> usize {
         match self.tree.root() {
-            Some(p) => p.len(),
+            Some(p) => p.data.len,
             None => 0,
         }
     }
@@ -38,9 +35,9 @@ impl<O: Op> List<O> {
     /// Panics if `range` is out of bounds.
     ///
     /// TODO: Move the pointer-based implementation to `tree.rs`.
-    pub fn fold<B: RangeBounds<usize>>(&self, range: B) -> Option<O::Acc>
+    pub fn fold<B: RangeBounds<usize>>(&self, range: B) -> Option<O::Value>
     where
-        O::Acc: Clone,
+        O::Value: Clone,
     {
         let (mut start, end) = into_range(range, self.len());
         assert!(start <= end && end <= self.len(), "index out of bounds");
@@ -51,19 +48,19 @@ impl<O: Op> List<O> {
         // - `start` is the index of `x`.
         // - `start < end`.
         // - `result = fold(original_start..=start)`.
-        let mut x = self.get_leaf_ptr(start).unwrap().upcast();
-        let mut result = x.acc().clone();
+        let mut x = self.get_leaf_ptr(start).unwrap();
+        let mut result = x.data.value.clone();
         start += 1;
         if start == end {
             return Some(result);
         }
         loop {
             let p = x.parent.unwrap();
-            if p.left() == x {
-                let s = p.right();
-                if start + s.len() <= end {
-                    result = O::mul(&result, s.acc());
-                    start += s.len();
+            if p.left.unwrap() == x {
+                let s = p.right.unwrap();
+                if start + s.data.len <= end {
+                    result = O::mul(&result, &s.data.value);
+                    start += s.data.len;
                     if start == end {
                         return Some(result);
                     }
@@ -72,7 +69,7 @@ impl<O: Op> List<O> {
                     break;
                 }
             }
-            x = p.upcast();
+            x = p;
         }
 
         // Phase 2: Go down.
@@ -80,18 +77,18 @@ impl<O: Op> List<O> {
         // - `start` is the index of `x`.
         // - `start < end`.
         // - `result = fold(original_start..start)`.
-        let mut x = x.as_beef_ptr();
+        let mut x = x;
         loop {
-            let left = x.left();
-            if start + left.len() <= end {
-                result = O::mul(&result, left.acc());
-                start += left.len();
+            let left = x.left.unwrap();
+            if start + left.data.len <= end {
+                result = O::mul(&result, &left.data.value);
+                start += left.data.len;
                 if start == end {
                     return Some(result);
                 }
-                x = x.right().as_beef_ptr();
+                x = x.right.unwrap();
             } else {
-                x = x.left().as_beef_ptr();
+                x = x.left.unwrap();
             }
         }
     }
@@ -100,56 +97,36 @@ impl<O: Op> List<O> {
     ///
     /// # Panics
     ///
-    /// Panics if `i > self.len()`.
+    /// Panics if `i > self.data.len`.
     pub fn insert(&mut self, i: usize, x: O::Value) {
         assert!(i <= self.len(), "index out of bounds");
         let position = self.get_leaf_ptr(i).map(|p| (p, i < self.len()));
-        let leaf = LeafPtr::new(LeafData::new(x));
-        self.tree.insert(position, leaf, |left, right| {
-            BeefPtr::new(
-                BeefData {
-                    len: 0,
-                    acc: O::mul(&left.data().acc, &right.data().acc),
-                    lazy: O::identity(),
-                },
-                left.upcast(),
-                right.upcast(),
-            )
-        });
+        let leaf = Ptr::new_leaf(Data::new(x));
+        self.tree.insert(position, leaf, Data::mul);
     }
 
     /// Append all the elements in `other`, leaving `other` empty.
     pub fn append(&mut self, other: &mut Self) {
         let other = &mut other.tree;
-        self.tree.append(other, |left, right| {
-            BeefPtr::new(
-                BeefData {
-                    len: left.len() + right.len(),
-                    acc: O::mul(left.acc(), right.acc()),
-                    lazy: O::identity(),
-                },
-                left,
-                right,
-            )
-        });
+        self.tree.append(other, Data::mul);
     }
 
     /// Remove the `i`th value and return it.
     ///
     /// # Panics
     ///
-    /// Panics if `i >= self.len()`.
+    /// Panics if `i >= self.data.len`.
     pub fn remove(&mut self, i: usize) -> O::Value {
         assert!(i < self.len(), "index out of bounds");
         let p = self.get_leaf_ptr(i).unwrap();
-        self.tree.remove(p, BeefPtr::free);
+        self.tree.remove(p);
         p.free().value
     }
 
-    /// Returns the `i`th leaf pointer if `i < self.len()`, and the rightmost leaf pointer otherwise or `None` if the list is empty.
-    fn get_leaf_ptr(&self, mut i: usize) -> Option<LeafPtr<ListCallback<O>>> {
+    /// Returns the `i`th leaf pointer if `i < self.data.len`, and the rightmost leaf pointer otherwise or `None` if the list is empty.
+    fn get_leaf_ptr(&self, mut i: usize) -> Option<Ptr<ListCallback<O>>> {
         self.tree.binary_search(|b| {
-            let left_len = b.left().len();
+            let left_len = b.left.unwrap().data.len;
             if i < left_len {
                 true
             } else {
@@ -186,90 +163,60 @@ impl<O: Op> FromIterator<O::Value> for List<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let leaves = iter
             .into_iter()
-            .map(|value| LeafPtr::new(LeafData::new(value)))
+            .map(|value| Ptr::new_leaf(Data::new(value)))
             .collect::<Vec<_>>();
         List {
             tree: Tree::from_slice_of_leaves(&leaves, |left, right| {
-                BeefPtr::new(
-                    BeefData {
-                        len: left.len() + right.len(),
-                        acc: O::mul(left.acc(), right.acc()),
-                        lazy: O::identity(),
-                    },
-                    left,
-                    right,
-                )
+                Ptr::new_red_beef(Data::mul, left, right)
             }),
         }
     }
 }
 
-struct LeafData<O: Op> {
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Data<O: Op> {
     len: usize,
     value: O::Value,
-    acc: O::Acc,
+    lazy: O::Lazy,
 }
-impl<O: Op> LeafData<O> {
+impl<O: Op> Data<O> {
     fn new(value: O::Value) -> Self {
         Self {
             len: 1,
-            acc: O::to_acc(&value),
             value,
+            lazy: O::identity(),
         }
     }
-}
 
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct BeefData<O: Op> {
-    len: usize,
-    acc: O::Acc,
-    lazy: O::Lazy,
+    fn mul(left: &Self, right: &Self) -> Self {
+        Self {
+            len: left.len + right.len,
+            value: O::mul(&left.value, &right.value),
+            lazy: O::identity(),
+        }
+    }
 }
 
 struct ListCallback<O> {
     marker: PhantomData<O>,
 }
 impl<O: Op> Callback for ListCallback<O> {
-    type BeefData = BeefData<O>;
-    type LeafData = LeafData<O>;
+    type Data = Data<O>;
 
-    fn update(x: &mut BeefSteak<Self>) {
+    fn update(x: &mut Node<Self>) {
         debug_assert!(O::is_identity(&x.data.lazy));
-        x.data.len = x.left.len() + x.right.len();
-        x.data.acc = O::mul(x.left.acc(), x.right.acc());
+        x.data.len = x.left.unwrap().data.len + x.right.unwrap().data.len;
+        x.data.value = O::mul(&x.left.unwrap().data.value, &x.right.unwrap().data.value);
     }
 
-    fn push(x: &mut BeefSteak<Self>) {
+    fn push(x: &mut Node<Self>) {
         if !O::is_identity(&x.data.lazy) {
             let lazy = O::swap_with_identity(&mut x.data.lazy);
-            x.left.apply(&lazy);
-            x.right.apply(&lazy);
-        }
-    }
-}
-
-impl<O: Op> Ptr<ListCallback<O>> {
-    fn len(self) -> usize {
-        match &self.steak {
-            Steak::Leaf(x) => x.len,
-            Steak::Beef(x) => x.data.len,
-        }
-    }
-
-    fn acc(&self) -> &O::Acc {
-        match &self.steak {
-            Steak::Leaf(x) => &x.acc,
-            Steak::Beef(x) => &x.data.acc,
-        }
-    }
-
-    fn apply(&mut self, lazy: &O::Lazy) {
-        match &mut self.steak {
-            Steak::Leaf(x) => {
-                O::apply_on_acc(&mut x.acc, lazy);
-                O::apply_on_value(&mut x.value, lazy);
+            O::apply(&mut x.data.value, &lazy);
+            if x.is_beef() {
+                O::compose(&mut x.left.unwrap().data.lazy, &lazy);
+                O::compose(&mut x.right.unwrap().data.lazy, &lazy);
             }
-            Steak::Beef(x) => O::apply_on_acc(&mut x.data.acc, lazy),
         }
     }
 }
@@ -313,36 +260,31 @@ mod tests {
     #[derive(Clone, Copy, Debug, PartialEq)]
     enum RollingHash {}
     impl Op for RollingHash {
-        type Acc = HashnBase;
         type Lazy = ();
-        type Value = u64;
+        type Value = HashnBase;
 
-        fn mul(left: &Self::Acc, right: &Self::Acc) -> Self::Acc { left.mul(right) }
-
-        fn to_acc(value: &Self::Value) -> Self::Acc { HashnBase::from_value(*value) }
+        fn mul(left: &Self::Value, right: &Self::Value) -> Self::Value { left.mul(right) }
 
         fn compose(_: &mut Self::Lazy, _: &Self::Lazy) {}
 
         fn identity() -> Self::Lazy {}
 
-        fn apply_on_acc(_: &mut Self::Acc, _: &Self::Lazy) {}
-
-        fn apply_on_value(_: &mut Self::Value, _: &Self::Lazy) {}
+        fn apply(_: &mut Self::Value, _: &Self::Lazy) {}
     }
     type C = ListCallback<RollingHash>;
 
     fn random_list(rng: &mut StdRng, black_height: u8) -> List<RollingHash> {
-        fn new_value(rng: &mut StdRng) -> LeafData<RollingHash> {
-            LeafData::new(rng.gen_range(0..20))
+        fn value(rng: &mut StdRng) -> Data<RollingHash> {
+            Data::new(HashnBase::from_value(rng.gen_range(0..20)))
         }
-        fn new_beef(left: Ptr<C>, right: Ptr<C>) -> BeefData<RollingHash> {
-            BeefData {
-                len: left.len() + right.len(),
-                acc: HashnBase::mul(left.acc(), right.acc()),
+        fn mul(left: Ptr<C>, right: Ptr<C>) -> Data<RollingHash> {
+            Data {
+                len: left.data.len + right.data.len,
+                value: HashnBase::mul(&left.data.value, &right.data.value),
                 lazy: (),
             }
         }
-        let tree = test_util::random_tree(rng, black_height, new_value, new_beef);
+        let tree = test_util::random_tree(rng, black_height, value, Data::mul);
         test_util::validate(&tree);
         List { tree }
     }
@@ -355,12 +297,11 @@ mod tests {
         where
             O::Value: Copy,
         {
-            match &p.steak {
-                Steak::Leaf(l) => result.push(l.value),
-                Steak::Beef(b) => {
-                    to_vec(b.left, result);
-                    to_vec(b.right, result);
-                }
+            if p.is_leaf() {
+                result.push(p.data.value);
+            } else {
+                to_vec(p.left.unwrap(), result);
+                to_vec(p.right.unwrap(), result);
             }
         }
         let mut result = Vec::new();
@@ -385,16 +326,19 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        fn height(ptr: Ptr<C>) -> u8 {
-            match &ptr.steak {
-                Steak::Leaf(_) => 1,
-                Steak::Beef(b) => height(b.left).max(height(b.right)) + 1,
+        fn height(p: Ptr<C>) -> u8 {
+            if p.is_leaf() {
+                1
+            } else {
+                height(p.left.unwrap()).max(height(p.right.unwrap())) + 1
             }
         }
         for n in 0..100 {
-            let list = (0..n).collect::<List<RollingHash>>();
+            let list = (0..n)
+                .map(HashnBase::from_value)
+                .collect::<List<RollingHash>>();
             validate(&list.tree);
-            let vec = (0..n).collect::<Vec<_>>();
+            let vec = (0..n).map(HashnBase::from_value).collect::<Vec<_>>();
             assert_eq!(to_vec(&list), vec);
             let height = list.tree.root().map_or(0, height);
             let expected_height = if n == 0 { 0 } else { (2 * n - 1).ilog2() as u8 + 1 };
@@ -405,7 +349,7 @@ mod tests {
                 n,
                 expected_height,
                 height,
-                test_util::format(&list.tree, |p| format!("{:?}", p)),
+                test_util::format(&list.tree),
             );
         }
     }
@@ -420,11 +364,10 @@ mod tests {
             for _ in 0..200 {
                 let (start, end) = choose2_with_reputation(&mut rng, 0..=list.len());
                 let result = list.fold(start..end);
-                let expected = vec[start..end].iter().fold(None::<HashnBase>, |acc, &x| {
-                    let x = HashnBase::from_value(x);
-                    Some(match acc {
+                let expected = vec[start..end].iter().fold(None::<HashnBase>, |value, &x| {
+                    Some(match value {
                         None => x,
-                        Some(acc) => HashnBase::mul(&acc, &x),
+                        Some(value) => HashnBase::mul(&value, &x),
                     })
                 });
                 assert_eq!(result, expected);
@@ -446,7 +389,8 @@ mod tests {
                     // Insert
                     x if vec.len() <= x => {
                         let i = rng.gen_range(0..=vec.len());
-                        let value = rng.gen_range(0..20);
+                        let value = HashnBase::from_value(rng.gen_range(0..20));
+                        eprintln!("insert {} at {}", value.hash, i);
                         list.insert(i, value);
                         vec.insert(i, value);
                     }
@@ -456,6 +400,7 @@ mod tests {
                             continue;
                         }
                         let i = rng.gen_range(0..vec.len());
+                        eprintln!("remove {} at {}", vec[i].hash, i);
                         let result = list.remove(i);
                         let expected = vec.remove(i);
                         assert_eq!(result, expected);
@@ -464,6 +409,7 @@ mod tests {
                 }
                 assert_eq!(&to_vec(&list), &vec);
                 test_util::validate(&list.tree);
+                eprintln!("{}", test_util::format(&list.tree));
             }
         }
     }

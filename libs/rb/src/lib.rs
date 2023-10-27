@@ -14,22 +14,14 @@ pub use list::List;
 pub trait Op {
     /// The type of the value stored in the leaf nodes.
     type Value;
-    /// The type of the value stored in the internal nodes.
-    type Acc;
     /// The type of the lazy action stored in the internal nodes.
     type Lazy: PartialEq;
 
-    /// Convert a `Value` to an `Acc`.
-    fn to_acc(_: &Self::Value) -> Self::Acc;
-
-    /// Multiply two `Acc`s.
-    fn mul(_: &Self::Acc, _: &Self::Acc) -> Self::Acc;
+    /// Multiply two `Value`s.
+    fn mul(_: &Self::Value, _: &Self::Value) -> Self::Value;
 
     /// Apply a `Lazy` action to a `Value`.
-    fn apply_on_value(_: &mut Self::Value, _: &Self::Lazy);
-
-    /// Apply a `Lazy` action to an `Acc`.
-    fn apply_on_acc(_: &mut Self::Acc, _: &Self::Lazy);
+    fn apply(_: &mut Self::Value, _: &Self::Lazy);
 
     /// Compose two `Lazy` actions.
     fn compose(_: &mut Self::Lazy, _: &Self::Lazy);
