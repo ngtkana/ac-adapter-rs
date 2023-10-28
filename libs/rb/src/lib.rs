@@ -4,11 +4,11 @@
 /// The core implementation of a red-black tree.
 mod tree;
 
-/// A list based on a red-black tree.
-mod list;
+/// A segtree based on a red-black tree.
+mod seg;
 
 /// A list based on a red-black tree.
-pub use list::List;
+pub use seg::Seg;
 
 /// A trait for algebraic operations.
 pub trait Op {
