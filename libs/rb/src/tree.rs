@@ -53,9 +53,9 @@ impl<C: Callback> Tree<C> {
 
         // Join `leaf` and `s` with `b`, and transplant `b` at the original position of `s`.
         let b = if result {
-            Ptr::new_beef(mul, Color::Red, new, s)
+            Ptr::join_new(mul, Color::Red, new, s)
         } else {
-            Ptr::new_beef(mul, Color::Red, s, new)
+            Ptr::join_new(mul, Color::Red, s, new)
         };
         self.transplant(s, b);
         s.parent = Some(b);
@@ -73,21 +73,88 @@ impl<C: Callback> Tree<C> {
         if other.is_empty() {
             return;
         };
-        let (root, black_height) = merge(
+        *self = merge(
             mem::take(self),
             mem::take(other),
             |color, mut left, mut right| {
-                let p = Ptr::new_beef(mul, color, left, right);
+                let p = Ptr::join_new(mul, color, left, right);
                 left.parent = Some(p);
                 right.parent = Some(p);
                 p
             },
         );
-        self.root = Some(root);
-        self.black_height = black_height;
     }
 
-    /// Remove a leaf node.
+    /// Split at the given position.
+    ///
+    /// `position` is not freed or destructed in this function, so you need to free it manually.
+    ///
+    /// # Precondition
+    ///
+    /// - `position` is not a leaf node.
+    /// - `black_height` is the black-height at *the child of* `at`.
+    pub fn split_off(
+        &mut self,
+        at: Ptr<C>,
+        black_height: u8,
+        mut mul: impl FnMut(&C::Data, &C::Data) -> C::Data,
+    ) -> Self {
+        let mut x = at;
+        let mut h = black_height;
+        let mut left = Tree {
+            root: Some(x.left.take().unwrap()),
+            black_height: h,
+        };
+        left.fix_root();
+        let mut right = Tree {
+            root: Some(x.right.take().unwrap()),
+            black_height: h,
+        };
+        right.fix_root();
+        h += u8::from(x.color == Color::Black);
+        // Loop invariant: `black_height` is the black-height at `p`.
+        // NOTE: `x` behaves as a marker to remember the original position of `join(left, x, right)`.
+        while let Some(p) = x.parent {
+            h += u8::from(p.color == Color::Black);
+            // Connect `p.parent` and `x` to remember the original position of `join(left, x, right)`.
+            if let Some(mut pp) = p.parent {
+                if pp.left.unwrap() == p {
+                    *pp.left.as_mut().unwrap() = x;
+                } else {
+                    *pp.right.as_mut().unwrap() = x;
+                }
+            }
+            x.parent = p.parent;
+            // Join `{left,right}` and `s` with `p`.
+            if p.left.unwrap() == x {
+                let mut s = Tree {
+                    root: Some(p.right.unwrap()),
+                    black_height: h - u8::from(p.color == Color::Black),
+                };
+                s.fix_root();
+                right = merge(right, s, |color, left, right| {
+                    Ptr::join(p, &mut mul, color, left, right)
+                });
+            } else {
+                let mut s = Tree {
+                    root: Some(p.left.unwrap()),
+                    black_height: h - u8::from(p.color == Color::Black),
+                };
+                s.fix_root();
+                left = merge(s, left, |color, left, right| {
+                    Ptr::join(p, &mut mul, color, left, right)
+                });
+            }
+        }
+        left.root.unwrap().parent = None;
+        right.root.unwrap().parent = None;
+        *self = left;
+        right
+    }
+
+    /// Remove a leaf node `position`.
+    ///
+    /// `position` is not freed or destructed in this function.
     pub fn remove(&mut self, mut position: Ptr<C>) {
         // Handle the case where the tree has only one node.
         let Some(p) = position.parent else {
@@ -109,8 +176,18 @@ impl<C: Callback> Tree<C> {
         // Remove `p` from the tree.
         position.parent = None;
 
-        // Catch the no longer needed beef.
+        // Catch the no longer needed "join" node.
         p.free();
+    }
+
+    /// It is only for `split_off`
+    fn fix_root(&mut self) {
+        let mut root = self.root.unwrap();
+        root.parent = None;
+        if root.color == Color::Red {
+            root.color = Color::Black;
+            self.black_height += 1;
+        }
     }
 
     /// Fix the red-red violation.
@@ -376,17 +453,17 @@ impl<C: Callback> Tree<C> {
                         let mut left = leaves[2 * i];
                         let mut center = leaves[2 * i + 1];
                         let mut right = leaves[2 * i + 2];
-                        let mut b0 = Ptr::new_beef(&mut *mul, Color::Red, left, center);
+                        let mut b0 = Ptr::join_new(&mut *mul, Color::Red, left, center);
                         left.parent = Some(b0);
                         center.parent = Some(b0);
-                        let b1 = Ptr::new_beef(&mut *mul, Color::Black, b0, right);
+                        let b1 = Ptr::join_new(&mut *mul, Color::Black, b0, right);
                         b0.parent = Some(b1);
                         right.parent = Some(b1);
                         leaves[i] = b1;
                     } else {
                         let mut left = leaves[2 * i];
                         let mut right = leaves[2 * i + 1];
-                        let b = Ptr::new_beef(&mut *mul, Color::Black, left, right);
+                        let b = Ptr::join_new(&mut *mul, Color::Black, left, right);
                         left.parent = Some(b);
                         right.parent = Some(b);
                         leaves[i] = b;
@@ -419,13 +496,18 @@ fn merge<C: Callback>(
     mut left: Tree<C>,
     mut right: Tree<C>,
     join: impl FnOnce(Color, Ptr<C>, Ptr<C>) -> Ptr<C>,
-) -> (Ptr<C>, u8) {
+) -> Tree<C> {
     let l = left.root.unwrap();
     let r = right.root.unwrap();
+    debug_assert_eq!(l.color, Color::Black);
+    debug_assert_eq!(r.color, Color::Black);
     match left.black_height.cmp(&right.black_height) {
         // Case 1: Two trees have the same black height.
         // Join the roots.
-        Ordering::Equal => (join(Color::Black, l, r), left.black_height + 1),
+        Ordering::Equal => Tree {
+            root: Some(join(Color::Black, l, r)),
+            black_height: left.black_height + 1,
+        },
         // Case 2: The l tree has a smaller black height.
         // Slide down along the l spine of the r tree, join, and fix the red-red violation.
         Ordering::Less => {
@@ -445,7 +527,7 @@ fn merge<C: Callback>(
             *p.left.as_mut().unwrap() = b;
             b.parent = Some(p);
             right.fix_red(b);
-            (right.root.unwrap(), right.black_height)
+            right
         }
         // Case 3: The r tree has a smaller black height.
         // Slide down along the r spine of the l tree, join, and fix the red-red violation.
@@ -466,7 +548,7 @@ fn merge<C: Callback>(
             *p.right.as_mut().unwrap() = b;
             b.parent = Some(p);
             left.fix_red(b);
-            (left.root.unwrap(), left.black_height)
+            left
         }
     }
 }
@@ -484,10 +566,8 @@ impl<C: Callback> Node<C> {
         self.left.is_none()
     }
 
-    pub fn is_beef(&self) -> bool { !self.is_leaf() }
-
     fn update(&mut self) {
-        debug_assert!(self.is_beef());
+        debug_assert!(!self.is_leaf());
         C::update(self);
     }
 
@@ -511,15 +591,15 @@ impl<C: Callback> Ptr<C> {
         }))))
     }
 
-    pub fn new_beef(
+    /// NOTE: do not overwrite `{left, right}.parent`.
+    /// It will delete the information that is needed to transplant the new node.
+    pub fn join_new(
         mul: impl FnOnce(&C::Data, &C::Data) -> C::Data,
         color: Color,
         left: Self,
         right: Self,
     ) -> Self {
         let data = mul(&left.data, &right.data);
-        // NOTE: do not update `{left, right}.parent`.
-        // It will delete the information that is needed to transplant the new node.
         Self(NonNull::from(Box::leak(Box::new(Node {
             parent: None,
             color,
@@ -529,13 +609,33 @@ impl<C: Callback> Ptr<C> {
         }))))
     }
 
+    /// NOTE: It overwrites `{left, right, p}.parent`.
+    /// This information is not needed for all the current use cases.
+    pub fn join(
+        mut p: Ptr<C>,
+        mul: impl FnOnce(&C::Data, &C::Data) -> C::Data,
+        color: Color,
+        mut left: Self,
+        mut right: Self,
+    ) -> Self {
+        p.data = mul(&left.data, &right.data);
+        p.color = color;
+        p.left = Some(left);
+        p.right = Some(right);
+        left.parent = Some(p);
+        right.parent = Some(p);
+        p.parent = None;
+        p
+    }
+
     pub fn free(self) -> C::Data { unsafe { Box::from_raw(self.0.as_ptr()).data } }
 
     /// Binary search for a leaf node.
     ///
     /// # About `f`
     ///
-    /// If `f` returns `true`, the search continues to the left child because this `beef` is too big.
+    /// - `true`: too small, go to the right.
+    /// - `false`: too large, go to the left.
     pub fn binary_search_for_leaf<F: FnMut(Ptr<C>) -> bool>(self, mut f: F) -> Self {
         let mut x = self;
         while !x.is_leaf() {
@@ -623,6 +723,88 @@ pub mod test_util {
         result
     }
 
+    pub fn validate_except_for_data<C: Callback>(tree: &Tree<C>) {
+        fn validate_except_for_data<C: Callback>(p: Ptr<C>) -> Result<u8, String> {
+            if p.is_leaf() {
+                (p.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| format!("Red leaf node: {:?}", p))?;
+                Ok(1)
+            } else {
+                let left = p.left.unwrap();
+                let right = p.right.unwrap();
+                let left_height = validate_except_for_data(left)?;
+                let right_height = validate_except_for_data(right)?;
+                // Check the left parent pointers.
+                (left.parent == Some(p)).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The parent of the left child is self:\n  `p`: {:?}\n  `left`: {:?}\n  \
+                         `left.parent`: {:?}",
+                        p, left, left.parent
+                    )
+                })?;
+                // Check the right parent pointers.
+                (right.parent == Some(p)).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The parent of the right child is self:\n  `p`: {:?}\n  `right`: {:?}\n  \
+                         `right.parent`: {:?}",
+                        p, right, right.parent
+                    )
+                })?;
+                // Check the black height.
+                (left_height == right_height).then_some(()).ok_or_else(|| {
+                    format!(
+                        "Black height mismatch:\n  left: {:?} (black height: {})\n right: {:?} \
+                         (black height: {})",
+                        left, left_height, right, right_height
+                    )
+                })?;
+                // Check the red-red violation.
+                (p.color == Color::Black || left.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        format!(
+                            "Two consecutive red nodes:\nparent: {:?}\n child: {:?}",
+                            p, left
+                        )
+                    })?;
+                (p.color == Color::Black || right.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| {
+                        format!(
+                            "Two consecutive red nodes:\nparent: {:?}\n child: {:?}",
+                            p, right
+                        )
+                    })?;
+                Ok(left_height + u8::from(p.color == Color::Black))
+            }
+        }
+        || -> Result<(), String> {
+            if let Some(root) = tree.root {
+                validate_except_for_data(root)?;
+                (root.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| format!("The root is not black: {}", format(tree)))?;
+                (root.parent.is_none()).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The parent of the root {:?} is not None: {:?}",
+                        root,
+                        root.parent.unwrap(),
+                    )
+                })?;
+            } else {
+                (tree.black_height == 0).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The black height is not zero, but the tree is empty: {}",
+                        format(tree)
+                    )
+                })?;
+            }
+            Ok(())
+        }()
+        .unwrap_or_else(|err| panic!("validation error: {}\nin a tree {}.", err, format(tree),));
+    }
+
     pub fn validate<C: Callback>(tree: &Tree<C>)
     where
         C::Data: Clone + PartialEq + fmt::Debug,
@@ -693,7 +875,7 @@ pub mod test_util {
                 C::update(&mut copied_node);
                 (p.data == copied_node.data).then_some(()).ok_or_else(|| {
                     format!(
-                        "The beef data is not fully-updated at {:?}:\n    Cached: {:?} \n  \
+                        "The intenal-node data is not fully-updated at {:?}:\n    Cached: {:?} \n  \
                          Expected: {:?}",
                         p, p.data, copied_node.data
                     )
@@ -701,11 +883,29 @@ pub mod test_util {
                 Ok(left_height + u8::from(p.color == Color::Black))
             }
         }
-        if let Some(root) = tree.root {
-            validate(root).unwrap_or_else(|err| {
-                panic!("validation error: {}\nin a tree {}.", err, format(tree),)
-            });
-        }
+        || -> Result<(), String> {
+            if let Some(root) = tree.root {
+                validate(root)?;
+                (root.color == Color::Black)
+                    .then_some(())
+                    .ok_or_else(|| format!("The root is not black: {}", format(tree)))?;
+                (root.parent.is_none()).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The parent of the root is not None: {:?}",
+                        root.parent.unwrap()
+                    )
+                })?;
+            } else {
+                (tree.black_height == 0).then_some(()).ok_or_else(|| {
+                    format!(
+                        "The black height is not zero, but the tree is empty: {}",
+                        format(tree)
+                    )
+                })?;
+            }
+            Ok(())
+        }()
+        .unwrap_or_else(|err| panic!("validation error: {}\nin a tree {}.", err, format(tree),));
     }
 
     pub fn random_tree<C: Callback>(
@@ -731,7 +931,7 @@ pub mod test_util {
                 0 => {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let p01 = Ptr::new_beef(&mut *mul, Color::Black, p0, p1);
+                    let p01 = Ptr::join_new(&mut *mul, Color::Black, p0, p1);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
                     p01
@@ -741,8 +941,8 @@ pub mod test_util {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p01 = Ptr::new_beef(&mut *mul, Color::Red, p0, p1);
-                    let p012 = Ptr::new_beef(&mut *mul, Color::Black, p01, p2);
+                    let mut p01 = Ptr::join_new(&mut *mul, Color::Red, p0, p1);
+                    let p012 = Ptr::join_new(&mut *mul, Color::Black, p01, p2);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
                     p2.parent = Some(p012);
@@ -754,8 +954,8 @@ pub mod test_util {
                     let mut p0 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p12 = Ptr::new_beef(&mut *mul, Color::Red, p1, p2);
-                    let p012 = Ptr::new_beef(&mut *mul, Color::Black, p0, p12);
+                    let mut p12 = Ptr::join_new(&mut *mul, Color::Red, p1, p2);
+                    let p012 = Ptr::join_new(&mut *mul, Color::Black, p0, p12);
                     p0.parent = Some(p012);
                     p1.parent = Some(p12);
                     p2.parent = Some(p12);
@@ -768,9 +968,9 @@ pub mod test_util {
                     let mut p1 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p2 = random_tree(rng, black_height - 1, new_value, &mut *mul);
                     let mut p3 = random_tree(rng, black_height - 1, new_value, &mut *mul);
-                    let mut p01 = Ptr::new_beef(&mut *mul, Color::Red, p0, p1);
-                    let mut p23 = Ptr::new_beef(&mut *mul, Color::Red, p2, p3);
-                    let p0123 = Ptr::new_beef(&mut *mul, Color::Black, p01, p23);
+                    let mut p01 = Ptr::join_new(&mut *mul, Color::Red, p0, p1);
+                    let mut p23 = Ptr::join_new(&mut *mul, Color::Red, p2, p3);
+                    let p0123 = Ptr::join_new(&mut *mul, Color::Black, p01, p23);
                     p0.parent = Some(p01);
                     p1.parent = Some(p01);
                     p2.parent = Some(p23);
