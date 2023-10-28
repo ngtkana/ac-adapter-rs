@@ -32,60 +32,6 @@ impl<C: Callback> Tree<C> {
 
     fn is_empty(&self) -> bool { self.root.is_none() }
 
-    pub fn max_right<F>(&self, mut x: Ptr<C>, mut f: F)
-    where
-        F: FnMut(&C::Data) -> bool,
-    {
-        // Phase 1: Go up.
-        loop {
-            let Some(p) = x.parent else {
-                return;
-            };
-            if p.left.unwrap() == x {
-                let s = p.right.unwrap();
-                if !f(&s.data) {
-                    x = s;
-                    break;
-                }
-            }
-            x = p;
-        }
-
-        // Phase 2: Go down.
-        while !x.is_leaf() {
-            let left = x.left.unwrap();
-            let right = x.right.unwrap();
-            x = if f(&left.data) { right } else { left };
-        }
-    }
-
-    pub fn min_left<F>(&self, mut x: Ptr<C>, mut f: F)
-    where
-        F: FnMut(&C::Data) -> bool,
-    {
-        // Phase 1: Go up.
-        loop {
-            let Some(p) = x.parent else {
-                return;
-            };
-            if p.right.unwrap() == x {
-                let s = p.left.unwrap();
-                if !f(&s.data) {
-                    x = s;
-                    break;
-                }
-            }
-            x = p;
-        }
-
-        // Phase 2: Go down.
-        while !x.is_leaf() {
-            let left = x.left.unwrap();
-            let right = x.right.unwrap();
-            x = if f(&right.data) { left } else { right };
-        }
-    }
-
     /// Insert a leaf node.
     ///
     /// # Abount `position`
@@ -645,6 +591,8 @@ impl<C: Callback> Ptr<C> {
         }))))
     }
 
+    pub fn as_longlife_ref<'a>(self) -> &'a Node<C> { unsafe { self.0.as_ref() } }
+
     /// NOTE: do not overwrite `{left, right}.parent`.
     /// It will delete the information that is needed to transplant the new node.
     pub fn join_new(
@@ -696,6 +644,74 @@ impl<C: Callback> Ptr<C> {
             x = if f(x) { x.left.unwrap() } else { x.right.unwrap() }
         }
         x
+    }
+
+    /// Start with the singleton interval of `self`, and extend to the right as long as `f` is true.
+    ///
+    /// The return value is the first leaf that `f` is false.
+    /// If `f` is true even if the interval is extended to the rightmost, return `None`.
+    pub fn max_right<F>(self, mut f: F) -> Option<Self>
+    where
+        F: FnMut(&C::Data) -> bool,
+    {
+        let mut x = self;
+
+        // Phase 1: Go up.
+        loop {
+            let Some(p) = x.parent else {
+                return None;
+            };
+            if p.left.unwrap() == x {
+                let s = p.right.unwrap();
+                if !f(&s.data) {
+                    x = s;
+                    break;
+                }
+            }
+            x = p;
+        }
+
+        // Phase 2: Go down.
+        while !x.is_leaf() {
+            let left = x.left.unwrap();
+            let right = x.right.unwrap();
+            x = if f(&left.data) { right } else { left };
+        }
+        Some(x)
+    }
+
+    /// Start with the singleton interval of `self`, and extend to the left as long as `f` is true.
+    ///
+    /// The return value is the first leaf that `f` is false.
+    /// If `f` is true even if the interval is extended to the leftmost, return `None`.
+    pub fn min_left<F>(self, mut f: F) -> Option<Self>
+    where
+        F: FnMut(&C::Data) -> bool,
+    {
+        let mut x = self;
+
+        // Phase 1: Go up.
+        loop {
+            let Some(p) = x.parent else {
+                return None;
+            };
+            if p.right.unwrap() == x {
+                let s = p.left.unwrap();
+                if !f(&s.data) {
+                    x = s;
+                    break;
+                }
+            }
+            x = p;
+        }
+
+        // Phase 2: Go down.
+        while !x.is_leaf() {
+            let left = x.left.unwrap();
+            let right = x.right.unwrap();
+            x = if f(&right.data) { left } else { right };
+        }
+        Some(x)
     }
 }
 impl<C: Callback> Deref for Ptr<C> {

@@ -7,3 +7,4 @@ edition = "2021"
 ansi_term.workspace = true
 rand.workspace = true
 rstest.workspace = true
+itertools.workspace = true
