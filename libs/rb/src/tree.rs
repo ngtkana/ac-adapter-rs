@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use std::cmp::Ordering;
 use std::fmt;
+use std::mem;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
@@ -17,29 +18,19 @@ pub trait Callback: Sized {
 }
 
 pub struct Tree<C: Callback> {
-    root: Option<Ptr<C>>,
-    black_height: u8,
+    pub root: Option<Ptr<C>>,
+    pub black_height: u8,
 }
 impl<C: Callback> Tree<C> {
     /// Create a new empty red-black tree.
-    fn new() -> Self { Self::default() }
-
-    /// Returns the root node.
-    pub fn root(&self) -> Option<Ptr<C>> { self.root }
-
-    /// Binary search for a leaf node.
-    /// Returns `None` if the tree is empty.
-    ///
-    /// # About `f`
-    ///
-    /// If `f` returns `true`, the search continues to the left child because this `beef` is too big.
-    pub fn binary_search<F: FnMut(Ptr<C>) -> bool>(&self, mut f: F) -> Option<Ptr<C>> {
-        let mut x = self.root?;
-        while !x.is_leaf() {
-            x = if f(x) { x.left.unwrap() } else { x.right.unwrap() }
+    fn new() -> Self {
+        Self {
+            root: None,
+            black_height: 0,
         }
-        Some(x)
     }
+
+    fn is_empty(&self) -> bool { self.root.is_none() }
 
     /// Insert a leaf node.
     ///
@@ -75,71 +66,25 @@ impl<C: Callback> Tree<C> {
     }
 
     pub fn append(&mut self, other: &mut Self, mul: impl FnOnce(&C::Data, &C::Data) -> C::Data) {
-        let Some(mut left) = self.root else {
+        if self.is_empty() {
             std::mem::swap(self, other);
             return;
         };
-        let Some(mut right) = other.root else {
+        if other.is_empty() {
             return;
         };
-        match self.black_height.cmp(&other.black_height) {
-            // Case 1: Two trees have the same black height.
-            // Join the roots.
-            Ordering::Equal => {
-                let b = Ptr::new_beef(mul, Color::Black, left, right);
-                left.parent = Some(b);
-                right.parent = Some(b);
-                self.root = Some(b);
-                self.black_height += 1;
-            }
-            // Case 2: The left tree has a smaller black height.
-            // Slide down along the left spine of the right tree, join, and fix the red-red violation.
-            Ordering::Less => {
-                let mut h = other.black_height;
-                loop {
-                    if right.color == Color::Black {
-                        if h == self.black_height {
-                            break;
-                        }
-                        h -= 1;
-                    }
-                    right = right.left.unwrap();
-                }
-                let mut p = right.parent.unwrap();
-                let mut b = Ptr::new_beef(mul, Color::Red, left, right);
-                left.parent = Some(b);
-                right.parent = Some(b);
-                *p.left.as_mut().unwrap() = b;
-                b.parent = Some(p);
-                self.root = other.root;
-                self.black_height = other.black_height;
-                self.fix_red(b);
-            }
-            // Case 3: The right tree has a smaller black height.
-            // Slide down along the right spine of the left tree, join, and fix the red-red violation.
-            Ordering::Greater => {
-                let mut h = self.black_height;
-                loop {
-                    if left.color == Color::Black {
-                        if h == other.black_height {
-                            break;
-                        }
-                        h -= 1;
-                    }
-                    left = left.right.unwrap();
-                }
-                let mut p = left.parent.unwrap();
-                let mut b = Ptr::new_beef(mul, Color::Red, left, right);
-                left.parent = Some(b);
-                right.parent = Some(b);
-                *p.right.as_mut().unwrap() = b;
-                b.parent = Some(p);
-                self.fix_red(b);
-            }
-        }
-        // I don't forget to clear the other tree.
-        other.root = None;
-        other.black_height = 0;
+        let (root, black_height) = merge(
+            mem::take(self),
+            mem::take(other),
+            |color, mut left, mut right| {
+                let p = Ptr::new_beef(mul, color, left, right);
+                left.parent = Some(p);
+                right.parent = Some(p);
+                p
+            },
+        );
+        self.root = Some(root);
+        self.black_height = black_height;
     }
 
     /// Remove a leaf node.
@@ -462,11 +407,66 @@ impl<C: Callback> Tree<C> {
         }
     }
 }
+
 impl<C: Callback> Default for Tree<C> {
-    fn default() -> Self {
-        Self {
-            root: None,
-            black_height: 0,
+    fn default() -> Self { Self::new() }
+}
+
+/// Merge two trees.
+///
+/// NOTE: `join` is expected to overwrite the parent pointers of its arguments.
+fn merge<C: Callback>(
+    mut left: Tree<C>,
+    mut right: Tree<C>,
+    join: impl FnOnce(Color, Ptr<C>, Ptr<C>) -> Ptr<C>,
+) -> (Ptr<C>, u8) {
+    let l = left.root.unwrap();
+    let r = right.root.unwrap();
+    match left.black_height.cmp(&right.black_height) {
+        // Case 1: Two trees have the same black height.
+        // Join the roots.
+        Ordering::Equal => (join(Color::Black, l, r), left.black_height + 1),
+        // Case 2: The l tree has a smaller black height.
+        // Slide down along the l spine of the r tree, join, and fix the red-red violation.
+        Ordering::Less => {
+            let mut h = right.black_height;
+            let mut r = r;
+            loop {
+                if r.color == Color::Black {
+                    if h == left.black_height {
+                        break;
+                    }
+                    h -= 1;
+                }
+                r = r.left.unwrap();
+            }
+            let mut p = r.parent.unwrap();
+            let mut b = join(Color::Red, l, r);
+            *p.left.as_mut().unwrap() = b;
+            b.parent = Some(p);
+            right.fix_red(b);
+            (right.root.unwrap(), right.black_height)
+        }
+        // Case 3: The r tree has a smaller black height.
+        // Slide down along the r spine of the l tree, join, and fix the red-red violation.
+        Ordering::Greater => {
+            let mut h = left.black_height;
+            let mut l = l;
+            loop {
+                if l.color == Color::Black {
+                    if h == right.black_height {
+                        break;
+                    }
+                    h -= 1;
+                }
+                l = l.right.unwrap();
+            }
+            let mut p = l.parent.unwrap();
+            let mut b = join(Color::Red, l, r);
+            *p.right.as_mut().unwrap() = b;
+            b.parent = Some(p);
+            left.fix_red(b);
+            (left.root.unwrap(), left.black_height)
         }
     }
 }
@@ -529,10 +529,19 @@ impl<C: Callback> Ptr<C> {
         }))))
     }
 
-    pub fn free(self) -> C::Data {
-        let data = unsafe { std::ptr::read(&self.data) };
-        unsafe { Box::from_raw(self.0.as_ptr()) };
-        data
+    pub fn free(self) -> C::Data { unsafe { Box::from_raw(self.0.as_ptr()).data } }
+
+    /// Binary search for a leaf node.
+    ///
+    /// # About `f`
+    ///
+    /// If `f` returns `true`, the search continues to the left child because this `beef` is too big.
+    pub fn binary_search_for_leaf<F: FnMut(Ptr<C>) -> bool>(self, mut f: F) -> Self {
+        let mut x = self;
+        while !x.is_leaf() {
+            x = if f(x) { x.left.unwrap() } else { x.right.unwrap() }
+        }
+        x
     }
 }
 impl<C: Callback> Deref for Ptr<C> {
@@ -616,11 +625,11 @@ pub mod test_util {
 
     pub fn validate<C: Callback>(tree: &Tree<C>)
     where
-        C::Data: Copy + PartialEq + fmt::Debug,
+        C::Data: Clone + PartialEq + fmt::Debug,
     {
         fn validate<C: Callback>(p: Ptr<C>) -> Result<u8, String>
         where
-            C::Data: Copy + PartialEq + fmt::Debug,
+            C::Data: Clone + PartialEq + fmt::Debug,
         {
             if p.is_leaf() {
                 (p.color == Color::Black)
@@ -679,7 +688,7 @@ pub mod test_util {
                     color: p.color,
                     left: p.left,
                     right: p.right,
-                    data: p.data,
+                    data: p.data.clone(),
                 };
                 C::update(&mut copied_node);
                 (p.data == copied_node.data).then_some(()).ok_or_else(|| {
