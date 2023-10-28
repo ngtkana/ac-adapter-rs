@@ -1,10 +1,12 @@
 #![allow(dead_code)]
 use crate::tree::Callback;
+use crate::tree::Color;
 use crate::tree::Node;
 use crate::tree::Ptr;
 use crate::tree::Tree;
 use crate::Op;
 use std::marker::PhantomData;
+use std::mem;
 use std::ops::Bound;
 use std::ops::RangeBounds;
 
@@ -111,6 +113,36 @@ impl<O: Op> List<O> {
         self.tree.append(other, Data::mul);
     }
 
+    /// Split the list into two at the given index.
+    pub fn split_off(&mut self, mut at: usize) -> Self {
+        assert!(at <= self.len(), "index out of bounds");
+        if at == 0 {
+            return mem::take(self);
+        }
+        if at == self.len() {
+            return Self::default();
+        }
+        let mut x = self.tree.root.unwrap();
+        let mut black_height = self.tree.black_height;
+        loop {
+            let left_len = x.left.unwrap().data.len;
+            if x.color == Color::Black {
+                black_height -= 1;
+            }
+            x = match at.cmp(&left_len) {
+                std::cmp::Ordering::Less => x.left.unwrap(),
+                std::cmp::Ordering::Equal => break,
+                std::cmp::Ordering::Greater => {
+                    at -= left_len;
+                    x.right.unwrap()
+                }
+            };
+        }
+        Self {
+            tree: self.tree.split_off(x, black_height, Data::mul),
+        }
+    }
+
     /// Remove the `i`th value and return it.
     ///
     /// # Panics
@@ -211,7 +243,7 @@ impl<O: Op> Callback for ListCallback<O> {
         if !O::is_identity(&x.data.lazy) {
             let lazy = O::swap_with_identity(&mut x.data.lazy);
             O::apply(&mut x.data.value, &lazy);
-            if x.is_beef() {
+            if !x.is_leaf() {
                 O::compose(&mut x.left.unwrap().data.lazy, &lazy);
                 O::compose(&mut x.right.unwrap().data.lazy, &lazy);
             }
@@ -416,6 +448,27 @@ mod tests {
                 assert_eq!(to_vec(&list), vec);
                 lists.insert(i, list);
                 vecs.insert(i, vec);
+            }
+        }
+    }
+
+    #[test]
+    fn test_split_off() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let h = rng.gen_range(0..=6);
+            let mut lists = vec![random_list(&mut rng, h)];
+            let mut vecs = vec![to_vec(&lists[0])];
+            for _ in 0..20 {
+                let i = rng.gen_range(0..lists.len());
+                let j = rng.gen_range(0..=lists[i].len());
+                let list = lists[i].split_off(j);
+                let vec = vecs[i].split_off(j);
+                validate(&lists[i].tree);
+                validate(&list.tree);
+                assert_eq!((&to_vec(&lists[i]), &to_vec(&list)), (&vecs[i], &vec));
+                lists.insert(i + 1, list);
+                vecs.insert(i + 1, vec);
             }
         }
     }
