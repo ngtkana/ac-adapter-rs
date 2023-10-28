@@ -32,6 +32,60 @@ impl<C: Callback> Tree<C> {
 
     fn is_empty(&self) -> bool { self.root.is_none() }
 
+    pub fn max_right<F>(&self, mut x: Ptr<C>, mut f: F)
+    where
+        F: FnMut(&C::Data) -> bool,
+    {
+        // Phase 1: Go up.
+        loop {
+            let Some(p) = x.parent else {
+                return;
+            };
+            if p.left.unwrap() == x {
+                let s = p.right.unwrap();
+                if !f(&s.data) {
+                    x = s;
+                    break;
+                }
+            }
+            x = p;
+        }
+
+        // Phase 2: Go down.
+        while !x.is_leaf() {
+            let left = x.left.unwrap();
+            let right = x.right.unwrap();
+            x = if f(&left.data) { right } else { left };
+        }
+    }
+
+    pub fn min_left<F>(&self, mut x: Ptr<C>, mut f: F)
+    where
+        F: FnMut(&C::Data) -> bool,
+    {
+        // Phase 1: Go up.
+        loop {
+            let Some(p) = x.parent else {
+                return;
+            };
+            if p.right.unwrap() == x {
+                let s = p.left.unwrap();
+                if !f(&s.data) {
+                    x = s;
+                    break;
+                }
+            }
+            x = p;
+        }
+
+        // Phase 2: Go down.
+        while !x.is_leaf() {
+            let left = x.left.unwrap();
+            let right = x.right.unwrap();
+            x = if f(&right.data) { left } else { right };
+        }
+    }
+
     /// Insert a leaf node.
     ///
     /// # Abount `position`
