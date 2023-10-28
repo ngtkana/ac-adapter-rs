@@ -11,10 +11,10 @@ use std::ops::Bound;
 use std::ops::RangeBounds;
 
 /// A list based on a red-black tree.
-pub struct List<O: Op> {
+pub struct Seg<O: Op> {
     tree: Tree<ListCallback<O>>,
 }
-impl<O: Op> List<O> {
+impl<O: Op> Seg<O> {
     /// Create a new empty list.
     pub fn new() -> Self { Self::default() }
 
@@ -213,7 +213,7 @@ fn into_range<B: RangeBounds<usize>>(range: B, len: usize) -> (usize, usize) {
     (start, end)
 }
 
-impl<O: Op> Default for List<O> {
+impl<O: Op> Default for Seg<O> {
     fn default() -> Self {
         Self {
             tree: Tree::default(),
@@ -221,13 +221,13 @@ impl<O: Op> Default for List<O> {
     }
 }
 
-impl<O: Op> FromIterator<O::Value> for List<O> {
+impl<O: Op> FromIterator<O::Value> for Seg<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let mut leaves = iter
             .into_iter()
             .map(|value| Ptr::new_leaf(Data::new(value)))
             .collect::<Vec<_>>();
-        List {
+        Seg {
             tree: Tree::from_slice_of_leaves(&mut leaves, Data::mul),
         }
     }
@@ -312,7 +312,7 @@ mod tests {
     }
     type C = ListCallback<Concat>;
 
-    fn random_list(rng: &mut StdRng, black_height: u8) -> List<Concat> {
+    fn random_list(rng: &mut StdRng, black_height: u8) -> Seg<Concat> {
         fn value(rng: &mut StdRng) -> Data<Concat> { Data::new(vec![rng.gen_range(0..20)]) }
         fn mul(left: Ptr<C>, right: Ptr<C>) -> Data<Concat> {
             Data {
@@ -323,10 +323,10 @@ mod tests {
         }
         let tree = test_util::random_tree(rng, black_height, value, Data::mul);
         test_util::validate(&tree);
-        List { tree }
+        Seg { tree }
     }
 
-    fn to_vec<O: Op>(list: &List<O>) -> Vec<O::Value>
+    fn to_vec<O: Op>(list: &Seg<O>) -> Vec<O::Value>
     where
         O::Value: Clone,
     {
@@ -371,7 +371,7 @@ mod tests {
             }
         }
         for n in 0..100 {
-            let list = (0..n).map(|x| vec![x]).collect::<List<Concat>>();
+            let list = (0..n).map(|x| vec![x]).collect::<Seg<Concat>>();
             validate(&list.tree);
             let vec = (0..n).map(|x| vec![x]).collect::<Vec<_>>();
             assert_eq!(to_vec(&list), vec);
@@ -444,7 +444,7 @@ mod tests {
     fn test_insert_remove(#[case] max_length: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let mut list = List::<Concat>::new();
+            let mut list = Seg::<Concat>::new();
             let mut vec = Vec::new();
             for _ in 0..200 {
                 match rng.gen_range(0..=max_length) {
