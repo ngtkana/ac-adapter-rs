@@ -18,14 +18,14 @@ impl<O: Op> List<O> {
 
     /// Returns the length of the list.
     pub fn len(&self) -> usize {
-        match self.tree.root() {
+        match self.tree.root {
             Some(p) => p.data.len,
             None => 0,
         }
     }
 
     /// Returns `true` if the list is empty.
-    pub fn is_empty(&self) -> bool { self.tree.root().is_none() }
+    pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
 
     /// Folds the `range` into a single value by `O::mul`.
     /// If `range` is empty, returns `None`.
@@ -125,7 +125,7 @@ impl<O: Op> List<O> {
 
     /// Returns the `i`th leaf pointer if `i < self.data.len`, and the rightmost leaf pointer otherwise or `None` if the list is empty.
     fn get_leaf_ptr(&self, mut i: usize) -> Option<Ptr<ListCallback<O>>> {
-        self.tree.binary_search(|b| {
+        Some(self.tree.root?.binary_search_for_leaf(|b| {
             let left_len = b.left.unwrap().data.len;
             if i < left_len {
                 true
@@ -133,7 +133,7 @@ impl<O: Op> List<O> {
                 i -= left_len;
                 false
             }
-        })
+        }))
     }
 }
 
@@ -232,36 +232,15 @@ mod tests {
 
     const P: u64 = 998244353;
 
-    #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-    pub struct HashnBase {
-        hash: u64,
-        base: u64,
-    }
-    impl HashnBase {
-        pub fn empty() -> Self { Self { hash: 0, base: 1 } }
-
-        pub fn from_value(value: u64) -> Self {
-            Self {
-                hash: value,
-                base: 100,
-            }
-        }
-
-        pub fn mul(&self, other: &Self) -> Self {
-            Self {
-                hash: (self.hash * other.base + other.hash) % P,
-                base: self.base * other.base % P,
-            }
-        }
-    }
-
     #[derive(Clone, Copy, Debug, PartialEq)]
-    enum RollingHash {}
-    impl Op for RollingHash {
+    enum Concat {}
+    impl Op for Concat {
         type Lazy = ();
-        type Value = HashnBase;
+        type Value = Vec<u64>;
 
-        fn mul(left: &Self::Value, right: &Self::Value) -> Self::Value { left.mul(right) }
+        fn mul(left: &Self::Value, right: &Self::Value) -> Self::Value {
+            left.iter().chain(right.iter()).copied().collect()
+        }
 
         fn compose(_: &mut Self::Lazy, _: &Self::Lazy) {}
 
@@ -269,16 +248,14 @@ mod tests {
 
         fn apply(_: &mut Self::Value, _: &Self::Lazy) {}
     }
-    type C = ListCallback<RollingHash>;
+    type C = ListCallback<Concat>;
 
-    fn random_list(rng: &mut StdRng, black_height: u8) -> List<RollingHash> {
-        fn value(rng: &mut StdRng) -> Data<RollingHash> {
-            Data::new(HashnBase::from_value(rng.gen_range(0..20)))
-        }
-        fn mul(left: Ptr<C>, right: Ptr<C>) -> Data<RollingHash> {
+    fn random_list(rng: &mut StdRng, black_height: u8) -> List<Concat> {
+        fn value(rng: &mut StdRng) -> Data<Concat> { Data::new(vec![rng.gen_range(0..20)]) }
+        fn mul(left: Ptr<C>, right: Ptr<C>) -> Data<Concat> {
             Data {
                 len: left.data.len + right.data.len,
-                value: HashnBase::mul(&left.data.value, &right.data.value),
+                value: Concat::mul(&left.data.value, &right.data.value),
                 lazy: (),
             }
         }
@@ -289,21 +266,21 @@ mod tests {
 
     fn to_vec<O: Op>(list: &List<O>) -> Vec<O::Value>
     where
-        O::Value: Copy,
+        O::Value: Clone,
     {
         fn to_vec<O: Op>(p: Ptr<ListCallback<O>>, result: &mut Vec<O::Value>)
         where
-            O::Value: Copy,
+            O::Value: Clone,
         {
             if p.is_leaf() {
-                result.push(p.data.value);
+                result.push(p.data.value.clone());
             } else {
                 to_vec(p.left.unwrap(), result);
                 to_vec(p.right.unwrap(), result);
             }
         }
         let mut result = Vec::new();
-        if let Some(root) = list.tree.root() {
+        if let Some(root) = list.tree.root {
             to_vec(root, &mut result);
         }
         result
@@ -332,13 +309,11 @@ mod tests {
             }
         }
         for n in 0..100 {
-            let list = (0..n)
-                .map(HashnBase::from_value)
-                .collect::<List<RollingHash>>();
+            let list = (0..n).map(|x| vec![x]).collect::<List<Concat>>();
             validate(&list.tree);
-            let vec = (0..n).map(HashnBase::from_value).collect::<Vec<_>>();
+            let vec = (0..n).map(|x| vec![x]).collect::<Vec<_>>();
             assert_eq!(to_vec(&list), vec);
-            let height = list.tree.root().map_or(0, height);
+            let height = list.tree.root.map_or(0, height);
             let expected_height = if n == 0 { 0 } else { (2 * n - 1).ilog2() as u8 + 1 };
             assert_eq!(
                 height,
@@ -362,10 +337,10 @@ mod tests {
             for _ in 0..200 {
                 let (start, end) = choose2_with_reputation(&mut rng, 0..=list.len());
                 let result = list.fold(start..end);
-                let expected = vec[start..end].iter().fold(None::<HashnBase>, |value, &x| {
+                let expected = vec[start..end].iter().fold(None::<Vec<u64>>, |value, x| {
                     Some(match value {
-                        None => x,
-                        Some(value) => HashnBase::mul(&value, &x),
+                        None => x.clone(),
+                        Some(value) => Concat::mul(&value, &x),
                     })
                 });
                 assert_eq!(result, expected);
@@ -380,16 +355,16 @@ mod tests {
     fn test_insert_remove(#[case] max_length: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let mut list = List::<RollingHash>::new();
+            let mut list = List::<Concat>::new();
             let mut vec = Vec::new();
             for _ in 0..200 {
                 match rng.gen_range(0..=max_length) {
                     // Insert
                     x if vec.len() <= x => {
                         let i = rng.gen_range(0..=vec.len());
-                        let value = HashnBase::from_value(rng.gen_range(0..20));
-                        list.insert(i, value);
-                        vec.insert(i, value);
+                        let value = vec![rng.gen_range(0..20)];
+                        list.insert(i, value.clone());
+                        vec.insert(i, value.clone());
                     }
                     // Remove
                     x if x < vec.len() => {
