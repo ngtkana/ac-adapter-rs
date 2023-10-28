@@ -5,20 +5,21 @@ use crate::tree::Node;
 use crate::tree::Ptr;
 use crate::tree::Tree;
 use crate::Op;
+use std::fmt;
 use std::marker::PhantomData;
 use std::mem;
 use std::ops::Bound;
 use std::ops::RangeBounds;
 
-/// A list based on a red-black tree.
+/// A seg based on a red-black tree.
 pub struct Seg<O: Op> {
     tree: Tree<ListCallback<O>>,
 }
 impl<O: Op> Seg<O> {
-    /// Create a new empty list.
+    /// Create a new empty seg.
     pub fn new() -> Self { Self::default() }
 
-    /// Returns the length of the list.
+    /// Returns the length of the seg.
     pub fn len(&self) -> usize {
         match self.tree.root {
             Some(p) => p.data.len,
@@ -26,8 +27,18 @@ impl<O: Op> Seg<O> {
         }
     }
 
-    /// Returns `true` if the list is empty.
+    /// Returns `true` if the seg is empty.
     pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
+
+    /// Returns an iterator over the seg.
+    pub fn iter(&self) -> Iter<'_, O> {
+        Iter {
+            marker: PhantomData,
+            start: self.get_leaf_ptr(0),
+            end: self.get_leaf_ptr(self.len()),
+            len: self.len(),
+        }
+    }
 
     /// Folds the `range` into a single value by `O::mul`.
     /// If `range` is empty, returns `None`.
@@ -51,7 +62,7 @@ impl<O: Op> Seg<O> {
         if start == end {
             return Some(acc);
         }
-        self.tree.max_right(x, |data| {
+        x.max_right(|data| {
             let new_acc = O::mul(&acc, &data.value);
             let new_start = start + data.len;
             if new_start <= end {
@@ -82,7 +93,7 @@ impl<O: Op> Seg<O> {
         }
         start += 1;
         let mut acc = x.data.value.clone();
-        self.tree.max_right(x, |data| {
+        x.max_right(|data| {
             let new_acc = O::mul(&data.value, &acc);
             if f(&new_acc) {
                 start += data.len;
@@ -112,8 +123,8 @@ impl<O: Op> Seg<O> {
         }
         end -= 1;
         let mut acc = x.data.value.clone();
-        self.tree.min_left(x, |data| {
-            let new_acc = O::mul(&acc, &data.value);
+        x.min_left(|data| {
+            let new_acc = O::mul(&data.value, &acc);
             if f(&new_acc) {
                 end -= data.len;
                 acc = new_acc;
@@ -155,7 +166,7 @@ impl<O: Op> Seg<O> {
         self.tree.append(other, Data::mul);
     }
 
-    /// Split the list into two at the given index.
+    /// Split the seg into two at the given index.
     pub fn split_off(&mut self, mut at: usize) -> Self {
         assert!(at <= self.len(), "index out of bounds");
         if at == 0 {
@@ -185,7 +196,7 @@ impl<O: Op> Seg<O> {
         }
     }
 
-    /// Returns the `i`th leaf pointer if `i < self.data.len`, and the rightmost leaf pointer otherwise or `None` if the list is empty.
+    /// Returns the `i`th leaf pointer if `i < self.data.len`, and the rightmost leaf pointer otherwise or `None` if the seg is empty.
     fn get_leaf_ptr(&self, mut i: usize) -> Option<Ptr<ListCallback<O>>> {
         Some(self.tree.root?.binary_search_for_leaf(|b| {
             let left_len = b.left.unwrap().data.len;
@@ -230,6 +241,128 @@ impl<O: Op> FromIterator<O::Value> for Seg<O> {
         Seg {
             tree: Tree::from_slice_of_leaves(&mut leaves, Data::mul),
         }
+    }
+}
+
+/// An iterator over the seg.
+pub struct Iter<'a, O: Op> {
+    marker: PhantomData<&'a O>,
+    start: Option<Ptr<ListCallback<O>>>,
+    end: Option<Ptr<ListCallback<O>>>,
+    len: usize,
+}
+impl<'a, O: Op> Iterator for Iter<'a, O> {
+    type Item = &'a O::Value;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let start = self.start?;
+        self.len -= 1;
+        if self.len == 0 {
+            self.start = None;
+            self.end = None;
+        } else {
+            self.start = start.max_right(|_| false);
+        }
+        Some(&start.as_longlife_ref().data.value)
+    }
+
+    /// `advance_by` is better, but it is unstable now
+    fn nth(&mut self, n: usize) -> Option<Self::Item> {
+        if n == 0 {
+            return self.next();
+        }
+        if self.len <= n {
+            self.start = None;
+            self.end = None;
+            self.len = 0;
+            None
+        } else {
+            self.len -= n + 1;
+            let mut i = n - 1;
+            let start = self
+                .start
+                .unwrap()
+                .max_right(|data| {
+                    if i < data.len {
+                        false
+                    } else {
+                        i -= data.len;
+                        true
+                    }
+                })
+                .unwrap();
+            if self.len == 0 {
+                self.start = None;
+                self.end = None;
+            } else {
+                self.start = Some(start.max_right(|_| false).unwrap());
+            }
+            Some(&start.as_longlife_ref().data.value)
+        }
+    }
+}
+impl<'a, O: Op> DoubleEndedIterator for Iter<'a, O> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        let end = self.end?;
+        let result = &end.as_longlife_ref().data.value;
+        self.len -= 1;
+        if self.len == 0 {
+            self.start = None;
+            self.end = None;
+        } else {
+            self.end = end.min_left(|_| false);
+        }
+        Some(result)
+    }
+
+    /// `advance_back_by` is better, but it is unstable now
+    fn nth_back(&mut self, n: usize) -> Option<Self::Item> {
+        if n == 0 {
+            return self.next_back();
+        }
+        if self.len <= n {
+            self.start = None;
+            self.end = None;
+            self.len = 0;
+            None
+        } else {
+            self.len -= n + 1;
+            let mut i = n - 1;
+            let end = self
+                .end
+                .unwrap()
+                .min_left(|data| {
+                    if i < data.len {
+                        false
+                    } else {
+                        i -= data.len;
+                        true
+                    }
+                })
+                .unwrap();
+            if self.len == 0 {
+                self.start = None;
+                self.end = None;
+            } else {
+                self.end = Some(end.min_left(|_| false).unwrap());
+            }
+            Some(&end.as_longlife_ref().data.value)
+        }
+    }
+}
+impl<'a, O: Op> IntoIterator for &'a Seg<O> {
+    type IntoIter = Iter<'a, O>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+
+impl<O: Op> fmt::Debug for Seg<O>
+where
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_list().entries(self.iter()).finish()
     }
 }
 
@@ -286,6 +419,7 @@ mod tests {
     use super::*;
     use crate::tree::test_util;
     use crate::tree::test_util::validate;
+    use itertools::assert_equal;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
@@ -312,21 +446,14 @@ mod tests {
     }
     type C = ListCallback<Concat>;
 
-    fn random_list(rng: &mut StdRng, black_height: u8) -> Seg<Concat> {
+    fn random_seg(rng: &mut StdRng, black_height: u8) -> Seg<Concat> {
         fn value(rng: &mut StdRng) -> Data<Concat> { Data::new(vec![rng.gen_range(0..20)]) }
-        fn mul(left: Ptr<C>, right: Ptr<C>) -> Data<Concat> {
-            Data {
-                len: left.data.len + right.data.len,
-                value: Concat::mul(&left.data.value, &right.data.value),
-                lazy: (),
-            }
-        }
         let tree = test_util::random_tree(rng, black_height, value, Data::mul);
         test_util::validate(&tree);
         Seg { tree }
     }
 
-    fn to_vec<O: Op>(list: &Seg<O>) -> Vec<O::Value>
+    fn to_vec<O: Op>(seg: &Seg<O>) -> Vec<O::Value>
     where
         O::Value: Clone,
     {
@@ -342,7 +469,7 @@ mod tests {
             }
         }
         let mut result = Vec::new();
-        if let Some(root) = list.tree.root {
+        if let Some(root) = seg.tree.root {
             to_vec(root, &mut result);
         }
         result
@@ -362,6 +489,49 @@ mod tests {
     }
 
     #[test]
+    fn test_iter() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..10 {
+            let h = rng.gen_range(0..=6);
+            let seg = random_seg(&mut rng, h);
+            let vec = to_vec(&seg);
+            assert_equal(&seg, &vec);
+            assert_equal(seg.iter().rev(), vec.iter().rev());
+
+            // Call `next` and `next_back` at random
+            {
+                let mut iter = seg.iter();
+                let mut vec_iter = vec.iter();
+                for _ in 0..100 {
+                    match rng.gen_range(0..=1) {
+                        0 => assert_eq!(iter.next(), vec_iter.next()),
+                        1 => assert_eq!(iter.next_back(), vec_iter.next_back()),
+                        _ => unreachable!(),
+                    }
+                }
+            }
+
+            // Call `nth` and `nth_back` at random
+            {
+                let mut iter = seg.iter();
+                let mut vec_iter = vec.iter();
+                for _ in 0..100 {
+                    let n = rng.gen_range(0..=seg.len());
+                    assert_eq!(iter.nth(n), vec_iter.nth(n));
+                    assert_eq!(iter.nth_back(n), vec_iter.nth_back(n));
+                }
+            }
+
+            // Applications: `step`
+            if h != 0 {
+                let n = rng.gen_range(1..=seg.len());
+                assert_equal(seg.iter().step_by(n), vec.iter().step_by(n));
+                assert_equal(seg.iter().rev().step_by(n), vec.iter().rev().step_by(n));
+            }
+        }
+    }
+
+    #[test]
     fn test_from_iter() {
         fn height(p: Ptr<C>) -> u8 {
             if p.is_leaf() {
@@ -371,11 +541,11 @@ mod tests {
             }
         }
         for n in 0..100 {
-            let list = (0..n).map(|x| vec![x]).collect::<Seg<Concat>>();
-            validate(&list.tree);
+            let seg = (0..n).map(|x| vec![x]).collect::<Seg<Concat>>();
+            validate(&seg.tree);
             let vec = (0..n).map(|x| vec![x]).collect::<Vec<_>>();
-            assert_eq!(to_vec(&list), vec);
-            let height = list.tree.root.map_or(0, height);
+            assert_eq!(to_vec(&seg), vec);
+            let height = seg.tree.root.map_or(0, height);
             let expected_height = if n == 0 { 0 } else { (2 * n - 1).ilog2() as u8 + 1 };
             assert_eq!(
                 height,
@@ -384,7 +554,7 @@ mod tests {
                 n,
                 expected_height,
                 height,
-                test_util::format(&list.tree),
+                test_util::format(&seg.tree),
             );
         }
     }
@@ -394,11 +564,11 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let black_height = rng.gen_range(0..=6);
-            let list = random_list(&mut rng, black_height);
-            let vec = to_vec(&list);
+            let seg = random_seg(&mut rng, black_height);
+            let vec = to_vec(&seg);
             for _ in 0..200 {
-                let (start, end) = choose2_with_reputation(&mut rng, 0..=list.len());
-                let result = list.fold(start..end);
+                let (start, end) = choose2_with_reputation(&mut rng, 0..=seg.len());
+                let result = seg.fold(start..end);
                 let expected = vec[start..end].iter().fold(None::<Vec<u64>>, |value, x| {
                     Some(match value {
                         None => x.clone(),
@@ -412,25 +582,63 @@ mod tests {
 
     #[test]
     fn test_max_right_min_left() {
+        #[derive(Clone, Copy, Debug, PartialEq)]
+        enum Add {}
+        impl Op for Add {
+            type Lazy = ();
+            type Value = u64;
+
+            fn mul(x: &Self::Value, y: &Self::Value) -> Self::Value { x + y }
+
+            fn apply(_: &mut Self::Value, _: &Self::Lazy) {}
+
+            fn compose(_: &mut Self::Lazy, _: &Self::Lazy) {}
+
+            fn identity() -> Self::Lazy {}
+        }
+        fn value(rng: &mut StdRng) -> Data<Add> { Data::new(rng.gen_range(0..20)) }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let black_height = rng.gen_range(0..=6);
-            let list = random_list(&mut rng, black_height);
+            let tree = test_util::random_tree(&mut rng, black_height, value, Data::mul);
+            test_util::validate(&tree);
+            let seg = Seg { tree };
+            let vec = to_vec(&seg);
+
+            let sum = seg.fold(..).unwrap_or(0);
+
             for _ in 0..200 {
                 // max_right
                 {
-                    let start = rng.gen_range(0..=list.len());
-                    let acc = rng.gen_range(0..=list.len());
-                    let result = list.max_right(start, |s| s.len() <= acc);
-                    let expected = (start + acc).min(list.len());
+                    let start = rng.gen_range(0..=seg.len());
+                    let acc = rng.gen_range(0..=sum + 3);
+                    let result = seg.max_right(start, |&s| s <= acc);
+                    let expected = start
+                        + vec[start..]
+                            .iter()
+                            .scan(0, |acc, &x| {
+                                *acc += x;
+                                Some(*acc)
+                            })
+                            .take_while(|&a| a <= acc)
+                            .count();
                     assert_eq!(result, expected);
                 }
                 // min_left
                 {
-                    let end = rng.gen_range(0..=list.len());
-                    let acc = rng.gen_range(0..=list.len());
-                    let result = list.min_left(end, |s| s.len() <= acc);
-                    let expected = end.saturating_sub(acc);
+                    let end = rng.gen_range(0..=seg.len());
+                    let acc = rng.gen_range(0..=sum + 3);
+                    let result = seg.min_left(end, |&s| s <= acc);
+                    let expected = end
+                        - vec[..end]
+                            .iter()
+                            .rev()
+                            .scan(0, |acc, &x| {
+                                *acc += x;
+                                Some(*acc)
+                            })
+                            .take_while(|&a| a <= acc)
+                            .count();
                     assert_eq!(result, expected);
                 }
             }
@@ -444,7 +652,7 @@ mod tests {
     fn test_insert_remove(#[case] max_length: usize) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let mut list = Seg::<Concat>::new();
+            let mut seg = Seg::<Concat>::new();
             let mut vec = Vec::new();
             for _ in 0..200 {
                 match rng.gen_range(0..=max_length) {
@@ -452,7 +660,7 @@ mod tests {
                     x if vec.len() <= x => {
                         let i = rng.gen_range(0..=vec.len());
                         let value = vec![rng.gen_range(0..20)];
-                        list.insert(i, value.clone());
+                        seg.insert(i, value.clone());
                         vec.insert(i, value.clone());
                     }
                     // Remove
@@ -461,14 +669,14 @@ mod tests {
                             continue;
                         }
                         let i = rng.gen_range(0..vec.len());
-                        let result = list.remove(i);
+                        let result = seg.remove(i);
                         let expected = vec.remove(i);
                         assert_eq!(result, expected);
                     }
                     _ => unreachable!(),
                 }
-                assert_eq!(&to_vec(&list), &vec);
-                test_util::validate(&list.tree);
+                assert_eq!(&to_vec(&seg), &vec);
+                test_util::validate(&seg.tree);
             }
         }
     }
@@ -478,18 +686,18 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = 8;
-            let mut lists = iter::repeat_with(|| {
+            let mut segs = iter::repeat_with(|| {
                 let h = rng.gen_range(0..=6);
-                random_list(&mut rng, h)
+                random_seg(&mut rng, h)
             })
             .take(n)
             .collect::<Vec<_>>();
-            let mut vecs = lists.iter().map(to_vec).collect::<Vec<_>>();
-            while lists.len() > 1 {
-                let i = rng.gen_range(0..=lists.len() - 2);
-                let list = {
-                    let mut lhs = lists.remove(i);
-                    let mut rhs = lists.remove(i);
+            let mut vecs = segs.iter().map(to_vec).collect::<Vec<_>>();
+            while segs.len() > 1 {
+                let i = rng.gen_range(0..=segs.len() - 2);
+                let seg = {
+                    let mut lhs = segs.remove(i);
+                    let mut rhs = segs.remove(i);
                     lhs.append(&mut rhs);
                     assert!(rhs.is_empty());
                     validate(&lhs.tree);
@@ -502,8 +710,8 @@ mod tests {
                     assert!(rhs.is_empty());
                     lhs
                 };
-                assert_eq!(to_vec(&list), vec);
-                lists.insert(i, list);
+                assert_eq!(to_vec(&seg), vec);
+                segs.insert(i, seg);
                 vecs.insert(i, vec);
             }
         }
@@ -514,17 +722,17 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let h = rng.gen_range(0..=6);
-            let mut lists = vec![random_list(&mut rng, h)];
-            let mut vecs = vec![to_vec(&lists[0])];
+            let mut segs = vec![random_seg(&mut rng, h)];
+            let mut vecs = vec![to_vec(&segs[0])];
             for _ in 0..20 {
-                let i = rng.gen_range(0..lists.len());
-                let j = rng.gen_range(0..=lists[i].len());
-                let list = lists[i].split_off(j);
+                let i = rng.gen_range(0..segs.len());
+                let j = rng.gen_range(0..=segs[i].len());
+                let seg = segs[i].split_off(j);
                 let vec = vecs[i].split_off(j);
-                validate(&lists[i].tree);
-                validate(&list.tree);
-                assert_eq!((&to_vec(&lists[i]), &to_vec(&list)), (&vecs[i], &vec));
-                lists.insert(i + 1, list);
+                validate(&segs[i].tree);
+                validate(&seg.tree);
+                assert_eq!((&to_vec(&segs[i]), &to_vec(&seg)), (&vecs[i], &vec));
+                segs.insert(i + 1, seg);
                 vecs.insert(i + 1, vec);
             }
         }
