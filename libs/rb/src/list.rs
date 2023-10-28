@@ -45,54 +45,84 @@ impl<O: Op> List<O> {
         assert!(start <= end && end <= self.len(), "index out of bounds");
         (start < end).then_some(())?;
 
-        // Phase 1: Go up.
-        // Loop invariants:
-        // - `start` is the index of `x`.
-        // - `start < end`.
-        // - `result = fold(original_start..=start)`.
-        let mut x = self.get_leaf_ptr(start).unwrap();
-        let mut result = x.data.value.clone();
+        let x = self.get_leaf_ptr(start).unwrap();
+        let mut acc = x.data.value.clone();
         start += 1;
         if start == end {
-            return Some(result);
+            return Some(acc);
         }
-        loop {
-            let p = x.parent.unwrap();
-            if p.left.unwrap() == x {
-                let s = p.right.unwrap();
-                if start + s.data.len <= end {
-                    result = O::mul(&result, &s.data.value);
-                    start += s.data.len;
-                    if start == end {
-                        return Some(result);
-                    }
-                } else {
-                    x = s;
-                    break;
-                }
+        self.tree.max_right(x, |data| {
+            let new_acc = O::mul(&acc, &data.value);
+            let new_start = start + data.len;
+            if new_start <= end {
+                acc = new_acc;
+                start = new_start;
+                true
+            } else {
+                false
             }
-            x = p;
+        });
+        Some(acc)
+    }
+
+    /// Returns the maximum `i` such that `f(self.fold(0..i))` is `true`.
+    pub fn max_right<F>(&self, mut start: usize, mut f: F) -> usize
+    where
+        O::Value: Clone,
+        F: FnMut(&O::Value) -> bool,
+    {
+        assert!(start <= self.len(), "index out of bounds");
+        if start == self.len() {
+            return start;
         }
 
-        // Phase 2: Go down.
-        // Loop invariants:
-        // - `start` is the index of `x`.
-        // - `start < end`.
-        // - `result = fold(original_start..start)`.
-        let mut x = x;
-        loop {
-            let left = x.left.unwrap();
-            if start + left.data.len <= end {
-                result = O::mul(&result, &left.data.value);
-                start += left.data.len;
-                if start == end {
-                    return Some(result);
-                }
-                x = x.right.unwrap();
-            } else {
-                x = x.left.unwrap();
-            }
+        let x = self.get_leaf_ptr(start).unwrap();
+        if !f(&x.data.value) {
+            return start;
         }
+        start += 1;
+        let mut acc = x.data.value.clone();
+        self.tree.max_right(x, |data| {
+            let new_acc = O::mul(&data.value, &acc);
+            if f(&new_acc) {
+                start += data.len;
+                acc = new_acc;
+                true
+            } else {
+                false
+            }
+        });
+        start
+    }
+
+    /// Returns the minimum `i` such that `f(self.fold(i..self.len()))` is `true`.
+    pub fn min_left<F>(&self, mut end: usize, mut f: F) -> usize
+    where
+        O::Value: Clone,
+        F: FnMut(&O::Value) -> bool,
+    {
+        assert!(end <= self.len(), "index out of bounds");
+        if end == 0 {
+            return end;
+        }
+
+        let x = self.get_leaf_ptr(end - 1).unwrap();
+        if !f(&x.data.value) {
+            return end;
+        }
+        end -= 1;
+        let mut acc = x.data.value.clone();
+        self.tree.min_left(x, |data| {
+            let new_acc = O::mul(&acc, &data.value);
+            if f(&new_acc) {
+                end -= data.len;
+                acc = new_acc;
+                true
+            } else {
+                false
+            }
+        });
+        end
     }
 
     /// Insert a value at the `i`th position.
@@ -105,6 +135,18 @@ impl<O: Op> List<O> {
         let position = self.get_leaf_ptr(i).map(|p| (p, i < self.len()));
         let leaf = Ptr::new_leaf(Data::new(x));
         self.tree.insert(position, leaf, Data::mul);
+    }
+
+    /// Remove the `i`th value and return it.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `i >= self.data.len`.
+    pub fn remove(&mut self, i: usize) -> O::Value {
+        assert!(i < self.len(), "index out of bounds");
+        let p = self.get_leaf_ptr(i).unwrap();
+        self.tree.remove(p);
+        p.free().value
     }
 
     /// Append all the elements in `other`, leaving `other` empty.
@@ -141,18 +183,6 @@ impl<O: Op> List<O> {
         Self {
             tree: self.tree.split_off(x, black_height, Data::mul),
         }
-    }
-
-    /// Remove the `i`th value and return it.
-    ///
-    /// # Panics
-    ///
-    /// Panics if `i >= self.data.len`.
-    pub fn remove(&mut self, i: usize) -> O::Value {
-        assert!(i < self.len(), "index out of bounds");
-        let p = self.get_leaf_ptr(i).unwrap();
-        self.tree.remove(p);
-        p.free().value
     }
 
     /// Returns the `i`th leaf pointer if `i < self.data.len`, and the rightmost leaf pointer otherwise or `None` if the list is empty.
@@ -376,6 +406,33 @@ mod tests {
                     })
                 });
                 assert_eq!(result, expected);
+            }
+        }
+    }
+
+    #[test]
+    fn test_max_right_min_left() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let black_height = rng.gen_range(0..=6);
+            let list = random_list(&mut rng, black_height);
+            for _ in 0..200 {
+                // max_right
+                {
+                    let start = rng.gen_range(0..=list.len());
+                    let acc = rng.gen_range(0..=list.len());
+                    let result = list.max_right(start, |s| s.len() <= acc);
+                    let expected = (start + acc).min(list.len());
+                    assert_eq!(result, expected);
+                }
+                // min_left
+                {
+                    let end = rng.gen_range(0..=list.len());
+                    let acc = rng.gen_range(0..=list.len());
+                    let result = list.min_left(end, |s| s.len() <= acc);
+                    let expected = end.saturating_sub(acc);
+                    assert_eq!(result, expected);
+                }
             }
         }
     }
