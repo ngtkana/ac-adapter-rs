@@ -94,7 +94,7 @@ impl<O: Op> Seg<O> {
         start += 1;
         let mut acc = x.data.value.clone();
         x.max_right(|data| {
-            let new_acc = O::mul(&data.value, &acc);
+            let new_acc = O::mul(&acc, &data.value);
             if f(&new_acc) {
                 start += data.len;
                 acc = new_acc;
@@ -583,12 +583,26 @@ mod tests {
     #[test]
     fn test_max_right_min_left() {
         #[derive(Clone, Copy, Debug, PartialEq)]
-        enum Add {}
-        impl Op for Add {
+        enum Affine {}
+        impl Op for Affine {
             type Lazy = ();
-            type Value = u64;
+            type Value = (u64, u64);
 
-            fn mul(x: &Self::Value, y: &Self::Value) -> Self::Value { x + y }
+            fn mul(&(a, b): &Self::Value, &(c, d): &Self::Value) -> Self::Value {
+                let a = a as u128;
+                let b = b as u128;
+                let c = c as u128;
+                let d = d as u128;
+                let mut e = a * c;
+                let mut f = a * d + b;
+                e += f >> 64;
+                f &= (1 << 64) - 1;
+                if (u64::MAX as u128) < e {
+                    (u64::MAX, u64::MAX)
+                } else {
+                    (e as u64, f as u64)
+                }
+            }
 
             fn apply(_: &mut Self::Value, _: &Self::Lazy) {}
 
@@ -596,7 +610,9 @@ mod tests {
 
             fn identity() -> Self::Lazy {}
         }
-        fn value(rng: &mut StdRng) -> Data<Add> { Data::new(rng.gen_range(0..20)) }
+        fn value(rng: &mut StdRng) -> Data<Affine> {
+            Data::new((rng.gen_range(1..4), rng.gen_range(0..4)))
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let black_height = rng.gen_range(0..=6);
@@ -605,19 +621,19 @@ mod tests {
             let seg = Seg { tree };
             let vec = to_vec(&seg);
 
-            let sum = seg.fold(..).unwrap_or(0);
+            let sum = seg.fold(..).unwrap_or((1, 0));
 
             for _ in 0..200 {
                 // max_right
                 {
                     let start = rng.gen_range(0..=seg.len());
-                    let acc = rng.gen_range(0..=sum + 3);
+                    let acc = (rng.gen_range(0..=sum.0), rng.gen_range(0..=sum.1));
                     let result = seg.max_right(start, |&s| s <= acc);
                     let expected = start
                         + vec[start..]
                             .iter()
-                            .scan(0, |acc, &x| {
-                                *acc += x;
+                            .scan((1, 0), |acc, &x| {
+                                *acc = Affine::mul(acc, &x);
                                 Some(*acc)
                             })
                             .take_while(|&a| a <= acc)
@@ -627,14 +643,14 @@ mod tests {
                 // min_left
                 {
                     let end = rng.gen_range(0..=seg.len());
-                    let acc = rng.gen_range(0..=sum + 3);
+                    let acc = (rng.gen_range(0..=sum.0), rng.gen_range(0..=sum.1));
                     let result = seg.min_left(end, |&s| s <= acc);
                     let expected = end
                         - vec[..end]
                             .iter()
                             .rev()
-                            .scan(0, |acc, &x| {
-                                *acc += x;
+                            .scan((1, 0), |acc, &x| {
+                                *acc = Affine::mul(&x, acc);
                                 Some(*acc)
                             })
                             .take_while(|&a| a <= acc)
