@@ -143,9 +143,9 @@ impl<O: Op> Seg<O> {
     /// Panics if `i > self.data.len`.
     pub fn insert(&mut self, i: usize, x: O::Value) {
         assert!(i <= self.len(), "index out of bounds");
-        let position = self.get_leaf_ptr(i).map(|p| (p, i < self.len()));
-        let leaf = Ptr::new_leaf(Data::new(x));
-        self.tree.insert(position, leaf, Data::mul);
+        let position = self.get_leaf_ptr(i).map(|p| (p, i == self.len()));
+        self.tree
+            .insert(position, Ptr::new_leaf(Data::new(x)), Data::mul);
     }
 
     /// Remove the `i`th value and return it.
@@ -200,10 +200,10 @@ impl<O: Op> Seg<O> {
     fn get_leaf_ptr(&self, mut i: usize) -> Option<Ptr<ListCallback<O>>> {
         Some(self.tree.root?.binary_search_for_leaf(|b| {
             let left_len = b.left.unwrap().data.len;
-            if i < left_len {
+            if left_len <= i {
+                i -= left_len;
                 true
             } else {
-                i -= left_len;
                 false
             }
         }))
@@ -417,8 +417,8 @@ impl<O: Op> Callback for ListCallback<O> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::tree::test_util;
-    use crate::tree::test_util::validate;
+    use crate::test_util;
+    use crate::test_util::Concat;
     use itertools::assert_equal;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -426,30 +426,10 @@ mod tests {
     use rstest::rstest;
     use std::iter;
 
-    const P: u64 = 998244353;
-
-    #[derive(Clone, Copy, Debug, PartialEq)]
-    enum Concat {}
-    impl Op for Concat {
-        type Lazy = ();
-        type Value = Vec<u64>;
-
-        fn mul(left: &Self::Value, right: &Self::Value) -> Self::Value {
-            left.iter().chain(right.iter()).copied().collect()
-        }
-
-        fn compose(_: &mut Self::Lazy, _: &Self::Lazy) {}
-
-        fn identity() -> Self::Lazy {}
-
-        fn apply(_: &mut Self::Value, _: &Self::Lazy) {}
-    }
-    type C = ListCallback<Concat>;
-
     fn random_seg(rng: &mut StdRng, black_height: u8) -> Seg<Concat> {
         fn value(rng: &mut StdRng) -> Data<Concat> { Data::new(vec![rng.gen_range(0..20)]) }
         let tree = test_util::random_tree(rng, black_height, value, Data::mul);
-        test_util::validate(&tree);
+        test_util::validate_with_data(&tree);
         Seg { tree }
     }
 
@@ -533,7 +513,7 @@ mod tests {
 
     #[test]
     fn test_from_iter() {
-        fn height(p: Ptr<C>) -> u8 {
+        fn height<C: Callback>(p: Ptr<C>) -> u8 {
             if p.is_leaf() {
                 1
             } else {
@@ -542,19 +522,15 @@ mod tests {
         }
         for n in 0..100 {
             let seg = (0..n).map(|x| vec![x]).collect::<Seg<Concat>>();
-            validate(&seg.tree);
+            test_util::validate_with_data(&seg.tree);
             let vec = (0..n).map(|x| vec![x]).collect::<Vec<_>>();
             assert_eq!(to_vec(&seg), vec);
             let height = seg.tree.root.map_or(0, height);
             let expected_height = if n == 0 { 0 } else { (2 * n - 1).ilog2() as u8 + 1 };
             assert_eq!(
-                height,
-                expected_height,
-                "Expected height for length {} is {}, but the actual height is {}:\n{}\n",
-                n,
-                expected_height,
-                height,
-                test_util::format(&seg.tree),
+                height, expected_height,
+                "Expected height for length {} is {}, but the actual height is {}:\n{:?}\n",
+                n, expected_height, height, &seg.tree,
             );
         }
     }
@@ -617,7 +593,7 @@ mod tests {
         for _ in 0..20 {
             let black_height = rng.gen_range(0..=6);
             let tree = test_util::random_tree(&mut rng, black_height, value, Data::mul);
-            test_util::validate(&tree);
+            test_util::validate_with_data(&tree);
             let seg = Seg { tree };
             let vec = to_vec(&seg);
 
@@ -692,7 +668,7 @@ mod tests {
                     _ => unreachable!(),
                 }
                 assert_eq!(&to_vec(&seg), &vec);
-                test_util::validate(&seg.tree);
+                test_util::validate_with_data(&seg.tree);
             }
         }
     }
@@ -716,7 +692,7 @@ mod tests {
                     let mut rhs = segs.remove(i);
                     lhs.append(&mut rhs);
                     assert!(rhs.is_empty());
-                    validate(&lhs.tree);
+                    test_util::validate_with_data(&lhs.tree);
                     lhs
                 };
                 let vec = {
@@ -745,8 +721,8 @@ mod tests {
                 let j = rng.gen_range(0..=segs[i].len());
                 let seg = segs[i].split_off(j);
                 let vec = vecs[i].split_off(j);
-                validate(&segs[i].tree);
-                validate(&seg.tree);
+                test_util::validate_with_data(&segs[i].tree);
+                test_util::validate_with_data(&seg.tree);
                 assert_eq!((&to_vec(&segs[i]), &to_vec(&seg)), (&vecs[i], &vec));
                 segs.insert(i + 1, seg);
                 vecs.insert(i + 1, vec);
