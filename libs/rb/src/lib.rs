@@ -4,14 +4,14 @@
 /// A segtree based on a red-black tree.
 mod seg;
 /// A sorted vector based on a red-black tree.
-mod soc;
+mod seg_map;
 /// The core implementation of a red-black tree.
 mod tree;
 
 /// A list based on a red-black tree.
 pub use seg::Seg;
 /// A sorted vector based on a red-black tree.
-pub use soc::Soc;
+pub use seg_map::SegMap;
 
 /// A trait for algebraic operations.
 pub trait Op {
