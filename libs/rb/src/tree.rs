@@ -37,9 +37,10 @@ impl<C: Callback> Tree<C> {
     /// # Abount `position`
     ///
     /// `position` is `None` if and only if the tree is empty.
-    /// If `position` is `Some((leaf, true))`, the new leaf will be inserted to the left of `leaf`.
+    /// - if `position.unwrap().1` is `true`, the `position` is too small, so insert `new` to the right of `position`.
+    /// - if `position.unwrap().1` is `false`, the `position` is too large, so insert `new` to the left of `position`.
     ///
-    /// # Abount the return value
+    /// # About the return value
     ///
     /// It is the newly added internal node.
     pub fn insert(
@@ -161,12 +162,16 @@ impl<C: Callback> Tree<C> {
     /// Remove a leaf node `position`.
     ///
     /// `position` is not freed or destructed in this function.
-    pub fn remove(&mut self, mut position: Ptr<C>) {
+    ///
+    /// # About the return value
+    ///
+    /// It is the newly added internal node.
+    pub fn remove(&mut self, mut position: Ptr<C>) -> Option<Ptr<C>> {
         // Handle the case where the tree has only one node.
         let Some(p) = position.parent else {
             self.root = None;
             self.black_height = 0;
-            return;
+            return None;
         };
         // Transplant `s` at the original position of `p`.
         let mut s = if position == p.left.unwrap() { p.right.unwrap() } else { p.left.unwrap() };
@@ -183,7 +188,7 @@ impl<C: Callback> Tree<C> {
         position.parent = None;
 
         // Catch the no longer needed "join" node.
-        p.free();
+        Some(p)
     }
 
     /// It is only for `split_off`

@@ -9,7 +9,7 @@ use std::fmt;
 use std::marker::PhantomData;
 
 pub struct SegMap<K, O: Op> {
-    tree: Tree<SocCallback<K, O>>,
+    pub(super) tree: Tree<SocCallback<K, O>>,
 }
 impl<K, O: Op> SegMap<K, O> {
     pub fn new() -> Self { Self { tree: Tree::new() } }
@@ -30,12 +30,32 @@ impl<K, O: Op> SegMap<K, O> {
     pub fn remove_nth(&mut self, i: usize) -> (K, O::Value) {
         assert!(i < self.len(), "index out of bounds");
         let p = self.get_nth(i).unwrap();
-        self.tree.remove(p);
+        if let Some(b) = self.tree.remove(p) {
+            // Case 1: `b.prev` -- `b` -- `p` -- `p.next`
+            if b.data.next.unwrap() == p {
+                let next = p.data.next;
+                let mut prev = b.data.prev.unwrap();
+                prev.data.next = next;
+                if let Some(mut next) = next {
+                    next.data.prev = Some(prev);
+                }
+            }
+            // Case 2: `p.prev` -- `p` -- `b` -- `b.next`
+            else {
+                let prev = p.data.prev;
+                let mut next = b.data.next.unwrap();
+                next.data.prev = prev;
+                if let Some(mut prev) = prev {
+                    prev.data.next = Some(next);
+                }
+            }
+            b.free();
+        }
         let data = p.free();
         (data.key.unwrap(), data.value)
     }
 
-    pub fn nth(&mut self, i: usize) -> (&K, &O::Value) {
+    pub fn nth(&self, i: usize) -> (&K, &O::Value) {
         assert!(i < self.len(), "index out of bounds");
         let p = self.get_nth(i).unwrap().as_longlife_ref();
         (p.data.key.as_ref().unwrap(), &p.data.value)
@@ -79,11 +99,11 @@ where
     }
 
     pub fn lower_bound<Q: Borrow<K>>(&self, b: &Q) -> usize {
-        self.partition_point(|k| k <= b.borrow())
+        self.partition_point(|k| k < b.borrow())
     }
 
     pub fn upper_bound<Q: Borrow<K>>(&self, b: &Q) -> usize {
-        self.partition_point(|k| k < b.borrow())
+        self.partition_point(|k| k <= b.borrow())
     }
 
     /// Insert a new key-value pair at the *lower-bound* position of the key.
@@ -96,19 +116,8 @@ where
         };
         let result = p.data.key.as_ref().unwrap() < key;
         let mut b = self.tree.insert(Some((p, result)), x, Data::mul).unwrap();
-        // Case 1: `original p.prev` -- `x` -- `b` -- `p`
+        // Case 1: `p` -- `b` -- `x` -- `p.next`
         if result {
-            x.data.prev = p.data.prev;
-            if let Some(mut prev) = p.data.prev {
-                prev.data.next = Some(x);
-            }
-            x.data.next = Some(b);
-            b.data.prev = Some(x);
-            b.data.next = Some(p);
-            p.data.prev = Some(b);
-        }
-        // Case 2: `p` -- `b` -- `x` -- `original p.next`
-        else {
             x.data.next = p.data.next;
             if let Some(mut next) = p.data.next {
                 next.data.prev = Some(x);
@@ -117,6 +126,17 @@ where
             b.data.next = Some(x);
             b.data.prev = Some(p);
             p.data.next = Some(b);
+        }
+        // Case 2: `p.prev` -- `x` -- `b` -- `p`
+        else {
+            x.data.prev = p.data.prev;
+            if let Some(mut prev) = p.data.prev {
+                prev.data.next = Some(x);
+            }
+            x.data.next = Some(b);
+            b.data.prev = Some(x);
+            b.data.next = Some(p);
+            p.data.prev = Some(b);
         }
     }
 
@@ -237,6 +257,9 @@ impl<'a, K, O: Op> DoubleEndedIterator for Iter<'a, K, O> {
         }
     }
 }
+impl<'a, K, O: Op> ExactSizeIterator for Iter<'a, K, O> {
+    fn len(&self) -> usize { self.len }
+}
 impl<'a, K, O: Op> IntoIterator for &'a SegMap<K, O> {
     type IntoIter = Iter<'a, K, O>;
     type Item = (&'a K, &'a O::Value);
@@ -254,7 +277,7 @@ where
     }
 }
 
-struct SocCallback<K, O> {
+pub(super) struct SocCallback<K, O> {
     marker: PhantomData<(K, O)>,
 }
 impl<K, O: Op> Callback for SocCallback<K, O> {
@@ -270,11 +293,12 @@ impl<K, O: Op> Callback for SocCallback<K, O> {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]
-struct Data<K, O: Op> {
+pub(super) struct Data<K, O: Op> {
+    // TODO: Use `LinkedList`?
     prev: Option<Ptr<SocCallback<K, O>>>,
     next: Option<Ptr<SocCallback<K, O>>>,
     len: usize,
-    key: Option<K>,
+    pub(super) key: Option<K>,
     value: O::Value,
     lazy: O::Lazy,
 }
@@ -306,6 +330,7 @@ impl<K, O: Op> Data<K, O> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_util::validate;
     use crate::test_util::validate_base;
     use crate::test_util::visit_nodes;
     use crate::test_util::Concat;
@@ -317,7 +342,7 @@ mod tests {
     fn validate_soc<K, O: Op>(soc: &SegMap<K, O>)
     where
         K: Clone + Ord + fmt::Debug,
-        O::Value: Clone,
+        O::Value: Clone + fmt::Debug,
     {
         validate_base(&soc.tree, |p| {
             if !p.is_leaf() {
@@ -350,12 +375,17 @@ mod tests {
                         next.data.prev, next, p,
                     )
                 })?;
-                (prev.data.key <= next.data.key)
+                (prev.data.key.as_ref().unwrap() <= next.data.key.as_ref().unwrap())
                     .then_some(())
                     .ok_or_else(|| {
                         format!(
-                            "prev at internal node {:?} is not less than next {:?}",
-                            p, p.data.key,
+                            "{:?}'s prev {:?}({:?}) is less than next {:?}({:?}):\n{:?}",
+                            p,
+                            prev,
+                            prev.data.key.as_ref().unwrap(),
+                            next,
+                            next.data.key.as_ref().unwrap(),
+                            &soc,
                         )
                     })?;
             }
@@ -380,51 +410,54 @@ mod tests {
     #[test]
     fn test_insert_lower_bound_upper_bound() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..1 {
-            let mut soc = SegMap::<u64, Concat>::new();
+        for _ in 0..20 {
+            let mut map = SegMap::<u64, Concat>::new();
             let mut vec = Vec::new();
 
-            // Insert
             for _ in 0..20 {
-                let key = rng.gen_range(0..20);
-                let value = vec![rng.gen_range(0..20)];
-                let i = vec.partition_point(|(k, _)| k < &key);
-                vec.insert(i, (key, value.clone()));
-                soc.insert(key, value);
-                assert_eq!(to_vec(&soc), vec);
-            }
-
-            // Lower bound
-            for _ in 0..20 {
-                let key = rng.gen_range(0..20);
-                let i = vec.partition_point(|(k, _)| k <= &key);
-                let result = soc.lower_bound(&key);
-                assert_eq!(
-                    result, i,
-                    "Lower-bound of {} in {:?} is expected to be {}, but actually {}",
-                    key, vec, i, result,
-                );
-            }
-
-            // Upper bound
-            for _ in 0..20 {
-                let key = rng.gen_range(0..20);
-                let i = vec.partition_point(|(k, _)| k < &key);
-                let result = soc.upper_bound(&key);
-                assert_eq!(
-                    result, i,
-                    "Upper-bound of {} in {:?} is expected to be {}, but actually {}",
-                    key, vec, i, result,
-                );
-            }
-
-            // Remove at
-            while !vec.is_empty() {
-                let i = rng.gen_range(0..vec.len());
-                let (key, value) = soc.remove_nth(i);
-                assert_eq!(key, vec[i].0);
-                assert_eq!(value, vec[i].1);
-                vec.remove(i);
+                match rng.gen_range(0..4) {
+                    // Insert
+                    0 => {
+                        let key = rng.gen_range(0..20);
+                        let value = vec![rng.gen_range(0..20)];
+                        let i = vec.partition_point(|&(k, _)| k < key);
+                        vec.insert(i, (key, value.clone()));
+                        map.insert(key, value);
+                    }
+                    // Remove nth
+                    1 => {
+                        if vec.is_empty() {
+                            continue;
+                        }
+                        let i = rng.gen_range(0..vec.len());
+                        assert_eq!(vec.remove(i), map.remove_nth(i));
+                    }
+                    // Lower bound
+                    2 => {
+                        let key = rng.gen_range(0..20);
+                        let i = vec.partition_point(|&(k, _)| k < key);
+                        let result = map.lower_bound(&key);
+                        assert_eq!(
+                            i, result,
+                            "lower_bound({:?}, {}) is expected to be {}, but actually {}",
+                            &vec, key, i, result,
+                        );
+                    }
+                    // Upper bound
+                    3 => {
+                        let value = rng.gen_range(0..20);
+                        let i = vec.partition_point(|&(v, _)| v <= value);
+                        let result = map.upper_bound(&value);
+                        assert_eq!(
+                            i, result,
+                            "upper_bound({:?}, {}) is expected to be {}, but actually {}",
+                            &vec, value, i, result,
+                        );
+                    }
+                    _ => unreachable!(),
+                }
+                assert_eq!(vec, to_vec(&map));
+                validate(&map.tree);
             }
         }
     }

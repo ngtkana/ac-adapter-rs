@@ -3,8 +3,10 @@
 
 /// A segtree based on a red-black tree.
 mod seg;
-/// A sorted vector based on a red-black tree.
+/// A keyed segtree based on a red-black tree.
 mod seg_map;
+/// A sorted list based on a red-black tree.
+mod sorted_set;
 /// The core implementation of a red-black tree.
 mod tree;
 
@@ -12,6 +14,8 @@ mod tree;
 pub use seg::Seg;
 /// A sorted vector based on a red-black tree.
 pub use seg_map::SegMap;
+/// A sorted list based on a red-black tree.
+pub use sorted_set::SortedList;
 
 /// A trait for algebraic operations.
 pub trait Op {
