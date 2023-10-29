@@ -8,10 +8,10 @@ use std::borrow::Borrow;
 use std::fmt;
 use std::marker::PhantomData;
 
-pub struct Soc<K, O: Op> {
+pub struct SegMap<K, O: Op> {
     tree: Tree<SocCallback<K, O>>,
 }
-impl<K, O: Op> Soc<K, O> {
+impl<K, O: Op> SegMap<K, O> {
     pub fn new() -> Self { Self { tree: Tree::new() } }
 
     pub fn is_empty(&self) -> bool { self.tree.is_empty() }
@@ -55,7 +55,7 @@ impl<K, O: Op> Soc<K, O> {
     }
 }
 
-impl<K, O: Op> Soc<K, O>
+impl<K, O: Op> SegMap<K, O>
 where
     K: Ord,
 {
@@ -237,14 +237,14 @@ impl<'a, K, O: Op> DoubleEndedIterator for Iter<'a, K, O> {
         }
     }
 }
-impl<'a, K, O: Op> IntoIterator for &'a Soc<K, O> {
+impl<'a, K, O: Op> IntoIterator for &'a SegMap<K, O> {
     type IntoIter = Iter<'a, K, O>;
     type Item = (&'a K, &'a O::Value);
 
     fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
-impl<K, O: Op> fmt::Debug for Soc<K, O>
+impl<K, O: Op> fmt::Debug for SegMap<K, O>
 where
     K: fmt::Debug,
     O::Value: fmt::Debug,
@@ -314,7 +314,7 @@ mod tests {
     use rand::SeedableRng;
     use std::fmt;
 
-    fn validate_soc<K, O: Op>(soc: &Soc<K, O>)
+    fn validate_soc<K, O: Op>(soc: &SegMap<K, O>)
     where
         K: Clone + Ord + fmt::Debug,
         O::Value: Clone,
@@ -363,7 +363,7 @@ mod tests {
         })
     }
 
-    fn to_vec<K, O: Op>(soc: &Soc<K, O>) -> Vec<(K, O::Value)>
+    fn to_vec<K, O: Op>(soc: &SegMap<K, O>) -> Vec<(K, O::Value)>
     where
         K: Clone,
         O::Value: Clone,
@@ -381,7 +381,7 @@ mod tests {
     fn test_insert_lower_bound_upper_bound() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..1 {
-            let mut soc = Soc::<u64, Concat>::new();
+            let mut soc = SegMap::<u64, Concat>::new();
             let mut vec = Vec::new();
 
             // Insert
