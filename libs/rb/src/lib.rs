@@ -10,6 +10,9 @@ mod sorted_set;
 /// The core implementation of a red-black tree.
 mod tree;
 
+/// Balancing algorithm of red-black trees.
+mod balance;
+
 /// A list based on a red-black tree.
 pub use seg::Seg;
 /// A sorted vector based on a red-black tree.
