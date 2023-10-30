@@ -147,6 +147,10 @@ where
     }
 }
 
+impl<K, O: Op> Default for SegMap<K, O> {
+    fn default() -> Self { Self::new() }
+}
+
 /// An iterator over the seg.
 /// TODO: this is same as one in `seg.rs`.
 pub struct Iter<'a, K, O: Op> {

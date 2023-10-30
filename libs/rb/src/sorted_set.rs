@@ -47,6 +47,10 @@ impl<K: Ord> SortedList<K> {
     pub fn insert(&mut self, key: K) { self.map.insert(key, ()); }
 }
 
+impl<K> Default for SortedList<K> {
+    fn default() -> Self { Self::new() }
+}
+
 pub struct Iter<'a, K> {
     iter: crate::seg_map::Iter<'a, K, Nop>,
 }

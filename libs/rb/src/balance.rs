@@ -87,78 +87,49 @@ mod tests {
         }))))
     }
 
-    fn random_tree(rng: &mut StdRng, black_height: u8, parent_color: Color) -> Option<Ptr<Node>> {
-        let color = match parent_color {
-            Color::Red => Color::Black,
-            Color::Black => [Color::Red, Color::Black][rng.gen_range(0..2)],
-        };
-        let Some(children_black_height) = black_height.checked_sub(u8::from(color == Color::Black))
-        else {
-            return None;
-        };
-        let mut root = new_ptr(color);
-        let mut left = random_tree(rng, children_black_height, color);
-        let mut right = random_tree(rng, children_black_height, color);
-        if let Some(left) = left.as_mut() {
-            left.parent = Some(root);
-        }
-        if let Some(right) = right.as_mut() {
-            right.parent = Some(root);
-        }
-        root.left = left;
-        root.right = right;
-        Some(root)
-    }
-
-    struct RedRedViolation {
-        root: Ptr<Node>,
-        violation: Ptr<Node>,
-    }
-
-    fn random_red_red_violation(
+    fn random_tree(
         rng: &mut StdRng,
         black_height: u8,
         parent_color: Color,
-    ) -> RedRedViolation {
+        red_vio: bool,
+    ) -> (Option<Ptr<Node>>, Violations) {
         let color = match parent_color {
             Color::Red => {
-                if rng.gen_ratio(1, 3u32.pow(black_height as u32)) {
+                if red_vio && rng.gen_ratio(1, 2u32.pow(black_height as u32)) {
                     Color::Red
                 } else {
                     Color::Black
                 }
             }
             Color::Black => {
-                if black_height == 0 || rng.gen() {
+                if (red_vio && black_height == 0) || rng.gen() {
                     Color::Red
                 } else {
                     Color::Black
                 }
             }
         };
-        // Overflow doesn't occur here because of the selection of `color`.
-        let children_black_height = black_height - u8::from(color == Color::Black);
-        let violation;
-        let mut left;
-        let mut right;
-        let mut root = new_ptr(color);
-        if (parent_color, color) == (Color::Red, Color::Red) {
-            left = random_tree(rng, children_black_height, color);
-            right = random_tree(rng, children_black_height, color);
-            violation = root;
-        } else {
-            if rng.gen() {
-                let left_ = random_red_red_violation(rng, children_black_height, color);
-                right = random_tree(rng, children_black_height, color);
-                violation = left_.violation;
-                left = Some(left_.root);
-            } else {
-                left = random_tree(rng, children_black_height, color);
-                let right_ = random_red_red_violation(rng, children_black_height, color);
-                violation = right_.violation;
-                right = Some(right_.root);
-            }
+
+        // The concepual "nil" node is black, and has a black height of 0.
+        if black_height == 0 && color == Color::Black {
+            return (None, Violations::default());
         }
+
+        // Determine where the red violation occurs
+        let root_red_vio = (parent_color, color) == (Color::Red, Color::Red);
+        let (left_red_vio, right_red_vio) = if !red_vio || root_red_vio {
+            (false, false)
+        } else if rng.gen() {
+            (true, false)
+        } else {
+            (false, true)
+        };
+
+        // Join the two trees
+        let mut root = new_ptr(color);
+        let children_black_height = black_height - u8::from(color == Color::Black);
+        let (mut left, left_vio) = random_tree(rng, children_black_height, color, left_red_vio);
+        let (mut right, right_vio) = random_tree(rng, children_black_height, color, right_red_vio);
         if let Some(left) = left.as_mut() {
             left.parent = Some(root);
         }
@@ -167,7 +138,13 @@ mod tests {
         }
         root.left = left;
         root.right = right;
-        RedRedViolation { root, violation }
+
+        // Merge violations
+        let mut violations = left_vio.concat(right_vio);
+        if root_red_vio {
+            violations.red_vios.push(root);
+        }
+        (Some(root), violations)
     }
 
     struct Paren(Option<Ptr<Node>>);
@@ -186,7 +163,6 @@ mod tests {
                     match x.color {
                         Color::Red => {
                             if p.map_or(true, |p| p.color == Color::Red) {
-                                // The background is red, the letter is white
                                 write!(s, "\x1b[41m\x1b[37m{:?}\x1b[0m", x)?;
                             } else {
                                 write!(s, "\x1b[31m{:?}\x1b[0m", x)?;
@@ -205,34 +181,41 @@ mod tests {
         }
     }
 
+    #[derive(Debug, PartialEq, Default)]
     struct Violations {
-        red_red_violations: Vec<Ptr<Node>>,
+        red_vios: Vec<Ptr<Node>>,
+    }
+    impl Violations {
+        fn concat(mut self, other: Self) -> Self {
+            self.red_vios.extend(other.red_vios);
+            self
+        }
     }
 
     fn validate(x: Option<Ptr<Node>>) -> (u8, Violations) {
         fn validate(x: Option<Ptr<Node>>) -> Result<(u8, Violations), String> {
             let Some(x) = x else {
                 return Ok((0, Violations {
-                    red_red_violations: Vec::new(),
+                    red_vios: Vec::new(),
                 }));
             };
-            let mut red_red_violations = Vec::new();
+            let mut red_vios = Vec::new();
             let (
                 left_height,
                 Violations {
-                    red_red_violations: left_red_red_violations,
+                    red_vios: left_red_vios,
                 },
             ) = validate(x.left)?;
             let (
                 right_height,
                 Violations {
-                    red_red_violations: right_red_red_violations,
+                    red_vios: right_red_vios,
                 },
             ) = validate(x.right)?;
 
             // Collect red-red violations
-            red_red_violations.extend(left_red_red_violations);
-            red_red_violations.extend(right_red_red_violations);
+            red_vios.extend(left_red_vios);
+            red_vios.extend(right_red_vios);
 
             // Black height mismatch
             (left_height == right_height).then(|| ()).ok_or_else(|| {
@@ -246,12 +229,12 @@ mod tests {
             if x.color == Color::Red {
                 if let Some(left) = x.left {
                     if left.color == Color::Red {
-                        red_red_violations.push(left);
+                        red_vios.push(left);
                     }
                 }
                 if let Some(right) = x.right {
                     if right.color == Color::Red {
-                        red_red_violations.push(right);
+                        red_vios.push(right);
                     }
                 }
             }
@@ -277,7 +260,7 @@ mod tests {
             }
             Ok((
                 left_height + u8::from(x.color == Color::Black),
-                Violations { red_red_violations },
+                Violations { red_vios },
             ))
         }
         || -> Result<(u8, Violations), String> {
@@ -285,11 +268,11 @@ mod tests {
             if let Some(x) = x {
                 // Root is black
                 if x.color != Color::Black {
-                    violations.red_red_violations.push(x);
+                    violations.red_vios.push(x);
                 }
                 // Parent is None
                 (x.parent.is_none())
-                    .then(|| ())
+                    .then_some(())
                     .ok_or_else(|| format!("parent of {:?} is not None", x))?;
             }
             Ok((h, violations))
@@ -302,23 +285,24 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(0..=4);
-            let root = random_tree(&mut rng, h, Color::Red);
-            let (black_height, Violations { red_red_violations }) = validate(root);
+            let (root, expected_violations) = random_tree(&mut rng, h, Color::Red, false);
+            let (black_height, actual_violations) = validate(root);
             assert_eq!(black_height, h, "{}", Paren(root));
-            assert_eq!(red_red_violations, Vec::new(), "{}", Paren(root));
+            assert_eq!(expected_violations, actual_violations, "{}", Paren(root));
+            assert_eq!(expected_violations.red_vios.len(), 0, "{}", Paren(root));
         }
     }
 
     #[test]
-    fn test_random_red_red_violation_is_valid() {
+    fn test_random_red_vio_is_valid() {
         let mut rng = StdRng::seed_from_u64(0);
-        for _ in 0..10 {
-            let h = 3;
-            let RedRedViolation { root, violation } =
-                random_red_red_violation(&mut rng, h, Color::Red);
-            let (black_height, Violations { red_red_violations }) = validate(Some(root));
-            assert_eq!(black_height, h, "{}", Paren(Some(root)));
-            assert_eq!(red_red_violations, vec![violation], "{}", Paren(Some(root)));
+        for _ in 0..200 {
+            let h = rng.gen_range(1..=4);
+            let (root, expected_violations) = random_tree(&mut rng, h, Color::Red, true);
+            let (black_height, actual_violations) = validate(root);
+            assert_eq!(black_height, h, "{}", Paren(root));
+            assert_eq!(expected_violations, actual_violations, "{}", Paren(root));
+            assert_eq!(expected_violations.red_vios.len(), 1, "{}", Paren(root));
         }
     }
 }
