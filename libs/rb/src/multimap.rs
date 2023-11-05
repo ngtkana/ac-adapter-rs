@@ -52,7 +52,7 @@ impl<K: Ord, O: MultimapOp> Node<K, O> {
     }
 }
 fn len<K, O: MultimapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
-    node.as_ref().map(|node| node.len).unwrap_or(0)
+    node.as_ref().map_or(0, |node| node.len)
 }
 fn acc<K, O: MultimapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
     node.as_ref().map(|node| &node.acc)
