@@ -84,6 +84,28 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
 
     pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
 
+    pub fn nth(&self, mut n: usize) -> (&K, &O::Value) {
+        assert!(
+            n < self.len(),
+            "Index out of range: n = {n}, while len = {}",
+            self.len()
+        );
+        let mut x = self.tree.root.unwrap();
+        loop {
+            let left_len = len(x.left);
+            x = match n.cmp(&left_len) {
+                Ordering::Less => x.left.unwrap(),
+                Ordering::Equal => break,
+                Ordering::Greater => {
+                    n -= left_len + 1;
+                    x.right.unwrap()
+                }
+            };
+        }
+        let x = x.as_longlife_ref();
+        (&x.key, &x.value)
+    }
+
     pub fn insert(&mut self, key: K, value: O::Value) {
         let mut new = Ptr::new(Node::new(key, value, Color::Red));
         let Some(mut x) = self.tree.root else {
@@ -117,6 +139,8 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
         }
         if x.color == Color::Red {
             self.tree.fix_red(new);
+        } else {
+            new.update_ancestors();
         }
     }
 
@@ -183,6 +207,11 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
         }
         if needs_fix {
             self.tree.fix_black(black_vio);
+        } else {
+            if let Some(mut p) = black_vio.p {
+                balance::Node::update(&mut *p);
+                p.update_ancestors();
+            }
         }
         let x = x.free();
         Some((x.key, x.value))
@@ -238,6 +267,8 @@ impl<K: Ord> Multiset<K> {
     {
         self.map.remove(key).map(|(k, _)| k)
     }
+
+    pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
 }
 impl<K: Ord> Default for Multiset<K> {
     fn default() -> Self { Self::new() }
@@ -246,6 +277,10 @@ impl<K: Ord> Default for Multiset<K> {
 #[cfg(test)]
 mod test_multiset {
     use crate::balance::test_utils::Violations;
+    use crate::balance::Ptr;
+    use crate::multimap::len;
+    use crate::multimap::Node;
+    use crate::multimap::Nop;
     use crate::Multiset;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -260,14 +295,40 @@ mod test_multiset {
             .collect()
     }
 
+    impl Multiset<i32> {
+        fn validate_len(&self) {
+            fn validate_len(p: Option<Ptr<Node<i32, Nop>>>) -> Result<(), String> {
+                if let Some(p) = p {
+                    validate_len(p.left)?;
+                    let expected = len(p.left) + 1 + len(p.right);
+                    (p.len == expected).then_some(()).ok_or_else(|| {
+                        format!(
+                            "Len is incorrect at {:?}. Expected {}, but cached {}",
+                            p, expected, p.len
+                        )
+                    })?;
+                    validate_len(p.right)?;
+                }
+                Ok(())
+            }
+            validate_len(self.map.tree.root).unwrap_or_else(|e| {
+                panic!(
+                    "{e}:\n Tree: {}",
+                    self.map.tree.format_by(|p| format!("<{:?}:{}>", p, p.len))
+                )
+            });
+        }
+    }
+
     #[test]
-    fn test_insert_remove() {
+    fn test_insert_remove_nth() {
         const VALUE_LIM: i32 = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..10 {
             let mut set = Multiset::new();
             let mut vec = Vec::new();
             for _ in 0..200 {
+                // Mutation
                 match rng.gen_range(0..2) {
                     0 => {
                         let key = rng.gen_range(0..VALUE_LIM);
@@ -287,6 +348,13 @@ mod test_multiset {
 
                 set.map.tree.validate();
                 assert_eq!(Violations::collect(&set.map.tree), Violations::default());
+                set.validate_len();
+
+                // Nth query
+                for i in 0..vec.len() {
+                    let result = *set.nth(i);
+                    assert_eq!(result, vec[i]);
+                }
             }
         }
     }
