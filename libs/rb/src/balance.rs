@@ -311,6 +311,8 @@ impl<T: Node> Ptr<T> {
         }
         x
     }
+
+    pub fn as_longlife_ref<'a>(self) -> &'a T { unsafe { self.0.as_ref() } }
 }
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
@@ -347,11 +349,31 @@ pub mod test_utils {
 
     impl<T: Node> fmt::Display for Tree<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            self.fmt_by(f, |p| format!("{:?}", p))
+        }
+    }
+    struct TreeFormatter<'a, T: Node, F: Fn(Ptr<T>) -> String>(&'a Tree<T>, &'a F);
+    impl<'a, T: Node, F: Fn(Ptr<T>) -> String> fmt::Display for TreeFormatter<'a, T, F> {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+            self.0.fmt_by(f, |p| (self.1)(p))
+        }
+    }
+    impl<T: Node> Tree<T> {
+        pub fn format_by<F: Fn(Ptr<T>) -> String>(&self, key: F) -> String {
+            format!("{}", TreeFormatter(self, &key))
+        }
+
+        fn fmt_by(
+            &self,
+            f: &mut fmt::Formatter<'_>,
+            mut key: impl Fn(Ptr<T>) -> String,
+        ) -> fmt::Result {
             fn write<T: Node>(
                 s: &mut fmt::Formatter<'_>,
                 x: Option<Ptr<T>>,
                 p: Option<Ptr<T>>,
                 vios: &Violations<T>,
+                key: &mut impl Fn(Ptr<T>) -> String,
             ) -> fmt::Result {
                 if vios.black_vios.contains(&BlackViolation { p, x }) {
                     write!(s, "\x1b[40m\x1b[37m«\x1b[0m")?;
@@ -360,16 +382,16 @@ pub mod test_utils {
                     if *x.color() == Color::Black {
                         write!(s, "[")?
                     }
-                    write(s, *x.left(), Some(x), vios)?;
+                    write(s, *x.left(), Some(x), vios, key)?;
                     if vios.red_vios.contains(&x) {
-                        write!(s, "\x1b[41m\x1b[37m{:?}\x1b[0m", x)?;
+                        write!(s, "\x1b[41m\x1b[37m{}\x1b[0m", key(x))?;
                     } else {
                         match *x.color() {
-                            Color::Black => write!(s, "\x1b[30m{:?}\x1b[0m", x)?,
-                            Color::Red => write!(s, "\x1b[31m{:?}\x1b[0m", x)?,
+                            Color::Black => write!(s, "\x1b[30m{}\x1b[0m", key(x))?,
+                            Color::Red => write!(s, "\x1b[31m{}\x1b[0m", key(x))?,
                         }
                     }
-                    write(s, *x.right(), Some(x), vios)?;
+                    write(s, *x.right(), Some(x), vios, key)?;
                     if *x.color() == Color::Black {
                         write!(s, "]")?;
                     }
@@ -381,12 +403,11 @@ pub mod test_utils {
             }
             let vios = Violations::collect(self);
             write!(f, "Tree({}, \"", self.black_height)?;
-            write(f, self.root, None, &vios)?;
+            write(f, self.root, None, &vios, &mut key)?;
             write!(f, "\")")?;
             Ok(())
         }
-    }
-    impl<T: Node> Tree<T> {
+
         #[allow(clippy::too_many_lines)]
         pub fn random(
             rng: &mut StdRng,
@@ -882,15 +903,11 @@ mod test_update {
                 Ok(())
             }
             validate_sum(self.root).unwrap_or_else(|e| {
-                panic!("{e}:\n Tree: {}\n Sum: {:?}", self, self.collect_sum(),)
+                panic!(
+                    "{e}:\n Tree: {}",
+                    self.format_by(|p| format!("<{:?}:{},{}>", p, p.value, p.sum))
+                )
             });
-        }
-
-        fn collect_sum(&self) -> Vec<(i32, i32)> {
-            self.collect()
-                .into_iter()
-                .map(|x| (x.value, x.sum))
-                .collect()
         }
     }
 
