@@ -35,11 +35,13 @@ impl<T: Node> Tree<T> {
         }
     }
 
+    // Updates: the proper ancestors of `x` (i.e. `x` should be already updated)
     pub fn fix_red(&mut self, mut x: Ptr<T>) {
         while color(*x.parent()) == Color::Red {
             let mut p = x.parent().unwrap();
 
             let Some(mut pp) = p.parent() else {
+                p.update();
                 *p.color() = Color::Black;
                 self.black_height += 1;
                 return;
@@ -52,6 +54,8 @@ impl<T: Node> Tree<T> {
                     *p.color() = Color::Black;
                     *pp.color() = Color::Red;
                     *pp.right().unwrap().color() = Color::Black;
+                    p.update();
+                    pp.update();
                     x = pp;
                 }
                 // Case 1.2: `pp` is a splayed 4-node.
@@ -60,6 +64,9 @@ impl<T: Node> Tree<T> {
                     rotate_right(pp);
                     *x.color() = Color::Black;
                     *pp.color() = Color::Red;
+                    p.update();
+                    pp.update();
+                    x.update();
                     break;
                 }
                 // Case 1.3: `pp` is a straight 4-node.
@@ -67,6 +74,7 @@ impl<T: Node> Tree<T> {
                     rotate_right(pp);
                     *p.color() = Color::Black;
                     *pp.color() = Color::Red;
+                    pp.update();
                     break;
                 }
             }
@@ -77,6 +85,8 @@ impl<T: Node> Tree<T> {
                     *p.color() = Color::Black;
                     *pp.color() = Color::Red;
                     *pp.left().unwrap().color() = Color::Black;
+                    p.update();
+                    pp.update();
                     x = pp;
                 }
                 // Case 2.2: `pp` is a splayed 4-node.
@@ -85,6 +95,9 @@ impl<T: Node> Tree<T> {
                     rotate_left(pp);
                     *x.color() = Color::Black;
                     *pp.color() = Color::Red;
+                    p.update();
+                    pp.update();
+                    x.update();
                     break;
                 }
                 // Case 2.3: `pp` is a straight 4-node.
@@ -92,17 +105,15 @@ impl<T: Node> Tree<T> {
                     rotate_left(pp);
                     *p.color() = Color::Black;
                     *pp.color() = Color::Red;
+                    pp.update();
                     break;
                 }
             }
         }
-        while let Some(mut p) = x.parent() {
-            p.update();
-            x = p;
-        }
-        self.root = Some(x);
+        self.root = Some(x.update_ancestors());
     }
 
+    // Updates: the proper ancestors of `x` (i.e. `x` should be already updated)
     pub fn fix_black(&mut self, black_violation: BlackViolation<T>) {
         let BlackViolation { p, mut x } = black_violation;
         loop {
@@ -128,6 +139,7 @@ impl<T: Node> Tree<T> {
                     // Case 1.1: `s` is a 2-node.
                     (Color::Black, Color::Black) => {
                         *s.color() = Color::Red;
+                        p.update();
                         x = Some(p);
                     }
                     // Case 1.2: `s` is a left-leaning 3-node.
@@ -137,6 +149,7 @@ impl<T: Node> Tree<T> {
                         rotate_left(p);
                         *c.color() = *p.color();
                         *p.color() = Color::Black;
+                        s.update();
                         break;
                     }
                     // Case 1.3: `s` is a right-leaning 3-node, or a 4-node.
@@ -162,6 +175,7 @@ impl<T: Node> Tree<T> {
                     // Case 2.1: `s` is a 2-node.
                     (Color::Black, Color::Black) => {
                         *s.color() = Color::Red;
+                        p.update();
                         x = Some(p);
                     }
                     // Case 2.2: `s` os a right-leaning 3-node.
@@ -171,6 +185,7 @@ impl<T: Node> Tree<T> {
                         rotate_right(p);
                         *c.color() = *p.color();
                         *p.color() = Color::Black;
+                        s.update();
                         break;
                     }
                     // Case 2.3: `s` is a left-leaning 3-node, or a 4-node.
@@ -184,12 +199,13 @@ impl<T: Node> Tree<T> {
                 }
             }
         }
-        let mut x = x.or(p).unwrap();
-        while let Some(mut p) = x.parent() {
-            p.update();
-            x = p;
-        }
-        self.root = Some(x);
+        self.root = Some(match x {
+            None => {
+                p.unwrap().update();
+                p.unwrap().update_ancestors()
+            }
+            Some(x) => x.update_ancestors(),
+        })
     }
 
     pub fn transplant(&mut self, mut place: Ptr<T>, new: Option<Ptr<T>>) {
@@ -281,10 +297,20 @@ fn rotate_right<T: Node>(mut r: Ptr<T>) {
 }
 
 pub struct Ptr<T>(NonNull<T>);
-impl<T> Ptr<T> {
+impl<T: Node> Ptr<T> {
     pub fn new(x: T) -> Self { Self(NonNull::from(Box::leak(Box::new(x)))) }
 
     pub fn free(self) -> T { unsafe { *Box::from_raw(self.0.as_ptr()) } }
+
+    // Returns the root
+    pub fn update_ancestors(self) -> Self {
+        let mut x = self;
+        while let Some(mut p) = *x.parent() {
+            p.update();
+            x = p;
+        }
+        x
+    }
 }
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
@@ -647,7 +673,7 @@ pub mod test_utils {
 }
 
 #[cfg(test)]
-mod tests {
+mod test_fix {
     use super::Color;
     use super::Ptr;
     use crate::balance::test_utils::Violations;
@@ -739,11 +765,10 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(1..=4);
-            let (mut tree, violations) = Tree::random(&mut rng, new_node, h, true, false);
-            let red_vio = violations.red_vios[0];
+            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, true, false);
             let before = tree.collect();
 
-            tree.fix_red(red_vio);
+            tree.fix_red(vios.red_vios[0]);
             let after = tree.collect();
             tree.validate();
 
@@ -759,11 +784,10 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(1..=4);
-            let (mut tree, violations) = Tree::random(&mut rng, new_node, h, false, true);
-            let black_vio = violations.black_vios[0];
+            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, false, true);
             let before = tree.collect();
 
-            tree.fix_black(black_vio);
+            tree.fix_black(vios.black_vios[0]);
             let after = tree.collect();
             tree.validate();
 
@@ -771,6 +795,149 @@ mod tests {
             assert_eq!(Violations::collect(&tree), Violations::default());
             // Make sure the sequence of nodes has not changed.
             assert_eq!(before, after);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test_update {
+    use super::test_utils::Violations;
+    use super::Color;
+    use super::Node as _;
+    use super::Ptr;
+    use crate::balance::Tree;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+
+    const VALUE_LIM: i32 = 20;
+
+    struct SumNode {
+        pub value: i32,
+        pub sum: i32,
+        pub color: Color,
+        pub parent: Option<Ptr<Self>>,
+        pub left: Option<Ptr<Self>>,
+        pub right: Option<Ptr<Self>>,
+    }
+    fn sum(p: Option<Ptr<SumNode>>) -> i32 { p.map_or(0, |p| p.sum) }
+    impl super::Node for SumNode {
+        fn update(&mut self) { self.sum = sum(self.left) + self.value + sum(self.right); }
+
+        fn push(&mut self) {}
+
+        fn color(&mut self) -> &mut Color { &mut self.color }
+
+        fn parent(&mut self) -> &mut Option<Ptr<Self>> { &mut self.parent }
+
+        fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
+
+        fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+    }
+
+    impl Tree<SumNode> {
+        fn random_sum(
+            rng: &mut StdRng,
+            black_height: u8,
+            red_vio: bool,
+            black_vio: bool,
+        ) -> (Self, Violations<SumNode>) {
+            fn new_node(rng: &mut StdRng, color: Color) -> SumNode {
+                let value = rng.gen_range(0..VALUE_LIM);
+                SumNode {
+                    value,
+                    sum: value,
+                    color,
+                    parent: None,
+                    left: None,
+                    right: None,
+                }
+            }
+            fn update(p: Option<Ptr<SumNode>>) {
+                if let Some(mut p) = p {
+                    update(p.left);
+                    update(p.right);
+                    p.update();
+                }
+            }
+
+            let (tree, vios) = Self::random(rng, new_node, black_height, red_vio, black_vio);
+            update(tree.root);
+            (tree, vios)
+        }
+
+        fn validate_sum(&self) {
+            fn validate_sum(p: Option<Ptr<SumNode>>) -> Result<(), String> {
+                if let Some(p) = p {
+                    validate_sum(p.left)?;
+                    let expected = sum(p.left) + p.value + sum(p.right);
+                    (p.sum == expected).then_some(()).ok_or_else(|| {
+                        format!(
+                            "Sum is incorrect at {:?}. Expected {}, but cached {}",
+                            p, expected, p.sum
+                        )
+                    })?;
+                    validate_sum(p.right)?;
+                }
+                Ok(())
+            }
+            validate_sum(self.root).unwrap_or_else(|e| {
+                panic!("{e}:\n Tree: {}\n Sum: {:?}", self, self.collect_sum(),)
+            });
+        }
+
+        fn collect_sum(&self) -> Vec<(i32, i32)> {
+            self.collect()
+                .into_iter()
+                .map(|x| (x.value, x.sum))
+                .collect()
+        }
+    }
+
+    #[test]
+    fn test_random_tree_is_valid() {
+        let mut rng = StdRng::seed_from_u64(0);
+        for _ in 0..200 {
+            let h = rng.gen_range(0..=4);
+            let (tree, _) = Tree::random_sum(&mut rng, h, false, false);
+            tree.validate_sum();
+        }
+    }
+
+    #[test]
+    fn test_fix_red() {
+        let mut rng = StdRng::seed_from_u64(0);
+        for _ in 0..200 {
+            let h = rng.gen_range(1..=4);
+            let (mut tree, vios) = Tree::random_sum(&mut rng, h, true, false);
+            let mut p = vios.red_vios[0];
+            tree.validate_sum();
+
+            // Change this value to make sure `fix_red` updates all the proper ancestors.
+            p.value = rng.gen_range(0..VALUE_LIM);
+            p.update();
+
+            tree.fix_red(p);
+            tree.validate_sum();
+        }
+    }
+
+    #[test]
+    fn test_fix_black() {
+        let mut rng = StdRng::seed_from_u64(0);
+        for _ in 0..200 {
+            let h = rng.gen_range(1..=4);
+            let (mut tree, vios) = Tree::random_sum(&mut rng, h, false, true);
+            let vio = vios.black_vios[0];
+            tree.validate_sum();
+
+            // Change this value to make sure `fix_black` updates all the proper ancestors.
+            if let Some(mut p) = vio.p {
+                p.value = rng.gen_range(0..VALUE_LIM);
+            }
+
+            tree.fix_black(vio);
+            tree.validate_sum();
         }
     }
 }
