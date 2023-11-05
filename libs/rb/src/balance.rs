@@ -313,6 +313,8 @@ impl<T: Balance> Ptr<T> {
     }
 
     pub fn as_longlife_ref<'a>(self) -> &'a T { unsafe { self.0.as_ref() } }
+
+    pub fn as_longlife_mut<'a>(mut self) -> &'a mut T { unsafe { self.0.as_mut() } }
 }
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
