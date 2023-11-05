@@ -7,6 +7,6 @@ mod balance;
 mod map;
 
 pub use map::Multimap;
+pub use map::MultimapOp;
+pub use map::MultimapSeg;
 pub use map::Multiset;
-pub use map::Segmap;
-pub use map::SegmapOp;
