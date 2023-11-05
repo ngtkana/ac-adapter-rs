@@ -327,7 +327,7 @@ pub mod test_utils {
                 p: Option<Ptr<T>>,
                 vios: &Violations<T>,
             ) -> fmt::Result {
-                if vios.black_vios.contains(&BlackViolation { x, p }) {
+                if vios.black_vios.contains(&BlackViolation { p, x }) {
                     write!(s, "\x1b[40m\x1b[37m«\x1b[0m")?;
                 }
                 if let Some(mut x) = x {
@@ -348,7 +348,7 @@ pub mod test_utils {
                         write!(s, "]")?;
                     }
                 }
-                if vios.black_vios.contains(&BlackViolation { x, p }) {
+                if vios.black_vios.contains(&BlackViolation { p, x }) {
                     write!(s, "\x1b[40m\x1b[37m»\x1b[0m")?;
                 }
                 Ok(())
