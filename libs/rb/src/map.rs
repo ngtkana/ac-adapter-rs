@@ -5,6 +5,7 @@ use crate::balance::Ptr;
 use crate::balance::Tree;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
+use std::fmt;
 use std::marker::PhantomData;
 
 pub trait SegmapOp {
@@ -381,6 +382,11 @@ impl<K: Ord, V> Multimap<K, V> {
 impl<K: Ord, V> Default for Multimap<K, V> {
     fn default() -> Self { Self::new() }
 }
+impl<K: Ord + fmt::Debug, V: fmt::Debug> fmt::Debug for Multimap<K, V> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map().entries(self.iter()).finish()
+    }
+}
 impl<'a, K: Ord, V> IntoIterator for &'a Multimap<K, V> {
     type IntoIter = MultimapIter<'a, K, V>;
     type Item = (&'a K, &'a V);
@@ -446,6 +452,11 @@ impl<K: Ord> Multiset<K> {
 }
 impl<K: Ord> Default for Multiset<K> {
     fn default() -> Self { Self::new() }
+}
+impl<K: Ord + fmt::Debug> fmt::Debug for Multiset<K> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_set().entries(self.iter()).finish()
+    }
 }
 impl<'a, K: Ord> IntoIterator for &'a Multiset<K> {
     type IntoIter = MultisetIter<'a, K>;
