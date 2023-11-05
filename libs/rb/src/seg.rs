@@ -548,7 +548,7 @@ mod tests {
                 let expected = vec[start..end].iter().fold(None::<Vec<u64>>, |value, x| {
                     Some(match value {
                         None => x.clone(),
-                        Some(value) => Concat::mul(&value, &x),
+                        Some(value) => Concat::mul(&value, x),
                     })
                 });
                 assert_eq!(result, expected);

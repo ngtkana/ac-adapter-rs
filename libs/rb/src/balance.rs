@@ -25,6 +25,124 @@ pub trait Node: Sized {
     fn right(&mut self) -> &mut Option<Ptr<Self>>;
 }
 
+fn color<T: Node>(x: Option<Ptr<T>>) -> Color {
+    match x {
+        None => Color::Black,
+        Some(mut x) => *x.color(),
+    }
+}
+
+fn rotate_left<T: Node>(mut l: Ptr<T>) {
+    let p = *l.parent();
+    let mut r = l.right().unwrap();
+    let c = *r.left();
+
+    // Connect `p` and `r`.
+    *r.parent() = p;
+    if let Some(mut p) = p {
+        *(if *p.left() == Some(l) { p.left() } else { p.right() }) = Some(r);
+    }
+
+    // Connect `r` and `l`.
+    *l.parent() = Some(r);
+    *r.left() = Some(l);
+
+    // Connect `l` and `c`.
+    if let Some(mut c) = c {
+        *c.parent() = Some(l);
+    }
+    *l.right() = c;
+}
+
+fn rotate_right<T: Node>(mut r: Ptr<T>) {
+    let p = *r.parent();
+    let mut l = r.left().unwrap();
+    let c = *l.right();
+
+    // Connect `p` and `l`.
+    *l.parent() = p;
+    if let Some(mut p) = p {
+        *(if *p.left() == Some(r) { p.left() } else { p.right() }) = Some(l);
+    }
+
+    // Connect `l` and `r`.
+    *r.parent() = Some(l);
+    *l.right() = Some(r);
+
+    // Connect `r` and `c`.
+    if let Some(mut c) = c {
+        *c.parent() = Some(r);
+    }
+    *r.left() = c;
+}
+
+pub fn fix_red<T: Node>(mut x: Ptr<T>) -> (Ptr<T>, bool) {
+    while color(*x.parent()) == Color::Red {
+        let mut p = x.parent().unwrap();
+
+        let Some(mut pp) = p.parent() else {
+            *p.color() = Color::Black;
+            return (p, true);
+        };
+
+        // Case 1: `p` is the left child.
+        if *pp.left() == Some(p) {
+            // Case 1.1: `pp` is a 5-node.
+            if color(*pp.right()) == Color::Red {
+                *p.color() = Color::Black;
+                *pp.color() = Color::Red;
+                *pp.right().unwrap().color() = Color::Black;
+                x = pp;
+            }
+            // Case 1.2: `pp` is a splayed 4-node.
+            else if *p.right() == Some(x) {
+                rotate_left(p);
+                rotate_right(pp);
+                *x.color() = Color::Black;
+                *pp.color() = Color::Red;
+                break;
+            }
+            // Case 1.3: `pp` is a straight 4-node.
+            else {
+                rotate_right(pp);
+                *p.color() = Color::Black;
+                *pp.color() = Color::Red;
+                break;
+            }
+        }
+        // Case 2: `p` is the right child.
+        else {
+            // Case 2.1: `pp` is a 5-node.
+            if color(*pp.left()) == Color::Red {
+                *p.color() = Color::Black;
+                *pp.color() = Color::Red;
+                *pp.left().unwrap().color() = Color::Black;
+                x = pp;
+            }
+            // Case 2.2: `pp` is a splayed 4-node.
+            else if *p.left() == Some(x) {
+                rotate_right(p);
+                rotate_left(pp);
+                *x.color() = Color::Black;
+                *pp.color() = Color::Red;
+                break;
+            }
+            // Case 2.3: `pp` is a straight 4-node.
+            else {
+                rotate_left(pp);
+                *p.color() = Color::Black;
+                *pp.color() = Color::Red;
+                break;
+            }
+        }
+    }
+    while let Some(mut p) = x.parent() {
+        p.update();
+        x = p;
+    }
+    (x, false)
+}
+
 pub struct Ptr<T>(NonNull<T>);
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
@@ -49,6 +167,7 @@ impl<T> PartialEq for Ptr<T> {
 
 #[cfg(test)]
 mod tests {
+    use super::fix_red;
     use super::Color;
     use super::Ptr;
     use rand::rngs::StdRng;
@@ -118,7 +237,7 @@ mod tests {
                 }
                 Ok(())
             }
-            let vios = Violations::collect(&self);
+            let vios = Violations::collect(self);
             write!(f, "Tree({}, \"", self.black_height)?;
             write(f, self.root, None, &vios)?;
             write!(f, "\")")?;
@@ -126,12 +245,14 @@ mod tests {
         }
     }
     impl Tree {
+        #[allow(clippy::too_many_lines)]
         fn random(
             rng: &mut StdRng,
             black_height: u8,
             red_vio: bool,
             black_vio: bool,
         ) -> (Self, Violations) {
+            #[allow(clippy::too_many_lines)]
             fn random_tree(
                 rng: &mut StdRng,
                 mut black_height: u8,
@@ -140,7 +261,7 @@ mod tests {
                 parent: Option<Ptr<Node>>,
             ) -> (Option<Ptr<Node>>, Violations) {
                 // Select the violation position here
-                let parent_color = parent.map(|p| p.color).unwrap_or(Color::Black);
+                let parent_color = parent.map_or(Color::Black, |p| p.color);
                 let here_red_vio;
                 let here_black_vio;
                 let color;
@@ -162,7 +283,7 @@ mod tests {
                     (true, false) => {
                         here_red_vio = parent_color == Color::Red
                             && red_vio
-                            && rng.gen_ratio(1, 2u32.pow(black_height as u32));
+                            && rng.gen_ratio(1, 2u32.pow(u32::from(black_height)));
                         here_black_vio = false;
                         color = if here_red_vio {
                             Color::Red
@@ -193,7 +314,7 @@ mod tests {
                         };
                         here_black_vio = rng.gen_ratio(
                             1,
-                            2u32.pow(black_height as u32 - u32::from(color == Color::Black)),
+                            2u32.pow(u32::from(black_height) - u32::from(color == Color::Black)),
                         );
                     }
                     (true, true) => panic!(),
@@ -286,7 +407,7 @@ mod tests {
 
                 // Parent pointer incinsistency
                 if let Some(left) = x.left {
-                    (left.parent == Some(x)).then(|| ()).ok_or_else(|| {
+                    (left.parent == Some(x)).then_some(()).ok_or_else(|| {
                         format!(
                             "parent pointer inconsistency between {:?} and its left child {:?}. \
                              The parent of the left child is {:?}",
@@ -295,7 +416,7 @@ mod tests {
                     })?;
                 }
                 if let Some(right) = x.right {
-                    (right.parent == Some(x)).then(|| ()).ok_or_else(|| {
+                    (right.parent == Some(x)).then_some(()).ok_or_else(|| {
                         format!(
                             "parent pointer inconsistency between {:?} and its right child {:?}. \
                              The parent of the right child is {:?}",
@@ -320,9 +441,23 @@ mod tests {
             }()
             .unwrap_or_else(|e| panic!("Validation error: {}\nTree: {}", e, self))
         }
+
+        fn collect(&self) -> Vec<Ptr<Node>> {
+            fn extend(x: Option<Ptr<Node>>, out: &mut Vec<Ptr<Node>>) {
+                if let Some(x) = x {
+                    extend(x.left, out);
+                    out.push(x);
+                    extend(x.right, out);
+                }
+            }
+            let mut out = Vec::new();
+            extend(self.root, &mut out);
+            out
+        }
     }
 
     #[derive(Debug, PartialEq, Default)]
+    #[allow(clippy::type_complexity)]
     struct Violations {
         red_vios: Vec<Ptr<Node>>,
         black_vios: Vec<(Option<Ptr<Node>>, Option<Ptr<Node>>)>, // child, parent
@@ -404,6 +539,30 @@ mod tests {
 
             let actual_violations = Violations::collect(&tree);
             assert_eq!(expected_violations, actual_violations, "{}", tree);
+        }
+    }
+
+    #[test]
+    fn test_fix_red() {
+        let mut rng = StdRng::seed_from_u64(0);
+        for _ in 0..200 {
+            let h = rng.gen_range(1..=4);
+            let (mut tree, violations) = Tree::random(&mut rng, h, true, false);
+            let red_vio = violations.red_vios[0];
+            let before = tree.collect();
+
+            let (root, changed) = fix_red(red_vio);
+            tree.root = Some(root);
+            if changed {
+                tree.black_height += 1;
+            }
+            let after = tree.collect();
+            tree.validate();
+
+            // Make sure the violation has fixed.
+            assert_eq!(Violations::collect(&tree), Violations::default());
+            // Make sure the sequence of nodes has not changed.
+            assert_eq!(before, after);
         }
     }
 }
