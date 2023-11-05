@@ -8,43 +8,32 @@ use std::cmp::Ordering;
 use std::fmt;
 use std::marker::PhantomData;
 
-pub trait SegmapOp {
+pub trait MultimapOp {
     type Value;
     type Acc;
-    type Lazy: PartialEq;
 
     fn to_acc(value: &Self::Value) -> Self::Acc;
 
     fn join(lhs: Option<&Self::Acc>, center: &Self::Value, rhs: Option<&Self::Acc>) -> Self::Acc;
-
-    fn apply(_value: &mut Self::Value, _lazy: &Self::Lazy);
-
-    fn compose(_lhs: &Self::Lazy, _rhs: &Self::Lazy) -> Self::Lazy;
-
-    fn identity() -> Self::Lazy;
-
-    fn is_identity(lazy: &Self::Lazy) -> bool { *lazy == Self::identity() }
 }
 
 #[allow(dead_code)]
-pub struct Node<K, O: SegmapOp> {
+pub struct Node<K, O: MultimapOp> {
     key: K,
     value: O::Value,
     acc: O::Acc,
-    lazy: O::Lazy,
     parent: Option<Ptr<Node<K, O>>>,
     left: Option<Ptr<Node<K, O>>>,
     right: Option<Ptr<Node<K, O>>>,
     len: usize,
     color: Color,
 }
-impl<K: Ord, O: SegmapOp> Node<K, O> {
+impl<K: Ord, O: MultimapOp> Node<K, O> {
     pub fn new(key: K, value: O::Value, color: Color) -> Self {
         Self {
             key,
             acc: O::to_acc(&value),
             value,
-            lazy: O::identity(),
             parent: None,
             left: None,
             right: None,
@@ -53,13 +42,13 @@ impl<K: Ord, O: SegmapOp> Node<K, O> {
         }
     }
 }
-fn len<K, O: SegmapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
+fn len<K, O: MultimapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
     node.as_ref().map_or(0, |node| node.len)
 }
-fn acc<K, O: SegmapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
+fn acc<K, O: MultimapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
     node.as_ref().map(|node| &node.acc)
 }
-impl<K, O: SegmapOp> Balance for Node<K, O> {
+impl<K, O: MultimapOp> Balance for Node<K, O> {
     fn update(&mut self) {
         self.len = len(self.left) + 1 + len(self.right);
         self.acc = O::join(acc(&self.left), &self.value, acc(&self.right));
@@ -76,10 +65,10 @@ impl<K, O: SegmapOp> Balance for Node<K, O> {
     fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
 }
 
-pub struct Segmap<K, O: SegmapOp> {
+pub struct MultimapSeg<K, O: MultimapOp> {
     tree: Tree<Node<K, O>>,
 }
-impl<K: Ord, O: SegmapOp> Segmap<K, O> {
+impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
     pub fn new() -> Self { Self { tree: Tree::new() } }
 
     pub fn len(&self) -> usize { len(self.tree.root) }
@@ -269,23 +258,23 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
     }
 }
 
-impl<K: Ord, O: SegmapOp> Default for Segmap<K, O> {
+impl<K: Ord, O: MultimapOp> Default for MultimapSeg<K, O> {
     fn default() -> Self { Self::new() }
 }
-impl<'a, K: Ord, O: SegmapOp> IntoIterator for &'a Segmap<K, O> {
+impl<'a, K: Ord, O: MultimapOp> IntoIterator for &'a MultimapSeg<K, O> {
     type IntoIter = SegmapIter<'a, K, O>;
     type Item = (&'a K, &'a O::Value);
 
     fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
-pub struct SegmapIter<'a, K: Ord, O: SegmapOp> {
+pub struct SegmapIter<'a, K: Ord, O: MultimapOp> {
     start: Option<Ptr<Node<K, O>>>,
     end: Option<Ptr<Node<K, O>>>,
     len: usize,
     marker: PhantomData<&'a (K, O)>,
 }
-impl<'a, K: Ord, O: SegmapOp> Iterator for SegmapIter<'a, K, O> {
+impl<'a, K: Ord, O: MultimapOp> Iterator for SegmapIter<'a, K, O> {
     type Item = (&'a K, &'a O::Value);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -301,7 +290,7 @@ impl<'a, K: Ord, O: SegmapOp> Iterator for SegmapIter<'a, K, O> {
 
     fn size_hint(&self) -> (usize, Option<usize>) { (self.len, Some(self.len)) }
 }
-impl<'a, K: Ord, O: SegmapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
+impl<'a, K: Ord, O: MultimapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             return None;
@@ -313,12 +302,11 @@ impl<'a, K: Ord, O: SegmapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
         Some((&x.key, &x.value))
     }
 }
-impl<'a, K: Ord, O: SegmapOp> ExactSizeIterator for SegmapIter<'a, K, O> {}
+impl<'a, K: Ord, O: MultimapOp> ExactSizeIterator for SegmapIter<'a, K, O> {}
 
 struct Nop<T>(PhantomData<T>);
-impl<T> SegmapOp for Nop<T> {
+impl<T> MultimapOp for Nop<T> {
     type Acc = ();
-    type Lazy = ();
     type Value = T;
 
     fn to_acc(_value: &Self::Value) -> Self::Acc {}
@@ -329,21 +317,15 @@ impl<T> SegmapOp for Nop<T> {
         _rhs: Option<&Self::Acc>,
     ) -> Self::Acc {
     }
-
-    fn apply(_value: &mut Self::Value, _lazy: &Self::Lazy) {}
-
-    fn compose(_lhs: &Self::Lazy, _rhs: &Self::Lazy) -> Self::Lazy {}
-
-    fn identity() -> Self::Lazy {}
 }
 
 pub struct Multimap<K, V> {
-    segmap: Segmap<K, Nop<V>>,
+    segmap: MultimapSeg<K, Nop<V>>,
 }
 impl<K: Ord, V> Multimap<K, V> {
     pub fn new() -> Self {
         Self {
-            segmap: Segmap::new(),
+            segmap: MultimapSeg::new(),
         }
     }
 
