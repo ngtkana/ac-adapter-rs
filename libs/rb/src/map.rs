@@ -85,6 +85,15 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
 
     pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
 
+    pub fn iter(&self) -> SegmapIter<'_, K, O> {
+        SegmapIter {
+            start: self.tree.min(),
+            end: self.tree.max(),
+            len: self.len(),
+            marker: PhantomData,
+        }
+    }
+
     pub fn nth(&self, n: usize) -> (&K, &O::Value) {
         let x = self.nth_ptr(n).as_longlife_ref();
         (&x.key, &x.value)
@@ -95,21 +104,13 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
         (&x.key, &mut x.value)
     }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<&O::Value>
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<(&O::Value, usize), usize>
     where
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
         self.binary_search_ptr(key)
-            .map(|(x, _)| &x.as_longlife_ref().value)
-    }
-
-    pub fn binary_search_index<Q: ?Sized>(&self, key: &Q) -> Option<usize>
-    where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
-    {
-        self.binary_search_ptr(key).map(|(_, i)| i)
+            .map(|(x, i)| (&x.as_longlife_ref().value, i))
     }
 
     pub fn insert(&mut self, key: K, value: O::Value) {
@@ -155,7 +156,7 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        let x = self.binary_search_ptr(key)?.0;
+        let x = self.binary_search_ptr(key).ok()?.0;
         self.remove_ptr(x);
         let x = x.free();
         Some((x.key, x.value))
@@ -189,24 +190,24 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
         x
     }
 
-    pub fn binary_search_ptr<Q: ?Sized>(&self, key: &Q) -> Option<(Ptr<Node<K, O>>, usize)>
+    pub fn binary_search_ptr<Q: ?Sized>(&self, key: &Q) -> Result<(Ptr<Node<K, O>>, usize), usize>
     where
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        let mut x = self.tree.root?;
+        let mut x = self.tree.root.ok_or(0usize)?;
         let mut index = 0;
         loop {
             x = match key.cmp(x.key.borrow()) {
-                Ordering::Less => x.left?,
+                Ordering::Less => x.left.ok_or(index)?,
                 Ordering::Greater => {
                     index += len(x.left) + 1;
-                    x.right?
+                    x.right.ok_or(index)?
                 }
                 Ordering::Equal => break,
             }
         }
-        Some((x, index + len(x.left)))
+        Ok((x, index + len(x.left)))
     }
 
     fn remove_ptr(&mut self, x: Ptr<Node<K, O>>) {
@@ -270,6 +271,48 @@ impl<K: Ord, O: SegmapOp> Segmap<K, O> {
 impl<K: Ord, O: SegmapOp> Default for Segmap<K, O> {
     fn default() -> Self { Self::new() }
 }
+impl<'a, K: Ord, O: SegmapOp> IntoIterator for &'a Segmap<K, O> {
+    type IntoIter = SegmapIter<'a, K, O>;
+    type Item = (&'a K, &'a O::Value);
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+
+pub struct SegmapIter<'a, K: Ord, O: SegmapOp> {
+    start: Option<Ptr<Node<K, O>>>,
+    end: Option<Ptr<Node<K, O>>>,
+    len: usize,
+    marker: PhantomData<&'a (K, O)>,
+}
+impl<'a, K: Ord, O: SegmapOp> Iterator for SegmapIter<'a, K, O> {
+    type Item = (&'a K, &'a O::Value);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.len == 0 {
+            return None;
+        }
+        let x = self.start.unwrap();
+        self.start = x.next();
+        self.len -= 1;
+        let x = x.as_longlife_ref();
+        Some((&x.key, &x.value))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { (self.len, Some(self.len)) }
+}
+impl<'a, K: Ord, O: SegmapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
+    fn next_back(&mut self) -> Option<Self::Item> {
+        if self.len == 0 {
+            return None;
+        }
+        let x = self.end.unwrap();
+        self.end = x.prev();
+        self.len -= 1;
+        let x = x.as_longlife_ref();
+        Some((&x.key, &x.value))
+    }
+}
+impl<'a, K: Ord, O: SegmapOp> ExactSizeIterator for SegmapIter<'a, K, O> {}
 
 struct Nop<T>(PhantomData<T>);
 impl<T> SegmapOp for Nop<T> {
@@ -307,22 +350,20 @@ impl<K: Ord, V> Multimap<K, V> {
 
     pub fn is_empty(&self) -> bool { self.segmap.is_empty() }
 
+    pub fn iter(&self) -> MultimapIter<'_, K, V> {
+        MultimapIter {
+            iter: self.segmap.iter(),
+        }
+    }
+
     pub fn nth(&self, n: usize) -> (&K, &V) { self.segmap.nth(n) }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<(&V, usize), usize>
     where
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
         self.segmap.binary_search(key)
-    }
-
-    pub fn binary_search_index<Q: ?Sized>(&self, key: &Q) -> Option<usize>
-    where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
-    {
-        self.segmap.binary_search_index(key)
     }
 
     pub fn insert(&mut self, key: K, value: V) { self.segmap.insert(key, value) }
@@ -340,6 +381,26 @@ impl<K: Ord, V> Multimap<K, V> {
 impl<K: Ord, V> Default for Multimap<K, V> {
     fn default() -> Self { Self::new() }
 }
+impl<'a, K: Ord, V> IntoIterator for &'a Multimap<K, V> {
+    type IntoIter = MultimapIter<'a, K, V>;
+    type Item = (&'a K, &'a V);
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+pub struct MultimapIter<'a, K: Ord, V> {
+    iter: SegmapIter<'a, K, Nop<V>>,
+}
+impl<'a, K: Ord, V> Iterator for MultimapIter<'a, K, V> {
+    type Item = (&'a K, &'a V);
+
+    fn next(&mut self) -> Option<Self::Item> { self.iter.next() }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+}
+impl<'a, K: Ord, V> DoubleEndedIterator for MultimapIter<'a, K, V> {
+    fn next_back(&mut self) -> Option<Self::Item> { self.iter.next_back() }
+}
+impl<'a, K: Ord, V> ExactSizeIterator for MultimapIter<'a, K, V> {}
 
 pub struct Multiset<K> {
     map: Multimap<K, ()>,
@@ -355,14 +416,20 @@ impl<K: Ord> Multiset<K> {
 
     pub fn is_empty(&self) -> bool { self.map.is_empty() }
 
+    pub fn iter(&self) -> MultisetIter<'_, K> {
+        MultisetIter {
+            iter: self.map.iter(),
+        }
+    }
+
     pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<usize>
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<usize, usize>
     where
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        self.map.binary_search_index(key)
+        self.map.binary_search(key).map(|(_, i)| i)
     }
 
     pub fn insert(&mut self, key: K) { self.map.insert(key, ()) }
@@ -380,6 +447,26 @@ impl<K: Ord> Multiset<K> {
 impl<K: Ord> Default for Multiset<K> {
     fn default() -> Self { Self::new() }
 }
+impl<'a, K: Ord> IntoIterator for &'a Multiset<K> {
+    type IntoIter = MultisetIter<'a, K>;
+    type Item = &'a K;
+
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+pub struct MultisetIter<'a, K: Ord> {
+    iter: MultimapIter<'a, K, ()>,
+}
+impl<'a, K: Ord> Iterator for MultisetIter<'a, K> {
+    type Item = &'a K;
+
+    fn next(&mut self) -> Option<Self::Item> { self.iter.next().map(|(k, _)| k) }
+
+    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+}
+impl<'a, K: Ord> DoubleEndedIterator for MultisetIter<'a, K> {
+    fn next_back(&mut self) -> Option<Self::Item> { self.iter.next_back().map(|(k, _)| k) }
+}
+impl<'a, K: Ord> ExactSizeIterator for MultisetIter<'a, K> {}
 
 #[cfg(test)]
 mod test_multiset {
@@ -484,12 +571,17 @@ mod test_multiset {
                 // Binary search query
                 for x in 0..VALUE_LIM {
                     let result = set.binary_search(&x);
-                    let expected = vec.binary_search(&x).ok();
-                    assert_eq!(result.is_some(), expected.is_some());
-                    if let Some(result) = result {
-                        assert_eq!(vec[result], x);
+                    match result {
+                        Ok(i) => assert_eq!(vec[i], x),
+                        Err(i) => {
+                            assert!(i == vec.len() || vec[i] > x);
+                            assert!(i == 0 || vec[i - 1] < x);
+                        }
                     }
                 }
+
+                // Collect query
+                assert_eq!(set.iter().copied().collect::<Vec<_>>(), vec);
             }
         }
     }
