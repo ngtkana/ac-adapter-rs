@@ -207,11 +207,9 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
         }
         if needs_fix {
             self.tree.fix_black(black_vio);
-        } else {
-            if let Some(mut p) = black_vio.p {
-                balance::Node::update(&mut *p);
-                p.update_ancestors();
-            }
+        } else if let Some(mut p) = black_vio.p {
+            balance::Node::update(&mut *p);
+            p.update_ancestors();
         }
         let x = x.free();
         Some((x.key, x.value))
@@ -351,9 +349,9 @@ mod test_multiset {
                 set.validate_len();
 
                 // Nth query
-                for i in 0..vec.len() {
+                for (i, &expected) in vec.iter().enumerate() {
                     let result = *set.nth(i);
-                    assert_eq!(result, vec[i]);
+                    assert_eq!(result, expected);
                 }
             }
         }
