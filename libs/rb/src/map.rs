@@ -5,8 +5,9 @@ use crate::balance::Ptr;
 use crate::balance::Tree;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
+use std::marker::PhantomData;
 
-pub trait MultimapOp {
+pub trait SegmapOp {
     type Value;
     type Acc;
     type Lazy: PartialEq;
@@ -25,7 +26,7 @@ pub trait MultimapOp {
 }
 
 #[allow(dead_code)]
-pub struct Node<K, O: MultimapOp> {
+pub struct Node<K, O: SegmapOp> {
     key: K,
     value: O::Value,
     acc: O::Acc,
@@ -36,7 +37,7 @@ pub struct Node<K, O: MultimapOp> {
     len: usize,
     color: Color,
 }
-impl<K: Ord, O: MultimapOp> Node<K, O> {
+impl<K: Ord, O: SegmapOp> Node<K, O> {
     pub fn new(key: K, value: O::Value, color: Color) -> Self {
         Self {
             key,
@@ -51,13 +52,13 @@ impl<K: Ord, O: MultimapOp> Node<K, O> {
         }
     }
 }
-fn len<K, O: MultimapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
+fn len<K, O: SegmapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
     node.as_ref().map_or(0, |node| node.len)
 }
-fn acc<K, O: MultimapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
+fn acc<K, O: SegmapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
     node.as_ref().map(|node| &node.acc)
 }
-impl<K, O: MultimapOp> Balance for Node<K, O> {
+impl<K, O: SegmapOp> Balance for Node<K, O> {
     fn update(&mut self) {
         self.len = len(self.left) + 1 + len(self.right);
         self.acc = O::join(acc(&self.left), &self.value, acc(&self.right));
@@ -74,10 +75,10 @@ impl<K, O: MultimapOp> Balance for Node<K, O> {
     fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
 }
 
-pub struct Multimap<K, O: MultimapOp> {
+pub struct Segmap<K, O: SegmapOp> {
     tree: Tree<Node<K, O>>,
 }
-impl<K: Ord, O: MultimapOp> Multimap<K, O> {
+impl<K: Ord, O: SegmapOp> Segmap<K, O> {
     pub fn new() -> Self { Self { tree: Tree::new() } }
 
     pub fn len(&self) -> usize { len(self.tree.root) }
@@ -87,6 +88,28 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
     pub fn nth(&self, n: usize) -> (&K, &O::Value) {
         let x = self.nth_ptr(n).as_longlife_ref();
         (&x.key, &x.value)
+    }
+
+    pub fn nth_mut(&mut self, n: usize) -> (&K, &mut O::Value) {
+        let x = self.nth_ptr(n).as_longlife_mut();
+        (&x.key, &mut x.value)
+    }
+
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<&O::Value>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.binary_search_ptr(key)
+            .map(|(x, _)| &x.as_longlife_ref().value)
+    }
+
+    pub fn binary_search_index<Q: ?Sized>(&self, key: &Q) -> Option<usize>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.binary_search_ptr(key).map(|(_, i)| i)
     }
 
     pub fn insert(&mut self, key: K, value: O::Value) {
@@ -132,14 +155,7 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        let mut x = self.tree.root?;
-        loop {
-            match key.cmp(x.key.borrow()) {
-                Ordering::Less => x = x.left?,
-                Ordering::Greater => x = x.right?,
-                Ordering::Equal => break,
-            }
-        }
+        let x = self.binary_search_ptr(key)?.0;
         self.remove_ptr(x);
         let x = x.free();
         Some((x.key, x.value))
@@ -171,6 +187,26 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
             };
         }
         x
+    }
+
+    pub fn binary_search_ptr<Q: ?Sized>(&self, key: &Q) -> Option<(Ptr<Node<K, O>>, usize)>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        let mut x = self.tree.root?;
+        let mut index = 0;
+        loop {
+            x = match key.cmp(x.key.borrow()) {
+                Ordering::Less => x.left?,
+                Ordering::Greater => {
+                    index += len(x.left) + 1;
+                    x.right?
+                }
+                Ordering::Equal => break,
+            }
+        }
+        Some((x, index + len(x.left)))
     }
 
     fn remove_ptr(&mut self, x: Ptr<Node<K, O>>) {
@@ -231,15 +267,15 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
     }
 }
 
-impl<K: Ord, O: MultimapOp> Default for Multimap<K, O> {
+impl<K: Ord, O: SegmapOp> Default for Segmap<K, O> {
     fn default() -> Self { Self::new() }
 }
 
-enum Nop {}
-impl MultimapOp for Nop {
+struct Nop<T>(PhantomData<T>);
+impl<T> SegmapOp for Nop<T> {
     type Acc = ();
     type Lazy = ();
-    type Value = ();
+    type Value = T;
 
     fn to_acc(_value: &Self::Value) -> Self::Acc {}
 
@@ -257,8 +293,56 @@ impl MultimapOp for Nop {
     fn identity() -> Self::Lazy {}
 }
 
+pub struct Multimap<K, V> {
+    segmap: Segmap<K, Nop<V>>,
+}
+impl<K: Ord, V> Multimap<K, V> {
+    pub fn new() -> Self {
+        Self {
+            segmap: Segmap::new(),
+        }
+    }
+
+    pub fn len(&self) -> usize { self.segmap.len() }
+
+    pub fn is_empty(&self) -> bool { self.segmap.is_empty() }
+
+    pub fn nth(&self, n: usize) -> (&K, &V) { self.segmap.nth(n) }
+
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<&V>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.segmap.binary_search(key)
+    }
+
+    pub fn binary_search_index<Q: ?Sized>(&self, key: &Q) -> Option<usize>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.segmap.binary_search_index(key)
+    }
+
+    pub fn insert(&mut self, key: K, value: V) { self.segmap.insert(key, value) }
+
+    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.segmap.remove(key)
+    }
+
+    pub fn remove_nth(&mut self, n: usize) -> (K, V) { self.segmap.remove_nth(n) }
+}
+impl<K: Ord, V> Default for Multimap<K, V> {
+    fn default() -> Self { Self::new() }
+}
+
 pub struct Multiset<K> {
-    map: Multimap<K, Nop>,
+    map: Multimap<K, ()>,
 }
 impl<K: Ord> Multiset<K> {
     pub fn new() -> Self {
@@ -271,6 +355,16 @@ impl<K: Ord> Multiset<K> {
 
     pub fn is_empty(&self) -> bool { self.map.is_empty() }
 
+    pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
+
+    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Option<usize>
+    where
+        K: Ord + Borrow<Q>,
+        Q: Ord,
+    {
+        self.map.binary_search_index(key)
+    }
+
     pub fn insert(&mut self, key: K) { self.map.insert(key, ()) }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<K>
@@ -280,8 +374,6 @@ impl<K: Ord> Multiset<K> {
     {
         self.map.remove(key).map(|(k, _)| k)
     }
-
-    pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
 
     pub fn remove_nth(&mut self, n: usize) -> K { self.map.remove_nth(n).0 }
 }
@@ -293,9 +385,9 @@ impl<K: Ord> Default for Multiset<K> {
 mod test_multiset {
     use crate::balance::test_utils::Violations;
     use crate::balance::Ptr;
-    use crate::multimap::len;
-    use crate::multimap::Node;
-    use crate::multimap::Nop;
+    use crate::map::len;
+    use crate::map::Node;
+    use crate::map::Nop;
     use crate::Multiset;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -303,6 +395,7 @@ mod test_multiset {
 
     fn to_vec<K: Ord + Clone>(set: &Multiset<K>) -> Vec<K> {
         set.map
+            .segmap
             .tree
             .collect()
             .into_iter()
@@ -312,7 +405,7 @@ mod test_multiset {
 
     impl Multiset<i32> {
         fn validate_len(&self) {
-            fn validate_len(p: Option<Ptr<Node<i32, Nop>>>) -> Result<(), String> {
+            fn validate_len(p: Option<Ptr<Node<i32, Nop<()>>>>) -> Result<(), String> {
                 if let Some(p) = p {
                     validate_len(p.left)?;
                     let expected = len(p.left) + 1 + len(p.right);
@@ -326,10 +419,13 @@ mod test_multiset {
                 }
                 Ok(())
             }
-            validate_len(self.map.tree.root).unwrap_or_else(|e| {
+            validate_len(self.map.segmap.tree.root).unwrap_or_else(|e| {
                 panic!(
                     "{e}:\n Tree: {}",
-                    self.map.tree.format_by(|p| format!("<{:?}:{}>", p, p.len))
+                    self.map
+                        .segmap
+                        .tree
+                        .format_by(|p| format!("<{:?}:{}>", p, p.len))
                 )
             });
         }
@@ -372,14 +468,27 @@ mod test_multiset {
                 }
                 assert_eq!(to_vec(&set), vec);
 
-                set.map.tree.validate();
-                assert_eq!(Violations::collect(&set.map.tree), Violations::default());
+                set.map.segmap.tree.validate();
+                assert_eq!(
+                    Violations::collect(&set.map.segmap.tree),
+                    Violations::default()
+                );
                 set.validate_len();
 
                 // Nth query
                 for (i, &expected) in vec.iter().enumerate() {
                     let result = *set.nth(i);
                     assert_eq!(result, expected);
+                }
+
+                // Binary search query
+                for x in 0..VALUE_LIM {
+                    let result = set.binary_search(&x);
+                    let expected = vec.binary_search(&x).ok();
+                    assert_eq!(result.is_some(), expected.is_some());
+                    if let Some(result) = result {
+                        assert_eq!(vec[result], x);
+                    }
                 }
             }
         }

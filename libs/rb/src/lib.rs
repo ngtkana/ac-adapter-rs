@@ -4,8 +4,9 @@
 mod balance;
 
 /// Multimap based on red-black trees.
-mod multimap;
+mod map;
 
-pub use multimap::Multimap;
-pub use multimap::MultimapOp;
-pub use multimap::Multiset;
+pub use map::Multimap;
+pub use map::Multiset;
+pub use map::Segmap;
+pub use map::SegmapOp;
