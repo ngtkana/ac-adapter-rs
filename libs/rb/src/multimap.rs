@@ -1,8 +1,8 @@
+use crate::balance::Balance;
 use crate::balance::BlackViolation;
 use crate::balance::Color;
 use crate::balance::Ptr;
 use crate::balance::Tree;
-use crate::balance::{self};
 use std::borrow::Borrow;
 use std::cmp::Ordering;
 
@@ -57,7 +57,7 @@ fn len<K, O: MultimapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
 fn acc<K, O: MultimapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
     node.as_ref().map(|node| &node.acc)
 }
-impl<K, O: MultimapOp> balance::Node for Node<K, O> {
+impl<K, O: MultimapOp> Balance for Node<K, O> {
     fn update(&mut self) {
         self.len = len(self.left) + 1 + len(self.right);
         self.acc = O::join(acc(&self.left), &self.value, acc(&self.right));
@@ -84,25 +84,8 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
 
     pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
 
-    pub fn nth(&self, mut n: usize) -> (&K, &O::Value) {
-        assert!(
-            n < self.len(),
-            "Index out of range: n = {n}, while len = {}",
-            self.len()
-        );
-        let mut x = self.tree.root.unwrap();
-        loop {
-            let left_len = len(x.left);
-            x = match n.cmp(&left_len) {
-                Ordering::Less => x.left.unwrap(),
-                Ordering::Equal => break,
-                Ordering::Greater => {
-                    n -= left_len + 1;
-                    x.right.unwrap()
-                }
-            };
-        }
-        let x = x.as_longlife_ref();
+    pub fn nth(&self, n: usize) -> (&K, &O::Value) {
+        let x = self.nth_ptr(n).as_longlife_ref();
         (&x.key, &x.value)
     }
 
@@ -157,6 +140,40 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
                 Ordering::Equal => break,
             }
         }
+        self.remove_ptr(x);
+        let x = x.free();
+        Some((x.key, x.value))
+    }
+
+    pub fn remove_nth(&mut self, n: usize) -> (K, O::Value) {
+        let x = self.nth_ptr(n);
+        self.remove_ptr(x);
+        let x = x.free();
+        (x.key, x.value)
+    }
+
+    fn nth_ptr(&self, mut n: usize) -> Ptr<Node<K, O>> {
+        assert!(
+            n < self.len(),
+            "Index out of range: n = {n}, while len = {}",
+            self.len()
+        );
+        let mut x = self.tree.root.unwrap();
+        loop {
+            let left_len = len(x.left);
+            x = match n.cmp(&left_len) {
+                Ordering::Less => x.left.unwrap(),
+                Ordering::Equal => break,
+                Ordering::Greater => {
+                    n -= left_len + 1;
+                    x.right.unwrap()
+                }
+            };
+        }
+        x
+    }
+
+    fn remove_ptr(&mut self, x: Ptr<Node<K, O>>) {
         let needs_fix;
         let black_vio;
         match (x.left, x.right) {
@@ -208,11 +225,9 @@ impl<K: Ord, O: MultimapOp> Multimap<K, O> {
         if needs_fix {
             self.tree.fix_black(black_vio);
         } else if let Some(mut p) = black_vio.p {
-            balance::Node::update(&mut *p);
+            p.update();
             p.update_ancestors();
         }
-        let x = x.free();
-        Some((x.key, x.value))
     }
 }
 
@@ -267,6 +282,8 @@ impl<K: Ord> Multiset<K> {
     }
 
     pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
+
+    pub fn remove_nth(&mut self, n: usize) -> K { self.map.remove_nth(n).0 }
 }
 impl<K: Ord> Default for Multiset<K> {
     fn default() -> Self { Self::new() }
@@ -327,18 +344,29 @@ mod test_multiset {
             let mut vec = Vec::new();
             for _ in 0..200 {
                 // Mutation
-                match rng.gen_range(0..2) {
-                    0 => {
+                match rng.gen_range(0..4) {
+                    // Insert
+                    0 | 1 => {
                         let key = rng.gen_range(0..VALUE_LIM);
                         set.insert(key);
                         let i = vec.binary_search(&key).unwrap_or_else(|i| i);
                         vec.insert(i, key);
                     }
-                    1 => {
+                    // Remove
+                    2 => {
                         let key = rng.gen_range(0..VALUE_LIM);
                         let result = set.remove(&key);
                         let expected = vec.binary_search(&key).ok().map(|i| vec.remove(i));
                         assert_eq!(result, expected);
+                    }
+                    // Remove nth
+                    3 => {
+                        if !vec.is_empty() {
+                            let i = rng.gen_range(0..vec.len());
+                            let result = set.remove_nth(i);
+                            let expected = vec.remove(i);
+                            assert_eq!(result, expected);
+                        }
                     }
                     _ => unreachable!(),
                 }

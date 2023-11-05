@@ -9,7 +9,7 @@ pub enum Color {
     Black,
 }
 
-pub trait Node: Sized {
+pub trait Balance: Sized {
     fn update(&mut self);
 
     fn push(&mut self);
@@ -23,11 +23,11 @@ pub trait Node: Sized {
     fn right(&mut self) -> &mut Option<Ptr<Self>>;
 }
 
-pub struct Tree<T: Node> {
+pub struct Tree<T: Balance> {
     pub root: Option<Ptr<T>>,
     pub black_height: u8,
 }
-impl<T: Node> Tree<T> {
+impl<T: Balance> Tree<T> {
     pub fn new() -> Self {
         Self {
             root: None,
@@ -220,14 +220,14 @@ impl<T: Node> Tree<T> {
     }
 }
 
-pub struct BlackViolation<T: Node> {
+pub struct BlackViolation<T: Balance> {
     pub p: Option<Ptr<T>>,
     pub x: Option<Ptr<T>>,
 }
-impl<T: Node> PartialEq for BlackViolation<T> {
+impl<T: Balance> PartialEq for BlackViolation<T> {
     fn eq(&self, other: &Self) -> bool { (self.p, self.x) == (other.p, other.x) }
 }
-impl<T: Node> fmt::Debug for BlackViolation<T> {
+impl<T: Balance> fmt::Debug for BlackViolation<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("BlackViolation")
             .field("p", &self.p)
@@ -235,7 +235,7 @@ impl<T: Node> fmt::Debug for BlackViolation<T> {
             .finish()
     }
 }
-impl<T: Node> Clone for BlackViolation<T> {
+impl<T: Balance> Clone for BlackViolation<T> {
     fn clone(&self) -> Self {
         Self {
             p: self.p,
@@ -243,16 +243,16 @@ impl<T: Node> Clone for BlackViolation<T> {
         }
     }
 }
-impl<T: Node> Copy for BlackViolation<T> {}
+impl<T: Balance> Copy for BlackViolation<T> {}
 
-fn color<T: Node>(x: Option<Ptr<T>>) -> Color {
+fn color<T: Balance>(x: Option<Ptr<T>>) -> Color {
     match x {
         None => Color::Black,
         Some(mut x) => *x.color(),
     }
 }
 
-fn rotate_left<T: Node>(mut l: Ptr<T>) {
+fn rotate_left<T: Balance>(mut l: Ptr<T>) {
     let p = *l.parent();
     let mut r = l.right().unwrap();
     let c = *r.left();
@@ -274,7 +274,7 @@ fn rotate_left<T: Node>(mut l: Ptr<T>) {
     *l.right() = c;
 }
 
-fn rotate_right<T: Node>(mut r: Ptr<T>) {
+fn rotate_right<T: Balance>(mut r: Ptr<T>) {
     let p = *r.parent();
     let mut l = r.left().unwrap();
     let c = *l.right();
@@ -297,7 +297,7 @@ fn rotate_right<T: Node>(mut r: Ptr<T>) {
 }
 
 pub struct Ptr<T>(NonNull<T>);
-impl<T: Node> Ptr<T> {
+impl<T: Balance> Ptr<T> {
     pub fn new(x: T) -> Self { Self(NonNull::from(Box::leak(Box::new(x)))) }
 
     pub fn free(self) -> T { unsafe { *Box::from_raw(self.0.as_ptr()) } }
@@ -341,24 +341,24 @@ pub mod test_utils {
     use super::Color;
     use super::Ptr;
     use super::Tree;
-    use crate::balance::Node;
+    use crate::balance::Balance;
     use rand::rngs::StdRng;
     use rand::Rng;
     use std::cmp::Ordering;
     use std::fmt;
 
-    impl<T: Node> fmt::Display for Tree<T> {
+    impl<T: Balance> fmt::Display for Tree<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             self.fmt_by(f, |p| format!("{:?}", p))
         }
     }
-    struct TreeFormatter<'a, T: Node, F: Fn(Ptr<T>) -> String>(&'a Tree<T>, &'a F);
-    impl<'a, T: Node, F: Fn(Ptr<T>) -> String> fmt::Display for TreeFormatter<'a, T, F> {
+    struct TreeFormatter<'a, T: Balance, F: Fn(Ptr<T>) -> String>(&'a Tree<T>, &'a F);
+    impl<'a, T: Balance, F: Fn(Ptr<T>) -> String> fmt::Display for TreeFormatter<'a, T, F> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             self.0.fmt_by(f, |p| (self.1)(p))
         }
     }
-    impl<T: Node> Tree<T> {
+    impl<T: Balance> Tree<T> {
         pub fn format_by<F: Fn(Ptr<T>) -> String>(&self, key: F) -> String {
             format!("{}", TreeFormatter(self, &key))
         }
@@ -368,7 +368,7 @@ pub mod test_utils {
             f: &mut fmt::Formatter<'_>,
             mut key: impl Fn(Ptr<T>) -> String,
         ) -> fmt::Result {
-            fn write<T: Node>(
+            fn write<T: Balance>(
                 s: &mut fmt::Formatter<'_>,
                 x: Option<Ptr<T>>,
                 p: Option<Ptr<T>>,
@@ -417,7 +417,7 @@ pub mod test_utils {
             black_vio: bool,
         ) -> (Self, Violations<T>) {
             #[allow(clippy::too_many_lines)]
-            fn random_tree<T: Node>(
+            fn random_tree<T: Balance>(
                 rng: &mut StdRng,
                 new_node: &mut impl Fn(&mut StdRng, Color) -> T,
                 mut black_height: u8,
@@ -554,7 +554,7 @@ pub mod test_utils {
         }
 
         pub fn validate(&self) {
-            fn validate<T: Node>(x: Option<Ptr<T>>) -> Result<u8, String> {
+            fn validate<T: Balance>(x: Option<Ptr<T>>) -> Result<u8, String> {
                 let Some(mut x) = x else {
                     return Ok(0);
                 };
@@ -608,7 +608,7 @@ pub mod test_utils {
         }
 
         pub fn collect(&self) -> Vec<Ptr<T>> {
-            fn extend<T: Node>(x: Option<Ptr<T>>, out: &mut Vec<Ptr<T>>) {
+            fn extend<T: Balance>(x: Option<Ptr<T>>, out: &mut Vec<Ptr<T>>) {
                 if let Some(mut x) = x {
                     extend(*x.left(), out);
                     out.push(x);
@@ -622,11 +622,11 @@ pub mod test_utils {
     }
 
     #[allow(clippy::type_complexity)]
-    pub struct Violations<T: Node> {
+    pub struct Violations<T: Balance> {
         pub red_vios: Vec<Ptr<T>>,
         pub black_vios: Vec<BlackViolation<T>>,
     }
-    impl<T: Node> Default for Violations<T> {
+    impl<T: Balance> Default for Violations<T> {
         fn default() -> Self {
             Self {
                 red_vios: Vec::new(),
@@ -634,12 +634,12 @@ pub mod test_utils {
             }
         }
     }
-    impl<T: Node> PartialEq for Violations<T> {
+    impl<T: Balance> PartialEq for Violations<T> {
         fn eq(&self, other: &Self) -> bool {
             self.red_vios == other.red_vios && self.black_vios == other.black_vios
         }
     }
-    impl<T: Node> fmt::Debug for Violations<T> {
+    impl<T: Balance> fmt::Debug for Violations<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             f.debug_struct("Violations")
                 .field("red_vios", &self.red_vios)
@@ -647,14 +647,14 @@ pub mod test_utils {
                 .finish()
         }
     }
-    impl<T: Node> Violations<T> {
+    impl<T: Balance> Violations<T> {
         pub fn append(&mut self, other: Self) {
             self.red_vios.extend(other.red_vios);
             self.black_vios.extend(other.black_vios);
         }
 
         pub fn collect(tree: &Tree<T>) -> Self {
-            fn extend<T: Node>(
+            fn extend<T: Balance>(
                 x: Option<Ptr<T>>,
                 p: Option<Ptr<T>>,
                 vios: &mut Violations<T>,
@@ -710,7 +710,7 @@ mod test_fix {
         pub right: Option<Ptr<Self>>,
     }
 
-    impl super::Node for Node {
+    impl super::Balance for Node {
         fn update(&mut self) {}
 
         fn push(&mut self) {}
@@ -823,8 +823,8 @@ mod test_fix {
 #[cfg(test)]
 mod test_update {
     use super::test_utils::Violations;
+    use super::Balance as _;
     use super::Color;
-    use super::Node as _;
     use super::Ptr;
     use crate::balance::Tree;
     use rand::rngs::StdRng;
@@ -842,7 +842,7 @@ mod test_update {
         pub right: Option<Ptr<Self>>,
     }
     fn sum(p: Option<Ptr<SumNode>>) -> i32 { p.map_or(0, |p| p.sum) }
-    impl super::Node for SumNode {
+    impl super::Balance for SumNode {
         fn update(&mut self) { self.sum = sum(self.left) + self.value + sum(self.right); }
 
         fn push(&mut self) {}
