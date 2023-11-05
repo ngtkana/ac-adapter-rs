@@ -35,6 +35,22 @@ impl<T: Balance> Tree<T> {
         }
     }
 
+    pub fn min(&self) -> Option<Ptr<T>> {
+        let mut x = self.root?;
+        while let Some(l) = *x.left() {
+            x = l;
+        }
+        Some(x)
+    }
+
+    pub fn max(&self) -> Option<Ptr<T>> {
+        let mut x = self.root?;
+        while let Some(r) = *x.right() {
+            x = r;
+        }
+        Some(x)
+    }
+
     // Updates: the proper ancestors of `x` (i.e. `x` should be already updated)
     pub fn fix_red(&mut self, mut x: Ptr<T>) {
         while color(*x.parent()) == Color::Red {
@@ -315,6 +331,44 @@ impl<T: Balance> Ptr<T> {
     pub fn as_longlife_ref<'a>(self) -> &'a T { unsafe { self.0.as_ref() } }
 
     pub fn as_longlife_mut<'a>(mut self) -> &'a mut T { unsafe { self.0.as_mut() } }
+
+    pub fn next(self) -> Option<Self> {
+        let mut x = self;
+        if let Some(r) = *x.right() {
+            x = r;
+            while let Some(l) = *x.left() {
+                x = l;
+            }
+            Some(x)
+        } else {
+            while let Some(mut p) = *x.parent() {
+                if *p.left() == Some(x) {
+                    return Some(p);
+                }
+                x = p;
+            }
+            None
+        }
+    }
+
+    pub fn prev(self) -> Option<Self> {
+        let mut x = self;
+        if let Some(l) = *x.left() {
+            x = l;
+            while let Some(r) = *x.right() {
+                x = r;
+            }
+            Some(x)
+        } else {
+            while let Some(mut p) = *x.parent() {
+                if *p.right() == Some(x) {
+                    return Some(p);
+                }
+                x = p;
+            }
+            None
+        }
+    }
 }
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
