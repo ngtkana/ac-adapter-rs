@@ -143,6 +143,91 @@ pub fn fix_red<T: Node>(mut x: Ptr<T>) -> (Ptr<T>, bool) {
     (x, false)
 }
 
+fn fix_black<T: Node>(mut x: Option<Ptr<T>>, p: Option<Ptr<T>>) -> (Option<Ptr<T>>, bool) {
+    loop {
+        if color(x) == Color::Red {
+            *x.unwrap().color() = Color::Black;
+            break;
+        }
+        let p = x.map_or(p, |mut x| *x.parent());
+        let Some(mut p) = p else { return (x, true) };
+        // Case 1: `x` is the left child.
+        if *p.left() == x {
+            let mut s = p.right().unwrap();
+            if *s.color() == Color::Red {
+                rotate_left(p);
+                *p.color() = Color::Red;
+                *s.color() = Color::Black;
+                s = p.right().unwrap();
+            }
+            match (color(*s.left()), color(*s.right())) {
+                // Case 1.1: `s` is a 2-node.
+                (Color::Black, Color::Black) => {
+                    *s.color() = Color::Red;
+                    x = Some(p);
+                }
+                // Case 1.2: `s` is a left-leaning 3-node.
+                (Color::Red, Color::Black) => {
+                    let mut c = s.left().unwrap();
+                    rotate_right(s);
+                    rotate_left(p);
+                    *c.color() = *p.color();
+                    *p.color() = Color::Black;
+                    break;
+                }
+                // Case 1.3: `s` is a right-leaning 3-node, or a 4-node.
+                (_, Color::Red) => {
+                    rotate_left(p);
+                    *s.color() = *p.color();
+                    *p.color() = Color::Black;
+                    *s.right().unwrap().color() = Color::Black;
+                    break;
+                }
+            }
+        }
+        // Case 2: `x` is the right child.
+        else {
+            let mut s = p.left().unwrap();
+            if *s.color() == Color::Red {
+                rotate_right(p);
+                *p.color() = Color::Red;
+                *s.color() = Color::Black;
+                s = p.left().unwrap();
+            }
+            match (color(*s.left()), color(*s.right())) {
+                // Case 2.1: `s` is a 2-node.
+                (Color::Black, Color::Black) => {
+                    *s.color() = Color::Red;
+                    x = Some(p);
+                }
+                // Case 2.2: `s` os a right-leaning 3-node.
+                (Color::Black, Color::Red) => {
+                    let mut c = s.right().unwrap();
+                    rotate_left(s);
+                    rotate_right(p);
+                    *c.color() = *p.color();
+                    *p.color() = Color::Black;
+                    break;
+                }
+                // Case 2.3: `s` is a left-leaning 3-node, or a 4-node.
+                (Color::Red, _) => {
+                    rotate_right(p);
+                    *s.color() = *p.color();
+                    *p.color() = Color::Black;
+                    *s.left().unwrap().color() = Color::Black;
+                    break;
+                }
+            }
+        }
+    }
+    let mut x = x.or(p).unwrap();
+    while let Some(mut p) = x.parent() {
+        p.update();
+        x = p;
+    }
+    (Some(x), false)
+}
+
 pub struct Ptr<T>(NonNull<T>);
 impl<T> Clone for Ptr<T> {
     fn clone(&self) -> Self { *self }
@@ -167,6 +252,7 @@ impl<T> PartialEq for Ptr<T> {
 
 #[cfg(test)]
 mod tests {
+    use super::fix_black;
     use super::fix_red;
     use super::Color;
     use super::Ptr;
@@ -555,6 +641,30 @@ mod tests {
             tree.root = Some(root);
             if changed {
                 tree.black_height += 1;
+            }
+            let after = tree.collect();
+            tree.validate();
+
+            // Make sure the violation has fixed.
+            assert_eq!(Violations::collect(&tree), Violations::default());
+            // Make sure the sequence of nodes has not changed.
+            assert_eq!(before, after);
+        }
+    }
+
+    #[test]
+    fn test_fix_black() {
+        let mut rng = StdRng::seed_from_u64(0);
+        for _ in 0..200 {
+            let h = rng.gen_range(1..=4);
+            let (mut tree, violations) = Tree::random(&mut rng, h, false, true);
+            let (black_vio_x, black_vio_p) = violations.black_vios[0];
+            let before = tree.collect();
+
+            let (root, changed) = fix_black(black_vio_x, black_vio_p);
+            tree.root = root;
+            if changed {
+                tree.black_height -= 1;
             }
             let after = tree.collect();
             tree.validate();
