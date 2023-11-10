@@ -1,4 +1,4 @@
-use crate::balance::Balance;
+pub(crate) use crate::balance::Balance;
 use crate::balance::BlackViolation;
 use crate::balance::Color;
 use crate::balance::Ptr;
@@ -63,6 +63,45 @@ impl<K, O: MultimapOp> Balance for Node<K, O> {
     fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
 
     fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+}
+impl<K: Ord, O: MultimapOp> Ptr<Node<K, O>> {
+    pub fn next(self) -> Option<Self> {
+        let mut x = self;
+        if let Some(r) = *x.right() {
+            x = r;
+            while let Some(l) = *x.left() {
+                x = l;
+            }
+            Some(x)
+        } else {
+            while let Some(mut p) = *x.parent() {
+                if *p.left() == Some(x) {
+                    return Some(p);
+                }
+                x = p;
+            }
+            None
+        }
+    }
+
+    pub fn prev(self) -> Option<Self> {
+        let mut x = self;
+        if let Some(l) = *x.left() {
+            x = l;
+            while let Some(r) = *x.right() {
+                x = r;
+            }
+            Some(x)
+        } else {
+            while let Some(mut p) = *x.parent() {
+                if *p.right() == Some(x) {
+                    return Some(p);
+                }
+                x = p;
+            }
+            None
+        }
+    }
 }
 
 pub struct MultimapSeg<K, O: MultimapOp> {
