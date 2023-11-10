@@ -322,53 +322,70 @@ impl<O: Op> Default for Seg<O> {
 }
 impl<O: Op> FromIterator<O::Value> for Seg<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
-        let mut stack = Vec::new();
-        for value in iter {
-            stack.push((Ptr::new(Node::new(value, Color::Black, 1)), 1));
-            while stack.len() >= 2 && stack[stack.len() - 2].1 == stack[stack.len() - 1].1 {
-                let (mut right, right_h) = stack.pop().unwrap();
-                let (mut left, left_h) = stack.pop().unwrap();
-                debug_assert_eq!(left_h, right_h);
-                let mut center = Ptr::new(Node::new(
-                    O::mul(&left.value, &right.value),
-                    Color::Black,
-                    left.len + right.len,
-                ));
-                center.left = Some(left);
-                center.right = Some(right);
-                left.parent = Some(center);
-                right.parent = Some(center);
-                stack.push((center, left_h + 1));
-            }
+        let mut nodes = iter
+            .into_iter()
+            .map(|value| Ptr::new(Node::new(value, Color::Black, 1)))
+            .collect::<Vec<_>>();
+        if nodes.is_empty() {
+            return Self::new();
         }
-        let Some((mut right, mut right_h)) = stack.pop() else { return Self::new() };
-        while let Some((left, left_h)) = stack.pop() {
-            let mut x = left;
-            for _ in 0..left_h - right_h - 1 {
-                x = x.right.unwrap();
+        let mut black_height = 1;
+        while nodes.len() > 1 {
+            for i in (0..nodes.len() - 1).step_by(2) {
+                if i + 3 == nodes.len() {
+                    let mut left = nodes[i];
+                    let mut center = nodes[i + 1];
+                    let mut right = nodes[i + 2];
+                    let mut x = Ptr::new(Node {
+                        value: O::mul(
+                            &left.as_longlife_ref().value,
+                            &center.as_longlife_ref().value,
+                        ),
+                        parent: None,
+                        left: Some(left),
+                        right: Some(center),
+                        color: Color::Red,
+                        len: left.len + center.len,
+                    });
+                    let p = Ptr::new(Node {
+                        value: O::mul(&x.as_longlife_ref().value, &right.as_longlife_ref().value),
+                        parent: None,
+                        left: Some(x),
+                        right: Some(right),
+                        color: Color::Black,
+                        len: x.len + right.len,
+                    });
+                    left.parent = Some(x);
+                    center.parent = Some(x);
+                    x.parent = Some(p);
+                    right.parent = Some(p);
+                    nodes[i / 2] = p;
+                } else {
+                    let mut left = nodes[i];
+                    let mut right = nodes[i + 1];
+                    let p = Ptr::new(Node {
+                        value: O::mul(
+                            &left.as_longlife_ref().value,
+                            &right.as_longlife_ref().value,
+                        ),
+                        parent: None,
+                        left: Some(left),
+                        right: Some(right),
+                        color: Color::Black,
+                        len: left.len + right.len,
+                    });
+                    left.parent = Some(p);
+                    right.parent = Some(p);
+                    nodes[i / 2] = p;
+                }
             }
-            let mut center = x.right.unwrap();
-            let mut new = Ptr::new(Node::new(
-                O::mul(&center.value, &right.value),
-                Color::Black,
-                center.len + right.len,
-            ));
-            new.left = Some(center);
-            new.right = Some(right);
-            x.right = Some(new);
-            center.parent = Some(new);
-            right.parent = Some(new);
-            new.parent = Some(x);
-            *x.color() = Color::Red;
-            x.update();
-            x.update_ancestors();
-            right = left;
-            right_h = left_h;
+            nodes.truncate(nodes.len() / 2);
+            black_height += 1;
         }
         Self {
             tree: Tree {
-                root: Some(right),
-                black_height: right_h,
+                root: Some(nodes[0]),
+                black_height,
             },
         }
     }
@@ -807,21 +824,21 @@ mod test_seg {
             let mut vec = Vec::new();
             for _ in 0..200 {
                 let i = rng.gen_range(0..LEN_LIM);
-                // Insert
-                if !used[i] {
-                    used[i] = true;
-                    let s = char::from((&mut rng).sample(&Alphanumeric)).to_string();
-                    let position = used[..i].iter().filter(|&&b| b).count();
-                    seg.insert(position, s.clone());
-                    vec.insert(position, s);
-                }
                 // Remove
-                else {
+                if used[i] {
                     used[i] = false;
                     let position = used[..=i].iter().filter(|&&b| b).count();
                     let result = seg.remove(position);
                     let expected = vec.remove(position);
                     assert_eq!(result, expected);
+                }
+                // Insert
+                else {
+                    used[i] = true;
+                    let s = char::from(rng.sample(Alphanumeric)).to_string();
+                    let position = used[..i].iter().filter(|&&b| b).count();
+                    seg.insert(position, s.clone());
+                    vec.insert(position, s);
                 }
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
                 seg.validate_value();
