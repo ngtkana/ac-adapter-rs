@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 use crate::balance::join;
 use crate::balance::Balance;
+use crate::balance::BlackViolation;
 use crate::balance::Color;
 use crate::balance::Ptr;
 use crate::balance::Tree;
@@ -149,7 +150,7 @@ impl<O: Op> Seg<O> {
         }
     }
 
-    pub fn fold(&self, range: impl RangeBounds<usize>) -> Option<O::Value> {
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> O::Value {
         let (start, end) = into_range(range, self.len());
         assert!(
             start <= end && end <= self.len(),
@@ -157,13 +158,13 @@ impl<O: Op> Seg<O> {
             self.len(),
         );
         if start == end {
-            return None;
+            return O::identity();
         }
         let mut x = self.tree.root.unwrap();
         let mut offset = 0;
         loop {
             if x.is_leaf() {
-                return Some(x.value.clone());
+                return x.value.clone();
             }
             let node_mid = offset + x.left.unwrap().len;
             x = if end <= node_mid {
@@ -180,7 +181,7 @@ impl<O: Op> Seg<O> {
                 && start <= offset + x.left.unwrap().len
                 && offset + x.left.unwrap().len <= end
         );
-        Some(O::mul(
+        O::mul(
             &{
                 let mut node_start = offset;
                 let mut x = x.left.unwrap();
@@ -215,7 +216,7 @@ impl<O: Op> Seg<O> {
                     node_end += x.len;
                 }
             },
-        ))
+        )
     }
 
     pub fn insert(&mut self, mut index: usize, value: O::Value) {
@@ -258,6 +259,27 @@ impl<O: Op> Seg<O> {
         }
         p.update();
         self.tree.fix_red(p);
+    }
+
+    pub fn remove(&mut self, index: usize) -> O::Value {
+        assert!(index < self.len());
+        let x = self.nth_ptr(index);
+        let Some(mut p) = x.parent else {
+            *self = Self::new();
+            return x.free().value;
+        };
+        let p_color = *p.color();
+        let y = (if p.left == Some(x) { p.right } else { p.left }).unwrap();
+        self.tree.transplant(p, Some(y));
+        if p_color == Color::Black {
+            self.tree.fix_black(BlackViolation {
+                p: y.parent,
+                x: Some(y),
+            });
+        } else {
+            y.update_ancestors();
+        }
+        x.free().value
     }
 
     pub fn append(&mut self, other: &mut Self) {
@@ -768,7 +790,7 @@ mod test_seg {
                     std::mem::swap(&mut i, &mut j);
                     j -= 1;
                 }
-                let result = seg.fold(i..j).unwrap_or_default();
+                let result = seg.fold(i..j);
                 let expected = vec[i..j].iter().flat_map(|s| s.chars()).collect::<String>();
                 assert_eq!(result, expected, "fold({i}..{j})");
             }
@@ -776,20 +798,31 @@ mod test_seg {
     }
 
     #[test]
-    fn test_seg_insert() {
+    fn test_seg_insert_remove() {
+        const LEN_LIM: usize = 60;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
+            let mut used = vec![false; LEN_LIM];
             let mut seg = Seg::<O>::new();
             let mut vec = Vec::new();
-            for _ in 0..20 {
-                let i = rng.gen_range(0..=seg.len());
-                let s = (&mut rng)
-                    .sample_iter(&Alphanumeric)
-                    .take(1)
-                    .map(char::from)
-                    .collect::<String>();
-                seg.insert(i, s.clone());
-                vec.insert(i, s);
+            for _ in 0..200 {
+                let i = rng.gen_range(0..LEN_LIM);
+                // Insert
+                if !used[i] {
+                    used[i] = true;
+                    let s = char::from((&mut rng).sample(&Alphanumeric)).to_string();
+                    let position = used[..i].iter().filter(|&&b| b).count();
+                    seg.insert(position, s.clone());
+                    vec.insert(position, s);
+                }
+                // Remove
+                else {
+                    used[i] = false;
+                    let position = used[..=i].iter().filter(|&&b| b).count();
+                    let result = seg.remove(position);
+                    let expected = vec.remove(position);
+                    assert_eq!(result, expected);
+                }
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
                 seg.validate_value();
             }

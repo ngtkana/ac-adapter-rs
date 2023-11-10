@@ -12,3 +12,5 @@ pub use map::Multimap;
 pub use map::MultimapOp;
 pub use map::MultimapSeg;
 pub use map::Multiset;
+pub use seq::Op;
+pub use seq::Seg;
