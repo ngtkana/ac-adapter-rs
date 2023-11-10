@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+use crate::balance::join;
 use crate::balance::Balance;
 use crate::balance::Color;
 use crate::balance::Ptr;
@@ -27,13 +28,13 @@ pub struct Node<O: Op> {
     color: Color,
 }
 impl<O: Op> Node<O> {
-    pub fn new(value: O::Value, color: Color) -> Self {
+    pub fn new(value: O::Value, color: Color, len: usize) -> Self {
         Self {
             value,
             parent: None,
             left: None,
             right: None,
-            len: 1,
+            len,
             color,
         }
     }
@@ -209,7 +210,7 @@ impl<O: Op> Seg<O> {
 
     pub fn insert(&mut self, mut index: usize, value: O::Value) {
         assert!(index <= self.len());
-        let mut new = Ptr::new(Node::new(value, Color::Black));
+        let mut new = Ptr::new(Node::new(value, Color::Black, 1));
         let Some(mut x) = self.tree.root else {
             new.color = Color::Black;
             self.tree.root = Some(new);
@@ -228,7 +229,7 @@ impl<O: Op> Seg<O> {
         let mut p;
         match index {
             0 => {
-                p = Ptr::new(Node::new(O::mul(&new.value, &x.value), Color::Red));
+                p = Ptr::new(Node::new(O::mul(&new.value, &x.value), Color::Red, 1));
                 self.tree.transplant(x, Some(p));
                 p.left = Some(new);
                 p.right = Some(x);
@@ -236,7 +237,7 @@ impl<O: Op> Seg<O> {
                 x.parent = Some(p);
             }
             1 => {
-                p = Ptr::new(Node::new(O::mul(&x.value, &new.value), Color::Red));
+                p = Ptr::new(Node::new(O::mul(&x.value, &new.value), Color::Red, 1));
                 self.tree.transplant(x, Some(p));
                 p.left = Some(x);
                 p.right = Some(new);
@@ -248,18 +249,81 @@ impl<O: Op> Seg<O> {
         p.update();
         self.tree.fix_red(p);
     }
+
+    pub fn append(&mut self, other: &mut Self) {
+        if self.is_empty() {
+            std::mem::swap(self, other);
+        }
+        if other.is_empty() {
+            return;
+        }
+        self.tree = join(
+            self.tree,
+            |l, r| {
+                Ptr::new(Node::new(
+                    O::mul(&l.value, &r.value),
+                    Color::Black,
+                    l.len + r.len,
+                ))
+            },
+            other.tree,
+        );
+    }
 }
 impl<O: Op> Default for Seg<O> {
     fn default() -> Self { Self::new() }
 }
 impl<O: Op> FromIterator<O::Value> for Seg<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
-        let mut seg = Self::new();
+        let mut stack = Vec::new();
         for value in iter {
-            // TODO: O(N) time complexity.
-            seg.insert(seg.len(), value);
+            stack.push((Ptr::new(Node::new(value, Color::Black, 1)), 1));
+            while stack.len() >= 2 && stack[stack.len() - 2].1 == stack[stack.len() - 1].1 {
+                let (mut right, right_h) = stack.pop().unwrap();
+                let (mut left, left_h) = stack.pop().unwrap();
+                debug_assert_eq!(left_h, right_h);
+                let mut center = Ptr::new(Node::new(
+                    O::mul(&left.value, &right.value),
+                    Color::Black,
+                    left.len + right.len,
+                ));
+                center.left = Some(left);
+                center.right = Some(right);
+                left.parent = Some(center);
+                right.parent = Some(center);
+                stack.push((center, left_h + 1));
+            }
         }
-        seg
+        let Some((mut right, mut right_h)) = stack.pop() else { return Self::new() };
+        while let Some((left, left_h)) = stack.pop() {
+            let mut x = left;
+            for _ in 0..left_h - right_h - 1 {
+                x = x.right.unwrap();
+            }
+            let mut center = x.right.unwrap();
+            let mut new = Ptr::new(Node::new(
+                O::mul(&center.value, &right.value),
+                Color::Black,
+                center.len + right.len,
+            ));
+            new.left = Some(center);
+            new.right = Some(right);
+            x.right = Some(new);
+            center.parent = Some(new);
+            right.parent = Some(new);
+            new.parent = Some(x);
+            *x.color() = Color::Red;
+            x.update();
+            x.update_ancestors();
+            right = left;
+            right_h = left_h;
+        }
+        Self {
+            tree: Tree {
+                root: Some(right),
+                black_height: right_h,
+            },
+        }
     }
 }
 impl<O: Op> fmt::Debug for Seg<O>
@@ -567,6 +631,20 @@ mod test_seg {
                     self.tree.format_by(|p| format!("<{:?}:{}>", p, p.value))
                 )
             });
+        }
+    }
+
+    #[test]
+    fn test_seg_from_iter() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for len in 0..200 {
+            let seg = (&mut rng)
+                .sample_iter(&Alphanumeric)
+                .map(|b| char::from(b).to_string())
+                .take(len)
+                .collect::<Seg<O>>();
+            seg.tree.validate();
+            seg.validate_value();
         }
     }
 
