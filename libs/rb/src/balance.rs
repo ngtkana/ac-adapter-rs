@@ -523,6 +523,7 @@ pub mod test_utils {
             black_height: u8,
             red_vio: bool,
             black_vio: bool,
+            force_black_leaf: bool,
         ) -> (Self, Violations<T>) {
             #[allow(clippy::too_many_lines)]
             fn random_tree<T: Balance>(
@@ -531,8 +532,12 @@ pub mod test_utils {
                 mut black_height: u8,
                 red_vio: bool,
                 black_vio: bool,
+                force_black_leaf: bool,
                 parent: Option<Ptr<T>>,
             ) -> (Option<Ptr<T>>, Violations<T>) {
+                if black_height == 0 && force_black_leaf {
+                    return (None, Violations::default());
+                }
                 // Select the violation position here
                 let parent_color = parent.map_or(Color::Black, |mut p| *p.color());
                 let here_red_vio;
@@ -632,6 +637,7 @@ pub mod test_utils {
                         children_h,
                         left_red_vio,
                         left_black_vio,
+                        force_black_leaf,
                         Some(here),
                     );
                     vios.append(left_vio);
@@ -641,6 +647,7 @@ pub mod test_utils {
                         children_h,
                         right_red_vio,
                         right_black_vio,
+                        force_black_leaf,
                         Some(here),
                     );
                     vios.append(right_vio);
@@ -656,8 +663,15 @@ pub mod test_utils {
                 }
                 (here, vios)
             }
-            let (root, vios) =
-                random_tree(rng, &mut new_node, black_height, red_vio, black_vio, None);
+            let (root, vios) = random_tree(
+                rng,
+                &mut new_node,
+                black_height,
+                red_vio,
+                black_vio,
+                force_black_leaf,
+                None,
+            );
             (Tree { root, black_height }, vios)
         }
 
@@ -846,7 +860,8 @@ mod test_fix {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(0..=4);
-            let (tree, expected_violations) = Tree::random(&mut rng, new_node, h, false, false);
+            let (tree, expected_violations) =
+                Tree::random(&mut rng, new_node, h, false, false, false);
             assert_eq!(tree.black_height, h, "{}", tree);
             assert_eq!(expected_violations.red_vios.len(), 0, "{}", tree);
             assert_eq!(expected_violations.black_vios.len(), 0, "{}", tree);
@@ -862,7 +877,8 @@ mod test_fix {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(0..=4);
-            let (tree, expected_violations) = Tree::random(&mut rng, new_node, h, true, false);
+            let (tree, expected_violations) =
+                Tree::random(&mut rng, new_node, h, true, false, false);
             assert_eq!(tree.black_height, h, "{}", tree);
             assert_eq!(expected_violations.red_vios.len(), 1, "{}", tree);
             assert_eq!(expected_violations.black_vios.len(), 0, "{}", tree);
@@ -878,7 +894,8 @@ mod test_fix {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(1..=4);
-            let (tree, expected_violations) = Tree::random(&mut rng, new_node, h, false, true);
+            let (tree, expected_violations) =
+                Tree::random(&mut rng, new_node, h, false, true, false);
             assert_eq!(tree.black_height, h, "{}", tree);
             assert_eq!(expected_violations.red_vios.len(), 0, "{}", tree);
             assert_eq!(expected_violations.black_vios.len(), 1, "{}", tree);
@@ -894,7 +911,7 @@ mod test_fix {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(1..=4);
-            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, true, false);
+            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, true, false, false);
             let before = tree.collect();
 
             tree.fix_red(vios.red_vios[0]);
@@ -913,7 +930,7 @@ mod test_fix {
         let mut rng = StdRng::seed_from_u64(0);
         for _ in 0..200 {
             let h = rng.gen_range(1..=4);
-            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, false, true);
+            let (mut tree, vios) = Tree::random(&mut rng, new_node, h, false, true, false);
             let before = tree.collect();
 
             tree.fix_black(vios.black_vios[0]);
@@ -991,7 +1008,7 @@ mod test_update {
                 }
             }
 
-            let (tree, vios) = Self::random(rng, new_node, black_height, red_vio, black_vio);
+            let (tree, vios) = Self::random(rng, new_node, black_height, red_vio, black_vio, false);
             update(tree.root);
             (tree, vios)
         }
