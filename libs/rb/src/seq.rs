@@ -7,6 +7,7 @@ use crate::balance::Tree;
 use std::cmp::Reverse;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ops;
 use std::ops::Bound;
 use std::ops::Range;
 use std::ops::RangeBounds;
@@ -139,6 +140,15 @@ impl<O: Op> Seg<O> {
 
     pub fn table(&self) -> SegTable<'_, O> { SegTable(self) }
 
+    pub fn nth(&self, index: usize) -> &O::Value { &self.nth_ptr(index).as_longlife_ref().value }
+
+    pub fn nth_mut(&mut self, index: usize) -> Entry<'_, O> {
+        Entry {
+            p: self.nth_ptr(index),
+            marker: PhantomData,
+        }
+    }
+
     pub fn fold(&self, range: impl RangeBounds<usize>) -> Option<O::Value> {
         let (start, end) = into_range(range, self.len());
         assert!(
@@ -269,6 +279,21 @@ impl<O: Op> Seg<O> {
             other.tree,
         );
     }
+
+    fn nth_ptr(&self, mut index: usize) -> Ptr<Node<O>> {
+        assert!(index < self.len());
+        let mut x = self.tree.root.unwrap();
+        while !x.is_leaf() {
+            let left_len = x.left.unwrap().len;
+            x = if index < left_len {
+                x.left.unwrap()
+            } else {
+                index -= left_len;
+                x.right.unwrap()
+            }
+        }
+        x
+    }
 }
 impl<O: Op> Default for Seg<O> {
     fn default() -> Self { Self::new() }
@@ -339,6 +364,24 @@ impl<'a, O: Op> IntoIterator for &'a Seg<O> {
     type Item = &'a O::Value;
 
     fn into_iter(self) -> Self::IntoIter { self.iter() }
+}
+pub struct Entry<'a, O: Op> {
+    p: Ptr<Node<O>>,
+    marker: PhantomData<&'a O>,
+}
+impl<'a, O: Op> ops::Deref for Entry<'a, O> {
+    type Target = O::Value;
+
+    fn deref(&self) -> &Self::Target { &self.p.as_longlife_ref().value }
+}
+impl<'a, O: Op> ops::DerefMut for Entry<'a, O> {
+    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.p.as_longlife_mut().value }
+}
+impl<'a, O: Op> Drop for Entry<'a, O> {
+    fn drop(&mut self) {
+        self.p.update();
+        self.p.update_ancestors();
+    }
 }
 struct SegTableCell<'a, O: Op> {
     start: usize,
@@ -429,6 +472,10 @@ where
                     .collect::<Vec<_>>()
             })
             .collect::<Vec<_>>();
+        if rows.is_empty() {
+            writeln!(f, "SegTable (empty)")?;
+            return Ok(());
+        }
         let n = rows[0].len();
         let mut colomn_width = (0..n).map(|i| i.to_string().len()).collect::<Vec<_>>();
         for (range, value) in rows.iter().flatten() {
@@ -588,6 +635,8 @@ mod test_seg {
     use super::Op;
     use super::Ptr;
     use super::Seg;
+    use crate::balance::Balance;
+    use crate::balance::Tree;
     use rand::distributions::Alphanumeric;
     use rand::rngs::StdRng;
     use rand::Rng;
@@ -605,6 +654,37 @@ mod test_seg {
     }
 
     impl Seg<O> {
+        fn random(rng: &mut StdRng, black_height: u8) -> Self {
+            fn update_all(mut p: Ptr<Node<O>>) {
+                if p.left.is_some() {
+                    update_all(p.left.unwrap());
+                    update_all(p.right.unwrap());
+                    p.update();
+                }
+            }
+            let (tree, _) = Tree::random(
+                rng,
+                |rng, color| {
+                    Node::new(
+                        rng.sample_iter(&Alphanumeric)
+                            .take(1)
+                            .map(char::from)
+                            .collect::<String>(),
+                        color,
+                        1,
+                    )
+                },
+                black_height,
+                false,
+                false,
+                true,
+            );
+            if let Some(root) = tree.root {
+                update_all(root);
+            }
+            Self { tree }
+        }
+
         fn validate_value(&self) {
             fn validate_value(p: Option<Ptr<Node<O>>>) -> Result<(), String> {
                 if let Some(p) = p {
@@ -617,8 +697,8 @@ mod test_seg {
                     expected.push_str(&p.right.unwrap().value);
                     (p.value == expected).then_some(()).ok_or_else(|| {
                         format!(
-                            "Len is incorrect at {:?}. Expected {}, but cached {}",
-                            p, expected, p.len
+                            "Value is incorrect at {:?}. Expected {}, but cached {}",
+                            p, expected, &p.value
                         )
                     })?;
                     validate_value(p.right)?;
@@ -649,6 +729,53 @@ mod test_seg {
     }
 
     #[test]
+    fn test_seg_nth_mut() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let black_height = rng.gen_range(1..=4);
+            let mut seg = Seg::random(&mut rng, black_height);
+            let mut vec = seg.iter().cloned().collect::<Vec<_>>();
+            for _ in 0..200 {
+                let i = rng.gen_range(0..seg.len());
+                let x = (&mut rng)
+                    .sample_iter(&Alphanumeric)
+                    .take(1)
+                    .map(char::from)
+                    .collect::<String>();
+                *seg.nth_mut(i) = x.clone();
+                vec[i] = x;
+                seg.tree.validate();
+                seg.validate_value();
+                assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
+            }
+        }
+    }
+
+    #[test]
+    fn test_fold() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let black_height = rng.gen_range(0..=4);
+            let seg = Seg::random(&mut rng, black_height);
+            seg.tree.validate();
+            seg.validate_value();
+            let n = seg.len();
+            let vec = seg.iter().cloned().collect::<Vec<_>>();
+            for _ in 0..200 {
+                let mut i = rng.gen_range(0..=n + 1);
+                let mut j = rng.gen_range(0..=n);
+                if i > j {
+                    std::mem::swap(&mut i, &mut j);
+                    j -= 1;
+                }
+                let result = seg.fold(i..j).unwrap_or_default();
+                let expected = vec[i..j].iter().flat_map(|s| s.chars()).collect::<String>();
+                assert_eq!(result, expected, "fold({i}..{j})");
+            }
+        }
+    }
+
+    #[test]
     fn test_seg_insert() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -665,19 +792,6 @@ mod test_seg {
                 vec.insert(i, s);
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
                 seg.validate_value();
-
-                // Validate `fold`
-                {
-                    let mut i = rng.gen_range(0..=vec.len() + 1);
-                    let mut j = rng.gen_range(0..=vec.len());
-                    if i > j {
-                        std::mem::swap(&mut i, &mut j);
-                        j -= 1;
-                    }
-                    let result = seg.fold(i..j).unwrap_or_default();
-                    let expected = vec[i..j].iter().flat_map(|s| s.chars()).collect::<String>();
-                    assert_eq!(result, expected, "fold({i}..{j})");
-                }
             }
         }
     }
