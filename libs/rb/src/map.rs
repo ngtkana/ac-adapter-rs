@@ -142,6 +142,30 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
             .map(|(x, i)| (&x.as_longlife_ref().value, i))
     }
 
+    pub fn partition_point(&self, mut f: impl FnMut(&K) -> bool) -> usize {
+        let Some(mut x) = self.tree.root else { return 0 };
+        let mut index = 0;
+        loop {
+            x = if f(&x.key) {
+                index += len(x.left) + 1;
+                let Some(right) = x.right else {
+                    break;
+                };
+                right
+            } else {
+                let Some(left) = x.left else {
+                    break;
+                };
+                left
+            };
+        }
+        index
+    }
+
+    pub fn lower_bound(&self, key: &K) -> usize { self.partition_point(|x| x < key) }
+
+    pub fn upper_bound(&self, key: &K) -> usize { self.partition_point(|x| x <= key) }
+
     pub fn insert(&mut self, key: K, value: O::Value) {
         let mut new = Ptr::new(Node::new(key, value, Color::Red));
         let Some(mut x) = self.tree.root else {
@@ -388,6 +412,14 @@ impl<K: Ord, V> Multimap<K, V> {
         self.segmap.binary_search(key)
     }
 
+    pub fn partition_point(&self, f: impl FnMut(&K) -> bool) -> usize {
+        self.segmap.partition_point(f)
+    }
+
+    pub fn lower_bound(&self, key: &K) -> usize { self.segmap.lower_bound(key) }
+
+    pub fn upper_bound(&self, key: &K) -> usize { self.segmap.upper_bound(key) }
+
     pub fn insert(&mut self, key: K, value: V) { self.segmap.insert(key, value) }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
@@ -458,6 +490,14 @@ impl<K: Ord> Multiset<K> {
     {
         self.map.binary_search(key).map(|(_, i)| i)
     }
+
+    pub fn partition_point(&self, f: impl FnMut(&K) -> bool) -> usize {
+        self.map.partition_point(f)
+    }
+
+    pub fn lower_bound(&self, key: &K) -> usize { self.map.lower_bound(key) }
+
+    pub fn upper_bound(&self, key: &K) -> usize { self.map.upper_bound(key) }
 
     pub fn insert(&mut self, key: K) { self.map.insert(key, ()) }
 
@@ -600,7 +640,7 @@ mod test_multiset {
                     assert_eq!(result, expected);
                 }
 
-                // Binary search query
+                // Binary search queries
                 for x in 0..VALUE_LIM {
                     let result = set.binary_search(&x);
                     match result {
@@ -610,6 +650,15 @@ mod test_multiset {
                             assert!(i == 0 || vec[i - 1] < x);
                         }
                     }
+
+                    assert_eq!(
+                        set.lower_bound(&x),
+                        vec.iter().position(|&y| y >= x).unwrap_or(vec.len())
+                    );
+                    assert_eq!(
+                        set.upper_bound(&x),
+                        vec.iter().position(|&y| y > x).unwrap_or(vec.len())
+                    );
                 }
 
                 // Collect query
