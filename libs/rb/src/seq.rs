@@ -234,10 +234,6 @@ pub fn unjoin<O: Op>(mut x: Ptr<Node<O>>, mut x_h: u8) -> (Tree<Node<O>>, Tree<N
         *r.parent() = None;
     }
     while let Some(mut p) = *x.parent() {
-        #[cfg(test)]
-        left.validate();
-        #[cfg(test)]
-        right.validate();
         *x.parent() = *p.parent();
         let original_p_color = p.color;
         if let Some(mut pp) = *p.parent() {
