@@ -1,5 +1,4 @@
 use core::fmt;
-use std::cmp::Ordering;
 use std::ops::Deref;
 use std::ops::DerefMut;
 use std::ptr::NonNull;
@@ -245,86 +244,6 @@ impl<T: Balance> Clone for Tree<T> {
     }
 }
 impl<T: Balance> Copy for Tree<T> {}
-
-pub fn join<T: Balance>(
-    mut left: Tree<T>,
-    center: impl FnOnce(Ptr<T>, Ptr<T>) -> Ptr<T>,
-    mut right: Tree<T>,
-) -> Tree<T> {
-    debug_assert!(left.root.is_some());
-    debug_assert!(right.root.is_some());
-    match left.black_height.cmp(&right.black_height) {
-        Ordering::Less => {
-            if color(left.root) == Color::Red {
-                *left.root.unwrap().color() = Color::Black;
-                left.black_height += 1;
-            }
-            debug_assert!(left.black_height > 0);
-            let mut right1 = Tree {
-                root: right.root,
-                black_height: right.black_height,
-            };
-            while left.black_height < right1.black_height || color(right1.root) == Color::Red {
-                let mut root = right1.root.unwrap();
-                if *root.color() == Color::Black {
-                    right1.black_height -= 1;
-                }
-                right1.root = Some(root.left().unwrap());
-            }
-            let mut center = center(left.root.unwrap(), right1.root.unwrap());
-            right.transplant(right1.root.unwrap(), Some(center));
-            *center.color() = Color::Red;
-            *center.left() = left.root;
-            *center.right() = right1.root;
-            *right1.root.unwrap().parent() = Some(center);
-            *left.root.unwrap().parent() = Some(center);
-            center.update();
-            right.fix_red(center);
-            right
-        }
-        Ordering::Greater => {
-            if color(right.root) == Color::Red {
-                *right.root.unwrap().color() = Color::Black;
-                right.black_height += 1;
-            }
-            debug_assert!(right.black_height > 0);
-            let mut left1 = Tree {
-                root: left.root,
-                black_height: left.black_height,
-            };
-            while left1.black_height > right.black_height || color(left1.root) == Color::Red {
-                let mut root = left1.root.unwrap();
-                if *root.color() == Color::Black {
-                    left1.black_height -= 1;
-                }
-                left1.root = Some(root.right().unwrap());
-            }
-            let mut center = center(left1.root.unwrap(), right.root.unwrap());
-            left.transplant(left1.root.unwrap(), Some(center));
-            *center.color() = Color::Red;
-            *center.left() = left1.root;
-            *center.right() = right.root;
-            *left1.root.unwrap().parent() = Some(center);
-            *right.root.unwrap().parent() = Some(center);
-            center.update();
-            left.fix_red(center);
-            left
-        }
-        Ordering::Equal => {
-            let mut center = center(left.root.unwrap(), right.root.unwrap());
-            *center.color() = Color::Black;
-            *center.left() = left.root;
-            *center.right() = right.root;
-            *left.root.unwrap().parent() = Some(center);
-            *right.root.unwrap().parent() = Some(center);
-            center.update();
-            Tree {
-                root: Some(center),
-                black_height: left.black_height + 1,
-            }
-        }
-    }
-}
 
 pub struct BlackViolation<T: Balance> {
     pub p: Option<Ptr<T>>,
@@ -947,7 +866,6 @@ mod test_fix {
 
 #[cfg(test)]
 mod test_update {
-    use super::join;
     use super::test_utils::Violations;
     use super::Balance as _;
     use super::Color;
@@ -1085,37 +1003,6 @@ mod test_update {
             tree.fix_black(vio);
             tree.validate();
             tree.validate_sum();
-        }
-    }
-
-    #[test]
-    fn test_join() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..200 {
-            let left_h = rng.gen_range(1..=4);
-            let right_h = rng.gen_range(1..=4);
-            let (left, _) = Tree::random_sum(&mut rng, left_h, false, false);
-            let (right, _) = Tree::random_sum(&mut rng, right_h, false, false);
-            left.validate();
-            right.validate();
-            left.validate_sum();
-            right.validate_sum();
-            let result = join(
-                left,
-                |_, _| {
-                    Ptr::new(Node {
-                        value: rng.gen_range(0..VALUE_LIM),
-                        sum: 0,
-                        color: if rng.gen() { Color::Red } else { Color::Black },
-                        parent: None,
-                        left: None,
-                        right: None,
-                    })
-                },
-                right,
-            );
-            result.validate();
-            result.validate_sum();
         }
     }
 }

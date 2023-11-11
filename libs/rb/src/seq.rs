@@ -1,10 +1,10 @@
 #![allow(dead_code)]
-use crate::balance::join;
 use crate::balance::Balance;
 use crate::balance::BlackViolation;
 use crate::balance::Color;
 use crate::balance::Ptr;
 use crate::balance::Tree;
+use std::cmp::Ordering;
 use std::cmp::Reverse;
 use std::fmt;
 use std::marker::PhantomData;
@@ -82,6 +82,33 @@ impl<O: Op> Balance for Node<O> {
     fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
 }
 impl<O: Op> Ptr<Node<O>> {
+    pub fn mul(left: Self, right: Self, color: Color) -> Self {
+        Ptr::new(Node {
+            value: O::mul(
+                &left.as_longlife_ref().value,
+                &right.as_longlife_ref().value,
+            ),
+            parent: None,
+            left: Some(left),
+            right: Some(right),
+            len: left.len + right.len,
+            color,
+        })
+    }
+
+    pub fn mul_in(left: Self, right: Self, color: Color, mut p: Self) -> Self {
+        p.value = O::mul(
+            &left.as_longlife_ref().value,
+            &right.as_longlife_ref().value,
+        );
+        p.parent = None;
+        p.left = Some(left);
+        p.right = Some(right);
+        p.len = left.len + right.len;
+        p.color = color;
+        p
+    }
+
     pub fn next(self) -> Option<Self> {
         let mut x = self;
         x = loop {
@@ -116,6 +143,132 @@ impl<O: Op> Ptr<Node<O>> {
             None
         }
     }
+}
+
+fn join<O: Op>(
+    mut left: Tree<Node<O>>,
+    center: impl FnOnce(Ptr<Node<O>>, Ptr<Node<O>>, Color) -> Ptr<Node<O>>,
+    mut right: Tree<Node<O>>,
+) -> Tree<Node<O>> {
+    debug_assert!(left.root.is_some());
+    debug_assert!(right.root.is_some());
+    match left.black_height.cmp(&right.black_height) {
+        Ordering::Less => {
+            if *left.root.unwrap().color() == Color::Red {
+                *left.root.unwrap().color() = Color::Black;
+                left.black_height += 1;
+            }
+            debug_assert!(left.black_height > 0);
+            let mut right1 = Tree {
+                root: right.root,
+                black_height: right.black_height,
+            };
+            while left.black_height < right1.black_height
+                || *right1.root.unwrap().color() == Color::Red
+            {
+                let mut root = right1.root.unwrap();
+                if *root.color() == Color::Black {
+                    right1.black_height -= 1;
+                }
+                right1.root = Some(root.left().unwrap());
+            }
+            let mut center = center(left.root.unwrap(), right1.root.unwrap(), Color::Red);
+            right.transplant(right1.root.unwrap(), Some(center));
+            *right1.root.unwrap().parent() = Some(center);
+            *left.root.unwrap().parent() = Some(center);
+            center.update();
+            right.fix_red(center);
+            right
+        }
+        Ordering::Greater => {
+            if *right.root.unwrap().color() == Color::Red {
+                *right.root.unwrap().color() = Color::Black;
+                right.black_height += 1;
+            }
+            debug_assert!(right.black_height > 0);
+            let mut left1 = Tree {
+                root: left.root,
+                black_height: left.black_height,
+            };
+            while left1.black_height > right.black_height
+                || *left1.root.unwrap().color() == Color::Red
+            {
+                let mut root = left1.root.unwrap();
+                if *root.color() == Color::Black {
+                    left1.black_height -= 1;
+                }
+                left1.root = Some(root.right().unwrap());
+            }
+            let center = center(left1.root.unwrap(), right.root.unwrap(), Color::Red);
+            left.transplant(left1.root.unwrap(), Some(center));
+            *left1.root.unwrap().parent() = Some(center);
+            *right.root.unwrap().parent() = Some(center);
+            left.fix_red(center);
+            left
+        }
+        Ordering::Equal => {
+            let center = center(left.root.unwrap(), right.root.unwrap(), Color::Black);
+            *left.root.unwrap().parent() = Some(center);
+            *right.root.unwrap().parent() = Some(center);
+            Tree {
+                root: Some(center),
+                black_height: left.black_height + 1,
+            }
+        }
+    }
+}
+
+pub fn unjoin<O: Op>(mut x: Ptr<Node<O>>, mut x_h: u8) -> (Tree<Node<O>>, Tree<Node<O>>) {
+    let mut left = Tree {
+        root: *x.left(),
+        black_height: x_h - u8::from(*x.color() == Color::Black),
+    };
+    let mut right = Tree {
+        root: *x.right(),
+        black_height: x_h - u8::from(*x.color() == Color::Black),
+    };
+    if let Some(mut l) = *x.left() {
+        *l.parent() = None;
+    }
+    if let Some(mut r) = *x.right() {
+        *r.parent() = None;
+    }
+    while let Some(mut p) = *x.parent() {
+        #[cfg(test)]
+        left.validate();
+        #[cfg(test)]
+        right.validate();
+        *x.parent() = *p.parent();
+        let original_p_color = p.color;
+        if let Some(mut pp) = *p.parent() {
+            if *pp.left() == Some(p) {
+                *pp.left() = Some(x);
+            } else {
+                *pp.right() = Some(x);
+            }
+        }
+        if *p.left() == Some(x) {
+            let s = Tree {
+                root: *p.right(),
+                black_height: x_h,
+            };
+            if let Some(mut s) = s.root {
+                *s.parent() = None;
+            }
+            right = join(right, move |l, r, color| Ptr::mul_in(l, r, color, p), s);
+        } else {
+            let s = Tree {
+                root: *p.left(),
+                black_height: x_h,
+            };
+            if let Some(mut s) = s.root {
+                *s.parent() = None;
+            }
+            left = join(s, move |l, r, color| Ptr::mul_in(l, r, color, p), left);
+        }
+        x_h += u8::from(original_p_color == Color::Black);
+    }
+    (left, right)
 }
 
 pub struct Seg<O: Op> {
@@ -237,27 +390,14 @@ impl<O: Op> Seg<O> {
                 x.right.unwrap()
             }
         }
-        let mut p;
-        match index {
-            0 => {
-                p = Ptr::new(Node::new(O::mul(&new.value, &x.value), Color::Red, 1));
-                self.tree.transplant(x, Some(p));
-                p.left = Some(new);
-                p.right = Some(x);
-                new.parent = Some(p);
-                x.parent = Some(p);
-            }
-            1 => {
-                p = Ptr::new(Node::new(O::mul(&x.value, &new.value), Color::Red, 1));
-                self.tree.transplant(x, Some(p));
-                p.left = Some(x);
-                p.right = Some(new);
-                x.parent = Some(p);
-                new.parent = Some(p);
-            }
+        let p = match index {
+            0 => Ptr::mul(new, x, Color::Red),
+            1 => Ptr::mul(x, new, Color::Red),
             _ => unreachable!(),
-        }
-        p.update();
+        };
+        self.tree.transplant(x, Some(p));
+        x.parent = Some(p);
+        new.parent = Some(p);
         self.tree.fix_red(p);
     }
 
@@ -289,17 +429,42 @@ impl<O: Op> Seg<O> {
         if other.is_empty() {
             return;
         }
-        self.tree = join(
-            self.tree,
-            |l, r| {
-                Ptr::new(Node::new(
-                    O::mul(&l.value, &r.value),
-                    Color::Black,
-                    l.len + r.len,
-                ))
-            },
-            other.tree,
-        );
+        self.tree = join(self.tree, Ptr::mul, other.tree);
+        other.tree = Tree::new();
+    }
+
+    pub fn split_off(&mut self, mut index: usize) -> Self {
+        assert!(index <= self.len());
+        if index == 0 {
+            return std::mem::take(self);
+        } else if index == self.len() {
+            return Self::new();
+        }
+        let mut x = self.tree.root.unwrap();
+        let mut x_h = self.tree.black_height;
+        while !x.is_leaf() {
+            let left_len = x.left.unwrap().len;
+            x_h -= u8::from(*x.color() == Color::Black);
+            x = if index < left_len {
+                x.left.unwrap()
+            } else {
+                index -= left_len;
+                x.right.unwrap()
+            };
+        }
+        loop {
+            let mut p = x.parent.unwrap();
+            if *p.right() == Some(x) {
+                x = p;
+                x_h += u8::from(*x.color() == Color::Black);
+                break;
+            }
+            x = p;
+            x_h += u8::from(*x.color() == Color::Black);
+        }
+        let (left, right) = unjoin(x, x_h);
+        self.tree = left;
+        Self { tree: right }
     }
 
     fn nth_ptr(&self, mut index: usize) -> Ptr<Node<O>> {
@@ -336,25 +501,8 @@ impl<O: Op> FromIterator<O::Value> for Seg<O> {
                     let mut left = nodes[i];
                     let mut center = nodes[i + 1];
                     let mut right = nodes[i + 2];
-                    let mut x = Ptr::new(Node {
-                        value: O::mul(
-                            &left.as_longlife_ref().value,
-                            &center.as_longlife_ref().value,
-                        ),
-                        parent: None,
-                        left: Some(left),
-                        right: Some(center),
-                        color: Color::Red,
-                        len: left.len + center.len,
-                    });
-                    let p = Ptr::new(Node {
-                        value: O::mul(&x.as_longlife_ref().value, &right.as_longlife_ref().value),
-                        parent: None,
-                        left: Some(x),
-                        right: Some(right),
-                        color: Color::Black,
-                        len: x.len + right.len,
-                    });
+                    let mut x = Ptr::mul(left, center, Color::Red);
+                    let p = Ptr::mul(x, right, Color::Black);
                     left.parent = Some(x);
                     center.parent = Some(x);
                     x.parent = Some(p);
@@ -363,17 +511,7 @@ impl<O: Op> FromIterator<O::Value> for Seg<O> {
                 } else {
                     let mut left = nodes[i];
                     let mut right = nodes[i + 1];
-                    let p = Ptr::new(Node {
-                        value: O::mul(
-                            &left.as_longlife_ref().value,
-                            &right.as_longlife_ref().value,
-                        ),
-                        parent: None,
-                        left: Some(left),
-                        right: Some(right),
-                        color: Color::Black,
-                        len: left.len + right.len,
-                    });
+                    let p = Ptr::mul(left, right, Color::Black);
                     left.parent = Some(p);
                     right.parent = Some(p);
                     nodes[i / 2] = p;
@@ -674,7 +812,7 @@ mod test_seg {
     use super::Op;
     use super::Ptr;
     use super::Seg;
-    use crate::balance::Balance;
+    use crate::balance::Color;
     use crate::balance::Tree;
     use rand::distributions::Alphanumeric;
     use rand::rngs::StdRng;
@@ -694,43 +832,63 @@ mod test_seg {
 
     impl Seg<O> {
         fn random(rng: &mut StdRng, black_height: u8) -> Self {
-            fn update_all(mut p: Ptr<Node<O>>) {
-                if p.left.is_some() {
-                    update_all(p.left.unwrap());
-                    update_all(p.right.unwrap());
-                    p.update();
+            fn random(rng: &mut StdRng, black_height: u8, parent_color: Color) -> Ptr<Node<O>> {
+                let color = match parent_color {
+                    Color::Red => Color::Black,
+                    Color::Black => {
+                        if rng.gen() {
+                            Color::Red
+                        } else {
+                            Color::Black
+                        }
+                    }
+                };
+                if black_height == 1 && color == Color::Black {
+                    return Ptr::new(Node::<O> {
+                        value: char::from(rng.sample(Alphanumeric)).to_string(),
+                        parent: None,
+                        left: None,
+                        right: None,
+                        color,
+                        len: 1,
+                    });
+                }
+                let mut left = random(rng, black_height - u8::from(color == Color::Black), color);
+                let mut right = random(rng, black_height - u8::from(color == Color::Black), color);
+                let x = Ptr::new(Node {
+                    value: O::mul(
+                        &left.as_longlife_ref().value,
+                        &right.as_longlife_ref().value,
+                    ),
+                    parent: None,
+                    left: Some(left),
+                    right: Some(right),
+                    color,
+                    len: left.len + right.len,
+                });
+                left.parent = Some(x);
+                right.parent = Some(x);
+                x
+            }
+            if black_height == 0 {
+                Self::new()
+            } else {
+                Self {
+                    tree: Tree {
+                        root: Some(random(rng, black_height, Color::Black)),
+                        black_height,
+                    },
                 }
             }
-            let (tree, _) = Tree::random(
-                rng,
-                |rng, color| {
-                    Node::new(
-                        rng.sample_iter(&Alphanumeric)
-                            .take(1)
-                            .map(char::from)
-                            .collect::<String>(),
-                        color,
-                        1,
-                    )
-                },
-                black_height,
-                false,
-                false,
-                true,
-            );
-            if let Some(root) = tree.root {
-                update_all(root);
-            }
-            Self { tree }
         }
 
-        fn validate_value(&self) {
-            fn validate_value(p: Option<Ptr<Node<O>>>) -> Result<(), String> {
+        fn validate(&self) {
+            fn validate(p: Option<Ptr<Node<O>>>) -> Result<(), String> {
                 if let Some(p) = p {
                     if p.is_leaf() {
                         return Ok(());
                     }
-                    validate_value(p.left)?;
+                    validate(p.left)?;
                     let mut expected = String::new();
                     expected.push_str(&p.left.unwrap().value);
                     expected.push_str(&p.right.unwrap().value);
@@ -740,11 +898,12 @@ mod test_seg {
                             p, expected, &p.value
                         )
                     })?;
-                    validate_value(p.right)?;
+                    validate(p.right)?;
                 }
                 Ok(())
             }
-            validate_value(self.tree.root).unwrap_or_else(|e| {
+            self.tree.validate();
+            validate(self.tree.root).unwrap_or_else(|e| {
                 panic!(
                     "{e}:\n Tree: {}",
                     self.tree.format_by(|p| format!("<{:?}:{}>", p, p.value))
@@ -762,8 +921,7 @@ mod test_seg {
                 .map(|b| char::from(b).to_string())
                 .take(len)
                 .collect::<Seg<O>>();
-            seg.tree.validate();
-            seg.validate_value();
+            seg.validate();
         }
     }
 
@@ -783,8 +941,7 @@ mod test_seg {
                     .collect::<String>();
                 *seg.nth_mut(i) = x.clone();
                 vec[i] = x;
-                seg.tree.validate();
-                seg.validate_value();
+                seg.validate();
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
             }
         }
@@ -797,7 +954,7 @@ mod test_seg {
             let black_height = rng.gen_range(0..=4);
             let seg = Seg::random(&mut rng, black_height);
             seg.tree.validate();
-            seg.validate_value();
+            seg.validate();
             let n = seg.len();
             let vec = seg.iter().cloned().collect::<Vec<_>>();
             for _ in 0..200 {
@@ -841,8 +998,45 @@ mod test_seg {
                     vec.insert(position, s);
                 }
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);
-                seg.validate_value();
+                seg.validate();
             }
+        }
+    }
+
+    #[test]
+    fn test_seg_append() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..20 {
+            let left_h = rng.gen_range(0..=4);
+            let right_h = rng.gen_range(0..=4);
+            let mut left = Seg::random(&mut rng, left_h);
+            let mut right = Seg::random(&mut rng, right_h);
+            let expected = left
+                .iter()
+                .cloned()
+                .chain(right.iter().cloned())
+                .collect::<Vec<_>>();
+            left.append(&mut right);
+            left.validate();
+            right.validate();
+            assert_eq!(left.iter().cloned().collect::<Vec<_>>(), expected);
+            assert!(right.is_empty());
+        }
+    }
+
+    #[test]
+    fn test_seg_split_off() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let h = rng.gen_range(0..=5);
+            let mut seg = Seg::random(&mut rng, h);
+            let i = rng.gen_range(0..=seg.len());
+            let expected = seg.iter().cloned().collect::<Vec<_>>();
+            let right = seg.split_off(i);
+            seg.validate();
+            right.validate();
+            assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), expected[..i]);
+            assert_eq!(right.iter().cloned().collect::<Vec<_>>(), expected[i..]);
         }
     }
 }
