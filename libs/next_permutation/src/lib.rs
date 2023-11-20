@@ -74,9 +74,9 @@ pub fn next_pairing(a: &mut [usize]) -> bool {
         if i % 2 == 1 && a[i] + 1 < (used + 1).next_power_of_two().trailing_zeros() as usize {
             a[i] = (used >> (a[i] + 1)).trailing_zeros() as usize + a[i] + 1;
             used ^= 1 << a[i];
-            for i in i + 1..n {
-                a[i] = used.trailing_zeros() as usize;
-                used ^= 1 << a[i];
+            for x in &mut a[i + 1..n] {
+                *x = used.trailing_zeros() as usize;
+                used ^= 1 << *x;
             }
             return true;
         }
@@ -216,10 +216,10 @@ mod tests {
                 p[i + step] += p[i];
             }
         }
-        for n in 0..10 {
+        for (n, &p) in p.iter().enumerate() {
             let result = partitions(n);
             assert!(result.iter().tuple_windows().all(|(a, b)| a < b));
-            assert_eq!(result.len(), p[n]);
+            assert_eq!(result.len(), p);
             assert_eq!(result, partitions_rev(n).into_iter().rev().collect_vec());
         }
     }
