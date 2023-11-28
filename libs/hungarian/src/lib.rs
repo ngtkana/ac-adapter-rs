@@ -311,6 +311,7 @@ mod tests {
         let h = cost_matrix.len();
         let w = cost_matrix[0].len();
         let value = permutations((0..w).collect_vec())
+            .into_iter()
             .map(|v| calculate_score(cost_matrix, v[..h].iter().copied()))
             .min_by(|x, y| x.partial_cmp(y).unwrap())
             .unwrap();
