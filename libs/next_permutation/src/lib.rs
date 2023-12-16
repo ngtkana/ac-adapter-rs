@@ -2,10 +2,7 @@
 
 /// Returns the next permutation of `a` in lexicographic order.
 pub fn next_permutation<T: Ord>(a: &mut [T]) -> bool {
-    if a.is_empty() {
-        return false;
-    }
-    let Some(i) = (0..a.len() - 1).rfind(|&i| a[i] < a[i + 1]) else {
+    let Some(i) = a.windows(2).rposition(|w| w[0] < w[1]) else {
         return false;
     };
     let j = a.iter().rposition(|x| x > &a[i]).unwrap();
