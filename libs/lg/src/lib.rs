@@ -277,7 +277,7 @@ impl fmt::Display for StringTable {
                 once(j.to_string().len())
                     .chain(
                         body.iter()
-                            .map(|row| row.values.get(j).map(|s| s.chars().count()).unwrap_or(0)),
+                            .map(|row| row.values.get(j).map_or(0, |s| s.chars().count())),
                     )
                     .max()
                     .unwrap()
@@ -348,8 +348,12 @@ impl StringRow {
 const GRAY: &str = "\x1b[48;2;127;127;127;37m";
 const RESET: &str = "\x1b[0m";
 
-fn gray(f: &mut fmt::Formatter<'_>) -> fmt::Result { write!(f, "{GRAY}") }
-fn resetln(f: &mut fmt::Formatter<'_>) -> fmt::Result { writeln!(f, "{RESET}") }
+fn gray(f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    write!(f, "{GRAY}")
+}
+fn resetln(f: &mut fmt::Formatter<'_>) -> fmt::Result {
+    writeln!(f, "{RESET}")
+}
 
 /// Format a iterator of [`bool`]s.
 pub fn bools<B, I>(iter: I) -> String
@@ -422,14 +426,17 @@ mod test {
                 label: table[0].borrow()[0].to_string(),
                 values: table[0].borrow()[1..]
                     .iter()
-                    .map(|s| s.to_string())
+                    .map(std::string::ToString::to_string)
                     .collect(),
             },
             body: table[1..]
                 .iter()
                 .map(|row| StringRow {
                     label: row.borrow()[0].to_string(),
-                    values: row.borrow()[1..].iter().map(|s| s.to_string()).collect(),
+                    values: row.borrow()[1..]
+                        .iter()
+                        .map(std::string::ToString::to_string)
+                        .collect(),
                 })
                 .collect(),
             verticalbar_count: vec![0; w + 1],
