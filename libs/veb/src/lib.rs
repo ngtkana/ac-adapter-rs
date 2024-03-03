@@ -404,22 +404,6 @@ impl VebSet {
     }
 }
 
-impl Default for VebSet {
-    fn default() -> Self {
-        Self::new(0)
-    }
-}
-
-impl std::iter::FromIterator<usize> for VebSet {
-    fn from_iter<T: IntoIterator<Item = usize>>(iter: T) -> Self {
-        let mut veb = VebSet::default();
-        for i in iter {
-            veb.insert(i);
-        }
-        veb
-    }
-}
-
 impl std::fmt::Debug for VebSet {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_set().entries(self.collect()).finish()
