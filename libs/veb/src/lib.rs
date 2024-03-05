@@ -1,5 +1,7 @@
 //! A predecessor data structure based on van Emde Boas trees.
 //!
+//! This is implemented with hash maps, so `new()` is $O(\log\log n)$.
+//!
 //! # Example
 //!
 //! ```
@@ -49,6 +51,316 @@ macro_rules! multi_or_else {
     ($e:expr) => {
         $e
     };
+}
+
+/// A van Emde Boas tree-based map.
+/// The map is implemented as a van Emde Boas tree with a hash map.
+///
+/// # Example
+/// ```
+/// use veb::VebMap;
+/// let mut veb = VebMap::from_iter(vec![(42, "foo"), (43, "bar")]);
+/// assert_eq!(veb.get(42), Some(&"foo"));
+/// assert_eq!(veb.get(43), Some(&"bar"));
+/// assert_eq!(veb.get(44), None);
+///
+/// assert_eq!(veb.min(), Some((42, &"foo")));
+/// assert_eq!(veb.min_key(), Some(42));
+/// assert_eq!(veb.min_value(), Some(&"foo"));
+/// ```
+pub struct VebMap<V> {
+    veb: VebSet,
+    map: HashMap<usize, V>,
+}
+impl<V> VebMap<V> {
+    /// Creates a new van Emde Boas tree-based map with the given capacity.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::new(1_000_000);
+    /// ```
+    pub fn new(n: usize) -> Self {
+        Self {
+            veb: VebSet::new(n),
+            map: HashMap::new(),
+        }
+    }
+
+    /// Inserts an element into the map.
+    /// Returns the previous value if the key was already present.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let mut veb = VebMap::new(1_000_000);
+    /// assert_eq!(veb.insert(42, "foo"), None);
+    /// assert_eq!(veb.insert(42, "bar"), Some("foo"));
+    /// ```
+    pub fn insert(&mut self, i: usize, v: V) -> Option<V> {
+        self.veb.insert(i);
+        self.map.insert(i, v)
+    }
+
+    /// Removes an element from the map.
+    /// Returns the value if the key was present.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let mut veb = VebMap::new(1_000_000);
+    /// veb.insert(42, "foo");
+    /// assert_eq!(veb.remove(42), Some("foo"));
+    /// assert_eq!(veb.remove(42), None);
+    /// ```
+    pub fn remove(&mut self, i: usize) -> Option<V> {
+        self.veb.remove(i);
+        self.map.remove(&i)
+    }
+
+    /// Returns the value corresponding to the key.
+    /// Returns `None` if the key is not present.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let mut veb = VebMap::new(1_000_000);
+    /// veb.insert(42, "foo");
+    /// assert_eq!(veb.get(42), Some(&"foo"));
+    /// assert_eq!(veb.get(43), None);
+    /// ```
+    pub fn get(&self, i: usize) -> Option<&V> {
+        self.map.get(&i)
+    }
+
+    /// Returns a mutable reference to the value corresponding to the key.
+    /// Returns `None` if the key is not present.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let mut veb = VebMap::new(1_000_000);
+    /// veb.insert(42, "foo");
+    /// assert_eq!(veb.get_mut(42), Some(&mut "foo"));
+    /// assert_eq!(veb.get_mut(43), None);
+    /// ```
+    pub fn get_mut(&mut self, i: usize) -> Option<&mut V> {
+        self.map.get_mut(&i)
+    }
+
+    /// Returns the minimum element in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.min(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.min(), Some((42, &"foo")));
+    /// ```
+    pub fn min_key(&self) -> Option<usize> {
+        self.veb.min()
+    }
+
+    /// Returns the minimum value in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.min_value(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.min_value(), Some(&"foo"));
+    /// ```
+    pub fn min_value(&self) -> Option<&V> {
+        self.veb.min().and_then(|i| self.map.get(&i))
+    }
+
+    /// Returns the minimum element and value in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.min(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.min(), Some((42, &"foo")));
+    /// ```
+    pub fn min(&self) -> Option<(usize, &V)> {
+        self.veb
+            .min()
+            .and_then(|i| self.map.get(&i).map(|v| (i, v)))
+    }
+
+    /// Returns the maximum element in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.max(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.max(), Some((42, &"foo")));
+    /// ```
+    pub fn max_key(&self) -> Option<usize> {
+        self.veb.max()
+    }
+
+    /// Returns the maximum value in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.max_value(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.max_value(), Some(&"foo"));
+    /// ```
+    pub fn max_value(&self) -> Option<&V> {
+        self.veb.max().and_then(|i| self.map.get(&i))
+    }
+
+    /// Returns the maximum element and value in the map.
+    /// Returns `None` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.max(), None);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.max(), Some((42, &"foo")));
+    /// ```
+    pub fn max(&self) -> Option<(usize, &V)> {
+        self.veb
+            .max()
+            .and_then(|i| self.map.get(&i).map(|v| (i, v)))
+    }
+
+    /// Returns the successor of the given element.
+    /// Returns `None` if the given element is the maximum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ_key(34), Some(56));
+    /// assert_eq!(veb.succ_value(34), Some(&"baz"));
+    /// assert_eq!(veb.succ(34), Some((56, &"baz")));
+    /// assert_eq!(veb.succ(78), None);
+    /// ```
+    pub fn succ_key(&self, i: usize) -> Option<usize> {
+        self.veb.succ(i)
+    }
+
+    /// Returns the successor value of the given element.
+    /// Returns `None` if the given element is the maximum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ_value(34), Some(&"baz"));
+    /// assert_eq!(veb.succ_value(78), None);
+    /// ```
+    pub fn succ_value(&self, i: usize) -> Option<&V> {
+        self.veb.succ(i).and_then(|i| self.map.get(&i))
+    }
+
+    /// Returns the successor of the given element.
+    /// Returns `None` if the given element is the maximum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ(34), Some((56, &"baz")));
+    /// assert_eq!(veb.succ(78), None);
+    /// ```
+    pub fn succ(&self, i: usize) -> Option<(usize, &V)> {
+        self.veb
+            .succ(i)
+            .and_then(|i| self.map.get(&i).map(|v| (i, v)))
+    }
+
+    /// Returns the predecessor of the given element.
+    /// Returns `None` if the given element is the minimum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred_key(34), Some(12));
+    /// assert_eq!(veb.pred_value(34), Some(&"foo"));
+    /// assert_eq!(veb.pred(34), Some((12, &"foo")));
+    /// assert_eq!(veb.pred(12), None);
+    /// ```
+    pub fn pred_key(&self, i: usize) -> Option<usize> {
+        self.veb.pred(i)
+    }
+
+    /// Returns the predecessor value of the given element.
+    /// Returns `None` if the given element is the minimum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred_value(34), Some(&"foo"));
+    /// assert_eq!(veb.pred_value(12), None);
+    /// ```
+    pub fn pred_value(&self, i: usize) -> Option<&V> {
+        self.veb.pred(i).and_then(|i| self.map.get(&i))
+    }
+
+    /// Returns the predecessor of the given element.
+    /// Returns `None` if the given element is the minimum element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred(34), Some((12, &"foo")));
+    /// assert_eq!(veb.pred(12), None);
+    /// ```
+    pub fn pred(&self, i: usize) -> Option<(usize, &V)> {
+        self.veb
+            .pred(i)
+            .and_then(|i| self.map.get(&i).map(|v| (i, v)))
+    }
+
+    /// Returns the number of elements in the map.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.len(), 0);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.len(), 1);
+    /// ```
+    pub fn len(&self) -> usize {
+        self.veb.len()
+    }
+
+    /// Returns `true` if the map is empty.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![]);
+    /// assert_eq!(veb.is_empty(), true);
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.is_empty(), false);
+    /// ```
+    pub fn is_empty(&self) -> bool {
+        self.veb.is_empty()
+    }
+
+    /// Returns the elements in the map in ascending order.
+    /// The elements are collected into a [`Vec`].
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.collect(), vec![(12, &"foo"), (34, &"bar"), (56, &"baz"), (78, &"qux")]);
+    /// ```
+    pub fn collect(&self) -> Vec<(usize, &V)> {
+        self.veb
+            .collect()
+            .into_iter()
+            .filter_map(|i| self.map.get(&i).map(|v| (i, v)))
+            .collect()
+    }
 }
 
 /// A van Emde Boas tree.
@@ -417,6 +729,7 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
     use rstest::rstest;
+    use std::collections::BTreeMap;
     use std::collections::BTreeSet;
     use std::ops::RangeInclusive;
 
@@ -426,7 +739,7 @@ mod tests {
     #[case(65..=4096)]
     #[case(4094..=4098)]
     #[case(1_000_000_000..=2_000_000_000)]
-    fn test(#[case] nrange: RangeInclusive<usize>) {
+    fn test_veb_set(#[case] nrange: RangeInclusive<usize>) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let n = rng.gen_range(nrange.clone());
@@ -448,6 +761,44 @@ mod tests {
                 }
                 assert_eq!(veb.min(), set.iter().next().copied(), "min");
                 assert_eq!(veb.max(), set.iter().next_back().copied(), "max");
+            }
+        }
+    }
+
+    #[rstest]
+    fn test_veb_map() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let n = rng.gen_range(0..1_000);
+            let mut veb = VebMap::new(n);
+            let mut map = BTreeMap::new();
+            for _ in 0..200 {
+                let i = rng.gen_range(0..n);
+                match rng.gen_range(0..5) {
+                    0 => {
+                        let v = rng.gen_range(0..1_000);
+                        assert_eq!(veb.insert(i, v), map.insert(i, v), "insert({i})");
+                    }
+                    1 => assert_eq!(veb.remove(i), map.remove(&i), "remove({i})"),
+                    2 => assert_eq!(
+                        veb.succ(i),
+                        map.range(i + 1..).next().map(|(&i, v)| (i, v)),
+                        "succ({i})"
+                    ),
+                    3 => assert_eq!(
+                        veb.pred(i),
+                        map.range(..i).next_back().map(|(&i, v)| (i, v)),
+                        "pred({i})"
+                    ),
+                    4 => assert_eq!(veb.get(i), map.get(&i), "get({i})"),
+                    _ => unreachable!(),
+                }
+                assert_eq!(veb.min(), map.iter().next().map(|(&i, v)| (i, v)), "min");
+                assert_eq!(
+                    veb.max(),
+                    map.iter().next_back().map(|(&i, v)| (i, v)),
+                    "max"
+                );
             }
         }
     }
