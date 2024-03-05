@@ -346,6 +346,18 @@ impl<V> VebMap<V> {
         self.veb.is_empty()
     }
 
+    /// Returns `true` if the map contains the given key.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// assert_eq!(veb.contains_key(42), true);
+    /// assert_eq!(veb.contains_key(43), false);
+    /// ```
+    pub fn contains_key(&self, i: usize) -> bool {
+        self.veb.contains(i)
+    }
+
     /// Returns the elements in the map in ascending order.
     /// The elements are collected into a [`Vec`].
     /// # Example
@@ -360,6 +372,18 @@ impl<V> VebMap<V> {
             .into_iter()
             .filter_map(|i| self.map.get(&i).map(|v| (i, v)))
             .collect()
+    }
+}
+
+impl<V> std::ops::Index<usize> for VebMap<V> {
+    type Output = V;
+    fn index(&self, i: usize) -> &V {
+        self.get(i).unwrap()
+    }
+}
+impl<V> std::ops::IndexMut<usize> for VebMap<V> {
+    fn index_mut(&mut self, i: usize) -> &mut V {
+        self.get_mut(i).unwrap()
     }
 }
 
@@ -686,14 +710,12 @@ impl VebSet {
     /// ```
     pub fn contains(&self, i: usize) -> bool {
         match self {
-            #[allow(unused_variables)]
             Self::Internal {
                 min,
-                max,
                 csize,
                 len,
-                summary,
                 chunks,
+                ..
             } => {
                 let j = i / csize;
                 let k = i % csize;
