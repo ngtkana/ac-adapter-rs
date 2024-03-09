@@ -119,7 +119,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns the value corresponding to the key.
-    /// Returns `None` if the key is not present.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -133,7 +132,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns a mutable reference to the value corresponding to the key.
-    /// Returns `None` if the key is not present.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -147,7 +145,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns the minimum element in the map.
-    /// Returns `None` if the map is empty.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -175,7 +172,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns the minimum element and value in the map.
-    /// Returns `None` if the map is empty.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -205,7 +201,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns the maximum value in the map.
-    /// Returns `None` if the map is empty.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -219,7 +214,6 @@ impl<V> VebMap<V> {
     }
 
     /// Returns the maximum element and value in the map.
-    /// Returns `None` if the map is empty.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -234,8 +228,7 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the successor of the given element.
-    /// Returns `None` if the given element is the maximum element.
+    /// Returns the strict successor of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -249,8 +242,7 @@ impl<V> VebMap<V> {
         self.veb.succ(i)
     }
 
-    /// Returns the successor value of the given element.
-    /// Returns `None` if the given element is the maximum element.
+    /// Returns the strict successor value of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -262,8 +254,7 @@ impl<V> VebMap<V> {
         self.veb.succ(i).and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the successor of the given element.
-    /// Returns `None` if the given element is the maximum element.
+    /// Returns the strict successor of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -277,8 +268,55 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the predecessor of the given element.
-    /// Returns `None` if the given element is the minimum element.
+    /// Returns the non-strict successor of the given element.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ_eq_key(34), Some(34));
+    /// assert_eq!(veb.succ_eq_key(35), Some(56));
+    /// ```
+    pub fn succ_eq_key(&self, i: usize) -> Option<usize> {
+        if self.contains_key(i) {
+            return Some(i);
+        }
+        self.succ_key(i)
+    }
+
+    /// Returns the non-strict successor value of the given element.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ_eq_value(34), Some(&"bar"));
+    /// assert_eq!(veb.succ_eq_value(35), Some(&"baz"));
+    /// ```
+    pub fn succ_eq_value(&self, i: usize) -> Option<&V> {
+        if let Some(v) = self.get(i) {
+            return Some(v);
+        }
+        self.succ_value(i)
+    }
+
+    /// Returns the non-strict successor of the given element.
+    ///
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.succ_eq(34), Some((34, &"bar"));
+    /// assert_eq!(veb.succ_eq(35), Some((56, &"baz"));
+    /// ```
+    pub fn succ_eq(&self, i: usize) -> Option<(usize, &V)> {
+        if let Some(v) = self.get(i) {
+            return Some((i, v));
+        }
+        self.succ(i)
+    }
+
+    /// Returns the strict predecessor of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -292,8 +330,7 @@ impl<V> VebMap<V> {
         self.veb.pred(i)
     }
 
-    /// Returns the predecessor value of the given element.
-    /// Returns `None` if the given element is the minimum element.
+    /// Returns the strict predecessor value of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -305,8 +342,7 @@ impl<V> VebMap<V> {
         self.veb.pred(i).and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the predecessor of the given element.
-    /// Returns `None` if the given element is the minimum element.
+    /// Returns the strict predecessor of the given element.
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -318,6 +354,51 @@ impl<V> VebMap<V> {
         self.veb
             .pred(i)
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
+    }
+
+    /// Returns the non-strict predecessor of the given element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred_eq_key(34), Some(34));
+    /// assert_eq!(veb.pred_eq_key(35), Some(12));
+    /// ```
+    pub fn pred_eq_key(&self, i: usize) -> Option<usize> {
+        if self.contains_key(i) {
+            return Some(i);
+        }
+        self.pred_key(i)
+    }
+
+    /// Returns the non-strict predecessor value of the given element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred_eq_value(34), Some(&"bar"));
+    /// assert_eq!(veb.pred_eq_value(35), Some(&"foo"));
+    /// ```
+    pub fn pred_eq_value(&self, i: usize) -> Option<&V> {
+        if let Some(v) = self.get(i) {
+            return Some(v);
+        }
+        self.pred_value(i)
+    }
+
+    /// Returns the non-strict predecessor of the given element.
+    /// # Example
+    /// ```
+    /// # use veb::VebMap;
+    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// assert_eq!(veb.pred_eq(34), Some((34, &"bar"));
+    /// assert_eq!(veb.pred_eq(35), Some((12, &"foo"));
+    /// ```
+    pub fn pred_eq(&self, i: usize) -> Option<(usize, &V)> {
+        if let Some(v) = self.get(i) {
+            return Some((i, v));
+        }
+        self.pred(i)
     }
 
     /// Returns the number of elements in the map.
@@ -364,7 +445,12 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.collect(), vec![(12, &"foo"), (34, &"bar"), (56, &"baz"), (78, &"qux")]);
+    /// assert_eq!(veb.collect(), vec![
+    ///     (12, &"foo"),
+    ///     (34, &"bar"),
+    ///     (56, &"baz"),
+    ///     (78, &"qux")
+    /// ]);
     /// ```
     pub fn collect(&self) -> Vec<(usize, &V)> {
         self.veb
@@ -375,8 +461,15 @@ impl<V> VebMap<V> {
     }
 }
 
+impl<V: std::fmt::Debug> std::fmt::Debug for VebMap<V> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_map().entries(self.collect()).finish()
+    }
+}
+
 impl<V> std::ops::Index<usize> for VebMap<V> {
     type Output = V;
+
     fn index(&self, i: usize) -> &V {
         self.get(i).unwrap()
     }
