@@ -3,7 +3,7 @@
 //! # Example
 //!
 //! ```[no_run]
-//! # use input::input;
+//! # use io::input;
 //! let (a, b): (i32, i32) = input();
 //! let a: Vec<i32> = input();
 //! ```
