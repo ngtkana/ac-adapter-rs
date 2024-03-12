@@ -26,7 +26,7 @@ macro_rules! lg {
         eprintln!();
     }};
     ($($expr:expr),* $(,)?) => {{
-        eprint!("{}❯", line!());
+        eprint!("{}\u{276f}", line!());
         $crate::lg!(@contents $($expr),*)
     }};
 }
