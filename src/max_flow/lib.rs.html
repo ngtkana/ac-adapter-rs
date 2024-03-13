@@ -309,6 +309,8 @@
 <a href="#275" id="275">275</a>
 <a href="#276" id="276">276</a>
 <a href="#277" id="277">277</a>
+<a href="#278" id="278">278</a>
+<a href="#279" id="279">279</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Dinic 法で最大流を求めます。
 //!
 //! # Flow Type
@@ -399,7 +401,9 @@
 }
 
 <span class="kw">impl</span>&lt;Value: FlowTrait&gt; MaxFlow&lt;Value&gt; {
-    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.network.len() }
+    <span class="kw">fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.network.len()
+    }
 
     <span class="doccomment">/// 構築です。
     ///

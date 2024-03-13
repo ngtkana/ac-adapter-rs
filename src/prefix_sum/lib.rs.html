@@ -161,6 +161,12 @@
 <a href="#127" id="127">127</a>
 <a href="#128" id="128">128</a>
 <a href="#129" id="129">129</a>
+<a href="#130" id="130">130</a>
+<a href="#131" id="131">131</a>
+<a href="#132" id="132">132</a>
+<a href="#133" id="133">133</a>
+<a href="#134" id="134">134</a>
+<a href="#135" id="135">135</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 累積和です。
 //!
 //! # 使い方
@@ -213,13 +219,19 @@
     </span>T: Clone + ops::Add&lt;Output = T&gt; + ops::Sub&lt;Output = T&gt;,
 {
     <span class="doccomment">/// 空であることです。
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.table.len() == <span class="number">1 </span>}
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.table.len() == <span class="number">1
+    </span>}
 
     <span class="doccomment">/// 長さです。中身の長さは `self.len() + 1` です。
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.table.len() - <span class="number">1 </span>}
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.table.len() - <span class="number">1
+    </span>}
 
     <span class="doccomment">/// コンストラクタです。引数は零元です。
-    </span><span class="kw">pub fn </span>with_zero(x: T) -&gt; <span class="self">Self </span>{ <span class="self">Self </span>{ table: <span class="macro">vec!</span>[x] } }
+    </span><span class="kw">pub fn </span>with_zero(x: T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{ table: <span class="macro">vec!</span>[x] }
+    }
 
     <span class="doccomment">/// 挿入します。
     </span><span class="kw">pub fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) {

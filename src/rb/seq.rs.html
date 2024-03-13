@@ -1102,12 +1102,6 @@
 <a href="#1068" id="1068">1068</a>
 <a href="#1069" id="1069">1069</a>
 <a href="#1070" id="1070">1070</a>
-<a href="#1071" id="1071">1071</a>
-<a href="#1072" id="1072">1072</a>
-<a href="#1073" id="1073">1073</a>
-<a href="#1074" id="1074">1074</a>
-<a href="#1075" id="1075">1075</a>
-<a href="#1076" id="1076">1076</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code)]
 </span><span class="kw">use </span><span class="kw">crate</span>::balance::Balance;
 <span class="kw">use </span><span class="kw">crate</span>::balance::BlackViolation;
@@ -1708,14 +1702,11 @@
             offset: usize,
         ) -&gt; usize {
             <span class="kw">if </span>p.is_leaf() {
-                vec.push((
-                    <span class="number">0</span>,
-                    SegTableCell {
-                        start: offset,
-                        end: offset + <span class="number">1</span>,
-                        value: <span class="kw-2">&amp;</span>p.as_longlife_ref().value,
-                    },
-                ));
+                vec.push((<span class="number">0</span>, SegTableCell {
+                    start: offset,
+                    end: offset + <span class="number">1</span>,
+                    value: <span class="kw-2">&amp;</span>p.as_longlife_ref().value,
+                }));
                 <span class="number">0
             </span>} <span class="kw">else </span>{
                 <span class="kw">let </span>ht = <span class="number">1 </span>+ traverse(vec, p.left.unwrap(), offset).max(traverse(
@@ -1723,14 +1714,11 @@
                     p.right.unwrap(),
                     offset + p.left.unwrap().len,
                 ));
-                vec.push((
-                    ht,
-                    SegTableCell {
-                        start: offset,
-                        end: offset + p.len,
-                        value: <span class="kw-2">&amp;</span>p.as_longlife_ref().value,
-                    },
-                ));
+                vec.push((ht, SegTableCell {
+                    start: offset,
+                    end: offset + p.len,
+                    value: <span class="kw-2">&amp;</span>p.as_longlife_ref().value,
+                }));
                 ht
             }
         }

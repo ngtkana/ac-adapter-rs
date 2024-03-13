@@ -120,6 +120,22 @@
 <a href="#86" id="86">86</a>
 <a href="#87" id="87">87</a>
 <a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
+<a href="#90" id="90">90</a>
+<a href="#91" id="91">91</a>
+<a href="#92" id="92">92</a>
+<a href="#93" id="93">93</a>
+<a href="#94" id="94">94</a>
+<a href="#95" id="95">95</a>
+<a href="#96" id="96">96</a>
+<a href="#97" id="97">97</a>
+<a href="#98" id="98">98</a>
+<a href="#99" id="99">99</a>
+<a href="#100" id="100">100</a>
+<a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
 </pre></div><pre class="rust"><code><span class="kw">pub trait </span>SieveKind {
     <span class="kw">type </span>SieveValue: Copy;
     <span class="kw">fn </span>new() -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt;;
@@ -135,21 +151,33 @@
 <span class="kw">impl </span>SieveKind <span class="kw">for </span>Boolean {
     <span class="kw">type </span>SieveValue = bool;
 
-    <span class="kw">fn </span>new() -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; { Vec::new() }
+    <span class="kw">fn </span>new() -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; {
+        Vec::new()
+    }
 
-    <span class="kw">fn </span>construct(len: usize) -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; { construct_is_prime_table(len) }
+    <span class="kw">fn </span>construct(len: usize) -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; {
+        construct_is_prime_table(len)
+    }
 
-    <span class="kw">fn </span>is_prime(_index: usize, b: <span class="self">Self</span>::SieveValue) -&gt; bool { b }
+    <span class="kw">fn </span>is_prime(_index: usize, b: <span class="self">Self</span>::SieveValue) -&gt; bool {
+        b
+    }
 }
 
 <span class="kw">impl </span>SieveKind <span class="kw">for </span>Usize {
     <span class="kw">type </span>SieveValue = usize;
 
-    <span class="kw">fn </span>new() -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; { Vec::new() }
+    <span class="kw">fn </span>new() -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; {
+        Vec::new()
+    }
 
-    <span class="kw">fn </span>construct(len: usize) -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; { construct_lpd_table(len) }
+    <span class="kw">fn </span>construct(len: usize) -&gt; Vec&lt;<span class="self">Self</span>::SieveValue&gt; {
+        construct_lpd_table(len)
+    }
 
-    <span class="kw">fn </span>is_prime(index: usize, b: <span class="self">Self</span>::SieveValue) -&gt; bool { index == b }
+    <span class="kw">fn </span>is_prime(index: usize, b: <span class="self">Self</span>::SieveValue) -&gt; bool {
+        index == b
+    }
 }
 
 <span class="kw">pub fn </span>construct_is_prime_table(n: usize) -&gt; Vec&lt;bool&gt; {
@@ -198,7 +226,9 @@
     <span class="attr">#[test_case(<span class="number">3 </span>=&gt; <span class="macro">vec!</span>[<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">4 </span>=&gt; <span class="macro">vec!</span>[<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">5 </span>=&gt; <span class="macro">vec!</span>[<span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>]</span>)]
-    <span class="kw">fn </span>test_construct_is_prime_table(n: usize) -&gt; Vec&lt;bool&gt; { construct_is_prime_table(n) }
+    <span class="kw">fn </span>test_construct_is_prime_table(n: usize) -&gt; Vec&lt;bool&gt; {
+        construct_is_prime_table(n)
+    }
 
     <span class="attr">#[test_case(<span class="number">0 </span>=&gt; Vec::&lt;usize&gt;::new())]
     #[test_case(<span class="number">1 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX]</span>)]
@@ -206,6 +236,8 @@
     <span class="attr">#[test_case(<span class="number">3 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">4 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>, <span class="number">3</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">5 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>, <span class="number">3</span>, <span class="number">2</span>]</span>)]
-    <span class="kw">fn </span>test_construct_lpd_table(n: usize) -&gt; Vec&lt;usize&gt; { construct_lpd_table(n) }
+    <span class="kw">fn </span>test_construct_lpd_table(n: usize) -&gt; Vec&lt;usize&gt; {
+        construct_lpd_table(n)
+    }
 }
 </code></pre></div></section></main></body></html>

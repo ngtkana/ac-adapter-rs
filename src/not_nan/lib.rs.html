@@ -66,6 +66,12 @@
 <a href="#32" id="32">32</a>
 <a href="#33" id="33">33</a>
 <a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! ordered_float::NotNan の劣化版です。
 </span><span class="kw">use </span>std::cmp::Ord;
 <span class="kw">use </span>std::cmp::Ordering;
@@ -73,7 +79,9 @@
     <span class="kw">fn </span>float_is_nan(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool;
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f64 {
-    <span class="kw">fn </span>float_is_nan(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.is_nan() }
+    <span class="kw">fn </span>float_is_nan(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.is_nan()
+    }
 }
 
 <span class="attr">#[derive(PartialEq, Debug, Default, Clone, Copy)]
@@ -86,7 +94,9 @@
         }
     }
 
-    <span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; T { <span class="self">self</span>.<span class="number">0 </span>}
+    <span class="kw">pub fn </span>into_inner(<span class="self">self</span>) -&gt; T {
+        <span class="self">self</span>.<span class="number">0
+    </span>}
 }
 <span class="kw">impl</span>&lt;T: Float&gt; Eq <span class="kw">for </span>NotNaN&lt;T&gt; {}
 <span class="kw">impl</span>&lt;T: Float&gt; Ord <span class="kw">for </span>NotNaN&lt;T&gt; {
@@ -98,6 +108,8 @@
     }
 }
 <span class="kw">impl</span>&lt;T: Float&gt; PartialOrd <span class="kw">for </span>NotNaN&lt;T&gt; {
-    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; { <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other)) }
+    <span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        <span class="prelude-val">Some</span>(<span class="self">self</span>.cmp(other))
+    }
 }
 </code></pre></div></section></main></body></html>

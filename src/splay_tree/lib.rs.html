@@ -734,6 +734,38 @@
 <a href="#700" id="700">700</a>
 <a href="#701" id="701">701</a>
 <a href="#702" id="702">702</a>
+<a href="#703" id="703">703</a>
+<a href="#704" id="704">704</a>
+<a href="#705" id="705">705</a>
+<a href="#706" id="706">706</a>
+<a href="#707" id="707">707</a>
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! スプレー木です。
 
 </span><span class="kw">mod </span>node;
@@ -839,9 +871,13 @@
     <span class="kw">type </span>Lazy = ();
     <span class="kw">type </span>Value = O::Value;
 
-    <span class="kw">fn </span>proj(value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Acc { O::proj(value) }
+    <span class="kw">fn </span>proj(value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Acc {
+        O::proj(value)
+    }
 
-    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc) -&gt; <span class="self">Self</span>::Acc { O::op(lhs, rhs) }
+    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Acc) -&gt; <span class="self">Self</span>::Acc {
+        O::op(lhs, rhs)
+    }
 
     <span class="kw">fn </span>act_value(<span class="kw-2">&amp;</span>(): <span class="kw-2">&amp;</span><span class="self">Self</span>::Lazy, _value: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {}
 
@@ -889,7 +925,9 @@
     /// let splay = SplayTree::&lt;Nop&lt;()&gt;&gt;::new();
     /// assert!(splay.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(Cell::new(null_mut())) }
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(Cell::new(null_mut()))
+    }
 
     <span class="doccomment">/// 空ならば `true` を返します。
     ///
@@ -900,7 +938,9 @@
     /// let splay = SplayTree::&lt;Nop&lt;()&gt;&gt;::new();
     /// assert!(splay.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.<span class="number">0</span>.get().is_null() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.<span class="number">0</span>.get().is_null()
+    }
 
     <span class="doccomment">/// 要素数を返します。
     ///
@@ -918,7 +958,9 @@
     /// let splay = repeat(()).take(3).collect::&lt;SplayTree&lt;Nop&lt;()&gt;&gt;&gt;();
     /// assert_eq!(splay.len(), 3);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.get().as_ref() }.map_or(<span class="number">0</span>, |root| root.len) }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.get().as_ref() }.map_or(<span class="number">0</span>, |root| root.len)
+    }
 
     <span class="doccomment">/// 指定した場所に挿入します。
     ///
@@ -1032,9 +1074,13 @@
     ///     type Acc = i32;
     ///     type Value = i32;
     ///
-    ///     fn proj(&amp;x: &amp;i32) -&gt; i32 { x }
+    ///     fn proj(&amp;x: &amp;i32) -&gt; i32 {
+    ///         x
+    ///     }
     ///
-    ///     fn op(&amp;x: &amp;i32, &amp;y: &amp;i32) -&gt; i32 { x + y }
+    ///     fn op(&amp;x: &amp;i32, &amp;y: &amp;i32) -&gt; i32 {
+    ///         x + y
+    ///     }
     /// }
     /// let splay = (10..15).collect::&lt;SplayTree&lt;NoLazy&lt;Sum&gt;&gt;&gt;();
     /// assert_eq!(splay.fold(2..), Some(12 + 13 + 14));
@@ -1074,11 +1120,15 @@
     ///
     ///     fn op(&amp;(): &amp;(), &amp;(): &amp;()) {}
     ///
-    ///     fn act_value(&amp;lazy: &amp;Self::Lazy, value: &amp;mut Self::Value) { *value = lazy; }
+    ///     fn act_value(&amp;lazy: &amp;Self::Lazy, value: &amp;mut Self::Value) {
+    ///         *value = lazy;
+    ///     }
     ///
     ///     fn act_acc(&amp;_lazy: &amp;Self::Lazy, &amp;mut (): &amp;mut Self::Acc) {}
     ///
-    ///     fn compose(&amp;x: &amp;Self::Lazy, y: &amp;mut Self::Lazy) { *y = x; }
+    ///     fn compose(&amp;x: &amp;Self::Lazy, y: &amp;mut Self::Lazy) {
+    ///         *y = x;
+    ///     }
     /// }
     ///
     /// let mut splay = (10..15).collect::&lt;SplayTree&lt;Update&gt;&gt;();
@@ -1279,7 +1329,9 @@
     <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, O&gt;;
     <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value;
 
-    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter { <span class="self">self</span>.iter() }
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.iter()
+    }
 }
 
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Debug <span class="kw">for </span>SplayTree&lt;O&gt; {
@@ -1288,10 +1340,14 @@
     }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Clone <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self</span>.iter().cloned().collect() }
+    <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.iter().cloned().collect()
+    }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Default <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(Cell::new(null_mut())) }
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(Cell::new(null_mut()))
+    }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; PartialEq <span class="kw">for </span>SplayTree&lt;O&gt;
 <span class="kw">where
@@ -1334,7 +1390,9 @@
 <span class="kw">where
     </span>O::Value: Hash,
 {
-    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) { <span class="self">self</span>.iter().for_each(|x| x.hash(state)) }
+    <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
+        <span class="self">self</span>.iter().for_each(|x| x.hash(state))
+    }
 }
 
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Index&lt;usize&gt; <span class="kw">for </span>SplayTree&lt;O&gt; {
@@ -1384,14 +1442,20 @@
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Deref <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
     <span class="kw">type </span>Target = O::Value;
 
-    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target { <span class="kw-2">&amp;</span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value }
+    <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
+        <span class="kw-2">&amp;</span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;*</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value
+    }
 }
 <span class="kw">impl</span>&lt;O: LazyOps&gt; DerefMut <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
-    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target { <span class="kw-2">&amp;mut </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value }
+    <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
+        <span class="kw-2">&amp;mut </span><span class="kw">unsafe </span>{ <span class="kw-2">&amp;mut *</span><span class="self">self</span>.<span class="number">0 </span>.<span class="number">0</span>.get() }.value
+    }
 }
 
 <span class="kw">impl</span>&lt;O: LazyOps&gt; Drop <span class="kw">for </span>SplayTree&lt;O&gt; {
-    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) { deep_free(<span class="self">self</span>.<span class="number">0</span>.get()); }
+    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+        deep_free(<span class="self">self</span>.<span class="number">0</span>.get());
+    }
 }
 <span class="kw">fn </span>into_range(len: usize, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; Range&lt;usize&gt; {
     <span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {

@@ -357,6 +357,22 @@
 <a href="#323" id="323">323</a>
 <a href="#324" id="324">324</a>
 <a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 双対セグメント木（右作用）
 //!
 //! 作用の方向迷うのですが、右作用にしました。
@@ -371,9 +387,13 @@
 //! impl Ops for O {
 //!     type Value = [i32; 2];
 //!
-//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -&gt; [i32; 2] { [a.min(b + c), b + d] }
+//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -&gt; [i32; 2] {
+//!         [a.min(b + c), b + d]
+//!     }
 //!
-//!     fn identity() -&gt; [i32; 2] { [0, 0] }
+//!     fn identity() -&gt; [i32; 2] {
+//!         [0, 0]
+//!     }
 //! }
 //!
 //! // 構築
@@ -431,10 +451,14 @@
     }
 
     <span class="doccomment">/// 空なら `true` を返します。
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.table.is_empty() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.table.is_empty()
+    }
 
     <span class="doccomment">/// 管理している配列の長さを返します。
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.table.len() / <span class="number">2 </span>}
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.table.len() / <span class="number">2
+    </span>}
 
     <span class="doccomment">/// `range` に `x` を作用させます。（右作用）
     </span><span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, x: <span class="kw-2">&amp;</span>O::Value) {
@@ -474,7 +498,9 @@
     }
 
     <span class="doccomment">/// `i` 番目の要素への参照を返します。
-    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) -&gt; <span class="kw-2">&amp;</span>O::Value { <span class="self">self</span>.get_mut(i) }
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) -&gt; <span class="kw-2">&amp;</span>O::Value {
+        <span class="self">self</span>.get_mut(i)
+    }
 
     <span class="doccomment">/// `i` 番目の要素をコピーして返します。
     </span><span class="kw">pub fn </span>get_copied(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) -&gt; O::Value
@@ -504,7 +530,9 @@
         <span class="self">self</span>.table[<span class="self">self</span>.len()..].to_vec()
     }
 
-    <span class="kw">fn </span>lg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 { <span class="self">self</span>.len().next_power_of_two().trailing_zeros() }
+    <span class="kw">fn </span>lg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; u32 {
+        <span class="self">self</span>.len().next_power_of_two().trailing_zeros()
+    }
 
     <span class="kw">fn </span>thrust(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) {
         (<span class="number">1</span>..=<span class="self">self</span>.lg())
@@ -588,7 +616,9 @@
 // 変換
 ////////////////////////////////////////////////////////////////////////////////
 </span><span class="kw">impl</span>&lt;O: Ops&gt; From&lt;Vec&lt;O::Value&gt;&gt; <span class="kw">for </span>DualSegtree&lt;O&gt; {
-    <span class="kw">fn </span>from(v: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::new(v) }
+    <span class="kw">fn </span>from(v: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new(v)
+    }
 }
 <span class="kw">impl</span>&lt;O: Ops&gt; FromIterator&lt;O::Value&gt; <span class="kw">for </span>DualSegtree&lt;O&gt; {
     <span class="kw">fn </span>from_iter&lt;T: IntoIterator&lt;Item = O::Value&gt;&gt;(iter: T) -&gt; <span class="self">Self </span>{
@@ -645,7 +675,9 @@
                 lhs.chars().chain(rhs.chars()).collect::&lt;String&gt;()
             }
 
-            <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value { String::new() }
+            <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value {
+                String::new()
+            }
         }
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">let </span>new_value = |rng: <span class="kw-2">&amp;mut </span>StdRng| rng.gen_range(<span class="string">&#39;a&#39;</span>..=<span class="string">&#39;z&#39;</span>).to_string();

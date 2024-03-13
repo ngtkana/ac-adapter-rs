@@ -149,6 +149,10 @@
 <a href="#115" id="115">115</a>
 <a href="#116" id="116">116</a>
 <a href="#117" id="117">117</a>
+<a href="#118" id="118">118</a>
+<a href="#119" id="119">119</a>
+<a href="#120" id="120">120</a>
+<a href="#121" id="121">121</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Value;
 
 <span class="doccomment">/// Returns a `Vec` of the divisors. The divisors is guaranteed to be sorted in ascending order.
@@ -253,7 +257,9 @@
     <span class="attr">#[test_case(<span class="number">6 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">6</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">12 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">12</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">36 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">9</span>, <span class="number">12</span>, <span class="number">18</span>, <span class="number">36</span>]</span>)]
-    <span class="kw">fn </span>test_divisors(n: u32) -&gt; Vec&lt;u32&gt; { divisors(n) }
+    <span class="kw">fn </span>test_divisors(n: u32) -&gt; Vec&lt;u32&gt; {
+        divisors(n)
+    }
 
     <span class="attr">#[test_case(<span class="number">0 </span>=&gt; Vec::&lt;u32&gt;::new())]
     #[test_case(<span class="number">1 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>]</span>)]
@@ -264,6 +270,8 @@
     <span class="attr">#[test_case(<span class="number">6 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">6</span>, <span class="number">2</span>, <span class="number">3</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">12 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">12</span>, <span class="number">2</span>, <span class="number">6</span>, <span class="number">3</span>, <span class="number">4</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">36 </span>=&gt; <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">36</span>, <span class="number">2</span>, <span class="number">18</span>, <span class="number">3</span>, <span class="number">12</span>, <span class="number">4</span>, <span class="number">9</span>, <span class="number">6</span>]</span>)]
-    <span class="kw">fn </span>test_divisors_unsorted(n: u32) -&gt; Vec&lt;u32&gt; { divisors_unordered(n).collect() }
+    <span class="kw">fn </span>test_divisors_unsorted(n: u32) -&gt; Vec&lt;u32&gt; {
+        divisors_unordered(n).collect()
+    }
 }
 </code></pre></div></section></main></body></html>

@@ -432,6 +432,14 @@
 <a href="#398" id="398">398</a>
 <a href="#399" id="399">399</a>
 <a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//!
 //! # このライブラリを使える問題
 //!
@@ -472,7 +480,9 @@
     /// let scc = Scc::new(1);
     /// assert!(!scc.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.g.is_empty() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.g.is_empty()
+    }
 
     <span class="doccomment">/// 管理しているグラフの頂点数を返します。
     ///
@@ -487,7 +497,9 @@
     /// let scc = Scc::new(1);
     /// assert_eq!(scc.len(), 1);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.g.len() }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.g.len()
+    }
 
     <span class="doccomment">/// 頂点数 `n` の辺のない未ビルドのグラフを構築します。
     ///
@@ -542,7 +554,9 @@
     /// assert_eq!(&amp;scc.g()[13], &amp;[18, 6]);
     /// assert_eq!(&amp;scc.g()[6], &amp;[]);
     /// ```
-    </span><span class="kw">pub fn </span>g(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;] { <span class="kw-2">&amp;</span><span class="self">self</span>.g }
+    </span><span class="kw">pub fn </span>g(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.g
+    }
 
     <span class="doccomment">/// 逆向きのグラフの隣接リストを返します。
     ///
@@ -557,7 +571,9 @@
     /// assert_eq!(&amp;scc.rg()[13], &amp;[]);
     /// assert_eq!(&amp;scc.rg()[6], &amp;[13]);
     /// ```
-    </span><span class="kw">pub fn </span>rg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;] { <span class="kw-2">&amp;</span><span class="self">self</span>.rg }
+    </span><span class="kw">pub fn </span>rg(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.rg
+    }
 
     <span class="doccomment">/// 【Require: ビルド済み】
     /// 商グラフにおけるトポロジカル順序に従って頂点番号の入ったスライスを返します。

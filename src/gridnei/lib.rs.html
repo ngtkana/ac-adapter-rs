@@ -293,6 +293,18 @@
 <a href="#259" id="259">259</a>
 <a href="#260" id="260">260</a>
 <a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
+<a href="#267" id="267">267</a>
+<a href="#268" id="268">268</a>
+<a href="#269" id="269">269</a>
+<a href="#270" id="270">270</a>
+<a href="#271" id="271">271</a>
+<a href="#272" id="272">272</a>
+<a href="#273" id="273">273</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! グリッドの様々な隣接セルを取得するライブラリです。
 //!
 //! # 隣接４マス
@@ -408,7 +420,9 @@
                 <span class="self">Self</span>::new(f(i <span class="kw">as </span>isize, j <span class="kw">as </span>isize), h, w)
             }
 
-            <span class="kw">pub fn </span>encode(<span class="self">self</span>) -&gt; <span class="macro-nonterminal">$crate::Encode</span>&lt;<span class="self">Self</span>&gt; { <span class="macro-nonterminal">$crate::Encode::new</span>(<span class="self">self</span>) }
+            <span class="kw">pub fn </span>encode(<span class="self">self</span>) -&gt; <span class="macro-nonterminal">$crate::Encode</span>&lt;<span class="self">Self</span>&gt; {
+                <span class="macro-nonterminal">$crate::Encode::new</span>(<span class="self">self</span>)
+            }
         }
         <span class="kw">impl </span>Iterator <span class="kw">for </span><span class="macro-nonterminal">$iter </span>{
             <span class="kw">type </span>Item = (usize, usize);
@@ -423,7 +437,9 @@
                 <span class="prelude-val">None
             </span>}
 
-            <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) { (<span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="macro-nonterminal">$len</span>)) }
+            <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+                (<span class="number">0</span>, <span class="prelude-val">Some</span>(<span class="macro-nonterminal">$len</span>))
+            }
         }
         <span class="kw">impl </span>DoubleEndedIterator <span class="kw">for </span><span class="macro-nonterminal">$iter </span>{
             <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
@@ -441,7 +457,9 @@
 
             <span class="kw">const </span>LEN: usize = <span class="macro-nonterminal">$len</span>;
 
-            <span class="kw">fn </span>w(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.w <span class="kw">as </span>usize }
+            <span class="kw">fn </span>w(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+                <span class="self">self</span>.w <span class="kw">as </span>usize
+            }
 
             <span class="kw">fn </span>from_fn&lt;F&gt;(i: usize, j: usize, h: usize, w: usize, f: F) -&gt; <span class="self">Self
             </span><span class="kw">where
@@ -491,7 +509,9 @@
 /// ```
 </span><span class="kw">pub struct </span>Encode&lt;I&gt;(I);
 <span class="kw">impl</span>&lt;I: GridIterator&gt; Encode&lt;I&gt; {
-    <span class="kw">pub fn </span>new(i: I) -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(i) }
+    <span class="kw">pub fn </span>new(i: I) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(i)
+    }
 
     <span class="kw">pub fn </span>from_fn&lt;F&gt;(x: usize, h: usize, w: usize, f: F) -&gt; <span class="self">Self
     </span><span class="kw">where
@@ -503,9 +523,13 @@
 <span class="kw">impl</span>&lt;I: GridIterator&gt; Iterator <span class="kw">for </span>Encode&lt;I&gt; {
     <span class="kw">type </span>Item = usize;
 
-    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; { <span class="self">self</span>.<span class="number">0</span>.next().map(<span class="kw">move </span>|(i, j)| i * <span class="self">self</span>.<span class="number">0</span>.w() + j) }
+    <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
+        <span class="self">self</span>.<span class="number">0</span>.next().map(<span class="kw">move </span>|(i, j)| i * <span class="self">self</span>.<span class="number">0</span>.w() + j)
+    }
 
-    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) { (<span class="number">0</span>, <span class="prelude-val">Some</span>(I::LEN)) }
+    <span class="kw">fn </span>size_hint(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (usize, <span class="prelude-ty">Option</span>&lt;usize&gt;) {
+        (<span class="number">0</span>, <span class="prelude-val">Some</span>(I::LEN))
+    }
 }
 <span class="kw">impl</span>&lt;I: GridIterator&gt; DoubleEndedIterator <span class="kw">for </span>Encode&lt;I&gt; {
     <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {

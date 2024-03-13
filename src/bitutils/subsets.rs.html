@@ -101,6 +101,8 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Unsigned;
 
 <span class="doccomment">/// Returns an iterator over subsets of `bs`.
@@ -168,6 +170,8 @@
     <span class="attr">#[test_case(<span class="number">13 </span>=&gt; <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">12</span>, <span class="number">13</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">14 </span>=&gt; <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>, <span class="number">8</span>, <span class="number">10</span>, <span class="number">12</span>, <span class="number">14</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">15 </span>=&gt; <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>, <span class="number">8</span>, <span class="number">9</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">12</span>, <span class="number">13</span>, <span class="number">14</span>, <span class="number">15</span>]</span>)]
-    <span class="kw">fn </span>test_subsets(bs: u32) -&gt; Vec&lt;u32&gt; { subsets(bs).collect_vec() }
+    <span class="kw">fn </span>test_subsets(bs: u32) -&gt; Vec&lt;u32&gt; {
+        subsets(bs).collect_vec()
+    }
 }
 </code></pre></div></section></main></body></html>

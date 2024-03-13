@@ -89,6 +89,10 @@
 <a href="#55" id="55">55</a>
 <a href="#56" id="56">56</a>
 <a href="#57" id="57">57</a>
+<a href="#58" id="58">58</a>
+<a href="#59" id="59">59</a>
+<a href="#60" id="60">60</a>
+<a href="#61" id="61">61</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt::Display;
 <span class="kw">use </span>std::fmt::Write;
 
@@ -128,7 +132,9 @@
     #[test_case(<span class="kw-2">&amp;</span>[<span class="number">42</span>] </span>=&gt; <span class="string">&quot;42&quot;</span>)]
     <span class="attr">#[test_case(<span class="kw-2">&amp;</span>[<span class="number">42</span>, <span class="number">43</span>] </span>=&gt; <span class="string">&quot;42 43&quot;</span>)]
     <span class="attr">#[test_case(<span class="kw-2">&amp;</span>[<span class="number">42</span>, <span class="number">43</span>, <span class="number">44</span>] </span>=&gt; <span class="string">&quot;42 43 44&quot;</span>)]
-    <span class="kw">fn </span>test_space(slice: <span class="kw-2">&amp;</span>[i32]) -&gt; String { implode_space(slice.iter()) }
+    <span class="kw">fn </span>test_space(slice: <span class="kw-2">&amp;</span>[i32]) -&gt; String {
+        implode_space(slice.iter())
+    }
 
     <span class="kw">struct </span>MaybeEmpty(<span class="prelude-ty">Option</span>&lt;i32&gt;);
     <span class="kw">impl </span>Display <span class="kw">for </span>MaybeEmpty {
@@ -144,6 +150,8 @@
     <span class="attr">#[test_case(<span class="kw-2">&amp;</span>[MaybeEmpty(<span class="prelude-val">None</span>), MaybeEmpty(<span class="prelude-val">None</span>)] </span>=&gt; <span class="string">&quot; &quot;</span>)]
     <span class="attr">#[test_case(<span class="kw-2">&amp;</span>[MaybeEmpty(<span class="prelude-val">Some</span>(<span class="number">42</span>)), MaybeEmpty(<span class="prelude-val">None</span>)] </span>=&gt; <span class="string">&quot;42 &quot;</span>)]
     <span class="attr">#[test_case(<span class="kw-2">&amp;</span>[MaybeEmpty(<span class="prelude-val">None</span>), MaybeEmpty(<span class="prelude-val">Some</span>(<span class="number">42</span>))] </span>=&gt; <span class="string">&quot; 42&quot;</span>)]
-    <span class="kw">fn </span>test_space_maybe_empty(slice: <span class="kw-2">&amp;</span>[MaybeEmpty]) -&gt; String { implode_space(slice.iter()) }
+    <span class="kw">fn </span>test_space_maybe_empty(slice: <span class="kw-2">&amp;</span>[MaybeEmpty]) -&gt; String {
+        implode_space(slice.iter())
+    }
 }
 </code></pre></div></section></main></body></html>

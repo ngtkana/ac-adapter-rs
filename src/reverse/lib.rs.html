@@ -61,6 +61,18 @@
 <a href="#27" id="27">27</a>
 <a href="#28" id="28">28</a>
 <a href="#29" id="29">29</a>
+<a href="#30" id="30">30</a>
+<a href="#31" id="31">31</a>
+<a href="#32" id="32">32</a>
+<a href="#33" id="33">33</a>
+<a href="#34" id="34">34</a>
+<a href="#35" id="35">35</a>
+<a href="#36" id="36">36</a>
+<a href="#37" id="37">37</a>
+<a href="#38" id="38">38</a>
+<a href="#39" id="39">39</a>
+<a href="#40" id="40">40</a>
+<a href="#41" id="41">41</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! std::cmp::Reverse です。
 //!
 //! Rust 1.17.0 がお好きな AOJ さんのために用意した特別ディナーです。
@@ -71,23 +83,35 @@
 
 <span class="kw">impl</span>&lt;T: PartialOrd&gt; PartialOrd <span class="kw">for </span>Reverse&lt;T&gt; {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; { other.<span class="number">0</span>.partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>) }
+    </span><span class="kw">fn </span>partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;Ordering&gt; {
+        other.<span class="number">0</span>.partial_cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
+    }
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { other.<span class="number">0 </span>&lt; <span class="self">self</span>.<span class="number">0 </span>}
+    </span><span class="kw">fn </span>lt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        other.<span class="number">0 </span>&lt; <span class="self">self</span>.<span class="number">0
+    </span>}
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { other.<span class="number">0 </span>&lt;= <span class="self">self</span>.<span class="number">0 </span>}
+    </span><span class="kw">fn </span>le(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        other.<span class="number">0 </span>&lt;= <span class="self">self</span>.<span class="number">0
+    </span>}
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { other.<span class="number">0 </span>&gt; <span class="self">self</span>.<span class="number">0 </span>}
+    </span><span class="kw">fn </span>gt(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        other.<span class="number">0 </span>&gt; <span class="self">self</span>.<span class="number">0
+    </span>}
 
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool { other.<span class="number">0 </span>&gt;= <span class="self">self</span>.<span class="number">0 </span>}
+    </span><span class="kw">fn </span>ge(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; bool {
+        other.<span class="number">0 </span>&gt;= <span class="self">self</span>.<span class="number">0
+    </span>}
 }
 
 <span class="kw">impl</span>&lt;T: Ord&gt; Ord <span class="kw">for </span>Reverse&lt;T&gt; {
     <span class="attr">#[inline]
-    </span><span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering { other.<span class="number">0</span>.cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>) }
+    </span><span class="kw">fn </span>cmp(<span class="kw-2">&amp;</span><span class="self">self</span>, other: <span class="kw-2">&amp;</span><span class="self">Self</span>) -&gt; Ordering {
+        other.<span class="number">0</span>.cmp(<span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)
+    }
 }
 </code></pre></div></section></main></body></html>

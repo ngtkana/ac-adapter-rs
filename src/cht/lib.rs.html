@@ -614,6 +614,28 @@
 <a href="#580" id="580">580</a>
 <a href="#581" id="581">581</a>
 <a href="#582" id="582">582</a>
+<a href="#583" id="583">583</a>
+<a href="#584" id="584">584</a>
+<a href="#585" id="585">585</a>
+<a href="#586" id="586">586</a>
+<a href="#587" id="587">587</a>
+<a href="#588" id="588">588</a>
+<a href="#589" id="589">589</a>
+<a href="#590" id="590">590</a>
+<a href="#591" id="591">591</a>
+<a href="#592" id="592">592</a>
+<a href="#593" id="593">593</a>
+<a href="#594" id="594">594</a>
+<a href="#595" id="595">595</a>
+<a href="#596" id="596">596</a>
+<a href="#597" id="597">597</a>
+<a href="#598" id="598">598</a>
+<a href="#599" id="599">599</a>
+<a href="#600" id="600">600</a>
+<a href="#601" id="601">601</a>
+<a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! CHT です。
 //!
 //! # TODO
@@ -691,10 +713,14 @@
 </span><span class="doccomment">/// 凹関数を管理する方であるというマーカー
 </span><span class="kw">pub enum </span>Concave {}
 <span class="kw">impl </span>ConvexOrConcave <span class="kw">for </span>Convex {
-    <span class="kw">fn </span>negate_if_concave(x: i64) -&gt; i64 { x }
+    <span class="kw">fn </span>negate_if_concave(x: i64) -&gt; i64 {
+        x
+    }
 }
 <span class="kw">impl </span>ConvexOrConcave <span class="kw">for </span>Concave {
-    <span class="kw">fn </span>negate_if_concave(x: i64) -&gt; i64 { -x }
+    <span class="kw">fn </span>negate_if_concave(x: i64) -&gt; i64 {
+        -x
+    }
 }
 
 <span class="doccomment">/// ログがつかない方
@@ -900,17 +926,25 @@
 </span><span class="doccomment">/// 二次式
 </span><span class="kw">pub struct </span>Quadratic([i64; <span class="number">3</span>]);
 <span class="kw">impl </span>Quadratic {
-    <span class="kw">pub fn </span>eval(<span class="self">self</span>, x: i64) -&gt; i64 { <span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>] + (<span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>] + <span class="self">self</span>.<span class="number">0</span>[<span class="number">2</span>] * x) * x }
+    <span class="kw">pub fn </span>eval(<span class="self">self</span>, x: i64) -&gt; i64 {
+        <span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>] + (<span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>] + <span class="self">self</span>.<span class="number">0</span>[<span class="number">2</span>] * x) * x
+    }
 
-    <span class="kw">pub fn </span>square(<span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self </span>* <span class="self">self </span>}
+    <span class="kw">pub fn </span>square(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self </span>* <span class="self">self
+    </span>}
 }
 <span class="kw">impl </span>From&lt;i64&gt; <span class="kw">for </span>Quadratic {
-    <span class="kw">fn </span>from(x: i64) -&gt; <span class="self">Self </span>{ <span class="self">Self</span>([x, <span class="number">0</span>, <span class="number">0</span>]) }
+    <span class="kw">fn </span>from(x: i64) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>([x, <span class="number">0</span>, <span class="number">0</span>])
+    }
 }
 <span class="kw">impl </span>Neg <span class="kw">for </span>Quadratic {
     <span class="kw">type </span>Output = <span class="self">Self</span>;
 
-    <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output { <span class="self">Self</span>([-<span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>], -<span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>], -<span class="self">self</span>.<span class="number">0</span>[<span class="number">2</span>]]) }
+    <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output {
+        <span class="self">Self</span>([-<span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>], -<span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>], -<span class="self">self</span>.<span class="number">0</span>[<span class="number">2</span>]])
+    }
 }
 <span class="kw">impl</span>&lt;T: Into&lt;<span class="self">Self</span>&gt;&gt; Add&lt;T&gt; <span class="kw">for </span>Quadratic {
     <span class="kw">type </span>Output = <span class="self">Self</span>;
@@ -927,7 +961,9 @@
 <span class="kw">impl </span>Add&lt;Quadratic&gt; <span class="kw">for </span>i64 {
     <span class="kw">type </span>Output = Quadratic;
 
-    <span class="kw">fn </span>add(<span class="self">self</span>, rhs: Quadratic) -&gt; <span class="self">Self</span>::Output { rhs.add(<span class="self">self</span>) }
+    <span class="kw">fn </span>add(<span class="self">self</span>, rhs: Quadratic) -&gt; <span class="self">Self</span>::Output {
+        rhs.add(<span class="self">self</span>)
+    }
 }
 <span class="kw">impl</span>&lt;T: Into&lt;<span class="self">Self</span>&gt;&gt; Sub&lt;T&gt; <span class="kw">for </span>Quadratic {
     <span class="kw">type </span>Output = <span class="self">Self</span>;
@@ -970,7 +1006,9 @@
 <span class="kw">impl </span>Mul&lt;Quadratic&gt; <span class="kw">for </span>i64 {
     <span class="kw">type </span>Output = Quadratic;
 
-    <span class="kw">fn </span>mul(<span class="self">self</span>, rhs: Quadratic) -&gt; <span class="self">Self</span>::Output { rhs.mul(<span class="self">self</span>) }
+    <span class="kw">fn </span>mul(<span class="self">self</span>, rhs: Quadratic) -&gt; <span class="self">Self</span>::Output {
+        rhs.mul(<span class="self">self</span>)
+    }
 }
 
 <span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Copy)]
@@ -983,7 +1021,9 @@
     q: i64,
 }
 <span class="kw">impl </span>Line {
-    <span class="kw">fn </span>eval(<span class="kw-2">&amp;</span><span class="self">self</span>, x: i64) -&gt; i64 { <span class="self">self</span>.p * x - <span class="self">self</span>.q }
+    <span class="kw">fn </span>eval(<span class="kw-2">&amp;</span><span class="self">self</span>, x: i64) -&gt; i64 {
+        <span class="self">self</span>.p * x - <span class="self">self</span>.q
+    }
 }
 <span class="kw">fn </span>brace(l0: Line, l1: Line) -&gt; <span class="prelude-ty">Result</span>&lt;Segment, i64&gt; {
     <span class="kw">let </span>Line { p: p0, q: q0 } = l0;
@@ -1009,10 +1049,14 @@
     max: Max,
 }
 <span class="kw">impl </span>Borrow&lt;i64&gt; <span class="kw">for </span>Segment {
-    <span class="kw">fn </span>borrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>i64 { <span class="kw-2">&amp;</span><span class="self">self</span>.line.p }
+    <span class="kw">fn </span>borrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>i64 {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.line.p
+    }
 }
 <span class="kw">impl </span>Borrow&lt;Max&gt; <span class="kw">for </span>Segment {
-    <span class="kw">fn </span>borrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Max { <span class="kw-2">&amp;</span><span class="self">self</span>.max }
+    <span class="kw">fn </span>borrow(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>Max {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.max
+    }
 }
 
 <span class="attr">#[cfg(test)]

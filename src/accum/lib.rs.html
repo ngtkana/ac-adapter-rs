@@ -253,6 +253,26 @@
 <a href="#219" id="219">219</a>
 <a href="#220" id="220">220</a>
 <a href="#221" id="221">221</a>
+<a href="#222" id="222">222</a>
+<a href="#223" id="223">223</a>
+<a href="#224" id="224">224</a>
+<a href="#225" id="225">225</a>
+<a href="#226" id="226">226</a>
+<a href="#227" id="227">227</a>
+<a href="#228" id="228">228</a>
+<a href="#229" id="229">229</a>
+<a href="#230" id="230">230</a>
+<a href="#231" id="231">231</a>
+<a href="#232" id="232">232</a>
+<a href="#233" id="233">233</a>
+<a href="#234" id="234">234</a>
+<a href="#235" id="235">235</a>
+<a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::cmp::Ord;
 <span class="kw">use </span>std::ops::AddAssign;
 <span class="kw">use </span>std::ops::BitAndAssign;
@@ -261,13 +281,25 @@
 <span class="kw">use </span>std::ops::DivAssign;
 <span class="kw">use </span>std::ops::MulAssign;
 <span class="kw">use </span>std::ops::SubAssign;
-<span class="kw">pub fn </span>add&lt;T: Copy + AddAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y += x); }
-<span class="kw">pub fn </span>add_inv&lt;T: Copy + SubAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y -= x); }
-<span class="kw">pub fn </span>mul&lt;T: Copy + MulAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y <span class="kw-2">*</span>= x); }
-<span class="kw">pub fn </span>mul_inv&lt;T: Copy + DivAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y /= x); }
+<span class="kw">pub fn </span>add&lt;T: Copy + AddAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y += x);
+}
+<span class="kw">pub fn </span>add_inv&lt;T: Copy + SubAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y -= x);
+}
+<span class="kw">pub fn </span>mul&lt;T: Copy + MulAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y <span class="kw-2">*</span>= x);
+}
+<span class="kw">pub fn </span>mul_inv&lt;T: Copy + DivAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y /= x);
+}
 <span class="comment">// -- ord
-</span><span class="kw">pub fn </span>min&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y = x.min(<span class="kw-2">*</span>y)); }
-<span class="kw">pub fn </span>max&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y = x.max(<span class="kw-2">*</span>y)); }
+</span><span class="kw">pub fn </span>min&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y = x.min(<span class="kw-2">*</span>y));
+}
+<span class="kw">pub fn </span>max&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y = x.max(<span class="kw-2">*</span>y));
+}
 <span class="kw">pub fn </span>skipped_min&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;</span>[T], max: T) -&gt; Vec&lt;T&gt; {
     skipped(a, |x, y| (<span class="kw-2">*</span>x).min(<span class="kw-2">*</span>y), || max).collect()
 }
@@ -275,10 +307,18 @@
     skipped(a, |x, y| (<span class="kw-2">*</span>x).max(<span class="kw-2">*</span>y), || min).collect()
 }
 <span class="comment">// --  bit
-</span><span class="kw">pub fn </span>xor&lt;T: Copy + BitXorAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y ^= x); }
-<span class="kw">pub fn </span>xor_inv&lt;T: Copy + BitXorAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y ^= x); }
-<span class="kw">pub fn </span>or&lt;T: Copy + BitOrAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y |= x); }
-<span class="kw">pub fn </span>and&lt;T: Copy + BitAndAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) { for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y &amp;= x); }
+</span><span class="kw">pub fn </span>xor&lt;T: Copy + BitXorAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y ^= x);
+}
+<span class="kw">pub fn </span>xor_inv&lt;T: Copy + BitXorAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    rfor_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y ^= x);
+}
+<span class="kw">pub fn </span>or&lt;T: Copy + BitOrAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y |= x);
+}
+<span class="kw">pub fn </span>and&lt;T: Copy + BitAndAssign&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
+    for_each_mut(a, |<span class="kw-2">&amp;mut </span>x, y| <span class="kw-2">*</span>y &amp;= x);
+}
 <span class="comment">// -- for_each
 </span><span class="kw">pub fn </span>for_each&lt;T&gt;(a: <span class="kw-2">&amp;</span>[T], <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T)) {
     <span class="kw">if </span>!a.is_empty() {

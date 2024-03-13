@@ -1114,6 +1114,8 @@
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
 <a href="#1082" id="1082">1082</a>
+<a href="#1083" id="1083">1083</a>
+<a href="#1084" id="1084">1084</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solves maximum flow problem.
 //!
 //! # Basic usage
@@ -1806,7 +1808,9 @@
     }
 }
 <span class="kw">impl</span>&lt;T: Value&gt; Debug <span class="kw">for </span>Dinic&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result { <span class="macro">write!</span>(w, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.get_network()) }
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(w, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.get_network())
+    }
 }
 
 <span class="doccomment">/// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].

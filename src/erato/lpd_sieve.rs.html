@@ -268,6 +268,14 @@
 <a href="#234" id="234">234</a>
 <a href="#235" id="235">235</a>
 <a href="#236" id="236">236</a>
+<a href="#237" id="237">237</a>
+<a href="#238" id="238">238</a>
+<a href="#239" id="239">239</a>
+<a href="#240" id="240">240</a>
+<a href="#241" id="241">241</a>
+<a href="#242" id="242">242</a>
+<a href="#243" id="243">243</a>
+<a href="#244" id="244">244</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::sieve_base::PrimeFactorsByLookup;
 <span class="kw">use </span><span class="kw">super</span>::sieve_base::PrimeNumbers;
 <span class="kw">use </span><span class="kw">super</span>::sieve_kind;
@@ -314,7 +322,9 @@
     /// assert!(LpdSieve::with_len(0).is_empty());
     /// assert!(!LpdSieve::with_len(1).is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.base.is_empty() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.base.is_empty()
+    }
 
     <span class="doccomment">/// Returns the length of a sieve.
     ///
@@ -325,7 +335,9 @@
     /// let sieve = LpdSieve::with_len(42);
     /// assert_eq!(sieve.len(), 42);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.base.len() }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.base.len()
+    }
 
     <span class="doccomment">/// Construct a sieve of given length.
     ///
@@ -364,7 +376,9 @@
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
-    </span><span class="kw">pub fn </span>is_prime&lt;T: Int&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) -&gt; bool { <span class="self">self</span>.base.is_prime(x) }
+    </span><span class="kw">pub fn </span>is_prime&lt;T: Int&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) -&gt; bool {
+        <span class="self">self</span>.base.is_prime(x)
+    }
 
     <span class="doccomment">/// Returns the least prime divisor of `x`.
     ///
@@ -387,7 +401,9 @@
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
-    </span><span class="kw">pub fn </span>lpd&lt;T: Int&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) -&gt; T { <span class="self">self</span>.base.lpd(x) }
+    </span><span class="kw">pub fn </span>lpd&lt;T: Int&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) -&gt; T {
+        <span class="self">self</span>.base.lpd(x)
+    }
 
     <span class="doccomment">/// Returns an iterator to generate all the prime numbers in ascending order, extending
     /// itself repeatedly.

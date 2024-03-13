@@ -133,6 +133,10 @@
 <a href="#99" id="99">99</a>
 <a href="#100" id="100">100</a>
 <a href="#101" id="101">101</a>
+<a href="#102" id="102">102</a>
+<a href="#103" id="103">103</a>
+<a href="#104" id="104">104</a>
+<a href="#105" id="105">105</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! CAUTION: Failing in tests!
 
 </span><span class="attr">#![allow(deprecated, unused_imports)]
@@ -184,11 +188,15 @@
         }
     }
 
-    <span class="kw">fn </span>index(x: u32) -&gt; usize { RADIX_HEAP_LEN - x.leading_zeros() <span class="kw">as </span>usize }
+    <span class="kw">fn </span>index(x: u32) -&gt; usize {
+        RADIX_HEAP_LEN - x.leading_zeros() <span class="kw">as </span>usize
+    }
 }
 
 <span class="kw">impl</span>&lt;T: Debug&gt; Default <span class="kw">for </span>RadixHeap&lt;T&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::new() }
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
 }
 
 <span class="kw">impl</span>&lt;T: Debug&gt; Debug <span class="kw">for </span>RadixHeap&lt;T&gt; {

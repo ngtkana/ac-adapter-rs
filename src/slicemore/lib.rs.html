@@ -176,6 +176,14 @@
 <a href="#142" id="142">142</a>
 <a href="#143" id="143">143</a>
 <a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
+<a href="#147" id="147">147</a>
+<a href="#148" id="148">148</a>
+<a href="#149" id="149">149</a>
+<a href="#150" id="150">150</a>
+<a href="#151" id="151">151</a>
+<a href="#152" id="152">152</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! `{lower,upper}_bound` and `partition_point`
 
 </span><span class="kw">use </span>std::cmp::Ordering::Equal;
@@ -204,10 +212,14 @@
     }
 
     <span class="doccomment">/// Method version of [`lower_bound_by()`].
-    </span><span class="kw">fn </span>lower_bound_by&lt;F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; Ordering&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; usize { lower_bound_by(<span class="self">self</span>, f) }
+    </span><span class="kw">fn </span>lower_bound_by&lt;F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; Ordering&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; usize {
+        lower_bound_by(<span class="self">self</span>, f)
+    }
 
     <span class="doccomment">/// Method version of [`upper_bound_by()`].
-    </span><span class="kw">fn </span>upper_bound_by&lt;F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; Ordering&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; usize { upper_bound_by(<span class="self">self</span>, f) }
+    </span><span class="kw">fn </span>upper_bound_by&lt;F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; Ordering&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: F) -&gt; usize {
+        upper_bound_by(<span class="self">self</span>, f)
+    }
 
     <span class="doccomment">/// Method version of [`lower_bound_by_key()`].
     </span><span class="kw">fn </span>lower_bound_by_key&lt;B: Ord, F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; B&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, b: <span class="kw-2">&amp;</span>B, f: F) -&gt; usize {
@@ -309,7 +321,9 @@
 /// # use std::cmp::Ordering::*;
 /// assert_eq!(lower_bound(&amp;[10, 11, 12], &amp;11), 1);
 /// ```
-</span><span class="kw">pub fn </span>lower_bound&lt;T: Ord&gt;(slice: <span class="kw-2">&amp;</span>[T], x: <span class="kw-2">&amp;</span>T) -&gt; usize { lower_bound_by(slice, |p| p.cmp(x)) }
+</span><span class="kw">pub fn </span>lower_bound&lt;T: Ord&gt;(slice: <span class="kw-2">&amp;</span>[T], x: <span class="kw-2">&amp;</span>T) -&gt; usize {
+    lower_bound_by(slice, |p| p.cmp(x))
+}
 
 <span class="doccomment">/// Find $i$ s.t. $a _ { i - 1 } \le b \lt a _ i$.
 ///
@@ -319,5 +333,7 @@
 /// # use std::cmp::Ordering::*;
 /// assert_eq!(upper_bound(&amp;[10, 11, 12], &amp;11), 2);
 /// ```
-</span><span class="kw">pub fn </span>upper_bound&lt;T: Ord&gt;(slice: <span class="kw-2">&amp;</span>[T], x: <span class="kw-2">&amp;</span>T) -&gt; usize { upper_bound_by(slice, |p| p.cmp(x)) }
+</span><span class="kw">pub fn </span>upper_bound&lt;T: Ord&gt;(slice: <span class="kw-2">&amp;</span>[T], x: <span class="kw-2">&amp;</span>T) -&gt; usize {
+    upper_bound_by(slice, |p| p.cmp(x))
+}
 </code></pre></div></section></main></body></html>

@@ -483,6 +483,8 @@
 <a href="#449" id="449">449</a>
 <a href="#450" id="450">450</a>
 <a href="#451" id="451">451</a>
+<a href="#452" id="452">452</a>
+<a href="#453" id="453">453</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 黄金分割探索をします。
 //!
 //! 次の 2 つの関数のお好きな方をどうぞです。
@@ -770,7 +772,9 @@
 
     <span class="attr">#[test_case(<span class="number">3</span>, <span class="number">0 </span>=&gt; <span class="number">2</span>)]
     #[test_case(<span class="number">0</span>, <span class="number">3 </span>=&gt; <span class="number">1</span>)]
-    </span><span class="kw">fn </span>test_near_mid(x: u32, y: u32) -&gt; u32 { x.golden_sect(y) }
+    </span><span class="kw">fn </span>test_near_mid(x: u32, y: u32) -&gt; u32 {
+        x.golden_sect(y)
+    }
 
     <span class="comment">////////////////////////////////////////////////////////////////////////////////
     // 内部実装

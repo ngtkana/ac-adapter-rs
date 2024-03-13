@@ -280,6 +280,16 @@
 <a href="#246" id="246">246</a>
 <a href="#247" id="247">247</a>
 <a href="#248" id="248">248</a>
+<a href="#249" id="249">249</a>
+<a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Fp;
 <span class="kw">use </span>std::ops::Index;
 
@@ -336,7 +346,9 @@
     /// assert_eq!(fact.fact(2).value(), 2);
     /// assert_eq!(fact.fact(3).value(), 6);
     /// ```
-    </span><span class="kw">pub fn </span>fact(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Fp&lt;P&gt; { <span class="self">self</span>.fact[n] }
+    </span><span class="kw">pub fn </span>fact(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Fp&lt;P&gt; {
+        <span class="self">self</span>.fact[n]
+    }
 
     <span class="doccomment">/// The inverse of the factorial $n!$
     /// # Requirements
@@ -352,7 +364,9 @@
     /// assert_eq!(fact.inv_fact(2).value(), 499122177);
     /// assert_eq!(fact.inv_fact(3).value(), 166374059);
     /// ```
-    </span><span class="kw">pub fn </span>inv_fact(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Fp&lt;P&gt; { <span class="self">self</span>.inv_fact[n] }
+    </span><span class="kw">pub fn </span>inv_fact(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize) -&gt; Fp&lt;P&gt; {
+        <span class="self">self</span>.inv_fact[n]
+    }
 
     <span class="doccomment">/// The permutation $P(n, k)$
     /// # Requirements
@@ -365,7 +379,9 @@
     /// let fact = Factorial::&lt;P&gt;::new(10);
     /// assert_eq!(fact.perm(8, 3).value(), 336);
     /// ```
-    </span><span class="kw">pub fn </span>perm(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize, k: usize) -&gt; Fp&lt;P&gt; { <span class="self">self</span>.fact[n] * <span class="self">self</span>.inv_fact[n - k] }
+    </span><span class="kw">pub fn </span>perm(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize, k: usize) -&gt; Fp&lt;P&gt; {
+        <span class="self">self</span>.fact[n] * <span class="self">self</span>.inv_fact[n - k]
+    }
 
     <span class="doccomment">/// The binominal coefficient $n \choose k$
     /// # Requirements
@@ -393,7 +409,9 @@
     /// let fact = Factorial::&lt;P&gt;::new(10);
     /// assert_eq!(fact.binom(8, 3).value(), 56);
     /// ```
-    </span><span class="kw">pub fn </span>binom(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize, k: usize) -&gt; Fp&lt;P&gt; { <span class="self">self</span>.comb(n, k) }
+    </span><span class="kw">pub fn </span>binom(<span class="kw-2">&amp;</span><span class="self">self</span>, n: usize, k: usize) -&gt; Fp&lt;P&gt; {
+        <span class="self">self</span>.comb(n, k)
+    }
 
     <span class="doccomment">/// The binominal coefficient $n \choose k$, but zero if $k &lt; 0$ or $k &gt; n$
     /// # Requirements
@@ -434,7 +452,9 @@
 <span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; Index&lt;usize&gt; <span class="kw">for </span>Factorial&lt;P&gt; {
     <span class="kw">type </span>Output = Fp&lt;P&gt;;
 
-    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output { <span class="kw-2">&amp;</span><span class="self">self</span>.fact[index] }
+    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.fact[index]
+    }
 }
 
 <span class="attr">#[cfg(test)]

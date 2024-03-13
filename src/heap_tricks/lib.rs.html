@@ -991,6 +991,40 @@
 <a href="#957" id="957">957</a>
 <a href="#958" id="958">958</a>
 <a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
+<a href="#966" id="966">966</a>
+<a href="#967" id="967">967</a>
+<a href="#968" id="968">968</a>
+<a href="#969" id="969">969</a>
+<a href="#970" id="970">970</a>
+<a href="#971" id="971">971</a>
+<a href="#972" id="972">972</a>
+<a href="#973" id="973">973</a>
+<a href="#974" id="974">974</a>
+<a href="#975" id="975">975</a>
+<a href="#976" id="976">976</a>
+<a href="#977" id="977">977</a>
+<a href="#978" id="978">978</a>
+<a href="#979" id="979">979</a>
+<a href="#980" id="980">980</a>
+<a href="#981" id="981">981</a>
+<a href="#982" id="982">982</a>
+<a href="#983" id="983">983</a>
+<a href="#984" id="984">984</a>
+<a href="#985" id="985">985</a>
+<a href="#986" id="986">986</a>
+<a href="#987" id="987">987</a>
+<a href="#988" id="988">988</a>
+<a href="#989" id="989">989</a>
+<a href="#990" id="990">990</a>
+<a href="#991" id="991">991</a>
+<a href="#992" id="992">992</a>
+<a href="#993" id="993">993</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [`remove_unchecked`](RemovableHeap::remove_unchecked) のできるヒープです。
 //!
 //! 本体は [`RemovableHeap`] です。
@@ -1183,13 +1217,21 @@
 <span class="kw">where
     </span>T: AddAssign&lt;T&gt; + SubAssign&lt;T&gt;,
 {
-    <span class="kw">fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) { <span class="self">self</span>.left += value; }
+    <span class="kw">fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+        <span class="self">self</span>.left += value;
+    }
 
-    <span class="kw">fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) { <span class="self">self</span>.left -= value; }
+    <span class="kw">fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+        <span class="self">self</span>.left -= value;
+    }
 
-    <span class="kw">fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) { <span class="self">self</span>.right += value; }
+    <span class="kw">fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+        <span class="self">self</span>.right += value;
+    }
 
-    <span class="kw">fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) { <span class="self">self</span>.right -= value; }
+    <span class="kw">fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+        <span class="self">self</span>.right -= value;
+    }
 }
 
 <span class="doccomment">/// ヒープを４本使って中央値などを管理するデータ構造です。
@@ -1232,7 +1274,9 @@
 <span class="kw">where
     </span>T: Copy + Ord + Hash,
 {
-    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::default() }
+    <span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::default()
+    }
 }
 <span class="kw">impl</span>&lt;T, H&gt; DoubleHeap&lt;T, H&gt;
 <span class="kw">where
@@ -1268,7 +1312,9 @@
     /// heap.push_left(42);
     /// assert_eq!(heap.is_empty(), false);
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.left.is_empty() &amp;&amp; <span class="self">self</span>.right.is_empty() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.left.is_empty() &amp;&amp; <span class="self">self</span>.right.is_empty()
+    }
 
     <span class="doccomment">/// 全体の要素数を返します。
     ///
@@ -1281,7 +1327,9 @@
     /// heap.push_left(42);
     /// assert_eq!(heap.len(), 1);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.left.len() + <span class="self">self</span>.right.len() }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.left.len() + <span class="self">self</span>.right.len()
+    }
 
     <span class="doccomment">/// 左側ヒープの要素数を返します。
     ///
@@ -1296,7 +1344,9 @@
     /// heap.push_right(42);
     /// assert_eq!(heap.left_len(), 1);
     /// ```
-    </span><span class="kw">pub fn </span>left_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.left.len() }
+    </span><span class="kw">pub fn </span>left_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.left.len()
+    }
 
     <span class="doccomment">/// 右側ヒープの要素数を返します。
     ///
@@ -1311,7 +1361,9 @@
     /// heap.push_right(42);
     /// assert_eq!(heap.right_len(), 2);
     /// ```
-    </span><span class="kw">pub fn </span>right_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.right.len() }
+    </span><span class="kw">pub fn </span>right_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.right.len()
+    }
 
     <span class="doccomment">/// 左側ヒープの要素数が１増加するように、要素を挿入します。
     ///
@@ -1365,7 +1417,9 @@
     /// heap.push_right(13);
     /// assert_eq!(heap.peek_left(), Some(13));
     /// ```
-    </span><span class="kw">pub fn </span>peek_left(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; { <span class="self">self</span>.left.peek() }
+    </span><span class="kw">pub fn </span>peek_left(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+        <span class="self">self</span>.left.peek()
+    }
 
     <span class="doccomment">/// 右側ヒープの最大要素があれば返します。
     ///
@@ -1381,7 +1435,9 @@
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    </span><span class="kw">pub fn </span>peek_right(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; { <span class="self">self</span>.right.peek().map(|rev| rev.<span class="number">0</span>) }
+    </span><span class="kw">pub fn </span>peek_right(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+        <span class="self">self</span>.right.peek().map(|rev| rev.<span class="number">0</span>)
+    }
 
     <span class="doccomment">/// 左側ヒープの最大要素があれば削除して返します。
     ///
@@ -1635,7 +1691,9 @@
     /// assert_eq!(heap.handler().left, 10);
     /// assert_eq!(heap.handler().right, 36);
     /// ```
-    </span><span class="kw">pub fn </span>handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>H { <span class="kw-2">&amp;</span><span class="self">self</span>.handler }
+    </span><span class="kw">pub fn </span>handler(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>H {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.handler
+    }
 
     <span class="doccomment">/// 左側ヒープの要素を昇順に格納したベクターを構築して返します。
     ///
@@ -1650,7 +1708,9 @@
     /// heap.push_right(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
     /// ```
-    </span><span class="kw">pub fn </span>collect_left_sorted_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt; { <span class="self">self</span>.left.collect_sorted_vec() }
+    </span><span class="kw">pub fn </span>collect_left_sorted_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt; {
+        <span class="self">self</span>.left.collect_sorted_vec()
+    }
 
     <span class="doccomment">/// 右側ヒープの要素を昇順に格納したベクターを構築して返します。
     ///
@@ -1758,7 +1818,9 @@
     /// let heap = RemovableHeap::&lt;()&gt;::new();
     /// assert_eq!(heap.collect_sorted_vec(), Vec::new());
     /// ```
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::default() }
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::default()
+    }
 
     <span class="doccomment">/// ヒープが空ならば `true` を返します。
     ///
@@ -1770,7 +1832,9 @@
     /// assert_eq!(RemovableHeap::from_iter(Vec::&lt;u32&gt;::new()).is_empty(), true);
     /// assert_eq!(RemovableHeap::from_iter(vec![42]).is_empty(), false);
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.len() == <span class="number">0 </span>}
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.len() == <span class="number">0
+    </span>}
 
     <span class="doccomment">/// ヒープの長さを返します。
     ///
@@ -1782,7 +1846,9 @@
     /// assert_eq!(RemovableHeap::from_iter(Vec::&lt;u32&gt;::new()).len(), 0);
     /// assert_eq!(RemovableHeap::from_iter(vec![42, 45, 56]).len(), 3);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.len }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.len
+    }
 
     <span class="doccomment">/// ヒープに新しい要素 `x` を追加します。
     ///
@@ -1849,7 +1915,9 @@
     /// assert_eq!(heap.peek(), Some(56));
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &amp;[42, 45, 56]);
     /// ```
-    </span><span class="kw">pub fn </span>peek(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; { <span class="self">self</span>.heap.peek().copied() }
+    </span><span class="kw">pub fn </span>peek(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+        <span class="self">self</span>.heap.peek().copied()
+    }
 
     <span class="doccomment">/// ヒープの要素を昇順に格納したベクターを構築します。
     ///

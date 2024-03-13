@@ -108,6 +108,8 @@
 <a href="#74" id="74">74</a>
 <a href="#75" id="75">75</a>
 <a href="#76" id="76">76</a>
+<a href="#77" id="77">77</a>
+<a href="#78" id="78">78</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Provides iterator utilities of integer expression of sets.
 
 </span><span class="kw">mod </span>combinations;
@@ -170,7 +172,9 @@
     <span class="kw">fn </span>zero() -&gt; <span class="self">Self</span>;
     <span class="kw">fn </span>one() -&gt; <span class="self">Self</span>;
     <span class="kw">fn </span>wrapping_neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
-    <span class="kw">fn </span>bit_length() -&gt; u32 { size_of::&lt;<span class="self">Self</span>&gt;() <span class="kw">as </span>u32 * <span class="number">8 </span>}
+    <span class="kw">fn </span>bit_length() -&gt; u32 {
+        size_of::&lt;<span class="self">Self</span>&gt;() <span class="kw">as </span>u32 * <span class="number">8
+    </span>}
 }
 
 <span class="macro">macro_rules! </span>impl_unsigned {

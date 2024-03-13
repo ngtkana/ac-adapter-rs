@@ -580,6 +580,10 @@
 <a href="#546" id="546">546</a>
 <a href="#547" id="547">547</a>
 <a href="#548" id="548">548</a>
+<a href="#549" id="549">549</a>
+<a href="#550" id="550">550</a>
+<a href="#551" id="551">551</a>
+<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Run classic binary or exponential search on integer or floating point numbers.
 //!
 //! Both classic binary seach and exponential search has their streangth and weakness.
@@ -630,7 +634,9 @@
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
-    <span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self</span>.sqrt() }
+    <span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.sqrt()
+    }
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f64 {
     <span class="kw">const </span>INFINITY: <span class="self">Self </span>= std::f64::INFINITY;
@@ -638,7 +644,9 @@
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
-    <span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self</span>.sqrt() }
+    <span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+        <span class="self">self</span>.sqrt()
+    }
 }
 
 <span class="doccomment">/// Run an exponential search on floating point numbers.

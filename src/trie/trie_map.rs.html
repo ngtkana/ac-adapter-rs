@@ -424,6 +424,12 @@
 <a href="#390" id="390">390</a>
 <a href="#391" id="391">391</a>
 <a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::DEGREE;
 <span class="kw">use </span>std::fmt::Debug;
 <span class="kw">use </span>std::fmt::Formatter;
@@ -444,7 +450,9 @@
 }
 
 <span class="kw">impl</span>&lt;V&gt; Default <span class="kw">for </span>TrieMap&lt;V&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(<span class="prelude-val">None</span>) }
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(<span class="prelude-val">None</span>)
+    }
 }
 
 <span class="kw">impl</span>&lt;V&gt; TrieMap&lt;V&gt; {
@@ -465,7 +473,9 @@
     /// // entries can now be inserted into the empty map
     /// map.insert(once(1), &quot;a&quot;);
     /// ```
-    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>(<span class="prelude-val">None</span>) }
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>(<span class="prelude-val">None</span>)
+    }
 
     <span class="doccomment">/// Inserts a key-value pair into the map.
     ///
@@ -754,7 +764,9 @@
     }
 }
 <span class="kw">impl</span>&lt;V&gt; Default <span class="kw">for </span>Node&lt;V&gt; {
-    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{ <span class="self">Self</span>::new() }
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
 }
 
 <span class="attr">#[cfg(test)]

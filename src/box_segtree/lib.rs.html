@@ -463,6 +463,24 @@
 <a href="#429" id="429">429</a>
 <a href="#430" id="430">430</a>
 <a href="#431" id="431">431</a>
+<a href="#432" id="432">432</a>
+<a href="#433" id="433">433</a>
+<a href="#434" id="434">434</a>
+<a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
+<a href="#438" id="438">438</a>
+<a href="#439" id="439">439</a>
+<a href="#440" id="440">440</a>
+<a href="#441" id="441">441</a>
+<a href="#442" id="442">442</a>
+<a href="#443" id="443">443</a>
+<a href="#444" id="444">444</a>
+<a href="#445" id="445">445</a>
+<a href="#446" id="446">446</a>
+<a href="#447" id="447">447</a>
+<a href="#448" id="448">448</a>
+<a href="#449" id="449">449</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [`Box`] で実装された、ポインタベースのセグツリーです。
 //!
 //! # 使い方
@@ -477,12 +495,18 @@
 //! impl Ops for O {
 //!     type Value = u32;
 //!
-//!     fn op(lhs: &amp;Self::Value, rhs: &amp;Self::Value) -&gt; Self::Value { lhs + rhs }
+//!     fn op(lhs: &amp;Self::Value, rhs: &amp;Self::Value) -&gt; Self::Value {
+//!         lhs + rhs
+//!     }
 //!
-//!     fn id() -&gt; Self::Value { 0 }
+//!     fn id() -&gt; Self::Value {
+//!         0
+//!     }
 //!
 //!     // init(len) = id() がデフォルト実装です。
-//!     fn init(_len: usize) -&gt; Self::Value { 0 }
+//!     fn init(_len: usize) -&gt; Self::Value {
+//!         0
+//!     }
 //! }
 //! ```
 //!
@@ -551,7 +575,9 @@
     }
 
     <span class="doccomment">/// [`Self::modify`] を呼んで第 `i` 項に `x` を代入します。
-    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, x: T) { <span class="self">self</span>.modify(i, <span class="kw">move </span>|y| <span class="kw-2">*</span>y = x); }
+    </span><span class="kw">pub fn </span>set(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, x: T) {
+        <span class="self">self</span>.modify(i, <span class="kw">move </span>|y| <span class="kw-2">*</span>y = x);
+    }
 
     <span class="doccomment">/// 第 `i` 項を `f` で編集し、それに従ってその祖先の `value` を再計算します。
     </span><span class="kw">pub fn </span>modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, f: <span class="kw">impl </span>FnOnce(<span class="kw-2">&amp;mut </span>T)) {
@@ -625,7 +651,9 @@
     ///     &quot;[0, 0, 0, 10, 0, 20, 0]&quot;.to_string(),
     /// );
     /// ```
-    </span><span class="kw">pub fn </span>debug_list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegtreeDebugList&lt;<span class="lifetime">&#39;_</span>, T, O&gt; { SegtreeDebugList(<span class="self">self</span>) }
+    </span><span class="kw">pub fn </span>debug_list(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegtreeDebugList&lt;<span class="lifetime">&#39;_</span>, T, O&gt; {
+        SegtreeDebugList(<span class="self">self</span>)
+    }
 }
 
 <span class="attr">#[derive(Clone, Default, Hash, PartialEq)]
@@ -788,7 +816,9 @@
     <span class="kw">type </span>IntoIter = Iter&lt;<span class="lifetime">&#39;a</span>, T, O&gt;;
     <span class="kw">type </span>Item = &lt;<span class="self">Self</span>::IntoIter <span class="kw">as </span>Iterator&gt;::Item;
 
-    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter { <span class="self">self</span>.iter() }
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.iter()
+    }
 }
 
 <span class="kw">fn </span>__internal_open(range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, len: usize) -&gt; Range&lt;usize&gt; {
@@ -822,7 +852,9 @@
     /// 単位元
     </span><span class="kw">fn </span>id() -&gt; <span class="self">Self</span>::Value;
     <span class="doccomment">/// 初期状態の `len` セル分の値の畳み込み
-    </span><span class="kw">fn </span>init(_len: usize) -&gt; <span class="self">Self</span>::Value { <span class="self">Self</span>::id() }
+    </span><span class="kw">fn </span>init(_len: usize) -&gt; <span class="self">Self</span>::Value {
+        <span class="self">Self</span>::id()
+    }
 }
 
 <span class="attr">#[cfg(test)]
@@ -843,9 +875,13 @@
             lhs.chars().chain(rhs.chars()).collect::&lt;String&gt;()
         }
 
-        <span class="kw">fn </span>id() -&gt; <span class="self">Self</span>::Value { String::new() }
+        <span class="kw">fn </span>id() -&gt; <span class="self">Self</span>::Value {
+            String::new()
+        }
 
-        <span class="kw">fn </span>init(len: usize) -&gt; <span class="self">Self</span>::Value { <span class="string">&quot;?&quot;</span>.repeat(len) }
+        <span class="kw">fn </span>init(len: usize) -&gt; <span class="self">Self</span>::Value {
+            <span class="string">&quot;?&quot;</span>.repeat(len)
+        }
     }
 
     <span class="attr">#[test]

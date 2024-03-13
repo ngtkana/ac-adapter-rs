@@ -389,6 +389,10 @@
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
 <a href="#357" id="357">357</a>
+<a href="#358" id="358">358</a>
+<a href="#359" id="359">359</a>
+<a href="#360" id="360">360</a>
+<a href="#361" id="361">361</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solve an assignment problem by Hungarian algorithm.
 //!
 //! # Example
@@ -604,10 +608,14 @@
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_rand_i32() { test_rand_impl::&lt;i32&gt;(<span class="number">5</span>, <span class="number">5</span>, <span class="number">1000</span>, <span class="bool-val">false</span>, -<span class="number">100</span>..=<span class="number">100</span>); }
+    </span><span class="kw">fn </span>test_rand_i32() {
+        test_rand_impl::&lt;i32&gt;(<span class="number">5</span>, <span class="number">5</span>, <span class="number">1000</span>, <span class="bool-val">false</span>, -<span class="number">100</span>..=<span class="number">100</span>);
+    }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_rand_f64() { test_rand_impl::&lt;f64&gt;(<span class="number">5</span>, <span class="number">5</span>, <span class="number">1000</span>, <span class="bool-val">false</span>, -<span class="number">100.0</span>..=<span class="number">100.</span>); }
+    </span><span class="kw">fn </span>test_rand_f64() {
+        test_rand_impl::&lt;f64&gt;(<span class="number">5</span>, <span class="number">5</span>, <span class="number">1000</span>, <span class="bool-val">false</span>, -<span class="number">100.0</span>..=<span class="number">100.</span>);
+    }
 
     <span class="kw">fn </span>test_rand_impl&lt;T: Value + Debug + Epsilon + SampleUniform&gt;(
         h: usize,

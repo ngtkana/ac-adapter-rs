@@ -333,6 +333,14 @@
 <a href="#299" id="299">299</a>
 <a href="#300" id="300">300</a>
 <a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solve a submodular graph cut optimizaion problem of degree $\le 2$
 //!
 //! As in [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization),
@@ -420,7 +428,9 @@
     /// gco.unary(0, [0, 10]);
     /// gco.unary(1, [-40, 0]);
     /// ```
-    </span><span class="kw">pub fn </span>unary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, cost: [i64; <span class="number">2</span>]) { <span class="self">self</span>.unary.push(Unary { i, cost }); }
+    </span><span class="kw">pub fn </span>unary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, cost: [i64; <span class="number">2</span>]) {
+        <span class="self">self</span>.unary.push(Unary { i, cost });
+    }
 
     <span class="doccomment">/// Add a binary term.
     ///
@@ -458,7 +468,9 @@
     }
 
     <span class="doccomment">/// Returns the minimum value and an argmin of $f$.
-    </span><span class="kw">pub fn </span>solve(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GcoResult { solve(<span class="self">self</span>) }
+    </span><span class="kw">pub fn </span>solve(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GcoResult {
+        solve(<span class="self">self</span>)
+    }
 }
 
 <span class="doccomment">/// The minimum value and and an argmin of $f$.
@@ -552,14 +564,18 @@
     cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>],
 }
 
-<span class="kw">fn </span>index_by_array2(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], index: [usize; <span class="number">2</span>]) -&gt; i64 { cost[index[<span class="number">0</span>]][index[<span class="number">1</span>]] }
+<span class="kw">fn </span>index_by_array2(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], index: [usize; <span class="number">2</span>]) -&gt; i64 {
+    cost[index[<span class="number">0</span>]][index[<span class="number">1</span>]]
+}
 <span class="kw">fn </span>diff(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], p: usize) -&gt; i64 {
     <span class="macro">assert!</span>(is_submodular(cost));
     <span class="kw">let </span><span class="kw-2">mut </span>index = [<span class="number">0</span>, <span class="number">0</span>];
     index[p] = <span class="number">1</span>;
     index_by_array2(cost, index) - cost[<span class="number">0</span>][<span class="number">0</span>]
 }
-<span class="kw">fn </span>is_submodular(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) -&gt; bool { cost[<span class="number">0</span>][<span class="number">0</span>] + cost[<span class="number">1</span>][<span class="number">1</span>] &lt;= cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>] }
+<span class="kw">fn </span>is_submodular(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) -&gt; bool {
+    cost[<span class="number">0</span>][<span class="number">0</span>] + cost[<span class="number">1</span>][<span class="number">1</span>] &lt;= cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>]
+}
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {

@@ -105,6 +105,8 @@
 <a href="#71" id="71">71</a>
 <a href="#72" id="72">72</a>
 <a href="#73" id="73">73</a>
+<a href="#74" id="74">74</a>
+<a href="#75" id="75">75</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Execute the trial-division algorithm.
 //!
 //! # Items
@@ -157,7 +159,9 @@
     <span class="doccomment">/// Increment `self`.
     </span><span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
     <span class="doccomment">/// Returns `true` if and only if `self` divides `n`.
-    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool { n % <span class="self">self </span>== <span class="self">Self</span>::zero() }
+    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool {
+        n % <span class="self">self </span>== <span class="self">Self</span>::zero()
+    }
 }
 
 <span class="macro">macro_rules! </span>impl_value {

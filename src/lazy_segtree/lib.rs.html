@@ -467,6 +467,8 @@
 <a href="#433" id="433">433</a>
 <a href="#434" id="434">434</a>
 <a href="#435" id="435">435</a>
+<a href="#436" id="436">436</a>
+<a href="#437" id="437">437</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::cell::RefCell;
 <span class="kw">use </span>std::fmt::Debug;
 <span class="kw">use </span>std::fmt::Formatter;
@@ -569,7 +571,9 @@
         }
     }
 
-    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; T { <span class="self">self</span>.table.borrow()[<span class="self">self</span>.len + i].clone() }
+    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; T {
+        <span class="self">self</span>.table.borrow()[<span class="self">self</span>.len + i].clone()
+    }
 
     <span class="kw">pub fn </span>modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>T)) {
         <span class="kw">let </span>i = <span class="self">self</span>.len + i;

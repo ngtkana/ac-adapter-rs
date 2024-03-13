@@ -429,6 +429,18 @@
 <a href="#395" id="395">395</a>
 <a href="#396" id="396">396</a>
 <a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Nop;
 <span class="kw">use </span><span class="kw">super</span>::Op;
 <span class="kw">use </span>std::cmp::Ordering;
@@ -762,7 +774,9 @@
         }
     }
 
-    <span class="kw">fn </span>nil() -&gt; Nonempty&lt;()&gt; { Nonempty::Nil(Nil(())) }
+    <span class="kw">fn </span>nil() -&gt; Nonempty&lt;()&gt; {
+        Nonempty::Nil(Nil(()))
+    }
     <span class="kw">fn </span>n2(
         x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;,
         y: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;,
@@ -795,17 +809,27 @@
     ) -&gt; <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt; {
         n2(n2(x, y, height), n2(z, w, height), height)
     }
-    <span class="kw">fn </span>n2nil() -&gt; Nonempty&lt;()&gt; { n2(nil, nil, <span class="number">1</span>)() }
-    <span class="kw">fn </span>l3nil() -&gt; Nonempty&lt;()&gt; { l3(nil, nil, nil, <span class="number">1</span>)() }
-    <span class="kw">fn </span>r3nil() -&gt; Nonempty&lt;()&gt; { r3(nil, nil, nil, <span class="number">1</span>)() }
-    <span class="kw">fn </span>n4nil() -&gt; Nonempty&lt;()&gt; { n4(nil, nil, nil, nil, <span class="number">1</span>)() }
+    <span class="kw">fn </span>n2nil() -&gt; Nonempty&lt;()&gt; {
+        n2(nil, nil, <span class="number">1</span>)()
+    }
+    <span class="kw">fn </span>l3nil() -&gt; Nonempty&lt;()&gt; {
+        l3(nil, nil, nil, <span class="number">1</span>)()
+    }
+    <span class="kw">fn </span>r3nil() -&gt; Nonempty&lt;()&gt; {
+        r3(nil, nil, nil, <span class="number">1</span>)()
+    }
+    <span class="kw">fn </span>n4nil() -&gt; Nonempty&lt;()&gt; {
+        n4(nil, nil, nil, nil, <span class="number">1</span>)()
+    }
 
     <span class="attr">#[test_case(nil =&gt; <span class="string">&quot;()&quot;</span>.to_owned())]
     #[test_case(n2nil =&gt; <span class="string">&quot;(()1,2())&quot;</span>.to_owned())]
     #[test_case(l3nil =&gt; <span class="string">&quot;((()1,2())1,3())&quot;</span>.to_owned())]
     #[test_case(r3nil =&gt; <span class="string">&quot;(()1,3(()1,2()))&quot;</span>.to_owned())]
     #[test_case(n4nil =&gt; <span class="string">&quot;((()1,2())1,4(()1,2()))&quot;</span>.to_owned())]
-    </span><span class="kw">fn </span>test_to_structure_string(x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;) -&gt; String { to_structure_sring(<span class="kw-2">&amp;</span>x()) }
+    </span><span class="kw">fn </span>test_to_structure_string(x: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;) -&gt; String {
+        to_structure_sring(<span class="kw-2">&amp;</span>x())
+    }
 
     <span class="attr">#[test_case(nil, nil =&gt; to_structure_sring(<span class="kw-2">&amp;</span>n2nil()))]
     #[test_case(nil, n2nil =&gt; to_structure_sring(<span class="kw-2">&amp;</span>l3nil()))]

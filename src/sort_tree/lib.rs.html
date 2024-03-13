@@ -116,6 +116,8 @@
 <a href="#82" id="82">82</a>
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
+<a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 根付き木をトポロジカルソートします。
 
 /// 親を消します
@@ -135,7 +137,9 @@
 }
 
 <span class="doccomment">/// 根付き木をトポロジカルソートします。
-</span><span class="kw">pub fn </span>sort_tree(root: usize, g: <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;]) -&gt; [Vec&lt;usize&gt;; <span class="number">2</span>] { sort_tree_by(root, g, |x| <span class="kw-2">*</span>x) }
+</span><span class="kw">pub fn </span>sort_tree(root: usize, g: <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;]) -&gt; [Vec&lt;usize&gt;; <span class="number">2</span>] {
+    sort_tree_by(root, g, |x| <span class="kw-2">*</span>x)
+}
 
 <span class="doccomment">/// 根付き木をトポロジカルソートします。
 </span><span class="kw">pub fn </span>sort_tree_by&lt;E&gt;(root: usize, g: <span class="kw-2">&amp;</span>[Vec&lt;E&gt;], to: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>E) -&gt; usize) -&gt; [Vec&lt;usize&gt;; <span class="number">2</span>] {

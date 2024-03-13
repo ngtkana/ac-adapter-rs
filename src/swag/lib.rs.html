@@ -317,6 +317,14 @@
 <a href="#283" id="283">283</a>
 <a href="#284" id="284">284</a>
 <a href="#285" id="285">285</a>
+<a href="#286" id="286">286</a>
+<a href="#287" id="287">287</a>
+<a href="#288" id="288">288</a>
+<a href="#289" id="289">289</a>
+<a href="#290" id="290">290</a>
+<a href="#291" id="291">291</a>
+<a href="#292" id="292">292</a>
+<a href="#293" id="293">293</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! SWAG をします。
 //!
 //! # 基本的な使い方
@@ -455,16 +463,24 @@
     }
 
     <span class="doccomment">/// 現在の内部状態の始点を返します。
-    </span><span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.center - <span class="self">self</span>.stack.len() }
+    </span><span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.center - <span class="self">self</span>.stack.len()
+    }
 
     <span class="doccomment">/// 現在の内部状態の終点を返します。
-    </span><span class="kw">pub fn </span>end(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.end }
+    </span><span class="kw">pub fn </span>end(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.end
+    }
 
     <span class="doccomment">/// 現在の内部状態の始点・終点を `start..end` の形で返します。
-    </span><span class="kw">pub fn </span>current_index_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range&lt;usize&gt; { <span class="self">self</span>.start()..<span class="self">self</span>.end() }
+    </span><span class="kw">pub fn </span>current_index_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range&lt;usize&gt; {
+        <span class="self">self</span>.start()..<span class="self">self</span>.end()
+    }
 
     <span class="doccomment">/// 現在の内部状態の window をスライスの形で返します。
-    </span><span class="kw">pub fn </span>current_window(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[T] { <span class="kw-2">&amp;</span><span class="self">self</span>.v.borrow()[<span class="self">self</span>.current_index_range()] }
+    </span><span class="kw">pub fn </span>current_window(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[T] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.v.borrow()[<span class="self">self</span>.current_index_range()]
+    }
 
     <span class="doccomment">/// 現在の内部状態の window における aggregation を返します。
     </span><span class="kw">pub fn </span>current_fold(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {

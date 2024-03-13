@@ -834,6 +834,18 @@
 <a href="#800" id="800">800</a>
 <a href="#801" id="801">801</a>
 <a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! ウェーブレット行列
 //!
 //! 本体は [`WaveletMatrix`] です。
@@ -979,7 +991,9 @@
     /// let wm = WaveletMatrix::from_iter(vec![0]);
     /// assert!(!wm.is_empty());
     /// ```
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.table.is_empty() }
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.table.is_empty()
+    }
 
     <span class="doccomment">/// 配列の長さを返します。
     ///
@@ -993,7 +1007,9 @@
     /// assert_eq!(WaveletMatrix::from_iter(vec![42]).len(), 1);
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, StaticBitVec::len) }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.table.first().map_or(<span class="number">0</span>, StaticBitVec::len)
+    }
 
     <span class="doccomment">/// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///
@@ -1200,7 +1216,9 @@
         Spans { stack, target }
     }
 
-    <span class="kw">fn </span>lim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.table.len() }
+    <span class="kw">fn </span>lim(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.table.len()
+    }
 
     <span class="kw">fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Range&lt;usize&gt;) -&gt; SpanInNode&lt;<span class="lifetime">&#39;_</span>&gt; {
         SpanInNode {
@@ -1277,10 +1295,14 @@
 }
 <span class="kw">impl </span>StaticBitVec {
     <span class="doccomment">/// `a.is_empty()`
-    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool { <span class="self">self</span>.len == <span class="number">0 </span>}
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.len == <span class="number">0
+    </span>}
 
     <span class="doccomment">/// `a.len()`
-    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize { <span class="self">self</span>.len }
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.len
+    }
 
     <span class="doccomment">/// `a[i]`
     </span><span class="kw">pub fn </span>access(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; bool {
@@ -1418,7 +1440,9 @@
     }
 }
 
-<span class="kw">fn </span>midpoint(range: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; usize { range.start + (range.end - range.start) / <span class="number">2 </span>}
+<span class="kw">fn </span>midpoint(range: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; usize {
+    range.start + (range.end - range.start) / <span class="number">2
+</span>}
 
 <span class="kw">fn </span>is_disjoint_with(lhs: <span class="kw-2">&amp;</span>Range&lt;usize&gt;, rhs: <span class="kw-2">&amp;</span>Range&lt;usize&gt;) -&gt; bool {
     lhs.end &lt;= rhs.start || rhs.end &lt;= lhs.start

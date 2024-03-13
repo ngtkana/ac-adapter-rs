@@ -191,6 +191,8 @@
 <a href="#157" id="157">157</a>
 <a href="#158" id="158">158</a>
 <a href="#159" id="159">159</a>
+<a href="#160" id="160">160</a>
+<a href="#161" id="161">161</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 二分法（ダブリング）をします。
 //!
 //! # このライブラリを使える問題
@@ -322,7 +324,9 @@
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>test_case::test_case;
 
-    <span class="kw">fn </span>cat(s: <span class="kw-2">&amp;</span>str, t: <span class="kw-2">&amp;</span>str) -&gt; String { s.chars().chain(t.chars()).collect() }
+    <span class="kw">fn </span>cat(s: <span class="kw-2">&amp;</span>str, t: <span class="kw-2">&amp;</span>str) -&gt; String {
+        s.chars().chain(t.chars()).collect()
+    }
 
     <span class="attr">#[test_case(<span class="number">0 </span>=&gt; <span class="string">&quot;x&quot;</span>.to_owned())]
     #[test_case(<span class="number">1 </span>=&gt; <span class="string">&quot;abx&quot;</span>.to_owned())]

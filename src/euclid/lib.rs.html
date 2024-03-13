@@ -145,6 +145,8 @@
 <a href="#111" id="111">111</a>
 <a href="#112" id="112">112</a>
 <a href="#113" id="113">113</a>
+<a href="#114" id="114">114</a>
+<a href="#115" id="115">115</a>
 </pre></div><pre class="rust"><code><span class="kw">mod </span>crt;
 <span class="kw">mod </span>ext_gcd;
 <span class="kw">mod </span>gcd;
@@ -194,7 +196,9 @@
     <span class="doccomment">/// Calculates the least nonnegative remainder of `self (mod rhs)`.
     </span><span class="kw">fn </span>rem_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
     <span class="doccomment">/// Returns `true` if and only if `self` divides `n`.
-    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool { n.rem_euclid(<span class="self">self</span>) == <span class="self">Self</span>::zero() }
+    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool {
+        n.rem_euclid(<span class="self">self</span>) == <span class="self">Self</span>::zero()
+    }
 }
 
 <span class="doccomment">/// Abstraction of unsigned integers.

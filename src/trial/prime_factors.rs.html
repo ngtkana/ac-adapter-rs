@@ -167,6 +167,10 @@
 <a href="#133" id="133">133</a>
 <a href="#134" id="134">134</a>
 <a href="#135" id="135">135</a>
+<a href="#136" id="136">136</a>
+<a href="#137" id="137">137</a>
+<a href="#138" id="138">138</a>
+<a href="#139" id="139">139</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::Value;
 <span class="kw">use </span>std::mem::replace;
 
@@ -290,7 +294,9 @@
     <span class="attr">#[test_case(<span class="number">6 </span>=&gt; <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">12 </span>=&gt; <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]</span>)]
     <span class="attr">#[test_case(<span class="number">36 </span>=&gt; <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">3</span>]</span>)]
-    <span class="kw">fn </span>test_factors_unique(n: u32) -&gt; Vec&lt;u32&gt; { prime_factors(n).collect() }
+    <span class="kw">fn </span>test_factors_unique(n: u32) -&gt; Vec&lt;u32&gt; {
+        prime_factors(n).collect()
+    }
 
     <span class="attr">#[test_case(<span class="number">1 </span>=&gt; Vec::&lt;(u32, usize)&gt;::new())]
     #[test_case(<span class="number">2 </span>=&gt; <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="number">1</span>)]</span>)]
@@ -300,6 +306,8 @@
     <span class="attr">#[test_case(<span class="number">6 </span>=&gt; <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="number">1</span>), (<span class="number">3</span>, <span class="number">1</span>)]</span>)]
     <span class="attr">#[test_case(<span class="number">12 </span>=&gt; <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">1</span>)]</span>)]
     <span class="attr">#[test_case(<span class="number">36 </span>=&gt; <span class="macro">vec!</span>[(<span class="number">2</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">2</span>)]</span>)]
-    <span class="kw">fn </span>test_factors(n: u32) -&gt; Vec&lt;(u32, usize)&gt; { prime_factors_rle(n).collect() }
+    <span class="kw">fn </span>test_factors(n: u32) -&gt; Vec&lt;(u32, usize)&gt; {
+        prime_factors_rle(n).collect()
+    }
 }
 </code></pre></div></section></main></body></html>

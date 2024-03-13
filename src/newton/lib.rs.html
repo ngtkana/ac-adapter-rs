@@ -137,6 +137,10 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
+<a href="#108" id="108">108</a>
+<a href="#109" id="109">109</a>
 </pre></div><pre class="rust"><code><span class="kw">pub fn </span>triangular_root(y: u64) -&gt; u64 {
     <span class="kw">if </span>y == <span class="number">0 </span>{
         <span class="number">0
@@ -175,7 +179,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_sqrt() {
-        <span class="kw">fn </span>square(x: u64) -&gt; u64 { x * x }
+        <span class="kw">fn </span>square(x: u64) -&gt; u64 {
+            x * x
+        }
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for </span>y <span class="kw">in </span><span class="number">0</span>..<span class="number">100 </span>{
             <span class="kw">let </span>x = sqrt(y);
@@ -212,7 +218,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_triangular_root() {
-        <span class="kw">fn </span>triangular(x: u64) -&gt; u64 { x * (x + <span class="number">1</span>) / <span class="number">2 </span>}
+        <span class="kw">fn </span>triangular(x: u64) -&gt; u64 {
+            x * (x + <span class="number">1</span>) / <span class="number">2
+        </span>}
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for </span>y <span class="kw">in </span><span class="number">0</span>..<span class="number">100 </span>{
             <span class="kw">let </span>x = triangular_root(y);
