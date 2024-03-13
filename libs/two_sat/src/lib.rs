@@ -63,7 +63,9 @@ impl TwoSat {
             .collect()
     }
 
-    pub fn build(&mut self) { self.scc.build(); }
+    pub fn build(&mut self) {
+        self.scc.build();
+    }
 }
 impl Debug for TwoSat {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

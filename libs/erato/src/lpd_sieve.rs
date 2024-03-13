@@ -44,7 +44,9 @@ impl LpdSieve {
     /// assert!(LpdSieve::with_len(0).is_empty());
     /// assert!(!LpdSieve::with_len(1).is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.base.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.base.is_empty()
+    }
 
     /// Returns the length of a sieve.
     ///
@@ -55,7 +57,9 @@ impl LpdSieve {
     /// let sieve = LpdSieve::with_len(42);
     /// assert_eq!(sieve.len(), 42);
     /// ```
-    pub fn len(&self) -> usize { self.base.len() }
+    pub fn len(&self) -> usize {
+        self.base.len()
+    }
 
     /// Construct a sieve of given length.
     ///
@@ -94,7 +98,9 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
-    pub fn is_prime<T: Int>(&mut self, x: T) -> bool { self.base.is_prime(x) }
+    pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
+        self.base.is_prime(x)
+    }
 
     /// Returns the least prime divisor of `x`.
     ///
@@ -117,7 +123,9 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
-    pub fn lpd<T: Int>(&mut self, x: T) -> T { self.base.lpd(x) }
+    pub fn lpd<T: Int>(&mut self, x: T) -> T {
+        self.base.lpd(x)
+    }
 
     /// Returns an iterator to generate all the prime numbers in ascending order, extending
     /// itself repeatedly.

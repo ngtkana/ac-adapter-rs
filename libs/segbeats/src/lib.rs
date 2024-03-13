@@ -113,8 +113,12 @@ trait Dfs {
     type Param: Copy + Debug;
     type Output: Debug;
     fn identity() -> Self::Output;
-    fn break_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool { false }
-    fn tag_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool { true }
+    fn break_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
+        false
+    }
+    fn tag_condition(_node: Node<Self::Value>, _x: Self::Param) -> bool {
+        true
+    }
     fn tag(_node: &mut Node<Self::Value>, _x: Self::Param) {}
     fn merge(left: Self::Output, right: Self::Output) -> Self::Output;
     fn extract(node: Node<Self::Value>) -> Self::Output;
@@ -127,11 +131,17 @@ impl<T: Elm> Dfs for ChangeMin<T> {
 
     fn identity() -> Self::Output {}
 
-    fn break_condition(node: Node<T>, x: Self::Param) -> bool { node.max[0] <= x }
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
+        node.max[0] <= x
+    }
 
-    fn tag_condition(node: Node<T>, x: Self::Param) -> bool { node.max[1] < x }
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
+        node.max[1] < x
+    }
 
-    fn tag(node: &mut Node<Self::Value>, x: Self::Param) { node.change_min(x); }
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
+        node.change_min(x);
+    }
 
     fn merge((): (), (): ()) {}
 
@@ -145,11 +155,17 @@ impl<T: Elm> Dfs for ChangeMax<T> {
 
     fn identity() -> Self::Output {}
 
-    fn break_condition(node: Node<T>, x: Self::Param) -> bool { x <= node.min[0] }
+    fn break_condition(node: Node<T>, x: Self::Param) -> bool {
+        x <= node.min[0]
+    }
 
-    fn tag_condition(node: Node<T>, x: Self::Param) -> bool { x < node.min[1] }
+    fn tag_condition(node: Node<T>, x: Self::Param) -> bool {
+        x < node.min[1]
+    }
 
-    fn tag(node: &mut Node<Self::Value>, x: Self::Param) { node.change_max(x); }
+    fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
+        node.change_max(x);
+    }
 
     fn merge((): (), (): ()) {}
 
@@ -161,11 +177,17 @@ impl<T: Elm> Dfs for QueryMin<T> {
     type Param = ();
     type Value = T;
 
-    fn identity() -> Self::Output { T::max_value() }
+    fn identity() -> Self::Output {
+        T::max_value()
+    }
 
-    fn merge(left: T, right: T) -> T { left.min(right) }
+    fn merge(left: T, right: T) -> T {
+        left.min(right)
+    }
 
-    fn extract(node: Node<T>) -> T { node.min[0] }
+    fn extract(node: Node<T>) -> T {
+        node.min[0]
+    }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QueryMax<T> {
@@ -173,11 +195,17 @@ impl<T: Elm> Dfs for QueryMax<T> {
     type Param = ();
     type Value = T;
 
-    fn identity() -> Self::Output { T::min_value() }
+    fn identity() -> Self::Output {
+        T::min_value()
+    }
 
-    fn merge(left: T, right: T) -> T { left.max(right) }
+    fn merge(left: T, right: T) -> T {
+        left.max(right)
+    }
 
-    fn extract(node: Node<T>) -> T { node.max[0] }
+    fn extract(node: Node<T>) -> T {
+        node.max[0]
+    }
 }
 struct QuerySum<T>(std::marker::PhantomData<T>);
 impl<T: Elm> Dfs for QuerySum<T> {
@@ -185,11 +213,17 @@ impl<T: Elm> Dfs for QuerySum<T> {
     type Param = ();
     type Value = T;
 
-    fn identity() -> Self::Output { T::zero() }
+    fn identity() -> Self::Output {
+        T::zero()
+    }
 
-    fn merge(left: T, right: T) -> T { left + right }
+    fn merge(left: T, right: T) -> T {
+        left + right
+    }
 
-    fn extract(node: Node<T>) -> T { node.sum }
+    fn extract(node: Node<T>) -> T {
+        node.sum
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Copy, Eq)]
@@ -273,8 +307,12 @@ impl<T: Elm> Node<T> {
     }
 }
 
-fn contains(i: &Range<usize>, j: &Range<usize>) -> bool { i.start <= j.start && j.end <= i.end }
-fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool { i.end <= j.start || j.end <= i.start }
+fn contains(i: &Range<usize>, j: &Range<usize>) -> bool {
+    i.start <= j.start && j.end <= i.end
+}
+fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
+    i.end <= j.start || j.end <= i.start
+}
 
 pub trait Elm:
     Sized

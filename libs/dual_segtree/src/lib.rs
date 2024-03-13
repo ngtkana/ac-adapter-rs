@@ -12,9 +12,13 @@
 //! impl Ops for O {
 //!     type Value = [i32; 2];
 //!
-//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -> [i32; 2] { [a.min(b + c), b + d] }
+//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -> [i32; 2] {
+//!         [a.min(b + c), b + d]
+//!     }
 //!
-//!     fn identity() -> [i32; 2] { [0, 0] }
+//!     fn identity() -> [i32; 2] {
+//!         [0, 0]
+//!     }
 //! }
 //!
 //! // 構築
@@ -72,10 +76,14 @@ impl<O: Ops> DualSegtree<O> {
     }
 
     /// 空なら `true` を返します。
-    pub fn is_empty(&self) -> bool { self.table.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.table.is_empty()
+    }
 
     /// 管理している配列の長さを返します。
-    pub fn len(&self) -> usize { self.table.len() / 2 }
+    pub fn len(&self) -> usize {
+        self.table.len() / 2
+    }
 
     /// `range` に `x` を作用させます。（右作用）
     pub fn apply(&mut self, range: impl RangeBounds<usize>, x: &O::Value) {
@@ -115,7 +123,9 @@ impl<O: Ops> DualSegtree<O> {
     }
 
     /// `i` 番目の要素への参照を返します。
-    pub fn get(&mut self, i: usize) -> &O::Value { self.get_mut(i) }
+    pub fn get(&mut self, i: usize) -> &O::Value {
+        self.get_mut(i)
+    }
 
     /// `i` 番目の要素をコピーして返します。
     pub fn get_copied(&mut self, i: usize) -> O::Value
@@ -145,7 +155,9 @@ impl<O: Ops> DualSegtree<O> {
         self.table[self.len()..].to_vec()
     }
 
-    fn lg(&self) -> u32 { self.len().next_power_of_two().trailing_zeros() }
+    fn lg(&self) -> u32 {
+        self.len().next_power_of_two().trailing_zeros()
+    }
 
     fn thrust(&mut self, i: usize) {
         (1..=self.lg())
@@ -229,7 +241,9 @@ fn slice_end_index_overflow_fail() -> ! {
 // 変換
 ////////////////////////////////////////////////////////////////////////////////
 impl<O: Ops> From<Vec<O::Value>> for DualSegtree<O> {
-    fn from(v: Vec<O::Value>) -> Self { Self::new(v) }
+    fn from(v: Vec<O::Value>) -> Self {
+        Self::new(v)
+    }
 }
 impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
@@ -286,7 +300,9 @@ mod tests {
                 lhs.chars().chain(rhs.chars()).collect::<String>()
             }
 
-            fn identity() -> Self::Value { String::new() }
+            fn identity() -> Self::Value {
+                String::new()
+            }
         }
         let mut rng = StdRng::seed_from_u64(42);
         let new_value = |rng: &mut StdRng| rng.gen_range('a'..='z').to_string();

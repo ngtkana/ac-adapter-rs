@@ -38,7 +38,9 @@ impl Scc {
     /// let scc = Scc::new(1);
     /// assert!(!scc.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.g.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.g.is_empty()
+    }
 
     /// 管理しているグラフの頂点数を返します。
     ///
@@ -53,7 +55,9 @@ impl Scc {
     /// let scc = Scc::new(1);
     /// assert_eq!(scc.len(), 1);
     /// ```
-    pub fn len(&self) -> usize { self.g.len() }
+    pub fn len(&self) -> usize {
+        self.g.len()
+    }
 
     /// 頂点数 `n` の辺のない未ビルドのグラフを構築します。
     ///
@@ -108,7 +112,9 @@ impl Scc {
     /// assert_eq!(&scc.g()[13], &[18, 6]);
     /// assert_eq!(&scc.g()[6], &[]);
     /// ```
-    pub fn g(&self) -> &[Vec<usize>] { &self.g }
+    pub fn g(&self) -> &[Vec<usize>] {
+        &self.g
+    }
 
     /// 逆向きのグラフの隣接リストを返します。
     ///
@@ -123,7 +129,9 @@ impl Scc {
     /// assert_eq!(&scc.rg()[13], &[]);
     /// assert_eq!(&scc.rg()[6], &[13]);
     /// ```
-    pub fn rg(&self) -> &[Vec<usize>] { &self.rg }
+    pub fn rg(&self) -> &[Vec<usize>] {
+        &self.rg
+    }
 
     /// 【Require: ビルド済み】
     /// 商グラフにおけるトポロジカル順序に従って頂点番号の入ったスライスを返します。

@@ -5,7 +5,9 @@ pub trait Float: PartialEq + PartialOrd {
     fn float_is_nan(&self) -> bool;
 }
 impl Float for f64 {
-    fn float_is_nan(&self) -> bool { self.is_nan() }
+    fn float_is_nan(&self) -> bool {
+        self.is_nan()
+    }
 }
 
 #[derive(PartialEq, Debug, Default, Clone, Copy)]
@@ -18,7 +20,9 @@ impl<T: Float> NotNaN<T> {
         }
     }
 
-    pub fn into_inner(self) -> T { self.0 }
+    pub fn into_inner(self) -> T {
+        self.0
+    }
 }
 impl<T: Float> Eq for NotNaN<T> {}
 impl<T: Float> Ord for NotNaN<T> {
@@ -30,5 +34,7 @@ impl<T: Float> Ord for NotNaN<T> {
     }
 }
 impl<T: Float> PartialOrd for NotNaN<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }

@@ -50,13 +50,19 @@ where
     T: Clone + ops::Add<Output = T> + ops::Sub<Output = T>,
 {
     /// 空であることです。
-    pub fn is_empty(&self) -> bool { self.table.len() == 1 }
+    pub fn is_empty(&self) -> bool {
+        self.table.len() == 1
+    }
 
     /// 長さです。中身の長さは `self.len() + 1` です。
-    pub fn len(&self) -> usize { self.table.len() - 1 }
+    pub fn len(&self) -> usize {
+        self.table.len() - 1
+    }
 
     /// コンストラクタです。引数は零元です。
-    pub fn with_zero(x: T) -> Self { Self { table: vec![x] } }
+    pub fn with_zero(x: T) -> Self {
+        Self { table: vec![x] }
+    }
 
     /// 挿入します。
     pub fn push(&mut self, x: T) {

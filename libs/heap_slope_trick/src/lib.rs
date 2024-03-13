@@ -74,7 +74,9 @@ pub struct HeapSlopeTrick {
 }
 impl HeapSlopeTrick {
     /// 零関数 f(x) = 0
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// 一点評価 f(x)
     pub fn eval(&self, x: i64) -> i64 {
@@ -106,10 +108,14 @@ impl HeapSlopeTrick {
     }
 
     /// 最小値取得 min { f(x) | x in ]-∞, ∞[ }
-    pub fn get_minimum(&self) -> i64 { self.minimum }
+    pub fn get_minimum(&self) -> i64 {
+        self.minimum
+    }
 
     /// 定数関数加算 g(x) = f(x) + c
-    pub fn add_const(&mut self, c: i64) { self.minimum += c; }
+    pub fn add_const(&mut self, c: i64) {
+        self.minimum += c;
+    }
 
     /// 傾き +1 のカットオフ一次関数加算 g(x) = f(x) + max(x - a, 0)
     pub fn add_cutoff_diagonal(&mut self, a: i64) {
@@ -135,10 +141,14 @@ impl HeapSlopeTrick {
     }
 
     /// 左から累積最小値 g(x) = min { f(y) | y ∈ ]-∞, x] }
-    pub fn cumulative_min_from_left(&mut self) { self.large.clear(); }
+    pub fn cumulative_min_from_left(&mut self) {
+        self.large.clear();
+    }
 
     /// 右から累積最小値 g(x) = min { f(y) | y ∈ [x, ∞[ }
-    pub fn cumulative_min_from_right(&mut self) { self.small.clear(); }
+    pub fn cumulative_min_from_right(&mut self) {
+        self.small.clear();
+    }
 
     /// 平行移動 g(x) = f ( x - a )
     pub fn shift(&mut self, a: i64) {
@@ -154,10 +164,14 @@ impl HeapSlopeTrick {
     }
 
     /// 差分の最小値 min { f(x + 1) - f(x) | x ∈ ]-∞, ∞[ }
-    pub fn get_tilt_minimum(&self) -> i64 { -(self.small.len() as i64) }
+    pub fn get_tilt_minimum(&self) -> i64 {
+        -(self.small.len() as i64)
+    }
 
     /// 差分の最大値 max { f(x + 1) - f(x) | x ∈ ]-∞, ∞[ }
-    pub fn get_tilt_maximum(&self) -> i64 { self.large.len() as i64 }
+    pub fn get_tilt_maximum(&self) -> i64 {
+        self.large.len() as i64
+    }
 
     /// 関節点（二階差分が正である点）全体の列 { (x, f(x)) | f(x) + f(x) < f(x - 1) + f(x + 1) }
     pub fn articulation_points(&self) -> Vec<[i64; 2]> {
@@ -344,7 +358,9 @@ mod tests {
             ]
         }
 
-        fn get_minimum(&self) -> i64 { self.values.iter().copied().min().unwrap() }
+        fn get_minimum(&self) -> i64 {
+            self.values.iter().copied().min().unwrap()
+        }
 
         fn add_const(&mut self, c: i64) {
             self.values
@@ -360,11 +376,17 @@ mod tests {
             }
         }
 
-        fn add_abs(&mut self, a: i64) { self.add_fn(|x| (x - a).abs()); }
+        fn add_abs(&mut self, a: i64) {
+            self.add_fn(|x| (x - a).abs());
+        }
 
-        fn add_cutoff_diagonal(&mut self, a: i64) { self.add_fn(|x| (x - a).max(0)); }
+        fn add_cutoff_diagonal(&mut self, a: i64) {
+            self.add_fn(|x| (x - a).max(0));
+        }
 
-        fn add_cutoff_anti_diagonal(&mut self, a: i64) { self.add_fn(|x| (a - x).max(0)); }
+        fn add_cutoff_anti_diagonal(&mut self, a: i64) {
+            self.add_fn(|x| (a - x).max(0));
+        }
 
         fn cumulative_min_from_left(&mut self) {
             for i in 0..self.values.len() - 1 {

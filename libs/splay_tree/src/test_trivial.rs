@@ -12,9 +12,13 @@ impl LazyOps for I32Add {
     type Lazy = ();
     type Value = i32;
 
-    fn proj(&value: &Self::Value) -> Self::Acc { value }
+    fn proj(&value: &Self::Value) -> Self::Acc {
+        value
+    }
 
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { lhs + rhs }
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+        lhs + rhs
+    }
 
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
 
@@ -42,7 +46,9 @@ fn test_default() {
     assert!(splay.is_empty());
 }
 
-fn from_slice<T: Copy + Sized + Debug>(a: &[T]) -> SplayTree<Nop<T>> { a.iter().copied().collect() }
+fn from_slice<T: Copy + Sized + Debug>(a: &[T]) -> SplayTree<Nop<T>> {
+    a.iter().copied().collect()
+}
 
 #[test]
 fn test_eq() {

@@ -690,7 +690,9 @@ where
     }
 }
 impl<T: Value> Debug for Dinic<T> {
-    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result { write!(w, "{:?}", self.get_network()) }
+    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
+        write!(w, "{:?}", self.get_network())
+    }
 }
 
 /// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].

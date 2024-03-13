@@ -213,10 +213,14 @@ mod tests {
     }
 
     #[test]
-    fn test_rand_i32() { test_rand_impl::<i32>(5, 5, 1000, false, -100..=100); }
+    fn test_rand_i32() {
+        test_rand_impl::<i32>(5, 5, 1000, false, -100..=100);
+    }
 
     #[test]
-    fn test_rand_f64() { test_rand_impl::<f64>(5, 5, 1000, false, -100.0..=100.); }
+    fn test_rand_f64() {
+        test_rand_impl::<f64>(5, 5, 1000, false, -100.0..=100.);
+    }
 
     fn test_rand_impl<T: Value + Debug + Epsilon + SampleUniform>(
         h: usize,

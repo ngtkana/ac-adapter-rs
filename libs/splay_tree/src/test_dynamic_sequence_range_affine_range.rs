@@ -15,9 +15,13 @@ impl LazyOps for Affine {
     type Lazy = [i64; 2];
     type Value = i64;
 
-    fn proj(&value: &Self::Value) -> Self::Acc { (value, 1) }
+    fn proj(&value: &Self::Value) -> Self::Acc {
+        (value, 1)
+    }
 
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { ((lhs.0 + rhs.0) % P, lhs.1 + rhs.1) }
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+        ((lhs.0 + rhs.0) % P, lhs.1 + rhs.1)
+    }
 
     fn act_value(lazy: &Self::Lazy, value: &mut Self::Value) {
         *value = (lazy[0] * *value + lazy[1]) % P;

@@ -71,7 +71,9 @@ impl BitVec {
     /// let mut bv = BitVec::new(10);
     /// assert_eq!(&bv, &BitVec::from_01str("0000000000"));
     /// ```
-    pub fn new(len: usize) -> Self { Self::from_raw(vec![0; div_ceil(len, 64)], len) }
+    pub fn new(len: usize) -> Self {
+        Self::from_raw(vec![0; div_ceil(len, 64)], len)
+    }
 
     /// "01" 文字列から構築します。
     ///
@@ -108,7 +110,9 @@ impl BitVec {
     /// assert!(BitVec::new(0).is_empty());
     /// assert!(!BitVec::new(1).is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.vec.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.vec.is_empty()
+    }
 
     /// 長さを返します。
     ///
@@ -119,7 +123,9 @@ impl BitVec {
     /// let mut bv = BitVec::from_01str("010");
     /// assert_eq!(bv.len(), 3);
     /// ```
-    pub fn len(&self) -> usize { self.len }
+    pub fn len(&self) -> usize {
+        self.len
+    }
 
     /// 後ろに要素を追架します。
     ///
@@ -198,9 +204,13 @@ impl BitVec {
     }
 
     /// ビットを順に [`bool`] を返すイテレータを作ります。
-    pub fn iter(&self) -> Iter<'_> { Iter { bv: self, i: 0 } }
+    pub fn iter(&self) -> Iter<'_> {
+        Iter { bv: self, i: 0 }
+    }
 
-    fn from_raw(vec: Vec<u64>, len: usize) -> Self { Self { vec, len } }
+    fn from_raw(vec: Vec<u64>, len: usize) -> Self {
+        Self { vec, len }
+    }
 }
 
 /// ビットを順に [`bool`] を返すイテレータです。
@@ -223,7 +233,9 @@ impl<'a> Iterator for Iter<'a> {
 }
 
 impl Default for BitVec {
-    fn default() -> Self { Self::from_raw(Vec::new(), 0) }
+    fn default() -> Self {
+        Self::from_raw(Vec::new(), 0)
+    }
 }
 
 impl FromIterator<bool> for BitVec {
@@ -252,7 +264,9 @@ impl<'a> IntoIterator for &'a BitVec {
     type IntoIter = Iter<'a>;
     type Item = bool;
 
-    fn into_iter(self) -> Iter<'a> { self.iter() }
+    fn into_iter(self) -> Iter<'a> {
+        self.iter()
+    }
 }
 impl Debug for BitVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -260,7 +274,9 @@ impl Debug for BitVec {
     }
 }
 impl ToString for BitVec {
-    fn to_string(&self) -> String { self.format('1', '0') }
+    fn to_string(&self) -> String {
+        self.format('1', '0')
+    }
 }
 
 impl BitAndAssign<&Self> for BitVec {

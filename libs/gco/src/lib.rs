@@ -85,7 +85,9 @@ impl Gco {
     /// gco.unary(0, [0, 10]);
     /// gco.unary(1, [-40, 0]);
     /// ```
-    pub fn unary(&mut self, i: usize, cost: [i64; 2]) { self.unary.push(Unary { i, cost }); }
+    pub fn unary(&mut self, i: usize, cost: [i64; 2]) {
+        self.unary.push(Unary { i, cost });
+    }
 
     /// Add a binary term.
     ///
@@ -123,7 +125,9 @@ impl Gco {
     }
 
     /// Returns the minimum value and an argmin of $f$.
-    pub fn solve(&self) -> GcoResult { solve(self) }
+    pub fn solve(&self) -> GcoResult {
+        solve(self)
+    }
 }
 
 /// The minimum value and and an argmin of $f$.
@@ -217,14 +221,18 @@ struct Binary {
     cost: [[i64; 2]; 2],
 }
 
-fn index_by_array2(cost: [[i64; 2]; 2], index: [usize; 2]) -> i64 { cost[index[0]][index[1]] }
+fn index_by_array2(cost: [[i64; 2]; 2], index: [usize; 2]) -> i64 {
+    cost[index[0]][index[1]]
+}
 fn diff(cost: [[i64; 2]; 2], p: usize) -> i64 {
     assert!(is_submodular(cost));
     let mut index = [0, 0];
     index[p] = 1;
     index_by_array2(cost, index) - cost[0][0]
 }
-fn is_submodular(cost: [[i64; 2]; 2]) -> bool { cost[0][0] + cost[1][1] <= cost[0][1] + cost[1][0] }
+fn is_submodular(cost: [[i64; 2]; 2]) -> bool {
+    cost[0][0] + cost[1][1] <= cost[0][1] + cost[1][0]
+}
 
 #[cfg(test)]
 mod tests {

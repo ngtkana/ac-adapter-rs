@@ -17,9 +17,13 @@
 //! impl Ops for O {
 //!     type Value = i32;
 //!
-//!     fn op(x: &i32, y: &i32) -> i32 { x + y }
+//!     fn op(x: &i32, y: &i32) -> i32 {
+//!         x + y
+//!     }
 //!
-//!     fn identity() -> i32 { 0 }
+//!     fn identity() -> i32 {
+//!         0
+//!     }
 //! }
 //!
 //! // 本体の使い方
@@ -107,9 +111,13 @@ pub trait Ops {
 /// impl Ops for O {
 ///     type Value = i32;
 ///
-///     fn op(x: &i32, y: &i32) -> i32 { x + y }
+///     fn op(x: &i32, y: &i32) -> i32 {
+///         x + y
+///     }
 ///
-///     fn identity() -> i32 { 0 }
+///     fn identity() -> i32 {
+///         0
+///     }
 /// }
 /// ```
 pub struct Segtree<O: Ops> {
@@ -171,7 +179,9 @@ impl<O: Ops> Segtree<O> {
     /// let seg = Segtree::<O>::new(vec![0, 1, 2]);
     /// assert_eq!(seg.is_empty(), false);
     /// ```
-    pub fn is_empty(&self) -> bool { self.table.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.table.is_empty()
+    }
 
     /// 表している配列を返します。
     ///
@@ -192,7 +202,9 @@ impl<O: Ops> Segtree<O> {
     /// let seg = Segtree::<O>::new(vec![0, 1, 2]);
     /// assert_eq!(seg.len(), 3);
     /// ```
-    pub fn len(&self) -> usize { self.table.len() / 2 }
+    pub fn len(&self) -> usize {
+        self.table.len() / 2
+    }
 
     /// 与えられた範囲で畳み込みます。
     ///
@@ -435,7 +447,9 @@ impl<O: Ops> Segtree<O> {
     /// *seg.entry(0) = 10;
     /// assert_eq!(seg.fold(..), 13);
     /// ```
-    pub fn entry(&mut self, idx: usize) -> Entry<'_, O> { Entry { idx, seg: self } }
+    pub fn entry(&mut self, idx: usize) -> Entry<'_, O> {
+        Entry { idx, seg: self }
+    }
 
     /// 表している配列をスライスで返します。
     ///
@@ -458,7 +472,9 @@ impl<O: Ops> Segtree<O> {
     /// let seg = Segtree::<O>::new(vec![0, 1, 2]);
     /// assert_eq!(seg.as_slice(), &[0, 1, 2]);
     /// ```
-    pub fn as_slice(&self) -> &[O::Value] { self.as_ref() }
+    pub fn as_slice(&self) -> &[O::Value] {
+        self.as_ref()
+    }
 
     /// 表している配列を可変スライスで返します。
     ///
@@ -481,7 +497,9 @@ impl<O: Ops> Segtree<O> {
     /// let mut seg = Segtree::<O>::new(vec![0, 1, 2]);
     /// assert_eq!(seg.as_slice_mut(), &mut [0, 1, 2]);
     /// ```
-    pub fn as_slice_mut(&mut self) -> &mut [O::Value] { self.as_mut() }
+    pub fn as_slice_mut(&mut self) -> &mut [O::Value] {
+        self.as_mut()
+    }
 }
 ////////////////////////////////////////////////////////////////////////////////
 // 要素アクセス
@@ -489,7 +507,9 @@ impl<O: Ops> Segtree<O> {
 impl<O: Ops, Idx: SliceIndex<[O::Value], Output = O::Value>> Index<Idx> for Segtree<O> {
     type Output = O::Value;
 
-    fn index(&self, index: Idx) -> &Self::Output { &self.as_slice()[index] }
+    fn index(&self, index: Idx) -> &Self::Output {
+        &self.as_slice()[index]
+    }
 }
 /// [`Segtree`] のエントリー型です。
 ///
@@ -515,17 +535,23 @@ impl<'a, O: Ops> Drop for Entry<'a, O> {
 impl<O: Ops> Deref for Entry<'_, O> {
     type Target = O::Value;
 
-    fn deref(&self) -> &Self::Target { &self.seg.as_slice()[self.idx] }
+    fn deref(&self) -> &Self::Target {
+        &self.seg.as_slice()[self.idx]
+    }
 }
 impl<O: Ops> DerefMut for Entry<'_, O> {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.seg.as_slice_mut()[self.idx] }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.seg.as_slice_mut()[self.idx]
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
 // 変換
 ////////////////////////////////////////////////////////////////////////////////
 impl<O: Ops> From<Vec<O::Value>> for Segtree<O> {
-    fn from(v: Vec<O::Value>) -> Self { Self::new(v) }
+    fn from(v: Vec<O::Value>) -> Self {
+        Self::new(v)
+    }
 }
 impl<O: Ops> FromIterator<O::Value> for Segtree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
@@ -543,7 +569,9 @@ impl<O: Ops> FromIterator<O::Value> for Segtree<O> {
     }
 }
 impl<O: Ops> AsRef<[O::Value]> for Segtree<O> {
-    fn as_ref(&self) -> &[O::Value] { &self.table[self.len()..] }
+    fn as_ref(&self) -> &[O::Value] {
+        &self.table[self.len()..]
+    }
 }
 impl<O: Ops> AsMut<[O::Value]> for Segtree<O> {
     fn as_mut(&mut self) -> &mut [O::Value] {
@@ -556,7 +584,9 @@ impl<O: Ops> AsMut<[O::Value]> for Segtree<O> {
 // フォーマット
 ////////////////////////////////////////////////////////////////////////////////
 impl<O: Ops> Debug for Segtree<O> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result { self.as_slice().fmt(f) }
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.as_slice().fmt(f)
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -618,9 +648,13 @@ mod tests {
         impl Ops for O {
             type Value = i32;
 
-            fn op(lhs: &i32, rhs: &i32) -> i32 { lhs + rhs }
+            fn op(lhs: &i32, rhs: &i32) -> i32 {
+                lhs + rhs
+            }
 
-            fn identity() -> i32 { 0 }
+            fn identity() -> i32 {
+                0
+            }
         }
         let a = vec![1, 2, 4, 8, 16];
         let seg = Segtree::<O>::new(a.clone());
@@ -673,7 +707,9 @@ mod tests {
                 lhs.chars().chain(rhs.chars()).collect()
             }
 
-            fn identity() -> Self::Value { String::new() }
+            fn identity() -> Self::Value {
+                String::new()
+            }
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -720,7 +756,9 @@ mod tests {
                 lhs.chars().chain(rhs.chars()).collect()
             }
 
-            fn identity() -> Self::Value { String::new() }
+            fn identity() -> Self::Value {
+                String::new()
+            }
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -760,7 +798,9 @@ mod tests {
                 lhs.chars().chain(rhs.chars()).collect()
             }
 
-            fn identity() -> Self::Value { String::new() }
+            fn identity() -> Self::Value {
+                String::new()
+            }
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {

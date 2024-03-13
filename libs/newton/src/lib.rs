@@ -36,7 +36,9 @@ mod tests {
 
     #[test]
     fn test_sqrt() {
-        fn square(x: u64) -> u64 { x * x }
+        fn square(x: u64) -> u64 {
+            x * x
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for y in 0..100 {
             let x = sqrt(y);
@@ -73,7 +75,9 @@ mod tests {
 
     #[test]
     fn test_triangular_root() {
-        fn triangular(x: u64) -> u64 { x * (x + 1) / 2 }
+        fn triangular(x: u64) -> u64 {
+            x * (x + 1) / 2
+        }
         let mut rng = StdRng::seed_from_u64(42);
         for y in 0..100 {
             let x = triangular_root(y);

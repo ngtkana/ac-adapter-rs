@@ -47,7 +47,9 @@ pub trait Int:
     /// Calculates the least nonnegative remainder of `self (mod rhs)`.
     fn rem_euclid(self, rhs: Self) -> Self;
     /// Returns `true` if and only if `self` divides `n`.
-    fn divides(self, n: Self) -> bool { n.rem_euclid(self) == Self::zero() }
+    fn divides(self, n: Self) -> bool {
+        n.rem_euclid(self) == Self::zero()
+    }
 }
 
 /// Abstraction of unsigned integers.

@@ -136,16 +136,24 @@ where
     }
 
     /// 現在の内部状態の始点を返します。
-    pub fn start(&self) -> usize { self.center - self.stack.len() }
+    pub fn start(&self) -> usize {
+        self.center - self.stack.len()
+    }
 
     /// 現在の内部状態の終点を返します。
-    pub fn end(&self) -> usize { self.end }
+    pub fn end(&self) -> usize {
+        self.end
+    }
 
     /// 現在の内部状態の始点・終点を `start..end` の形で返します。
-    pub fn current_index_range(&self) -> Range<usize> { self.start()..self.end() }
+    pub fn current_index_range(&self) -> Range<usize> {
+        self.start()..self.end()
+    }
 
     /// 現在の内部状態の window をスライスの形で返します。
-    pub fn current_window(&self) -> &[T] { &self.v.borrow()[self.current_index_range()] }
+    pub fn current_window(&self) -> &[T] {
+        &self.v.borrow()[self.current_index_range()]
+    }
 
     /// 現在の内部状態の window における aggregation を返します。
     pub fn current_fold(&self) -> Option<T> {

@@ -143,7 +143,9 @@ impl WaveletMatrix {
     /// let wm = WaveletMatrix::from_iter(vec![0]);
     /// assert!(!wm.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.table.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.table.is_empty()
+    }
 
     /// 配列の長さを返します。
     ///
@@ -157,7 +159,9 @@ impl WaveletMatrix {
     /// assert_eq!(WaveletMatrix::from_iter(vec![42]).len(), 1);
     /// assert_eq!(WaveletMatrix::from_iter(vec![42, 45]).len(), 2);
     /// ```
-    pub fn len(&self) -> usize { self.table.first().map_or(0, StaticBitVec::len) }
+    pub fn len(&self) -> usize {
+        self.table.first().map_or(0, StaticBitVec::len)
+    }
 
     /// 新しく構築するとともに、途中経過の配列をすべてベクターに詰めて返します。
     ///
@@ -364,7 +368,9 @@ impl WaveletMatrix {
         Spans { stack, target }
     }
 
-    fn lim(&self) -> usize { 1 << self.table.len() }
+    fn lim(&self) -> usize {
+        1 << self.table.len()
+    }
 
     fn root(&self, index: Range<usize>) -> SpanInNode<'_> {
         SpanInNode {
@@ -441,10 +447,14 @@ impl FromIterator<bool> for StaticBitVec {
 }
 impl StaticBitVec {
     /// `a.is_empty()`
-    pub fn is_empty(&self) -> bool { self.len == 0 }
+    pub fn is_empty(&self) -> bool {
+        self.len == 0
+    }
 
     /// `a.len()`
-    pub fn len(&self) -> usize { self.len }
+    pub fn len(&self) -> usize {
+        self.len
+    }
 
     /// `a[i]`
     pub fn access(&self, i: usize) -> bool {
@@ -582,7 +592,9 @@ impl<'a> SpanInNode<'a> {
     }
 }
 
-fn midpoint(range: &Range<usize>) -> usize { range.start + (range.end - range.start) / 2 }
+fn midpoint(range: &Range<usize>) -> usize {
+    range.start + (range.end - range.start) / 2
+}
 
 fn is_disjoint_with(lhs: &Range<usize>, rhs: &Range<usize>) -> bool {
     lhs.end <= rhs.start || rhs.end <= lhs.start

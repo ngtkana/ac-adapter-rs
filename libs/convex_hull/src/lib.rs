@@ -118,13 +118,19 @@ mod tests {
     use std::iter;
 
     #[test]
-    fn test_convex_hull_small() { test_convex_hull_base(4, 10, 2000); }
+    fn test_convex_hull_small() {
+        test_convex_hull_base(4, 10, 2000);
+    }
 
     #[test]
-    fn test_convex_hull_middle() { test_convex_hull_base(100, 100, 100); }
+    fn test_convex_hull_middle() {
+        test_convex_hull_base(100, 100, 100);
+    }
 
     #[test]
-    fn test_convex_hull_large() { test_convex_hull_base(1_000_000_000, 400, 20); }
+    fn test_convex_hull_large() {
+        test_convex_hull_base(1_000_000_000, 400, 20);
+    }
 
     fn test_convex_hull_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         let mut rng = StdRng::seed_from_u64(42);
@@ -147,13 +153,19 @@ mod tests {
     }
 
     #[test]
-    fn test_caliper_small() { test_caliper_base(4, 10, 2000); }
+    fn test_caliper_small() {
+        test_caliper_base(4, 10, 2000);
+    }
 
     #[test]
-    fn test_caliper_middle() { test_caliper_base(100, 100, 100); }
+    fn test_caliper_middle() {
+        test_caliper_base(100, 100, 100);
+    }
 
     #[test]
-    fn test_caliper_large() { test_caliper_base(1_000_000_000, 400, 20); }
+    fn test_caliper_large() {
+        test_caliper_base(1_000_000_000, 400, 20);
+    }
 
     fn test_caliper_base(coord_max: i64, vertex_number: usize, iteration: u32) {
         fn brute(a: &[[i64; 2]]) -> i64 {

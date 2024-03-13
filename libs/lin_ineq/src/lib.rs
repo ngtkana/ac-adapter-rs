@@ -159,7 +159,9 @@ impl<T: Signed> Interval<T> {
     /// assert_eq!(Interval([-10, 10]).contains(10), true);
     /// assert_eq!(Interval([-10, 10]).contains(20), false);
     /// ```
-    pub fn contains(self, x: T) -> bool { (self.0[0]..=self.0[1]).contains(&x) }
+    pub fn contains(self, x: T) -> bool {
+        (self.0[0]..=self.0[1]).contains(&x)
+    }
 
     /// 区間の交差を計算します。
     ///
@@ -187,7 +189,9 @@ impl<T: Signed> Interval<T> {
     /// # use std::i64::{MIN, MAX};
     /// assert_eq!(Interval::<i64>::full().0, [MIN, MAX]);
     /// ```
-    pub fn full() -> Self { Self([T::MIN, T::MAX]) }
+    pub fn full() -> Self {
+        Self([T::MIN, T::MAX])
+    }
 
     /// 標準形の空区間を返します。具体的には、`[MAX, MIN]` を返します。
     ///
@@ -198,7 +202,9 @@ impl<T: Signed> Interval<T> {
     /// # use std::i64::{MIN, MAX};
     /// assert_eq!(Interval::<i64>::empty().0, [MAX, MIN]);
     /// ```
-    pub fn empty() -> Self { Self([T::MAX, T::MIN]) }
+    pub fn empty() -> Self {
+        Self([T::MAX, T::MIN])
+    }
 
     /// 空区間であるかどうかを判定します。
     ///
@@ -210,7 +216,9 @@ impl<T: Signed> Interval<T> {
     /// assert_eq!(Interval([0, 0]).is_empty(), false);
     /// assert_eq!(Interval([0, -10]).is_empty(), true);
     /// ```
-    pub fn is_empty(self) -> bool { self.0[0] > self.0[1] }
+    pub fn is_empty(self) -> bool {
+        self.0[0] > self.0[1]
+    }
 
     /// 空区間ならば標準形を、そうでないならばそのまま返します。
     ///
@@ -235,33 +243,45 @@ impl<T: Signed> Mul for Interval<T> {
     type Output = Self;
 
     /// [`intersection()`](Self::intersection) を呼び出します。
-    fn mul(self, rhs: Self) -> Self::Output { self.intersection(rhs) }
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.intersection(rhs)
+    }
 }
 impl<'a, T: Signed> Mul<&'a Self> for Interval<T> {
     type Output = Self;
 
     /// [`intersection()`](Self::intersection) を呼び出します。
-    fn mul(self, rhs: &'a Self) -> Self::Output { self.intersection(*rhs) }
+    fn mul(self, rhs: &'a Self) -> Self::Output {
+        self.intersection(*rhs)
+    }
 }
 impl<'a, T: Signed> Mul<Interval<T>> for &'a Interval<T> {
     type Output = Interval<T>;
 
     /// [`intersection()`](Interval::intersection) を呼び出します。
-    fn mul(self, rhs: Interval<T>) -> Self::Output { self.intersection(rhs) }
+    fn mul(self, rhs: Interval<T>) -> Self::Output {
+        self.intersection(rhs)
+    }
 }
 impl<'a, T: Signed> Mul for &'a Interval<T> {
     type Output = Interval<T>;
 
     /// [`intersection()`](Interval::intersection) を呼び出します。
-    fn mul(self, rhs: Self) -> Self::Output { self.intersection(*rhs) }
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.intersection(*rhs)
+    }
 }
 impl<T: Signed> Product for Interval<T> {
     /// [`intersection()`](Self::intersection) で畳み込みます。
-    fn product<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::full(), Self::mul) }
+    fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::full(), Self::mul)
+    }
 }
 impl<'a, T: 'a + Signed> Product<&'a Self> for Interval<T> {
     /// [`intersection()`](Self::intersection) で畳み込みます。
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.fold(Self::full(), Self::mul) }
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.fold(Self::full(), Self::mul)
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -389,7 +409,9 @@ mod tests {
 
     #[test]
     fn test_debug() {
-        fn debug(x: Interval<i64>) -> String { format!("{:?}", x) }
+        fn debug(x: Interval<i64>) -> String {
+            format!("{:?}", x)
+        }
         assert_eq!(debug(Interval([0, 2])).as_str(), "Finite(0, 2)");
         assert_eq!(debug(Interval([0, MAX])).as_str(), "Ge(0)");
         assert_eq!(debug(Interval([MIN, 2])).as_str(), "Le(2)");

@@ -85,24 +85,36 @@ impl Hld {
     }
 
     /// 親を消したグラフを返します。
-    pub fn child(&self) -> &[Vec<usize>] { &self.child }
+    pub fn child(&self) -> &[Vec<usize>] {
+        &self.child
+    }
 
     /// 頂点番号から部分木のサイズを引くテーブルを返します。
-    pub fn size(&self) -> &[usize] { &self.size }
+    pub fn size(&self) -> &[usize] {
+        &self.size
+    }
 
     /// 頂点番号から訪問時刻を引くテーブルを返します。
-    pub fn time(&self) -> &[usize] { &self.time }
+    pub fn time(&self) -> &[usize] {
+        &self.time
+    }
 
     /// 訪問時刻から頂点番号を引くテーブルを返します。
-    pub fn ord(&self) -> &[usize] { &self.ord }
+    pub fn ord(&self) -> &[usize] {
+        &self.ord
+    }
 
     /// 頂点番号から、親の頂点番号を引くテーブルを返します。
     ///
     /// ただし、根の親は自分自身です。
-    pub fn parent(&self) -> &[usize] { &self.parent }
+    pub fn parent(&self) -> &[usize] {
+        &self.parent
+    }
 
     /// 頂点番号から、Heavy path の先頭の頂点番号を引くテーブルを返します。
-    pub fn head(&self) -> &[usize] { &self.head }
+    pub fn head(&self) -> &[usize] {
+        &self.head
+    }
 
     /// 頂点 `u`, `v` が隣接頂点であれば `true`、さもなくば `false` を返します。
     ///
@@ -224,7 +236,9 @@ impl Hld {
     /// assert_eq!(hld.is_ancestor_of(1, 3), false);
     /// assert_eq!(hld.is_ancestor_of(3, 0), false);
     /// ```
-    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool { self.lca(p, u) == p }
+    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool {
+        self.lca(p, u) == p
+    }
 
     /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
     ///   `true`、さもなくば `false` を返します。

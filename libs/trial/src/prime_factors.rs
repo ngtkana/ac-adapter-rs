@@ -121,7 +121,9 @@ mod tests {
     #[test_case(6 => vec![2, 3])]
     #[test_case(12 => vec![2, 3])]
     #[test_case(36 => vec![2, 3])]
-    fn test_factors_unique(n: u32) -> Vec<u32> { prime_factors(n).collect() }
+    fn test_factors_unique(n: u32) -> Vec<u32> {
+        prime_factors(n).collect()
+    }
 
     #[test_case(1 => Vec::<(u32, usize)>::new())]
     #[test_case(2 => vec![(2, 1)])]
@@ -131,5 +133,7 @@ mod tests {
     #[test_case(6 => vec![(2, 1), (3, 1)])]
     #[test_case(12 => vec![(2, 2), (3, 1)])]
     #[test_case(36 => vec![(2, 2), (3, 2)])]
-    fn test_factors(n: u32) -> Vec<(u32, usize)> { prime_factors_rle(n).collect() }
+    fn test_factors(n: u32) -> Vec<(u32, usize)> {
+        prime_factors_rle(n).collect()
+    }
 }

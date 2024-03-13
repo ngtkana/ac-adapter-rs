@@ -48,7 +48,9 @@ impl Float for f32 {
     const ONE: Self = 1.0;
     const ZERO: Self = 0.0;
 
-    fn sqrt(self) -> Self { self.sqrt() }
+    fn sqrt(self) -> Self {
+        self.sqrt()
+    }
 }
 impl Float for f64 {
     const INFINITY: Self = std::f64::INFINITY;
@@ -56,7 +58,9 @@ impl Float for f64 {
     const ONE: Self = 1.0;
     const ZERO: Self = 0.0;
 
-    fn sqrt(self) -> Self { self.sqrt() }
+    fn sqrt(self) -> Self {
+        self.sqrt()
+    }
 }
 
 /// Run an exponential search on floating point numbers.

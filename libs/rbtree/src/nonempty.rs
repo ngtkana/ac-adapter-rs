@@ -331,7 +331,9 @@ mod tests {
         }
     }
 
-    fn nil() -> Nonempty<()> { Nonempty::Nil(Nil(())) }
+    fn nil() -> Nonempty<()> {
+        Nonempty::Nil(Nil(()))
+    }
     fn n2(
         x: impl Fn() -> Nonempty<()>,
         y: impl Fn() -> Nonempty<()>,
@@ -364,17 +366,27 @@ mod tests {
     ) -> impl Fn() -> Nonempty<()> {
         n2(n2(x, y, height), n2(z, w, height), height)
     }
-    fn n2nil() -> Nonempty<()> { n2(nil, nil, 1)() }
-    fn l3nil() -> Nonempty<()> { l3(nil, nil, nil, 1)() }
-    fn r3nil() -> Nonempty<()> { r3(nil, nil, nil, 1)() }
-    fn n4nil() -> Nonempty<()> { n4(nil, nil, nil, nil, 1)() }
+    fn n2nil() -> Nonempty<()> {
+        n2(nil, nil, 1)()
+    }
+    fn l3nil() -> Nonempty<()> {
+        l3(nil, nil, nil, 1)()
+    }
+    fn r3nil() -> Nonempty<()> {
+        r3(nil, nil, nil, 1)()
+    }
+    fn n4nil() -> Nonempty<()> {
+        n4(nil, nil, nil, nil, 1)()
+    }
 
     #[test_case(nil => "()".to_owned())]
     #[test_case(n2nil => "(()1,2())".to_owned())]
     #[test_case(l3nil => "((()1,2())1,3())".to_owned())]
     #[test_case(r3nil => "(()1,3(()1,2()))".to_owned())]
     #[test_case(n4nil => "((()1,2())1,4(()1,2()))".to_owned())]
-    fn test_to_structure_string(x: impl Fn() -> Nonempty<()>) -> String { to_structure_sring(&x()) }
+    fn test_to_structure_string(x: impl Fn() -> Nonempty<()>) -> String {
+        to_structure_sring(&x())
+    }
 
     #[test_case(nil, nil => to_structure_sring(&n2nil()))]
     #[test_case(nil, n2nil => to_structure_sring(&l3nil()))]

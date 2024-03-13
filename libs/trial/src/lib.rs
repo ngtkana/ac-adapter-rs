@@ -50,7 +50,9 @@ pub trait Value:
     /// Increment `self`.
     fn increment(&mut self);
     /// Returns `true` if and only if `self` divides `n`.
-    fn divides(self, n: Self) -> bool { n % self == Self::zero() }
+    fn divides(self, n: Self) -> bool {
+        n % self == Self::zero()
+    }
 }
 
 macro_rules! impl_value {
