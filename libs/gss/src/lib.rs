@@ -285,7 +285,9 @@ mod tests {
 
     #[test_case(3, 0 => 2)]
     #[test_case(0, 3 => 1)]
-    fn test_near_mid(x: u32, y: u32) -> u32 { x.golden_sect(y) }
+    fn test_near_mid(x: u32, y: u32) -> u32 {
+        x.golden_sect(y)
+    }
 
     ////////////////////////////////////////////////////////////////////////////////
     // 内部実装

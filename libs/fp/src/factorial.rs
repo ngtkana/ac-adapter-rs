@@ -54,7 +54,9 @@ impl<const P: u64> Factorial<P> {
     /// assert_eq!(fact.fact(2).value(), 2);
     /// assert_eq!(fact.fact(3).value(), 6);
     /// ```
-    pub fn fact(&self, n: usize) -> Fp<P> { self.fact[n] }
+    pub fn fact(&self, n: usize) -> Fp<P> {
+        self.fact[n]
+    }
 
     /// The inverse of the factorial $n!$
     /// # Requirements
@@ -70,7 +72,9 @@ impl<const P: u64> Factorial<P> {
     /// assert_eq!(fact.inv_fact(2).value(), 499122177);
     /// assert_eq!(fact.inv_fact(3).value(), 166374059);
     /// ```
-    pub fn inv_fact(&self, n: usize) -> Fp<P> { self.inv_fact[n] }
+    pub fn inv_fact(&self, n: usize) -> Fp<P> {
+        self.inv_fact[n]
+    }
 
     /// The permutation $P(n, k)$
     /// # Requirements
@@ -83,7 +87,9 @@ impl<const P: u64> Factorial<P> {
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.perm(8, 3).value(), 336);
     /// ```
-    pub fn perm(&self, n: usize, k: usize) -> Fp<P> { self.fact[n] * self.inv_fact[n - k] }
+    pub fn perm(&self, n: usize, k: usize) -> Fp<P> {
+        self.fact[n] * self.inv_fact[n - k]
+    }
 
     /// The binominal coefficient $n \choose k$
     /// # Requirements
@@ -111,7 +117,9 @@ impl<const P: u64> Factorial<P> {
     /// let fact = Factorial::<P>::new(10);
     /// assert_eq!(fact.binom(8, 3).value(), 56);
     /// ```
-    pub fn binom(&self, n: usize, k: usize) -> Fp<P> { self.comb(n, k) }
+    pub fn binom(&self, n: usize, k: usize) -> Fp<P> {
+        self.comb(n, k)
+    }
 
     /// The binominal coefficient $n \choose k$, but zero if $k < 0$ or $k > n$
     /// # Requirements
@@ -152,7 +160,9 @@ impl<const P: u64> Factorial<P> {
 impl<const P: u64> Index<usize> for Factorial<P> {
     type Output = Fp<P>;
 
-    fn index(&self, index: usize) -> &Self::Output { &self.fact[index] }
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.fact[index]
+    }
 }
 
 #[cfg(test)]

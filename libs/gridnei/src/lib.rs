@@ -113,7 +113,9 @@ macro_rules! grid_iter {
                 Self::new(f(i as isize, j as isize), h, w)
             }
 
-            pub fn encode(self) -> $crate::Encode<Self> { $crate::Encode::new(self) }
+            pub fn encode(self) -> $crate::Encode<Self> {
+                $crate::Encode::new(self)
+            }
         }
         impl Iterator for $iter {
             type Item = (usize, usize);
@@ -128,7 +130,9 @@ macro_rules! grid_iter {
                 None
             }
 
-            fn size_hint(&self) -> (usize, Option<usize>) { (0, Some($len)) }
+            fn size_hint(&self) -> (usize, Option<usize>) {
+                (0, Some($len))
+            }
         }
         impl DoubleEndedIterator for $iter {
             fn next_back(&mut self) -> Option<Self::Item> {
@@ -146,7 +150,9 @@ macro_rules! grid_iter {
 
             const LEN: usize = $len;
 
-            fn w(&self) -> usize { self.w as usize }
+            fn w(&self) -> usize {
+                self.w as usize
+            }
 
             fn from_fn<F>(i: usize, j: usize, h: usize, w: usize, f: F) -> Self
             where
@@ -196,7 +202,9 @@ pub trait GridIterator: DoubleEndedIterator<Item = (usize, usize)> {
 /// ```
 pub struct Encode<I>(I);
 impl<I: GridIterator> Encode<I> {
-    pub fn new(i: I) -> Self { Self(i) }
+    pub fn new(i: I) -> Self {
+        Self(i)
+    }
 
     pub fn from_fn<F>(x: usize, h: usize, w: usize, f: F) -> Self
     where
@@ -208,9 +216,13 @@ impl<I: GridIterator> Encode<I> {
 impl<I: GridIterator> Iterator for Encode<I> {
     type Item = usize;
 
-    fn next(&mut self) -> Option<Self::Item> { self.0.next().map(move |(i, j)| i * self.0.w() + j) }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.0.next().map(move |(i, j)| i * self.0.w() + j)
+    }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { (0, Some(I::LEN)) }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (0, Some(I::LEN))
+    }
 }
 impl<I: GridIterator> DoubleEndedIterator for Encode<I> {
     fn next_back(&mut self) -> Option<Self::Item> {

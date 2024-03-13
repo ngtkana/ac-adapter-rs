@@ -103,9 +103,13 @@ impl<O: Ops> LazyOps for NoLazy<O> {
     type Lazy = ();
     type Value = O::Value;
 
-    fn proj(value: &Self::Value) -> Self::Acc { O::proj(value) }
+    fn proj(value: &Self::Value) -> Self::Acc {
+        O::proj(value)
+    }
 
-    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc { O::op(lhs, rhs) }
+    fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc {
+        O::op(lhs, rhs)
+    }
 
     fn act_value(&(): &Self::Lazy, _value: &mut Self::Value) {}
 
@@ -153,7 +157,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = SplayTree::<Nop<()>>::new();
     /// assert!(splay.is_empty());
     /// ```
-    pub fn new() -> Self { Self(Cell::new(null_mut())) }
+    pub fn new() -> Self {
+        Self(Cell::new(null_mut()))
+    }
 
     /// 空ならば `true` を返します。
     ///
@@ -164,7 +170,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = SplayTree::<Nop<()>>::new();
     /// assert!(splay.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.0.get().is_null() }
+    pub fn is_empty(&self) -> bool {
+        self.0.get().is_null()
+    }
 
     /// 要素数を返します。
     ///
@@ -182,7 +190,9 @@ impl<O: LazyOps> SplayTree<O> {
     /// let splay = repeat(()).take(3).collect::<SplayTree<Nop<()>>>();
     /// assert_eq!(splay.len(), 3);
     /// ```
-    pub fn len(&self) -> usize { unsafe { self.0.get().as_ref() }.map_or(0, |root| root.len) }
+    pub fn len(&self) -> usize {
+        unsafe { self.0.get().as_ref() }.map_or(0, |root| root.len)
+    }
 
     /// 指定した場所に挿入します。
     ///
@@ -296,9 +306,13 @@ impl<O: LazyOps> SplayTree<O> {
     ///     type Acc = i32;
     ///     type Value = i32;
     ///
-    ///     fn proj(&x: &i32) -> i32 { x }
+    ///     fn proj(&x: &i32) -> i32 {
+    ///         x
+    ///     }
     ///
-    ///     fn op(&x: &i32, &y: &i32) -> i32 { x + y }
+    ///     fn op(&x: &i32, &y: &i32) -> i32 {
+    ///         x + y
+    ///     }
     /// }
     /// let splay = (10..15).collect::<SplayTree<NoLazy<Sum>>>();
     /// assert_eq!(splay.fold(2..), Some(12 + 13 + 14));
@@ -338,11 +352,15 @@ impl<O: LazyOps> SplayTree<O> {
     ///
     ///     fn op(&(): &(), &(): &()) {}
     ///
-    ///     fn act_value(&lazy: &Self::Lazy, value: &mut Self::Value) { *value = lazy; }
+    ///     fn act_value(&lazy: &Self::Lazy, value: &mut Self::Value) {
+    ///         *value = lazy;
+    ///     }
     ///
     ///     fn act_acc(&_lazy: &Self::Lazy, &mut (): &mut Self::Acc) {}
     ///
-    ///     fn compose(&x: &Self::Lazy, y: &mut Self::Lazy) { *y = x; }
+    ///     fn compose(&x: &Self::Lazy, y: &mut Self::Lazy) {
+    ///         *y = x;
+    ///     }
     /// }
     ///
     /// let mut splay = (10..15).collect::<SplayTree<Update>>();
@@ -543,7 +561,9 @@ impl<'a, O: LazyOps> IntoIterator for &'a SplayTree<O> {
     type IntoIter = Iter<'a, O>;
     type Item = &'a O::Value;
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 
 impl<O: LazyOps> Debug for SplayTree<O> {
@@ -552,10 +572,14 @@ impl<O: LazyOps> Debug for SplayTree<O> {
     }
 }
 impl<O: LazyOps> Clone for SplayTree<O> {
-    fn clone(&self) -> Self { self.iter().cloned().collect() }
+    fn clone(&self) -> Self {
+        self.iter().cloned().collect()
+    }
 }
 impl<O: LazyOps> Default for SplayTree<O> {
-    fn default() -> Self { Self(Cell::new(null_mut())) }
+    fn default() -> Self {
+        Self(Cell::new(null_mut()))
+    }
 }
 impl<O: LazyOps> PartialEq for SplayTree<O>
 where
@@ -598,7 +622,9 @@ impl<O: LazyOps> Hash for SplayTree<O>
 where
     O::Value: Hash,
 {
-    fn hash<H: std::hash::Hasher>(&self, state: &mut H) { self.iter().for_each(|x| x.hash(state)) }
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        self.iter().for_each(|x| x.hash(state))
+    }
 }
 
 impl<O: LazyOps> Index<usize> for SplayTree<O> {
@@ -648,14 +674,20 @@ pub struct Entry<'a, O: LazyOps>(&'a mut SplayTree<O>);
 impl<O: LazyOps> Deref for Entry<'_, O> {
     type Target = O::Value;
 
-    fn deref(&self) -> &Self::Target { &unsafe { &*self.0 .0.get() }.value }
+    fn deref(&self) -> &Self::Target {
+        &unsafe { &*self.0 .0.get() }.value
+    }
 }
 impl<O: LazyOps> DerefMut for Entry<'_, O> {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut unsafe { &mut *self.0 .0.get() }.value }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut unsafe { &mut *self.0 .0.get() }.value
+    }
 }
 
 impl<O: LazyOps> Drop for SplayTree<O> {
-    fn drop(&mut self) { deep_free(self.0.get()); }
+    fn drop(&mut self) {
+        deep_free(self.0.get());
+    }
 }
 fn into_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     let start = match range.start_bound() {

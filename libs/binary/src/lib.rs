@@ -129,7 +129,9 @@ mod tests {
     use super::*;
     use test_case::test_case;
 
-    fn cat(s: &str, t: &str) -> String { s.chars().chain(t.chars()).collect() }
+    fn cat(s: &str, t: &str) -> String {
+        s.chars().chain(t.chars()).collect()
+    }
 
     #[test_case(0 => "x".to_owned())]
     #[test_case(1 => "abx".to_owned())]

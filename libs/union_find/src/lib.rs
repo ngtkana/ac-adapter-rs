@@ -88,7 +88,9 @@ impl Op for () {
 impl<T: Op, U: Op> Op for (T, U) {
     type Value = (T::Value, U::Value);
 
-    fn singleton() -> Self::Value { (T::singleton(), U::singleton()) }
+    fn singleton() -> Self::Value {
+        (T::singleton(), U::singleton())
+    }
 
     fn add_edge(x: &mut Self::Value) {
         T::add_edge(&mut x.0);
@@ -103,7 +105,9 @@ impl<T: Op, U: Op> Op for (T, U) {
 impl<T: Op, U: Op, V: Op> Op for (T, U, V) {
     type Value = (T::Value, U::Value, V::Value);
 
-    fn singleton() -> Self::Value { (T::singleton(), U::singleton(), V::singleton()) }
+    fn singleton() -> Self::Value {
+        (T::singleton(), U::singleton(), V::singleton())
+    }
 
     fn add_edge(x: &mut Self::Value) {
         T::add_edge(&mut x.0);
@@ -122,33 +126,49 @@ pub enum EdgeCount {}
 impl Op for EdgeCount {
     type Value = usize;
 
-    fn singleton() -> Self::Value { 0 }
+    fn singleton() -> Self::Value {
+        0
+    }
 
-    fn add_edge(x: &mut Self::Value) { *x += 1; }
+    fn add_edge(x: &mut Self::Value) {
+        *x += 1;
+    }
 
-    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent += child + 1 }
+    fn graft(parent: &mut Self::Value, child: Self::Value) {
+        *parent += child + 1
+    }
 }
 /// 頂点の個数
 pub enum VertexCount {}
 impl Op for VertexCount {
     type Value = usize;
 
-    fn singleton() -> Self::Value { 1 }
+    fn singleton() -> Self::Value {
+        1
+    }
 
     fn add_edge(_x: &mut Self::Value) {}
 
-    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent += child }
+    fn graft(parent: &mut Self::Value, child: Self::Value) {
+        *parent += child
+    }
 }
 /// サイクルがあるとき、`true`
 pub enum HasCycle {}
 impl Op for HasCycle {
     type Value = bool;
 
-    fn singleton() -> Self::Value { false }
+    fn singleton() -> Self::Value {
+        false
+    }
 
-    fn add_edge(x: &mut Self::Value) { *x = true }
+    fn add_edge(x: &mut Self::Value) {
+        *x = true
+    }
 
-    fn graft(parent: &mut Self::Value, child: Self::Value) { *parent |= child }
+    fn graft(parent: &mut Self::Value, child: Self::Value) {
+        *parent |= child
+    }
 }
 
 #[derive(Clone, Default, Hash, PartialEq)]
@@ -195,9 +215,13 @@ impl<O: Op> UnionFind<O> {
         x
     }
 
-    pub fn same(&self, x: usize, y: usize) -> bool { self.find(x) == self.find(y) }
+    pub fn same(&self, x: usize, y: usize) -> bool {
+        self.find(x) == self.find(y)
+    }
 
-    pub fn is_root(&self, x: usize) -> bool { x == self.find(x) }
+    pub fn is_root(&self, x: usize) -> bool {
+        x == self.find(x)
+    }
 
     pub fn get_value(&self, x: usize) -> &O::Value {
         assert!(x < self.parent_or_size.len());
@@ -280,7 +304,9 @@ mod tests {
         impl Op for O {
             type Value = PhantomData<()>;
 
-            fn singleton() -> Self::Value { PhantomData }
+            fn singleton() -> Self::Value {
+                PhantomData
+            }
 
             fn add_edge(_x: &mut Self::Value) {}
 

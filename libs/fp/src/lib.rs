@@ -116,7 +116,9 @@ impl<const P: u64> Fp<P> {
     /// const P: u64 = 998244353;
     /// let a = Fp::<P>::new(42);
     /// ```
-    pub const fn new(value: u64) -> Self { Self { value: value % P } }
+    pub const fn new(value: u64) -> Self {
+        Self { value: value % P }
+    }
 
     /// Returns the value.
     /// # Examples
@@ -126,7 +128,9 @@ impl<const P: u64> Fp<P> {
     /// let a = Fp::<P>::new(42);
     /// assert_eq!(a.value(), 42);
     /// ```
-    pub const fn value(self) -> u64 { self.value }
+    pub const fn value(self) -> u64 {
+        self.value
+    }
 
     /// Returns the multiplicative inverse.
     /// # Examples
@@ -173,7 +177,9 @@ impl<const P: u64> Fp<P> {
     /// assert_eq!(Fp::sign(2), Fp::from(1));
     /// assert_eq!(Fp::sign(3), Fp::from(-1));
     /// ```
-    pub fn sign(pow: usize) -> Self { Self::new(if pow % 2 == 0 { 1 } else { P - 1 }) }
+    pub fn sign(pow: usize) -> Self {
+        Self::new(if pow % 2 == 0 { 1 } else { P - 1 })
+    }
 }
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -258,11 +264,15 @@ impl<const P: u64> SubAssign<Fp<P>> for Fp<P> {
     }
 }
 impl<const P: u64> MulAssign<Fp<P>> for Fp<P> {
-    fn mul_assign(&mut self, rhs: Fp<P>) { self.value = self.value * rhs.value % P; }
+    fn mul_assign(&mut self, rhs: Fp<P>) {
+        self.value = self.value * rhs.value % P;
+    }
 }
 #[allow(clippy::suspicious_op_assign_impl)]
 impl<const P: u64> DivAssign<Fp<P>> for Fp<P> {
-    fn div_assign(&mut self, rhs: Fp<P>) { *self *= rhs.inv() }
+    fn div_assign(&mut self, rhs: Fp<P>) {
+        *self *= rhs.inv()
+    }
 }
 macro_rules! fp_forward_ops {
     ($(
@@ -320,10 +330,14 @@ impl<const P: u64> Neg for Fp<P> {
     }
 }
 impl<const P: u64> Sum for Fp<P> {
-    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self { iter.fold(Self::new(0), |acc, x| acc + x) }
+    fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
+        iter.fold(Self::new(0), |acc, x| acc + x)
+    }
 }
 impl<'a, const P: u64> Sum<&'a Self> for Fp<P> {
-    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.copied().sum() }
+    fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().sum()
+    }
 }
 impl<const P: u64> Product for Fp<P> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
@@ -331,7 +345,9 @@ impl<const P: u64> Product for Fp<P> {
     }
 }
 impl<'a, const P: u64> Product<&'a Self> for Fp<P> {
-    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self { iter.copied().product() }
+    fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
+        iter.copied().product()
+    }
 }
 
 #[cfg(test)]

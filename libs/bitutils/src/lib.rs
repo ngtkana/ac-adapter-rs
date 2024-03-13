@@ -60,7 +60,9 @@ pub trait Unsigned:
     fn zero() -> Self;
     fn one() -> Self;
     fn wrapping_neg(self) -> Self;
-    fn bit_length() -> u32 { size_of::<Self>() as u32 * 8 }
+    fn bit_length() -> u32 {
+        size_of::<Self>() as u32 * 8
+    }
 }
 
 macro_rules! impl_unsigned {

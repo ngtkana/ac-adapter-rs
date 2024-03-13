@@ -20,7 +20,9 @@ impl Debug for TrieSet {
 }
 
 impl Default for TrieSet {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl TrieSet {

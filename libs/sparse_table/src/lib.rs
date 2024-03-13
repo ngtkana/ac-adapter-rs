@@ -69,7 +69,9 @@ where
 {
     type Output = I::Output;
 
-    fn index(&self, index: I) -> &I::Output { self.seq.index(index) }
+    fn index(&self, index: I) -> &I::Output {
+        self.seq.index(index)
+    }
 }
 
 fn convert_to_range<T>(len: usize, range_bound: T) -> ops::Range<usize>

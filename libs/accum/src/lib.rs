@@ -6,13 +6,25 @@ use std::ops::BitXorAssign;
 use std::ops::DivAssign;
 use std::ops::MulAssign;
 use std::ops::SubAssign;
-pub fn add<T: Copy + AddAssign>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y += x); }
-pub fn add_inv<T: Copy + SubAssign>(a: &mut [T]) { rfor_each_mut(a, |&mut x, y| *y -= x); }
-pub fn mul<T: Copy + MulAssign>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y *= x); }
-pub fn mul_inv<T: Copy + DivAssign>(a: &mut [T]) { rfor_each_mut(a, |&mut x, y| *y /= x); }
+pub fn add<T: Copy + AddAssign>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y += x);
+}
+pub fn add_inv<T: Copy + SubAssign>(a: &mut [T]) {
+    rfor_each_mut(a, |&mut x, y| *y -= x);
+}
+pub fn mul<T: Copy + MulAssign>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y *= x);
+}
+pub fn mul_inv<T: Copy + DivAssign>(a: &mut [T]) {
+    rfor_each_mut(a, |&mut x, y| *y /= x);
+}
 // -- ord
-pub fn min<T: Copy + Ord>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y = x.min(*y)); }
-pub fn max<T: Copy + Ord>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y = x.max(*y)); }
+pub fn min<T: Copy + Ord>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y = x.min(*y));
+}
+pub fn max<T: Copy + Ord>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y = x.max(*y));
+}
 pub fn skipped_min<T: Copy + Ord>(a: &[T], max: T) -> Vec<T> {
     skipped(a, |x, y| (*x).min(*y), || max).collect()
 }
@@ -20,10 +32,18 @@ pub fn skipped_max<T: Copy + Ord>(a: &[T], min: T) -> Vec<T> {
     skipped(a, |x, y| (*x).max(*y), || min).collect()
 }
 // --  bit
-pub fn xor<T: Copy + BitXorAssign>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y ^= x); }
-pub fn xor_inv<T: Copy + BitXorAssign>(a: &mut [T]) { rfor_each_mut(a, |&mut x, y| *y ^= x); }
-pub fn or<T: Copy + BitOrAssign>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y |= x); }
-pub fn and<T: Copy + BitAndAssign>(a: &mut [T]) { for_each_mut(a, |&mut x, y| *y &= x); }
+pub fn xor<T: Copy + BitXorAssign>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y ^= x);
+}
+pub fn xor_inv<T: Copy + BitXorAssign>(a: &mut [T]) {
+    rfor_each_mut(a, |&mut x, y| *y ^= x);
+}
+pub fn or<T: Copy + BitOrAssign>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y |= x);
+}
+pub fn and<T: Copy + BitAndAssign>(a: &mut [T]) {
+    for_each_mut(a, |&mut x, y| *y &= x);
+}
 // -- for_each
 pub fn for_each<T>(a: &[T], mut f: impl FnMut(&T, &T)) {
     if !a.is_empty() {

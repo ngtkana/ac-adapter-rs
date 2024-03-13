@@ -598,14 +598,11 @@ impl<'a, O: Op> SegTable<'a, O> {
             offset: usize,
         ) -> usize {
             if p.is_leaf() {
-                vec.push((
-                    0,
-                    SegTableCell {
-                        start: offset,
-                        end: offset + 1,
-                        value: &p.as_longlife_ref().value,
-                    },
-                ));
+                vec.push((0, SegTableCell {
+                    start: offset,
+                    end: offset + 1,
+                    value: &p.as_longlife_ref().value,
+                }));
                 0
             } else {
                 let ht = 1 + traverse(vec, p.left.unwrap(), offset).max(traverse(
@@ -613,14 +610,11 @@ impl<'a, O: Op> SegTable<'a, O> {
                     p.right.unwrap(),
                     offset + p.left.unwrap().len,
                 ));
-                vec.push((
-                    ht,
-                    SegTableCell {
-                        start: offset,
-                        end: offset + p.len,
-                        value: &p.as_longlife_ref().value,
-                    },
-                ));
+                vec.push((ht, SegTableCell {
+                    start: offset,
+                    end: offset + p.len,
+                    value: &p.as_longlife_ref().value,
+                }));
                 ht
             }
         }

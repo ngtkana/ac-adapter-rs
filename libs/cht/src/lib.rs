@@ -75,10 +75,14 @@ pub enum Convex {}
 /// 凹関数を管理する方であるというマーカー
 pub enum Concave {}
 impl ConvexOrConcave for Convex {
-    fn negate_if_concave(x: i64) -> i64 { x }
+    fn negate_if_concave(x: i64) -> i64 {
+        x
+    }
 }
 impl ConvexOrConcave for Concave {
-    fn negate_if_concave(x: i64) -> i64 { -x }
+    fn negate_if_concave(x: i64) -> i64 {
+        -x
+    }
 }
 
 /// ログがつかない方
@@ -284,17 +288,25 @@ pub const X: Quadratic = Quadratic([0, 1, 0]);
 /// 二次式
 pub struct Quadratic([i64; 3]);
 impl Quadratic {
-    pub fn eval(self, x: i64) -> i64 { self.0[0] + (self.0[1] + self.0[2] * x) * x }
+    pub fn eval(self, x: i64) -> i64 {
+        self.0[0] + (self.0[1] + self.0[2] * x) * x
+    }
 
-    pub fn square(self) -> Self { self * self }
+    pub fn square(self) -> Self {
+        self * self
+    }
 }
 impl From<i64> for Quadratic {
-    fn from(x: i64) -> Self { Self([x, 0, 0]) }
+    fn from(x: i64) -> Self {
+        Self([x, 0, 0])
+    }
 }
 impl Neg for Quadratic {
     type Output = Self;
 
-    fn neg(self) -> Self::Output { Self([-self.0[0], -self.0[1], -self.0[2]]) }
+    fn neg(self) -> Self::Output {
+        Self([-self.0[0], -self.0[1], -self.0[2]])
+    }
 }
 impl<T: Into<Self>> Add<T> for Quadratic {
     type Output = Self;
@@ -311,7 +323,9 @@ impl<T: Into<Self>> Add<T> for Quadratic {
 impl Add<Quadratic> for i64 {
     type Output = Quadratic;
 
-    fn add(self, rhs: Quadratic) -> Self::Output { rhs.add(self) }
+    fn add(self, rhs: Quadratic) -> Self::Output {
+        rhs.add(self)
+    }
 }
 impl<T: Into<Self>> Sub<T> for Quadratic {
     type Output = Self;
@@ -354,7 +368,9 @@ impl<T: Into<Self>> Mul<T> for Quadratic {
 impl Mul<Quadratic> for i64 {
     type Output = Quadratic;
 
-    fn mul(self, rhs: Quadratic) -> Self::Output { rhs.mul(self) }
+    fn mul(self, rhs: Quadratic) -> Self::Output {
+        rhs.mul(self)
+    }
 }
 
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, PartialOrd, Ord, Copy)]
@@ -367,7 +383,9 @@ struct Line {
     q: i64,
 }
 impl Line {
-    fn eval(&self, x: i64) -> i64 { self.p * x - self.q }
+    fn eval(&self, x: i64) -> i64 {
+        self.p * x - self.q
+    }
 }
 fn brace(l0: Line, l1: Line) -> Result<Segment, i64> {
     let Line { p: p0, q: q0 } = l0;
@@ -393,10 +411,14 @@ struct Segment {
     max: Max,
 }
 impl Borrow<i64> for Segment {
-    fn borrow(&self) -> &i64 { &self.line.p }
+    fn borrow(&self) -> &i64 {
+        &self.line.p
+    }
 }
 impl Borrow<Max> for Segment {
-    fn borrow(&self) -> &Max { &self.max }
+    fn borrow(&self) -> &Max {
+        &self.max
+    }
 }
 
 #[cfg(test)]

@@ -102,7 +102,9 @@ mod tests {
     #[test_case(6 => vec![1, 2, 3, 6])]
     #[test_case(12 => vec![1, 2, 3, 4, 6, 12])]
     #[test_case(36 => vec![1, 2, 3, 4, 6, 9, 12, 18, 36])]
-    fn test_divisors(n: u32) -> Vec<u32> { divisors(n) }
+    fn test_divisors(n: u32) -> Vec<u32> {
+        divisors(n)
+    }
 
     #[test_case(0 => Vec::<u32>::new())]
     #[test_case(1 => vec![1])]
@@ -113,5 +115,7 @@ mod tests {
     #[test_case(6 => vec![1, 6, 2, 3])]
     #[test_case(12 => vec![1, 12, 2, 6, 3, 4])]
     #[test_case(36 => vec![1, 36, 2, 18, 3, 12, 4, 9, 6])]
-    fn test_divisors_unsorted(n: u32) -> Vec<u32> { divisors_unordered(n).collect() }
+    fn test_divisors_unsorted(n: u32) -> Vec<u32> {
+        divisors_unordered(n).collect()
+    }
 }

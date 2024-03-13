@@ -71,7 +71,9 @@ impl<T> AvlTree<T> {
     /// let avl = AvlTree::<()>::new();
     /// assert!(avl.is_empty());
     /// ```
-    pub fn new() -> Self { Self::default() }
+    pub fn new() -> Self {
+        Self::default()
+    }
 
     /// 空列であれば `true` を返します。
     ///
@@ -82,7 +84,9 @@ impl<T> AvlTree<T> {
     /// let avl = AvlTree::<()>::new();
     /// assert!(avl.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.root.is_none() }
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
 
     /// 列の要素数を返します。
     ///
@@ -94,7 +98,9 @@ impl<T> AvlTree<T> {
     /// assert_eq!(AvlTree::<()>::new().len(), 0);
     /// assert_eq!(repeat(()).take(3).collect::<AvlTree::<_>>().len(), 3);
     /// ```
-    pub fn len(&self) -> usize { len(self.root.as_deref()) }
+    pub fn len(&self) -> usize {
+        len(self.root.as_deref())
+    }
 
     /// 列の末尾に要素を追加します。
     ///
@@ -182,7 +188,9 @@ impl<T> AvlTree<T> {
     /// avl.push_back(2);
     /// assert_eq!(avl.back(), Some(&2));
     /// ```
-    pub fn back(&self) -> Option<&T> { self.get(self.len().checked_sub(1)?) }
+    pub fn back(&self) -> Option<&T> {
+        self.get(self.len().checked_sub(1)?)
+    }
 
     /// 列の先頭の要素があれば返し、空なら `None` を返します。
     ///
@@ -197,7 +205,9 @@ impl<T> AvlTree<T> {
     /// avl.push_back(2);
     /// assert_eq!(avl.front(), Some(&1));
     /// ```
-    pub fn front(&self) -> Option<&T> { self.get(0) }
+    pub fn front(&self) -> Option<&T> {
+        self.get(0)
+    }
 
     /// 列の末尾の要素があれば返し、空なら `None` を返します。
     ///
@@ -216,7 +226,9 @@ impl<T> AvlTree<T> {
     /// }
     /// assert_eq!(avl_tree.back(), Some(&9));
     /// ```
-    pub fn back_mut(&mut self) -> Option<&mut T> { self.get_mut(self.len().checked_sub(1)?) }
+    pub fn back_mut(&mut self) -> Option<&mut T> {
+        self.get_mut(self.len().checked_sub(1)?)
+    }
 
     /// 列の先頭の要素があれば返し、空なら `None` を返します。
     ///
@@ -235,7 +247,9 @@ impl<T> AvlTree<T> {
     /// }
     /// assert_eq!(avl.front(), Some(&9));
     /// ```
-    pub fn front_mut(&mut self) -> Option<&mut T> { self.get_mut(0) }
+    pub fn front_mut(&mut self) -> Option<&mut T> {
+        self.get_mut(0)
+    }
 
     /// `other` のすべての要素を `self` の後ろに挿入します。
     ///
@@ -556,23 +570,33 @@ impl<T> AvlTree<T> {
 }
 
 impl<T> Default for AvlTree<T> {
-    fn default() -> Self { Self { root: None } }
+    fn default() -> Self {
+        Self { root: None }
+    }
 }
 impl<T: PartialEq> PartialEq for AvlTree<T> {
-    fn eq(&self, other: &Self) -> bool { self.iter().eq(other) }
+    fn eq(&self, other: &Self) -> bool {
+        self.iter().eq(other)
+    }
 }
 impl<T: PartialEq, A> PartialEq<[A]> for AvlTree<T>
 where
     T: PartialEq<A>,
 {
-    fn eq(&self, other: &[A]) -> bool { self.iter().eq(other) }
+    fn eq(&self, other: &[A]) -> bool {
+        self.iter().eq(other)
+    }
 }
 impl<T: Eq> Eq for AvlTree<T> {}
 impl<T: PartialOrd> PartialOrd for AvlTree<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { self.iter().partial_cmp(other) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.iter().partial_cmp(other)
+    }
 }
 impl<T: Ord> Ord for AvlTree<T> {
-    fn cmp(&self, other: &Self) -> Ordering { self.iter().cmp(other) }
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.iter().cmp(other)
+    }
 }
 impl<T: Debug> Debug for AvlTree<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -604,12 +628,16 @@ impl<'a, T> IntoIterator for &'a AvlTree<T> {
     type IntoIter = Iter<'a, T>;
     type Item = &'a T;
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 impl<T> Index<usize> for AvlTree<T> {
     type Output = T;
 
-    fn index(&self, index: usize) -> &Self::Output { self.get(index).unwrap() }
+    fn index(&self, index: usize) -> &Self::Output {
+        self.get(index).unwrap()
+    }
 }
 impl<T> FromIterator<T> for AvlTree<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
@@ -716,8 +744,12 @@ impl<T> Node<T> {
         self.ht = 1 + ht(self.left.as_deref()).max(ht(self.right.as_deref()));
     }
 }
-fn len<T>(tree: Option<&Node<T>>) -> usize { tree.as_ref().map_or(0, |node| node.len) }
-fn ht<T>(tree: Option<&Node<T>>) -> u8 { tree.as_ref().map_or(0, |node| node.ht) }
+fn len<T>(tree: Option<&Node<T>>) -> usize {
+    tree.as_ref().map_or(0, |node| node.len)
+}
+fn ht<T>(tree: Option<&Node<T>>) -> u8 {
+    tree.as_ref().map_or(0, |node| node.ht)
+}
 fn balance<T>(node: &mut Box<Node<T>>) {
     fn rotate_left<T>(node: &mut Box<Node<T>>) {
         let mut x = node.left.take().unwrap();

@@ -17,7 +17,9 @@ pub fn sort_tree_remove_parent(root: usize, g: &mut [Vec<usize>]) -> [Vec<usize>
 }
 
 /// 根付き木をトポロジカルソートします。
-pub fn sort_tree(root: usize, g: &[Vec<usize>]) -> [Vec<usize>; 2] { sort_tree_by(root, g, |x| *x) }
+pub fn sort_tree(root: usize, g: &[Vec<usize>]) -> [Vec<usize>; 2] {
+    sort_tree_by(root, g, |x| *x)
+}
 
 /// 根付き木をトポロジカルソートします。
 pub fn sort_tree_by<E>(root: usize, g: &[Vec<E>], to: impl Fn(&E) -> usize) -> [Vec<usize>; 2] {

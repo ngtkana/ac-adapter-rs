@@ -250,7 +250,9 @@ pub struct BlackViolation<T: Balance> {
     pub x: Option<Ptr<T>>,
 }
 impl<T: Balance> PartialEq for BlackViolation<T> {
-    fn eq(&self, other: &Self) -> bool { (self.p, self.x) == (other.p, other.x) }
+    fn eq(&self, other: &Self) -> bool {
+        (self.p, self.x) == (other.p, other.x)
+    }
 }
 impl<T: Balance> fmt::Debug for BlackViolation<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -323,9 +325,13 @@ fn rotate_right<T: Balance>(mut r: Ptr<T>) {
 
 pub struct Ptr<T>(NonNull<T>);
 impl<T: Balance> Ptr<T> {
-    pub fn new(x: T) -> Self { Self(NonNull::from(Box::leak(Box::new(x)))) }
+    pub fn new(x: T) -> Self {
+        Self(NonNull::from(Box::leak(Box::new(x))))
+    }
 
-    pub fn free(self) -> T { unsafe { *Box::from_raw(self.0.as_ptr()) } }
+    pub fn free(self) -> T {
+        unsafe { *Box::from_raw(self.0.as_ptr()) }
+    }
 
     // Returns the root
     pub fn update_ancestors(self) -> Self {
@@ -337,21 +343,31 @@ impl<T: Balance> Ptr<T> {
         x
     }
 
-    pub fn as_longlife_ref<'a>(self) -> &'a T { unsafe { self.0.as_ref() } }
+    pub fn as_longlife_ref<'a>(self) -> &'a T {
+        unsafe { self.0.as_ref() }
+    }
 
-    pub fn as_longlife_mut<'a>(mut self) -> &'a mut T { unsafe { self.0.as_mut() } }
+    pub fn as_longlife_mut<'a>(mut self) -> &'a mut T {
+        unsafe { self.0.as_mut() }
+    }
 }
 impl<T> Clone for Ptr<T> {
-    fn clone(&self) -> Self { *self }
+    fn clone(&self) -> Self {
+        *self
+    }
 }
 impl<T> Copy for Ptr<T> {}
 impl<T> Deref for Ptr<T> {
     type Target = T;
 
-    fn deref(&self) -> &Self::Target { unsafe { self.0.as_ref() } }
+    fn deref(&self) -> &Self::Target {
+        unsafe { self.0.as_ref() }
+    }
 }
 impl<T> DerefMut for Ptr<T> {
-    fn deref_mut(&mut self) -> &mut Self::Target { unsafe { self.0.as_mut() } }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        unsafe { self.0.as_mut() }
+    }
 }
 impl<T> fmt::Debug for Ptr<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -359,7 +375,9 @@ impl<T> fmt::Debug for Ptr<T> {
     }
 }
 impl<T> PartialEq for Ptr<T> {
-    fn eq(&self, other: &Self) -> bool { std::ptr::eq(self.0.as_ptr(), other.0.as_ptr()) }
+    fn eq(&self, other: &Self) -> bool {
+        std::ptr::eq(self.0.as_ptr(), other.0.as_ptr())
+    }
 }
 
 #[cfg(test)]
@@ -756,13 +774,21 @@ mod test_fix {
 
         fn push(&mut self) {}
 
-        fn color(&mut self) -> &mut Color { &mut self.color }
+        fn color(&mut self) -> &mut Color {
+            &mut self.color
+        }
 
-        fn parent(&mut self) -> &mut Option<Ptr<Self>> { &mut self.parent }
+        fn parent(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.parent
+        }
 
-        fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
+        fn left(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.left
+        }
 
-        fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+        fn right(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.right
+        }
     }
 
     fn new_node(_: &mut StdRng, color: Color) -> Node {
@@ -885,19 +911,31 @@ mod test_update {
         pub left: Option<Ptr<Self>>,
         pub right: Option<Ptr<Self>>,
     }
-    fn sum(p: Option<Ptr<Node>>) -> i32 { p.map_or(0, |p| p.sum) }
+    fn sum(p: Option<Ptr<Node>>) -> i32 {
+        p.map_or(0, |p| p.sum)
+    }
     impl super::Balance for Node {
-        fn update(&mut self) { self.sum = sum(self.left) + self.value + sum(self.right); }
+        fn update(&mut self) {
+            self.sum = sum(self.left) + self.value + sum(self.right);
+        }
 
         fn push(&mut self) {}
 
-        fn color(&mut self) -> &mut Color { &mut self.color }
+        fn color(&mut self) -> &mut Color {
+            &mut self.color
+        }
 
-        fn parent(&mut self) -> &mut Option<Ptr<Self>> { &mut self.parent }
+        fn parent(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.parent
+        }
 
-        fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
+        fn left(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.left
+        }
 
-        fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+        fn right(&mut self) -> &mut Option<Ptr<Self>> {
+            &mut self.right
+        }
     }
 
     impl Tree<Node> {

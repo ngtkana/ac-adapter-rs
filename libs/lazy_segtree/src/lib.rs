@@ -100,7 +100,9 @@ where
         }
     }
 
-    pub fn get(&self, i: usize) -> T { self.table.borrow()[self.len + i].clone() }
+    pub fn get(&self, i: usize) -> T {
+        self.table.borrow()[self.len + i].clone()
+    }
 
     pub fn modify(&mut self, i: usize, mut f: impl FnMut(&mut T)) {
         let i = self.len + i;

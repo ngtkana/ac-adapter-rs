@@ -26,10 +26,14 @@ impl<T> SliceMore<T> for [T] {
     }
 
     /// Method version of [`lower_bound_by()`].
-    fn lower_bound_by<F: FnMut(&T) -> Ordering>(&self, f: F) -> usize { lower_bound_by(self, f) }
+    fn lower_bound_by<F: FnMut(&T) -> Ordering>(&self, f: F) -> usize {
+        lower_bound_by(self, f)
+    }
 
     /// Method version of [`upper_bound_by()`].
-    fn upper_bound_by<F: FnMut(&T) -> Ordering>(&self, f: F) -> usize { upper_bound_by(self, f) }
+    fn upper_bound_by<F: FnMut(&T) -> Ordering>(&self, f: F) -> usize {
+        upper_bound_by(self, f)
+    }
 
     /// Method version of [`lower_bound_by_key()`].
     fn lower_bound_by_key<B: Ord, F: FnMut(&T) -> B>(&self, b: &B, f: F) -> usize {
@@ -131,7 +135,9 @@ pub fn upper_bound_by_key<T, B: Ord, F: FnMut(&T) -> B>(slice: &[T], b: &B, mut 
 /// # use std::cmp::Ordering::*;
 /// assert_eq!(lower_bound(&[10, 11, 12], &11), 1);
 /// ```
-pub fn lower_bound<T: Ord>(slice: &[T], x: &T) -> usize { lower_bound_by(slice, |p| p.cmp(x)) }
+pub fn lower_bound<T: Ord>(slice: &[T], x: &T) -> usize {
+    lower_bound_by(slice, |p| p.cmp(x))
+}
 
 /// Find $i$ s.t. $a _ { i - 1 } \le b \lt a _ i$.
 ///
@@ -141,4 +147,6 @@ pub fn lower_bound<T: Ord>(slice: &[T], x: &T) -> usize { lower_bound_by(slice, 
 /// # use std::cmp::Ordering::*;
 /// assert_eq!(upper_bound(&[10, 11, 12], &11), 2);
 /// ```
-pub fn upper_bound<T: Ord>(slice: &[T], x: &T) -> usize { upper_bound_by(slice, |p| p.cmp(x)) }
+pub fn upper_bound<T: Ord>(slice: &[T], x: &T) -> usize {
+    upper_bound_by(slice, |p| p.cmp(x))
+}

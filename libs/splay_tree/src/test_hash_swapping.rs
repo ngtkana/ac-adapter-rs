@@ -15,7 +15,9 @@ impl Ops for StrHash {
     type Acc = [u64; 2];
     type Value = u64;
 
-    fn proj(&value: &Self::Value) -> Self::Acc { [value, 1_000_000] }
+    fn proj(&value: &Self::Value) -> Self::Acc {
+        [value, 1_000_000]
+    }
 
     fn op(&lhs: &Self::Acc, &rhs: &Self::Acc) -> Self::Acc {
         [(lhs[0] + lhs[1] * rhs[0]) % P, lhs[1] * rhs[1] % P]

@@ -18,7 +18,9 @@ impl<V: Debug> Debug for TrieMap<V> {
 }
 
 impl<V> Default for TrieMap<V> {
-    fn default() -> Self { Self(None) }
+    fn default() -> Self {
+        Self(None)
+    }
 }
 
 impl<V> TrieMap<V> {
@@ -39,7 +41,9 @@ impl<V> TrieMap<V> {
     /// // entries can now be inserted into the empty map
     /// map.insert(once(1), "a");
     /// ```
-    pub fn new() -> Self { Self(None) }
+    pub fn new() -> Self {
+        Self(None)
+    }
 
     /// Inserts a key-value pair into the map.
     ///
@@ -328,7 +332,9 @@ impl<V> Node<V> {
     }
 }
 impl<V> Default for Node<V> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]

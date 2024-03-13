@@ -88,7 +88,9 @@ pub struct MaxFlow<Value: FlowTrait> {
 }
 
 impl<Value: FlowTrait> MaxFlow<Value> {
-    fn len(&self) -> usize { self.network.len() }
+    fn len(&self) -> usize {
+        self.network.len()
+    }
 
     /// 構築です。
     ///

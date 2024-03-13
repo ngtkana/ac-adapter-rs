@@ -28,7 +28,9 @@ impl<T: Signed> Rational<T> {
         Self(num / g, den / g)
     }
 
-    pub fn decompose(self) -> [T; 2] { [self.0, self.1] }
+    pub fn decompose(self) -> [T; 2] {
+        [self.0, self.1]
+    }
 
     pub fn into_f64(self) -> f64
     where
@@ -38,14 +40,20 @@ impl<T: Signed> Rational<T> {
     }
 }
 impl<T: Signed> PartialEq for Rational<T> {
-    fn eq(&self, other: &Self) -> bool { self.0 * other.1 == self.1 * other.0 }
+    fn eq(&self, other: &Self) -> bool {
+        self.0 * other.1 == self.1 * other.0
+    }
 }
 impl<T: Signed> Eq for Rational<T> {}
 impl<T: Signed> Ord for Rational<T> {
-    fn cmp(&self, other: &Self) -> Ordering { (self.0 * other.1).cmp(&(self.1 * other.0)) }
+    fn cmp(&self, other: &Self) -> Ordering {
+        (self.0 * other.1).cmp(&(self.1 * other.0))
+    }
 }
 impl<T: Signed> PartialOrd for Rational<T> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> { Some(self.cmp(other)) }
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
 }
 impl<T: Signed> Debug for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
@@ -87,7 +95,9 @@ impl<T: Signed> SubAssign for Rational<T> {
     }
 }
 impl<T: Signed> MulAssign for Rational<T> {
-    fn mul_assign(&mut self, rhs: Self) { *self = Self::new(self.0 * rhs.0, self.1 * rhs.1) }
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = Self::new(self.0 * rhs.0, self.1 * rhs.1)
+    }
 }
 impl<T: Signed> DivAssign for Rational<T> {
     fn div_assign(&mut self, rhs: Self) {
@@ -104,7 +114,9 @@ impl<T: Signed> DivAssign for Rational<T> {
 impl<T: Signed> Neg for Rational<T> {
     type Output = Self;
 
-    fn neg(self) -> Self::Output { Self(-self.0, self.1) }
+    fn neg(self) -> Self::Output {
+        Self(-self.0, self.1)
+    }
 }
 impl<T: Signed> Sum for Rational<T> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {

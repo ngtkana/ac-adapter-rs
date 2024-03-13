@@ -49,11 +49,15 @@ impl<T> RadixHeap<T> {
         }
     }
 
-    fn index(x: u32) -> usize { RADIX_HEAP_LEN - x.leading_zeros() as usize }
+    fn index(x: u32) -> usize {
+        RADIX_HEAP_LEN - x.leading_zeros() as usize
+    }
 }
 
 impl<T: Debug> Default for RadixHeap<T> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl<T: Debug> Debug for RadixHeap<T> {

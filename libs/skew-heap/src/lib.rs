@@ -59,7 +59,9 @@ use std::mem::take;
 #[derive(Clone, Hash, PartialEq)]
 pub struct SkewHeap<T>(Option<Box<SkeyHeapNode<T>>>);
 impl<T: Ord> Default for SkewHeap<T> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<'a, A: 'a + Copy + Ord> Extend<&'a A> for SkewHeap<A> {
     fn extend<T: IntoIterator<Item = &'a A>>(&mut self, iter: T) {
@@ -89,13 +91,19 @@ impl<T: fmt::Debug + Ord> fmt::Debug for SkewHeap<T> {
 }
 impl<T: Ord> SkewHeap<T> {
     /// 新しく構築します。
-    pub fn new() -> Self { Self(None) }
+    pub fn new() -> Self {
+        Self(None)
+    }
 
     /// 中身を殻にします。
-    pub fn clear(&mut self) { *self = Self::new(); }
+    pub fn clear(&mut self) {
+        *self = Self::new();
+    }
 
     /// 要素一つからなる `SkewHeap` を構築します。
-    pub fn singleton(value: T) -> Self { Self(Some(Box::new(SkeyHeapNode::singleton(value)))) }
+    pub fn singleton(value: T) -> Self {
+        Self(Some(Box::new(SkeyHeapNode::singleton(value))))
+    }
 
     /// 2 つの `SkewHeap` から、その合併を構築します。
     ///
@@ -104,13 +112,19 @@ impl<T: Ord> SkewHeap<T> {
     /// O ( lg ( self.len(), rhs.len() ) )
     ///
     /// ただし `SkewHeap::len` メソッドはありません。（あの！？）
-    pub fn meld(&mut self, rhs: Self) { *self = meld(take(self), rhs); }
+    pub fn meld(&mut self, rhs: Self) {
+        *self = meld(take(self), rhs);
+    }
 
     /// 要素を一つ、追加します。
-    pub fn push(&mut self, value: T) { self.meld(Self::singleton(value)); }
+    pub fn push(&mut self, value: T) {
+        self.meld(Self::singleton(value));
+    }
 
     /// 含んでいる最大の要素への参照を返します。
-    pub fn peek(&self) -> Option<&T> { self.0.as_ref().map(|heap| &heap.value) }
+    pub fn peek(&self) -> Option<&T> {
+        self.0.as_ref().map(|heap| &heap.value)
+    }
 
     /// 含んでいる最大の要素を取り除き、それを返します。
     pub fn pop(&mut self) -> Option<T> {
@@ -137,7 +151,9 @@ impl<T: Ord> SkewHeap<T> {
 /// O ( lg ( self.len(), rhs.len() ) )
 ///
 /// ただし `SkewHeap::len` メソッドはありません。（あの！？）
-pub fn meld<T: Ord>(a: SkewHeap<T>, b: SkewHeap<T>) -> SkewHeap<T> { SkewHeap(meld_node(a.0, b.0)) }
+pub fn meld<T: Ord>(a: SkewHeap<T>, b: SkewHeap<T>) -> SkewHeap<T> {
+    SkewHeap(meld_node(a.0, b.0))
+}
 
 #[derive(Clone, Default, Hash, PartialEq)]
 struct SkeyHeapNode<T> {

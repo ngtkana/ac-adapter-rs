@@ -49,5 +49,7 @@ mod tests {
     #[test_case(3, &[1, 2, 0] => 2)]
     #[test_case(3, &[2, 0, 1] => 2)]
     #[test_case(3, &[2, 1, 0] => 3)]
-    fn test_hand(n: usize, a: &[usize]) -> u64 { inversion_number(n, a) }
+    fn test_hand(n: usize, a: &[usize]) -> u64 {
+        inversion_number(n, a)
+    }
 }

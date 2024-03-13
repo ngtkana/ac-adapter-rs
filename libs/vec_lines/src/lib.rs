@@ -117,7 +117,9 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// let lines = VecLinesDecreasing::<i32>::new();
     /// assert!(lines.is_empty());
     /// ```
-    pub fn is_empty(&self) -> bool { self.lines.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.lines.is_empty()
+    }
 
     /// 管理している直線の本数を返します。
     ///
@@ -131,7 +133,9 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     ///
     /// lines.push([0, 0]);
     /// ```
-    pub fn len(&self) -> usize { self.lines.len() }
+    pub fn len(&self) -> usize {
+        self.lines.len()
+    }
 
     /// index 番目の直線を返します。
     ///
@@ -147,7 +151,9 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// // 直線を手に入れたら、次は `Line::eval` で評価です。
     /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
     /// ```
-    pub fn get(&self, index: usize) -> Option<Line<T>> { self.lines.get(index).copied() }
+    pub fn get(&self, index: usize) -> Option<Line<T>> {
+        self.lines.get(index).copied()
+    }
 
     /// 後ろに直線を挿入します。
     ///
@@ -261,7 +267,9 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     ///     .collect::<Vec<_>>();
     /// assert_eq!(lines, vec![[1, 0], [0, 10], [-1, 30]]);
     /// ```
-    pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> { self.lines.iter().copied() }
+    pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> {
+        self.lines.iter().copied()
+    }
 }
 
 /// 一次関数 $ax + b$ を、`[a, b]` の形で管理します。
@@ -278,7 +286,9 @@ impl<T: Signed> Line<T> {
     /// let line = Line([2, 10]);
     /// assert_eq!(line.eval(2), 14);
     /// ```
-    pub fn eval(self, x: T) -> T { self.0[0] * x + self.0[1] }
+    pub fn eval(self, x: T) -> T {
+        self.0[0] * x + self.0[1]
+    }
 
     /// 係数を返します。
     ///
@@ -288,7 +298,9 @@ impl<T: Signed> Line<T> {
     /// let line = Line([2, 10]);
     /// assert_eq!(line.into_coeff(), [2, 10]);
     /// ```
-    pub fn into_coeff(self) -> [T; 2] { self.0 }
+    pub fn into_coeff(self) -> [T; 2] {
+        self.0
+    }
 }
 
 fn weakly_convex<T: Signed>(
@@ -314,14 +326,22 @@ pub enum DecreasingTilt {}
 /// 傾き単調増加を意味するマーカー
 pub enum IncreasingTilt {}
 impl Constraint for DecreasingTilt {
-    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool { a0 >= a1 }
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
+        a0 >= a1
+    }
 
-    fn strictly_better<T: Signed>(x: T, y: T) -> bool { x < y }
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
+        x < y
+    }
 }
 impl Constraint for IncreasingTilt {
-    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool { a0 <= a1 }
+    fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
+        a0 <= a1
+    }
 
-    fn strictly_better<T: Signed>(x: T, y: T) -> bool { x > y }
+    fn strictly_better<T: Signed>(x: T, y: T) -> bool {
+        x > y
+    }
 }
 
 /// 符号つき整数
@@ -345,7 +365,9 @@ macro_rules! impl_signed {
 impl_signed! { i8, i16, i32, i64, i128, isize }
 
 impl<T: Signed, C: Constraint> Default for VecLines<T, C> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 #[cfg(test)]
@@ -363,7 +385,9 @@ mod tests {
     #[test_case([0, 5] => [1, 4])]
     #[test_case([0, 6] => [2, 4])]
     #[test_case([0, 7] => [2, 5])]
-    fn test_golden_section(x: [isize; 2]) -> [isize; 2] { golden_section(x) }
+    fn test_golden_section(x: [isize; 2]) -> [isize; 2] {
+        golden_section(x)
+    }
 
     /*
     こちらの問題の本質部分です。

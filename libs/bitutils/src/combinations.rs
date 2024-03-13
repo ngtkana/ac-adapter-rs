@@ -59,5 +59,7 @@ mod tests {
     #[test_case(3, 1 => vec![1, 2, 4])]
     #[test_case(3, 2 => vec![3, 5, 6])]
     #[test_case(3, 3 => vec![7])]
-    fn test_combinations(n: u32, k: u32) -> Vec<u32> { combinations(n, k).collect_vec() }
+    fn test_combinations(n: u32, k: u32) -> Vec<u32> {
+        combinations(n, k).collect_vec()
+    }
 }

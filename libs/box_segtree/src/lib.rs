@@ -12,12 +12,18 @@
 //! impl Ops for O {
 //!     type Value = u32;
 //!
-//!     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value { lhs + rhs }
+//!     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+//!         lhs + rhs
+//!     }
 //!
-//!     fn id() -> Self::Value { 0 }
+//!     fn id() -> Self::Value {
+//!         0
+//!     }
 //!
 //!     // init(len) = id() がデフォルト実装です。
-//!     fn init(_len: usize) -> Self::Value { 0 }
+//!     fn init(_len: usize) -> Self::Value {
+//!         0
+//!     }
 //! }
 //! ```
 //!
@@ -86,7 +92,9 @@ impl<T: Clone, O: Ops<Value = T>> Segtree<T, O> {
     }
 
     /// [`Self::modify`] を呼んで第 `i` 項に `x` を代入します。
-    pub fn set(&mut self, i: usize, x: T) { self.modify(i, move |y| *y = x); }
+    pub fn set(&mut self, i: usize, x: T) {
+        self.modify(i, move |y| *y = x);
+    }
 
     /// 第 `i` 項を `f` で編集し、それに従ってその祖先の `value` を再計算します。
     pub fn modify(&mut self, i: usize, f: impl FnOnce(&mut T)) {
@@ -160,7 +168,9 @@ impl<T: Clone, O: Ops<Value = T>> Segtree<T, O> {
     ///     "[0, 0, 0, 10, 0, 20, 0]".to_string(),
     /// );
     /// ```
-    pub fn debug_list(&self) -> SegtreeDebugList<'_, T, O> { SegtreeDebugList(self) }
+    pub fn debug_list(&self) -> SegtreeDebugList<'_, T, O> {
+        SegtreeDebugList(self)
+    }
 }
 
 #[derive(Clone, Default, Hash, PartialEq)]
@@ -323,7 +333,9 @@ impl<'a, T: 'a + Clone, O: 'a + Ops<Value = T>> IntoIterator for &'a Segtree<T, 
     type IntoIter = Iter<'a, T, O>;
     type Item = <Self::IntoIter as Iterator>::Item;
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 
 fn __internal_open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
@@ -357,7 +369,9 @@ pub trait Ops {
     /// 単位元
     fn id() -> Self::Value;
     /// 初期状態の `len` セル分の値の畳み込み
-    fn init(_len: usize) -> Self::Value { Self::id() }
+    fn init(_len: usize) -> Self::Value {
+        Self::id()
+    }
 }
 
 #[cfg(test)]
@@ -378,9 +392,13 @@ mod tests {
             lhs.chars().chain(rhs.chars()).collect::<String>()
         }
 
-        fn id() -> Self::Value { String::new() }
+        fn id() -> Self::Value {
+            String::new()
+        }
 
-        fn init(len: usize) -> Self::Value { "?".repeat(len) }
+        fn init(len: usize) -> Self::Value {
+            "?".repeat(len)
+        }
     }
 
     #[test]

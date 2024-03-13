@@ -21,9 +21,13 @@ impl<S: SieveKind> SieveBase<S> {
         }
     }
 
-    pub fn is_empty(&self) -> bool { self.sieve.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.sieve.is_empty()
+    }
 
-    pub fn len(&self) -> usize { self.sieve.len() }
+    pub fn len(&self) -> usize {
+        self.sieve.len()
+    }
 
     pub fn with_len(n: usize) -> Self {
         let sieve = S::construct(n);
@@ -60,7 +64,9 @@ impl<S: SieveKind> SieveBase<S> {
 }
 
 impl<S: SieveKind> Default for SieveBase<S> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl SieveBase<sieve_kind::Boolean> {
@@ -107,9 +113,13 @@ impl<'a, S: SieveKind, T: Int> Iterator for PrimeNumbers<'a, S, T> {
     }
 }
 impl<T: Int> PrimeFactorsByTrialDivision<'_, T> {
-    pub fn unique(self) -> Unique<T, Self> { PrimeFactors::unique(self) }
+    pub fn unique(self) -> Unique<T, Self> {
+        PrimeFactors::unique(self)
+    }
 
-    pub fn rle(self) -> Rle<T, Self> { PrimeFactors::rle(self) }
+    pub fn rle(self) -> Rle<T, Self> {
+        PrimeFactors::rle(self)
+    }
 }
 impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
     type Item = T;
@@ -157,10 +167,14 @@ impl SieveBase<sieve_kind::Usize> {
 }
 impl<T: Int> PrimeFactorsByLookup<'_, T> {
     /// Forward [`crate::PrimeFactors::unique`].
-    pub fn unique(self) -> Unique<T, Self> { PrimeFactors::unique(self) }
+    pub fn unique(self) -> Unique<T, Self> {
+        PrimeFactors::unique(self)
+    }
 
     /// Forward [`crate::PrimeFactors::rle`].
-    pub fn rle(self) -> Rle<T, Self> { PrimeFactors::rle(self) }
+    pub fn rle(self) -> Rle<T, Self> {
+        PrimeFactors::rle(self)
+    }
 }
 impl<'a, T: Int> Iterator for PrimeFactorsByLookup<'a, T> {
     type Item = T;

@@ -163,7 +163,9 @@ struct SortedTree {
     ord: Vec<usize>,
 }
 impl SortedTree {
-    fn len(&self) -> usize { self.child.len() }
+    fn len(&self) -> usize {
+        self.child.len()
+    }
 }
 
 #[cfg(test)]
@@ -181,13 +183,21 @@ mod tests {
             type Acc = usize;
             type Value = usize;
 
-            fn proj(&self, value: Self::Value) -> Self::Acc { value }
+            fn proj(&self, value: Self::Value) -> Self::Acc {
+                value
+            }
 
-            fn identity(&self) -> Self::Acc { 0 }
+            fn identity(&self) -> Self::Acc {
+                0
+            }
 
-            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc { acc + value }
+            fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
+                acc + value
+            }
 
-            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value { acc + 1 }
+            fn finish(&self, acc: Self::Acc, _index: usize) -> Self::Value {
+                acc + 1
+            }
         }
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
@@ -221,7 +231,9 @@ mod tests {
                 }
             }
 
-            fn identity(&self) -> Self::Acc { Acc { white: 1, all: 1 } }
+            fn identity(&self) -> Self::Acc {
+                Acc { white: 1, all: 1 }
+            }
 
             fn mul(&self, acc: Self::Acc, value: Self::Acc) -> Self::Acc {
                 Acc {
