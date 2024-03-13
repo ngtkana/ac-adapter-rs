@@ -952,6 +952,51 @@
 <a href="#918" id="918">918</a>
 <a href="#919" id="919">919</a>
 <a href="#920" id="920">920</a>
+<a href="#921" id="921">921</a>
+<a href="#922" id="922">922</a>
+<a href="#923" id="923">923</a>
+<a href="#924" id="924">924</a>
+<a href="#925" id="925">925</a>
+<a href="#926" id="926">926</a>
+<a href="#927" id="927">927</a>
+<a href="#928" id="928">928</a>
+<a href="#929" id="929">929</a>
+<a href="#930" id="930">930</a>
+<a href="#931" id="931">931</a>
+<a href="#932" id="932">932</a>
+<a href="#933" id="933">933</a>
+<a href="#934" id="934">934</a>
+<a href="#935" id="935">935</a>
+<a href="#936" id="936">936</a>
+<a href="#937" id="937">937</a>
+<a href="#938" id="938">938</a>
+<a href="#939" id="939">939</a>
+<a href="#940" id="940">940</a>
+<a href="#941" id="941">941</a>
+<a href="#942" id="942">942</a>
+<a href="#943" id="943">943</a>
+<a href="#944" id="944">944</a>
+<a href="#945" id="945">945</a>
+<a href="#946" id="946">946</a>
+<a href="#947" id="947">947</a>
+<a href="#948" id="948">948</a>
+<a href="#949" id="949">949</a>
+<a href="#950" id="950">950</a>
+<a href="#951" id="951">951</a>
+<a href="#952" id="952">952</a>
+<a href="#953" id="953">953</a>
+<a href="#954" id="954">954</a>
+<a href="#955" id="955">955</a>
+<a href="#956" id="956">956</a>
+<a href="#957" id="957">957</a>
+<a href="#958" id="958">958</a>
+<a href="#959" id="959">959</a>
+<a href="#960" id="960">960</a>
+<a href="#961" id="961">961</a>
+<a href="#962" id="962">962</a>
+<a href="#963" id="963">963</a>
+<a href="#964" id="964">964</a>
+<a href="#965" id="965">965</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! A predecessor data structure based on van Emde Boas trees.
 //!
 //! This is implemented with hash maps, so `new()` is $O(\log\log n)$.
@@ -960,7 +1005,7 @@
 //!
 //! ```
 //! # use veb::VebSet;
-//! let mut veb = VebSet::new(1_000_000); // capacity
+//! let mut veb = VebSet::new(1000); // capacity
 //! veb.insert(42);
 //! assert!(veb.contains(42));
 //! veb.remove(42);
@@ -988,10 +1033,12 @@
 //! | `insert(x)`  | $O(\log\log n)$ | $S \leftarrow S \cup \{x\}$ |
 //! | `remove(x)`  | $O(\log\log n)$ | $S \leftarrow S \setminus \{x\}$ |
 //! | `contains(x)`| $O(\log\log n)$ | $x \in S$ |
-//! | `min()`      | $O(1)$          | $\min S$ |
-//! | `max()`      | $O(1)$          | $\max S$ |
-//! | `succ(x)`    | $O(\log\log n)$ | $\min\\{y \in S \mid y &gt; x\\}$ |
-//! | `pred(x)`    | $O(\log\log n)$ | $\max\\{y \in S \mid y &lt; x\\}$ |
+//! | `min()`      | $O(1)$          | $\min\left( S \right)$ |
+//! | `max()`      | $O(1)$          | $\max\left( S \right)$ |
+//! | `succ(x)`    | $O(\log\log n)$ | $\min\left( x^△ \right)$ |
+//! | `succ_eq(x)` | $O(\log\log n)$ | $\min\left( x^▲ \right)$ |
+//! | `pred(x)`    | $O(\log\log n)$ | $\max\left( x^▽ \right)$ |
+//! | `pred_eq(x)` | $O(\log\log n)$ | $\max\left( x^▲ \right)$ |
 //! | `len()`      | $O(1)$          | $\|S\|$ |
 //! | `is_empty()` | $O(1)$          | $S = \emptyset$ |
 //! | `collect()`  | $O(\|S\|\log\log n)$ | Convert to a [`Vec`] |
@@ -1032,7 +1079,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::new(1_000_000);
+    /// let veb = VebMap::&lt;()&gt;::new(1000);
     /// ```
     </span><span class="kw">pub fn </span>new(n: usize) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
@@ -1047,7 +1094,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let mut veb = VebMap::new(1_000_000);
+    /// let mut veb = VebMap::new(1000);
     /// assert_eq!(veb.insert(42, &quot;foo&quot;), None);
     /// assert_eq!(veb.insert(42, &quot;bar&quot;), Some(&quot;foo&quot;));
     /// ```
@@ -1056,13 +1103,12 @@
         <span class="self">self</span>.map.insert(i, v)
     }
 
-    <span class="doccomment">/// Removes an element from the map.
-    /// Returns the value if the key was present.
+    <span class="doccomment">/// Returns the value at $i$.
     ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let mut veb = VebMap::new(1_000_000);
+    /// let mut veb = VebMap::new(1000);
     /// veb.insert(42, &quot;foo&quot;);
     /// assert_eq!(veb.remove(42), Some(&quot;foo&quot;));
     /// assert_eq!(veb.remove(42), None);
@@ -1076,7 +1122,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let mut veb = VebMap::new(1_000_000);
+    /// let mut veb = VebMap::new(1000);
     /// veb.insert(42, &quot;foo&quot;);
     /// assert_eq!(veb.get(42), Some(&amp;&quot;foo&quot;));
     /// assert_eq!(veb.get(43), None);
@@ -1086,10 +1132,11 @@
     }
 
     <span class="doccomment">/// Returns a mutable reference to the value corresponding to the key.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let mut veb = VebMap::new(1_000_000);
+    /// let mut veb = VebMap::new(1000);
     /// veb.insert(42, &quot;foo&quot;);
     /// assert_eq!(veb.get_mut(42), Some(&amp;mut &quot;foo&quot;));
     /// assert_eq!(veb.get_mut(43), None);
@@ -1098,11 +1145,12 @@
         <span class="self">self</span>.map.get_mut(<span class="kw-2">&amp;</span>i)
     }
 
-    <span class="doccomment">/// Returns the minimum element in the map.
+    <span class="doccomment">/// Returns the key $\min \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.min(), Some((42, &amp;&quot;foo&quot;)));
@@ -1111,12 +1159,12 @@
         <span class="self">self</span>.veb.min()
     }
 
-    <span class="doccomment">/// Returns the minimum value in the map.
-    /// Returns `None` if the map is empty.
+    <span class="doccomment">/// Returns the value at $\min \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min_value(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.min_value(), Some(&amp;&quot;foo&quot;));
@@ -1125,11 +1173,12 @@
         <span class="self">self</span>.veb.min().and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
     }
 
-    <span class="doccomment">/// Returns the minimum element and value in the map.
+    <span class="doccomment">/// Returns the entry at $\min \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.min(), Some((42, &amp;&quot;foo&quot;)));
@@ -1140,12 +1189,12 @@
             .and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i).map(|v| (i, v)))
     }
 
-    <span class="doccomment">/// Returns the maximum element in the map.
-    /// Returns `None` if the map is empty.
+    <span class="doccomment">/// Returns the key $\max \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.max(), Some((42, &amp;&quot;foo&quot;)));
@@ -1154,11 +1203,12 @@
         <span class="self">self</span>.veb.max()
     }
 
-    <span class="doccomment">/// Returns the maximum value in the map.
+    <span class="doccomment">/// Returns the value at $\max \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max_value(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.max_value(), Some(&amp;&quot;foo&quot;));
@@ -1167,11 +1217,12 @@
         <span class="self">self</span>.veb.max().and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
     }
 
-    <span class="doccomment">/// Returns the maximum element and value in the map.
+    <span class="doccomment">/// Returns the entry at $\max \left( S \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max(), None);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.max(), Some((42, &amp;&quot;foo&quot;)));
@@ -1182,7 +1233,8 @@
             .and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i).map(|v| (i, v)))
     }
 
-    <span class="doccomment">/// Returns the strict successor of the given element.
+    <span class="doccomment">/// Returns the key $\min \left (i^△ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1196,7 +1248,8 @@
         <span class="self">self</span>.veb.succ(i)
     }
 
-    <span class="doccomment">/// Returns the strict successor value of the given element.
+    <span class="doccomment">/// Returns the value at $\min \left (i^△ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1208,7 +1261,8 @@
         <span class="self">self</span>.veb.succ(i).and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
     }
 
-    <span class="doccomment">/// Returns the strict successor of the given element.
+    <span class="doccomment">/// Returns the entry at $\min \left (i^△ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1222,7 +1276,7 @@
             .and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i).map(|v| (i, v)))
     }
 
-    <span class="doccomment">/// Returns the non-strict successor of the given element.
+    <span class="doccomment">/// Returns the key $\min \left (i^▲ \right)$.
     ///
     /// # Example
     /// ```
@@ -1238,7 +1292,7 @@
         <span class="self">self</span>.succ_key(i)
     }
 
-    <span class="doccomment">/// Returns the non-strict successor value of the given element.
+    <span class="doccomment">/// Returns the value at $\min \left (i^▲ \right)$.
     ///
     /// # Example
     /// ```
@@ -1254,7 +1308,7 @@
         <span class="self">self</span>.succ_value(i)
     }
 
-    <span class="doccomment">/// Returns the non-strict successor of the given element.
+    <span class="doccomment">/// Returns the entry at $\min \left (i^▲ \right)$.
     ///
     /// # Example
     /// ```
@@ -1270,7 +1324,8 @@
         <span class="self">self</span>.succ(i)
     }
 
-    <span class="doccomment">/// Returns the strict predecessor of the given element.
+    <span class="doccomment">/// Returns the key $\max \left (i^▽ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1284,7 +1339,8 @@
         <span class="self">self</span>.veb.pred(i)
     }
 
-    <span class="doccomment">/// Returns the strict predecessor value of the given element.
+    <span class="doccomment">/// Returns the value at $\max \left (i^▽ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1296,7 +1352,8 @@
         <span class="self">self</span>.veb.pred(i).and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
     }
 
-    <span class="doccomment">/// Returns the strict predecessor of the given element.
+    <span class="doccomment">/// Returns the entry at $\max \left (i^▽ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
@@ -1310,13 +1367,14 @@
             .and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i).map(|v| (i, v)))
     }
 
-    <span class="doccomment">/// Returns the non-strict predecessor of the given element.
+    <span class="doccomment">/// Returns the key $\max \left (i^▲ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.pred_eq_key(34), Some(34));
-    /// assert_eq!(veb.pred_eq_key(35), Some(12));
+    /// assert_eq!(veb.pred_eq_key(33), Some(12));
     /// ```
     </span><span class="kw">pub fn </span>pred_eq_key(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="kw">if </span><span class="self">self</span>.contains_key(i) {
@@ -1325,13 +1383,14 @@
         <span class="self">self</span>.pred_key(i)
     }
 
-    <span class="doccomment">/// Returns the non-strict predecessor value of the given element.
+    <span class="doccomment">/// Returns the value at $\max \left (i^▲ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.pred_eq_value(34), Some(&amp;&quot;bar&quot;));
-    /// assert_eq!(veb.pred_eq_value(35), Some(&amp;&quot;foo&quot;));
+    /// assert_eq!(veb.pred_eq_value(33), Some(&amp;&quot;foo&quot;));
     /// ```
     </span><span class="kw">pub fn </span>pred_eq_value(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1340,13 +1399,14 @@
         <span class="self">self</span>.pred_value(i)
     }
 
-    <span class="doccomment">/// Returns the non-strict predecessor of the given element.
+    <span class="doccomment">/// Returns the entry at $\max \left (i^▲ \right)$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.pred_eq(34), Some((34, &amp;&quot;bar&quot;)));
-    /// assert_eq!(veb.pred_eq(35), Some((12, &amp;&quot;foo&quot;)));
+    /// assert_eq!(veb.pred_eq(33), Some((12, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>pred_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1355,11 +1415,12 @@
         <span class="self">self</span>.pred(i)
     }
 
-    <span class="doccomment">/// Returns the number of elements in the map.
+    <span class="doccomment">/// Returns $\|S\|$.
+    ///
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.len(), 0);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.len(), 1);
@@ -1372,7 +1433,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![]);
+    /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.is_empty(), true);
     /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.is_empty(), false);
@@ -1421,6 +1482,17 @@
     }
 }
 
+<span class="kw">impl</span>&lt;V&gt; std::iter::FromIterator&lt;(usize, V)&gt; <span class="kw">for </span>VebMap&lt;V&gt; {
+    <span class="kw">fn </span>from_iter&lt;I: IntoIterator&lt;Item = (usize, V)&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>vec = iter.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+        <span class="kw">let </span><span class="kw-2">mut </span>veb = VebMap::new(vec.iter().map(|(i, <span class="kw">_</span>)| <span class="kw-2">*</span>i).max().unwrap_or(<span class="number">0</span>) + <span class="number">1</span>);
+        <span class="kw">for </span>(i, v) <span class="kw">in </span>vec {
+            veb.insert(i, v);
+        }
+        veb
+    }
+}
+
 <span class="kw">impl</span>&lt;V&gt; std::ops::Index&lt;usize&gt; <span class="kw">for </span>VebMap&lt;V&gt; {
     <span class="kw">type </span>Output = V;
 
@@ -1452,7 +1524,7 @@
     /// # Example
     /// ```
     /// use veb::VebSet;
-    /// let veb = VebSet::new(1_000_000);
+    /// let veb = VebSet::new(1000);
     /// ```
     </span><span class="kw">pub fn </span>new(n: usize) -&gt; <span class="self">Self </span>{
         <span class="kw">if </span>n &lt;= <span class="number">64 </span>{
@@ -1542,7 +1614,7 @@
     /// # Example
     /// ```
     /// # use veb::VebSet;
-    /// let mut veb = VebSet::new(1_000_000);
+    /// let mut veb = VebSet::new(1000);
     /// assert_eq!(veb.insert(42), true);
     /// assert_eq!(veb.insert(42), false);
     /// ```
@@ -1601,7 +1673,7 @@
     /// # Example
     /// ```
     /// # use veb::VebSet;
-    /// let mut veb = VebSet::new(1_000_000);
+    /// let mut veb = VebSet::new(1000);
     /// veb.insert(42);
     /// assert_eq!(veb.remove(42), true);
     /// assert_eq!(veb.remove(42), false);
@@ -1660,7 +1732,7 @@
         }
     }
 
-    <span class="doccomment">/// Returns the successor of the given element.
+    <span class="doccomment">/// Returns the minimum element greater than given element.
     /// Returns `None` if the given element is the maximum element.
     ///
     /// # Example
@@ -1704,8 +1776,7 @@
         }
     }
 
-    <span class="doccomment">/// Returns the predecessor of the given element.
-    /// Returns `None` if the given element is the minimum element.
+    <span class="doccomment">/// Returns $\min\{j \in S \mid j \le i\}$.
     ///
     /// # Example
     /// ```
@@ -1743,6 +1814,14 @@
             }
             <span class="kw-2">&amp;</span><span class="self">Self</span>::Leaf(bs) =&gt; (bs &amp; ((<span class="number">1 </span>&lt;&lt; i) - <span class="number">1</span>)).checked_ilog2().map(|j| j <span class="kw">as </span>usize),
         }
+    }
+
+    <span class="doccomment">/// Returns $\max\{j \in S \mid j \leq i\}$.
+    </span><span class="kw">pub fn </span>pred_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
+        <span class="kw">if </span><span class="self">self</span>.contains(i) {
+            <span class="kw">return </span><span class="prelude-val">Some</span>(i);
+        }
+        <span class="self">self</span>.pred(i)
     }
 
     <span class="doccomment">/// Returns `true` if the set contains the given element.
@@ -1788,6 +1867,17 @@
 <span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>VebSet {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_set().entries(<span class="self">self</span>.collect()).finish()
+    }
+}
+
+<span class="kw">impl </span>std::iter::FromIterator&lt;usize&gt; <span class="kw">for </span>VebSet {
+    <span class="kw">fn </span>from_iter&lt;I: IntoIterator&lt;Item = usize&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span>vec: Vec&lt;<span class="kw">_</span>&gt; = iter.into_iter().collect();
+        <span class="kw">let </span><span class="kw-2">mut </span>veb = VebSet::new(vec.iter().copied().max().unwrap_or(<span class="number">0</span>) + <span class="number">1</span>);
+        <span class="kw">for </span>i <span class="kw">in </span>vec {
+            veb.insert(i);
+        }
+        veb
     }
 }
 
