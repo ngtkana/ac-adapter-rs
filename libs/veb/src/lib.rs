@@ -306,8 +306,8 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq(34), Some((34, &"bar"));
-    /// assert_eq!(veb.succ_eq(35), Some((56, &"baz"));
+    /// assert_eq!(veb.succ_eq(34), Some((34, &"bar")));
+    /// assert_eq!(veb.succ_eq(35), Some((56, &"baz")));
     /// ```
     pub fn succ_eq(&self, i: usize) -> Option<(usize, &V)> {
         if let Some(v) = self.get(i) {
@@ -391,8 +391,8 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq(34), Some((34, &"bar"));
-    /// assert_eq!(veb.pred_eq(35), Some((12, &"foo"));
+    /// assert_eq!(veb.pred_eq(34), Some((34, &"bar")));
+    /// assert_eq!(veb.pred_eq(35), Some((12, &"foo")));
     /// ```
     pub fn pred_eq(&self, i: usize) -> Option<(usize, &V)> {
         if let Some(v) = self.get(i) {
