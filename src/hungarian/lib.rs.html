@@ -388,6 +388,7 @@
 <a href="#354" id="354">354</a>
 <a href="#355" id="355">355</a>
 <a href="#356" id="356">356</a>
+<a href="#357" id="357">357</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solve an assignment problem by Hungarian algorithm.
 //!
 //! # Example
@@ -701,6 +702,7 @@
         <span class="kw">let </span>h = cost_matrix.len();
         <span class="kw">let </span>w = cost_matrix[<span class="number">0</span>].len();
         <span class="kw">let </span>value = permutations((<span class="number">0</span>..w).collect_vec())
+            .into_iter()
             .map(|v| calculate_score(cost_matrix, v[..h].iter().copied()))
             .min_by(|x, y| x.partial_cmp(y).unwrap())
             .unwrap();

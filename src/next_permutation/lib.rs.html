@@ -255,295 +255,227 @@
 <a href="#221" id="221">221</a>
 <a href="#222" id="222">222</a>
 <a href="#223" id="223">223</a>
-<a href="#224" id="224">224</a>
-<a href="#225" id="225">225</a>
-<a href="#226" id="226">226</a>
-<a href="#227" id="227">227</a>
-<a href="#228" id="228">228</a>
-<a href="#229" id="229">229</a>
-<a href="#230" id="230">230</a>
-<a href="#231" id="231">231</a>
-<a href="#232" id="232">232</a>
-<a href="#233" id="233">233</a>
-<a href="#234" id="234">234</a>
-<a href="#235" id="235">235</a>
-<a href="#236" id="236">236</a>
-<a href="#237" id="237">237</a>
-<a href="#238" id="238">238</a>
-<a href="#239" id="239">239</a>
-<a href="#240" id="240">240</a>
-<a href="#241" id="241">241</a>
-<a href="#242" id="242">242</a>
-<a href="#243" id="243">243</a>
-<a href="#244" id="244">244</a>
-<a href="#245" id="245">245</a>
-<a href="#246" id="246">246</a>
-<a href="#247" id="247">247</a>
-<a href="#248" id="248">248</a>
-<a href="#249" id="249">249</a>
-<a href="#250" id="250">250</a>
-<a href="#251" id="251">251</a>
-<a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
-<a href="#256" id="256">256</a>
-<a href="#257" id="257">257</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! スライスの next-permutation アルゴリズムと、それによるイテレータを提供します。
-//!
-//! # `next_permutation` 系
-//!
-//! 次の置換が存在する場合は、受け取った可変スライス `state` をそれに変化させ、`true` を返します。
-//! さもなくば、`state` には何も起こさず、`false` を返します。
-//!
-//! ## Examples
-//!
-//! ```
-//! # use next_permutation::next_permutation;
-//! let mut a = vec![1, 0, 2, 1];
-//! assert_eq!(
-//!     next_permutation(&amp;mut a).map(|a| a.to_vec()),
-//!     Some(vec![1, 1, 0, 2])
-//! );
-//! assert_eq!(a.as_slice(), &amp;[1, 1, 0, 2]);
-//! ```
-//!
-//! # `permutations` 系
-//!
-//! 受け取ったベクターの置換をすべて辞書順返すイテレータを返します。
-//! 引数 `state` は必ずしもソートされていなくてもよいです。
-//! （この関数の実装の最初に、自動的にソートされます。）
-//!
-//! ## Examples
-//!
-//! ```
-//! # use next_permutation::permutations;
-//! let a = vec![1, 0, 0];
-//! let perms = permutations(a).collect::&lt;Vec&lt;_&gt;&gt;();
-//! assert_eq!(perms, vec![vec![0, 0, 1], vec![0, 1, 0], vec![1, 0, 0]]);
-//! ```
-//!
-//! # [`iter_by_next`] について
-//!
-//! [`next_permutation`] から [`permutations`] を作る操作を一般化したものです
-//!
-//! ## Examples
-//!
-//! 直積全探索の例です。
-//!
-//! ```
-//! # use next_permutation::iter_by_next;
-//! let n = 3;
-//! let value_lim = 3;
-//!
-//! let result = iter_by_next(vec![0; n], |state: &amp;mut [_]| {
-//!     // `state` に型注釈が必要です。
-//!     state.iter().rposition(|&amp;x| x + 1 != value_lim).map(|i| {
-//!         state[i] += 1;
-//!         state[i + 1..].iter_mut().for_each(|x| *x = 0);
-//!         state
-//!     })
-//! })
-//! .collect::&lt;Vec&lt;_&gt;&gt;();
-//!
-//! let mut expected = Vec::new();
-//! for i in 0..value_lim {
-//!     for j in 0..value_lim {
-//!         for k in 0..value_lim {
-//!             expected.push(vec![i, j, k]);
-//!         }
-//!     }
-//! }
-//! assert_eq!(result, expected);
-//! ```
+</pre></div><pre class="rust"><code><span class="doccomment">//! A library to enumerate permutations, shuffles, and partitions.
 
-</span><span class="kw">use </span>std::borrow::BorrowMut;
-<span class="kw">use </span>std::cmp::Ordering;
-<span class="kw">use </span>std::iter::once;
-<span class="kw">use </span>std::iter::repeat;
-
-<span class="doccomment">/// 遷移関数からイテレータを作ります。
-</span><span class="kw">pub fn </span>iter_by_next&lt;T, U: <span class="question-mark">?</span>Sized&gt;(
-    init: T,
-    <span class="kw-2">mut </span>next: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>U) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>U&gt;,
-) -&gt; <span class="kw">impl </span>Iterator&lt;Item = T&gt;
-<span class="kw">where
-    </span>T: BorrowMut&lt;U&gt; + Clone,
-    U: ToOwned&lt;Owned = T&gt;,
-{
-    once(init.clone()).chain(repeat(()).scan(init, <span class="kw">move </span>|state, ()| {
-        next(state.borrow_mut()).map(|state| state.to_owned())
-    }))
+/// Returns the next permutation of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>next_permutation&lt;T: Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) -&gt; bool {
+    <span class="kw">let </span><span class="prelude-val">Some</span>(i) = a.windows(<span class="number">2</span>).rposition(|w| w[<span class="number">0</span>] &lt; w[<span class="number">1</span>]) <span class="kw">else </span>{
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    };
+    <span class="kw">let </span>j = a.iter().rposition(|x| x &gt; <span class="kw-2">&amp;</span>a[i]).unwrap();
+    a.swap(i, j);
+    a[i + <span class="number">1</span>..].reverse();
+    <span class="bool-val">true
+</span>}
+<span class="doccomment">/// Calls `f` for each permutation of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>for_each_permutation&lt;T: Ord, F: FnMut(<span class="kw-2">&amp;</span>[T])&gt;(a: <span class="kw-2">&amp;mut </span>[T], <span class="kw-2">mut </span>f: F) {
+    a.sort();
+    <span class="kw">while </span>{
+        f(a);
+        next_permutation(a)
+    } {}
+}
+<span class="doccomment">/// Returns all permutations of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>permutations&lt;T: Ord + Clone&gt;(a: Vec&lt;T&gt;) -&gt; Vec&lt;Vec&lt;T&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>a = a;
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    for_each_permutation(<span class="kw-2">&amp;mut </span>a, |a| result.push(a.to_vec()));
+    result
+}
+<span class="doccomment">/// Returns the next $(K, N - K)$-shuffle of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>next_shuffle&lt;T: Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T], k: usize) -&gt; bool {
+    <span class="kw">let </span>n = a.len();
+    <span class="kw">if </span>n == k {
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    }
+    <span class="kw">let </span>(left, right) = a.split_at_mut(k);
+    <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>i) = left.iter().rposition(|x| x &lt; right.last().unwrap()) <span class="kw">else </span>{
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    };
+    <span class="kw">let </span><span class="kw-2">mut </span>j = right.iter().position(|x| <span class="kw-2">&amp;</span>left[i] &lt; x).unwrap();
+    std::mem::swap(<span class="kw-2">&amp;mut </span>left[i], <span class="kw-2">&amp;mut </span>right[j]);
+    i += <span class="number">1</span>;
+    j += <span class="number">1</span>;
+    <span class="kw">let </span>swap_len = (k - i).min(n - k - j);
+    left[k - swap_len..].swap_with_slice(<span class="kw-2">&amp;mut </span>right[j..j + swap_len]);
+    left[i..].rotate_left(k.saturating_sub(i + swap_len));
+    right[j..].rotate_right((n - k).saturating_sub(j + swap_len));
+    <span class="bool-val">true
+</span>}
+<span class="doccomment">/// Calls `f` for each $(K, N - K)$-shuffle of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>for_each_shuffle&lt;T: Ord, F: FnMut(<span class="kw-2">&amp;</span>[T])&gt;(a: <span class="kw-2">&amp;mut </span>[T], k: usize, <span class="kw-2">mut </span>f: F) {
+    a.sort();
+    <span class="kw">while </span>{
+        f(<span class="kw-2">&amp;</span>a[..k]);
+        next_shuffle(a, k)
+    } {}
+}
+<span class="doccomment">/// Returns all $(K, N - K)$-shuffles of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>shuffles&lt;T: Ord + Clone&gt;(a: Vec&lt;T&gt;, k: usize) -&gt; Vec&lt;Vec&lt;T&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>a = a;
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    for_each_shuffle(<span class="kw-2">&amp;mut </span>a, k, |a| result.push(a.to_vec()));
+    result
+}
+<span class="doccomment">/// Returns the next pairing (ascending $(2,2,\dots,2)$-shuffle) of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>next_pairing(a: <span class="kw-2">&amp;mut </span>[usize]) -&gt; bool {
+    <span class="macro">assert!</span>(a.len() % <span class="number">2 </span>== <span class="number">0</span>);
+    <span class="macro">assert!</span>(a.len() &lt;= <span class="number">32</span>);
+    <span class="kw">let </span>n = a.len();
+    <span class="kw">let </span><span class="kw-2">mut </span>used = <span class="number">0_u32</span>;
+    <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">0</span>..n).rev() {
+        used |= <span class="number">1 </span>&lt;&lt; a[i];
+        <span class="kw">if </span>i % <span class="number">2 </span>== <span class="number">1 </span>&amp;&amp; a[i] + <span class="number">1 </span>&lt; (used + <span class="number">1</span>).next_power_of_two().trailing_zeros() <span class="kw">as </span>usize {
+            a[i] = (used &gt;&gt; (a[i] + <span class="number">1</span>)).trailing_zeros() <span class="kw">as </span>usize + a[i] + <span class="number">1</span>;
+            used ^= <span class="number">1 </span>&lt;&lt; a[i];
+            <span class="kw">for </span>x <span class="kw">in </span><span class="kw-2">&amp;mut </span>a[i + <span class="number">1</span>..n] {
+                <span class="kw-2">*</span>x = used.trailing_zeros() <span class="kw">as </span>usize;
+                used ^= <span class="number">1 </span>&lt;&lt; <span class="kw-2">*</span>x;
+            }
+            <span class="kw">return </span><span class="bool-val">true</span>;
+        }
+    }
+    <span class="bool-val">false
+</span>}
+<span class="doccomment">/// Calls `f` for each pairing (ascending $(2,2,\dots,2)$-shuffle) of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>for_each_pairing&lt;F: FnMut(<span class="kw-2">&amp;</span>[usize])&gt;(n: usize, <span class="kw-2">mut </span>f: F) {
+    <span class="kw">let </span><span class="kw-2">mut </span>a = (<span class="number">0</span>..n).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+    <span class="kw">while </span>{
+        f(<span class="kw-2">&amp;</span>a);
+        next_pairing(<span class="kw-2">&amp;mut </span>a)
+    } {}
+}
+<span class="doccomment">/// Returns all pairings (ascending $(2,2,\dots,2)$-shuffles) of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>pairings(n: usize) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    for_each_pairing(n, |a| result.push(a.to_vec()));
+    result
+}
+<span class="doccomment">/// Returns the next partition of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>next_partition(a: <span class="kw-2">&amp;mut </span>Vec&lt;usize&gt;) -&gt; bool {
+    <span class="kw">let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>sum) = a.pop() <span class="kw">else </span>{ <span class="kw">return </span><span class="bool-val">false </span>};
+    <span class="kw">if </span>a.is_empty() {
+        <span class="kw">return </span><span class="bool-val">false</span>;
+    }
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = a.pop() {
+        sum += x;
+        <span class="kw">if </span>a.last().map_or(<span class="bool-val">true</span>, |<span class="kw-2">&amp;</span>last| last &gt; x) {
+            a.push(x + <span class="number">1</span>);
+            a.extend(std::iter::repeat(<span class="number">1</span>).take(sum - x - <span class="number">1</span>));
+            <span class="kw">break</span>;
+        }
+    }
+    <span class="bool-val">true
+</span>}
+<span class="doccomment">/// Calls `f` for each partition of `n` in lexicographic order.
+</span><span class="kw">pub fn </span>for_each_partition&lt;F: FnMut(<span class="kw-2">&amp;</span>[usize])&gt;(n: usize, <span class="kw-2">mut </span>f: F) {
+    <span class="kw">let </span><span class="kw-2">mut </span>a = <span class="macro">vec!</span>[<span class="number">1</span>; n];
+    <span class="kw">while </span>{
+        f(<span class="kw-2">&amp;</span>a);
+        next_partition(<span class="kw-2">&amp;mut </span>a)
+    } {}
+}
+<span class="doccomment">/// Returns all partitions of `n` in lexicographic order.
+</span><span class="kw">pub fn </span>partitions(n: usize) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    for_each_partition(n, |a| result.push(a.to_vec()));
+    result
+}
+<span class="doccomment">/// Returns the previous partition of `a` in lexicographic order.
+</span><span class="kw">pub fn </span>prev_partition(a: <span class="kw-2">&amp;mut </span>Vec&lt;usize&gt;) -&gt; bool {
+    <span class="kw">let </span><span class="prelude-val">Some</span>(i) = a.iter().rposition(|<span class="kw-2">&amp;</span>x| x != <span class="number">1</span>) <span class="kw">else </span>{ <span class="kw">return </span><span class="bool-val">false </span>};
+    <span class="kw">let </span>max = a[i] - <span class="number">1</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>sum = a.split_off(i).into_iter().sum::&lt;usize&gt;();
+    <span class="kw">while </span>sum &gt;= max {
+        a.push(max);
+        sum -= max;
+    }
+    <span class="kw">if </span>sum &gt; <span class="number">0 </span>{
+        a.push(sum);
+    }
+    <span class="bool-val">true
+</span>}
+<span class="doccomment">/// Calls `f` for each partition of `n` in the reverse of the lexicographic order.
+</span><span class="kw">pub fn </span>for_each_partition_rev&lt;F: FnMut(<span class="kw-2">&amp;</span>[usize])&gt;(n: usize, <span class="kw-2">mut </span>f: F) {
+    <span class="kw">if </span>n == <span class="number">0 </span>{
+        f(<span class="kw-2">&amp;</span>[]);
+        <span class="kw">return</span>;
+    }
+    <span class="kw">let </span><span class="kw-2">mut </span>a = <span class="macro">vec!</span>[n];
+    <span class="kw">while </span>{
+        f(<span class="kw-2">&amp;</span>a);
+        prev_partition(<span class="kw-2">&amp;mut </span>a)
+    } {}
+}
+<span class="doccomment">/// Returns all partitions of `n` in the reverse of the lexicographic order.
+</span><span class="kw">pub fn </span>partitions_rev(n: usize) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+    <span class="kw">let </span><span class="kw-2">mut </span>result = Vec::new();
+    for_each_partition_rev(n, |a| result.push(a.to_vec()));
+    result
 }
 
-<span class="doccomment">/// 要素の [`Ord`] による比較により、受け取ったスライスを次の置換に遷移します。
-///
-/// # Returns
-///
-/// 次の置換が存在した場合、`true` を返します。
-///
-/// # Effects
-///
-/// 次の置換が存在した場合、次の置換に遷移します。
-/// さもなくば何も起こりません。
-</span><span class="kw">pub fn </span>next_permutation&lt;T: Ord&gt;(state: <span class="kw-2">&amp;mut </span>[T]) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>[T]&gt; {
-    next_permutation_by(state, Ord::cmp)
-}
-
-<span class="kw">pub fn </span>next_permutation_by_key&lt;T, U, F&gt;(state: <span class="kw-2">&amp;mut </span>[T], <span class="kw-2">mut </span>f: F) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>[T]&gt;
-<span class="kw">where
-    </span>F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; U,
-    U: Ord,
-{
-    next_permutation_by(state, |x, y| f(x).cmp(<span class="kw-2">&amp;</span>f(y)))
-}
-
-<span class="doccomment">/// 引数の比較関数により比較して、受け取ったスライスを次の置換に遷移します。
-///
-/// # Returns
-///
-/// 次の置換が存在した場合、`true` を返します。
-///
-/// # Effects
-///
-/// 次の置換が存在した場合、次の置換に遷移します。
-/// さもなくば何も起こりません。
-</span><span class="kw">pub fn </span>next_permutation_by&lt;T&gt;(
-    state: <span class="kw-2">&amp;mut </span>[T],
-    <span class="kw-2">mut </span>cmp: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; Ordering,
-) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>[T]&gt; {
-    (<span class="number">0</span>..state.len() - <span class="number">1</span>)
-        .rfind(|<span class="kw-2">&amp;</span>i| cmp(<span class="kw-2">&amp;</span>state[i], <span class="kw-2">&amp;</span>state[i + <span class="number">1</span>]) == Ordering::Less)
-        .map(|i| {
-            state[i + <span class="number">1</span>..].reverse();
-            <span class="kw">let </span>j = i
-                + <span class="number">1
-                </span>+ state[i + <span class="number">1</span>..]
-                    .iter()
-                    .position(|x| cmp(<span class="kw-2">&amp;</span>state[i], x) == (Ordering::Less))
-                    .unwrap();
-            state.swap(i, j);
-            state
-        })
-}
-
-<span class="doccomment">/// 要素を射影して、受け取ったベクターの置換をすべて辞書順返すイテレータを返します。
-///
-/// 引数 `state` は必ずしもソートされていなくてもよいです。
-/// （この関数の実装の最初に、自動的にソートされます。）
-</span><span class="kw">pub fn </span>permutations&lt;T&gt;(<span class="kw-2">mut </span>state: Vec&lt;T&gt;) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Vec&lt;T&gt;&gt;
-<span class="kw">where
-    </span>T: Clone + Ord,
-{
-    state.sort();
-    iter_by_next(state, next_permutation)
-}
-
-<span class="doccomment">/// 要素の [`Ord`] による比較により、
-/// 受け取ったベクターの置換をすべて辞書順返すイテレータを返します。
-///
-/// 引数 `state` は必ずしもソートされていなくてもよいです。
-/// （この関数の実装の最初に、自動的にソートされます。）
-</span><span class="kw">pub fn </span>permutations_by_key&lt;T, U, F&gt;(<span class="kw-2">mut </span>state: Vec&lt;T&gt;, f: F) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Vec&lt;T&gt;&gt;
-<span class="kw">where
-    </span>T: Clone,
-    U: Ord,
-    F: FnMut(<span class="kw-2">&amp;</span>T) -&gt; U + Copy,
-{
-    state.sort_by_key(f);
-    iter_by_next(state, <span class="kw">move </span>|state| next_permutation_by_key(state, f))
-}
-
-<span class="doccomment">/// 引数の比較関数により比較して、受け取ったベクターの置換をすべて辞書順返すイテレータを返します。
-///
-/// 引数 `state` は必ずしもソートされていなくてもよいです。
-/// （この関数の実装の最初に、自動的にソートされます。）
-</span><span class="kw">pub fn </span>permutations_by&lt;T, C&gt;(<span class="kw-2">mut </span>state: Vec&lt;T&gt;, cmp: C) -&gt; <span class="kw">impl </span>Iterator&lt;Item = Vec&lt;T&gt;&gt;
-<span class="kw">where
-    </span>T: Clone,
-    C: FnMut(<span class="kw-2">&amp;</span>T, <span class="kw-2">&amp;</span>T) -&gt; Ordering + Copy,
-{
-    state.sort_by(cmp);
-    iter_by_next(state, <span class="kw">move </span>|state| next_permutation_by(state, cmp))
-}
-
-<span class="attr">#[cfg(tests)]
+<span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
     <span class="kw">use </span>itertools::Itertools;
 
-    <span class="kw">fn </span>make_perms() -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
-        <span class="macro">vec!</span>[
-            <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>],
-            <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">2</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>],
-            <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>],
-            <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>],
-        ]
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_next_permutation() {
-        <span class="kw">let </span>perms = make_perms();
-        <span class="kw">for </span>v <span class="kw">in </span>perms.windows(<span class="number">2</span>) {
-            <span class="kw">let </span><span class="kw-2">mut </span>from = v[<span class="number">0</span>].clone();
-            <span class="kw">let </span>to = <span class="kw-2">&amp;</span>v[<span class="number">1</span>];
-            next_permutation(<span class="kw-2">&amp;mut </span>from);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>from, to);
-        }
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_next_permutation_by_key() {
-        <span class="kw">let </span>perms = make_perms();
-        <span class="kw">for </span>v <span class="kw">in </span>perms.windows(<span class="number">2</span>) {
-            <span class="kw">let </span><span class="kw-2">mut </span>from = v[<span class="number">0</span>].clone();
-            <span class="kw">let </span>to = <span class="kw-2">&amp;</span>v[<span class="number">1</span>];
-            next_permutation_by_key(<span class="kw-2">&amp;mut </span>from, |x| x);
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>from, to);
-        }
-    }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_next_permutation_by() {
-        <span class="kw">let </span>perms = make_perms();
-        <span class="kw">for </span>v <span class="kw">in </span>perms.windows(<span class="number">2</span>) {
-            <span class="kw">let </span><span class="kw-2">mut </span>from = v[<span class="number">0</span>].clone();
-            <span class="kw">let </span>to = <span class="kw-2">&amp;</span>v[<span class="number">1</span>];
-            next_permutation_by(<span class="kw-2">&amp;mut </span>from, |x, y| x.cmp(<span class="kw-2">&amp;</span>y));
-            <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>from, to);
-        }
-    }
-
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_permutations() {
-        <span class="kw">let </span>a = <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];
-        <span class="kw">let </span>perms = permutations(a).collect_vec();
-        <span class="kw">let </span>expected = make_perms();
-        <span class="macro">assert_eq!</span>(expected, perms);
+        <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..=<span class="number">5 </span>{
+            <span class="kw">let </span>result = permutations((<span class="number">0</span>..n).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;());
+            <span class="macro">assert!</span>(result.iter().tuple_windows().all(|(a, b)| a &lt; b));
+            <span class="macro">assert_eq!</span>(result.len(), (<span class="number">1</span>..=n).product());
+        }
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_permutations_by_key() {
-        <span class="kw">let </span>a = <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];
-        <span class="kw">let </span>perms = permutations_by_key(a, |x| x).collect_vec();
-        <span class="kw">let </span>expected = make_perms();
-        <span class="macro">assert_eq!</span>(expected, perms);
+    </span><span class="kw">fn </span>test_shuffles() {
+        <span class="kw">for </span>n <span class="kw">in </span><span class="number">0</span>..=<span class="number">5 </span>{
+            <span class="kw">for </span>k <span class="kw">in </span><span class="number">0</span>..=n {
+                <span class="kw">let </span>result = shuffles((<span class="number">0</span>..n).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), k);
+                <span class="kw">for </span>result <span class="kw">in </span><span class="kw-2">&amp;</span>result {
+                    <span class="macro">assert!</span>(result[..k].iter().tuple_windows().all(|(a, b)| a &lt; b));
+                    <span class="macro">assert!</span>(result[k..].iter().tuple_windows().all(|(a, b)| a &lt; b));
+                }
+                <span class="macro">assert!</span>(result.iter().tuple_windows().all(|(a, b)| a &lt; b));
+                <span class="macro">assert_eq!</span>(
+                    result.len(),
+                    (<span class="number">1</span>..=n).product::&lt;usize&gt;()
+                        / (<span class="number">1</span>..=k).product::&lt;usize&gt;()
+                        / (<span class="number">1</span>..=(n - k)).product::&lt;usize&gt;()
+                );
+            }
+        }
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_permutations_by() {
-        <span class="kw">let </span>a = <span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>];
-        <span class="kw">let </span>perms = permutations_by(a, |x, y| x.cmp(<span class="kw-2">&amp;</span>y)).collect_vec();
-        <span class="kw">let </span>expected = make_perms();
-        <span class="macro">assert_eq!</span>(expected, perms);
+    </span><span class="kw">fn </span>test_pairings() {
+        <span class="kw">for </span>n <span class="kw">in </span>(<span class="number">0</span>..=<span class="number">10</span>).step_by(<span class="number">2</span>) {
+            <span class="kw">let </span>result = pairings(n);
+            <span class="macro">assert!</span>(result.iter().tuple_windows().all(|(a, b)| a &lt; b));
+            <span class="kw">for </span>result <span class="kw">in </span><span class="kw-2">&amp;</span>result {
+                <span class="macro">assert!</span>(result.chunks_exact(<span class="number">2</span>).all(|x| x[<span class="number">0</span>] &lt; x[<span class="number">1</span>]));
+                <span class="macro">assert!</span>(result.iter().step_by(<span class="number">2</span>).tuple_windows().all(|(a, b)| a &lt; b));
+            }
+            <span class="macro">assert_eq!</span>(result.len(), (<span class="number">1</span>..=n).step_by(<span class="number">2</span>).product::&lt;usize&gt;());
+        }
+    }
+
+    <span class="attr">#[test]
+    </span><span class="kw">fn </span>test_partitions() {
+        <span class="kw">let </span>n = <span class="number">10</span>;
+        <span class="kw">let </span><span class="kw-2">mut </span>p = <span class="macro">vec!</span>[<span class="number">1</span>; n];
+        <span class="kw">for </span>step <span class="kw">in </span><span class="number">2</span>..n {
+            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..n - step {
+                p[i + step] += p[i];
+            }
+        }
+        <span class="kw">for </span>(n, <span class="kw-2">&amp;</span>p) <span class="kw">in </span>p.iter().enumerate() {
+            <span class="kw">let </span>result = partitions(n);
+            <span class="macro">assert!</span>(result.iter().tuple_windows().all(|(a, b)| a &lt; b));
+            <span class="macro">assert_eq!</span>(result.len(), p);
+            <span class="macro">assert_eq!</span>(result, partitions_rev(n).into_iter().rev().collect_vec());
+        }
     }
 }
 </code></pre></div></section></main></body></html>

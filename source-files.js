@@ -32,8 +32,8 @@ var sourcesIndex = JSON.parse('{\
 "hld":["",[],["lib.rs"]],\
 "hopkarp":["",[],["lib.rs"]],\
 "hungarian":["",[],["lib.rs"]],\
-"input":["",[],["lib.rs"]],\
 "inversion_number":["",[],["lib.rs"]],\
+"io":["",[],["lib.rs"]],\
 "itermore":["",[],["lib.rs"]],\
 "lagrange":["",[],["lib.rs"]],\
 "lazy_segbeats":["",[],["lib.rs"]],\
@@ -56,7 +56,7 @@ var sourcesIndex = JSON.parse('{\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
-"rb":["",[],["lib.rs","list.rs","tree.rs"]],\
+"rb":["",[],["balance.rs","lib.rs","map.rs","seq.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
 "reverse":["",[],["lib.rs"]],\
 "scc":["",[],["lib.rs"]],\
@@ -78,6 +78,7 @@ var sourcesIndex = JSON.parse('{\
 "two_sat":["",[],["lib.rs"]],\
 "uf_checklist":["",[],["lib.rs"]],\
 "union_find":["",[],["lib.rs"]],\
+"veb":["",[],["lib.rs"]],\
 "vec_lines":["",[],["lib.rs"]],\
 "wavelet_matrix":["",[],["lib.rs"]],\
 "z_algo":["",[],["lib.rs"]],\

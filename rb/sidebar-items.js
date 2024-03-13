@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"trait":["Op"]};
+window.SIDEBAR_ITEMS = {"struct":["Multimap","MultimapSeg","Multiset","Seg"],"trait":["MultimapOp","Op"]};
