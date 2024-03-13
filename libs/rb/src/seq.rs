@@ -73,13 +73,21 @@ impl<O: Op> Balance for Node<O> {
 
     fn push(&mut self) {}
 
-    fn color(&mut self) -> &mut Color { &mut self.color }
+    fn color(&mut self) -> &mut Color {
+        &mut self.color
+    }
 
-    fn parent(&mut self) -> &mut Option<Ptr<Self>> { &mut self.parent }
+    fn parent(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.parent
+    }
 
-    fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
+    fn left(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.left
+    }
 
-    fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+    fn right(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.right
+    }
 }
 impl<O: Op> Ptr<Node<O>> {
     pub fn mul(left: Self, right: Self, color: Color) -> Self {
@@ -271,11 +279,17 @@ pub struct Seg<O: Op> {
     tree: Tree<Node<O>>,
 }
 impl<O: Op> Seg<O> {
-    pub fn new() -> Self { Self { tree: Tree::new() } }
+    pub fn new() -> Self {
+        Self { tree: Tree::new() }
+    }
 
-    pub fn len(&self) -> usize { self.tree.root.map_or(0, |root| root.len) }
+    pub fn len(&self) -> usize {
+        self.tree.root.map_or(0, |root| root.len)
+    }
 
-    pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
+    pub fn is_empty(&self) -> bool {
+        self.tree.root.is_none()
+    }
 
     pub fn iter(&self) -> SegIter<'_, O> {
         SegIter {
@@ -286,11 +300,17 @@ impl<O: Op> Seg<O> {
         }
     }
 
-    pub fn display(&self) -> SegDisplay<'_, O> { SegDisplay(self) }
+    pub fn display(&self) -> SegDisplay<'_, O> {
+        SegDisplay(self)
+    }
 
-    pub fn table(&self) -> SegTable<'_, O> { SegTable(self) }
+    pub fn table(&self) -> SegTable<'_, O> {
+        SegTable(self)
+    }
 
-    pub fn nth(&self, index: usize) -> &O::Value { &self.nth_ptr(index).as_longlife_ref().value }
+    pub fn nth(&self, index: usize) -> &O::Value {
+        &self.nth_ptr(index).as_longlife_ref().value
+    }
 
     pub fn nth_mut(&mut self, index: usize) -> Entry<'_, O> {
         Entry {
@@ -479,7 +499,9 @@ impl<O: Op> Seg<O> {
     }
 }
 impl<O: Op> Default for Seg<O> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<O: Op> FromIterator<O::Value> for Seg<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
@@ -536,7 +558,9 @@ impl<'a, O: Op> IntoIterator for &'a Seg<O> {
     type IntoIter = SegIter<'a, O>;
     type Item = &'a O::Value;
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 pub struct Entry<'a, O: Op> {
     p: Ptr<Node<O>>,
@@ -545,10 +569,14 @@ pub struct Entry<'a, O: Op> {
 impl<'a, O: Op> ops::Deref for Entry<'a, O> {
     type Target = O::Value;
 
-    fn deref(&self) -> &Self::Target { &self.p.as_longlife_ref().value }
+    fn deref(&self) -> &Self::Target {
+        &self.p.as_longlife_ref().value
+    }
 }
 impl<'a, O: Op> ops::DerefMut for Entry<'a, O> {
-    fn deref_mut(&mut self) -> &mut Self::Target { &mut self.p.as_longlife_mut().value }
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.p.as_longlife_mut().value
+    }
 }
 impl<'a, O: Op> Drop for Entry<'a, O> {
     fn drop(&mut self) {
@@ -570,11 +598,14 @@ impl<'a, O: Op> SegTable<'a, O> {
             offset: usize,
         ) -> usize {
             if p.is_leaf() {
-                vec.push((0, SegTableCell {
-                    start: offset,
-                    end: offset + 1,
-                    value: &p.as_longlife_ref().value,
-                }));
+                vec.push((
+                    0,
+                    SegTableCell {
+                        start: offset,
+                        end: offset + 1,
+                        value: &p.as_longlife_ref().value,
+                    },
+                ));
                 0
             } else {
                 let ht = 1 + traverse(vec, p.left.unwrap(), offset).max(traverse(
@@ -582,11 +613,14 @@ impl<'a, O: Op> SegTable<'a, O> {
                     p.right.unwrap(),
                     offset + p.left.unwrap().len,
                 ));
-                vec.push((ht, SegTableCell {
-                    start: offset,
-                    end: offset + p.len,
-                    value: &p.as_longlife_ref().value,
-                }));
+                vec.push((
+                    ht,
+                    SegTableCell {
+                        start: offset,
+                        end: offset + p.len,
+                        value: &p.as_longlife_ref().value,
+                    },
+                ));
                 ht
             }
         }
@@ -773,7 +807,9 @@ impl<'a, O: Op> Iterator for SegIter<'a, O> {
         Some(&x.value)
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { (self.len, Some(self.len)) }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len, Some(self.len))
+    }
 }
 impl<'a, O: Op> DoubleEndedIterator for SegIter<'a, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
@@ -823,7 +859,9 @@ mod test_seg {
             lhs.chars().chain(rhs.chars()).collect()
         }
 
-        fn identity() -> Self::Value { String::new() }
+        fn identity() -> Self::Value {
+            String::new()
+        }
     }
 
     impl Seg<O> {

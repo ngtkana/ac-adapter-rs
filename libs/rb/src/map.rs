@@ -56,13 +56,21 @@ impl<K, O: MultimapOp> Balance for Node<K, O> {
 
     fn push(&mut self) {}
 
-    fn color(&mut self) -> &mut Color { &mut self.color }
+    fn color(&mut self) -> &mut Color {
+        &mut self.color
+    }
 
-    fn parent(&mut self) -> &mut Option<Ptr<Self>> { &mut self.parent }
+    fn parent(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.parent
+    }
 
-    fn left(&mut self) -> &mut Option<Ptr<Self>> { &mut self.left }
+    fn left(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.left
+    }
 
-    fn right(&mut self) -> &mut Option<Ptr<Self>> { &mut self.right }
+    fn right(&mut self) -> &mut Option<Ptr<Self>> {
+        &mut self.right
+    }
 }
 impl<K: Ord, O: MultimapOp> Ptr<Node<K, O>> {
     pub fn next(self) -> Option<Self> {
@@ -108,11 +116,17 @@ pub struct MultimapSeg<K, O: MultimapOp> {
     tree: Tree<Node<K, O>>,
 }
 impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
-    pub fn new() -> Self { Self { tree: Tree::new() } }
+    pub fn new() -> Self {
+        Self { tree: Tree::new() }
+    }
 
-    pub fn len(&self) -> usize { len(self.tree.root) }
+    pub fn len(&self) -> usize {
+        len(self.tree.root)
+    }
 
-    pub fn is_empty(&self) -> bool { self.tree.root.is_none() }
+    pub fn is_empty(&self) -> bool {
+        self.tree.root.is_none()
+    }
 
     pub fn iter(&self) -> SegmapIter<'_, K, O> {
         SegmapIter {
@@ -162,9 +176,13 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
         index
     }
 
-    pub fn lower_bound(&self, key: &K) -> usize { self.partition_point(|x| x < key) }
+    pub fn lower_bound(&self, key: &K) -> usize {
+        self.partition_point(|x| x < key)
+    }
 
-    pub fn upper_bound(&self, key: &K) -> usize { self.partition_point(|x| x <= key) }
+    pub fn upper_bound(&self, key: &K) -> usize {
+        self.partition_point(|x| x <= key)
+    }
 
     pub fn insert(&mut self, key: K, value: O::Value) {
         let mut new = Ptr::new(Node::new(key, value, Color::Red));
@@ -322,13 +340,17 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
 }
 
 impl<K: Ord, O: MultimapOp> Default for MultimapSeg<K, O> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<'a, K: Ord, O: MultimapOp> IntoIterator for &'a MultimapSeg<K, O> {
     type IntoIter = SegmapIter<'a, K, O>;
     type Item = (&'a K, &'a O::Value);
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 
 pub struct SegmapIter<'a, K: Ord, O: MultimapOp> {
@@ -351,7 +373,9 @@ impl<'a, K: Ord, O: MultimapOp> Iterator for SegmapIter<'a, K, O> {
         Some((&x.key, &x.value))
     }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { (self.len, Some(self.len)) }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (self.len, Some(self.len))
+    }
 }
 impl<'a, K: Ord, O: MultimapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
@@ -392,9 +416,13 @@ impl<K: Ord, V> Multimap<K, V> {
         }
     }
 
-    pub fn len(&self) -> usize { self.segmap.len() }
+    pub fn len(&self) -> usize {
+        self.segmap.len()
+    }
 
-    pub fn is_empty(&self) -> bool { self.segmap.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.segmap.is_empty()
+    }
 
     pub fn iter(&self) -> MultimapIter<'_, K, V> {
         MultimapIter {
@@ -402,7 +430,9 @@ impl<K: Ord, V> Multimap<K, V> {
         }
     }
 
-    pub fn nth(&self, n: usize) -> (&K, &V) { self.segmap.nth(n) }
+    pub fn nth(&self, n: usize) -> (&K, &V) {
+        self.segmap.nth(n)
+    }
 
     pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<(&V, usize), usize>
     where
@@ -416,11 +446,17 @@ impl<K: Ord, V> Multimap<K, V> {
         self.segmap.partition_point(f)
     }
 
-    pub fn lower_bound(&self, key: &K) -> usize { self.segmap.lower_bound(key) }
+    pub fn lower_bound(&self, key: &K) -> usize {
+        self.segmap.lower_bound(key)
+    }
 
-    pub fn upper_bound(&self, key: &K) -> usize { self.segmap.upper_bound(key) }
+    pub fn upper_bound(&self, key: &K) -> usize {
+        self.segmap.upper_bound(key)
+    }
 
-    pub fn insert(&mut self, key: K, value: V) { self.segmap.insert(key, value) }
+    pub fn insert(&mut self, key: K, value: V) {
+        self.segmap.insert(key, value)
+    }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
     where
@@ -430,10 +466,14 @@ impl<K: Ord, V> Multimap<K, V> {
         self.segmap.remove(key)
     }
 
-    pub fn remove_nth(&mut self, n: usize) -> (K, V) { self.segmap.remove_nth(n) }
+    pub fn remove_nth(&mut self, n: usize) -> (K, V) {
+        self.segmap.remove_nth(n)
+    }
 }
 impl<K: Ord, V> Default for Multimap<K, V> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<K: Ord + fmt::Debug, V: fmt::Debug> fmt::Debug for Multimap<K, V> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -444,7 +484,9 @@ impl<'a, K: Ord, V> IntoIterator for &'a Multimap<K, V> {
     type IntoIter = MultimapIter<'a, K, V>;
     type Item = (&'a K, &'a V);
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 pub struct MultimapIter<'a, K: Ord, V> {
     iter: SegmapIter<'a, K, Nop<V>>,
@@ -452,12 +494,18 @@ pub struct MultimapIter<'a, K: Ord, V> {
 impl<'a, K: Ord, V> Iterator for MultimapIter<'a, K, V> {
     type Item = (&'a K, &'a V);
 
-    fn next(&mut self) -> Option<Self::Item> { self.iter.next() }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next()
+    }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 impl<'a, K: Ord, V> DoubleEndedIterator for MultimapIter<'a, K, V> {
-    fn next_back(&mut self) -> Option<Self::Item> { self.iter.next_back() }
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back()
+    }
 }
 impl<'a, K: Ord, V> ExactSizeIterator for MultimapIter<'a, K, V> {}
 
@@ -471,9 +519,13 @@ impl<K: Ord> Multiset<K> {
         }
     }
 
-    pub fn len(&self) -> usize { self.map.len() }
+    pub fn len(&self) -> usize {
+        self.map.len()
+    }
 
-    pub fn is_empty(&self) -> bool { self.map.is_empty() }
+    pub fn is_empty(&self) -> bool {
+        self.map.is_empty()
+    }
 
     pub fn iter(&self) -> MultisetIter<'_, K> {
         MultisetIter {
@@ -481,7 +533,9 @@ impl<K: Ord> Multiset<K> {
         }
     }
 
-    pub fn nth(&self, n: usize) -> &K { self.map.nth(n).0 }
+    pub fn nth(&self, n: usize) -> &K {
+        self.map.nth(n).0
+    }
 
     pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<usize, usize>
     where
@@ -495,11 +549,17 @@ impl<K: Ord> Multiset<K> {
         self.map.partition_point(f)
     }
 
-    pub fn lower_bound(&self, key: &K) -> usize { self.map.lower_bound(key) }
+    pub fn lower_bound(&self, key: &K) -> usize {
+        self.map.lower_bound(key)
+    }
 
-    pub fn upper_bound(&self, key: &K) -> usize { self.map.upper_bound(key) }
+    pub fn upper_bound(&self, key: &K) -> usize {
+        self.map.upper_bound(key)
+    }
 
-    pub fn insert(&mut self, key: K) { self.map.insert(key, ()) }
+    pub fn insert(&mut self, key: K) {
+        self.map.insert(key, ())
+    }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<K>
     where
@@ -509,10 +569,14 @@ impl<K: Ord> Multiset<K> {
         self.map.remove(key).map(|(k, _)| k)
     }
 
-    pub fn remove_nth(&mut self, n: usize) -> K { self.map.remove_nth(n).0 }
+    pub fn remove_nth(&mut self, n: usize) -> K {
+        self.map.remove_nth(n).0
+    }
 }
 impl<K: Ord> Default for Multiset<K> {
-    fn default() -> Self { Self::new() }
+    fn default() -> Self {
+        Self::new()
+    }
 }
 impl<K: Ord + fmt::Debug> fmt::Debug for Multiset<K> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -523,7 +587,9 @@ impl<'a, K: Ord> IntoIterator for &'a Multiset<K> {
     type IntoIter = MultisetIter<'a, K>;
     type Item = &'a K;
 
-    fn into_iter(self) -> Self::IntoIter { self.iter() }
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
 }
 pub struct MultisetIter<'a, K: Ord> {
     iter: MultimapIter<'a, K, ()>,
@@ -531,12 +597,18 @@ pub struct MultisetIter<'a, K: Ord> {
 impl<'a, K: Ord> Iterator for MultisetIter<'a, K> {
     type Item = &'a K;
 
-    fn next(&mut self) -> Option<Self::Item> { self.iter.next().map(|(k, _)| k) }
+    fn next(&mut self) -> Option<Self::Item> {
+        self.iter.next().map(|(k, _)| k)
+    }
 
-    fn size_hint(&self) -> (usize, Option<usize>) { self.iter.size_hint() }
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        self.iter.size_hint()
+    }
 }
 impl<'a, K: Ord> DoubleEndedIterator for MultisetIter<'a, K> {
-    fn next_back(&mut self) -> Option<Self::Item> { self.iter.next_back().map(|(k, _)| k) }
+    fn next_back(&mut self) -> Option<Self::Item> {
+        self.iter.next_back().map(|(k, _)| k)
+    }
 }
 impl<'a, K: Ord> ExactSizeIterator for MultisetIter<'a, K> {}
 
