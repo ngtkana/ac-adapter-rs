@@ -53,19 +53,19 @@
 /// | 20  |        | 0      |           |
 /// | 21  | i      | 1      | i         |
 /// | 22  |        | 0      |           |
-pub fn manacher<T: Eq + std::fmt::Debug>(s: &[T]) -> Vec<usize> {
+pub fn manacher<T: Eq>(s: &[T]) -> Vec<usize> {
     let n = s.len();
     let mut a = vec![0; 2 * n + 1];
     let mut i = 1;
-    let mut j = 0;
+    let mut j = 1;
     while i <= 2 * n {
-        j += (i + j) % 2;
         while j < i && i + j < 2 * n && s[(i - j) / 2 - 1] == s[(i + j) / 2] {
             j += 2;
         }
         a[i] = j;
         if j == 0 {
             i += 1;
+            j = 1;
             continue;
         }
         let mut k = 1;
