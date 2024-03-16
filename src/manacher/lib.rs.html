@@ -229,15 +229,15 @@
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
             <span class="kw">let </span>n = rng.gen_range(<span class="number">0</span>..<span class="number">10</span>);
             <span class="kw">let </span>s = (<span class="number">0</span>..n).map(|<span class="kw">_</span>| rng.gen_range(<span class="number">0</span>..<span class="number">4</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="kw">let </span>a = manacher(<span class="kw-2">&amp;</span>s);
-            <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..=<span class="number">2 </span>* n {
+            <span class="kw">let </span>result = manacher(<span class="kw-2">&amp;</span>s);
+            <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>result) <span class="kw">in </span>result.iter().enumerate() {
                 <span class="kw">let </span><span class="kw-2">mut </span>l = i / <span class="number">2</span>;
                 <span class="kw">let </span><span class="kw-2">mut </span>r = i - l;
                 <span class="kw">while </span><span class="number">0 </span>&lt; l &amp;&amp; r &lt; n &amp;&amp; s[l - <span class="number">1</span>] == s[r] {
                     l -= <span class="number">1</span>;
                     r += <span class="number">1</span>;
                 }
-                <span class="macro">assert_eq!</span>(a[i], r - l);
+                <span class="macro">assert_eq!</span>(result, r - l);
             }
         }
     }
