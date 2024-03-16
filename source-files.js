@@ -42,6 +42,7 @@ var sourcesIndex = JSON.parse('{\
 "lin_ineq":["",[],["lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\
 "make_graph":["",[],["lib.rs"]],\
+"manacher":["",[],["lib.rs"]],\
 "max_flow":["",[],["lib.rs"]],\
 "mincost_flow":["",[],["lib.rs"]],\
 "monotone_minima":["",[],["lib.rs"]],\
