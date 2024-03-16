@@ -90,15 +90,15 @@ mod tests {
         for _ in 0..200 {
             let n = rng.gen_range(0..10);
             let s = (0..n).map(|_| rng.gen_range(0..4)).collect::<Vec<_>>();
-            let a = manacher(&s);
-            for i in 0..=2 * n {
+            let result = manacher(&s);
+            for (i, &result) in result.iter().enumerate() {
                 let mut l = i / 2;
                 let mut r = i - l;
                 while 0 < l && r < n && s[l - 1] == s[r] {
                     l -= 1;
                     r += 1;
                 }
-                assert_eq!(a[i], r - l);
+                assert_eq!(result, r - l);
             }
         }
     }
