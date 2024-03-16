@@ -194,19 +194,19 @@
 /// | 20  |        | 0      |           |
 /// | 21  | i      | 1      | i         |
 /// | 22  |        | 0      |           |
-</span><span class="kw">pub fn </span>manacher&lt;T: Eq + std::fmt::Debug&gt;(s: <span class="kw-2">&amp;</span>[T]) -&gt; Vec&lt;usize&gt; {
+</span><span class="kw">pub fn </span>manacher&lt;T: Eq&gt;(s: <span class="kw-2">&amp;</span>[T]) -&gt; Vec&lt;usize&gt; {
     <span class="kw">let </span>n = s.len();
     <span class="kw">let </span><span class="kw-2">mut </span>a = <span class="macro">vec!</span>[<span class="number">0</span>; <span class="number">2 </span>* n + <span class="number">1</span>];
     <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="number">1</span>;
-    <span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">0</span>;
+    <span class="kw">let </span><span class="kw-2">mut </span>j = <span class="number">1</span>;
     <span class="kw">while </span>i &lt;= <span class="number">2 </span>* n {
-        j += (i + j) % <span class="number">2</span>;
         <span class="kw">while </span>j &lt; i &amp;&amp; i + j &lt; <span class="number">2 </span>* n &amp;&amp; s[(i - j) / <span class="number">2 </span>- <span class="number">1</span>] == s[(i + j) / <span class="number">2</span>] {
             j += <span class="number">2</span>;
         }
         a[i] = j;
         <span class="kw">if </span>j == <span class="number">0 </span>{
             i += <span class="number">1</span>;
+            j = <span class="number">1</span>;
             <span class="kw">continue</span>;
         }
         <span class="kw">let </span><span class="kw-2">mut </span>k = <span class="number">1</span>;
