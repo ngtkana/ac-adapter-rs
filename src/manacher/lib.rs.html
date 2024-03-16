@@ -137,6 +137,8 @@
 <a href="#103" id="103">103</a>
 <a href="#104" id="104">104</a>
 <a href="#105" id="105">105</a>
+<a href="#106" id="106">106</a>
+<a href="#107" id="107">107</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Manacher&#39;s algorithm
 
 /// Returns the palindrome array $A$ of the given string $s$.
@@ -162,7 +164,9 @@
 /// # use manacher::manacher;
 /// let s = &quot;mississippi&quot;;
 /// let a = manacher(s.as_bytes());
-/// assert_eq!(a,, vec![0, 1, 0, 1, 0, 1, 4, 1, 0, 7, 0, 1, 4, 1, 0, 1, 0, 1, 4, 1, 0, 1, 0]);
+/// assert_eq!(a, vec![
+///     0, 1, 0, 1, 0, 1, 4, 1, 0, 7, 0, 1, 4, 1, 0, 1, 0, 1, 4, 1, 0, 1, 0
+/// ]);
 /// ```
 ///
 /// | $i$ | $s_{(i - 1) / 2}$ | $A_i$ | $s_{(i - A_i) / 2..(i + A_i) / 2}$ |
