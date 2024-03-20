@@ -1,437 +1,334 @@
-use std::cell::RefCell;
-use std::fmt::Debug;
-use std::fmt::Formatter;
-use std::fmt::{self};
-use std::ops::Bound;
-use std::ops::Range;
+//! # LazySegtree
+//!
+//! Defines a struct [`LazySegtree`] and a trait [`Op`] for a lazy segment tree.
+//!
+//! # Note
+//!
+//! It does not support binary searches.
+//!
+//! # Example
+//!
+//! ```
+//! use lazy_segtree::LazySegtree;
+//! use lazy_segtree::Op;
+//!
+//! enum O {}
+//! impl Op for O {
+//!     type Operator = u64;
+//!     type Value = u64;
+//!
+//!     fn identity() -> Self::Value {
+//!         0
+//!     }
+//!
+//!     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+//!         (*lhs).max(*rhs)
+//!     }
+//!
+//!     fn apply(op: &Self::Operator, value: &Self::Value) -> Self::Value {
+//!         *op + *value
+//!     }
+//!
+//!     fn identity_op() -> Self::Operator {
+//!         0
+//!     }
+//!
+//!     fn compose(op: &Self::Operator, other: &Self::Operator) -> Self::Operator {
+//!         *op + *other
+//!     }
+//! }
+//!
+//! let mut seg = LazySegtree::<O>::new(&[3, 1, 4, 1, 5, 9, 2, 6]);
+//! assert_eq!(seg.fold(0..8), 9);
+//! seg.range_apply(3..6, &2);
+//! assert_eq!(seg.fold(0..8), 11);
+//! ```
+use std::iter::FromIterator;
+use std::mem::replace;
 use std::ops::RangeBounds;
 
-#[derive(Clone)]
-pub struct LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction> {
-    lg: u32,
-    len: usize,
-    table: RefCell<Box<[T]>>,
-    lazy: RefCell<Box<[U]>>,
-    op: Op,
-    apply: Apply,
-    compose: Compose,
-    identity: Identity,
-    id_action: IdAction,
+/// Opertions for a lazy segment tree.
+pub trait Op {
+    /// The value type.
+    type Value;
+    /// The operator type.
+    type Operator: PartialEq;
+
+    /// Returns the identity value.
+    fn identity() -> Self::Value;
+    /// Multiplies two values.
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    /// Applies an operator to a value.
+    fn apply(op: &Self::Operator, value: &Self::Value) -> Self::Value;
+    /// Returns the identity operator.
+    fn identity_op() -> Self::Operator;
+    /// Composes two operators.
+    /// The result of `compose(a, b)` is equivalent to applying `b` and then `a`.
+    fn compose(op: &Self::Operator, other: &Self::Operator) -> Self::Operator;
 }
-pub struct LazySegtreeBuilder<'a, T, Op, Apply, Compose, Identity, IdAction> {
-    pub slice: &'a [T],
-    pub op: Op,
-    pub apply: Apply,
-    pub compose: Compose,
-    pub identity: Identity,
-    pub id_action: IdAction,
+
+/// A lazy segment tree.
+#[derive(Debug, Clone)]
+pub struct LazySegtree<O: Op> {
+    values: Vec<O::Value>,
+    operators: Vec<O::Operator>,
 }
-impl<'a, T, U, Op, Apply, Compose, Identity, IdAction>
-    LazySegtreeBuilder<'a, T, Op, Apply, Compose, Identity, IdAction>
-where
-    T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -> T,
-    Apply: Fn(U, T) -> T,
-    Compose: Fn(U, U) -> U,
-    Identity: Fn() -> T,
-    IdAction: Fn() -> U,
-{
-    pub fn finish(self) -> LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction> {
-        LazySegtree::new(
-            self.slice,
-            self.op,
-            self.apply,
-            self.compose,
-            self.identity,
-            self.id_action,
+impl<O: Op> LazySegtree<O> {
+    /// Constructs a new lazy segment tree.
+    /// You can use `from_iter` instead of this method.
+    pub fn new(values: &[O::Value]) -> Self
+    where
+        O::Value: Clone,
+        O::Operator: Clone,
+    {
+        let values_ = values;
+        let n = values_.len();
+        let mut values = vec![O::identity(); 2 * n];
+        values[n..].clone_from_slice(values_);
+        for i in (1..n).rev() {
+            values[i] = O::op(&values[i * 2], &values[i * 2 + 1]);
+        }
+        Self {
+            values,
+            operators: vec![O::identity_op(); 2 * n],
+        }
+    }
+
+    /// Applies an operator to a range.
+    pub fn range_apply<R: RangeBounds<usize>>(&mut self, range: R, f: &O::Operator) {
+        let n = self.operators.len() / 2;
+        let (l, r) = open(range, n);
+        if l == r {
+            return;
+        }
+        let l = n + l;
+        let r = n + r;
+        for p in (0..usize::BITS - r.leading_zeros()).rev() {
+            self.push(l >> p);
+            self.push((r - 1) >> p);
+        }
+        {
+            let mut l = l;
+            let mut r = r;
+            while l < r {
+                if l & 1 != 0 {
+                    self.operators[l] = O::compose(f, &self.operators[l]);
+                    l += 1;
+                }
+                if r & 1 != 0 {
+                    r -= 1;
+                    self.operators[r] = O::compose(f, &self.operators[r]);
+                }
+                l >>= 1;
+                r >>= 1;
+            }
+        }
+        for p in 1..usize::BITS - r.leading_zeros() {
+            self.update(l >> p);
+            self.update((r - 1) >> p);
+        }
+    }
+
+    /// Folds a range.
+    pub fn fold<R: RangeBounds<usize>>(&mut self, range: R) -> O::Value {
+        let n = self.operators.len() / 2;
+        let (mut l, mut r) = open(range, n);
+        if l == r {
+            return O::identity();
+        }
+        l += n;
+        r += n;
+        for p in (0..usize::BITS - r.leading_zeros()).rev() {
+            self.push(l >> p);
+            self.push((r - 1) >> p);
+        }
+        for p in 1..usize::BITS - r.leading_zeros() {
+            self.update(l >> p);
+            self.update((r - 1) >> p);
+        }
+        let mut left = O::identity();
+        let mut right = O::identity();
+        while l < r {
+            if l & 1 != 0 {
+                left = O::op(&left, &O::apply(&self.operators[l], &self.values[l]));
+                l += 1;
+            }
+            if r & 1 != 0 {
+                r -= 1;
+                right = O::op(&O::apply(&self.operators[r], &self.values[r]), &right);
+            }
+            l >>= 1;
+            r >>= 1;
+        }
+        O::op(&left, &right)
+    }
+
+    /// Returns the value at the index `i`.
+    pub fn get(&self, i: usize) -> O::Value
+    where
+        O::Value: Clone,
+    {
+        let mut i = self.operators.len() / 2 + i;
+        let mut value = self.values[i].clone();
+        while i > 0 {
+            value = O::apply(&self.operators[i], &value);
+            i >>= 1;
+        }
+        value
+    }
+
+    /// Returns the values as a vector.
+    /// It takes $O(n \log n)$ time because it calls `get` for each index.
+    pub fn collect(&self) -> Vec<O::Value>
+    where
+        O::Value: Clone,
+    {
+        (0..self.operators.len() / 2).map(|i| self.get(i)).collect()
+    }
+
+    fn push(&mut self, i: usize) {
+        let a = replace(&mut self.operators[i], O::identity_op());
+        self.values[i] = O::apply(&a, &self.values[i]);
+        if i < self.operators.len() / 2 {
+            self.operators[i << 1] = O::compose(&a, &self.operators[i << 1]);
+            self.operators[i << 1 | 1] = O::compose(&a, &self.operators[i << 1 | 1]);
+        }
+    }
+
+    fn update(&mut self, i: usize) {
+        self.values[i] = O::op(
+            &O::apply(&self.operators[i << 1], &self.values[i << 1]),
+            &O::apply(&self.operators[i << 1 | 1], &self.values[i << 1 | 1]),
         )
     }
 }
 
-impl<T, U, Op, Apply, Compose, Identity, IdAction>
-    LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>
+impl<O: Op> FromIterator<O::Value> for LazySegtree<O>
 where
-    T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -> T,
-    Apply: Fn(U, T) -> T,
-    Compose: Fn(U, U) -> U,
-    Identity: Fn() -> T,
-    IdAction: Fn() -> U,
+    O::Value: Clone,
+    O::Operator: Clone,
 {
-    pub fn new(
-        slice: &[T],
-        op: Op,
-        apply: Apply,
-        compose: Compose,
-        identity: Identity,
-        id_action: IdAction,
-    ) -> Self {
-        let len = slice.len();
-        let lg = len.next_power_of_two().trailing_zeros();
-        let mut table = slice.to_vec();
-        table.extend(slice.iter().cloned());
-        let table = RefCell::new(table.into_boxed_slice());
-        (1..len).rev().for_each(|i| {
-            let x = op(
-                table.borrow()[2 * i].clone(),
-                table.borrow()[2 * i + 1].clone(),
-            );
-            table.borrow_mut()[i] = x;
-        });
-        #[allow(clippy::redundant_closure)]
-        let lazy = RefCell::new(
-            std::iter::repeat_with(|| id_action())
-                .take(len)
-                .collect::<Vec<_>>()
-                .into_boxed_slice(),
-        );
-        Self {
-            lg,
-            len,
-            table,
-            lazy,
-            op,
-            apply,
-            compose,
-            identity,
-            id_action,
-        }
-    }
-
-    pub fn get(&self, i: usize) -> T {
-        self.table.borrow()[self.len + i].clone()
-    }
-
-    pub fn modify(&mut self, i: usize, mut f: impl FnMut(&mut T)) {
-        let i = self.len + i;
-        (1..=self.lg).rev().for_each(|p| self.push(i >> p));
-        f(&mut self.table.borrow_mut()[i]);
-        (1..=self.lg).for_each(|p| self.update(i >> p));
-    }
-
-    pub fn fold(&self, range: impl RangeBounds<usize>) -> T {
-        let Range { mut start, mut end } = open(range, self.len);
-        start += self.len;
-        end += self.len;
-        self.thrust(start);
-        self.thrust(end);
-        let mut fl = (self.identity)();
-        let mut fr = (self.identity)();
-        while start != end {
-            if start % 2 == 1 {
-                fl = (self.op)(fl, self.table.borrow()[start].clone());
-                start += 1;
-            }
-            if end % 2 == 1 {
-                end -= 1;
-                fr = (self.op)(self.table.borrow()[end].clone(), fr);
-            }
-            start /= 2;
-            end /= 2;
-        }
-        (self.op)(fl, fr)
-    }
-
-    pub fn apply(&mut self, range: impl RangeBounds<usize>, actor: U) {
-        let Range { mut start, mut end } = open(range, self.len);
-        start += self.len;
-        end += self.len;
-        self.thrust(start);
-        self.thrust(end);
-        {
-            let mut start = start;
-            let mut end = end;
-            while start != end {
-                if start % 2 == 1 {
-                    self.all_apply(start, actor.clone());
-                    start += 1;
-                }
-                if end % 2 == 1 {
-                    end -= 1;
-                    self.all_apply(end, actor.clone());
-                }
-                start /= 2;
-                end /= 2;
-            }
-        }
-        for p in 1..=self.lg {
-            if (start >> p) << p != start {
-                self.update(start >> p);
-            }
-            if (end >> p) << p != end {
-                self.update((end - 1) >> p);
-            }
-        }
-    }
-
-    pub fn to_vec(&self) -> Vec<T>
-    where
-        Self: Clone,
-    {
-        self.clone().into_vec()
-    }
-
-    pub fn into_vec(self) -> Vec<T> {
-        (1..self.len).for_each(|i| self.push(i));
-        (1..self.len).rev().for_each(|i| self.update(i));
-        let len = self.len;
-        let table = self.table;
-        table.into_inner()[len..].to_vec()
-    }
-
-    fn update(&self, i: usize) {
-        let x = (self.op)(
-            self.table.borrow()[i * 2].clone(),
-            self.table.borrow()[i * 2 + 1].clone(),
-        );
-        self.table.borrow_mut()[i] = x;
-    }
-
-    fn all_apply(&self, i: usize, f: U) {
-        let x = (self.apply)(f.clone(), self.table.borrow()[i].clone());
-        self.table.borrow_mut()[i] = x;
-        if i < self.len {
-            let x = (self.compose)(f, self.lazy.borrow()[i].clone());
-            self.lazy.borrow_mut()[i] = x;
-        }
-    }
-
-    fn push(&self, i: usize) {
-        let lazy = std::mem::replace(&mut self.lazy.borrow_mut()[i], (self.id_action)());
-        self.all_apply(2 * i, lazy.clone());
-        self.all_apply(2 * i + 1, lazy);
-    }
-
-    fn thrust(&self, i: usize) {
-        (1..=self.lg)
-            .rev()
-            .filter(|&p| (i >> p) << p != i)
-            .for_each(|p| {
-                self.push(i >> p);
-            });
+    fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
+        Self::new(&iter.into_iter().collect::<Vec<_>>())
     }
 }
 
-fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
-    (match range.start_bound() {
+fn open<B: RangeBounds<usize>>(bounds: B, n: usize) -> (usize, usize) {
+    use std::ops::Bound;
+    let start = match bounds.start_bound() {
         Bound::Unbounded => 0,
         Bound::Included(&x) => x,
         Bound::Excluded(&x) => x + 1,
-    })..match range.end_bound() {
-        Bound::Excluded(&x) => x,
+    };
+    let end = match bounds.end_bound() {
+        Bound::Unbounded => n,
         Bound::Included(&x) => x + 1,
-        Bound::Unbounded => len,
-    }
-}
-
-impl<T, U, Op, Apply, Compose, Identity, IdAction> Debug
-    for LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>
-where
-    T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -> T,
-    Apply: Fn(U, T) -> T,
-    Compose: Fn(U, U) -> U,
-    Identity: Fn() -> T,
-    IdAction: Fn() -> U,
-{
-    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
-        w.debug_struct("LazySegtree")
-            .field("table", &self.table.borrow())
-            .field("lazy", &self.lazy.borrow())
-            .finish()
-    }
+        Bound::Excluded(&x) => x,
+    };
+    (start, end)
 }
 
 #[cfg(test)]
 mod tests {
-    use super::LazySegtree;
-    use super::LazySegtreeBuilder;
-    use rand::prelude::*;
-    use randtools::SubRange;
-    use std::fmt::Debug;
-    use std::iter;
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
 
-    #[test]
-    fn test_index() {
-        let seg = LazySegtreeBuilder {
-            slice: &[0, 1],
-            op: std::cmp::min,
-            apply: std::ops::Add::add,
-            compose: std::ops::Add::add,
-            identity: || std::u32::MAX,
-            id_action: || 0_u32,
-        }
-        .finish();
-        assert_eq!(seg.get(0), 0);
-        assert_eq!(seg.get(1), 1);
+    const P: u64 = 998244353;
+
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    struct Affine {
+        a: u64,
+        b: u64,
     }
-
-    #[test]
-    fn test_modify() {
-        let mut seg = LazySegtreeBuilder {
-            slice: &[0, 1],
-            op: std::cmp::min,
-            apply: std::ops::Add::add,
-            compose: std::ops::Add::add,
-            identity: || std::u32::MAX,
-            id_action: || 0_u32,
-        }
-        .finish();
-        seg.modify(0, |x| *x = 10);
-        seg.modify(1, |x| *x = 11);
-        assert_eq!(seg.to_vec().as_slice(), &[10, 11]);
-        seg.modify(0, |x| *x = 20);
-        seg.modify(1, |x| *x = 21);
-        assert_eq!(seg.to_vec().as_slice(), &[20, 21]);
+    #[derive(Debug, Clone, Copy, PartialEq)]
+    struct Value {
+        value: u64,
+        len: usize,
     }
+    enum O {}
+    impl Op for O {
+        type Operator = Affine;
+        type Value = Value;
 
-    #[test]
-    fn test_min_add() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0_u32..30))
-                .take(n)
-                .collect::<Vec<_>>()
-                .into_boxed_slice();
-            let mut seg = LazySegtreeBuilder {
-                slice: &a,
-                op: std::cmp::min,
-                apply: std::ops::Add::add,
-                compose: std::ops::Add::add,
-                identity: || std::u32::MAX,
-                id_action: || 0_u32,
+        fn identity() -> Self::Value {
+            Value { value: 0, len: 0 }
+        }
+
+        fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            Value {
+                value: (lhs.value + rhs.value) % P,
+                len: lhs.len + rhs.len,
             }
-            .finish();
-            println!("a = {:?}", &a);
-            println!("seg = {:?}", debug_collect(&seg));
-            for _ in 0..20 {
-                match rng.gen_range(0..3) {
-                    0 => {
-                        let i = rng.gen_range(0..n);
-                        let x = rng.gen_range(0..30);
-                        println!("Set via modify {} {}", &i, x);
-                        seg.modify(i, |y| *y = x);
-                        a[i] = x;
+        }
 
-                        let collected = debug_collect(&seg);
-                        println!("seg = {:?}", &collected);
-                        assert_eq!(&a, &collected);
-                    }
-                    1 => {
-                        let range = rng.sample(SubRange(0..n));
-                        println!("Fold {:?}", &range);
-                        let result = seg.fold(range.clone());
-                        let expected = a[range].iter().copied().min().unwrap_or(std::u32::MAX);
-                        assert_eq!(result, expected);
-                    }
-                    2 => {
-                        let range = rng.sample(SubRange(0..n));
-                        let f = rng.gen_range(0..30);
-                        println!("Apply {:?} {}", &range, f);
-                        seg.apply(range.clone(), f);
-                        a[range].iter_mut().for_each(|x| *x += f);
+        fn apply(op: &Self::Operator, value: &Self::Value) -> Self::Value {
+            Value {
+                value: (op.a * value.value + op.b * value.len as u64) % P,
+                len: value.len,
+            }
+        }
 
-                        let collected = debug_collect(&seg);
-                        println!("seg = {:?}", &collected);
-                        assert_eq!(&a, &collected);
-                    }
-                    _ => panic!(),
-                }
-                validate(&seg);
+        fn identity_op() -> Self::Operator {
+            Affine { a: 1, b: 0 }
+        }
+
+        fn compose(op: &Self::Operator, other: &Self::Operator) -> Self::Operator {
+            Affine {
+                a: op.a * other.a % P,
+                b: (op.a * other.b + op.b) % P,
             }
         }
     }
 
     #[test]
-    fn test_to_vec() {
+    fn test_affine() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
-            let n = rng.gen_range(1..40);
-            let mut a = iter::repeat_with(|| rng.gen_range(0_u32..30))
-                .take(n)
-                .collect::<Vec<_>>()
-                .into_boxed_slice();
-            let mut seg = LazySegtreeBuilder {
-                slice: &a,
-                op: std::cmp::min,
-                apply: std::ops::Add::add,
-                compose: std::ops::Add::add,
-                identity: || std::u32::MAX,
-                id_action: || 0_u32,
+            let n = rng.gen_range(1..=40);
+            let q = rng.gen_range(1..=40);
+            let mut vec = (0..n)
+                .map(|_| Value {
+                    value: rng.gen_range(0..P),
+                    len: 1,
+                })
+                .collect::<Vec<_>>();
+            let mut seg = LazySegtree::<O>::new(&vec);
+            for _ in 0..q {
+                match rng.gen_range(0..2) {
+                    // range_apply
+                    0 => {
+                        let mut l = rng.gen_range(0..=n + 1);
+                        let mut r = rng.gen_range(0..=n);
+                        if l > r {
+                            (l, r) = (r, l - 1);
+                        }
+                        let f = Affine {
+                            a: rng.gen_range(0..P),
+                            b: rng.gen_range(0..P),
+                        };
+                        seg.range_apply(l..r, &f);
+                        for x in &mut vec[l..r] {
+                            *x = O::apply(&f, &*x);
+                        }
+                    }
+                    // fold
+                    1 => {
+                        let mut l = rng.gen_range(0..=n + 1);
+                        let mut r = rng.gen_range(0..=n);
+                        if l > r {
+                            (l, r) = (r, l - 1);
+                        }
+                        let result = seg.fold(l..r);
+                        let expected = vec[l..r]
+                            .iter()
+                            .fold(Value { value: 0, len: 0 }, |acc, &x| O::op(&acc, &x));
+                        assert_eq!(result, expected);
+                    }
+                    _ => unreachable!(),
+                }
             }
-            .finish();
-            println!("a = {:?}", &a);
-            println!("seg = {:?}", debug_collect(&seg));
-            for _ in 0..20 {
-                let range = rng.sample(SubRange(0..n));
-                let f = rng.gen_range(0..30);
-                println!("Apply {:?} {}", &range, f);
-                seg.apply(range.clone(), f);
-                a[range].iter_mut().for_each(|x| *x += f);
-
-                let collected = debug_collect(&seg);
-                println!("seg = {:?}", &collected);
-                assert_eq!(&a, &collected);
-                validate(&seg);
-            }
-            assert_eq!(seg.to_vec().into_boxed_slice(), a);
         }
-    }
-
-    fn validate<T, U, Op, Apply, Compose, Identity, IdAction>(
-        seg: &LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>,
-    ) where
-        T: Clone + Debug + PartialEq,
-        U: Clone + Debug,
-        Op: Fn(T, T) -> T,
-        Apply: Fn(U, T) -> T,
-        Compose: Fn(U, U) -> U,
-        Identity: Fn() -> T,
-        IdAction: Fn() -> U,
-    {
-        for i in (1..seg.len).rev() {
-            let expeted = (seg.apply)(
-                seg.lazy.borrow()[i].clone(),
-                (seg.op)(
-                    seg.table.borrow()[2 * i].clone(),
-                    seg.table.borrow()[2 * i + 1].clone(),
-                ),
-            );
-            let result = seg.table.borrow()[i].clone();
-            assert_eq!(
-                &result, &expeted,
-                "Validation failed: i = {}, seg = {:?}",
-                i, &seg
-            );
-        }
-    }
-
-    fn debug_collect<T, U, Op, Apply, Compose, Identity, IdAction>(
-        seg: &LazySegtree<T, U, Op, Apply, Compose, Identity, IdAction>,
-    ) -> Box<[T]>
-    where
-        T: Clone + Debug + Default,
-        U: Clone + Debug,
-        Op: Fn(T, T) -> T,
-        Apply: Fn(U, T) -> T,
-        Compose: Fn(U, U) -> U,
-        Identity: Fn() -> T,
-        IdAction: Fn() -> U,
-    {
-        (0..seg.len)
-            .map(|i| seg.len + i)
-            .map(|i| {
-                let mut x = seg.table.borrow()[i].clone();
-                (1..=seg.lg)
-                    .rev()
-                    .for_each(|p| x = (seg.apply)(seg.lazy.borrow()[i >> p].clone(), x.clone()));
-                x
-            })
-            .collect::<Vec<_>>()
-            .into_boxed_slice()
     }
 }
