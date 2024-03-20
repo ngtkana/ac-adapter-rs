@@ -366,544 +366,338 @@
 <a href="#332" id="332">332</a>
 <a href="#333" id="333">333</a>
 <a href="#334" id="334">334</a>
-<a href="#335" id="335">335</a>
-<a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
-<a href="#342" id="342">342</a>
-<a href="#343" id="343">343</a>
-<a href="#344" id="344">344</a>
-<a href="#345" id="345">345</a>
-<a href="#346" id="346">346</a>
-<a href="#347" id="347">347</a>
-<a href="#348" id="348">348</a>
-<a href="#349" id="349">349</a>
-<a href="#350" id="350">350</a>
-<a href="#351" id="351">351</a>
-<a href="#352" id="352">352</a>
-<a href="#353" id="353">353</a>
-<a href="#354" id="354">354</a>
-<a href="#355" id="355">355</a>
-<a href="#356" id="356">356</a>
-<a href="#357" id="357">357</a>
-<a href="#358" id="358">358</a>
-<a href="#359" id="359">359</a>
-<a href="#360" id="360">360</a>
-<a href="#361" id="361">361</a>
-<a href="#362" id="362">362</a>
-<a href="#363" id="363">363</a>
-<a href="#364" id="364">364</a>
-<a href="#365" id="365">365</a>
-<a href="#366" id="366">366</a>
-<a href="#367" id="367">367</a>
-<a href="#368" id="368">368</a>
-<a href="#369" id="369">369</a>
-<a href="#370" id="370">370</a>
-<a href="#371" id="371">371</a>
-<a href="#372" id="372">372</a>
-<a href="#373" id="373">373</a>
-<a href="#374" id="374">374</a>
-<a href="#375" id="375">375</a>
-<a href="#376" id="376">376</a>
-<a href="#377" id="377">377</a>
-<a href="#378" id="378">378</a>
-<a href="#379" id="379">379</a>
-<a href="#380" id="380">380</a>
-<a href="#381" id="381">381</a>
-<a href="#382" id="382">382</a>
-<a href="#383" id="383">383</a>
-<a href="#384" id="384">384</a>
-<a href="#385" id="385">385</a>
-<a href="#386" id="386">386</a>
-<a href="#387" id="387">387</a>
-<a href="#388" id="388">388</a>
-<a href="#389" id="389">389</a>
-<a href="#390" id="390">390</a>
-<a href="#391" id="391">391</a>
-<a href="#392" id="392">392</a>
-<a href="#393" id="393">393</a>
-<a href="#394" id="394">394</a>
-<a href="#395" id="395">395</a>
-<a href="#396" id="396">396</a>
-<a href="#397" id="397">397</a>
-<a href="#398" id="398">398</a>
-<a href="#399" id="399">399</a>
-<a href="#400" id="400">400</a>
-<a href="#401" id="401">401</a>
-<a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
-<a href="#410" id="410">410</a>
-<a href="#411" id="411">411</a>
-<a href="#412" id="412">412</a>
-<a href="#413" id="413">413</a>
-<a href="#414" id="414">414</a>
-<a href="#415" id="415">415</a>
-<a href="#416" id="416">416</a>
-<a href="#417" id="417">417</a>
-<a href="#418" id="418">418</a>
-<a href="#419" id="419">419</a>
-<a href="#420" id="420">420</a>
-<a href="#421" id="421">421</a>
-<a href="#422" id="422">422</a>
-<a href="#423" id="423">423</a>
-<a href="#424" id="424">424</a>
-<a href="#425" id="425">425</a>
-<a href="#426" id="426">426</a>
-<a href="#427" id="427">427</a>
-<a href="#428" id="428">428</a>
-<a href="#429" id="429">429</a>
-<a href="#430" id="430">430</a>
-<a href="#431" id="431">431</a>
-<a href="#432" id="432">432</a>
-<a href="#433" id="433">433</a>
-<a href="#434" id="434">434</a>
-<a href="#435" id="435">435</a>
-<a href="#436" id="436">436</a>
-<a href="#437" id="437">437</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::cell::RefCell;
-<span class="kw">use </span>std::fmt::Debug;
-<span class="kw">use </span>std::fmt::Formatter;
-<span class="kw">use </span>std::fmt::{<span class="self">self</span>};
-<span class="kw">use </span>std::ops::Bound;
-<span class="kw">use </span>std::ops::Range;
+</pre></div><pre class="rust"><code><span class="doccomment">//! # LazySegtree
+//!
+//! Defines a struct [`LazySegtree`] and a trait [`Op`] for a lazy segment tree.
+//!
+//! # Note
+//!
+//! It does not support binary searches.
+//!
+//! # Example
+//!
+//! ```
+//! use lazy_segtree::LazySegtree;
+//! use lazy_segtree::Op;
+//!
+//! enum O {}
+//! impl Op for O {
+//!     type Operator = u64;
+//!     type Value = u64;
+//!
+//!     fn identity() -&gt; Self::Value {
+//!         0
+//!     }
+//!
+//!     fn op(lhs: &amp;Self::Value, rhs: &amp;Self::Value) -&gt; Self::Value {
+//!         (*lhs).max(*rhs)
+//!     }
+//!
+//!     fn apply(op: &amp;Self::Operator, value: &amp;Self::Value) -&gt; Self::Value {
+//!         *op + *value
+//!     }
+//!
+//!     fn identity_op() -&gt; Self::Operator {
+//!         0
+//!     }
+//!
+//!     fn compose(op: &amp;Self::Operator, other: &amp;Self::Operator) -&gt; Self::Operator {
+//!         *op + *other
+//!     }
+//! }
+//!
+//! let mut seg = LazySegtree::&lt;O&gt;::new(&amp;[3, 1, 4, 1, 5, 9, 2, 6]);
+//! assert_eq!(seg.fold(0..8), 9);
+//! seg.range_apply(3..6, &amp;2);
+//! assert_eq!(seg.fold(0..8), 11);
+//! ```
+</span><span class="kw">use </span>std::iter::FromIterator;
+<span class="kw">use </span>std::mem::replace;
 <span class="kw">use </span>std::ops::RangeBounds;
 
-<span class="attr">#[derive(Clone)]
-</span><span class="kw">pub struct </span>LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt; {
-    lg: u32,
-    len: usize,
-    table: RefCell&lt;Box&lt;[T]&gt;&gt;,
-    lazy: RefCell&lt;Box&lt;[U]&gt;&gt;,
-    op: Op,
-    apply: Apply,
-    compose: Compose,
-    identity: Identity,
-    id_action: IdAction,
+<span class="doccomment">/// Opertions for a lazy segment tree.
+</span><span class="kw">pub trait </span>Op {
+    <span class="doccomment">/// The value type.
+    </span><span class="kw">type </span>Value;
+    <span class="doccomment">/// The operator type.
+    </span><span class="kw">type </span>Operator: PartialEq;
+
+    <span class="doccomment">/// Returns the identity value.
+    </span><span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value;
+    <span class="doccomment">/// Multiplies two values.
+    </span><span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
+    <span class="doccomment">/// Applies an operator to a value.
+    </span><span class="kw">fn </span>apply(op: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator, value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
+    <span class="doccomment">/// Returns the identity operator.
+    </span><span class="kw">fn </span>identity_op() -&gt; <span class="self">Self</span>::Operator;
+    <span class="doccomment">/// Composes two operators.
+    /// The result of `compose(a, b)` is equivalent to applying `b` and then `a`.
+    </span><span class="kw">fn </span>compose(op: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator, other: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator) -&gt; <span class="self">Self</span>::Operator;
 }
-<span class="kw">pub struct </span>LazySegtreeBuilder&lt;<span class="lifetime">&#39;a</span>, T, Op, Apply, Compose, Identity, IdAction&gt; {
-    <span class="kw">pub </span>slice: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[T],
-    <span class="kw">pub </span>op: Op,
-    <span class="kw">pub </span>apply: Apply,
-    <span class="kw">pub </span>compose: Compose,
-    <span class="kw">pub </span>identity: Identity,
-    <span class="kw">pub </span>id_action: IdAction,
+
+<span class="doccomment">/// A lazy segment tree.
+</span><span class="attr">#[derive(Debug, Clone)]
+</span><span class="kw">pub struct </span>LazySegtree&lt;O: Op&gt; {
+    values: Vec&lt;O::Value&gt;,
+    operators: Vec&lt;O::Operator&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T, U, Op, Apply, Compose, Identity, IdAction&gt;
-    LazySegtreeBuilder&lt;<span class="lifetime">&#39;a</span>, T, Op, Apply, Compose, Identity, IdAction&gt;
-<span class="kw">where
-    </span>T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -&gt; T,
-    Apply: Fn(U, T) -&gt; T,
-    Compose: Fn(U, U) -&gt; U,
-    Identity: Fn() -&gt; T,
-    IdAction: Fn() -&gt; U,
-{
-    <span class="kw">pub fn </span>finish(<span class="self">self</span>) -&gt; LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt; {
-        LazySegtree::new(
-            <span class="self">self</span>.slice,
-            <span class="self">self</span>.op,
-            <span class="self">self</span>.apply,
-            <span class="self">self</span>.compose,
-            <span class="self">self</span>.identity,
-            <span class="self">self</span>.id_action,
+<span class="kw">impl</span>&lt;O: Op&gt; LazySegtree&lt;O&gt; {
+    <span class="doccomment">/// Constructs a new lazy segment tree.
+    /// You can use `from_iter` instead of this method.
+    </span><span class="kw">pub fn </span>new(values: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>O::Value: Clone,
+        O::Operator: Clone,
+    {
+        <span class="kw">let </span>values_ = values;
+        <span class="kw">let </span>n = values_.len();
+        <span class="kw">let </span><span class="kw-2">mut </span>values = <span class="macro">vec!</span>[O::identity(); <span class="number">2 </span>* n];
+        values[n..].clone_from_slice(values_);
+        <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">1</span>..n).rev() {
+            values[i] = O::op(<span class="kw-2">&amp;</span>values[i * <span class="number">2</span>], <span class="kw-2">&amp;</span>values[i * <span class="number">2 </span>+ <span class="number">1</span>]);
+        }
+        <span class="self">Self </span>{
+            values,
+            operators: <span class="macro">vec!</span>[O::identity_op(); <span class="number">2 </span>* n],
+        }
+    }
+
+    <span class="doccomment">/// Applies an operator to a range.
+    </span><span class="kw">pub fn </span>range_apply&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R, f: <span class="kw-2">&amp;</span>O::Operator) {
+        <span class="kw">let </span>n = <span class="self">self</span>.operators.len() / <span class="number">2</span>;
+        <span class="kw">let </span>(l, r) = open(range, n);
+        <span class="kw">if </span>l == r {
+            <span class="kw">return</span>;
+        }
+        <span class="kw">let </span>l = n + l;
+        <span class="kw">let </span>r = n + r;
+        <span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..usize::BITS - r.leading_zeros()).rev() {
+            <span class="self">self</span>.push(l &gt;&gt; p);
+            <span class="self">self</span>.push((r - <span class="number">1</span>) &gt;&gt; p);
+        }
+        {
+            <span class="kw">let </span><span class="kw-2">mut </span>l = l;
+            <span class="kw">let </span><span class="kw-2">mut </span>r = r;
+            <span class="kw">while </span>l &lt; r {
+                <span class="kw">if </span>l &amp; <span class="number">1 </span>!= <span class="number">0 </span>{
+                    <span class="self">self</span>.operators[l] = O::compose(f, <span class="kw-2">&amp;</span><span class="self">self</span>.operators[l]);
+                    l += <span class="number">1</span>;
+                }
+                <span class="kw">if </span>r &amp; <span class="number">1 </span>!= <span class="number">0 </span>{
+                    r -= <span class="number">1</span>;
+                    <span class="self">self</span>.operators[r] = O::compose(f, <span class="kw-2">&amp;</span><span class="self">self</span>.operators[r]);
+                }
+                l &gt;&gt;= <span class="number">1</span>;
+                r &gt;&gt;= <span class="number">1</span>;
+            }
+        }
+        <span class="kw">for </span>p <span class="kw">in </span><span class="number">1</span>..usize::BITS - r.leading_zeros() {
+            <span class="self">self</span>.update(l &gt;&gt; p);
+            <span class="self">self</span>.update((r - <span class="number">1</span>) &gt;&gt; p);
+        }
+    }
+
+    <span class="doccomment">/// Folds a range.
+    </span><span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: R) -&gt; O::Value {
+        <span class="kw">let </span>n = <span class="self">self</span>.operators.len() / <span class="number">2</span>;
+        <span class="kw">let </span>(<span class="kw-2">mut </span>l, <span class="kw-2">mut </span>r) = open(range, n);
+        <span class="kw">if </span>l == r {
+            <span class="kw">return </span>O::identity();
+        }
+        l += n;
+        r += n;
+        <span class="kw">for </span>p <span class="kw">in </span>(<span class="number">0</span>..usize::BITS - r.leading_zeros()).rev() {
+            <span class="self">self</span>.push(l &gt;&gt; p);
+            <span class="self">self</span>.push((r - <span class="number">1</span>) &gt;&gt; p);
+        }
+        <span class="kw">for </span>p <span class="kw">in </span><span class="number">1</span>..usize::BITS - r.leading_zeros() {
+            <span class="self">self</span>.update(l &gt;&gt; p);
+            <span class="self">self</span>.update((r - <span class="number">1</span>) &gt;&gt; p);
+        }
+        <span class="kw">let </span><span class="kw-2">mut </span>left = O::identity();
+        <span class="kw">let </span><span class="kw-2">mut </span>right = O::identity();
+        <span class="kw">while </span>l &lt; r {
+            <span class="kw">if </span>l &amp; <span class="number">1 </span>!= <span class="number">0 </span>{
+                left = O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[l], <span class="kw-2">&amp;</span><span class="self">self</span>.values[l]));
+                l += <span class="number">1</span>;
+            }
+            <span class="kw">if </span>r &amp; <span class="number">1 </span>!= <span class="number">0 </span>{
+                r -= <span class="number">1</span>;
+                right = O::op(<span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[r], <span class="kw-2">&amp;</span><span class="self">self</span>.values[r]), <span class="kw-2">&amp;</span>right);
+            }
+            l &gt;&gt;= <span class="number">1</span>;
+            r &gt;&gt;= <span class="number">1</span>;
+        }
+        O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)
+    }
+
+    <span class="doccomment">/// Returns the value at the index `i`.
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; O::Value
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="self">self</span>.operators.len() / <span class="number">2 </span>+ i;
+        <span class="kw">let </span><span class="kw-2">mut </span>value = <span class="self">self</span>.values[i].clone();
+        <span class="kw">while </span>i &gt; <span class="number">0 </span>{
+            value = O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[i], <span class="kw-2">&amp;</span>value);
+            i &gt;&gt;= <span class="number">1</span>;
+        }
+        value
+    }
+
+    <span class="doccomment">/// Returns the values as a vector.
+    /// It takes $O(n \log n)$ time because it calls `get` for each index.
+    </span><span class="kw">pub fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;O::Value&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        (<span class="number">0</span>..<span class="self">self</span>.operators.len() / <span class="number">2</span>).map(|i| <span class="self">self</span>.get(i)).collect()
+    }
+
+    <span class="kw">fn </span>push(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) {
+        <span class="kw">let </span>a = replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.operators[i], O::identity_op());
+        <span class="self">self</span>.values[i] = O::apply(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span><span class="self">self</span>.values[i]);
+        <span class="kw">if </span>i &lt; <span class="self">self</span>.operators.len() / <span class="number">2 </span>{
+            <span class="self">self</span>.operators[i &lt;&lt; <span class="number">1</span>] = O::compose(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1</span>]);
+            <span class="self">self</span>.operators[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>] = O::compose(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>]);
+        }
+    }
+
+    <span class="kw">fn </span>update(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) {
+        <span class="self">self</span>.values[i] = O::op(
+            <span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i &lt;&lt; <span class="number">1</span>]),
+            <span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>]),
         )
     }
 }
 
-<span class="kw">impl</span>&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;
-    LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;
+<span class="kw">impl</span>&lt;O: Op&gt; FromIterator&lt;O::Value&gt; <span class="kw">for </span>LazySegtree&lt;O&gt;
 <span class="kw">where
-    </span>T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -&gt; T,
-    Apply: Fn(U, T) -&gt; T,
-    Compose: Fn(U, U) -&gt; U,
-    Identity: Fn() -&gt; T,
-    IdAction: Fn() -&gt; U,
+    </span>O::Value: Clone,
+    O::Operator: Clone,
 {
-    <span class="kw">pub fn </span>new(
-        slice: <span class="kw-2">&amp;</span>[T],
-        op: Op,
-        apply: Apply,
-        compose: Compose,
-        identity: Identity,
-        id_action: IdAction,
-    ) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span>len = slice.len();
-        <span class="kw">let </span>lg = len.next_power_of_two().trailing_zeros();
-        <span class="kw">let </span><span class="kw-2">mut </span>table = slice.to_vec();
-        table.extend(slice.iter().cloned());
-        <span class="kw">let </span>table = RefCell::new(table.into_boxed_slice());
-        (<span class="number">1</span>..len).rev().for_each(|i| {
-            <span class="kw">let </span>x = op(
-                table.borrow()[<span class="number">2 </span>* i].clone(),
-                table.borrow()[<span class="number">2 </span>* i + <span class="number">1</span>].clone(),
-            );
-            table.borrow_mut()[i] = x;
-        });
-        <span class="attr">#[allow(clippy::redundant_closure)]
-        </span><span class="kw">let </span>lazy = RefCell::new(
-            std::iter::repeat_with(|| id_action())
-                .take(len)
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .into_boxed_slice(),
-        );
-        <span class="self">Self </span>{
-            lg,
-            len,
-            table,
-            lazy,
-            op,
-            apply,
-            compose,
-            identity,
-            id_action,
-        }
-    }
-
-    <span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; T {
-        <span class="self">self</span>.table.borrow()[<span class="self">self</span>.len + i].clone()
-    }
-
-    <span class="kw">pub fn </span>modify(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>T)) {
-        <span class="kw">let </span>i = <span class="self">self</span>.len + i;
-        (<span class="number">1</span>..=<span class="self">self</span>.lg).rev().for_each(|p| <span class="self">self</span>.push(i &gt;&gt; p));
-        f(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i]);
-        (<span class="number">1</span>..=<span class="self">self</span>.lg).for_each(|p| <span class="self">self</span>.update(i &gt;&gt; p));
-    }
-
-    <span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; T {
-        <span class="kw">let </span>Range { <span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end } = open(range, <span class="self">self</span>.len);
-        start += <span class="self">self</span>.len;
-        end += <span class="self">self</span>.len;
-        <span class="self">self</span>.thrust(start);
-        <span class="self">self</span>.thrust(end);
-        <span class="kw">let </span><span class="kw-2">mut </span>fl = (<span class="self">self</span>.identity)();
-        <span class="kw">let </span><span class="kw-2">mut </span>fr = (<span class="self">self</span>.identity)();
-        <span class="kw">while </span>start != end {
-            <span class="kw">if </span>start % <span class="number">2 </span>== <span class="number">1 </span>{
-                fl = (<span class="self">self</span>.op)(fl, <span class="self">self</span>.table.borrow()[start].clone());
-                start += <span class="number">1</span>;
-            }
-            <span class="kw">if </span>end % <span class="number">2 </span>== <span class="number">1 </span>{
-                end -= <span class="number">1</span>;
-                fr = (<span class="self">self</span>.op)(<span class="self">self</span>.table.borrow()[end].clone(), fr);
-            }
-            start /= <span class="number">2</span>;
-            end /= <span class="number">2</span>;
-        }
-        (<span class="self">self</span>.op)(fl, fr)
-    }
-
-    <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, actor: U) {
-        <span class="kw">let </span>Range { <span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end } = open(range, <span class="self">self</span>.len);
-        start += <span class="self">self</span>.len;
-        end += <span class="self">self</span>.len;
-        <span class="self">self</span>.thrust(start);
-        <span class="self">self</span>.thrust(end);
-        {
-            <span class="kw">let </span><span class="kw-2">mut </span>start = start;
-            <span class="kw">let </span><span class="kw-2">mut </span>end = end;
-            <span class="kw">while </span>start != end {
-                <span class="kw">if </span>start % <span class="number">2 </span>== <span class="number">1 </span>{
-                    <span class="self">self</span>.all_apply(start, actor.clone());
-                    start += <span class="number">1</span>;
-                }
-                <span class="kw">if </span>end % <span class="number">2 </span>== <span class="number">1 </span>{
-                    end -= <span class="number">1</span>;
-                    <span class="self">self</span>.all_apply(end, actor.clone());
-                }
-                start /= <span class="number">2</span>;
-                end /= <span class="number">2</span>;
-            }
-        }
-        <span class="kw">for </span>p <span class="kw">in </span><span class="number">1</span>..=<span class="self">self</span>.lg {
-            <span class="kw">if </span>(start &gt;&gt; p) &lt;&lt; p != start {
-                <span class="self">self</span>.update(start &gt;&gt; p);
-            }
-            <span class="kw">if </span>(end &gt;&gt; p) &lt;&lt; p != end {
-                <span class="self">self</span>.update((end - <span class="number">1</span>) &gt;&gt; p);
-            }
-        }
-    }
-
-    <span class="kw">pub fn </span>to_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt;
-    <span class="kw">where
-        </span><span class="self">Self</span>: Clone,
-    {
-        <span class="self">self</span>.clone().into_vec()
-    }
-
-    <span class="kw">pub fn </span>into_vec(<span class="self">self</span>) -&gt; Vec&lt;T&gt; {
-        (<span class="number">1</span>..<span class="self">self</span>.len).for_each(|i| <span class="self">self</span>.push(i));
-        (<span class="number">1</span>..<span class="self">self</span>.len).rev().for_each(|i| <span class="self">self</span>.update(i));
-        <span class="kw">let </span>len = <span class="self">self</span>.len;
-        <span class="kw">let </span>table = <span class="self">self</span>.table;
-        table.into_inner()[len..].to_vec()
-    }
-
-    <span class="kw">fn </span>update(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) {
-        <span class="kw">let </span>x = (<span class="self">self</span>.op)(
-            <span class="self">self</span>.table.borrow()[i * <span class="number">2</span>].clone(),
-            <span class="self">self</span>.table.borrow()[i * <span class="number">2 </span>+ <span class="number">1</span>].clone(),
-        );
-        <span class="self">self</span>.table.borrow_mut()[i] = x;
-    }
-
-    <span class="kw">fn </span>all_apply(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, f: U) {
-        <span class="kw">let </span>x = (<span class="self">self</span>.apply)(f.clone(), <span class="self">self</span>.table.borrow()[i].clone());
-        <span class="self">self</span>.table.borrow_mut()[i] = x;
-        <span class="kw">if </span>i &lt; <span class="self">self</span>.len {
-            <span class="kw">let </span>x = (<span class="self">self</span>.compose)(f, <span class="self">self</span>.lazy.borrow()[i].clone());
-            <span class="self">self</span>.lazy.borrow_mut()[i] = x;
-        }
-    }
-
-    <span class="kw">fn </span>push(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) {
-        <span class="kw">let </span>lazy = std::mem::replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.lazy.borrow_mut()[i], (<span class="self">self</span>.id_action)());
-        <span class="self">self</span>.all_apply(<span class="number">2 </span>* i, lazy.clone());
-        <span class="self">self</span>.all_apply(<span class="number">2 </span>* i + <span class="number">1</span>, lazy);
-    }
-
-    <span class="kw">fn </span>thrust(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) {
-        (<span class="number">1</span>..=<span class="self">self</span>.lg)
-            .rev()
-            .filter(|<span class="kw-2">&amp;</span>p| (i &gt;&gt; p) &lt;&lt; p != i)
-            .for_each(|p| {
-                <span class="self">self</span>.push(i &gt;&gt; p);
-            });
+    <span class="kw">fn </span>from_iter&lt;T: IntoIterator&lt;Item = O::Value&gt;&gt;(iter: T) -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new(<span class="kw-2">&amp;</span>iter.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;())
     }
 }
 
-<span class="kw">fn </span>open(range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, len: usize) -&gt; Range&lt;usize&gt; {
-    (<span class="kw">match </span>range.start_bound() {
+<span class="kw">fn </span>open&lt;B: RangeBounds&lt;usize&gt;&gt;(bounds: B, n: usize) -&gt; (usize, usize) {
+    <span class="kw">use </span>std::ops::Bound;
+    <span class="kw">let </span>start = <span class="kw">match </span>bounds.start_bound() {
         Bound::Unbounded =&gt; <span class="number">0</span>,
         Bound::Included(<span class="kw-2">&amp;</span>x) =&gt; x,
         Bound::Excluded(<span class="kw-2">&amp;</span>x) =&gt; x + <span class="number">1</span>,
-    })..<span class="kw">match </span>range.end_bound() {
-        Bound::Excluded(<span class="kw-2">&amp;</span>x) =&gt; x,
+    };
+    <span class="kw">let </span>end = <span class="kw">match </span>bounds.end_bound() {
+        Bound::Unbounded =&gt; n,
         Bound::Included(<span class="kw-2">&amp;</span>x) =&gt; x + <span class="number">1</span>,
-        Bound::Unbounded =&gt; len,
-    }
-}
-
-<span class="kw">impl</span>&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt; Debug
-    <span class="kw">for </span>LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;
-<span class="kw">where
-    </span>T: Clone + Debug,
-    U: Clone + Debug,
-    Op: Fn(T, T) -&gt; T,
-    Apply: Fn(U, T) -&gt; T,
-    Compose: Fn(U, U) -&gt; U,
-    Identity: Fn() -&gt; T,
-    IdAction: Fn() -&gt; U,
-{
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        w.debug_struct(<span class="string">&quot;LazySegtree&quot;</span>)
-            .field(<span class="string">&quot;table&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.table.borrow())
-            .field(<span class="string">&quot;lazy&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.lazy.borrow())
-            .finish()
-    }
+        Bound::Excluded(<span class="kw-2">&amp;</span>x) =&gt; x,
+    };
+    (start, end)
 }
 
 <span class="attr">#[cfg(test)]
 </span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">super</span>::LazySegtree;
-    <span class="kw">use </span><span class="kw">super</span>::LazySegtreeBuilder;
-    <span class="kw">use </span>rand::prelude::<span class="kw-2">*</span>;
-    <span class="kw">use </span>randtools::SubRange;
-    <span class="kw">use </span>std::fmt::Debug;
-    <span class="kw">use </span>std::iter;
+    <span class="kw">use super</span>::<span class="kw-2">*</span>;
+    <span class="kw">use </span>rand::rngs::StdRng;
+    <span class="kw">use </span>rand::Rng;
+    <span class="kw">use </span>rand::SeedableRng;
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_index() {
-        <span class="kw">let </span>seg = LazySegtreeBuilder {
-            slice: <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>],
-            op: std::cmp::min,
-            apply: std::ops::Add::add,
-            compose: std::ops::Add::add,
-            identity: || std::u32::MAX,
-            id_action: || <span class="number">0_u32</span>,
-        }
-        .finish();
-        <span class="macro">assert_eq!</span>(seg.get(<span class="number">0</span>), <span class="number">0</span>);
-        <span class="macro">assert_eq!</span>(seg.get(<span class="number">1</span>), <span class="number">1</span>);
+    <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
+
+    <span class="attr">#[derive(Debug, Clone, Copy, PartialEq)]
+    </span><span class="kw">struct </span>Affine {
+        a: u64,
+        b: u64,
     }
-
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_modify() {
-        <span class="kw">let </span><span class="kw-2">mut </span>seg = LazySegtreeBuilder {
-            slice: <span class="kw-2">&amp;</span>[<span class="number">0</span>, <span class="number">1</span>],
-            op: std::cmp::min,
-            apply: std::ops::Add::add,
-            compose: std::ops::Add::add,
-            identity: || std::u32::MAX,
-            id_action: || <span class="number">0_u32</span>,
-        }
-        .finish();
-        seg.modify(<span class="number">0</span>, |x| <span class="kw-2">*</span>x = <span class="number">10</span>);
-        seg.modify(<span class="number">1</span>, |x| <span class="kw-2">*</span>x = <span class="number">11</span>);
-        <span class="macro">assert_eq!</span>(seg.to_vec().as_slice(), <span class="kw-2">&amp;</span>[<span class="number">10</span>, <span class="number">11</span>]);
-        seg.modify(<span class="number">0</span>, |x| <span class="kw-2">*</span>x = <span class="number">20</span>);
-        seg.modify(<span class="number">1</span>, |x| <span class="kw-2">*</span>x = <span class="number">21</span>);
-        <span class="macro">assert_eq!</span>(seg.to_vec().as_slice(), <span class="kw-2">&amp;</span>[<span class="number">20</span>, <span class="number">21</span>]);
+    <span class="attr">#[derive(Debug, Clone, Copy, PartialEq)]
+    </span><span class="kw">struct </span>Value {
+        value: u64,
+        len: usize,
     }
+    <span class="kw">enum </span>O {}
+    <span class="kw">impl </span>Op <span class="kw">for </span>O {
+        <span class="kw">type </span>Operator = Affine;
+        <span class="kw">type </span>Value = Value;
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_min_add() {
-        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..<span class="number">40</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>a = iter::repeat_with(|| rng.gen_range(<span class="number">0_u32</span>..<span class="number">30</span>))
-                .take(n)
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .into_boxed_slice();
-            <span class="kw">let </span><span class="kw-2">mut </span>seg = LazySegtreeBuilder {
-                slice: <span class="kw-2">&amp;</span>a,
-                op: std::cmp::min,
-                apply: std::ops::Add::add,
-                compose: std::ops::Add::add,
-                identity: || std::u32::MAX,
-                id_action: || <span class="number">0_u32</span>,
+        <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value {
+            Value { value: <span class="number">0</span>, len: <span class="number">0 </span>}
+        }
+
+        <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+            Value {
+                value: (lhs.value + rhs.value) % P,
+                len: lhs.len + rhs.len,
             }
-            .finish();
-            <span class="macro">println!</span>(<span class="string">&quot;a = {:?}&quot;</span>, <span class="kw-2">&amp;</span>a);
-            <span class="macro">println!</span>(<span class="string">&quot;seg = {:?}&quot;</span>, debug_collect(<span class="kw-2">&amp;</span>seg));
-            <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-                <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">3</span>) {
-                    <span class="number">0 </span>=&gt; {
-                        <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
-                        <span class="kw">let </span>x = rng.gen_range(<span class="number">0</span>..<span class="number">30</span>);
-                        <span class="macro">println!</span>(<span class="string">&quot;Set via modify {} {}&quot;</span>, <span class="kw-2">&amp;</span>i, x);
-                        seg.modify(i, |y| <span class="kw-2">*</span>y = x);
-                        a[i] = x;
+        }
 
-                        <span class="kw">let </span>collected = debug_collect(<span class="kw-2">&amp;</span>seg);
-                        <span class="macro">println!</span>(<span class="string">&quot;seg = {:?}&quot;</span>, <span class="kw-2">&amp;</span>collected);
-                        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>collected);
-                    }
-                    <span class="number">1 </span>=&gt; {
-                        <span class="kw">let </span>range = rng.sample(SubRange(<span class="number">0</span>..n));
-                        <span class="macro">println!</span>(<span class="string">&quot;Fold {:?}&quot;</span>, <span class="kw-2">&amp;</span>range);
-                        <span class="kw">let </span>result = seg.fold(range.clone());
-                        <span class="kw">let </span>expected = a[range].iter().copied().min().unwrap_or(std::u32::MAX);
-                        <span class="macro">assert_eq!</span>(result, expected);
-                    }
-                    <span class="number">2 </span>=&gt; {
-                        <span class="kw">let </span>range = rng.sample(SubRange(<span class="number">0</span>..n));
-                        <span class="kw">let </span>f = rng.gen_range(<span class="number">0</span>..<span class="number">30</span>);
-                        <span class="macro">println!</span>(<span class="string">&quot;Apply {:?} {}&quot;</span>, <span class="kw-2">&amp;</span>range, f);
-                        seg.apply(range.clone(), f);
-                        a[range].iter_mut().for_each(|x| <span class="kw-2">*</span>x += f);
+        <span class="kw">fn </span>apply(op: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator, value: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+            Value {
+                value: (op.a * value.value + op.b * value.len <span class="kw">as </span>u64) % P,
+                len: value.len,
+            }
+        }
 
-                        <span class="kw">let </span>collected = debug_collect(<span class="kw-2">&amp;</span>seg);
-                        <span class="macro">println!</span>(<span class="string">&quot;seg = {:?}&quot;</span>, <span class="kw-2">&amp;</span>collected);
-                        <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>collected);
-                    }
-                    <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
-                }
-                validate(<span class="kw-2">&amp;</span>seg);
+        <span class="kw">fn </span>identity_op() -&gt; <span class="self">Self</span>::Operator {
+            Affine { a: <span class="number">1</span>, b: <span class="number">0 </span>}
+        }
+
+        <span class="kw">fn </span>compose(op: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator, other: <span class="kw-2">&amp;</span><span class="self">Self</span>::Operator) -&gt; <span class="self">Self</span>::Operator {
+            Affine {
+                a: op.a * other.a % P,
+                b: (op.a * other.b + op.b) % P,
             }
         }
     }
 
     <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_to_vec() {
+    </span><span class="kw">fn </span>test_affine() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..<span class="number">40</span>);
-            <span class="kw">let </span><span class="kw-2">mut </span>a = iter::repeat_with(|| rng.gen_range(<span class="number">0_u32</span>..<span class="number">30</span>))
-                .take(n)
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-                .into_boxed_slice();
-            <span class="kw">let </span><span class="kw-2">mut </span>seg = LazySegtreeBuilder {
-                slice: <span class="kw-2">&amp;</span>a,
-                op: std::cmp::min,
-                apply: std::ops::Add::add,
-                compose: std::ops::Add::add,
-                identity: || std::u32::MAX,
-                id_action: || <span class="number">0_u32</span>,
+            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">40</span>);
+            <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">40</span>);
+            <span class="kw">let </span><span class="kw-2">mut </span>vec = (<span class="number">0</span>..n)
+                .map(|<span class="kw">_</span>| Value {
+                    value: rng.gen_range(<span class="number">0</span>..P),
+                    len: <span class="number">1</span>,
+                })
+                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+            <span class="kw">let </span><span class="kw-2">mut </span>seg = LazySegtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span>vec);
+            <span class="kw">for _ in </span><span class="number">0</span>..q {
+                <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">2</span>) {
+                    <span class="comment">// range_apply
+                    </span><span class="number">0 </span>=&gt; {
+                        <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..=n + <span class="number">1</span>);
+                        <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..=n);
+                        <span class="kw">if </span>l &gt; r {
+                            (l, r) = (r, l - <span class="number">1</span>);
+                        }
+                        <span class="kw">let </span>f = Affine {
+                            a: rng.gen_range(<span class="number">0</span>..P),
+                            b: rng.gen_range(<span class="number">0</span>..P),
+                        };
+                        seg.range_apply(l..r, <span class="kw-2">&amp;</span>f);
+                        <span class="kw">for </span>x <span class="kw">in </span><span class="kw-2">&amp;mut </span>vec[l..r] {
+                            <span class="kw-2">*</span>x = O::apply(<span class="kw-2">&amp;</span>f, <span class="kw-2">&amp;*</span>x);
+                        }
+                    }
+                    <span class="comment">// fold
+                    </span><span class="number">1 </span>=&gt; {
+                        <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..=n + <span class="number">1</span>);
+                        <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..=n);
+                        <span class="kw">if </span>l &gt; r {
+                            (l, r) = (r, l - <span class="number">1</span>);
+                        }
+                        <span class="kw">let </span>result = seg.fold(l..r);
+                        <span class="kw">let </span>expected = vec[l..r]
+                            .iter()
+                            .fold(Value { value: <span class="number">0</span>, len: <span class="number">0 </span>}, |acc, <span class="kw-2">&amp;</span>x| O::op(<span class="kw-2">&amp;</span>acc, <span class="kw-2">&amp;</span>x));
+                        <span class="macro">assert_eq!</span>(result, expected);
+                    }
+                    <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
+                }
             }
-            .finish();
-            <span class="macro">println!</span>(<span class="string">&quot;a = {:?}&quot;</span>, <span class="kw-2">&amp;</span>a);
-            <span class="macro">println!</span>(<span class="string">&quot;seg = {:?}&quot;</span>, debug_collect(<span class="kw-2">&amp;</span>seg));
-            <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-                <span class="kw">let </span>range = rng.sample(SubRange(<span class="number">0</span>..n));
-                <span class="kw">let </span>f = rng.gen_range(<span class="number">0</span>..<span class="number">30</span>);
-                <span class="macro">println!</span>(<span class="string">&quot;Apply {:?} {}&quot;</span>, <span class="kw-2">&amp;</span>range, f);
-                seg.apply(range.clone(), f);
-                a[range].iter_mut().for_each(|x| <span class="kw-2">*</span>x += f);
-
-                <span class="kw">let </span>collected = debug_collect(<span class="kw-2">&amp;</span>seg);
-                <span class="macro">println!</span>(<span class="string">&quot;seg = {:?}&quot;</span>, <span class="kw-2">&amp;</span>collected);
-                <span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>collected);
-                validate(<span class="kw-2">&amp;</span>seg);
-            }
-            <span class="macro">assert_eq!</span>(seg.to_vec().into_boxed_slice(), a);
         }
-    }
-
-    <span class="kw">fn </span>validate&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;(
-        seg: <span class="kw-2">&amp;</span>LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;,
-    ) <span class="kw">where
-        </span>T: Clone + Debug + PartialEq,
-        U: Clone + Debug,
-        Op: Fn(T, T) -&gt; T,
-        Apply: Fn(U, T) -&gt; T,
-        Compose: Fn(U, U) -&gt; U,
-        Identity: Fn() -&gt; T,
-        IdAction: Fn() -&gt; U,
-    {
-        <span class="kw">for </span>i <span class="kw">in </span>(<span class="number">1</span>..seg.len).rev() {
-            <span class="kw">let </span>expeted = (seg.apply)(
-                seg.lazy.borrow()[i].clone(),
-                (seg.op)(
-                    seg.table.borrow()[<span class="number">2 </span>* i].clone(),
-                    seg.table.borrow()[<span class="number">2 </span>* i + <span class="number">1</span>].clone(),
-                ),
-            );
-            <span class="kw">let </span>result = seg.table.borrow()[i].clone();
-            <span class="macro">assert_eq!</span>(
-                <span class="kw-2">&amp;</span>result, <span class="kw-2">&amp;</span>expeted,
-                <span class="string">&quot;Validation failed: i = {}, seg = {:?}&quot;</span>,
-                i, <span class="kw-2">&amp;</span>seg
-            );
-        }
-    }
-
-    <span class="kw">fn </span>debug_collect&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;(
-        seg: <span class="kw-2">&amp;</span>LazySegtree&lt;T, U, Op, Apply, Compose, Identity, IdAction&gt;,
-    ) -&gt; Box&lt;[T]&gt;
-    <span class="kw">where
-        </span>T: Clone + Debug + Default,
-        U: Clone + Debug,
-        Op: Fn(T, T) -&gt; T,
-        Apply: Fn(U, T) -&gt; T,
-        Compose: Fn(U, U) -&gt; U,
-        Identity: Fn() -&gt; T,
-        IdAction: Fn() -&gt; U,
-    {
-        (<span class="number">0</span>..seg.len)
-            .map(|i| seg.len + i)
-            .map(|i| {
-                <span class="kw">let </span><span class="kw-2">mut </span>x = seg.table.borrow()[i].clone();
-                (<span class="number">1</span>..=seg.lg)
-                    .rev()
-                    .for_each(|p| x = (seg.apply)(seg.lazy.borrow()[i &gt;&gt; p].clone(), x.clone()));
-                x
-            })
-            .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
-            .into_boxed_slice()
     }
 }
 </code></pre></div></section></main></body></html>

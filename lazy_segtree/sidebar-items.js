@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["LazySegtree","LazySegtreeBuilder"]};
+window.SIDEBAR_ITEMS = {"struct":["LazySegtree"],"trait":["Op"]};
