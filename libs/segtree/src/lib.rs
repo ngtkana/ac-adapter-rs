@@ -7,11 +7,11 @@
 //!
 //! The multiplication must be associative.
 //!
-//! Furthermore, when this is used for [`SegtreeOfSegtrees`] or [`Dense2dSegtree`], the multiplication must be commutative.
+//! Furthermore, when this is used for [`Sparse2dSegtree`] or [`Dense2dSegtree`], the multiplication must be commutative.
 //!
 //! # Modifier APIs
 //!
-//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`SegtreeOfSegtrees`] does not have it.
+//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`Sparse2dSegtree`] does not have it.
 //! Instead, it has `apply` API. You can apply a function $f$ that satisfies $f(x \cdot y) = x \cdot f(y)$ to a single element..
 
 use core::fmt;
@@ -265,11 +265,11 @@ impl<K: Ord, O: Op> Index<K> for SparseSegtree<K, O> {
 
 /// A segment tree of segment trees (2D segment tree).
 /// The multiplication must be commutative.
-pub struct SegtreeOfSegtrees<K, L, O: Op> {
+pub struct Sparse2dSegtree<K, L, O: Op> {
     segtrees: Vec<SparseSegtree<L, O>>,
     keys: Vec<K>,
 }
-impl<K, L, O: Op> SegtreeOfSegtrees<K, L, O>
+impl<K, L, O: Op> Sparse2dSegtree<K, L, O>
 where
     K: Ord + Clone,
     L: Ord + Clone,
@@ -369,21 +369,21 @@ where
     }
 }
 
-impl<K, L, O: Op> fmt::Debug for SegtreeOfSegtrees<K, L, O>
+impl<K, L, O: Op> fmt::Debug for Sparse2dSegtree<K, L, O>
 where
     K: fmt::Debug,
     L: fmt::Debug,
     O::Value: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_struct("SegtreeOfSegtrees")
+        f.debug_struct("Sparse2dSegtree")
             .field("segtrees", &self.segtrees)
             .field("keys", &self.keys)
             .finish()
     }
 }
 
-impl<K, L, O: Op> FromIterator<(K, L, O::Value)> for SegtreeOfSegtrees<K, L, O>
+impl<K, L, O: Op> FromIterator<(K, L, O::Value)> for Sparse2dSegtree<K, L, O>
 where
     K: Ord + Clone,
     L: Ord + Clone,
@@ -394,7 +394,7 @@ where
     }
 }
 
-impl<K: Ord, L: Ord, O: Op> Index<K> for SegtreeOfSegtrees<K, L, O> {
+impl<K: Ord, L: Ord, O: Op> Index<K> for Sparse2dSegtree<K, L, O> {
     type Output = SparseSegtree<L, O>;
 
     fn index(&self, i: K) -> &Self::Output {
@@ -402,7 +402,7 @@ impl<K: Ord, L: Ord, O: Op> Index<K> for SegtreeOfSegtrees<K, L, O> {
     }
 }
 
-impl<K: Ord, L: Ord, O: Op> Index<(K, L)> for SegtreeOfSegtrees<K, L, O> {
+impl<K: Ord, L: Ord, O: Op> Index<(K, L)> for Sparse2dSegtree<K, L, O> {
     type Output = O::Value;
 
     fn index(&self, (i, j): (K, L)) -> &Self::Output {
@@ -794,7 +794,7 @@ mod tests {
             })
             .take(n)
             .collect::<Vec<_>>();
-            let mut segtree = SegtreeOfSegtrees::<usize, usize, O>::new(&vec);
+            let mut segtree = Sparse2dSegtree::<usize, usize, O>::new(&vec);
             for _ in 0..q {
                 match rng.gen_range(0..1) {
                     // fold
