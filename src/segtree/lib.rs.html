@@ -739,7 +739,137 @@
 <a href="#705" id="705">705</a>
 <a href="#706" id="706">706</a>
 <a href="#707" id="707">707</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>std::iter::FromIterator;
+<a href="#708" id="708">708</a>
+<a href="#709" id="709">709</a>
+<a href="#710" id="710">710</a>
+<a href="#711" id="711">711</a>
+<a href="#712" id="712">712</a>
+<a href="#713" id="713">713</a>
+<a href="#714" id="714">714</a>
+<a href="#715" id="715">715</a>
+<a href="#716" id="716">716</a>
+<a href="#717" id="717">717</a>
+<a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
+<a href="#721" id="721">721</a>
+<a href="#722" id="722">722</a>
+<a href="#723" id="723">723</a>
+<a href="#724" id="724">724</a>
+<a href="#725" id="725">725</a>
+<a href="#726" id="726">726</a>
+<a href="#727" id="727">727</a>
+<a href="#728" id="728">728</a>
+<a href="#729" id="729">729</a>
+<a href="#730" id="730">730</a>
+<a href="#731" id="731">731</a>
+<a href="#732" id="732">732</a>
+<a href="#733" id="733">733</a>
+<a href="#734" id="734">734</a>
+<a href="#735" id="735">735</a>
+<a href="#736" id="736">736</a>
+<a href="#737" id="737">737</a>
+<a href="#738" id="738">738</a>
+<a href="#739" id="739">739</a>
+<a href="#740" id="740">740</a>
+<a href="#741" id="741">741</a>
+<a href="#742" id="742">742</a>
+<a href="#743" id="743">743</a>
+<a href="#744" id="744">744</a>
+<a href="#745" id="745">745</a>
+<a href="#746" id="746">746</a>
+<a href="#747" id="747">747</a>
+<a href="#748" id="748">748</a>
+<a href="#749" id="749">749</a>
+<a href="#750" id="750">750</a>
+<a href="#751" id="751">751</a>
+<a href="#752" id="752">752</a>
+<a href="#753" id="753">753</a>
+<a href="#754" id="754">754</a>
+<a href="#755" id="755">755</a>
+<a href="#756" id="756">756</a>
+<a href="#757" id="757">757</a>
+<a href="#758" id="758">758</a>
+<a href="#759" id="759">759</a>
+<a href="#760" id="760">760</a>
+<a href="#761" id="761">761</a>
+<a href="#762" id="762">762</a>
+<a href="#763" id="763">763</a>
+<a href="#764" id="764">764</a>
+<a href="#765" id="765">765</a>
+<a href="#766" id="766">766</a>
+<a href="#767" id="767">767</a>
+<a href="#768" id="768">768</a>
+<a href="#769" id="769">769</a>
+<a href="#770" id="770">770</a>
+<a href="#771" id="771">771</a>
+<a href="#772" id="772">772</a>
+<a href="#773" id="773">773</a>
+<a href="#774" id="774">774</a>
+<a href="#775" id="775">775</a>
+<a href="#776" id="776">776</a>
+<a href="#777" id="777">777</a>
+<a href="#778" id="778">778</a>
+<a href="#779" id="779">779</a>
+<a href="#780" id="780">780</a>
+<a href="#781" id="781">781</a>
+<a href="#782" id="782">782</a>
+<a href="#783" id="783">783</a>
+<a href="#784" id="784">784</a>
+<a href="#785" id="785">785</a>
+<a href="#786" id="786">786</a>
+<a href="#787" id="787">787</a>
+<a href="#788" id="788">788</a>
+<a href="#789" id="789">789</a>
+<a href="#790" id="790">790</a>
+<a href="#791" id="791">791</a>
+<a href="#792" id="792">792</a>
+<a href="#793" id="793">793</a>
+<a href="#794" id="794">794</a>
+<a href="#795" id="795">795</a>
+<a href="#796" id="796">796</a>
+<a href="#797" id="797">797</a>
+<a href="#798" id="798">798</a>
+<a href="#799" id="799">799</a>
+<a href="#800" id="800">800</a>
+<a href="#801" id="801">801</a>
+<a href="#802" id="802">802</a>
+<a href="#803" id="803">803</a>
+<a href="#804" id="804">804</a>
+<a href="#805" id="805">805</a>
+<a href="#806" id="806">806</a>
+<a href="#807" id="807">807</a>
+<a href="#808" id="808">808</a>
+<a href="#809" id="809">809</a>
+<a href="#810" id="810">810</a>
+<a href="#811" id="811">811</a>
+<a href="#812" id="812">812</a>
+<a href="#813" id="813">813</a>
+<a href="#814" id="814">814</a>
+<a href="#815" id="815">815</a>
+<a href="#816" id="816">816</a>
+<a href="#817" id="817">817</a>
+<a href="#818" id="818">818</a>
+<a href="#819" id="819">819</a>
+<a href="#820" id="820">820</a>
+<a href="#821" id="821">821</a>
+<a href="#822" id="822">822</a>
+<a href="#823" id="823">823</a>
+<a href="#824" id="824">824</a>
+<a href="#825" id="825">825</a>
+<a href="#826" id="826">826</a>
+<a href="#827" id="827">827</a>
+<a href="#828" id="828">828</a>
+<a href="#829" id="829">829</a>
+<a href="#830" id="830">830</a>
+<a href="#831" id="831">831</a>
+<a href="#832" id="832">832</a>
+<a href="#833" id="833">833</a>
+<a href="#834" id="834">834</a>
+<a href="#835" id="835">835</a>
+</pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
+<span class="kw">use </span>std::collections::BTreeMap;
+<span class="kw">use </span>std::iter::FromIterator;
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::ops::DerefMut;
 <span class="kw">use </span>std::ops::Index;
@@ -783,6 +913,7 @@
     <span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: R) -&gt; O::Value {
         <span class="kw">let </span>n = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         <span class="kw">let </span>(<span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end) = open(range, n);
+        <span class="macro">assert!</span>(start &lt;= end &amp;&amp; end &lt;= n);
         start += n;
         end += n;
         <span class="kw">let </span><span class="kw-2">mut </span>left = O::identity();
@@ -810,8 +941,23 @@
         }
     }
 
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>O::Value&gt; {
+        <span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..].iter()
+    }
+
     <span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[O::Value] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..]
+    }
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; fmt::Debug <span class="kw">for </span>Segtree&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: fmt::Debug,
+{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Segtree&quot;</span>)
+            .field(<span class="string">&quot;values&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.values)
+            .finish()
     }
 }
 
@@ -860,6 +1006,14 @@
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.segtree.values[<span class="self">self</span>.index]
     }
 }
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;a</span>, O&gt;
+<span class="kw">where
+    </span>O::Value: fmt::Debug,
+{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Entry&quot;</span>).field(<span class="string">&quot;index&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.index).finish()
+    }
+}
 
 <span class="kw">pub struct </span>SparseSegtree&lt;K, O: Op&gt; {
     inner: Segtree&lt;O&gt;,
@@ -876,7 +1030,7 @@
         <span class="kw">let </span>values = kv.iter().map(|(<span class="kw">_</span>, v)| v.clone()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="self">Self </span>{
             inner: Segtree::new(<span class="kw-2">&amp;</span>values),
-            keys: keys.to_vec(),
+            keys,
         }
     }
 
@@ -885,12 +1039,41 @@
         <span class="self">self</span>.inner.fold(start..end)
     }
 
-    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
-        <span class="kw">let </span>index = <span class="self">self</span>.keys.binary_search(<span class="kw-2">&amp;</span>key).unwrap() + <span class="self">self</span>.keys.len();
+    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
+        <span class="kw">let </span>index = <span class="self">self</span>.keys.binary_search(key).unwrap() + <span class="self">self</span>.keys.len();
         Entry {
             segtree: <span class="kw-2">&amp;mut </span><span class="self">self</span>.inner,
             index,
         }
+    }
+
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>O::Value)&gt; {
+        <span class="self">self</span>.keys.iter().zip(<span class="self">self</span>.inner.as_slice())
+    }
+
+    <span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;K, O::Value&gt;
+    <span class="kw">where
+        </span>K: Clone,
+        O::Value: Clone,
+    {
+        <span class="self">self</span>.keys
+            .iter()
+            .cloned()
+            .zip(<span class="self">self</span>.inner.iter().cloned())
+            .collect()
+    }
+}
+
+<span class="kw">impl</span>&lt;K, O: Op&gt; fmt::Debug <span class="kw">for </span>SparseSegtree&lt;K, O&gt;
+<span class="kw">where
+    </span>K: fmt::Debug,
+    O::Value: fmt::Debug,
+{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;SparseSegtree&quot;</span>)
+            .field(<span class="string">&quot;inner&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.inner)
+            .field(<span class="string">&quot;keys&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.keys)
+            .finish()
     }
 }
 
@@ -976,13 +1159,50 @@
         O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)
     }
 
-    <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, k: K, l: L, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>O::Value)) {
-        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="self">self</span>.keys.binary_search(<span class="kw-2">&amp;</span>k).unwrap();
+    <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>K, l: <span class="kw-2">&amp;</span>L, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>O::Value)) {
+        <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="self">self</span>.keys.binary_search(k).unwrap();
         i += <span class="self">self</span>.keys.len();
         <span class="kw">while </span>i != <span class="number">0 </span>{
-            f(<span class="kw-2">&amp;mut </span><span class="self">self</span>.segtrees[i].entry(l.clone()));
+            f(<span class="kw-2">&amp;mut </span><span class="self">self</span>.segtrees[i].entry(l));
             i /= <span class="number">2</span>;
         }
+    }
+
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>L, <span class="kw-2">&amp;</span>O::Value)&gt; {
+        <span class="self">self</span>.keys
+            .iter()
+            .zip(<span class="self">self</span>.segtrees[<span class="self">self</span>.keys.len()..].iter())
+            .flat_map(|(k, segtree)| segtree.iter().map(<span class="kw">move </span>|(l, v)| (k, l, v)))
+    }
+
+    <span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;(K, L), O::Value&gt;
+    <span class="kw">where
+        </span>K: Clone,
+        L: Clone,
+        O::Value: Clone,
+    {
+        <span class="self">self</span>.keys
+            .iter()
+            .flat_map(|k| {
+                <span class="self">self</span>.segtrees[<span class="self">self</span>.keys.len() + <span class="self">self</span>.keys.binary_search(k).unwrap()]
+                    .iter()
+                    .map(<span class="kw">move </span>|(l, v)| ((k.clone(), l.clone()), v.clone()))
+            })
+            .collect()
+    }
+}
+
+<span class="kw">impl</span>&lt;K, L, O: Op&gt; fmt::Debug <span class="kw">for </span>SegtreeOfSegtrees&lt;K, L, O&gt;
+<span class="kw">where
+    </span>K: fmt::Debug,
+    L: fmt::Debug,
+    O::Value: fmt::Debug,
+{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;SegtreeOfSegtrees&quot;</span>)
+            .field(<span class="string">&quot;segtrees&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.segtrees)
+            .field(<span class="string">&quot;keys&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.keys)
+            .finish()
     }
 }
 
@@ -1023,7 +1243,7 @@
     {
         <span class="kw">let </span>values_ = values;
         <span class="kw">let </span>h = values.len();
-        <span class="kw">let </span>w = values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len());
+        <span class="kw">let </span>w = values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, Vec::len);
         <span class="kw">let </span><span class="kw-2">mut </span>values = <span class="macro">vec!</span>[<span class="macro">vec!</span>[O::identity(); <span class="number">2 </span>* w]; <span class="number">2 </span>* h];
         <span class="kw">for </span>(values, values_) <span class="kw">in </span>values[h..].iter_mut().zip(values_) {
             values[w..].clone_from_slice(values_);
@@ -1043,7 +1263,9 @@
         <span class="kw">let </span>h = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         <span class="kw">let </span>w = <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
         <span class="kw">let </span>(<span class="kw-2">mut </span>i0, <span class="kw-2">mut </span>i1) = open(i, h);
+        <span class="macro">assert!</span>(i0 &lt;= i1 &amp;&amp; i1 &lt;= h);
         <span class="kw">let </span>(<span class="kw-2">mut </span>j0, <span class="kw-2">mut </span>j1) = open(j, w);
+        <span class="macro">assert!</span>(j0 &lt;= j1 &amp;&amp; j1 &lt;= w);
         i0 += h;
         i1 += h;
         j0 += w;
@@ -1099,6 +1321,30 @@
             i: h + i,
             j: w + j,
         }
+    }
+
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>[O::Value]&gt; {
+        <span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..]
+            .iter()
+            .map(|v| <span class="kw-2">&amp;</span>v[v.len() / <span class="number">2</span>..])
+    }
+
+    <span class="kw">pub fn </span>collect_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Vec&lt;O::Value&gt;&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="self">self</span>.iter().map(&lt;[<span class="kw">_</span>]&gt;::to_vec).collect()
+    }
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; fmt::Debug <span class="kw">for </span>Dense2dSegtree&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: fmt::Debug,
+{
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;Dense2dSegtree&quot;</span>)
+            .field(<span class="string">&quot;values&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.values)
+            .finish()
     }
 }
 
@@ -1172,13 +1418,23 @@
     <span class="kw">use </span>std::ops::Bound;
     <span class="kw">let </span>start = <span class="kw">match </span>bounds.start_bound() {
         Bound::Unbounded =&gt; <span class="number">0</span>,
-        Bound::Included(x) =&gt; keys.binary_search(x).unwrap_or_else(|i| i),
-        Bound::Excluded(x) =&gt; keys.binary_search(x).unwrap_or_else(|i| i + <span class="number">1</span>),
+        Bound::Included(x) =&gt; <span class="kw">match </span>keys.binary_search(x) {
+            <span class="prelude-val">Ok</span>(i) | <span class="prelude-val">Err</span>(i) =&gt; i,
+        },
+        Bound::Excluded(x) =&gt; <span class="kw">match </span>keys.binary_search(x) {
+            <span class="prelude-val">Ok</span>(i) =&gt; i + <span class="number">1</span>,
+            <span class="prelude-val">Err</span>(i) =&gt; i,
+        },
     };
     <span class="kw">let </span>end = <span class="kw">match </span>bounds.end_bound() {
         Bound::Unbounded =&gt; keys.len(),
-        Bound::Included(x) =&gt; keys.binary_search(x).map_or_else(|i| i + <span class="number">1</span>, |i| i + <span class="number">1</span>),
-        Bound::Excluded(x) =&gt; keys.binary_search(x).unwrap_or_else(|i| i),
+        Bound::Included(x) =&gt; <span class="kw">match </span>keys.binary_search(x) {
+            <span class="prelude-val">Ok</span>(i) =&gt; i + <span class="number">1</span>,
+            <span class="prelude-val">Err</span>(i) =&gt; i,
+        },
+        Bound::Excluded(x) =&gt; <span class="kw">match </span>keys.binary_search(x) {
+            <span class="prelude-val">Ok</span>(i) | <span class="prelude-val">Err</span>(i) =&gt; i,
+        },
     };
     (start, end)
 }
@@ -1228,7 +1484,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_segtree() {
-        <span class="kw">use </span>rolling_hash::<span class="kw-2">*</span>;
+        <span class="kw">use </span>rolling_hash::BASE;
+        <span class="kw">use </span>rolling_hash::O;
 
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
@@ -1264,7 +1521,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_segtree_usability() {
-        <span class="kw">use </span>rolling_hash::<span class="kw-2">*</span>;
+        <span class="kw">use </span>rolling_hash::O;
         <span class="kw">let _ </span>= Segtree::&lt;O&gt;::from_len(<span class="number">1</span>);
         <span class="kw">let _ </span>= Segtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">1</span>)]);
         <span class="kw">let _ </span>= Segtree::&lt;O&gt;::from_iter(<span class="macro">vec!</span>[(<span class="number">0</span>, <span class="number">1</span>)]);
@@ -1277,7 +1534,8 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_sparse_segtree() {
-        <span class="kw">use </span>rolling_hash::<span class="kw-2">*</span>;
+        <span class="kw">use </span>rolling_hash::BASE;
+        <span class="kw">use </span>rolling_hash::O;
 
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
@@ -1292,7 +1550,7 @@
                 .copied()
                 .map(|key| (key, (rng.gen_range(<span class="number">0</span>..BASE), BASE)))
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="kw">let </span><span class="kw-2">mut </span>segtree = SparseSegtree::&lt;usize, O&gt;::from_iter(vec.iter().copied());
+            <span class="kw">let </span><span class="kw-2">mut </span>segtree = vec.iter().copied().collect::&lt;SparseSegtree&lt;<span class="kw">_</span>, O&gt;&gt;();
             <span class="kw">for _ in </span><span class="number">0</span>..q {
                 <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">2</span>) {
                     <span class="comment">// fold
@@ -1311,12 +1569,9 @@
                     </span><span class="number">1 </span>=&gt; {
                         <span class="kw">let </span>k = rng.gen_range(<span class="number">0</span>..n);
                         <span class="kw">let </span>x = (rng.gen_range(<span class="number">0</span>..BASE), BASE);
-                        <span class="kw">match </span>keys.binary_search(<span class="kw-2">&amp;</span>k) {
-                            <span class="prelude-val">Ok</span>(j) =&gt; {
-                                <span class="kw-2">*</span>segtree.entry(k) = x;
-                                vec[j].<span class="number">1 </span>= x;
-                            }
-                            <span class="prelude-val">Err</span>(<span class="kw">_</span>) =&gt; {}
+                        <span class="kw">if let </span><span class="prelude-val">Ok</span>(j) = keys.binary_search(<span class="kw-2">&amp;</span>k) {
+                            <span class="kw-2">*</span>segtree.entry(<span class="kw-2">&amp;</span>k) = x;
+                            vec[j].<span class="number">1 </span>= x;
                         }
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
@@ -1327,18 +1582,19 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_sparse_segtree_usability() {
-        <span class="kw">use </span>rolling_hash::<span class="kw-2">*</span>;
+        <span class="kw">use </span>rolling_hash::O;
         <span class="kw">let _ </span>= SparseSegtree::&lt;usize, O&gt;::new(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, (<span class="number">1</span>, <span class="number">1</span>))]);
         <span class="kw">let _ </span>= SparseSegtree::&lt;usize, O&gt;::from_iter(<span class="macro">vec!</span>[(<span class="number">0</span>, (<span class="number">1</span>, <span class="number">1</span>))]);
         <span class="kw">let </span><span class="kw-2">mut </span>segtree = SparseSegtree::&lt;usize, O&gt;::new(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, (<span class="number">1</span>, <span class="number">1</span>))]);
         <span class="kw">let _ </span>= segtree.fold(<span class="number">0</span>..<span class="number">1</span>);
-        <span class="kw">let _ </span>= segtree.entry(<span class="number">0</span>);
+        <span class="kw">let _ </span>= segtree.entry(<span class="kw-2">&amp;</span><span class="number">0</span>);
         <span class="macro">assert_eq!</span>(segtree[<span class="number">0</span>], (<span class="number">1</span>, <span class="number">1</span>));
     }
 
     <span class="attr">#[test]
+    #[allow(clippy::many_single_char_names)]
     </span><span class="kw">fn </span>test_segtree_of_segtree() {
-        <span class="kw">use </span>xor::<span class="kw-2">*</span>;
+        <span class="kw">use </span>xor::O;
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">30 </span>{
             <span class="kw">let </span>h = rng.gen_range(<span class="number">1</span>..=<span class="number">20</span>);
@@ -1375,7 +1631,7 @@
                         <span class="kw">let </span>y = rng.gen_range(<span class="number">0</span>..u64::MAX);
                         <span class="kw">let </span>(i, j, x) = vec[k];
                         vec[k].<span class="number">2 </span>= x ^ y;
-                        segtree.apply(i, j, |v| <span class="kw-2">*</span>v ^= y);
+                        segtree.apply(<span class="kw-2">&amp;</span>i, <span class="kw-2">&amp;</span>j, |v| <span class="kw-2">*</span>v ^= y);
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
@@ -1385,7 +1641,7 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_dense_2d_segtree() {
-        <span class="kw">use </span>xor::<span class="kw-2">*</span>;
+        <span class="kw">use </span>xor::O;
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
             <span class="kw">let </span>h = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
@@ -1428,9 +1684,9 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_dense_2d_segtree_usability() {
-        <span class="kw">use </span>xor::<span class="kw-2">*</span>;
-        <span class="kw">let _ </span>= Dense2dSegtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]]);
-        <span class="kw">let </span><span class="kw-2">mut </span>segtree = Dense2dSegtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>]]);
+        <span class="kw">use </span>xor::O;
+        <span class="kw">let _ </span>= Dense2dSegtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span>[<span class="macro">vec!</span>[<span class="number">0</span>]]);
+        <span class="kw">let </span><span class="kw-2">mut </span>segtree = Dense2dSegtree::&lt;O&gt;::new(<span class="kw-2">&amp;</span>[<span class="macro">vec!</span>[<span class="number">0</span>]]);
         <span class="kw">let _ </span>= segtree.fold(<span class="number">0</span>..<span class="number">1</span>, <span class="number">0</span>..<span class="number">1</span>);
         <span class="kw">let _ </span>= segtree.entry(<span class="number">0</span>, <span class="number">0</span>);
         <span class="macro">assert_eq!</span>(segtree[<span class="number">0</span>][<span class="number">0</span>], <span class="number">0</span>);
