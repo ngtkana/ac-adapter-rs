@@ -535,7 +535,7 @@
         <span class="kw">let </span>(i0, i1) = open(i, <span class="self">self</span>.values.len() - <span class="number">1</span>);
         <span class="kw">let </span>(j0, j1) = open(j, <span class="self">self</span>.values[<span class="number">0</span>].len());
         <span class="macro">assert!</span>(i0 &lt;= i1 &amp;&amp; i1 &lt; <span class="self">self</span>.values.len());
-        <span class="macro">assert!</span>(j0 &lt;= j1 &amp;&amp; j1 &lt;= <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len()));
+        <span class="macro">assert!</span>(j0 &lt;= j1 &amp;&amp; j1 &lt;= <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, Vec::len));
         O::div(
             <span class="kw-2">&amp;</span>O::mul(<span class="kw-2">&amp;</span><span class="self">self</span>.values[i0][j0], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i1][j1]),
             <span class="kw-2">&amp;</span>O::mul(<span class="kw-2">&amp;</span><span class="self">self</span>.values[i0][j1], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i1][j0]),
@@ -550,9 +550,9 @@
         <span class="kw">let </span><span class="kw-2">mut </span>values = <span class="self">self</span>.values.clone();
         <span class="kw">let </span>h = values.len();
         <span class="kw">let </span>w = values[<span class="number">0</span>].len();
-        <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..h {
+        <span class="kw">for </span>values <span class="kw">in </span><span class="kw-2">&amp;mut </span>values {
             <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..w - <span class="number">1 </span>{
-                values[i][j] = O::div(<span class="kw-2">&amp;</span>values[i][j], <span class="kw-2">&amp;</span>values[i][j + <span class="number">1</span>]);
+                values[j] = O::div(<span class="kw-2">&amp;</span>values[j], <span class="kw-2">&amp;</span>values[j + <span class="number">1</span>]);
             }
         }
         <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..h - <span class="number">1 </span>{
@@ -585,7 +585,7 @@
 <span class="kw">impl</span>&lt;O: Op&gt; From&lt;Vec&lt;Vec&lt;O::Value&gt;&gt;&gt; <span class="kw">for </span>SuffixSum2d&lt;O&gt; {
     <span class="kw">fn </span>from(<span class="kw-2">mut </span>values: Vec&lt;Vec&lt;O::Value&gt;&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>h = values.len();
-        <span class="kw">let </span>w = values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len());
+        <span class="kw">let </span>w = values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, Vec::len);
         values.push(repeat_with(O::identity).take(w).collect());
         <span class="kw">for </span>values <span class="kw">in </span><span class="kw-2">&amp;mut </span>values {
             values.push(O::identity());
