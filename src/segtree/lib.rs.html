@@ -867,7 +867,76 @@
 <a href="#833" id="833">833</a>
 <a href="#834" id="834">834</a>
 <a href="#835" id="835">835</a>
-</pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
+<a href="#836" id="836">836</a>
+<a href="#837" id="837">837</a>
+<a href="#838" id="838">838</a>
+<a href="#839" id="839">839</a>
+<a href="#840" id="840">840</a>
+<a href="#841" id="841">841</a>
+<a href="#842" id="842">842</a>
+<a href="#843" id="843">843</a>
+<a href="#844" id="844">844</a>
+<a href="#845" id="845">845</a>
+<a href="#846" id="846">846</a>
+<a href="#847" id="847">847</a>
+<a href="#848" id="848">848</a>
+<a href="#849" id="849">849</a>
+<a href="#850" id="850">850</a>
+<a href="#851" id="851">851</a>
+<a href="#852" id="852">852</a>
+<a href="#853" id="853">853</a>
+<a href="#854" id="854">854</a>
+<a href="#855" id="855">855</a>
+<a href="#856" id="856">856</a>
+<a href="#857" id="857">857</a>
+<a href="#858" id="858">858</a>
+<a href="#859" id="859">859</a>
+<a href="#860" id="860">860</a>
+<a href="#861" id="861">861</a>
+<a href="#862" id="862">862</a>
+<a href="#863" id="863">863</a>
+<a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
+<a href="#868" id="868">868</a>
+<a href="#869" id="869">869</a>
+<a href="#870" id="870">870</a>
+<a href="#871" id="871">871</a>
+<a href="#872" id="872">872</a>
+<a href="#873" id="873">873</a>
+<a href="#874" id="874">874</a>
+<a href="#875" id="875">875</a>
+<a href="#876" id="876">876</a>
+<a href="#877" id="877">877</a>
+<a href="#878" id="878">878</a>
+<a href="#879" id="879">879</a>
+<a href="#880" id="880">880</a>
+<a href="#881" id="881">881</a>
+<a href="#882" id="882">882</a>
+<a href="#883" id="883">883</a>
+<a href="#884" id="884">884</a>
+<a href="#885" id="885">885</a>
+<a href="#886" id="886">886</a>
+<a href="#887" id="887">887</a>
+<a href="#888" id="888">888</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! Segment tree and its variants.
+//!
+//! # [`Op`] trait
+//!
+//! * [`Op::identity`] returns the identity value $e$.
+//! * [`Op::op`] multiplies two values: $x \cdot y$.
+//!
+//! The multiplication must be associative.
+//!
+//! Furthermore, when this is used for [`SegtreeOfSegtrees`] or [`Dense2dSegtree`], the multiplication must be commutative.
+//!
+//! # Modifier APIs
+//!
+//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`SegtreeOfSegtrees`] does not have it.
+//! Instead, it has `apply` API. You can apply a function $f$ that satisfies $f(x \cdot y) = x \cdot f(y)$ to a single element..
+
+</span><span class="kw">use </span>core::fmt;
 <span class="kw">use </span>std::collections::BTreeMap;
 <span class="kw">use </span>std::iter::FromIterator;
 <span class="kw">use </span>std::ops::Deref;
@@ -875,28 +944,32 @@
 <span class="kw">use </span>std::ops::Index;
 <span class="kw">use </span>std::ops::RangeBounds;
 
-<span class="kw">pub trait </span>Op {
+<span class="doccomment">/// A trait for segment tree operations.
+</span><span class="kw">pub trait </span>Op {
     <span class="doccomment">/// The value type.
     </span><span class="kw">type </span>Value;
 
-    <span class="doccomment">/// Returns the identity value.
+    <span class="doccomment">/// Returns the identity value $e$.
     </span><span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value;
-    <span class="doccomment">/// Multiplies two values.
+    <span class="doccomment">/// Multiplies two values: $x \cdot y$.
     </span><span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
 }
 
-<span class="kw">pub struct </span>Segtree&lt;O: Op&gt; {
+<span class="doccomment">/// A segment tree.
+</span><span class="kw">pub struct </span>Segtree&lt;O: Op&gt; {
     values: Vec&lt;O::Value&gt;,
 }
 <span class="kw">impl</span>&lt;O: Op&gt; Segtree&lt;O&gt; {
-    <span class="kw">pub fn </span>from_len(n: usize) -&gt; <span class="self">Self
+    <span class="doccomment">/// Constructs a new segment tree with the specified length.
+    </span><span class="kw">pub fn </span>from_len(n: usize) -&gt; <span class="self">Self
     </span><span class="kw">where
         </span>O::Value: Clone,
     {
         <span class="self">Self</span>::new(<span class="kw-2">&amp;</span><span class="macro">vec!</span>[O::identity(); n])
     }
 
-    <span class="kw">pub fn </span>new(values: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
+    <span class="doccomment">/// Constructs with the specified values.
+    </span><span class="kw">pub fn </span>new(values: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
     </span><span class="kw">where
         </span>O::Value: Clone,
     {
@@ -910,7 +983,8 @@
         <span class="self">Self </span>{ values }
     }
 
-    <span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: R) -&gt; O::Value {
+    <span class="doccomment">/// Returns $x_l \cdot x_{l+1} \cdot \ldots \cdot x_{r-1}$.
+    </span><span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;usize&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: R) -&gt; O::Value {
         <span class="kw">let </span>n = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         <span class="kw">let </span>(<span class="kw-2">mut </span>start, <span class="kw-2">mut </span>end) = open(range, n);
         <span class="macro">assert!</span>(start &lt;= end &amp;&amp; end &lt;= n);
@@ -933,7 +1007,8 @@
         O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)
     }
 
-    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; Entry&lt;O&gt; {
+    <span class="doccomment">/// Returns the entry of $x_i$.
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; Entry&lt;O&gt; {
         <span class="kw">let </span>n = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         Entry {
             segtree: <span class="self">self</span>,
@@ -941,11 +1016,13 @@
         }
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>O::Value&gt; {
+    <span class="doccomment">/// Returns an iterator of $x_0, x_1, \ldots, x_{n-1}$.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>O::Value&gt; {
         <span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..].iter()
     }
 
-    <span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[O::Value] {
+    <span class="doccomment">/// Returns a slice of $x_0, x_1, \ldots, x_{n-1}$.
+    </span><span class="kw">pub fn </span>as_slice(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[O::Value] {
         <span class="kw-2">&amp;</span><span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..]
     }
 }
@@ -978,7 +1055,8 @@
     }
 }
 
-<span class="kw">pub struct </span>Entry&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
+<span class="doccomment">/// The result of [`Segtree::entry`].
+</span><span class="kw">pub struct </span>Entry&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
     segtree: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Segtree&lt;O&gt;,
     index: usize,
 }
@@ -1015,12 +1093,14 @@
     }
 }
 
-<span class="kw">pub struct </span>SparseSegtree&lt;K, O: Op&gt; {
+<span class="doccomment">/// A sparse (compressed) segment tree.
+</span><span class="kw">pub struct </span>SparseSegtree&lt;K, O: Op&gt; {
     inner: Segtree&lt;O&gt;,
     keys: Vec&lt;K&gt;,
 }
 <span class="kw">impl</span>&lt;K: Ord, O: Op&gt; SparseSegtree&lt;K, O&gt; {
-    <span class="kw">pub fn </span>new(kv: <span class="kw-2">&amp;</span>[(K, O::Value)]) -&gt; <span class="self">Self
+    <span class="doccomment">/// Constructs with the specified key-value pairs.
+    </span><span class="kw">pub fn </span>new(kv: <span class="kw-2">&amp;</span>[(K, O::Value)]) -&gt; <span class="self">Self
     </span><span class="kw">where
         </span>K: Clone,
         O::Value: Clone,
@@ -1034,12 +1114,15 @@
         }
     }
 
-    <span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;K&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: R) -&gt; O::Value {
+    <span class="doccomment">/// Folds $\left \lbrace x_k \mid k \in \text{{range}} \right \rbrace$.
+    </span><span class="kw">pub fn </span>fold&lt;R: RangeBounds&lt;K&gt;&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, range: R) -&gt; O::Value {
         <span class="kw">let </span>(start, end) = open_key(range, <span class="kw-2">&amp;</span><span class="self">self</span>.keys);
         <span class="self">self</span>.inner.fold(start..end)
     }
 
-    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
+    <span class="doccomment">/// Returns the entry of $x_k$.
+    /// If $k$ is not found, it panics.
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, key: <span class="kw-2">&amp;</span>K) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
         <span class="kw">let </span>index = <span class="self">self</span>.keys.binary_search(key).unwrap() + <span class="self">self</span>.keys.len();
         Entry {
             segtree: <span class="kw-2">&amp;mut </span><span class="self">self</span>.inner,
@@ -1047,11 +1130,18 @@
         }
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>O::Value)&gt; {
+    <span class="doccomment">/// Returns the keys.
+    </span><span class="kw">pub fn </span>keys(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[K] {
+        <span class="kw-2">&amp;</span><span class="self">self</span>.keys
+    }
+
+    <span class="doccomment">/// Returns an iterator of $(k, x_k)$.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>O::Value)&gt; {
         <span class="self">self</span>.keys.iter().zip(<span class="self">self</span>.inner.as_slice())
     }
 
-    <span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;K, O::Value&gt;
+    <span class="doccomment">/// Collects the key-value pairs into a `BTreeMap`.
+    </span><span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;K, O::Value&gt;
     <span class="kw">where
         </span>K: Clone,
         O::Value: Clone,
@@ -1095,7 +1185,9 @@
     }
 }
 
-<span class="kw">pub struct </span>SegtreeOfSegtrees&lt;K, L, O: Op&gt; {
+<span class="doccomment">/// A segment tree of segment trees (2D segment tree).
+/// The multiplication must be commutative.
+</span><span class="kw">pub struct </span>SegtreeOfSegtrees&lt;K, L, O: Op&gt; {
     segtrees: Vec&lt;SparseSegtree&lt;L, O&gt;&gt;,
     keys: Vec&lt;K&gt;,
 }
@@ -1105,7 +1197,8 @@
     L: Ord + Clone,
     O::Value: Clone,
 {
-    <span class="kw">pub fn </span>new(points: <span class="kw-2">&amp;</span>[(K, L, O::Value)]) -&gt; <span class="self">Self </span>{
+    <span class="doccomment">/// Constructs with the specified key-value pairs.
+    </span><span class="kw">pub fn </span>new(points: <span class="kw-2">&amp;</span>[(K, L, O::Value)]) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span><span class="kw-2">mut </span>keys = points.iter().map(|(k, <span class="kw">_</span>, <span class="kw">_</span>)| k.clone()).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         keys.sort();
         keys.dedup();
@@ -1138,7 +1231,8 @@
         <span class="self">Self </span>{ segtrees, keys }
     }
 
-    <span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, i: <span class="kw">impl </span>RangeBounds&lt;K&gt;, j: <span class="kw">impl </span>RangeBounds&lt;L&gt; + Clone) -&gt; O::Value {
+    <span class="doccomment">/// Folds $\left \lbrace x_{k, l} \mid (k, l) \in \text{{range}} \right \rbrace$.
+    </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, i: <span class="kw">impl </span>RangeBounds&lt;K&gt;, j: <span class="kw">impl </span>RangeBounds&lt;L&gt; + Clone) -&gt; O::Value {
         <span class="kw">let </span>(<span class="kw-2">mut </span>i0, <span class="kw-2">mut </span>i1) = open_key(i, <span class="kw-2">&amp;</span><span class="self">self</span>.keys);
         i0 += <span class="self">self</span>.keys.len();
         i1 += <span class="self">self</span>.keys.len();
@@ -1159,7 +1253,10 @@
         O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)
     }
 
-    <span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>K, l: <span class="kw-2">&amp;</span>L, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>O::Value)) {
+    <span class="doccomment">/// Apply a function to $x_{k, l}$.
+    ///
+    /// The function $f$ must satisfy $f(x \cdot y) = x \cdot f(y)$.
+    </span><span class="kw">pub fn </span>apply(<span class="kw-2">&amp;mut </span><span class="self">self</span>, k: <span class="kw-2">&amp;</span>K, l: <span class="kw-2">&amp;</span>L, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>O::Value)) {
         <span class="kw">let </span><span class="kw-2">mut </span>i = <span class="self">self</span>.keys.binary_search(k).unwrap();
         i += <span class="self">self</span>.keys.len();
         <span class="kw">while </span>i != <span class="number">0 </span>{
@@ -1168,14 +1265,16 @@
         }
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>L, <span class="kw-2">&amp;</span>O::Value)&gt; {
+    <span class="doccomment">/// Returns the iterator of $(k, l, x_{k, l})$.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (<span class="kw-2">&amp;</span>K, <span class="kw-2">&amp;</span>L, <span class="kw-2">&amp;</span>O::Value)&gt; {
         <span class="self">self</span>.keys
             .iter()
             .zip(<span class="self">self</span>.segtrees[<span class="self">self</span>.keys.len()..].iter())
             .flat_map(|(k, segtree)| segtree.iter().map(<span class="kw">move </span>|(l, v)| (k, l, v)))
     }
 
-    <span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;(K, L), O::Value&gt;
+    <span class="doccomment">/// Collects the key-value pairs into a `BTreeMap`.
+    </span><span class="kw">pub fn </span>collect_map(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; BTreeMap&lt;(K, L), O::Value&gt;
     <span class="kw">where
         </span>K: Clone,
         L: Clone,
@@ -1233,11 +1332,13 @@
     }
 }
 
-<span class="kw">pub struct </span>Dense2dSegtree&lt;O: Op&gt; {
+<span class="doccomment">/// A dense 2D segment tree.
+</span><span class="kw">pub struct </span>Dense2dSegtree&lt;O: Op&gt; {
     values: Vec&lt;Vec&lt;O::Value&gt;&gt;,
 }
 <span class="kw">impl</span>&lt;O: Op&gt; Dense2dSegtree&lt;O&gt; {
-    <span class="kw">pub fn </span>new(values: <span class="kw-2">&amp;</span>[Vec&lt;O::Value&gt;]) -&gt; <span class="self">Self
+    <span class="doccomment">/// Constructs with the specified values.
+    </span><span class="kw">pub fn </span>new(values: <span class="kw-2">&amp;</span>[Vec&lt;O::Value&gt;]) -&gt; <span class="self">Self
     </span><span class="kw">where
         </span>O::Value: Clone,
     {
@@ -1259,7 +1360,8 @@
         <span class="self">Self </span>{ values }
     }
 
-    <span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, i: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, j: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; O::Value {
+    <span class="doccomment">/// Fold $\left \lbrace x_{i, j} \mid i \in \text{{range}}_i, j \in \text{{range}}_j \right \rbrace$.
+    </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, i: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, j: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; O::Value {
         <span class="kw">let </span>h = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         <span class="kw">let </span>w = <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
         <span class="kw">let </span>(<span class="kw-2">mut </span>i0, <span class="kw-2">mut </span>i1) = open(i, h);
@@ -1313,7 +1415,8 @@
         O::op(<span class="kw-2">&amp;</span>left, <span class="kw-2">&amp;</span>right)
     }
 
-    <span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, j: usize) -&gt; Dense2dEntry&lt;O&gt; {
+    <span class="doccomment">/// Returns the entry of $x_{i, j}$.
+    </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, j: usize) -&gt; Dense2dEntry&lt;O&gt; {
         <span class="kw">let </span>h = <span class="self">self</span>.values.len() / <span class="number">2</span>;
         <span class="kw">let </span>w = <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
         Dense2dEntry {
@@ -1323,13 +1426,15 @@
         }
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>[O::Value]&gt; {
+    <span class="doccomment">/// Returns an iterator that returns the rows $(x_{i, 0}, x_{i, 1}, \ldots, x_{i, w-1})$.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>[O::Value]&gt; {
         <span class="self">self</span>.values[<span class="self">self</span>.values.len() / <span class="number">2</span>..]
             .iter()
             .map(|v| <span class="kw-2">&amp;</span>v[v.len() / <span class="number">2</span>..])
     }
 
-    <span class="kw">pub fn </span>collect_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Vec&lt;O::Value&gt;&gt;
+    <span class="doccomment">/// Collect to a $2$-dimensional vector.
+    </span><span class="kw">pub fn </span>collect_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Vec&lt;O::Value&gt;&gt;
     <span class="kw">where
         </span>O::Value: Clone,
     {
@@ -1356,7 +1461,8 @@
     }
 }
 
-<span class="kw">pub struct </span>Dense2dEntry&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
+<span class="doccomment">/// The result of [`Dense2dSegtree::entry`].
+</span><span class="kw">pub struct </span>Dense2dEntry&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
     segtree: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>Dense2dSegtree&lt;O&gt;,
     i: usize,
     j: usize,
