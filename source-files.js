@@ -7,7 +7,6 @@ var sourcesIndex = JSON.parse('{\
 "binary":["",[],["lib.rs"]],\
 "bitutils":["",[],["combinations.rs","lib.rs","subsets.rs"]],\
 "bitvec":["",[],["lib.rs"]],\
-"box_segtree":["",[],["lib.rs"]],\
 "bsgs":["",[],["lib.rs"]],\
 "cht":["",[],["lib.rs"]],\
 "cipolla":["",[],["lib.rs"]],\
@@ -53,7 +52,6 @@ var sourcesIndex = JSON.parse('{\
 "open":["",[],["lib.rs"]],\
 "partially_persistent_union_find":["",[],["lib.rs"]],\
 "poly":["",[],["lib.rs"]],\
-"prefix_sum":["",[],["lib.rs"]],\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
@@ -72,6 +70,7 @@ var sourcesIndex = JSON.parse('{\
 "sparse_table":["",[],["lib.rs"]],\
 "splay_tree":["",[],["lib.rs","node.rs"]],\
 "suffix_array":["",[],["lib.rs"]],\
+"suffix_sum":["",[],["lib.rs"]],\
 "swag":["",[],["lib.rs"]],\
 "tree_fold":["",[],["lib.rs"]],\
 "trial":["",[],["divisors.rs","lib.rs","prime_factors.rs"]],\

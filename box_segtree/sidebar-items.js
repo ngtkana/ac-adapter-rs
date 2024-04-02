@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["Iter","Segtree","SegtreeDebugList"],"trait":["Ops"]};
