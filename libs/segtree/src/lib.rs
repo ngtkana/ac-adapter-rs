@@ -161,7 +161,7 @@ impl<K: Ord, O: Op> SparseSegtree<K, O> {
         let values = kv.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
         Self {
             inner: Segtree::new(&values),
-            keys: keys.to_vec(),
+            keys,
         }
     }
 
@@ -170,8 +170,8 @@ impl<K: Ord, O: Op> SparseSegtree<K, O> {
         self.inner.fold(start..end)
     }
 
-    pub fn entry(&mut self, key: K) -> Entry<'_, O> {
-        let index = self.keys.binary_search(&key).unwrap() + self.keys.len();
+    pub fn entry(&mut self, key: &K) -> Entry<'_, O> {
+        let index = self.keys.binary_search(key).unwrap() + self.keys.len();
         Entry {
             segtree: &mut self.inner,
             index,
@@ -290,11 +290,11 @@ where
         O::op(&left, &right)
     }
 
-    pub fn apply(&mut self, k: K, l: L, mut f: impl FnMut(&mut O::Value)) {
-        let mut i = self.keys.binary_search(&k).unwrap();
+    pub fn apply(&mut self, k: &K, l: &L, mut f: impl FnMut(&mut O::Value)) {
+        let mut i = self.keys.binary_search(k).unwrap();
         i += self.keys.len();
         while i != 0 {
-            f(&mut self.segtrees[i].entry(l.clone()));
+            f(&mut self.segtrees[i].entry(l));
             i /= 2;
         }
     }
@@ -374,7 +374,7 @@ impl<O: Op> Dense2dSegtree<O> {
     {
         let values_ = values;
         let h = values.len();
-        let w = values.get(0).map_or(0, |v| v.len());
+        let w = values.get(0).map_or(0, Vec::len);
         let mut values = vec![vec![O::identity(); 2 * w]; 2 * h];
         for (values, values_) in values[h..].iter_mut().zip(values_) {
             values[w..].clone_from_slice(values_);
@@ -464,7 +464,7 @@ impl<O: Op> Dense2dSegtree<O> {
     where
         O::Value: Clone,
     {
-        self.iter().map(|v| v.to_vec()).collect()
+        self.iter().map(<[_]>::to_vec).collect()
     }
 }
 
@@ -550,8 +550,7 @@ fn open_key<K: Ord, B: RangeBounds<K>>(bounds: B, keys: &[K]) -> (usize, usize) 
     let start = match bounds.start_bound() {
         Bound::Unbounded => 0,
         Bound::Included(x) => match keys.binary_search(x) {
-            Ok(i) => i,
-            Err(i) => i,
+            Ok(i) | Err(i) => i,
         },
         Bound::Excluded(x) => match keys.binary_search(x) {
             Ok(i) => i + 1,
@@ -565,8 +564,7 @@ fn open_key<K: Ord, B: RangeBounds<K>>(bounds: B, keys: &[K]) -> (usize, usize) 
             Err(i) => i,
         },
         Bound::Excluded(x) => match keys.binary_search(x) {
-            Ok(i) => i,
-            Err(i) => i,
+            Ok(i) | Err(i) => i,
         },
     };
     (start, end)
@@ -617,7 +615,8 @@ mod tests {
 
     #[test]
     fn test_segtree() {
-        use rolling_hash::*;
+        use rolling_hash::BASE;
+        use rolling_hash::O;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
@@ -653,7 +652,7 @@ mod tests {
 
     #[test]
     fn test_segtree_usability() {
-        use rolling_hash::*;
+        use rolling_hash::O;
         let _ = Segtree::<O>::from_len(1);
         let _ = Segtree::<O>::new(&[(0, 1)]);
         let _ = Segtree::<O>::from_iter(vec![(0, 1)]);
@@ -666,7 +665,8 @@ mod tests {
 
     #[test]
     fn test_sparse_segtree() {
-        use rolling_hash::*;
+        use rolling_hash::BASE;
+        use rolling_hash::O;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
@@ -681,7 +681,7 @@ mod tests {
                 .copied()
                 .map(|key| (key, (rng.gen_range(0..BASE), BASE)))
                 .collect::<Vec<_>>();
-            let mut segtree = SparseSegtree::<usize, O>::from_iter(vec.iter().copied());
+            let mut segtree = vec.iter().copied().collect::<SparseSegtree<_, O>>();
             for _ in 0..q {
                 match rng.gen_range(0..2) {
                     // fold
@@ -700,12 +700,9 @@ mod tests {
                     1 => {
                         let k = rng.gen_range(0..n);
                         let x = (rng.gen_range(0..BASE), BASE);
-                        match keys.binary_search(&k) {
-                            Ok(j) => {
-                                *segtree.entry(k) = x;
-                                vec[j].1 = x;
-                            }
-                            Err(_) => {}
+                        if let Ok(j) = keys.binary_search(&k) {
+                            *segtree.entry(&k) = x;
+                            vec[j].1 = x;
                         }
                     }
                     _ => unreachable!(),
@@ -716,18 +713,19 @@ mod tests {
 
     #[test]
     fn test_sparse_segtree_usability() {
-        use rolling_hash::*;
+        use rolling_hash::O;
         let _ = SparseSegtree::<usize, O>::new(&[(0, (1, 1))]);
         let _ = SparseSegtree::<usize, O>::from_iter(vec![(0, (1, 1))]);
         let mut segtree = SparseSegtree::<usize, O>::new(&[(0, (1, 1))]);
         let _ = segtree.fold(0..1);
-        let _ = segtree.entry(0);
+        let _ = segtree.entry(&0);
         assert_eq!(segtree[0], (1, 1));
     }
 
     #[test]
+    #[allow(clippy::many_single_char_names)]
     fn test_segtree_of_segtree() {
-        use xor::*;
+        use xor::O;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..30 {
             let h = rng.gen_range(1..=20);
@@ -764,7 +762,7 @@ mod tests {
                         let y = rng.gen_range(0..u64::MAX);
                         let (i, j, x) = vec[k];
                         vec[k].2 = x ^ y;
-                        segtree.apply(i, j, |v| *v ^= y);
+                        segtree.apply(&i, &j, |v| *v ^= y);
                     }
                     _ => unreachable!(),
                 }
@@ -774,7 +772,7 @@ mod tests {
 
     #[test]
     fn test_dense_2d_segtree() {
-        use xor::*;
+        use xor::O;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let h = rng.gen_range(1..=10);
@@ -817,9 +815,9 @@ mod tests {
 
     #[test]
     fn test_dense_2d_segtree_usability() {
-        use xor::*;
-        let _ = Dense2dSegtree::<O>::new(&vec![vec![0]]);
-        let mut segtree = Dense2dSegtree::<O>::new(&vec![vec![0]]);
+        use xor::O;
+        let _ = Dense2dSegtree::<O>::new(&[vec![0]]);
+        let mut segtree = Dense2dSegtree::<O>::new(&[vec![0]]);
         let _ = segtree.fold(0..1, 0..1);
         let _ = segtree.entry(0, 0);
         assert_eq!(segtree[0][0], 0);
