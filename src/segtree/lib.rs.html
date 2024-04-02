@@ -929,11 +929,11 @@
 //!
 //! The multiplication must be associative.
 //!
-//! Furthermore, when this is used for [`SegtreeOfSegtrees`] or [`Dense2dSegtree`], the multiplication must be commutative.
+//! Furthermore, when this is used for [`Sparse2dSegtree`] or [`Dense2dSegtree`], the multiplication must be commutative.
 //!
 //! # Modifier APIs
 //!
-//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`SegtreeOfSegtrees`] does not have it.
+//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`Sparse2dSegtree`] does not have it.
 //! Instead, it has `apply` API. You can apply a function $f$ that satisfies $f(x \cdot y) = x \cdot f(y)$ to a single element..
 
 </span><span class="kw">use </span>core::fmt;
@@ -1187,11 +1187,11 @@
 
 <span class="doccomment">/// A segment tree of segment trees (2D segment tree).
 /// The multiplication must be commutative.
-</span><span class="kw">pub struct </span>SegtreeOfSegtrees&lt;K, L, O: Op&gt; {
+</span><span class="kw">pub struct </span>Sparse2dSegtree&lt;K, L, O: Op&gt; {
     segtrees: Vec&lt;SparseSegtree&lt;L, O&gt;&gt;,
     keys: Vec&lt;K&gt;,
 }
-<span class="kw">impl</span>&lt;K, L, O: Op&gt; SegtreeOfSegtrees&lt;K, L, O&gt;
+<span class="kw">impl</span>&lt;K, L, O: Op&gt; Sparse2dSegtree&lt;K, L, O&gt;
 <span class="kw">where
     </span>K: Ord + Clone,
     L: Ord + Clone,
@@ -1291,21 +1291,21 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K, L, O: Op&gt; fmt::Debug <span class="kw">for </span>SegtreeOfSegtrees&lt;K, L, O&gt;
+<span class="kw">impl</span>&lt;K, L, O: Op&gt; fmt::Debug <span class="kw">for </span>Sparse2dSegtree&lt;K, L, O&gt;
 <span class="kw">where
     </span>K: fmt::Debug,
     L: fmt::Debug,
     O::Value: fmt::Debug,
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">&quot;SegtreeOfSegtrees&quot;</span>)
+        f.debug_struct(<span class="string">&quot;Sparse2dSegtree&quot;</span>)
             .field(<span class="string">&quot;segtrees&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.segtrees)
             .field(<span class="string">&quot;keys&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.keys)
             .finish()
     }
 }
 
-<span class="kw">impl</span>&lt;K, L, O: Op&gt; FromIterator&lt;(K, L, O::Value)&gt; <span class="kw">for </span>SegtreeOfSegtrees&lt;K, L, O&gt;
+<span class="kw">impl</span>&lt;K, L, O: Op&gt; FromIterator&lt;(K, L, O::Value)&gt; <span class="kw">for </span>Sparse2dSegtree&lt;K, L, O&gt;
 <span class="kw">where
     </span>K: Ord + Clone,
     L: Ord + Clone,
@@ -1316,7 +1316,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K: Ord, L: Ord, O: Op&gt; Index&lt;K&gt; <span class="kw">for </span>SegtreeOfSegtrees&lt;K, L, O&gt; {
+<span class="kw">impl</span>&lt;K: Ord, L: Ord, O: Op&gt; Index&lt;K&gt; <span class="kw">for </span>Sparse2dSegtree&lt;K, L, O&gt; {
     <span class="kw">type </span>Output = SparseSegtree&lt;L, O&gt;;
 
     <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, i: K) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
@@ -1324,7 +1324,7 @@
     }
 }
 
-<span class="kw">impl</span>&lt;K: Ord, L: Ord, O: Op&gt; Index&lt;(K, L)&gt; <span class="kw">for </span>SegtreeOfSegtrees&lt;K, L, O&gt; {
+<span class="kw">impl</span>&lt;K: Ord, L: Ord, O: Op&gt; Index&lt;(K, L)&gt; <span class="kw">for </span>Sparse2dSegtree&lt;K, L, O&gt; {
     <span class="kw">type </span>Output = O::Value;
 
     <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, (i, j): (K, L)) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
@@ -1716,7 +1716,7 @@
             })
             .take(n)
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="kw">let </span><span class="kw-2">mut </span>segtree = SegtreeOfSegtrees::&lt;usize, usize, O&gt;::new(<span class="kw-2">&amp;</span>vec);
+            <span class="kw">let </span><span class="kw-2">mut </span>segtree = Sparse2dSegtree::&lt;usize, usize, O&gt;::new(<span class="kw-2">&amp;</span>vec);
             <span class="kw">for _ in </span><span class="number">0</span>..q {
                 <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">1</span>) {
                     <span class="comment">// fold
