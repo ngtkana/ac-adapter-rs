@@ -1,3 +1,5 @@
+use core::fmt;
+use std::collections::BTreeMap;
 use std::iter::FromIterator;
 use std::ops::Deref;
 use std::ops::DerefMut;
@@ -42,6 +44,7 @@ impl<O: Op> Segtree<O> {
     pub fn fold<R: RangeBounds<usize>>(&self, range: R) -> O::Value {
         let n = self.values.len() / 2;
         let (mut start, mut end) = open(range, n);
+        assert!(start <= end && end <= n);
         start += n;
         end += n;
         let mut left = O::identity();
@@ -69,8 +72,23 @@ impl<O: Op> Segtree<O> {
         }
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &O::Value> {
+        self.values[self.values.len() / 2..].iter()
+    }
+
     pub fn as_slice(&self) -> &[O::Value] {
         &self.values[self.values.len() / 2..]
+    }
+}
+
+impl<O: Op> fmt::Debug for Segtree<O>
+where
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Segtree")
+            .field("values", &self.values)
+            .finish()
     }
 }
 
@@ -119,6 +137,14 @@ impl<'a, O: Op> DerefMut for Entry<'a, O> {
         &mut self.segtree.values[self.index]
     }
 }
+impl<'a, O: Op> fmt::Debug for Entry<'a, O>
+where
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Entry").field("index", &self.index).finish()
+    }
+}
 
 pub struct SparseSegtree<K, O: Op> {
     inner: Segtree<O>,
@@ -150,6 +176,35 @@ impl<K: Ord, O: Op> SparseSegtree<K, O> {
             segtree: &mut self.inner,
             index,
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&K, &O::Value)> {
+        self.keys.iter().zip(self.inner.as_slice())
+    }
+
+    pub fn collect_map(&self) -> BTreeMap<K, O::Value>
+    where
+        K: Clone,
+        O::Value: Clone,
+    {
+        self.keys
+            .iter()
+            .cloned()
+            .zip(self.inner.iter().cloned())
+            .collect()
+    }
+}
+
+impl<K, O: Op> fmt::Debug for SparseSegtree<K, O>
+where
+    K: fmt::Debug,
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SparseSegtree")
+            .field("inner", &self.inner)
+            .field("keys", &self.keys)
+            .finish()
     }
 }
 
@@ -243,6 +298,43 @@ where
             i /= 2;
         }
     }
+
+    pub fn iter(&self) -> impl Iterator<Item = (&K, &L, &O::Value)> {
+        self.keys
+            .iter()
+            .zip(self.segtrees[self.keys.len()..].iter())
+            .flat_map(|(k, segtree)| segtree.iter().map(move |(l, v)| (k, l, v)))
+    }
+
+    pub fn collect_map(&self) -> BTreeMap<(K, L), O::Value>
+    where
+        K: Clone,
+        L: Clone,
+        O::Value: Clone,
+    {
+        self.keys
+            .iter()
+            .flat_map(|k| {
+                self.segtrees[self.keys.len() + self.keys.binary_search(k).unwrap()]
+                    .iter()
+                    .map(move |(l, v)| ((k.clone(), l.clone()), v.clone()))
+            })
+            .collect()
+    }
+}
+
+impl<K, L, O: Op> fmt::Debug for SegtreeOfSegtrees<K, L, O>
+where
+    K: fmt::Debug,
+    L: fmt::Debug,
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("SegtreeOfSegtrees")
+            .field("segtrees", &self.segtrees)
+            .field("keys", &self.keys)
+            .finish()
+    }
 }
 
 impl<K, L, O: Op> FromIterator<(K, L, O::Value)> for SegtreeOfSegtrees<K, L, O>
@@ -302,7 +394,9 @@ impl<O: Op> Dense2dSegtree<O> {
         let h = self.values.len() / 2;
         let w = self.values.get(0).map_or(0, |v| v.len() / 2);
         let (mut i0, mut i1) = open(i, h);
+        assert!(i0 <= i1 && i1 <= h);
         let (mut j0, mut j1) = open(j, w);
+        assert!(j0 <= j1 && j1 <= w);
         i0 += h;
         i1 += h;
         j0 += w;
@@ -358,6 +452,30 @@ impl<O: Op> Dense2dSegtree<O> {
             i: h + i,
             j: w + j,
         }
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &[O::Value]> {
+        self.values[self.values.len() / 2..]
+            .iter()
+            .map(|v| &v[v.len() / 2..])
+    }
+
+    pub fn collect_vec(&self) -> Vec<Vec<O::Value>>
+    where
+        O::Value: Clone,
+    {
+        self.iter().map(|v| v.to_vec()).collect()
+    }
+}
+
+impl<O: Op> fmt::Debug for Dense2dSegtree<O>
+where
+    O::Value: fmt::Debug,
+{
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_struct("Dense2dSegtree")
+            .field("values", &self.values)
+            .finish()
     }
 }
 
@@ -431,13 +549,25 @@ fn open_key<K: Ord, B: RangeBounds<K>>(bounds: B, keys: &[K]) -> (usize, usize) 
     use std::ops::Bound;
     let start = match bounds.start_bound() {
         Bound::Unbounded => 0,
-        Bound::Included(x) => keys.binary_search(x).unwrap_or_else(|i| i),
-        Bound::Excluded(x) => keys.binary_search(x).unwrap_or_else(|i| i + 1),
+        Bound::Included(x) => match keys.binary_search(x) {
+            Ok(i) => i,
+            Err(i) => i,
+        },
+        Bound::Excluded(x) => match keys.binary_search(x) {
+            Ok(i) => i + 1,
+            Err(i) => i,
+        },
     };
     let end = match bounds.end_bound() {
         Bound::Unbounded => keys.len(),
-        Bound::Included(x) => keys.binary_search(x).map_or_else(|i| i + 1, |i| i + 1),
-        Bound::Excluded(x) => keys.binary_search(x).unwrap_or_else(|i| i),
+        Bound::Included(x) => match keys.binary_search(x) {
+            Ok(i) => i + 1,
+            Err(i) => i,
+        },
+        Bound::Excluded(x) => match keys.binary_search(x) {
+            Ok(i) => i,
+            Err(i) => i,
+        },
     };
     (start, end)
 }
