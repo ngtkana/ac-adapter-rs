@@ -1,3 +1,19 @@
+//! Segment tree and its variants.
+//!
+//! # [`Op`] trait
+//!
+//! * [`Op::identity`] returns the identity value $e$.
+//! * [`Op::op`] multiplies two values: $x \cdot y$.
+//!
+//! The multiplication must be associative.
+//!
+//! Furthermore, when this is used for [`SegtreeOfSegtrees`] or [`Dense2dSegtree`], the multiplication must be commutative.
+//!
+//! # Modifier APIs
+//!
+//! While [`Segtree`], [`SparseSegtree`], and [`Dense2dSegtree`] have `entry` API, [`SegtreeOfSegtrees`] does not have it.
+//! Instead, it has `apply` API. You can apply a function $f$ that satisfies $f(x \cdot y) = x \cdot f(y)$ to a single element..
+
 use core::fmt;
 use std::collections::BTreeMap;
 use std::iter::FromIterator;
@@ -6,20 +22,23 @@ use std::ops::DerefMut;
 use std::ops::Index;
 use std::ops::RangeBounds;
 
+/// A trait for segment tree operations.
 pub trait Op {
     /// The value type.
     type Value;
 
-    /// Returns the identity value.
+    /// Returns the identity value $e$.
     fn identity() -> Self::Value;
-    /// Multiplies two values.
+    /// Multiplies two values: $x \cdot y$.
     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
+/// A segment tree.
 pub struct Segtree<O: Op> {
     values: Vec<O::Value>,
 }
 impl<O: Op> Segtree<O> {
+    /// Constructs a new segment tree with the specified length.
     pub fn from_len(n: usize) -> Self
     where
         O::Value: Clone,
@@ -27,6 +46,7 @@ impl<O: Op> Segtree<O> {
         Self::new(&vec![O::identity(); n])
     }
 
+    /// Constructs with the specified values.
     pub fn new(values: &[O::Value]) -> Self
     where
         O::Value: Clone,
@@ -41,6 +61,7 @@ impl<O: Op> Segtree<O> {
         Self { values }
     }
 
+    /// Returns $x_l \cdot x_{l+1} \cdot \ldots \cdot x_{r-1}$.
     pub fn fold<R: RangeBounds<usize>>(&self, range: R) -> O::Value {
         let n = self.values.len() / 2;
         let (mut start, mut end) = open(range, n);
@@ -64,6 +85,7 @@ impl<O: Op> Segtree<O> {
         O::op(&left, &right)
     }
 
+    /// Returns the entry of $x_i$.
     pub fn entry(&mut self, index: usize) -> Entry<O> {
         let n = self.values.len() / 2;
         Entry {
@@ -72,10 +94,12 @@ impl<O: Op> Segtree<O> {
         }
     }
 
+    /// Returns an iterator of $x_0, x_1, \ldots, x_{n-1}$.
     pub fn iter(&self) -> impl Iterator<Item = &O::Value> {
         self.values[self.values.len() / 2..].iter()
     }
 
+    /// Returns a slice of $x_0, x_1, \ldots, x_{n-1}$.
     pub fn as_slice(&self) -> &[O::Value] {
         &self.values[self.values.len() / 2..]
     }
@@ -109,6 +133,7 @@ impl<O: Op> Index<usize> for Segtree<O> {
     }
 }
 
+/// The result of [`Segtree::entry`].
 pub struct Entry<'a, O: Op> {
     segtree: &'a mut Segtree<O>,
     index: usize,
@@ -146,11 +171,13 @@ where
     }
 }
 
+/// A sparse (compressed) segment tree.
 pub struct SparseSegtree<K, O: Op> {
     inner: Segtree<O>,
     keys: Vec<K>,
 }
 impl<K: Ord, O: Op> SparseSegtree<K, O> {
+    /// Constructs with the specified key-value pairs.
     pub fn new(kv: &[(K, O::Value)]) -> Self
     where
         K: Clone,
@@ -165,11 +192,14 @@ impl<K: Ord, O: Op> SparseSegtree<K, O> {
         }
     }
 
+    /// Folds $\left \lbrace x_k \mid k \in \text{{range}} \right \rbrace$.
     pub fn fold<R: RangeBounds<K>>(&self, range: R) -> O::Value {
         let (start, end) = open_key(range, &self.keys);
         self.inner.fold(start..end)
     }
 
+    /// Returns the entry of $x_k$.
+    /// If $k$ is not found, it panics.
     pub fn entry(&mut self, key: &K) -> Entry<'_, O> {
         let index = self.keys.binary_search(key).unwrap() + self.keys.len();
         Entry {
@@ -178,10 +208,17 @@ impl<K: Ord, O: Op> SparseSegtree<K, O> {
         }
     }
 
+    /// Returns the keys.
+    pub fn keys(&self) -> &[K] {
+        &self.keys
+    }
+
+    /// Returns an iterator of $(k, x_k)$.
     pub fn iter(&self) -> impl Iterator<Item = (&K, &O::Value)> {
         self.keys.iter().zip(self.inner.as_slice())
     }
 
+    /// Collects the key-value pairs into a `BTreeMap`.
     pub fn collect_map(&self) -> BTreeMap<K, O::Value>
     where
         K: Clone,
@@ -226,6 +263,8 @@ impl<K: Ord, O: Op> Index<K> for SparseSegtree<K, O> {
     }
 }
 
+/// A segment tree of segment trees (2D segment tree).
+/// The multiplication must be commutative.
 pub struct SegtreeOfSegtrees<K, L, O: Op> {
     segtrees: Vec<SparseSegtree<L, O>>,
     keys: Vec<K>,
@@ -236,6 +275,7 @@ where
     L: Ord + Clone,
     O::Value: Clone,
 {
+    /// Constructs with the specified key-value pairs.
     pub fn new(points: &[(K, L, O::Value)]) -> Self {
         let mut keys = points.iter().map(|(k, _, _)| k.clone()).collect::<Vec<_>>();
         keys.sort();
@@ -269,6 +309,7 @@ where
         Self { segtrees, keys }
     }
 
+    /// Folds $\left \lbrace x_{k, l} \mid (k, l) \in \text{{range}} \right \rbrace$.
     pub fn fold(&self, i: impl RangeBounds<K>, j: impl RangeBounds<L> + Clone) -> O::Value {
         let (mut i0, mut i1) = open_key(i, &self.keys);
         i0 += self.keys.len();
@@ -290,6 +331,9 @@ where
         O::op(&left, &right)
     }
 
+    /// Apply a function to $x_{k, l}$.
+    ///
+    /// The function $f$ must satisfy $f(x \cdot y) = x \cdot f(y)$.
     pub fn apply(&mut self, k: &K, l: &L, mut f: impl FnMut(&mut O::Value)) {
         let mut i = self.keys.binary_search(k).unwrap();
         i += self.keys.len();
@@ -299,6 +343,7 @@ where
         }
     }
 
+    /// Returns the iterator of $(k, l, x_{k, l})$.
     pub fn iter(&self) -> impl Iterator<Item = (&K, &L, &O::Value)> {
         self.keys
             .iter()
@@ -306,6 +351,7 @@ where
             .flat_map(|(k, segtree)| segtree.iter().map(move |(l, v)| (k, l, v)))
     }
 
+    /// Collects the key-value pairs into a `BTreeMap`.
     pub fn collect_map(&self) -> BTreeMap<(K, L), O::Value>
     where
         K: Clone,
@@ -364,10 +410,12 @@ impl<K: Ord, L: Ord, O: Op> Index<(K, L)> for SegtreeOfSegtrees<K, L, O> {
     }
 }
 
+/// A dense 2D segment tree.
 pub struct Dense2dSegtree<O: Op> {
     values: Vec<Vec<O::Value>>,
 }
 impl<O: Op> Dense2dSegtree<O> {
+    /// Constructs with the specified values.
     pub fn new(values: &[Vec<O::Value>]) -> Self
     where
         O::Value: Clone,
@@ -390,6 +438,7 @@ impl<O: Op> Dense2dSegtree<O> {
         Self { values }
     }
 
+    /// Fold $\left \lbrace x_{i, j} \mid i \in \text{{range}}_i, j \in \text{{range}}_j \right \rbrace$.
     pub fn fold(&self, i: impl RangeBounds<usize>, j: impl RangeBounds<usize>) -> O::Value {
         let h = self.values.len() / 2;
         let w = self.values.get(0).map_or(0, |v| v.len() / 2);
@@ -444,6 +493,7 @@ impl<O: Op> Dense2dSegtree<O> {
         O::op(&left, &right)
     }
 
+    /// Returns the entry of $x_{i, j}$.
     pub fn entry(&mut self, i: usize, j: usize) -> Dense2dEntry<O> {
         let h = self.values.len() / 2;
         let w = self.values.get(0).map_or(0, |v| v.len() / 2);
@@ -454,12 +504,14 @@ impl<O: Op> Dense2dSegtree<O> {
         }
     }
 
+    /// Returns an iterator that returns the rows $(x_{i, 0}, x_{i, 1}, \ldots, x_{i, w-1})$.
     pub fn iter(&self) -> impl Iterator<Item = &[O::Value]> {
         self.values[self.values.len() / 2..]
             .iter()
             .map(|v| &v[v.len() / 2..])
     }
 
+    /// Collect to a $2$-dimensional vector.
     pub fn collect_vec(&self) -> Vec<Vec<O::Value>>
     where
         O::Value: Clone,
@@ -487,6 +539,7 @@ impl<O: Op> Index<usize> for Dense2dSegtree<O> {
     }
 }
 
+/// The result of [`Dense2dSegtree::entry`].
 pub struct Dense2dEntry<'a, O: Op> {
     segtree: &'a mut Dense2dSegtree<O>,
     i: usize,
