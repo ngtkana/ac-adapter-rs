@@ -282,6 +282,22 @@
 <a href="#248" id="248">248</a>
 <a href="#249" id="249">249</a>
 <a href="#250" id="250">250</a>
+<a href="#251" id="251">251</a>
+<a href="#252" id="252">252</a>
+<a href="#253" id="253">253</a>
+<a href="#254" id="254">254</a>
+<a href="#255" id="255">255</a>
+<a href="#256" id="256">256</a>
+<a href="#257" id="257">257</a>
+<a href="#258" id="258">258</a>
+<a href="#259" id="259">259</a>
+<a href="#260" id="260">260</a>
+<a href="#261" id="261">261</a>
+<a href="#262" id="262">262</a>
+<a href="#263" id="263">263</a>
+<a href="#264" id="264">264</a>
+<a href="#265" id="265">265</a>
+<a href="#266" id="266">266</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Interval Heaps
 //!
 //! van Leeuwen, Jan, and Derick Wood. &quot;Interval heaps.&quot; The Computer Journal 36.3 (1993): 209-216.
@@ -364,13 +380,35 @@
         <span class="self">Self </span>{ values: Vec::new() }
     }
 }
-<span class="kw">impl</span>&lt;T: Ord + std::fmt::Debug&gt; From&lt;Vec&lt;T&gt;&gt; <span class="kw">for </span>IntervalHeap&lt;T&gt; {
+<span class="kw">impl</span>&lt;T: Ord&gt; From&lt;Vec&lt;T&gt;&gt; <span class="kw">for </span>IntervalHeap&lt;T&gt; {
     <span class="kw">fn </span>from(values: Vec&lt;T&gt;) -&gt; <span class="self">Self </span>{
-        <span class="kw">let </span><span class="kw-2">mut </span>result = <span class="self">Self</span>::new();
+        <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="self">Self</span>::new();
         <span class="kw">for </span>x <span class="kw">in </span>values {
-            result.push(x);
+            ret.push(x);
         }
-        result
+        ret
+    }
+}
+<span class="kw">impl</span>&lt;T: Ord&gt; Extend&lt;T&gt; <span class="kw">for </span>IntervalHeap&lt;T&gt; {
+    <span class="kw">fn </span>extend&lt;I: IntoIterator&lt;Item = T&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iter: I) {
+        <span class="kw">for </span>x <span class="kw">in </span>iter {
+            <span class="self">self</span>.push(x);
+        }
+    }
+}
+<span class="kw">impl</span>&lt;T: Ord&gt; IntoIterator <span class="kw">for </span>IntervalHeap&lt;T&gt; {
+    <span class="kw">type </span>IntoIter = std::vec::IntoIter&lt;T&gt;;
+    <span class="kw">type </span>Item = T;
+
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.values.into_iter()
+    }
+}
+<span class="kw">impl</span>&lt;T: Ord&gt; std::iter::FromIterator&lt;T&gt; <span class="kw">for </span>IntervalHeap&lt;T&gt; {
+    <span class="kw">fn </span>from_iter&lt;I: IntoIterator&lt;Item = T&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>ret = <span class="self">Self</span>::new();
+        ret.extend(iter);
+        ret
     }
 }
 
@@ -486,19 +524,17 @@
     </span><span class="kw">fn </span>test_interval_heap() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">0</span>..<span class="number">4</span>);
+            <span class="kw">let </span>n = rng.gen_range(<span class="number">0</span>..<span class="number">10</span>);
             <span class="kw">let </span>q = rng.gen_range(<span class="number">10</span>..<span class="number">100</span>);
             <span class="kw">let </span>lim = rng.gen_range(<span class="number">1</span>..=n + q + <span class="number">10</span>);
             <span class="kw">let </span><span class="kw-2">mut </span>vec = (<span class="number">0</span>..n).map(|<span class="kw">_</span>| rng.gen_range(<span class="number">0</span>..lim)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             <span class="kw">let </span><span class="kw-2">mut </span>interval_heap = IntervalHeap::from(vec.clone());
             vec.sort_unstable();
-            <span class="macro">eprintln!</span>(<span class="string">&quot;vec = {:?}&quot;</span>, vec);
             <span class="kw">for _ in </span><span class="number">0</span>..q {
                 <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">3</span>) {
                     <span class="comment">// push
                     </span><span class="number">0 </span>=&gt; {
                         <span class="kw">let </span>x = rng.gen_range(<span class="number">0</span>..lim);
-                        <span class="macro">eprintln!</span>(<span class="string">&quot;push {}&quot;</span>, x);
                         interval_heap.push(x);
                         <span class="kw">let </span>i = vec.binary_search(<span class="kw-2">&amp;</span>x).unwrap_or_else(|x| x);
                         vec.insert(i, x);
@@ -506,7 +542,6 @@
                     }
                     <span class="comment">// pop_min
                     </span><span class="number">1 </span>=&gt; {
-                        <span class="macro">eprintln!</span>(<span class="string">&quot;pop_min&quot;</span>);
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = interval_heap.pop_min() {
                             <span class="macro">assert_eq!</span>(x, vec.remove(<span class="number">0</span>));
                             validate_interval_heap(<span class="kw-2">&amp;</span>interval_heap);
@@ -516,7 +551,6 @@
                     }
                     <span class="comment">// pop_max
                     </span><span class="number">2 </span>=&gt; {
-                        <span class="macro">eprintln!</span>(<span class="string">&quot;pop_max&quot;</span>);
                         <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = interval_heap.pop_max() {
                             <span class="macro">assert_eq!</span>(x, vec.pop().unwrap());
                             validate_interval_heap(<span class="kw-2">&amp;</span>interval_heap);
@@ -526,9 +560,7 @@
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
-                <span class="macro">eprintln!</span>(<span class="string">&quot;vec = {:?}&quot;</span>, <span class="kw-2">&amp;</span>vec);
             }
-            <span class="macro">eprintln!</span>(<span class="string">&quot;---&quot;</span>);
         }
     }
 }
