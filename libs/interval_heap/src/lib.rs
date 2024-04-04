@@ -267,21 +267,21 @@ mod tests {
                     }
                     // pop_min
                     1 => {
-                        // if let Some(x) = interval_heap.pop_min() {
-                        //     assert_eq!(x, vec.remove(0));
-                        //     validate_interval_heap(&interval_heap);
-                        // } else {
-                        //     assert!(vec.is_empty());
-                        // }
+                        if let Some(x) = interval_heap.pop_min() {
+                            assert_eq!(x, vec.remove(0));
+                            validate_interval_heap(&interval_heap);
+                        } else {
+                            assert!(vec.is_empty());
+                        }
                     }
                     // pop_max
                     2 => {
-                        // if let Some(x) = interval_heap.pop_max() {
-                        //     assert_eq!(x, vec.pop().unwrap());
-                        //     validate_interval_heap(&interval_heap);
-                        // } else {
-                        //     assert!(vec.is_empty());
-                        // }
+                        if let Some(x) = interval_heap.pop_max() {
+                            assert_eq!(x, vec.pop().unwrap());
+                            validate_interval_heap(&interval_heap);
+                        } else {
+                            assert!(vec.is_empty());
+                        }
                     }
                     _ => unreachable!(),
                 }
