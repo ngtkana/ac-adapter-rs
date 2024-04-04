@@ -592,22 +592,22 @@
                     }
                     <span class="comment">// pop_min
                     </span><span class="number">1 </span>=&gt; {
-                        <span class="comment">// if let Some(x) = interval_heap.pop_min() {
-                        //     assert_eq!(x, vec.remove(0));
-                        //     validate_interval_heap(&amp;interval_heap);
-                        // } else {
-                        //     assert!(vec.is_empty());
-                        // }
-                    </span>}
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = interval_heap.pop_min() {
+                            <span class="macro">assert_eq!</span>(x, vec.remove(<span class="number">0</span>));
+                            validate_interval_heap(<span class="kw-2">&amp;</span>interval_heap);
+                        } <span class="kw">else </span>{
+                            <span class="macro">assert!</span>(vec.is_empty());
+                        }
+                    }
                     <span class="comment">// pop_max
                     </span><span class="number">2 </span>=&gt; {
-                        <span class="comment">// if let Some(x) = interval_heap.pop_max() {
-                        //     assert_eq!(x, vec.pop().unwrap());
-                        //     validate_interval_heap(&amp;interval_heap);
-                        // } else {
-                        //     assert!(vec.is_empty());
-                        // }
-                    </span>}
+                        <span class="kw">if let </span><span class="prelude-val">Some</span>(x) = interval_heap.pop_max() {
+                            <span class="macro">assert_eq!</span>(x, vec.pop().unwrap());
+                            validate_interval_heap(<span class="kw-2">&amp;</span>interval_heap);
+                        } <span class="kw">else </span>{
+                            <span class="macro">assert!</span>(vec.is_empty());
+                        }
+                    }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
             }
