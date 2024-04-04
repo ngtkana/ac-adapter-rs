@@ -115,25 +115,24 @@ fn max_heapify_up<T: Ord>(values: &mut [T], mut end: usize) {
 }
 
 fn min_heapify_down<T: Ord>(values: &mut [T], mut start: usize) {
+    let n = values.len();
     loop {
         let end = start + 1;
-        if end >= values.len() {
+        if end >= n {
             break;
         }
         if values[start] > values[end] {
             values.swap(start, end);
         }
-        let left = 2 * start + 2;
-        if left >= values.len() {
+        let mut swp = 2 * start + 4;
+        if swp >= n || values[swp - 2] < values[swp] {
+            swp -= 2;
+        }
+        if swp >= n || values[start] <= values[swp] {
             break;
         }
-        let right = 2 * start + 4;
-        let next = if right >= values.len() || values[left] < values[right] { left } else { right };
-        if values[start] <= values[next] {
-            break;
-        }
-        values.swap(start, next);
-        start = next;
+        values.swap(start, swp);
+        start = swp;
     }
 }
 
@@ -144,17 +143,15 @@ fn max_heapify_down<T: Ord>(values: &mut [T], mut end: usize) {
         if values[start] > values[end] {
             values.swap(start, end);
         }
-        let left = 2 * end + 1;
-        if left >= n {
+        let mut swp = 2 * end + 3;
+        if swp >= n || values[swp - 2] > values[swp] {
+            swp -= 2;
+        }
+        if swp >= n || values[end] >= values[swp] {
             break;
         }
-        let right = 2 * end + 3;
-        let next = if right >= n || values[left] > values[right] { left } else { right };
-        if values[end] >= values[next] {
-            break;
-        }
-        values.swap(end, next);
-        end = next;
+        values.swap(end, swp);
+        end = swp;
     }
 }
 
