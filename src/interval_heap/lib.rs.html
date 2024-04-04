@@ -284,9 +284,6 @@
 <a href="#250" id="250">250</a>
 <a href="#251" id="251">251</a>
 <a href="#252" id="252">252</a>
-<a href="#253" id="253">253</a>
-<a href="#254" id="254">254</a>
-<a href="#255" id="255">255</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! # Interval Heaps
 //!
 //! van Leeuwen, Jan, and Derick Wood. &quot;Interval heaps.&quot; The Computer Journal 36.3 (1993): 209-216.
@@ -404,25 +401,24 @@
 }
 
 <span class="kw">fn </span>min_heapify_down&lt;T: Ord&gt;(values: <span class="kw-2">&amp;mut </span>[T], <span class="kw-2">mut </span>start: usize) {
+    <span class="kw">let </span>n = values.len();
     <span class="kw">loop </span>{
         <span class="kw">let </span>end = start + <span class="number">1</span>;
-        <span class="kw">if </span>end &gt;= values.len() {
+        <span class="kw">if </span>end &gt;= n {
             <span class="kw">break</span>;
         }
         <span class="kw">if </span>values[start] &gt; values[end] {
             values.swap(start, end);
         }
-        <span class="kw">let </span>left = <span class="number">2 </span>* start + <span class="number">2</span>;
-        <span class="kw">if </span>left &gt;= values.len() {
+        <span class="kw">let </span><span class="kw-2">mut </span>swp = <span class="number">2 </span>* start + <span class="number">4</span>;
+        <span class="kw">if </span>swp &gt;= n || values[swp - <span class="number">2</span>] &lt; values[swp] {
+            swp -= <span class="number">2</span>;
+        }
+        <span class="kw">if </span>swp &gt;= n || values[start] &lt;= values[swp] {
             <span class="kw">break</span>;
         }
-        <span class="kw">let </span>right = <span class="number">2 </span>* start + <span class="number">4</span>;
-        <span class="kw">let </span>next = <span class="kw">if </span>right &gt;= values.len() || values[left] &lt; values[right] { left } <span class="kw">else </span>{ right };
-        <span class="kw">if </span>values[start] &lt;= values[next] {
-            <span class="kw">break</span>;
-        }
-        values.swap(start, next);
-        start = next;
+        values.swap(start, swp);
+        start = swp;
     }
 }
 
@@ -433,17 +429,15 @@
         <span class="kw">if </span>values[start] &gt; values[end] {
             values.swap(start, end);
         }
-        <span class="kw">let </span>left = <span class="number">2 </span>* end + <span class="number">1</span>;
-        <span class="kw">if </span>left &gt;= n {
+        <span class="kw">let </span><span class="kw-2">mut </span>swp = <span class="number">2 </span>* end + <span class="number">3</span>;
+        <span class="kw">if </span>swp &gt;= n || values[swp - <span class="number">2</span>] &gt; values[swp] {
+            swp -= <span class="number">2</span>;
+        }
+        <span class="kw">if </span>swp &gt;= n || values[end] &gt;= values[swp] {
             <span class="kw">break</span>;
         }
-        <span class="kw">let </span>right = <span class="number">2 </span>* end + <span class="number">3</span>;
-        <span class="kw">let </span>next = <span class="kw">if </span>right &gt;= n || values[left] &gt; values[right] { left } <span class="kw">else </span>{ right };
-        <span class="kw">if </span>values[end] &gt;= values[next] {
-            <span class="kw">break</span>;
-        }
-        values.swap(end, next);
-        end = next;
+        values.swap(end, swp);
+        end = swp;
     }
 }
 
