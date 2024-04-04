@@ -80,13 +80,35 @@ impl<T: Ord> Default for IntervalHeap<T> {
         Self { values: Vec::new() }
     }
 }
-impl<T: Ord + std::fmt::Debug> From<Vec<T>> for IntervalHeap<T> {
+impl<T: Ord> From<Vec<T>> for IntervalHeap<T> {
     fn from(values: Vec<T>) -> Self {
-        let mut result = Self::new();
+        let mut ret = Self::new();
         for x in values {
-            result.push(x);
+            ret.push(x);
         }
-        result
+        ret
+    }
+}
+impl<T: Ord> Extend<T> for IntervalHeap<T> {
+    fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
+        for x in iter {
+            self.push(x);
+        }
+    }
+}
+impl<T: Ord> IntoIterator for IntervalHeap<T> {
+    type IntoIter = std::vec::IntoIter<T>;
+    type Item = T;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.values.into_iter()
+    }
+}
+impl<T: Ord> std::iter::FromIterator<T> for IntervalHeap<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        let mut ret = Self::new();
+        ret.extend(iter);
+        ret
     }
 }
 
@@ -202,19 +224,17 @@ mod tests {
     fn test_interval_heap() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
-            let n = rng.gen_range(0..4);
+            let n = rng.gen_range(0..10);
             let q = rng.gen_range(10..100);
             let lim = rng.gen_range(1..=n + q + 10);
             let mut vec = (0..n).map(|_| rng.gen_range(0..lim)).collect::<Vec<_>>();
             let mut interval_heap = IntervalHeap::from(vec.clone());
             vec.sort_unstable();
-            eprintln!("vec = {:?}", vec);
             for _ in 0..q {
                 match rng.gen_range(0..3) {
                     // push
                     0 => {
                         let x = rng.gen_range(0..lim);
-                        eprintln!("push {}", x);
                         interval_heap.push(x);
                         let i = vec.binary_search(&x).unwrap_or_else(|x| x);
                         vec.insert(i, x);
@@ -222,7 +242,6 @@ mod tests {
                     }
                     // pop_min
                     1 => {
-                        eprintln!("pop_min");
                         if let Some(x) = interval_heap.pop_min() {
                             assert_eq!(x, vec.remove(0));
                             validate_interval_heap(&interval_heap);
@@ -232,7 +251,6 @@ mod tests {
                     }
                     // pop_max
                     2 => {
-                        eprintln!("pop_max");
                         if let Some(x) = interval_heap.pop_max() {
                             assert_eq!(x, vec.pop().unwrap());
                             validate_interval_heap(&interval_heap);
@@ -242,9 +260,7 @@ mod tests {
                     }
                     _ => unreachable!(),
                 }
-                eprintln!("vec = {:?}", &vec);
             }
-            eprintln!("---");
         }
     }
 }
