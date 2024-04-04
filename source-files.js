@@ -31,6 +31,7 @@ var sourcesIndex = JSON.parse('{\
 "hld":["",[],["lib.rs"]],\
 "hopkarp":["",[],["lib.rs"]],\
 "hungarian":["",[],["lib.rs"]],\
+"interval_heap":["",[],["lib.rs"]],\
 "inversion_number":["",[],["lib.rs"]],\
 "io":["",[],["lib.rs"]],\
 "itermore":["",[],["lib.rs"]],\
