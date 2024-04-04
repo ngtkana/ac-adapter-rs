@@ -30,9 +30,7 @@ impl<T: Ord> IntervalHeap<T> {
     pub fn pop_min(&mut self) -> Option<T> {
         (!self.values.is_empty()).then_some(())?;
         let ret = self.values.swap_remove(0);
-        if self.values.len() >= 2 {
-            min_heapify_down(&mut self.values, 0);
-        }
+        min_heapify_down(&mut self.values, 0);
         Some(ret)
     }
 
@@ -82,8 +80,7 @@ impl<T: Ord> Default for IntervalHeap<T> {
 }
 impl<T: Ord> From<Vec<T>> for IntervalHeap<T> {
     fn from(mut values: Vec<T>) -> Self {
-        let n = values.len();
-        for i in (0..n).rev() {
+        for i in (0..values.len()).rev() {
             match i % 2 {
                 0 => min_heapify_down(&mut values, i),
                 1 => max_heapify_down(&mut values, i),
@@ -148,15 +145,15 @@ fn min_heapify_down<T: Ord>(values: &mut [T], mut start: usize) {
         if values[start] > values[end] {
             values.swap(start, end);
         }
-        let mut swp = 2 * start + 4;
-        if swp >= n || values[swp - 2] < values[swp] {
-            swp -= 2;
+        let mut next = 2 * start + 4;
+        if next >= n || values[next - 2] < values[next] {
+            next -= 2;
         }
-        if swp >= n || values[start] <= values[swp] {
+        if next >= n || values[start] <= values[next] {
             break;
         }
-        values.swap(start, swp);
-        start = swp;
+        values.swap(start, next);
+        start = next;
     }
 }
 
@@ -167,15 +164,15 @@ fn max_heapify_down<T: Ord>(values: &mut [T], mut end: usize) {
         if values[start] > values[end] {
             values.swap(start, end);
         }
-        let mut swp = 2 * end + 3;
-        if swp >= n || values[swp - 2] > values[swp] {
-            swp -= 2;
+        let mut next = 2 * end + 3;
+        if next >= n || values[next - 2] > values[next] {
+            next -= 2;
         }
-        if swp >= n || values[end] >= values[swp] {
+        if next >= n || values[end] >= values[next] {
             break;
         }
-        values.swap(end, swp);
-        end = swp;
+        values.swap(end, next);
+        end = next;
     }
     if n % 2 == 1 && 1 < n && values[n - 1] > values[(n / 2 - 1) | 1] {
         values.swap(n - 1, (n / 2 - 1) | 1);
