@@ -38,13 +38,11 @@ impl<T: Ord> IntervalHeap<T> {
 
     /// Removes and returns $\max(S)$.
     pub fn pop_max(&mut self) -> Option<T> {
-        if self.values.len() <= 1 {
+        if self.values.len() <= 2 {
             return self.values.pop();
         }
         let ret = self.values.swap_remove(1);
-        if self.values.len() >= 3 {
-            max_heapify_down(&mut self.values, 1);
-        }
+        max_heapify_down(&mut self.values, 1);
         Some(ret)
     }
 
