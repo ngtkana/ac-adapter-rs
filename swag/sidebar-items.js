@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Swag"]};
+window.SIDEBAR_ITEMS = {"struct":["DequeueSwag"],"trait":["Op"]};

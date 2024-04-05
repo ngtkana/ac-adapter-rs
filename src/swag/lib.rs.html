@@ -325,297 +325,411 @@
 <a href="#291" id="291">291</a>
 <a href="#292" id="292">292</a>
 <a href="#293" id="293">293</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! SWAG をします。
+<a href="#294" id="294">294</a>
+<a href="#295" id="295">295</a>
+<a href="#296" id="296">296</a>
+<a href="#297" id="297">297</a>
+<a href="#298" id="298">298</a>
+<a href="#299" id="299">299</a>
+<a href="#300" id="300">300</a>
+<a href="#301" id="301">301</a>
+<a href="#302" id="302">302</a>
+<a href="#303" id="303">303</a>
+<a href="#304" id="304">304</a>
+<a href="#305" id="305">305</a>
+<a href="#306" id="306">306</a>
+<a href="#307" id="307">307</a>
+<a href="#308" id="308">308</a>
+<a href="#309" id="309">309</a>
+<a href="#310" id="310">310</a>
+<a href="#311" id="311">311</a>
+<a href="#312" id="312">312</a>
+<a href="#313" id="313">313</a>
+<a href="#314" id="314">314</a>
+<a href="#315" id="315">315</a>
+<a href="#316" id="316">316</a>
+<a href="#317" id="317">317</a>
+<a href="#318" id="318">318</a>
+<a href="#319" id="319">319</a>
+<a href="#320" id="320">320</a>
+<a href="#321" id="321">321</a>
+<a href="#322" id="322">322</a>
+<a href="#323" id="323">323</a>
+<a href="#324" id="324">324</a>
+<a href="#325" id="325">325</a>
+<a href="#326" id="326">326</a>
+<a href="#327" id="327">327</a>
+<a href="#328" id="328">328</a>
+<a href="#329" id="329">329</a>
+<a href="#330" id="330">330</a>
+<a href="#331" id="331">331</a>
+<a href="#332" id="332">332</a>
+<a href="#333" id="333">333</a>
+<a href="#334" id="334">334</a>
+<a href="#335" id="335">335</a>
+<a href="#336" id="336">336</a>
+<a href="#337" id="337">337</a>
+<a href="#338" id="338">338</a>
+<a href="#339" id="339">339</a>
+<a href="#340" id="340">340</a>
+<a href="#341" id="341">341</a>
+<a href="#342" id="342">342</a>
+<a href="#343" id="343">343</a>
+<a href="#344" id="344">344</a>
+<a href="#345" id="345">345</a>
+<a href="#346" id="346">346</a>
+<a href="#347" id="347">347</a>
+<a href="#348" id="348">348</a>
+<a href="#349" id="349">349</a>
+<a href="#350" id="350">350</a>
+</pre></div><pre class="rust"><code><span class="doccomment">//! # Sliding Window Aggregation (SWAG)
 //!
-//! # 基本的な使い方
+//! * [`DequeueSwag`]: A foldable deque.
 //!
-//! 構造体 [`Swag`] を構築して、メソッド [`fold`](Swag::fold) を呼んでいきましょう。与える配列は `Borrow&lt;[T]&gt;`
-//! を実装していればよいです。
+//! # Constructors
 //!
-//! # Tips
-//!
-//! * [`fold`](Swag::fold) の戻り値は `Option` です。`unwrap_`
-//! 系のメソッドと組み合わせるには、[`fold_or`](Swag::fold_or),
-//! [`fold_or_else`](Swag::fold_or_else) を使いましょう。
-//!
-//! * [`fold`](Swag::fold) は `self` の内部状態を書き換えるので `mut self` メソッドです。
-//!
-//! # Examples
-//!
-//! ```
-//! use std::ops::Add;
-//! use swag::Swag;
-//!
-//! // Vec 版
-//! let _swag = Swag::new(vec![0, 1, 2], Add::add);
-//!
-//! // スライス版
-//! let a = vec![0, 1, 2];
-//! let mut swag = Swag::new(a.as_slice(), Add::add);
-//!
-//! // 畳み込み
-//! assert_eq!(swag.fold(..), Some(3));
-//! ```
-</span><span class="kw">use </span>std::borrow::Borrow;
-<span class="kw">use </span>std::fmt::Debug;
-<span class="kw">use </span>std::fmt::Formatter;
-<span class="kw">use </span>std::fmt::{<span class="self">self</span>};
-<span class="kw">use </span>std::marker::PhantomData;
-<span class="kw">use </span>std::ops::Bound;
-<span class="kw">use </span>std::ops::Range;
-<span class="kw">use </span>std::ops::RangeBounds;
+//! * [`new()`](DequeueSwag::new): Constructs a new [`DequeueSwag`].
+//! * [`from`](DequeueSwag::from): [`Vec`] -&gt; [`DequeueSwag`].
+//! * [`from_iter`](DequeueSwag::from_iter): [`IntoIterator`] -&gt; [`DequeueSwag`].
+//! * [`clone_from_slice`](DequeueSwag::clone_from_slice), [`copy_from_slice`](DequeueSwag::copy_from_slice): [`&amp;[T]`] -&gt; [`DequeueSwag`].
 
-<span class="doccomment">/// SWAG をします。
-///
-/// # 計算量
-///
-/// 長さ N の配列を管理しているとし、`fold` を Q 回呼ぶとき、Θ( N + Q ) です。
-</span><span class="attr">#[derive(Clone, Default, Hash, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>Swag&lt;T, V, F&gt; {
-    v: V,
-    folder: F,
-    stack: Vec&lt;T&gt;,
-    center: usize,
-    end: usize,
-    accum: <span class="prelude-ty">Option</span>&lt;T&gt;,
-    _marker: PhantomData&lt;<span class="kw">fn</span>(T) -&gt; T&gt;,
+</span><span class="kw">use </span>std::{iter::FromIterator, ops::Index};
+
+<span class="doccomment">/// Operations
+</span><span class="kw">pub trait </span>Op {
+    <span class="doccomment">/// Value type
+    </span><span class="kw">type </span>Value;
+
+    <span class="doccomment">/// Associative operation
+    </span><span class="kw">fn </span>op(a: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, b: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
 }
-<span class="kw">impl</span>&lt;T, V, F&gt; Debug <span class="kw">for </span>Swag&lt;T, V, F&gt;
+
+<span class="doccomment">/// DequeueSwag
+</span><span class="kw">pub struct </span>DequeueSwag&lt;O: Op&gt; {
+    front: Vec&lt;O::Value&gt;,
+    back: Vec&lt;O::Value&gt;,
+    front_sum: Vec&lt;O::Value&gt;,
+    back_sum: Vec&lt;O::Value&gt;,
+}
+<span class="kw">impl</span>&lt;O: Op&gt; DequeueSwag&lt;O&gt; {
+    <span class="doccomment">/// Constructs a new `DequeueSwag`.
+    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
+        <span class="self">Self </span>{
+            front: Vec::new(),
+            back: Vec::new(),
+            front_sum: Vec::new(),
+            back_sum: Vec::new(),
+        }
+    }
+
+    <span class="doccomment">/// Returns the element at the index.
+    </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>O::Value&gt; {
+        <span class="kw">if </span>i &lt; <span class="self">self</span>.front.len() {
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.front[<span class="self">self</span>.front.len() - i - <span class="number">1</span>])
+        } <span class="kw">else if </span>i &lt; <span class="self">self</span>.front.len() + <span class="self">self</span>.back.len() {
+            <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="self">self</span>.back[i - <span class="self">self</span>.front.len()])
+        } <span class="kw">else </span>{
+            <span class="prelude-val">None
+        </span>}
+    }
+
+    <span class="doccomment">/// Returns the length of the `DequeueSwag`.
+    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
+        <span class="self">self</span>.front.len() + <span class="self">self</span>.back.len()
+    }
+
+    <span class="doccomment">/// Returns whether the `DequeueSwag` is empty.
+    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
+        <span class="self">self</span>.front.is_empty() &amp;&amp; <span class="self">self</span>.back.is_empty()
+    }
+
+    <span class="doccomment">/// Append an element to the front.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &amp;Self::Value, b: &amp;Self::Value) -&gt; Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::&lt;O&gt;::copy_from_slice(&amp;[2, 3, 4]);
+    /// swag.push_front(1);
+    /// assert_eq!(swag.collect_vec(), vec![1, 2, 3, 4]);
+    /// ```
+    </span><span class="kw">pub fn </span>push_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: O::Value)
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="self">self</span>.front_sum.push(<span class="kw">if </span><span class="self">self</span>.front_sum.is_empty() {
+            x.clone()
+        } <span class="kw">else </span>{
+            O::op(<span class="kw-2">&amp;</span>x, <span class="self">self</span>.front_sum.last().unwrap())
+        });
+        <span class="self">self</span>.front.push(x);
+    }
+
+    <span class="doccomment">/// Append an element to the back.
+    ///
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &amp;Self::Value, b: &amp;Self::Value) -&gt; Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::&lt;O&gt;::copy_from_slice(&amp;[1, 2, 3]);
+    /// swag.push_back(4);
+    /// assert_eq!(swag.collect_vec(), vec![1, 2, 3, 4]);
+    /// ```
+    </span><span class="kw">pub fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: O::Value)
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="self">self</span>.back_sum.push(<span class="kw">if </span><span class="self">self</span>.back_sum.is_empty() {
+            x.clone()
+        } <span class="kw">else </span>{
+            O::op(<span class="self">self</span>.back_sum.last().unwrap(), <span class="kw-2">&amp;</span>x)
+        });
+        <span class="self">self</span>.back.push(x);
+    }
+
+    <span class="doccomment">/// Pop an element from the front.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// # enum O {}
+    /// # impl swag::Op for O {
+    /// #    type Value = i32;
+    /// #    fn op(a: &amp;Self::Value, b: &amp;Self::Value) -&gt; Self::Value {
+    /// #        a + b
+    /// #    }
+    /// # }
+    /// let mut swag = DequeueSwag::&lt;O&gt;::copy_from_slice(&amp;[1, 2, 3]);
+    /// assert_eq!(swag.pop_front(), Some(1));
+    /// assert_eq!(swag.collect_vec(), vec![2, 3]);
+    /// ```
+    </span><span class="kw">pub fn </span>pop_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;O::Value&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="kw">if </span><span class="self">self</span>.front.is_empty() {
+            <span class="kw">let </span>n = <span class="self">self</span>.back.len();
+            <span class="kw">let </span><span class="kw-2">mut </span>swp = <span class="self">Self</span>::new();
+            <span class="kw">for </span>x <span class="kw">in </span><span class="self">self</span>.back.drain(..(n + <span class="number">1</span>) / <span class="number">2</span>).rev() {
+                swp.push_front(x);
+            }
+            <span class="kw">for </span>x <span class="kw">in </span><span class="self">self</span>.back.drain(..) {
+                swp.push_back(x);
+            }
+            <span class="kw-2">*</span><span class="self">self </span>= swp;
+        }
+        <span class="macro">eprintln!</span>(<span class="string">&quot;{} {}&quot;</span>, <span class="self">self</span>.front.len(), <span class="self">self</span>.back.len());
+        <span class="kw">let _ </span>= <span class="self">self</span>.front_sum.pop();
+        <span class="self">self</span>.front.pop()
+    }
+
+    <span class="doccomment">/// Pop an element from the back.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &amp;Self::Value, b: &amp;Self::Value) -&gt; Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::&lt;O&gt;::copy_from_slice(&amp;[1, 2, 3]);
+    /// assert_eq!(swag.pop_back(), Some(3));
+    /// assert_eq!(swag.collect_vec(), vec![1, 2]);
+    /// ```
+    </span><span class="kw">pub fn </span>pop_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;O::Value&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="kw">if </span><span class="self">self</span>.back.is_empty() {
+            <span class="kw">let </span>n = <span class="self">self</span>.front.len();
+            <span class="kw">let </span><span class="kw-2">mut </span>swp = <span class="self">Self</span>::new();
+            <span class="kw">for </span>x <span class="kw">in </span><span class="self">self</span>.front.drain(..n / <span class="number">2</span>).rev() {
+                swp.push_front(x);
+            }
+            <span class="kw">for </span>x <span class="kw">in </span><span class="self">self</span>.front.drain(..) {
+                swp.push_back(x);
+            }
+            <span class="kw-2">*</span><span class="self">self </span>= swp;
+        }
+        <span class="kw">let _ </span>= <span class="self">self</span>.back_sum.pop();
+        <span class="self">self</span>.back.pop()
+    }
+
+    <span class="doccomment">/// Fold the `DequeueSwag`.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &amp;Self::Value, b: &amp;Self::Value) -&gt; Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::&lt;O&gt;::copy_from_slice(&amp;[1, 2, 3]);
+    /// assert_eq!(swag.fold(), Some(6));
+    /// ```
+    </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;O::Value&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="kw">match </span>(<span class="self">self</span>.front_sum.last(), <span class="self">self</span>.back_sum.last()) {
+            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
+            (<span class="prelude-val">Some</span>(x), <span class="prelude-val">None</span>) | (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(x)) =&gt; <span class="prelude-val">Some</span>(x.clone()),
+            (<span class="prelude-val">Some</span>(x), <span class="prelude-val">Some</span>(y)) =&gt; <span class="prelude-val">Some</span>(O::op(x, y)),
+        }
+    }
+
+    <span class="doccomment">/// Returns an iterator over the `DequeueSwag`.
+    </span><span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw">impl </span>Iterator&lt;Item = <span class="kw-2">&amp;</span>O::Value&gt; {
+        <span class="self">self</span>.front.iter().rev().chain(<span class="self">self</span>.back.iter())
+    }
+
+    <span class="doccomment">/// Collects the `DequeueSwag` into a `Vec`.
+    </span><span class="kw">pub fn </span>collect_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;O::Value&gt;
+    <span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="self">self</span>.iter().cloned().collect()
+    }
+
+    <span class="doccomment">/// Returns two slices, joining that is exactly the all elements.
+    </span><span class="kw">pub fn </span>as_two_slices(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; (<span class="kw-2">&amp;</span>[O::Value], <span class="kw-2">&amp;</span>[O::Value]) {
+        (<span class="kw-2">&amp;</span><span class="self">self</span>.front, <span class="kw-2">&amp;</span><span class="self">self</span>.back)
+    }
+
+    <span class="doccomment">/// Constructs a new `DequeueSwag` from a slice.
+    </span><span class="kw">pub fn </span>clone_from_slice(slice: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>O::Value: Clone,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>reslt = <span class="self">Self</span>::new();
+        <span class="kw">for </span>x <span class="kw">in </span>slice {
+            reslt.push_back(x.clone());
+        }
+        reslt
+    }
+
+    <span class="doccomment">/// Constructs a new `DequeueSwag` from a slice.
+    </span><span class="kw">pub fn </span>copy_from_slice(slice: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
+    </span><span class="kw">where
+        </span>O::Value: Copy,
+    {
+        <span class="kw">let </span><span class="kw-2">mut </span>reslt = <span class="self">Self</span>::new();
+        <span class="kw">for </span>x <span class="kw">in </span>slice {
+            reslt.push_back(<span class="kw-2">*</span>x);
+        }
+        reslt
+    }
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; Default <span class="kw">for </span>DequeueSwag&lt;O&gt; {
+    <span class="kw">fn </span>default() -&gt; <span class="self">Self </span>{
+        <span class="self">Self</span>::new()
+    }
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; Index&lt;usize&gt; <span class="kw">for </span>DequeueSwag&lt;O&gt; {
+    <span class="kw">type </span>Output = O::Value;
+
+    <span class="kw">fn </span>index(<span class="kw-2">&amp;</span><span class="self">self</span>, index: usize) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Output {
+        <span class="kw">if </span>index &lt; <span class="self">self</span>.front.len() {
+            <span class="kw-2">&amp;</span><span class="self">self</span>.front[<span class="self">self</span>.front.len() - index - <span class="number">1</span>]
+        } <span class="kw">else </span>{
+            <span class="kw-2">&amp;</span><span class="self">self</span>.back[index - <span class="self">self</span>.front.len()]
+        }
+    }
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; std::fmt::Debug <span class="kw">for </span>DequeueSwag&lt;O&gt;
 <span class="kw">where
-    </span>T: Copy + Debug,
-    V: Borrow&lt;[T]&gt;,
-    F: Fn(T, T) -&gt; T,
+    </span>O::Value: std::fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        w.debug_struct(<span class="string">&quot;Swag&quot;</span>)
-            .field(<span class="string">&quot;v&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.v.borrow())
-            .field(<span class="string">&quot;stack&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.stack)
-            .field(<span class="string">&quot;center&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.center)
-            .field(<span class="string">&quot;end&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.end)
-            .field(<span class="string">&quot;accum&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.accum)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+        f.debug_struct(<span class="string">&quot;DequeueSwag&quot;</span>)
+            .field(<span class="string">&quot;front&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.front)
+            .field(<span class="string">&quot;back&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.back)
+            .field(<span class="string">&quot;front_sum&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.front_sum)
+            .field(<span class="string">&quot;back_sum&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.back_sum)
             .finish()
     }
 }
-<span class="kw">impl</span>&lt;T, V, F&gt; Swag&lt;T, V, F&gt;
+
+<span class="kw">impl</span>&lt;O: Op&gt; From&lt;Vec&lt;O::Value&gt;&gt; <span class="kw">for </span>DequeueSwag&lt;O&gt;
 <span class="kw">where
-    </span>T: Copy,
-    V: Borrow&lt;[T]&gt;,
-    F: Fn(T, T) -&gt; T,
+    </span>O::Value: Clone,
 {
-    <span class="doccomment">/// 新しい `Swag` を構築します。
-    ///
-    /// # 引数
-    ///
-    /// * `v` は走査する配列です。`Vec` やスライスなど、`Borrow&lt;[T]&gt;` を実装した型ならばよいです。
-    /// * `folder` は畳み込む演算です。結合的であればよいです。
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::ops::Add;
-    /// use swag::Swag;
-    ///
-    /// // Vec 版
-    /// let _swag = Swag::new(vec![0, 1, 2], Add::add);
-    ///
-    /// // スライス版
-    /// let a = vec![0, 1, 2];
-    /// let _swag = Swag::new(a.as_slice(), Add::add);
-    /// ```
-    </span><span class="kw">pub fn </span>new(v: V, folder: F) -&gt; <span class="self">Self </span>{
-        <span class="self">Self </span>{
-            v,
-            folder,
-            stack: Vec::new(),
-            center: <span class="number">0</span>,
-            end: <span class="number">0</span>,
-            accum: <span class="prelude-val">None</span>,
-            _marker: PhantomData,
+    <span class="kw">fn </span>from(<span class="kw-2">mut </span>values: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{
+        <span class="kw">let </span><span class="kw-2">mut </span>reslt = <span class="self">Self</span>::new();
+        <span class="kw">let </span>n = values.len();
+        <span class="kw">for </span>x <span class="kw">in </span>values.drain(n / <span class="number">2</span>..) {
+            reslt.push_back(x);
         }
-    }
-
-    <span class="doccomment">/// 与えられた区間における aggregation を返します。
-    ///
-    ///
-    /// # 要件
-    ///
-    /// 始点・終点ともに、現在の内部状態よりも小さくなく、スライスのサイズより大きくないこと
-    ///
-    ///
-    /// # 戻り値
-    ///
-    /// `range` が開区間 [l, r[ に対応するとき、 f { v_i: l &lt;= i &lt; r } を返します。
-    </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
-        <span class="kw">let </span>Range { start, end } = open(range, <span class="self">self</span>.v.borrow().len());
-        <span class="self">self</span>.advance_end(end);
-        <span class="self">self</span>.advance_start(start);
-        <span class="self">self</span>.current_fold()
-    }
-
-    <span class="doccomment">/// [`fold`](Swag::fold) + `unwrap_or`
-    </span><span class="kw">pub fn </span>fold_or(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, default: T) -&gt; T {
-        <span class="self">self</span>.fold(range).unwrap_or(default)
-    }
-
-    <span class="doccomment">/// [`fold`](Swag::fold) + `unwrap_or_else`
-    </span><span class="kw">pub fn </span>fold_or_else(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, f: <span class="kw">impl </span>FnOnce() -&gt; T) -&gt; T {
-        <span class="self">self</span>.fold(range).unwrap_or_else(f)
-    }
-
-    <span class="doccomment">/// 現在の内部状態の始点を返します。
-    </span><span class="kw">pub fn </span>start(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.center - <span class="self">self</span>.stack.len()
-    }
-
-    <span class="doccomment">/// 現在の内部状態の終点を返します。
-    </span><span class="kw">pub fn </span>end(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="self">self</span>.end
-    }
-
-    <span class="doccomment">/// 現在の内部状態の始点・終点を `start..end` の形で返します。
-    </span><span class="kw">pub fn </span>current_index_range(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Range&lt;usize&gt; {
-        <span class="self">self</span>.start()..<span class="self">self</span>.end()
-    }
-
-    <span class="doccomment">/// 現在の内部状態の window をスライスの形で返します。
-    </span><span class="kw">pub fn </span>current_window(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>[T] {
-        <span class="kw-2">&amp;</span><span class="self">self</span>.v.borrow()[<span class="self">self</span>.current_index_range()]
-    }
-
-    <span class="doccomment">/// 現在の内部状態の window における aggregation を返します。
-    </span><span class="kw">pub fn </span>current_fold(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
-        <span class="kw">match </span>(<span class="self">self</span>.stack.last(), <span class="self">self</span>.accum) {
-            (<span class="prelude-val">None</span>, <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">None</span>,
-            (<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>x), <span class="prelude-val">None</span>) =&gt; <span class="prelude-val">Some</span>(x),
-            (<span class="prelude-val">None</span>, <span class="prelude-val">Some</span>(y)) =&gt; <span class="prelude-val">Some</span>(y),
-            (<span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>x), <span class="prelude-val">Some</span>(y)) =&gt; <span class="prelude-val">Some</span>((<span class="self">self</span>.folder)(x, y)),
+        <span class="kw">for </span>x <span class="kw">in </span>values.into_iter().rev() {
+            reslt.push_front(x);
         }
-    }
-
-    <span class="kw">fn </span>advance_start(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize) {
-        <span class="macro">debug_assert!</span>(
-            start &lt;= <span class="self">self</span>.v.borrow().len(),
-            <span class="string">&quot;Out of range: start = {}, len = {}&quot;</span>,
-            start,
-            <span class="self">self</span>.v.borrow().len()
-        );
-        <span class="macro">debug_assert!</span>(
-            start &lt;= <span class="self">self</span>.end,
-            <span class="string">&quot;Start will exceed end: start = {}, self.end = {}&quot;</span>,
-            start,
-            <span class="self">self</span>.end,
-        );
-        <span class="macro">debug_assert!</span>(
-            <span class="self">self</span>.start() &lt;= start,
-            <span class="string">&quot;Non-monotone advance_start: self.start = {}, start = {}&quot;</span>,
-            <span class="self">self</span>.start(),
-            start,
-        );
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(d) = <span class="self">self</span>.stack.len().checked_sub(start - <span class="self">self</span>.start()) {
-            <span class="self">self</span>.stack.truncate(d);
-        } <span class="kw">else </span>{
-            <span class="self">self</span>.accum = <span class="prelude-val">None</span>;
-            <span class="self">self</span>.stack.clear();
-            <span class="self">self</span>.center = <span class="self">self</span>.end;
-            <span class="self">self</span>.stack = <span class="self">self</span>.v.borrow()[start..<span class="self">self</span>.end]
-                .iter()
-                .copied()
-                .rev()
-                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-            <span class="kw">if </span>!<span class="self">self</span>.stack.is_empty() {
-                <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..<span class="self">self</span>.stack.len() - <span class="number">1 </span>{
-                    <span class="kw">let </span>x = (<span class="self">self</span>.folder)(<span class="self">self</span>.stack[i + <span class="number">1</span>], <span class="self">self</span>.stack[i]);
-                    <span class="self">self</span>.stack[i + <span class="number">1</span>] = x;
-                }
-            }
-        }
-    }
-
-    <span class="kw">fn </span>advance_end(<span class="kw-2">&amp;mut </span><span class="self">self</span>, end: usize) {
-        <span class="macro">debug_assert!</span>(
-            end &lt;= <span class="self">self</span>.v.borrow().len(),
-            <span class="string">&quot;Out of range: end = {}, len = {}&quot;</span>,
-            end,
-            <span class="self">self</span>.v.borrow().len()
-        );
-        <span class="macro">debug_assert!</span>(
-            <span class="self">self</span>.end &lt;= end,
-            <span class="string">&quot;Non-monotone advance_start: self.end = {}, end = {}&quot;</span>,
-            <span class="self">self</span>.end,
-            end,
-        );
-        <span class="kw">let </span><span class="kw-2">mut </span>iter = <span class="self">self
-            </span>.accum
-            .iter()
-            .chain(<span class="self">self</span>.v.borrow()[<span class="self">self</span>.end..end].iter())
-            .copied();
-        <span class="self">self</span>.accum = iter.next().map(|first| iter.fold(first, <span class="kw-2">&amp;</span><span class="self">self</span>.folder));
-        <span class="self">self</span>.end = end;
+        reslt
     }
 }
-<span class="kw">fn </span>open(range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, len: usize) -&gt; Range&lt;usize&gt; {
-    <span class="kw">use </span>Bound::Excluded;
-    <span class="kw">use </span>Bound::Included;
-    <span class="kw">use </span>Bound::Unbounded;
-    <span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {
-        Unbounded =&gt; <span class="number">0</span>,
-        Included(<span class="kw-2">&amp;</span>x) =&gt; x,
-        Excluded(<span class="kw-2">&amp;</span>x) =&gt; x - <span class="number">1</span>,
-    };
-    <span class="kw">let </span>end = <span class="kw">match </span>range.end_bound() {
-        Excluded(<span class="kw-2">&amp;</span>x) =&gt; x,
-        Included(<span class="kw-2">&amp;</span>x) =&gt; x + <span class="number">1</span>,
-        Unbounded =&gt; len,
-    };
-    start..end
+
+<span class="kw">impl</span>&lt;O: Op&gt; IntoIterator <span class="kw">for </span>DequeueSwag&lt;O&gt; {
+    <span class="kw">type </span>Item = O::Value;
+    <span class="kw">type </span>IntoIter = std::iter::Chain&lt;
+        std::iter::Rev&lt;std::vec::IntoIter&lt;O::Value&gt;&gt;,
+        std::vec::IntoIter&lt;O::Value&gt;,
+    &gt;;
+
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.front.into_iter().rev().chain(<span class="self">self</span>.back.into_iter())
+    }
 }
 
-<span class="attr">#[cfg(test)]
-</span><span class="kw">mod </span>tests {
-    <span class="kw">use </span><span class="kw">super</span>::Swag;
-    <span class="kw">use </span>itertools::Itertools;
-    <span class="kw">use </span>std::ops::Add;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>DequeueSwag&lt;O&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value;
+    <span class="kw">type </span>IntoIter = std::iter::Chain&lt;
+        std::iter::Rev&lt;std::slice::Iter&lt;<span class="lifetime">&#39;a</span>, O::Value&gt;&gt;,
+        std::slice::Iter&lt;<span class="lifetime">&#39;a</span>, O::Value&gt;,
+    &gt;;
 
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_vec() {
-        <span class="kw">let </span>a = <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>swag = Swag::new(a, Add::add);
-        swag.advance_end(<span class="number">3</span>);
-        swag.advance_start(<span class="number">1</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;swag = {:?}&quot;</span>, <span class="kw-2">&amp;</span>swag);
-        <span class="macro">assert_eq!</span>(swag.current_index_range(), <span class="number">1</span>..<span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(swag.current_window(), <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-        <span class="macro">assert_eq!</span>(swag.current_fold(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+    <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
+        <span class="self">self</span>.front.iter().rev().chain(<span class="self">self</span>.back.iter())
     }
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_slice() {
-        <span class="kw">let </span>a = <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>];
-        <span class="kw">let </span><span class="kw-2">mut </span>swag = Swag::new(a.as_slice(), Add::add);
-        swag.advance_end(<span class="number">3</span>);
-        swag.advance_start(<span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(swag.current_index_range(), <span class="number">1</span>..<span class="number">3</span>);
-        <span class="macro">assert_eq!</span>(swag.current_window(), <span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>]);
-        <span class="macro">assert_eq!</span>(swag.current_fold(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; FromIterator&lt;O::Value&gt; <span class="kw">for </span>DequeueSwag&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: Clone,
+{
+    <span class="kw">fn </span>from_iter&lt;T: IntoIterator&lt;Item = O::Value&gt;&gt;(iter: T) -&gt; <span class="self">Self </span>{
+        iter.into_iter().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;().into()
     }
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_call_methods() {
-        <span class="kw">let </span><span class="kw-2">mut </span>swag = Swag::new(<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>], Add::add);
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">0</span>..<span class="number">0</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(swag.fold_or(<span class="number">0</span>..<span class="number">0</span>, <span class="number">42</span>), <span class="number">42</span>);
-        <span class="macro">assert_eq!</span>(swag.fold_or_else(<span class="number">0</span>..<span class="number">0</span>, || <span class="number">42</span>), <span class="number">42</span>);
-    }
-    <span class="attr">#[test]
-    </span><span class="kw">fn </span>test_algo_hand() {
-        <span class="kw">let </span><span class="kw-2">mut </span>swag = Swag::new((<span class="number">0</span>..<span class="number">10</span>).map(|i| (i, <span class="number">1</span>)).collect_vec(), |(x, d), (y, e)| {
-            (<span class="number">10_u32</span>.pow(e) * x + y, d + e)
-        });
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">1</span>..<span class="number">3</span>), <span class="prelude-val">Some</span>((<span class="number">12</span>, <span class="number">2</span>)));
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">4</span>..<span class="number">4</span>), <span class="prelude-val">None</span>);
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">4</span>..<span class="number">7</span>), <span class="prelude-val">Some</span>((<span class="number">456</span>, <span class="number">3</span>)));
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">5</span>..<span class="number">8</span>), <span class="prelude-val">Some</span>((<span class="number">567</span>, <span class="number">3</span>)));
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">6</span>..<span class="number">9</span>), <span class="prelude-val">Some</span>((<span class="number">678</span>, <span class="number">3</span>)));
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">7</span>..<span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="number">789</span>, <span class="number">3</span>)));
-        <span class="macro">assert_eq!</span>(swag.fold(<span class="number">9</span>..<span class="number">10</span>), <span class="prelude-val">Some</span>((<span class="number">9</span>, <span class="number">1</span>)));
+}
+
+<span class="kw">impl</span>&lt;O: Op&gt; Extend&lt;O::Value&gt; <span class="kw">for </span>DequeueSwag&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: Clone,
+{
+    <span class="kw">fn </span>extend&lt;T: IntoIterator&lt;Item = O::Value&gt;&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, iter: T) {
+        <span class="kw">for </span>x <span class="kw">in </span>iter {
+            <span class="self">self</span>.push_back(x);
+        }
     }
 }
 </code></pre></div></section></main></body></html>
