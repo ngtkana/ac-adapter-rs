@@ -9,5 +9,4 @@ edition = "2018"
 [dependencies]
 
 [dev-dependencies]
-itertools = { workspace = true }
 rand = { workspace = true }

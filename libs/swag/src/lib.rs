@@ -9,7 +9,8 @@
 //! * [`from_iter`](DequeueSwag::from_iter): [`IntoIterator`] -> [`DequeueSwag`].
 //! * [`clone_from_slice`](DequeueSwag::clone_from_slice), [`copy_from_slice`](DequeueSwag::copy_from_slice): [`&[T]`] -> [`DequeueSwag`].
 
-use std::{iter::FromIterator, ops::Index};
+use std::iter::FromIterator;
+use std::ops::Index;
 
 /// Operations
 pub trait Op {
@@ -67,10 +68,11 @@ impl<O: Op> DequeueSwag<O> {
     /// use swag::DequeueSwag;
     /// enum O {}
     /// impl swag::Op for O {
-    ///    type Value = i32;
-    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
-    ///        a + b
-    ///    }
+    ///     type Value = i32;
+    ///
+    ///     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///         a + b
+    ///     }
     /// }
     /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[2, 3, 4]);
     /// swag.push_front(1);
@@ -95,10 +97,11 @@ impl<O: Op> DequeueSwag<O> {
     /// use swag::DequeueSwag;
     /// enum O {}
     /// impl swag::Op for O {
-    ///    type Value = i32;
-    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
-    ///        a + b
-    ///    }
+    ///     type Value = i32;
+    ///
+    ///     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///         a + b
+    ///     }
     /// }
     /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
     /// swag.push_back(4);
@@ -147,7 +150,6 @@ impl<O: Op> DequeueSwag<O> {
             }
             *self = swp;
         }
-        eprintln!("{} {}", self.front.len(), self.back.len());
         let _ = self.front_sum.pop();
         self.front.pop()
     }
@@ -159,10 +161,11 @@ impl<O: Op> DequeueSwag<O> {
     /// use swag::DequeueSwag;
     /// enum O {}
     /// impl swag::Op for O {
-    ///    type Value = i32;
-    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
-    ///        a + b
-    ///    }
+    ///     type Value = i32;
+    ///
+    ///     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///         a + b
+    ///     }
     /// }
     /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
     /// assert_eq!(swag.pop_back(), Some(3));
@@ -175,10 +178,10 @@ impl<O: Op> DequeueSwag<O> {
         if self.back.is_empty() {
             let n = self.front.len();
             let mut swp = Self::new();
-            for x in self.front.drain(..n / 2).rev() {
+            for x in self.front.drain((n + 1) / 2..) {
                 swp.push_front(x);
             }
-            for x in self.front.drain(..) {
+            for x in self.front.drain(..).rev() {
                 swp.push_back(x);
             }
             *self = swp;
@@ -194,10 +197,11 @@ impl<O: Op> DequeueSwag<O> {
     /// use swag::DequeueSwag;
     /// enum O {}
     /// impl swag::Op for O {
-    ///    type Value = i32;
-    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
-    ///        a + b
-    ///    }
+    ///     type Value = i32;
+    ///
+    ///     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///         a + b
+    ///     }
     /// }
     /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
     /// assert_eq!(swag.fold(), Some(6));
@@ -306,11 +310,11 @@ where
 }
 
 impl<O: Op> IntoIterator for DequeueSwag<O> {
-    type Item = O::Value;
     type IntoIter = std::iter::Chain<
         std::iter::Rev<std::vec::IntoIter<O::Value>>,
         std::vec::IntoIter<O::Value>,
     >;
+    type Item = O::Value;
 
     fn into_iter(self) -> Self::IntoIter {
         self.front.into_iter().rev().chain(self.back.into_iter())
@@ -318,11 +322,11 @@ impl<O: Op> IntoIterator for DequeueSwag<O> {
 }
 
 impl<'a, O: Op> IntoIterator for &'a DequeueSwag<O> {
-    type Item = &'a O::Value;
     type IntoIter = std::iter::Chain<
         std::iter::Rev<std::slice::Iter<'a, O::Value>>,
         std::slice::Iter<'a, O::Value>,
     >;
+    type Item = &'a O::Value;
 
     fn into_iter(self) -> Self::IntoIter {
         self.front.iter().rev().chain(self.back.iter())
@@ -345,6 +349,100 @@ where
     fn extend<T: IntoIterator<Item = O::Value>>(&mut self, iter: T) {
         for x in iter {
             self.push_back(x);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::VecDeque;
+    use std::fmt::Debug;
+    use std::ops::Add;
+    use std::ops::Mul;
+
+    const P: u64 = 998244353;
+
+    #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+    struct Fp(u64);
+    impl Debug for Fp {
+        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+            write!(f, "{}", self.0)
+        }
+    }
+    impl Add for Fp {
+        type Output = Self;
+
+        fn add(self, rhs: Self) -> Self::Output {
+            Fp((self.0 + rhs.0) % P)
+        }
+    }
+
+    impl Mul for Fp {
+        type Output = Self;
+
+        fn mul(self, rhs: Self) -> Self::Output {
+            Fp(self.0 * rhs.0 % P)
+        }
+    }
+
+    enum Affine {}
+    impl Op for Affine {
+        type Value = (Fp, Fp);
+
+        fn op(&(a, b): &Self::Value, &(c, d): &Self::Value) -> Self::Value {
+            (a * c, d + c * b)
+        }
+    }
+
+    #[test]
+    fn test_swag() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..1000 {
+            let q = 10;
+            let mut swag = DequeueSwag::<Affine>::new();
+            let mut deque = VecDeque::new();
+            for _ in 0..q {
+                match rng.gen_range(0..4) {
+                    0 => {
+                        let a = Fp(rng.gen_range(0..4));
+                        let b = Fp(rng.gen_range(0..4));
+                        eprintln!("push_front {:?}", (a, b));
+                        swag.push_front((a, b));
+                        deque.push_front((a, b));
+                    }
+                    1 => {
+                        let a = Fp(rng.gen_range(0..4));
+                        let b = Fp(rng.gen_range(0..4));
+                        eprintln!("push_back {:?}", (a, b));
+                        swag.push_back((a, b));
+                        deque.push_back((a, b));
+                    }
+                    2 => {
+                        eprintln!("pop_front");
+                        assert_eq!(swag.pop_front(), deque.pop_front());
+                    }
+                    3 => {
+                        eprintln!("pop_back");
+                        assert_eq!(swag.pop_back(), deque.pop_back());
+                    }
+                    _ => unreachable!(),
+                }
+                eprintln!("{:?}", deque);
+                eprintln!("{:?}", swag);
+                let result = swag.fold().unwrap_or((Fp(1), Fp(0)));
+                let expected = deque
+                    .iter()
+                    .fold((Fp(1), Fp(0)), |acc, x| Affine::op(&acc, x));
+                assert_eq!(result, expected);
+                let result = swag.collect_vec();
+                let expected = deque.iter().copied().collect::<Vec<_>>();
+                assert_eq!(result, expected);
+                eprintln!("---");
+            }
         }
     }
 }
