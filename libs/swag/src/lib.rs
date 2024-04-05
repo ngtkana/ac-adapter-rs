@@ -1,293 +1,350 @@
-//! SWAG をします。
+//! # Sliding Window Aggregation (SWAG)
 //!
-//! # 基本的な使い方
+//! * [`DequeueSwag`]: A foldable deque.
 //!
-//! 構造体 [`Swag`] を構築して、メソッド [`fold`](Swag::fold) を呼んでいきましょう。与える配列は `Borrow<[T]>`
-//! を実装していればよいです。
+//! # Constructors
 //!
-//! # Tips
-//!
-//! * [`fold`](Swag::fold) の戻り値は `Option` です。`unwrap_`
-//! 系のメソッドと組み合わせるには、[`fold_or`](Swag::fold_or),
-//! [`fold_or_else`](Swag::fold_or_else) を使いましょう。
-//!
-//! * [`fold`](Swag::fold) は `self` の内部状態を書き換えるので `mut self` メソッドです。
-//!
-//! # Examples
-//!
-//! ```
-//! use std::ops::Add;
-//! use swag::Swag;
-//!
-//! // Vec 版
-//! let _swag = Swag::new(vec![0, 1, 2], Add::add);
-//!
-//! // スライス版
-//! let a = vec![0, 1, 2];
-//! let mut swag = Swag::new(a.as_slice(), Add::add);
-//!
-//! // 畳み込み
-//! assert_eq!(swag.fold(..), Some(3));
-//! ```
-use std::borrow::Borrow;
-use std::fmt::Debug;
-use std::fmt::Formatter;
-use std::fmt::{self};
-use std::marker::PhantomData;
-use std::ops::Bound;
-use std::ops::Range;
-use std::ops::RangeBounds;
+//! * [`new()`](DequeueSwag::new): Constructs a new [`DequeueSwag`].
+//! * [`from`](DequeueSwag::from): [`Vec`] -> [`DequeueSwag`].
+//! * [`from_iter`](DequeueSwag::from_iter): [`IntoIterator`] -> [`DequeueSwag`].
+//! * [`clone_from_slice`](DequeueSwag::clone_from_slice), [`copy_from_slice`](DequeueSwag::copy_from_slice): [`&[T]`] -> [`DequeueSwag`].
 
-/// SWAG をします。
-///
-/// # 計算量
-///
-/// 長さ N の配列を管理しているとし、`fold` を Q 回呼ぶとき、Θ( N + Q ) です。
-#[derive(Clone, Default, Hash, PartialEq, Eq)]
-pub struct Swag<T, V, F> {
-    v: V,
-    folder: F,
-    stack: Vec<T>,
-    center: usize,
-    end: usize,
-    accum: Option<T>,
-    _marker: PhantomData<fn(T) -> T>,
+use std::{iter::FromIterator, ops::Index};
+
+/// Operations
+pub trait Op {
+    /// Value type
+    type Value;
+
+    /// Associative operation
+    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
-impl<T, V, F> Debug for Swag<T, V, F>
+
+/// DequeueSwag
+pub struct DequeueSwag<O: Op> {
+    front: Vec<O::Value>,
+    back: Vec<O::Value>,
+    front_sum: Vec<O::Value>,
+    back_sum: Vec<O::Value>,
+}
+impl<O: Op> DequeueSwag<O> {
+    /// Constructs a new `DequeueSwag`.
+    pub fn new() -> Self {
+        Self {
+            front: Vec::new(),
+            back: Vec::new(),
+            front_sum: Vec::new(),
+            back_sum: Vec::new(),
+        }
+    }
+
+    /// Returns the element at the index.
+    pub fn get(&self, i: usize) -> Option<&O::Value> {
+        if i < self.front.len() {
+            Some(&self.front[self.front.len() - i - 1])
+        } else if i < self.front.len() + self.back.len() {
+            Some(&self.back[i - self.front.len()])
+        } else {
+            None
+        }
+    }
+
+    /// Returns the length of the `DequeueSwag`.
+    pub fn len(&self) -> usize {
+        self.front.len() + self.back.len()
+    }
+
+    /// Returns whether the `DequeueSwag` is empty.
+    pub fn is_empty(&self) -> bool {
+        self.front.is_empty() && self.back.is_empty()
+    }
+
+    /// Append an element to the front.
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[2, 3, 4]);
+    /// swag.push_front(1);
+    /// assert_eq!(swag.collect_vec(), vec![1, 2, 3, 4]);
+    /// ```
+    pub fn push_front(&mut self, x: O::Value)
+    where
+        O::Value: Clone,
+    {
+        self.front_sum.push(if self.front_sum.is_empty() {
+            x.clone()
+        } else {
+            O::op(&x, self.front_sum.last().unwrap())
+        });
+        self.front.push(x);
+    }
+
+    /// Append an element to the back.
+    ///
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
+    /// swag.push_back(4);
+    /// assert_eq!(swag.collect_vec(), vec![1, 2, 3, 4]);
+    /// ```
+    pub fn push_back(&mut self, x: O::Value)
+    where
+        O::Value: Clone,
+    {
+        self.back_sum.push(if self.back_sum.is_empty() {
+            x.clone()
+        } else {
+            O::op(self.back_sum.last().unwrap(), &x)
+        });
+        self.back.push(x);
+    }
+
+    /// Pop an element from the front.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// # enum O {}
+    /// # impl swag::Op for O {
+    /// #    type Value = i32;
+    /// #    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    /// #        a + b
+    /// #    }
+    /// # }
+    /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
+    /// assert_eq!(swag.pop_front(), Some(1));
+    /// assert_eq!(swag.collect_vec(), vec![2, 3]);
+    /// ```
+    pub fn pop_front(&mut self) -> Option<O::Value>
+    where
+        O::Value: Clone,
+    {
+        if self.front.is_empty() {
+            let n = self.back.len();
+            let mut swp = Self::new();
+            for x in self.back.drain(..(n + 1) / 2).rev() {
+                swp.push_front(x);
+            }
+            for x in self.back.drain(..) {
+                swp.push_back(x);
+            }
+            *self = swp;
+        }
+        eprintln!("{} {}", self.front.len(), self.back.len());
+        let _ = self.front_sum.pop();
+        self.front.pop()
+    }
+
+    /// Pop an element from the back.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
+    /// assert_eq!(swag.pop_back(), Some(3));
+    /// assert_eq!(swag.collect_vec(), vec![1, 2]);
+    /// ```
+    pub fn pop_back(&mut self) -> Option<O::Value>
+    where
+        O::Value: Clone,
+    {
+        if self.back.is_empty() {
+            let n = self.front.len();
+            let mut swp = Self::new();
+            for x in self.front.drain(..n / 2).rev() {
+                swp.push_front(x);
+            }
+            for x in self.front.drain(..) {
+                swp.push_back(x);
+            }
+            *self = swp;
+        }
+        let _ = self.back_sum.pop();
+        self.back.pop()
+    }
+
+    /// Fold the `DequeueSwag`.
+    /// Returns `None` if the `DequeueSwag` is empty.
+    /// # Example
+    /// ```
+    /// use swag::DequeueSwag;
+    /// enum O {}
+    /// impl swag::Op for O {
+    ///    type Value = i32;
+    ///    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    ///        a + b
+    ///    }
+    /// }
+    /// let mut swag = DequeueSwag::<O>::copy_from_slice(&[1, 2, 3]);
+    /// assert_eq!(swag.fold(), Some(6));
+    /// ```
+    pub fn fold(&self) -> Option<O::Value>
+    where
+        O::Value: Clone,
+    {
+        match (self.front_sum.last(), self.back_sum.last()) {
+            (None, None) => None,
+            (Some(x), None) | (None, Some(x)) => Some(x.clone()),
+            (Some(x), Some(y)) => Some(O::op(x, y)),
+        }
+    }
+
+    /// Returns an iterator over the `DequeueSwag`.
+    pub fn iter(&self) -> impl Iterator<Item = &O::Value> {
+        self.front.iter().rev().chain(self.back.iter())
+    }
+
+    /// Collects the `DequeueSwag` into a `Vec`.
+    pub fn collect_vec(&self) -> Vec<O::Value>
+    where
+        O::Value: Clone,
+    {
+        self.iter().cloned().collect()
+    }
+
+    /// Returns two slices, joining that is exactly the all elements.
+    pub fn as_two_slices(&self) -> (&[O::Value], &[O::Value]) {
+        (&self.front, &self.back)
+    }
+
+    /// Constructs a new `DequeueSwag` from a slice.
+    pub fn clone_from_slice(slice: &[O::Value]) -> Self
+    where
+        O::Value: Clone,
+    {
+        let mut reslt = Self::new();
+        for x in slice {
+            reslt.push_back(x.clone());
+        }
+        reslt
+    }
+
+    /// Constructs a new `DequeueSwag` from a slice.
+    pub fn copy_from_slice(slice: &[O::Value]) -> Self
+    where
+        O::Value: Copy,
+    {
+        let mut reslt = Self::new();
+        for x in slice {
+            reslt.push_back(*x);
+        }
+        reslt
+    }
+}
+
+impl<O: Op> Default for DequeueSwag<O> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<O: Op> Index<usize> for DequeueSwag<O> {
+    type Output = O::Value;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        if index < self.front.len() {
+            &self.front[self.front.len() - index - 1]
+        } else {
+            &self.back[index - self.front.len()]
+        }
+    }
+}
+
+impl<O: Op> std::fmt::Debug for DequeueSwag<O>
 where
-    T: Copy + Debug,
-    V: Borrow<[T]>,
-    F: Fn(T, T) -> T,
+    O::Value: std::fmt::Debug,
 {
-    fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
-        w.debug_struct("Swag")
-            .field("v", &self.v.borrow())
-            .field("stack", &self.stack)
-            .field("center", &self.center)
-            .field("end", &self.end)
-            .field("accum", &self.accum)
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("DequeueSwag")
+            .field("front", &self.front)
+            .field("back", &self.back)
+            .field("front_sum", &self.front_sum)
+            .field("back_sum", &self.back_sum)
             .finish()
     }
 }
-impl<T, V, F> Swag<T, V, F>
+
+impl<O: Op> From<Vec<O::Value>> for DequeueSwag<O>
 where
-    T: Copy,
-    V: Borrow<[T]>,
-    F: Fn(T, T) -> T,
+    O::Value: Clone,
 {
-    /// 新しい `Swag` を構築します。
-    ///
-    /// # 引数
-    ///
-    /// * `v` は走査する配列です。`Vec` やスライスなど、`Borrow<[T]>` を実装した型ならばよいです。
-    /// * `folder` は畳み込む演算です。結合的であればよいです。
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use std::ops::Add;
-    /// use swag::Swag;
-    ///
-    /// // Vec 版
-    /// let _swag = Swag::new(vec![0, 1, 2], Add::add);
-    ///
-    /// // スライス版
-    /// let a = vec![0, 1, 2];
-    /// let _swag = Swag::new(a.as_slice(), Add::add);
-    /// ```
-    pub fn new(v: V, folder: F) -> Self {
-        Self {
-            v,
-            folder,
-            stack: Vec::new(),
-            center: 0,
-            end: 0,
-            accum: None,
-            _marker: PhantomData,
+    fn from(mut values: Vec<O::Value>) -> Self {
+        let mut reslt = Self::new();
+        let n = values.len();
+        for x in values.drain(n / 2..) {
+            reslt.push_back(x);
         }
-    }
-
-    /// 与えられた区間における aggregation を返します。
-    ///
-    ///
-    /// # 要件
-    ///
-    /// 始点・終点ともに、現在の内部状態よりも小さくなく、スライスのサイズより大きくないこと
-    ///
-    ///
-    /// # 戻り値
-    ///
-    /// `range` が開区間 [l, r[ に対応するとき、 f { v_i: l <= i < r } を返します。
-    pub fn fold(&mut self, range: impl RangeBounds<usize>) -> Option<T> {
-        let Range { start, end } = open(range, self.v.borrow().len());
-        self.advance_end(end);
-        self.advance_start(start);
-        self.current_fold()
-    }
-
-    /// [`fold`](Swag::fold) + `unwrap_or`
-    pub fn fold_or(&mut self, range: impl RangeBounds<usize>, default: T) -> T {
-        self.fold(range).unwrap_or(default)
-    }
-
-    /// [`fold`](Swag::fold) + `unwrap_or_else`
-    pub fn fold_or_else(&mut self, range: impl RangeBounds<usize>, f: impl FnOnce() -> T) -> T {
-        self.fold(range).unwrap_or_else(f)
-    }
-
-    /// 現在の内部状態の始点を返します。
-    pub fn start(&self) -> usize {
-        self.center - self.stack.len()
-    }
-
-    /// 現在の内部状態の終点を返します。
-    pub fn end(&self) -> usize {
-        self.end
-    }
-
-    /// 現在の内部状態の始点・終点を `start..end` の形で返します。
-    pub fn current_index_range(&self) -> Range<usize> {
-        self.start()..self.end()
-    }
-
-    /// 現在の内部状態の window をスライスの形で返します。
-    pub fn current_window(&self) -> &[T] {
-        &self.v.borrow()[self.current_index_range()]
-    }
-
-    /// 現在の内部状態の window における aggregation を返します。
-    pub fn current_fold(&self) -> Option<T> {
-        match (self.stack.last(), self.accum) {
-            (None, None) => None,
-            (Some(&x), None) => Some(x),
-            (None, Some(y)) => Some(y),
-            (Some(&x), Some(y)) => Some((self.folder)(x, y)),
+        for x in values.into_iter().rev() {
+            reslt.push_front(x);
         }
-    }
-
-    fn advance_start(&mut self, start: usize) {
-        debug_assert!(
-            start <= self.v.borrow().len(),
-            "Out of range: start = {}, len = {}",
-            start,
-            self.v.borrow().len()
-        );
-        debug_assert!(
-            start <= self.end,
-            "Start will exceed end: start = {}, self.end = {}",
-            start,
-            self.end,
-        );
-        debug_assert!(
-            self.start() <= start,
-            "Non-monotone advance_start: self.start = {}, start = {}",
-            self.start(),
-            start,
-        );
-        if let Some(d) = self.stack.len().checked_sub(start - self.start()) {
-            self.stack.truncate(d);
-        } else {
-            self.accum = None;
-            self.stack.clear();
-            self.center = self.end;
-            self.stack = self.v.borrow()[start..self.end]
-                .iter()
-                .copied()
-                .rev()
-                .collect::<Vec<_>>();
-            if !self.stack.is_empty() {
-                for i in 0..self.stack.len() - 1 {
-                    let x = (self.folder)(self.stack[i + 1], self.stack[i]);
-                    self.stack[i + 1] = x;
-                }
-            }
-        }
-    }
-
-    fn advance_end(&mut self, end: usize) {
-        debug_assert!(
-            end <= self.v.borrow().len(),
-            "Out of range: end = {}, len = {}",
-            end,
-            self.v.borrow().len()
-        );
-        debug_assert!(
-            self.end <= end,
-            "Non-monotone advance_start: self.end = {}, end = {}",
-            self.end,
-            end,
-        );
-        let mut iter = self
-            .accum
-            .iter()
-            .chain(self.v.borrow()[self.end..end].iter())
-            .copied();
-        self.accum = iter.next().map(|first| iter.fold(first, &self.folder));
-        self.end = end;
+        reslt
     }
 }
-fn open(range: impl RangeBounds<usize>, len: usize) -> Range<usize> {
-    use Bound::Excluded;
-    use Bound::Included;
-    use Bound::Unbounded;
-    let start = match range.start_bound() {
-        Unbounded => 0,
-        Included(&x) => x,
-        Excluded(&x) => x - 1,
-    };
-    let end = match range.end_bound() {
-        Excluded(&x) => x,
-        Included(&x) => x + 1,
-        Unbounded => len,
-    };
-    start..end
+
+impl<O: Op> IntoIterator for DequeueSwag<O> {
+    type Item = O::Value;
+    type IntoIter = std::iter::Chain<
+        std::iter::Rev<std::vec::IntoIter<O::Value>>,
+        std::vec::IntoIter<O::Value>,
+    >;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.front.into_iter().rev().chain(self.back.into_iter())
+    }
 }
 
-#[cfg(test)]
-mod tests {
-    use super::Swag;
-    use itertools::Itertools;
-    use std::ops::Add;
+impl<'a, O: Op> IntoIterator for &'a DequeueSwag<O> {
+    type Item = &'a O::Value;
+    type IntoIter = std::iter::Chain<
+        std::iter::Rev<std::slice::Iter<'a, O::Value>>,
+        std::slice::Iter<'a, O::Value>,
+    >;
 
-    #[test]
-    fn test_vec() {
-        let a = vec![0, 1, 2, 3, 4];
-        let mut swag = Swag::new(a, Add::add);
-        swag.advance_end(3);
-        swag.advance_start(1);
-        println!("swag = {:?}", &swag);
-        assert_eq!(swag.current_index_range(), 1..3);
-        assert_eq!(swag.current_window(), &[1, 2]);
-        assert_eq!(swag.current_fold(), Some(3));
+    fn into_iter(self) -> Self::IntoIter {
+        self.front.iter().rev().chain(self.back.iter())
     }
-    #[test]
-    fn test_slice() {
-        let a = vec![0, 1, 2, 3, 4];
-        let mut swag = Swag::new(a.as_slice(), Add::add);
-        swag.advance_end(3);
-        swag.advance_start(1);
-        assert_eq!(swag.current_index_range(), 1..3);
-        assert_eq!(swag.current_window(), &[1, 2]);
-        assert_eq!(swag.current_fold(), Some(3));
+}
+
+impl<O: Op> FromIterator<O::Value> for DequeueSwag<O>
+where
+    O::Value: Clone,
+{
+    fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
+        iter.into_iter().collect::<Vec<_>>().into()
     }
-    #[test]
-    fn test_call_methods() {
-        let mut swag = Swag::new(vec![0, 1, 2, 3, 4], Add::add);
-        assert_eq!(swag.fold(0..0), None);
-        assert_eq!(swag.fold_or(0..0, 42), 42);
-        assert_eq!(swag.fold_or_else(0..0, || 42), 42);
-    }
-    #[test]
-    fn test_algo_hand() {
-        let mut swag = Swag::new((0..10).map(|i| (i, 1)).collect_vec(), |(x, d), (y, e)| {
-            (10_u32.pow(e) * x + y, d + e)
-        });
-        assert_eq!(swag.fold(1..3), Some((12, 2)));
-        assert_eq!(swag.fold(4..4), None);
-        assert_eq!(swag.fold(4..7), Some((456, 3)));
-        assert_eq!(swag.fold(5..8), Some((567, 3)));
-        assert_eq!(swag.fold(6..9), Some((678, 3)));
-        assert_eq!(swag.fold(7..10), Some((789, 3)));
-        assert_eq!(swag.fold(9..10), Some((9, 1)));
+}
+
+impl<O: Op> Extend<O::Value> for DequeueSwag<O>
+where
+    O::Value: Clone,
+{
+    fn extend<T: IntoIterator<Item = O::Value>>(&mut self, iter: T) {
+        for x in iter {
+            self.push_back(x);
+        }
     }
 }
