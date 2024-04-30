@@ -1,11 +1,37 @@
+//! Link-Cut Tree
+//!
+//! # Summary
+//!
+//! Provided data structures are as follows:
+//!
+//! - [`LinkCutTree`]: a rooted forest
+//! - [`CommutLinkCutTree`]: a rooted forest with commutative operation
+//! - [`NonCommutLinkCutTree`]: a rooted forest with non-commutative operation
+//!
+//! Operations are specified by the trait [`Op`].
+//!
+//! # About the root
+//!
+//! If you want to change the root of the tree, you can use [`evert`](LinkCutTreeBase::evert) method.
+//!
+//! These also support some **unrooted** operations (`undirected_*`).
+//! It does not preserve the root of the tree.
+
 mod base;
 
 pub use base::LinkCutTreeBase;
-use base::*;
+use base::OpBase;
+
+/// Aggregation operation for link-cut tree
+pub trait Op {
+    type Value: Clone;
+    fn identity() -> Self::Value;
+    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+}
 
 impl OpBase for () {
-    type FrontValue = ();
     type InternalValue = ();
+    type Value = ();
 
     fn identity() -> Self::InternalValue {}
 
@@ -15,22 +41,19 @@ impl OpBase for () {
 
     fn into_front(_value: Self::InternalValue) {}
 
-    fn from_front(_value: Self::FrontValue) -> Self::InternalValue {}
+    fn from_front(_value: Self::Value) -> Self::InternalValue {}
 }
-
+/// Link-Cut Tree without aggregation operation
 pub type LinkCutTree = LinkCutTreeBase<()>;
 
-pub trait CommutOp {
-    type Value: Clone;
-    fn identity() -> Self::Value;
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
-}
+/// Link-Cut Tree with commutative operation
 pub type CommutLinkCutTree<T> = LinkCutTreeBase<Commut<T>>;
-pub struct Commut<T: CommutOp>(T);
+#[doc(hidden)]
+pub struct Commut<T: Op>(T);
 
-impl<T: CommutOp> OpBase for Commut<T> {
-    type FrontValue = T::Value;
+impl<T: Op> OpBase for Commut<T> {
     type InternalValue = T::Value;
+    type Value = T::Value;
 
     fn identity() -> Self::InternalValue {
         T::identity()
@@ -42,26 +65,23 @@ impl<T: CommutOp> OpBase for Commut<T> {
 
     fn rev(_value: &mut Self::InternalValue) {}
 
-    fn into_front(value: Self::InternalValue) -> Self::FrontValue {
+    fn into_front(value: Self::InternalValue) -> Self::Value {
         value
     }
 
-    fn from_front(value: Self::FrontValue) -> Self::InternalValue {
+    fn from_front(value: Self::Value) -> Self::InternalValue {
         value
     }
 }
 
-pub trait NonCommutOp {
-    type Value: Clone;
-    fn identity() -> Self::Value;
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
-}
-pub struct NonCommut<T: NonCommutOp>(T);
+#[doc(hidden)]
+pub struct NonCommut<T: Op>(T);
+/// Link-Cut Tree with non-commutative operation
 pub type NonCommutLinkCutTree<T> = LinkCutTreeBase<NonCommut<T>>;
 
-impl<T: NonCommutOp> OpBase for NonCommut<T> {
-    type FrontValue = T::Value;
+impl<T: Op> OpBase for NonCommut<T> {
     type InternalValue = (T::Value, T::Value);
+    type Value = T::Value;
 
     fn identity() -> Self::InternalValue {
         (T::identity(), T::identity())
@@ -75,11 +95,11 @@ impl<T: NonCommutOp> OpBase for NonCommut<T> {
         std::mem::swap(&mut value.0, &mut value.1);
     }
 
-    fn into_front(value: Self::InternalValue) -> Self::FrontValue {
-        value.0.clone()
+    fn into_front(value: Self::InternalValue) -> Self::Value {
+        value.0
     }
 
-    fn from_front(value: Self::FrontValue) -> Self::InternalValue {
+    fn from_front(value: Self::Value) -> Self::InternalValue {
         (value.clone(), value)
     }
 }
@@ -220,9 +240,7 @@ mod tests {
                     }
                 }
             }
-            if parent[y].is_none() {
-                return None;
-            }
+            parent[y]?;
             let mut path = vec![];
             let mut v = y;
             loop {
@@ -339,7 +357,7 @@ mod tests {
     #[test]
     fn test_link_cut_tree_xor() {
         enum O {}
-        impl CommutOp for O {
+        impl Op for O {
             type Value = u32;
 
             fn identity() -> Self::Value {
@@ -413,7 +431,7 @@ mod tests {
             value: u64,
         }
         enum O {}
-        impl NonCommutOp for O {
+        impl Op for O {
             type Value = RollingHash;
 
             fn identity() -> Self::Value {
