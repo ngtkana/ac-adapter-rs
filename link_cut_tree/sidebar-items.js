@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["LinkCutTreeBase"],"trait":["Op"],"type":["CommutLinkCutTree","LinkCutTree","NonCommutLinkCutTree"]};
