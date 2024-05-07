@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["bools"],"macro":["lg","rows","table"]};
+window.SIDEBAR_ITEMS = {"fn":["bools"],"macro":["dict","lg","rows","table"],"struct":["Dict"]};
