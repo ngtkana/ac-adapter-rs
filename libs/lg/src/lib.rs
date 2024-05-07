@@ -47,6 +47,24 @@ macro_rules! __lg_internal {
     }};
 }
 
+#[macro_export]
+macro_rules! dict {
+    ($($values:expr),* $(,)?) => {{
+        #![allow(unused_assignments)]
+        let mut dict = $crate::Dict::default();
+        $(
+            {
+                let mut name = stringify!($values).to_string();
+                if name.starts_with("&") {
+                    name = name[1..].to_string();
+                }
+                dict.add_row(name, $values);
+            }
+        )*
+        eprintln!("{}", dict);
+    }};
+}
+
 /// Print many 1D arrays side-by-side with the line number.
 ///
 /// # Examples
@@ -367,6 +385,61 @@ where
             .map(|b| ['.', '#'][usize::from(*(b.borrow()))])
             .collect::<String>(),
     )
+}
+
+#[derive(Default)]
+pub struct Dict {
+    dict: Vec<(String, Vec<String>)>,
+}
+impl Dict {
+    pub fn add_row<T: std::fmt::Debug>(
+        &mut self,
+        key: impl AsRef<str>,
+        values: impl IntoIterator<Item = T>,
+    ) {
+        self.dict.push((
+            key.as_ref().to_string(),
+            values
+                .into_iter()
+                .map(|value| format!("{:?}", value))
+                .collect(),
+        ));
+    }
+}
+impl std::fmt::Display for Dict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let max_nvalues = self
+            .dict
+            .iter()
+            .map(|(_, values)| values.len())
+            .max()
+            .unwrap_or(0);
+        let key_width = self
+            .dict
+            .iter()
+            .map(|(key, _)| key.len())
+            .max()
+            .unwrap_or(0);
+        let mut value_widths = vec![0; max_nvalues];
+        for (_, values) in &self.dict {
+            for (i, value) in values.iter().enumerate() {
+                value_widths[i] = value_widths[i].max(value.len());
+            }
+        }
+        write!(f, "{GRAY} {key:key_width$} |", key = "")?;
+        for (i, &value_width) in value_widths.iter().enumerate() {
+            write!(f, " {i:value_width$} ")?;
+        }
+        writeln!(f, "{RESET}")?;
+        for (key, values) in &self.dict {
+            write!(f, " {key:key_width$} |")?;
+            for (value, &value_width) in values.iter().zip(&value_widths) {
+                write!(f, " {value:value_width$} ",)?;
+            }
+            writeln!(f)?;
+        }
+        Ok(())
+    }
 }
 
 #[cfg(test)]
