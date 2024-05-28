@@ -47,13 +47,13 @@ var sourcesIndex = JSON.parse('{\
 "max_flow":["",[],["lib.rs"]],\
 "mincost_flow":["",[],["lib.rs"]],\
 "monotone_minima":["",[],["lib.rs"]],\
+"naive_poly":["",[],["lib.rs"]],\
 "newton":["",[],["lib.rs"]],\
 "next_permutation":["",[],["lib.rs"]],\
 "not_nan":["",[],["lib.rs"]],\
 "numeric_search":["",[],["lib.rs"]],\
 "open":["",[],["lib.rs"]],\
 "partially_persistent_union_find":["",[],["lib.rs"]],\
-"poly":["",[],["lib.rs"]],\
 "radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
