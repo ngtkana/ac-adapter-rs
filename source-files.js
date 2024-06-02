@@ -74,7 +74,7 @@ var sourcesIndex = JSON.parse('{\
 "suffix_array":["",[],["lib.rs"]],\
 "suffix_sum":["",[],["lib.rs"]],\
 "swag":["",[],["lib.rs"]],\
-"tree_fold":["",[],["lib.rs"]],\
+"tree_dp":["",[],["lib.rs"]],\
 "trial":["",[],["divisors.rs","lib.rs","prime_factors.rs"]],\
 "trie":["",[],["lib.rs","trie_map.rs","trie_set.rs"]],\
 "two_sat":["",[],["lib.rs"]],\
