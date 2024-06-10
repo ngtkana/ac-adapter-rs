@@ -726,6 +726,13 @@
 <a href="#692" id="692">692</a>
 <a href="#693" id="693">693</a>
 <a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
+<a href="#698" id="698">698</a>
+<a href="#699" id="699">699</a>
+<a href="#700" id="700">700</a>
+<a href="#701" id="701">701</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Provides a macro [`lg`] and formatting utils.
 </span><span class="kw">use </span>std::borrow::Borrow;
 <span class="kw">use </span>std::fmt;
@@ -777,7 +784,7 @@
 
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>dict {
-    ($(<span class="macro-nonterminal">$values</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {{
+    ($($(@field <span class="macro-nonterminal">$field</span>:ident)<span class="question-mark">? </span><span class="macro-nonterminal">$values</span>:expr ),* $(,)<span class="question-mark">?</span>) =&gt; {{
         <span class="attr">#![allow(unused_assignments)]
         </span><span class="kw">let </span><span class="kw-2">mut </span>dict = <span class="macro-nonterminal">$crate::Dict::default</span>();
         $(
@@ -786,7 +793,14 @@
                 <span class="kw">if </span>name.starts_with(<span class="string">&quot;&amp;&quot;</span>) {
                     name = name[<span class="number">1</span>..].to_string();
                 }
-                dict.add_row(name, <span class="macro-nonterminal">$values</span>);
+                $(
+                    <span class="kw">let </span>name = <span class="macro">format!</span>(<span class="string">&quot;{name}.{field}&quot;</span>, field = <span class="macro">stringify!</span>(<span class="macro-nonterminal">$field</span>));
+                )<span class="question-mark">?
+                </span><span class="kw">let </span>values = <span class="macro-nonterminal">$values</span>;
+                $(
+                    <span class="kw">let </span>values = values.iter().map(|value| <span class="kw-2">&amp;</span>value.<span class="macro-nonterminal">$field</span>).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+                )<span class="question-mark">?
+                </span>dict.add_row(name, values);
             }
         )*
         <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, dict);
