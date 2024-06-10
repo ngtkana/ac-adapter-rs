@@ -49,7 +49,7 @@ macro_rules! __lg_internal {
 
 #[macro_export]
 macro_rules! dict {
-    ($($values:expr),* $(,)?) => {{
+    ($($(@field $field:ident)? $values:expr ),* $(,)?) => {{
         #![allow(unused_assignments)]
         let mut dict = $crate::Dict::default();
         $(
@@ -58,7 +58,14 @@ macro_rules! dict {
                 if name.starts_with("&") {
                     name = name[1..].to_string();
                 }
-                dict.add_row(name, $values);
+                $(
+                    let name = format!("{name}.{field}", field = stringify!($field));
+                )?
+                let values = $values;
+                $(
+                    let values = values.iter().map(|value| &value.$field).collect::<Vec<_>>();
+                )?
+                dict.add_row(name, values);
             }
         )*
         eprintln!("{}", dict);
