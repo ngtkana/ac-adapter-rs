@@ -1,580 +1,452 @@
-//! 重軽分解をします。
+//! Heavy-Light Decomposition
 //!
-//! # 使い方
+//! # Usage
 //!
-//! 構造体 [`Hld`] を使いましょう。
-//!
-//! ## 初期化
-//!
-//! * [`new`](Hld::new): 根付き木から構築します。
-//!
-//!
-//! ## 基本的なメソッド
-//!
-//! * [`iter_v`](Hld::iter_v): パスを分解して、両端点を返すイテレータを作ります。
-//! * [`iter_e`](Hld::iter_e): それの LCA だけスキップするバージョンです。
-//!
-//!
-//! ## 便利なショートメソッド
-//!
-//! * [`dist`](Hld::dist): 2 点の間の距離を計算します。
-//! * [`lca`](Hld::lca): 2 点の LCA を探します。
-//! * [`between`](Hld::between): 3 点が一直線上にあるかどうかを判定します。
-//!
-//!
-//! ## 頂点 ID 翻訳
-//!
-//! * [`ord`](Hld::ord): 訪問時刻 → もとの頂点番号
-//! * [`time`](Hld::time): もとの頂点番号 → 訪問時刻
-//!
-//!
-//! ## せっかく計算してるので公開している情報
-//!
-//! * [`child`](Hld::child): 親を消したグラフ
-//! * [`size`](Hld::size): 部分木のサイズ
-//! * [`parent`](Hld::parent): 受け取った根付き木における親
-//! * [`head`](Hld::head): heavy path における先頭
-//!
-//!
-//!
-//! # Examples
-//!
-//! ```
-//! use hld::Hld;
-//! let root = 0;
-//! let n = 4;
-//! let edges = [[0, 1], [0, 2], [2, 3]];
-//! let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-//! let hld = Hld::new(root, &g);
-//!
-//! assert_eq!(hld.child(), &[vec![2, 1], Vec::new(), vec![3], Vec::new()]);
-//! assert_eq!(hld.time(), &[0, 3, 1, 2]);
-//! assert_eq!(hld.ord(), &[0, 2, 3, 1]);
-//! assert_eq!(hld.parent(), &[0, 0, 0, 2]);
-//! assert_eq!(hld.head(), &[0, 1, 0, 0]);
-//! ```
-use std::mem::swap;
-use std::usize::MAX;
+//! - Constructor: [`Hld::from_edges()`]
+//! - Iterator: [`Hld::path_segments()`]
+//! - Fields: [`parent`](Hld::parent), [`index`](Hld::index), [`head`](Hld::head)
 
-/// 重軽分解
-#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
+use std::iter::FusedIterator;
+
+/// Heavy-Light Decomposition
 pub struct Hld {
-    child: Vec<Vec<usize>>,
-    size: Vec<usize>,
-    time: Vec<usize>,
-    ord: Vec<usize>,
-    parent: Vec<usize>,
-    head: Vec<usize>,
+    /// vertex id -> parent vertex id
+    pub parent: Vec<usize>,
+    /// vertex id -> vertex index (in the hld order)
+    pub index: Vec<usize>,
+    /// vertex id -> head vertex id
+    pub head: Vec<usize>,
 }
 impl Hld {
-    /// HLD を構築するとともに、受け取ったグラフから親リンクを削除します。
-    ///
-    /// # 制約
-    ///
-    /// 入力は木である（根をひとつしか指定しないことからもわかるように、森はだめです。）
-    pub fn new(root: usize, g: &[Vec<usize>]) -> Self {
-        let (child, [size, time, ord, parent, head]) = hld(root, g);
-        Self {
-            child,
-            size,
-            time,
-            ord,
-            parent,
-            head,
+    /// From $p _ 1, \dots, p _ { n - 1 }$. Root is always $0$.
+    pub fn from_short_parents(mut parent: Vec<usize>) -> (Self, Vec<Vec<usize>>) {
+        parent.insert(0, 0);
+        let mut g = vec![Vec::new(); parent.len()];
+        for (i, &p) in parent.iter().enumerate().skip(1) {
+            g[p].push(i);
         }
+        (__build_hld(0, &mut g, parent), g)
     }
 
-    /// 親を消したグラフを返します。
-    pub fn child(&self) -> &[Vec<usize>] {
-        &self.child
+    /// From the set of undirected edges $(u _ 0, v _ 0), \dots ( u _ { n - 2 } , v _ { n - 2 } )$
+    ///
+    /// The second return value `g` is the graph with parents removed.
+    pub fn from_edges(root: usize, edges: &[(usize, usize)]) -> (Self, Vec<Vec<usize>>) {
+        Self::from_edge_iterator(root, edges.iter().copied())
     }
 
-    /// 頂点番号から部分木のサイズを引くテーブルを返します。
-    pub fn size(&self) -> &[usize] {
-        &self.size
-    }
-
-    /// 頂点番号から訪問時刻を引くテーブルを返します。
-    pub fn time(&self) -> &[usize] {
-        &self.time
-    }
-
-    /// 訪問時刻から頂点番号を引くテーブルを返します。
-    pub fn ord(&self) -> &[usize] {
-        &self.ord
-    }
-
-    /// 頂点番号から、親の頂点番号を引くテーブルを返します。
-    ///
-    /// ただし、根の親は自分自身です。
-    pub fn parent(&self) -> &[usize] {
-        &self.parent
-    }
-
-    /// 頂点番号から、Heavy path の先頭の頂点番号を引くテーブルを返します。
-    pub fn head(&self) -> &[usize] {
-        &self.head
-    }
-
-    /// 頂点 `u`, `v` が隣接頂点であれば `true`、さもなくば `false` を返します。
-    ///
-    /// # Panics
-    ///
-    /// * `x`, `v` のいずれかが範囲外
-    ///
-    /// # Examples
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &g);
-    /// assert_eq!(hld.is_adjacent(0, 3), false); // 1 -- 0 -- 2 -- 3
-    /// assert_eq!(hld.is_adjacent(2, 1), false); // 1 -- 0 -- 2 -- 3
-    /// assert_eq!(hld.is_adjacent(0, 2), true); // 1 -- 0 -- 2 -- 3
-    /// ```
-    pub fn is_adjacent(&self, u: usize, v: usize) -> bool {
-        assert!(u < self.child.len(), "範囲外です。");
-        assert!(v < self.child.len(), "範囲外です。");
-        self.parent[u] == v || u == self.parent[v]
-    }
-
-    /// `x` の隣接頂点のうち、`toward` との間にあるものを返します。
-    ///
-    /// # Panics
-    ///
-    /// * `x`, `toward` のいずれかが範囲外
-    /// * `x == toward`
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &g);
-    /// assert_eq!(hld.adjacent_toward(0, 3), 2); // 1 -- 0 -- 2 -- 3
-    /// assert_eq!(hld.adjacent_toward(2, 1), 0); // 1 -- 0 -- 2 -- 3
-    /// ```
-    pub fn adjacent_toward(&self, x: usize, toward: usize) -> usize {
-        assert!(x < self.child.len(), "範囲外です。");
-        assert!(toward < self.child.len(), "範囲外です。");
-        assert_ne!(
-            x, toward,
-            "`x = toward = {} となっており、方向がわかりません。",
-            x
-        );
-        if self.is_ancestor_of(x, toward) {
-            self.child[x]
-                .iter()
-                .copied()
-                .find(|&y| self.is_ancestor_of(y, toward))
-                .unwrap()
-        } else {
-            self.parent[x]
+    /// Iterator version of [`from_edges`](Self::from_edges)
+    pub fn from_edge_iterator(
+        root: usize,
+        edges: impl ExactSizeIterator<Item = (usize, usize)>,
+    ) -> (Self, Vec<Vec<usize>>) {
+        let mut g = vec![Vec::new(); edges.len() + 1];
+        for (i, j) in edges {
+            g[i].push(j);
+            g[j].push(i);
         }
+        let parent = __remove_parent(root, &mut g);
+        (__build_hld(root, &mut g, parent), g)
     }
 
-    /// 2 つの頂点番号から、その間の距離を返します。
+    /// Decompose the (directed) path `from --> to` to the path segments.
     ///
-    /// # Panics
+    /// # Items
     ///
-    /// * `u`, `v` のいずれかが範囲外
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let mut g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &mut g);
-    /// assert_eq!(hld.dist(1, 3), 3); // 1 -- 0 -- 2 -- 3
-    /// ```
-    pub fn dist(&self, u: usize, v: usize) -> usize {
-        self.iter_e(u, v).map(|(l, r)| r - l + 1).sum::<usize>()
-    }
-
-    /// 2 つの頂点番号から、LCA の頂点番号を返します。
-    ///
-    /// # Panics
-    ///
-    /// * `p`, `x` のいずれかが範囲外
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let mut g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &mut g);
-    /// assert_eq!(hld.lca(1, 3), 0);
-    /// ```
-    pub fn lca(&self, u: usize, v: usize) -> usize {
-        let (u, v) = self.iter_v(u, v).last().unwrap();
-        self.ord[u.min(v)]
-    }
-
-    /// `p` が `u` の祖先であれば `true`、さもなくば `false` です。
-    ///
-    /// # Panics
-    ///
-    /// * `u`, `v` のいずれかが範囲外
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &g);
-    /// assert_eq!(hld.is_ancestor_of(0, 3), true);
-    /// assert_eq!(hld.is_ancestor_of(1, 3), false);
-    /// assert_eq!(hld.is_ancestor_of(3, 0), false);
-    /// ```
-    pub fn is_ancestor_of(&self, p: usize, u: usize) -> bool {
-        self.lca(p, u) == p
-    }
-
-    /// 3 つの頂点番号 `a`, `b`, `c` について、`b` が `a` と `c` を結ぶパス上にあれば
-    ///   `true`、さもなくば `false` を返します。
-    ///
-    /// # Panics
-    ///
-    /// * `a`, `b`, `c` のいずれかが範囲外
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &g);
-    /// assert_eq!(hld.between(1, 0, 2), true);
-    /// assert_eq!(hld.between(1, 3, 2), false);
-    /// assert_eq!(hld.between(1, 2, 2), true);
-    /// ```
-    pub fn between(&self, a: usize, b: usize, c: usize) -> bool {
-        let mid = self.time[b];
-        self.iter_v(a, c)
-            .any(|(left, right)| (left..=right).contains(&mid))
-    }
-
-    /// 2 つの頂点番号から、その間のパスを Heavy path
-    /// に分解して、各々両端の頂点**の訪問時刻**を返すイテレータを作ります。
-    /// つまり、`f` の引数は閉区間です。
-    ///
-    /// # Panics
-    ///
-    /// * `u`, `v` のいずれかが範囲外
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// // 1 -- 0 -- 2 -- 3
-    /// let hld = Hld::new(0, &g);
-    /// let vtx = hld
-    ///     .iter_v(1, 3)
-    ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
-    ///     .collect::<Vec<_>>();
-    /// assert_eq!(
-    ///     vtx.as_slice(),
-    ///     &[(1, 1), (0, 3)], // [ 1 ] + [ 0 -- 2 -- 3 ]
-    /// );
-    /// ```
-    pub fn iter_v(&self, u: usize, v: usize) -> IterV<'_> {
-        IterV {
+    /// * `i`: root-side
+    /// * `j`: left-side
+    /// * `last`: last path segments (i.e. contains the LCA)
+    /// * `reverse`: `from --> to` and `i --> j` is in the different direction
+    pub fn path_segments(&self, from: usize, to: usize) -> PathSegments<'_> {
+        PathSegments {
             hld: self,
-            u,
-            v,
-            finish: false,
+            from,
+            to,
+            exhausted: false,
         }
     }
 
-    /// [`Self::iter_v`] とほぼ同様ですが、LCA だけスキップします。
-    ///
-    /// # Panics
-    ///
-    /// * `u`, `v` のいずれかが範囲外
-    ///
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use hld::Hld;
-    ///
-    /// let g = vec![vec![1, 2], vec![0], vec![0, 3], vec![2]];
-    ///
-    /// let hld = Hld::new(0, &g);
-    /// let vtx = hld
-    ///     .iter_e(1, 3)
-    ///     .map(|(u, v)| (hld.ord()[u], hld.ord()[v])) // 頂点番号に変換
-    ///     .collect::<Vec<_>>();
-    /// assert_eq!(
-    ///     vtx.as_slice(),
-    ///     &[(1, 1), (2, 3)], // lca = 0 がスキップされていますね。
-    /// );
-    /// ```
-    pub fn iter_e(&self, u: usize, v: usize) -> IterE<'_> {
-        IterE {
-            hld: self,
-            u,
-            v,
-            finish: false,
-        }
+    /// Variation of [`path_segments`](Self::path_segments) that returns the `index`.
+    pub fn path_segments_by_index(
+        &self,
+        i: usize,
+        j: usize,
+    ) -> impl Iterator<Item = (usize, usize, bool, bool)> + '_ {
+        self.path_segments(i, j)
+            .map(move |(i, j, last, reverse)| (self.index[i], self.index[j], last, reverse))
+    }
+
+    /// deprecated
+    pub fn ledacy_iter_v(&self, i: usize, j: usize) -> impl Iterator<Item = (usize, usize)> + '_ {
+        self.path_segments_by_index(i, j)
+            .map(|(i, j, _last, _revresed)| (i, j))
+    }
+
+    /// Returns the lca
+    pub fn lca(&self, i: usize, j: usize) -> usize {
+        self.path_segments(i, j)
+            .find(|&(_, _, last, _)| last)
+            .map(|(q, _, _, _)| q)
+            .unwrap()
+    }
+
+    /// Returns the distance between two vertices
+    pub fn dist(&self, i: usize, j: usize) -> usize {
+        self.path_segments_by_index(i, j)
+            .map(|(l, r, last, _)| r - l + usize::from(!last))
+            .sum()
+    }
+
+    /// `j` lies between `i` and `k`
+    pub fn between(&self, i: usize, j: usize, k: usize) -> bool {
+        let m = self.index[j];
+        self.path_segments_by_index(i, k)
+            .any(|(l, r, _, _)| (l..=r).contains(&m))
     }
 }
 
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct IterV<'a> {
+/// Iterator
+pub struct PathSegments<'a> {
     hld: &'a Hld,
-    u: usize,
-    v: usize,
-    finish: bool,
+    from: usize,
+    to: usize,
+    exhausted: bool,
 }
-impl Iterator for IterV<'_> {
-    type Item = (usize, usize);
+impl Iterator for PathSegments<'_> {
+    // i: usize         root-side,
+    // j: usize         leaf-side,
+    // last: bool       contains-lca
+    // reverse: bool    false if from --> to and i --> j coincide
+    type Item = (usize, usize, bool, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        if self.finish {
-            return None;
-        }
-        let Self { hld, u, v, .. } = self;
-        if hld.time[*u] > hld.time[*v] {
-            swap(u, v);
-        }
-        Some(if hld.head[*u] == hld.head[*v] {
-            self.finish = true;
-            (hld.time[*u], hld.time[*v])
+        (!self.exhausted).then_some(())?;
+        let Self { hld, from, to, .. } = *self;
+        let Hld {
+            index,
+            head,
+            parent,
+        } = hld;
+        #[allow(clippy::collapsible_else_if)]
+        Some(if head[from] == head[to] {
+            self.exhausted = true;
+            if index[from] < index[to] {
+                (from, to, true, false)
+            } else {
+                (to, from, true, true)
+            }
         } else {
-            let h = hld.head[*v];
-            let ans = (hld.time[h], hld.time[*v]);
-            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
-            *v = hld.parent[h];
-            ans
+            if index[from] < index[to] {
+                self.to = parent[head[to]];
+                (head[to], to, false, false)
+            } else {
+                self.from = parent[head[from]];
+                (head[from], from, false, true)
+            }
         })
     }
 }
-#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-pub struct IterE<'a> {
-    hld: &'a Hld,
-    u: usize,
-    v: usize,
-    finish: bool,
-}
-impl Iterator for IterE<'_> {
-    type Item = (usize, usize);
+impl FusedIterator for PathSegments<'_> {}
 
-    fn next(&mut self) -> Option<Self::Item> {
-        if self.finish {
-            return None;
-        }
-        let Self { hld, u, v, .. } = self;
-        if hld.time[*u] > hld.time[*v] {
-            swap(u, v);
-        }
-        if hld.head[*u] == hld.head[*v] {
-            self.finish = true;
-            if *u == *v {
-                None
-            } else {
-                Some((hld.time[*u] + 1, hld.time[*v]))
-            }
-        } else {
-            let h = hld.head[*v];
-            let ans = (hld.time[h], hld.time[*v]);
-            assert_ne!(hld.parent[h], h, "入力のグラフが非連結です。");
-            *v = hld.parent[h];
-            Some(ans)
-        }
-    }
-}
-
-fn hld(root: usize, g: &[Vec<usize>]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
+fn __build_hld(root: usize, g: &mut [Vec<usize>], parent: Vec<usize>) -> Hld {
     let n = g.len();
-    let mut size = vec![1; n];
-    let mut child = vec![Vec::<usize>::new(); n];
-    dfs(root, root, g, &mut size, &mut child);
-    let mut ord = Vec::new();
-    let mut time = vec![MAX; n];
-    let mut parent = vec![MAX; n];
-    let mut head = vec![MAX; n];
-    parent[root] = root;
+    __heavy_first(root, g);
+    let mut index = vec![usize::MAX; n];
+    let mut head = vec![usize::MAX; n];
     head[root] = root;
-    efs(root, &child, &mut time, &mut ord, &mut parent, &mut head);
-    assert!(parent.iter().all(|&x| x != MAX), "入力が非連結です。");
-    (child, [size, time, ord, parent, head])
-}
-
-fn dfs(x: usize, p: usize, g: &[Vec<usize>], size: &mut [usize], child: &mut [Vec<usize>]) {
-    let mut gx = g[x].iter().copied().filter(|&y| y != p).collect::<Vec<_>>();
-    if !gx.is_empty() {
-        for &y in &gx {
-            dfs(y, x, g, size, child);
-            size[x] += size[y];
-        }
-        let max_position = (0..gx.len()).max_by_key(|&i| size[gx[i]]).unwrap();
-        gx.swap(0, max_position);
+    __head_and_index(root, &*g, &mut head, &mut index, &mut (0..));
+    Hld {
+        parent,
+        index,
+        head,
     }
-    child[x] = gx;
 }
-
-fn efs(
-    x: usize,
+fn __head_and_index(
+    i: usize,
     g: &[Vec<usize>],
-    time: &mut [usize],
-    ord: &mut Vec<usize>,
-    parent: &mut [usize],
     head: &mut [usize],
+    index: &mut [usize],
+    current: &mut std::ops::RangeFrom<usize>,
 ) {
-    time[x] = ord.len();
-    ord.push(x);
-    if !g[x].is_empty() {
-        let h = g[x][0];
-        head[h] = head[x];
-        parent[h] = x;
-        efs(h, g, time, ord, parent, head);
-        for &y in &g[x][1..] {
-            head[y] = y;
-            parent[y] = x;
-            efs(y, g, time, ord, parent, head);
+    index[i] = current.next().unwrap();
+    for &j in &g[i] {
+        head[j] = if j == g[i][0] { head[i] } else { j };
+        __head_and_index(j, g, head, index, current);
+    }
+}
+
+fn __heavy_first(i: usize, g: &mut [Vec<usize>]) -> usize {
+    let mut max = 0;
+    let mut size = 1;
+    for e in 0..g[i].len() {
+        let csize = __heavy_first(g[i][e], g);
+        if max < csize {
+            max = csize;
+            g[i].swap(0, e);
+        }
+        size += csize;
+    }
+    size
+}
+
+fn __remove_parent(root: usize, g: &mut [Vec<usize>]) -> Vec<usize> {
+    let mut stack = vec![root];
+    let mut parent = vec![usize::MAX; g.len()];
+    parent[root] = root;
+    while let Some(i) = stack.pop() {
+        g[i].retain(|&j| parent[i] != j);
+        for &j in &g[i] {
+            parent[j] = i;
+            stack.push(j);
         }
     }
+    parent
 }
 
 #[cfg(test)]
 mod tests {
-    use super::hld;
-    use super::Hld;
-    use bfs::calc_dist;
-    use bfs::find_path;
+    use super::*;
     use itertools::Itertools;
-    use make_graph::array_make_undirected;
-    use rand::prelude::StdRng;
+    use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
-    use randtools::Tree;
-    use std::mem::swap;
-    use std::usize::MAX;
+    use std::cmp::Ordering;
+    use std::cmp::Reverse;
+    use std::collections::BinaryHeap;
+    use std::collections::HashSet;
 
-    #[test]
-    fn test_tree_parent() {
-        fn dfs(x: usize, p: usize, g: &[Vec<usize>], parent: &mut [usize]) {
-            for y in g[x].iter().copied().filter(|&y| y != p) {
-                parent[y] = x;
-                dfs(y, x, g, parent);
-            }
+    fn random_tree(rng: &mut StdRng, n: usize) -> Vec<(usize, usize)> {
+        assert_ne!(n, 0);
+        if n == 1 {
+            return Vec::new();
         }
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..12);
-            let root = rng.gen_range(0..n);
-            let g = rng.sample(Tree(n));
-            let mut parent = vec![MAX; n];
-            parent[root] = root;
-            dfs(root, root, &g, &mut parent);
-            let hld = Hld::new(root, &g);
-            assert_eq!(hld.parent(), parent.as_slice());
+        let prufer = (0..n - 2)
+            .map(|_| rng.gen_range(0..n))
+            .chain(std::iter::once(n - 1))
+            .collect::<Vec<_>>();
+        let mut count = vec![0; n];
+        for &y in &prufer {
+            count[y] += 1;
         }
+        let mut heap = (0..n)
+            .filter(|&i| count[i] == 0)
+            .map(Reverse)
+            .collect::<BinaryHeap<_>>();
+        prufer
+            .into_iter()
+            .map(|y| {
+                let Reverse(x) = heap.pop().unwrap();
+                count[y] -= 1;
+                if count[y] == 0 {
+                    heap.push(Reverse(y));
+                }
+                (x, y)
+            })
+            .collect::<Vec<_>>()
     }
 
     #[test]
-    fn test_tree_dist() {
+    fn test_fields() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..12);
+        for _ in 0..100 {
+            let n = rng.gen_range(1..=10);
+            let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let g = rng.sample(Tree(n));
-            let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &g);
-            for (i, dist_i) in dist.iter().enumerate() {
-                for (j, &d) in dist_i.iter().enumerate() {
-                    let result = hld.dist(i, j);
-                    let expected = d as usize;
-                    assert_eq!(result, expected);
+            let (hld, g) = Hld::from_edges(root, &edges);
+            let Hld {
+                index,
+                parent,
+                head,
+            } = &hld;
+
+            let mut size = vec![1; n];
+            {
+                let mut stack = vec![root];
+                let mut parent = vec![usize::MAX; n];
+                let mut sorted = Vec::new();
+                while let Some(i) = stack.pop() {
+                    sorted.push(i);
+                    for &j in &g[i] {
+                        if parent[i] == j {
+                            continue;
+                        }
+                        stack.push(j);
+                        parent[j] = i;
+                    }
+                }
+                for &i in sorted.iter().rev() {
+                    for &j in &g[i] {
+                        if parent[i] == j {
+                            continue;
+                        }
+                        size[i] += size[j];
+                    }
+                }
+                assert_eq!(size[root], n);
+            }
+
+            // validate `g`
+            assert_eq!(g.len(), n);
+            {
+                let mut edge_set = edges.iter().copied().collect::<HashSet<_>>();
+                let mut count = 0;
+                for (i, gi) in g.iter().enumerate() {
+                    for &j in gi {
+                        assert!(size[i] > size[j]);
+                        assert!(edge_set.remove(&(i, j)) || edge_set.remove(&(j, i)));
+                        count += 1;
+                    }
+                }
+                assert_eq!(count, n - 1);
+            }
+
+            // validate `parent`
+            {
+                let mut edge_set = edges.iter().copied().collect::<HashSet<_>>();
+                for (i, &p) in parent.iter().enumerate() {
+                    if i == root {
+                        assert_eq!(p, root);
+                    } else {
+                        assert!(edge_set.remove(&(i, p)) || edge_set.remove(&(p, i)));
+                    }
+                }
+            }
+
+            // validate heavy-first
+            {
+                for gi in &g {
+                    for &j in gi {
+                        assert!(size[j] <= size[gi[0]]);
+                    }
+                }
+            }
+
+            // validate head
+            {
+                for (i, gi) in g.iter().enumerate() {
+                    for &j in gi {
+                        if j == gi[0] {
+                            assert_eq!(head[j], head[i]);
+                        } else {
+                            assert_eq!(head[j], j);
+                        }
+                    }
+                }
+            }
+
+            // validate index
+            {
+                for (i, gi) in g.iter().enumerate() {
+                    let mut prev = usize::MAX;
+                    for &j in gi {
+                        if prev == usize::MAX {
+                            assert_eq!(index[i] + 1, index[j]);
+                        } else {
+                            assert!(prev < index[j]);
+                        }
+                        prev = index[j];
+                    }
                 }
             }
         }
     }
 
     #[test]
-    fn test_preorder() {
-        fn dfs(x: usize, p: usize, g: &[Vec<usize>], height: &mut [usize], parent: &mut [usize]) {
-            for y in g[x].iter().copied().filter(|&y| y != p) {
-                parent[y] = x;
-                height[y] = height[x] + 1;
-                dfs(y, x, g, height, parent);
-            }
-        }
+    fn test_path_decomposition() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..12);
+        for _ in 0..100 {
+            let n = rng.gen_range(1..=10);
+            let q = rng.gen_range(1..=10);
+            let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let g = rng.sample(Tree(n));
-            let mut height = vec![MAX; n];
-            let mut parent = vec![MAX; n];
-            height[root] = 1;
-            parent[root] = root;
-            dfs(root, root, &g, &mut height, &mut parent);
-            let hld = Hld::new(root, &g);
-            for i in 0..n {
-                for j in 0..n {
-                    // lca
-                    {
-                        let result = hld.lca(i, j);
-                        let mut i = i;
-                        let mut j = j;
-                        if height[i] > height[j] {
-                            swap(&mut i, &mut j);
-                        }
-                        while height[i] < height[j] {
-                            j = parent[j];
-                        }
-                        while i != j {
-                            i = parent[i];
-                            j = parent[j];
-                        }
-                        let expected = i;
-                        assert_eq!(result, expected);
-                    }
-                    // is_ancestor_of
-                    {
-                        let result = hld.is_ancestor_of(i, j);
-                        let expected = || -> bool {
-                            let mut j = j;
-                            while i != j {
-                                if j == parent[j] {
-                                    return false;
-                                }
-                                j = parent[j]
+            let (hld, g) = Hld::from_edges(root, &edges);
+            let Hld {
+                index,
+                parent,
+                head,
+            } = &hld;
+
+            for _ in 0..q {
+                let i = rng.gen_range(0..n);
+                let j = rng.gen_range(0..n);
+                // find path by graph searching
+                let path = {
+                    let mut next = vec![usize::MAX; n];
+                    let mut stack = vec![j];
+                    next[j] = j;
+                    while let Some(x) = stack.pop() {
+                        for y in g[x].iter().copied().chain((x != root).then_some(parent[x])) {
+                            if next[y] == usize::MAX {
+                                next[y] = x;
+                                stack.push(y);
                             }
-                            true
-                        }();
-                        assert_eq!(result, expected);
+                        }
                     }
-                    // is_adjacent
-                    {
-                        let result = hld.is_adjacent(i, j);
-                        let expected = parent[i] == j || i == parent[j];
-                        assert_eq!(result, expected);
+                    let mut path = vec![i];
+                    while path.last() != Some(&j) {
+                        let next = next[*path.last().unwrap()];
+                        path.push(next);
                     }
-                    // child_toward
-                    if i != j {
-                        let result = hld.adjacent_toward(i, j);
-                        assert!(hld.is_adjacent(result, i));
-                        hld.between(i, result, j);
+                    assert_eq!(path[0], i);
+                    assert_eq!(path[path.len() - 1], j);
+                    path
+                };
+                let mut index_to_path_position = vec![usize::MAX; n];
+                for (e, &x) in path.iter().enumerate() {
+                    index_to_path_position[index[x]] = e;
+                }
+                let path_segments = hld.path_segments(i, j).collect_vec();
+
+                // validate upper bound
+                assert!(path_segments.len() <= 1 + 2 * n.ilog2() as usize);
+
+                // validate the vertex number
+                assert_eq!(
+                    path_segments
+                        .iter()
+                        .map(|&(i, j, _, _)| index[j] - index[i] + 1)
+                        .sum::<usize>(),
+                    path.len()
+                );
+
+                // validate the vertex set
+                for &(i, j, _, _) in &path_segments {
+                    #[allow(clippy::needless_range_loop)]
+                    for k in index[i]..=index[j] {
+                        assert_ne!(index_to_path_position[k], usize::MAX);
+                    }
+                }
+
+                // validate the direction (root --> leaf)
+                for &(i, j, _, _) in &path_segments {
+                    assert!(index[i] <= index[j]);
+                }
+
+                // validate the sortedness (leafside to rootside)
+                for ((_, j, _, _), (k, _, _, _)) in path_segments.iter().copied().tuple_windows() {
+                    assert!(index[j] >= index[k]);
+                }
+
+                // validate last
+                for (e, &(_, _, last, _)) in path_segments.iter().enumerate() {
+                    assert_eq!(last, (e == path_segments.len() - 1));
+                }
+
+                // validate reverse
+                for &(i, j, _, reverse) in &path_segments {
+                    match index_to_path_position[index[i]].cmp(&index_to_path_position[index[j]]) {
+                        Ordering::Less => assert!(!reverse),
+                        Ordering::Equal => (),
+                        Ordering::Greater => assert!(reverse),
+                    }
+                }
+
+                // validate greedyness
+                {
+                    for &(i, _, last, _) in &path_segments {
+                        if !last {
+                            assert_eq!(head[i], i);
+                        }
                     }
                 }
             }
@@ -582,94 +454,67 @@ mod tests {
     }
 
     #[test]
-    fn test_tree_between() {
+    fn test_queries() {
         let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..12);
+        for _ in 0..100 {
+            let n = rng.gen_range(1..=10);
+            let q = rng.gen_range(1..=10);
+            let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let g = rng.sample(Tree(n));
-            let dist = (0..n).map(|i| calc_dist(i, &g)).collect_vec();
-            let hld = Hld::new(root, &g);
-            for i in 0..n {
-                for j in 0..n {
-                    for k in 0..n {
-                        let result = hld.between(i, j, k);
-                        let expected = dist[i][j] + dist[j][k] == dist[i][k];
-                        assert_eq!(result, expected);
+            let (hld, g) = Hld::from_edges(root, &edges);
+            let Hld { index, parent, .. } = &hld;
+
+            let mut sorted = (0..n).collect_vec();
+            sorted.sort_by_key(|&i| index[i]);
+            let mut depth = vec![0; n];
+            for &i in &sorted {
+                for &j in &g[i] {
+                    depth[j] = depth[i] + 1;
+                }
+            }
+
+            // validate lca
+            for _ in 0..q {
+                let i = rng.gen_range(0..n);
+                let j = rng.gen_range(0..n);
+                let result = hld.lca(i, j);
+                let expected = {
+                    let mut i = i;
+                    let mut j = j;
+                    while depth[i] < depth[j] {
+                        j = parent[j];
                     }
-                }
+                    while depth[i] > depth[j] {
+                        i = parent[i];
+                    }
+                    while i != j {
+                        i = parent[i];
+                        j = parent[j];
+                    }
+                    i
+                };
+                assert_eq!(result, expected);
+            }
+
+            // validate dist
+            for _ in 0..q {
+                let i = rng.gen_range(0..n);
+                let j = rng.gen_range(0..n);
+                let result = hld.dist(i, j);
+                let q = hld.lca(i, j);
+                let expected = depth[i] + depth[j] - 2 * depth[q];
+                assert_eq!(result, expected);
+            }
+
+            // validate betweenness
+            for _ in 0..q {
+                let i = rng.gen_range(0..n);
+                let j = rng.gen_range(0..n);
+                let k = rng.gen_range(0..n);
+                let result = hld.between(i, j, k);
+                let expected = hld.dist(i, j) + hld.dist(j, k) == hld.dist(i, k);
+                assert_eq!(result, expected);
             }
         }
-    }
-
-    #[test]
-    fn test_tree_path_sum() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..20 {
-            let n = rng.gen_range(1..12);
-            let root = rng.gen_range(0..n);
-            let orig_g = rng.sample(Tree(n));
-            let g = orig_g.clone();
-            let hld = Hld::new(root, &g);
-            let a = (0..n).map(|i| 1u64 << i).collect::<Vec<_>>();
-            let a_sorted = hld.ord.iter().map(|&i| a[i]).collect::<Vec<_>>();
-            for i in 0..n {
-                for j in 0..n {
-                    let result = hld
-                        .iter_v(i, j)
-                        .map(|(l, r)| a_sorted[l..=r].iter().sum::<u64>())
-                        .sum::<u64>();
-                    let path = find_path(i, j, &orig_g).unwrap();
-                    let expected = path.iter().map(|&i| a[i]).sum::<u64>();
-                    assert_eq!(result, expected);
-                }
-            }
-        }
-    }
-
-    #[test]
-    fn test_hand_4vtx() {
-        let n = 4;
-        let edges = [[0, 1], [0, 2], [2, 3]];
-        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
-        assert_eq!(size, vec![4, 1, 2, 1]);
-        assert_eq!(g, vec![vec![2, 1], Vec::new(), vec![3], Vec::new()]);
-        assert_eq!(time, vec![0, 3, 1, 2]);
-        assert_eq!(ord, vec![0, 2, 3, 1]);
-        assert_eq!(parent, vec![0, 0, 0, 2]);
-        assert_eq!(head, vec![0, 1, 0, 0]);
-    }
-
-    #[test]
-    fn test_hand_9vtx() {
-        let n = 9;
-        let edges = [[0, 2], [0, 3], [1, 2], [2, 5], [3, 8], [4, 6], [5, 6], [
-            5, 7,
-        ]];
-        let (g, [size, time, ord, parent, head]) = test_dfs_efs_impl(n, &edges);
-        assert_eq!(g, vec![
-            vec![2, 3], // 0
-            Vec::new(), // 1
-            vec![5, 1], // 2
-            vec![8],    // 3
-            Vec::new(), // 4
-            vec![6, 7], // 5
-            vec![4],    // 6
-            Vec::new(), // 7
-            Vec::new(), // 8
-        ]);
-        assert_eq!(size, vec![9, 1, 6, 2, 1, 4, 2, 1, 1]);
-        assert_eq!(time, vec![0, 6, 1, 7, 4, 2, 3, 5, 8]);
-        assert_eq!(ord, vec![0, 2, 5, 6, 4, 7, 1, 3, 8]);
-        assert_eq!(parent, vec![0, 2, 0, 0, 6, 2, 5, 5, 3]);
-        assert_eq!(head, vec![0, 1, 0, 3, 0, 0, 0, 7, 3]);
-    }
-
-    #[allow(clippy::type_complexity)]
-    fn test_dfs_efs_impl(n: usize, edges: &[[usize; 2]]) -> (Vec<Vec<usize>>, [Vec<usize>; 5]) {
-        assert_eq!(edges.len() + 1, n);
-        let r = 0;
-        let g = array_make_undirected(n, edges);
-        hld(r, &g)
     }
 }
