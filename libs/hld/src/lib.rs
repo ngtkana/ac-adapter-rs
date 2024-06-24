@@ -249,7 +249,7 @@ mod tests {
     fn test_fields() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
-            let n = rng.gen_range(1..=10);
+            let n = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
             let (hld, g) = Hld::from_edges(root, &edges);
@@ -355,8 +355,8 @@ mod tests {
     fn test_path_decomposition() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
-            let n = rng.gen_range(1..=10);
-            let q = rng.gen_range(1..=10);
+            let n = rng.gen_range(1..=100);
+            let q = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
             let (hld, g) = Hld::from_edges(root, &edges);
@@ -457,8 +457,8 @@ mod tests {
     fn test_queries() {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..100 {
-            let n = rng.gen_range(1..=10);
-            let q = rng.gen_range(1..=10);
+            let n = rng.gen_range(1..=100);
+            let q = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
             let (hld, g) = Hld::from_edges(root, &edges);
