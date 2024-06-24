@@ -803,7 +803,7 @@
     </span><span class="kw">fn </span>test_fields() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
+            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
             <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
@@ -909,8 +909,8 @@
     </span><span class="kw">fn </span>test_path_decomposition() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
-            <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
+            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
+            <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
             <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
@@ -1011,8 +1011,8 @@
     </span><span class="kw">fn </span>test_queries() {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">100 </span>{
-            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
-            <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">10</span>);
+            <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
+            <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
             <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
