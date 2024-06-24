@@ -120,8 +120,13 @@ impl Iterator for PathSegments<'_> {
     type Item = (usize, usize, bool, bool);
 
     fn next(&mut self) -> Option<Self::Item> {
-        (!self.exhausted).then_some(())?;
-        let Self { hld, from, to, .. } = *self;
+        let Self {
+            hld,
+            from,
+            to,
+            exhausted,
+        } = *self;
+        (!exhausted).then_some(())?;
         let Hld {
             index,
             head,
