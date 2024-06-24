@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Hld","IterE","IterV"]};
+window.SIDEBAR_ITEMS = {"struct":["Hld","PathSegments"]};
