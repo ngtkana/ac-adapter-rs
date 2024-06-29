@@ -121,9 +121,9 @@ pub fn two_way_tree_fold<O: Op>(
         }
     }
     TwoWayTreeFoldResult {
+        upper,
         lower,
         branch,
-        upper,
     }
 }
 
