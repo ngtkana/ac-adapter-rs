@@ -1,23 +1,24 @@
 //! 2-way tree DP
 //!
-//! # Notation
+//! # Graph-theoritic notation
 //!
 //! - $V$: vertex type
 //! - $T$: (rooted) tree type
 //! - $F$: (rooted) forest type (with ordering of the trees)
 //!
-//! # Forest Operations
+//! # Algebraic notation
 //!
-//! | | type | description |
+//! $$
+//! \phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
+//! $$
+//!
+//! # Operations
+//!
+//! | | graph-theoritic | algebraic |
 //! | - | - | - |
-//! | `up` | $F \times V \to T \to F$ | join by a root |
-//! | `mul` | $F \times F \to F$ | concatenate two forests |
-//! | `identity` | $* \to F$ | empty forest |
-//!
-//! # Parameters
-//!
-//! - `g[i]`: children of `i`
-//! - `sorted`: a permutation of the vertices with "parent-first" condition
+//! | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
+//! | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
+//! | `identity` | $* \to F$: empty forest | identity of $M$ |
 //!
 //! # Return value
 //!
@@ -26,20 +27,22 @@
 //! | `upper` | $f(\phi(T_i^\triangle))$ |
 //! | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
 //! | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
-//!
-//! where
-//!
-//! $$
-//! \phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
-//! $$
 
-/// Operations
+/// # Operations
 ///
-/// # Notation
+/// | | graph-theoritic | algebraic |
+/// | - | - | - |
+/// | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
+/// | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
+/// | `identity` | $* \to F$: empty forest | identity of $M$ |
 ///
-/// - $V$: vertex type
-/// - $T$: (rooted) tree type
-/// - $F$: (rooted) forest type (with ordering of the trees)
+/// # Return value
+///
+/// | | description |
+/// | - | - |
+/// | `upper` | $f(\phi(T_i^\triangle))$ |
+/// | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
+/// | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
 pub trait Op: Sized {
     /// A monoid $M$.
     type Value: Clone;
@@ -75,10 +78,13 @@ pub struct TwoWayTreeFoldResult<T> {
 
 /// Performs 2-way tree DP
 ///
-/// # Parameters
+/// # Operations
 ///
-/// - `g[i]`: children of `i`
-/// - `sorted`: a permutation of the vertices with "parent-first" condition
+/// | | graph-theoritic | algebraic |
+/// | - | - | - |
+/// | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
+/// | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
+/// | `identity` | $* \to F$: empty forest | identity of $M$ |
 ///
 /// # Return value
 ///
@@ -87,12 +93,6 @@ pub struct TwoWayTreeFoldResult<T> {
 /// | `upper` | $f(\phi(T_i^\triangle))$ |
 /// | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
 /// | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
-///
-/// where
-///
-/// $$
-/// \phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
-/// $$
 pub fn two_way_tree_fold<O: Op>(
     o: &O,
     g: &[Vec<usize>],
