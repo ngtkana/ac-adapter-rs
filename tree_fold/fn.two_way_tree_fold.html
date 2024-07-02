@@ -37,19 +37,14 @@
     g: &amp;[<a class="struct" href="https://doc.rust-lang.org/1.70.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.70.0/std/primitive.usize.html">usize</a>&gt;],
     sorted: &amp;[<a class="primitive" href="https://doc.rust-lang.org/1.70.0/std/primitive.usize.html">usize</a>]
 ) -&gt; <a class="struct" href="struct.TwoWayTreeFoldResult.html" title="struct tree_fold::TwoWayTreeFoldResult">TwoWayTreeFoldResult</a>&lt;O::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type tree_fold::Op::Value">Value</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Performs 2-way tree DP</p>
-<h2 id="parameters"><a href="#parameters">Parameters</a></h2>
-<ul>
-<li><code>g[i]</code>: children of <code>i</code></li>
-<li><code>sorted</code>: a permutation of the vertices with “parent-first” condition</li>
-</ul>
-<h2 id="return-value"><a href="#return-value">Return value</a></h2><div><table><thead><tr><th></th><th>description</th></tr></thead><tbody>
+<h2 id="operations"><a href="#operations">Operations</a></h2><div><table><thead><tr><th></th><th>graph-theoritic</th><th>algebraic</th></tr></thead><tbody>
+<tr><td><code>up</code></td><td>$F \times V \to T \to F$: join by a root</td><td>$f \circ g$</td></tr>
+<tr><td><code>mul</code></td><td>$F \times F \to F$: concatenate two forests</td><td>product of $M$</td></tr>
+<tr><td><code>identity</code></td><td>$* \to F$: empty forest</td><td>identity of $M$</td></tr>
+</tbody></table>
+</div><h2 id="return-value"><a href="#return-value">Return value</a></h2><div><table><thead><tr><th></th><th>description</th></tr></thead><tbody>
 <tr><td><code>upper</code></td><td>$f(\phi(T_i^\triangle))$</td></tr>
 <tr><td><code>lower</code></td><td>$\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$</td></tr>
 <tr><td><code>branch</code></td><td>$f(\phi(T_i^\blacktriangledown))$</td></tr>
 </tbody></table>
-</div>
-<p>where</p>
-<p>$$
-\phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
-$$</p>
-</div></details></section></div></main></body></html>
+</div></div></details></section></div></main></body></html>
