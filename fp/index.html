@@ -49,9 +49,9 @@
 <span class="kw">let </span>f = Factorial::&lt;<span class="number">998244353</span>&gt;::new(<span class="number">10</span>);
 <span class="macro">assert_eq!</span>(f.fact(<span class="number">5</span>), <span class="macro">fp!</span>(<span class="number">120</span>));
 <span class="macro">assert_eq!</span>(f.inv_fact(<span class="number">5</span>), <span class="macro">fp!</span>(<span class="number">120</span>).inv());
-<span class="macro">assert_eq!</span>(f.perm(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">60</span>));
-<span class="macro">assert_eq!</span>(f.comb(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">10</span>));
-<span class="macro">assert_eq!</span>(f.comb_with_reputation(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">35</span>));</code></pre></div>
+<span class="macro">assert_eq!</span>(f.falling(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">60</span>));
+<span class="macro">assert_eq!</span>(f.binom(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">10</span>));
+<span class="macro">assert_eq!</span>(f.multiset_number(<span class="number">5</span>, <span class="number">3</span>), <span class="macro">fp!</span>(<span class="number">35</span>));</code></pre></div>
 <h3 id="convolution-by-fast-fourier-transform-fft"><a href="#convolution-by-fast-fourier-transform-fft">Convolution by Fast Fourier transform (FFT)</a></h3>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::Fp;
 <span class="kw">use </span>fp::fps_mul;

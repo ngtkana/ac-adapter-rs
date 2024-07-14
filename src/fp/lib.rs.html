@@ -518,9 +518,9 @@
 //! let f = Factorial::&lt;998244353&gt;::new(10);
 //! assert_eq!(f.fact(5), fp!(120));
 //! assert_eq!(f.inv_fact(5), fp!(120).inv());
-//! assert_eq!(f.perm(5, 3), fp!(60));
-//! assert_eq!(f.comb(5, 3), fp!(10));
-//! assert_eq!(f.comb_with_reputation(5, 3), fp!(35));
+//! assert_eq!(f.falling(5, 3), fp!(60));
+//! assert_eq!(f.binom(5, 3), fp!(10));
+//! assert_eq!(f.multiset_number(5, 3), fp!(35));
 //! ```
 //!
 //! ## Convolution by Fast Fourier transform (FFT)
