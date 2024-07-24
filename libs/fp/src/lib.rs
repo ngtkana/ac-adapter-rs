@@ -132,6 +132,23 @@ impl<const P: u64> Fp<P> {
         self.value
     }
 
+    /// $(-1) ^ e$.
+    /// # Examples
+    /// ```
+    /// use fp::Fp;
+    /// const P: u64 = 998244353;
+    /// assert_eq!(Fp::<P>::m1pow(0), Fp::new(1));
+    /// assert_eq!(Fp::<P>::m1pow(1), Fp::from(-1));
+    /// assert_eq!(Fp::<P>::m1pow(2), Fp::new(1));
+    /// ```
+    pub const fn m1pow(exp: usize) -> Self {
+        match exp % 2 {
+            0 => Self { value: 1 },
+            1 => Self { value: P - 1 },
+            _ => unreachable!(),
+        }
+    }
+
     /// Returns the multiplicative inverse.
     /// # Examples
     /// ```
