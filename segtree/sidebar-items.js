@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Dense2dEntry","Dense2dSegtree","Entry","Segtree","Sparse2dSegtree","SparseSegtree"],"trait":["Op"]};
+window.SIDEBAR_ITEMS = {"struct":["Dense2dEntry","Dense2dSegtree","Entry","Segtree","SegtreeWithCompression","Sparse2dSegtree"],"trait":["Op"]};
