@@ -89,7 +89,7 @@ pub trait Map<'a>: 'a {
     fn map_iter(self) -> Self::I;
 }
 
-impl<'a, K, V> Map<'a> for &'a HashMap<K, V> {
+impl<'a, K, V, S> Map<'a> for &'a HashMap<K, V, S> {
     type I = collections::hash_map::Iter<'a, K, V>;
     type K = K;
     type V = V;
