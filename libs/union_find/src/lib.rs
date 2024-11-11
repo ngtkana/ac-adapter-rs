@@ -184,7 +184,7 @@ impl<O: Op> UnionFind<O> {
 
     pub fn from_values(values: Vec<O::Value>) -> Self {
         let n = values.len();
-        assert!(n <= std::usize::MAX / 2);
+        assert!(n <= usize::MAX / 2);
         Self {
             parent_or_size: vec![-1; n],
             values,

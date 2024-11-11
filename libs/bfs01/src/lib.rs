@@ -8,7 +8,7 @@ pub enum Weight {
 
 /// 一点からの距離配列を作ります。
 pub fn calc_dist(s: usize, g: &[Vec<(usize, Weight)>]) -> Vec<u32> {
-    let mut dist = vec![std::u32::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
     dist[s] = 0;
     let mut queue = VecDeque::from(vec![s]);
     while let Some(x) = queue.pop_front() {
@@ -32,8 +32,8 @@ pub fn calc_dist(s: usize, g: &[Vec<(usize, Weight)>]) -> Vec<u32> {
 
 /// 一点からの距離配列と、前者配列を作ります。始点の前者は自分自身です。
 pub fn calc_dist_restore(s: usize, g: &[Vec<(usize, Weight)>]) -> (Vec<u32>, Vec<usize>) {
-    let mut dist = vec![std::u32::MAX; g.len()];
-    let mut prv = vec![std::usize::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
+    let mut prv = vec![usize::MAX; g.len()];
     prv[s] = s;
     dist[s] = 0;
     let mut queue = VecDeque::from(vec![s]);
@@ -124,8 +124,8 @@ mod tests {
     fn validate_dist_prv(dist: &[u32], prv: &[usize], s: usize) {
         assert_eq!(prv[s], s);
         prv.iter().copied().enumerate().for_each(|(x, p)| {
-            if p == std::usize::MAX {
-                assert_eq!(dist[x], std::u32::MAX);
+            if p == usize::MAX {
+                assert_eq!(dist[x], u32::MAX);
             } else {
                 assert!(dist[p] == dist[x] || dist[p] + 1 == dist[x])
             }

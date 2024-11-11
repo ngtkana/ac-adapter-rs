@@ -33,12 +33,12 @@ pub fn tree_diamter_restore(g: &[Vec<usize>]) -> (Vec<usize>, u32) {
 
 /// 一点からの距離配列を作ります。
 pub fn calc_dist(start: usize, g: &[Vec<usize>]) -> Vec<u32> {
-    let mut dist = vec![std::u32::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
     dist[start] = 0;
     let mut queue = VecDeque::from(vec![start]);
     while let Some(x) = queue.pop_front() {
         for &y in &g[x] {
-            if dist[y] == std::u32::MAX {
+            if dist[y] == u32::MAX {
                 dist[y] = dist[x] + 1;
                 queue.push_back(y);
             }
@@ -49,14 +49,14 @@ pub fn calc_dist(start: usize, g: &[Vec<usize>]) -> Vec<u32> {
 
 /// 一点からの距離配列と、前者配列を作ります。始点の前者は自分自身です。
 pub fn calc_dist_restore(start: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize>) {
-    let mut dist = vec![std::u32::MAX; g.len()];
-    let mut prv = vec![std::usize::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
+    let mut prv = vec![usize::MAX; g.len()];
     dist[start] = 0;
     prv[start] = start;
     let mut queue = VecDeque::from(vec![start]);
     while let Some(x) = queue.pop_front() {
         for &y in &g[x] {
-            if dist[y] == std::u32::MAX {
+            if dist[y] == u32::MAX {
                 dist[y] = dist[x] + 1;
                 prv[y] = x;
                 queue.push_back(y);
@@ -69,7 +69,7 @@ pub fn calc_dist_restore(start: usize, g: &[Vec<usize>]) -> (Vec<u32>, Vec<usize
 /// start から end が到達可能ならば最短経路の頂点列を返し、不能ならば `None` を返します。
 pub fn find_path(start: usize, end: usize, g: &[Vec<usize>]) -> Option<Vec<usize>> {
     let (dist, prv) = calc_dist_restore(start, g);
-    if dist[end] == std::u32::MAX {
+    if dist[end] == u32::MAX {
         None
     } else {
         let mut res = vec![end];
@@ -124,7 +124,7 @@ mod tests {
             if let Some(path) = path {
                 validate_path(&dist, &path, start, end);
             } else {
-                assert_eq!(dist[end], std::u32::MAX);
+                assert_eq!(dist[end], u32::MAX);
             }
         }
     }
@@ -143,7 +143,7 @@ mod tests {
     fn validate_prv(dist: &[u32], prv: &[usize], start: usize) {
         assert_eq!(prv[start], start);
         (0..dist.len())
-            .filter(|&i| i != start && prv[i] != std::usize::MAX)
+            .filter(|&i| i != start && prv[i] != usize::MAX)
             .for_each(|i| assert_eq!(dist[prv[i]] + 1, dist[i]))
     }
 
@@ -185,7 +185,7 @@ mod tests {
 
     fn brute_tree_diameter(g: &[Vec<usize>]) -> ([usize; 2], u32) {
         let n = g.len();
-        let mut dist = vec![vec![std::u32::MAX; n]; n];
+        let mut dist = vec![vec![u32::MAX; n]; n];
         (0..n).for_each(|i| dist[i][i] = 0);
         g.iter()
             .enumerate()
@@ -202,7 +202,7 @@ mod tests {
                 }
             }
         }
-        assert!(dist.iter().flatten().all(|&x| x != std::u32::MAX));
+        assert!(dist.iter().flatten().all(|&x| x != u32::MAX));
         dist.iter()
             .enumerate()
             .flat_map(|(i, v)| v.iter().copied().enumerate().map(move |(j, x)| (i, j, x)))
