@@ -37,8 +37,8 @@
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
 //!   - コメント: 様々な解法があるよう。
-//!   [こちらのブログ](https://blog.hamayanhamayan.com/entry/2017/06/13/103254)
-//!   に各種手法お名前だけ言及ありです。
+//!     [こちらのブログ](https://blog.hamayanhamayan.com/entry/2017/06/13/103254)
+//!     に各種手法お名前だけ言及ありです。
 //! - yukicoder No.738 - 平らな農地
 //!   - 問題: <https://yukicoder.me/problems/no/738>
 //!   - 提出 (895 ms): <https://yukicoder.me/submissions/727730>
@@ -46,10 +46,10 @@
 //!   - 難易度: そこそこ。
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq),
-//!   [`spans`](WaveletMatrix::spans)
+//!     [`spans`](WaveletMatrix::spans)
 //!   - コメント: ヒープ４本でも解けてそちらのほうが一般的？
-//!   ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
-//!   （[自由度の高いメソッド `spans` が活躍します。](WaveletMatrix::spans)）
+//!     ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
+//!     （[自由度の高いメソッド `spans` が活躍します。](WaveletMatrix::spans)）
 //! - yukicoder No.919 - You Are A Project Manager
 //!   - 問題: <https://yukicoder.me/problems/no/919>
 //!   - 提出 (256 ms): <https://yukicoder.me/submissions/727758>
@@ -57,7 +57,7 @@
 //!   - 難易度: そこそこ。
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq),
-//!   [`spans`](WaveletMatrix::spans)
+//!     [`spans`](WaveletMatrix::spans)
 //!   - コメント: Mo でもできて、それもそれできれいです。
 //! - Library Checker - Range Kth Smallest
 //!   - 問題: <https://judge.yosupo.jp/problem/range_kth_smallest>
@@ -73,7 +73,7 @@
 //!   - 難易度: 簡単。
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`quantile`](WaveletMatrix::quantile),
-//!   [`range_freq`](WaveletMatrix::range_freq)
+//!     [`range_freq`](WaveletMatrix::range_freq)
 //!   - 他の解法:
 //!     - ヒープ４本 (90 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242>
 //!   - コメント: ヒープ４本のほうが楽です。

@@ -5,7 +5,6 @@
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fmt::Debug;
-use std::i64::MAX;
 use std::mem::replace;
 
 /// [`MinCostFlow::get_edge`] の戻り値型
@@ -20,7 +19,7 @@ pub struct Edge {
 impl Debug for Edge {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         fn fmt_i64(x: i64) -> String {
-            if x == MAX {
+            if x == i64::MAX {
                 "_".to_owned()
             } else {
                 x.to_string()
@@ -67,7 +66,7 @@ struct __InternalEdge {
 /// mcf.add_edge(0, 2, 1, 20);
 /// mcf.add_edge(1, 2, 1, 10);
 ///
-/// let slope = mcf.slope(0, 2, std::i64::MAX);
+/// let slope = mcf.slope(0, 2, i64::MAX);
 /// assert_eq!(slope, vec![(0, 0), (1, 20), (2, 50)]);
 /// ```
 ///
@@ -151,7 +150,7 @@ impl MinCostFlow {
         let mut slope = vec![(0, 0)];
         let mut flow = 0;
         let mut cost = 0;
-        let mut prev_price = MAX;
+        let mut prev_price = i64::MAX;
         while flow < flow_limit {
             let mut dual = vec![0; n];
             let mut used = vec![false; n];
@@ -202,7 +201,7 @@ impl MinCostFlow {
     ) -> bool {
         let mut heap = BinaryHeap::<(Reverse<i64>, usize)>::new();
         heap.push((Reverse(0), source));
-        let mut dist = vec![MAX; self.g.len()];
+        let mut dist = vec![i64::MAX; self.g.len()];
         dist[source] = 0;
         while let Some((Reverse(dx), x)) = heap.pop() {
             used[x] = true;
@@ -236,7 +235,6 @@ impl MinCostFlow {
 #[cfg(test)]
 mod tests {
     use super::MinCostFlow;
-    use std::i64::MAX;
 
     #[test]
     fn test_mincost_flow() {
@@ -255,7 +253,7 @@ mod tests {
         assert_eq!(graph.add_edge(0, 1, 1, 1), 0);
         assert_eq!(graph.add_edge(1, 2, 1, 0), 1);
         assert_eq!(graph.add_edge(0, 2, 2, 1), 2);
-        assert_eq!(&graph.slope(0, 2, MAX), &[(0, 0), (3, 3)]);
+        assert_eq!(&graph.slope(0, 2, i64::MAX), &[(0, 0), (3, 3)]);
     }
 
     #[test]
@@ -263,6 +261,6 @@ mod tests {
         let mut graph = MinCostFlow::new(3);
         assert_eq!(graph.add_edge(0, 1, 1, 1), 0);
         assert_eq!(graph.add_edge(1, 2, 1, 0), 1);
-        assert_eq!(graph.slope(0, 2, MAX), &[(0, 0), (1, 1)]);
+        assert_eq!(graph.slope(0, 2, i64::MAX), &[(0, 0), (1, 1)]);
     }
 }

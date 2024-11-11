@@ -11,8 +11,7 @@ use super::SieveBase;
 /// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
 ///
 /// - Construction: Θ ( n / lg lg n )
-/// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than
-/// n.
+/// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than n.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sieve {
     base: SieveBase<sieve_kind::Boolean>,

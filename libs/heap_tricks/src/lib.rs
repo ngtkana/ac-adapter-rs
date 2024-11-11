@@ -52,7 +52,7 @@
 //!   - 難易度: 易しめ。
 //!   - 制約: N + Q ≤ 70,000
 //!   - コメント: キーに [`Copy`] を課しているので [`String`] がくるとかなり
-//!   めんどくさいことに！！ むーん……
+//!     めんどくさいことに！！ むーん……
 //!   - 使う構造体: [`DoubleHeap`] （左右移動の明示的追跡あり）
 //! - yukicoder No.649 - ここでちょっとQK！
 //!   - 問題: <https://yukicoder.me/problems/no/649>
@@ -75,7 +75,7 @@
 //!   - 提出 (211 ms): <https://atcoder.jp/contests/abc127/submissions/28290935>
 //!   - 出題日: 2019-05-25
 //!   - 難易度: 易しめ。`heap_slope_trick` クレートがあるので
-//!   そちらを使ったほうが楽です。
+//!     そちらを使ったほうが楽です。
 //!   - 制約: Q ≤ 200,000
 //!   - 使う構造体: [`DoubleHeap`] （`heap_slope_trick` クレートを使ったほうがよいです。)
 //! - ABC 128 E - Roadwork
@@ -93,8 +93,8 @@
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`DoubleHeap`]
 //!   - 難易度: Mo 書かないといけないので先延ばしに……
-//!   ウェーブレット行列で解く問題を Mo で無理やりクエリ
-//!   先読みしているイメージですかね。
+//!     ウェーブレット行列で解く問題を Mo で無理やりクエリ
+//!     先読みしているイメージですかね。
 //! - ABC 170 E - Smart Infants
 //!   - 問題: <https://atcoder.jp/contests/abc170/tasks/abc170_e>
 //!   - 提出 (163 ms): <https://atcoder.jp/contests/abc170/submissions/28296739>
@@ -106,7 +106,7 @@
 //!     - C++ の `std::multiset` (488 ms): <https://atcoder.jp/contests/abc170/submissions/14328933>
 //!     - AVL 木 (2477 ms): <https://atcoder.jp/contests/abc170/submissions/24165251>
 //!   - コメント: これフルクラッチで書くとけっこう混乱するので、
-//!   ライブラリがるとかなり助かります。
+//!     ライブラリがるとかなり助かります。
 //! - OUPC 2020 D - 仲良しスライム
 //!   - 問題: <https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D>
 //!   - 提出 (90 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242>
@@ -117,9 +117,9 @@
 //!   - 他の解法:
 //!     - ウェーブレット行列 (440 ms): <https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171281>
 //!   - コメント: A:B 重み付き中央値クエリ。平衡基準を抽象化して良かった〜〜
-//!   これもウェーブレット行列のほうが思いつきやすそうですが、
-//!   ウェーブレット行列ライブラリの累積和系の機能が使いづらい（あの！？）ので、
-//!   実装は [`DoubleHeap`] を使うほうが楽です。
+//!     これもウェーブレット行列のほうが思いつきやすそうですが、
+//!     ウェーブレット行列ライブラリの累積和系の機能が使いづらい（あの！？）ので、
+//!     実装は [`DoubleHeap`] を使うほうが楽です。
 //! - ABC 213 G - Game on Tree 2
 //!   - 問題: <https://atcoder.jp/contests/abc218/tasks/abc218_g>
 //!   - 提出 (115 ms): <https://atcoder.jp/contests/abc218/submissions/28295770>
@@ -128,8 +128,8 @@
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`DoubleHeap`] (削除も使います。)
 //!   - コメント: 本番二分探索を考えてうまく行かず、
-//!   後日 [`std::collections::BTreeMap`] で multiset もどきを作って
-//!   なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
+//!     後日 [`std::collections::BTreeMap`] で multiset もどきを作って
+//!     なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
 //! - yukicoder No.1786 - Maximum Suffix Median (Online)
 //!   - 問題: <https://yukicoder.me/problems/no/1786>
 //!   - 提出 TODO
@@ -223,10 +223,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
-            .field("elm", &[
-                self.collect_left_sorted_vec(),
-                self.collect_right_sorted_vec(),
-            ])
+            .field(
+                "elm",
+                &[
+                    self.collect_left_sorted_vec(),
+                    self.collect_right_sorted_vec(),
+                ],
+            )
             .field("handler", &self.handler)
             .finish()
     }

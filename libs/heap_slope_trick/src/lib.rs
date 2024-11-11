@@ -100,10 +100,10 @@ impl HeapSlopeTrick {
         [
             self.small
                 .peek()
-                .map_or(std::i64::MIN, |&x| x + self.shift_small),
+                .map_or(i64::MIN, |&x| x + self.shift_small),
             self.large
                 .peek()
-                .map_or(std::i64::MAX, |&Reverse(x)| x + self.shift_large),
+                .map_or(i64::MAX, |&Reverse(x)| x + self.shift_large),
         ]
     }
 
@@ -345,13 +345,13 @@ mod tests {
             let start = self.values.iter().position(|&y| y == min).unwrap();
             let end = n - 1 - self.values.iter().rev().position(|&y| y == min).unwrap();
             [
-                if start == 0 || self.values[start - 1] == std::i64::MAX {
-                    std::i64::MIN
+                if start == 0 || self.values[start - 1] == i64::MAX {
+                    i64::MIN
                 } else {
                     XMIN + start as i64
                 },
-                if end == n - 1 || self.values[end + 1] == std::i64::MAX {
-                    std::i64::MAX
+                if end == n - 1 || self.values[end + 1] == i64::MAX {
+                    i64::MAX
                 } else {
                     XMIN + end as i64
                 },
@@ -365,14 +365,14 @@ mod tests {
         fn add_const(&mut self, c: i64) {
             self.values
                 .iter_mut()
-                .for_each(|x| *x = if *x == std::i64::MAX { std::i64::MAX } else { *x + c });
+                .for_each(|x| *x = if *x == i64::MAX { i64::MAX } else { *x + c });
         }
 
         fn add_fn(&mut self, f: impl Fn(i64) -> i64) {
             for x in XMIN..=XMAX {
                 let i = (x - XMIN) as usize;
                 let orig = self.values[i];
-                self.values[i] = if orig == std::i64::MAX { std::i64::MAX } else { orig + f(x) };
+                self.values[i] = if orig == i64::MAX { i64::MAX } else { orig + f(x) };
             }
         }
 
@@ -406,14 +406,12 @@ mod tests {
                     let a = -a as usize;
                     self.values.rotate_left(a);
                     let n = self.values.len();
-                    self.values[n - a..]
-                        .iter_mut()
-                        .for_each(|x| *x = std::i64::MAX);
+                    self.values[n - a..].iter_mut().for_each(|x| *x = i64::MAX);
                 }
                 Ordering::Greater => {
                     let a = a as usize;
                     self.values.rotate_right(a);
-                    self.values[..a].iter_mut().for_each(|x| *x = std::i64::MAX);
+                    self.values[..a].iter_mut().for_each(|x| *x = i64::MAX);
                 }
                 Ordering::Equal => (),
             }
@@ -426,7 +424,7 @@ mod tests {
                     (((i - b).max(0).min(n) as usize)..((i - a + 1).min(n).max(0) as usize))
                         .map(|j| self.values[j])
                         .min()
-                        .unwrap_or(std::i64::MAX)
+                        .unwrap_or(i64::MAX)
                 })
                 .collect();
         }
@@ -434,7 +432,7 @@ mod tests {
         fn get_tilt_minimum(&self) -> i64 {
             self.values
                 .windows(2)
-                .filter(|v| v[0] != std::i64::MAX && v[1] != std::i64::MAX)
+                .filter(|v| v[0] != i64::MAX && v[1] != i64::MAX)
                 .map(|v| v[1] - v[0])
                 .min()
                 .unwrap()
@@ -443,7 +441,7 @@ mod tests {
         fn get_tilt_maximum(&self) -> i64 {
             self.values
                 .windows(2)
-                .filter(|v| v[0] != std::i64::MAX && v[1] != std::i64::MAX)
+                .filter(|v| v[0] != i64::MAX && v[1] != i64::MAX)
                 .map(|v| v[1] - v[0])
                 .max()
                 .unwrap()
@@ -453,9 +451,7 @@ mod tests {
             self.values
                 .windows(3)
                 .enumerate()
-                .filter(|(_, v)| {
-                    v[0] != std::i64::MAX && v[2] != std::i64::MAX && v[0] + v[2] > v[1] * 2
-                })
+                .filter(|(_, v)| v[0] != i64::MAX && v[2] != i64::MAX && v[0] + v[2] > v[1] * 2)
                 .map(|(i, v)| [XMIN + 1 + i as i64, v[1]])
                 .collect()
         }

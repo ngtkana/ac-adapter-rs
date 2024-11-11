@@ -11,8 +11,7 @@ use super::SieveBase;
 /// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
 ///
 /// - Construction: O ( n lg n )
-/// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
-/// multiple divisors counted repeatedly.
+/// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with multiple divisors counted repeatedly.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
