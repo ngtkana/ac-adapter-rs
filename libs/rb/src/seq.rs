@@ -42,19 +42,16 @@ impl<O: Op> Node<O> {
     }
 
     pub fn is_leaf(&self) -> bool {
-        match self.left {
-            None => {
-                debug_assert!(self.left.is_none());
-                debug_assert!(self.right.is_none());
-                debug_assert_eq!(self.len, 1);
-                true
-            }
-            Some(_) => {
-                debug_assert!(self.left.is_some());
-                debug_assert!(self.right.is_some());
-                debug_assert_ne!(self.len, 1);
-                false
-            }
+        if self.left.is_none() {
+            debug_assert!(self.left.is_none());
+            debug_assert!(self.right.is_none());
+            debug_assert_eq!(self.len, 1);
+            true
+        } else {
+            debug_assert!(self.left.is_some());
+            debug_assert!(self.right.is_some());
+            debug_assert_ne!(self.len, 1);
+            false
         }
     }
 }
@@ -700,7 +697,7 @@ where
             .map(|row| {
                 let mut swp = Vec::new();
                 let mut offset = 0;
-                for (range, value) in row.iter() {
+                for (range, value) in row {
                     refinement[range.start] = true;
                     while offset < range.start {
                         let end = (offset + 1..n).find(|&i| refinement[i]).unwrap_or(n);
