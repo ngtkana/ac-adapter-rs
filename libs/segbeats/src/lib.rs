@@ -342,6 +342,7 @@ macro_rules! impl_elm {
                 fn zero() -> Self {
                     0
                 }
+                #[allow(clippy::cast_lossless)]
                 fn mul_u32(&self, x: u32) -> Self {
                     self * (x as $ty)
                 }
