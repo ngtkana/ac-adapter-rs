@@ -7,7 +7,7 @@ runs:
     - name: Rust Toolchain
       uses: dtolnay/rust-toolchain@stable
       with:
-        toolchain: "1.70.0"
+        toolchain: "1.82.0"
 
     - uses: taiki-e/install-action@nextest
 
