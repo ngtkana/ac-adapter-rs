@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/dinic/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="dinic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/dinic/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="dinic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../dinic/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1300,7 +1300,7 @@
     </span><span class="kw">fn </span>infinity() -&gt; <span class="self">Self</span>;
 }
 
-<span class="doccomment">/// A struct to execute Dinic&#39;s algorithm.
+<span class="doccomment">/// A struct to execute Dinic's algorithm.
 ///
 /// [See the module level documentation.](self)
 </span><span class="attr">#[derive(Clone, PartialEq)]
@@ -1362,15 +1362,15 @@
     </span><span class="kw">pub fn </span>add_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize, cap: T) -&gt; EdgeKey {
         <span class="macro">assert!</span>(
             from &lt; <span class="self">self</span>.res.len() || to &lt; <span class="self">self</span>.res.len(),
-            <span class="string">&quot;`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is \
-             {}&quot;</span>,
+            <span class="string">"`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is \
+             {}"</span>,
             from,
             to,
             <span class="self">self</span>.res.len()
         );
         <span class="macro">assert!</span>(
             T::zero() &lt;= cap,
-            <span class="string">&quot;`Dinic::add_edge` is called with a negative `cap`&quot;
+            <span class="string">"`Dinic::add_edge` is called with a negative `cap`"
         </span>);
         <span class="kw">let </span>size_from = <span class="self">self</span>.res[from].len();
         <span class="kw">let </span>size_to = <span class="kw">if </span>from == to { <span class="self">self</span>.res[to].len() + <span class="number">1 </span>} <span class="kw">else </span>{ <span class="self">self</span>.res[to].len() };
@@ -1425,7 +1425,7 @@
     </span><span class="kw">pub fn </span>flow(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: usize, t: usize) -&gt; T {
         <span class="macro">assert!</span>(
             s &lt; <span class="self">self</span>.res.len() &amp;&amp; t &lt; <span class="self">self</span>.res.len(),
-            <span class="string">&quot;`Dinic::flow` is called with `s` = {}, `t` = {}, while the number of vertices is {}&quot;</span>,
+            <span class="string">"`Dinic::flow` is called with `s` = {}, `t` = {}, while the number of vertices is {}"</span>,
             s,
             t,
             <span class="self">self</span>.res.len()
@@ -1466,8 +1466,8 @@
     </span><span class="kw">pub fn </span>flow_with_limit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: usize, t: usize, flow_with_limit: T) -&gt; T {
         <span class="macro">assert!</span>(
             s &lt; <span class="self">self</span>.res.len() &amp;&amp; t &lt; <span class="self">self</span>.res.len(),
-            <span class="string">&quot;`Dinic::flow_with_limit` is called with `s` = {}, `t` = {}, while the number of \
-             vertices is {}&quot;</span>,
+            <span class="string">"`Dinic::flow_with_limit` is called with `s` = {}, `t` = {}, while the number of \
+             vertices is {}"</span>,
             s,
             t,
             <span class="self">self</span>.res.len()
@@ -1537,7 +1537,7 @@
         <span class="kw">let </span>EdgeKey(edge_key) = edge_key;
         <span class="macro">assert!</span>(
             edge_key &lt; <span class="self">self</span>.pos.len(),
-            <span class="string">&quot;Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}&quot;</span>,
+            <span class="string">"Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}"</span>,
             edge_key,
             <span class="self">self</span>.pos.len()
         );
@@ -1734,7 +1734,7 @@
     /// let flow = dinic.flow(0, 5);
     /// assert_eq!(flow, 2);
     ///
-    /// # // Actually, the &quot;parallel&quot; ones are the matching edges.
+    /// # // Actually, the "parallel" ones are the matching edges.
     /// # assert_eq!(dinic.get_edge(edge_2).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_3).flow, 0);
     /// # assert_eq!(dinic.get_edge(edge_4).flow, 0);
@@ -1746,7 +1746,7 @@
     /// and diminish the capacity of this matching edge to `0`, so that the maching is of size `1`
     /// and the `dinic` is also a feasible flow of value `1`.
     ///
-    /// Now call [`Dinic::flow`] again with the same source and the same sink. So new matching will be of size `2` shaping like &quot;X&quot;. So [`Dinic::flow`] will return the delta `1 = 2 - 1` of the flow.
+    /// Now call [`Dinic::flow`] again with the same source and the same sink. So new matching will be of size `2` shaping like "X". So [`Dinic::flow`] will return the delta `1 = 2 - 1` of the flow.
     ///
     /// ```
     /// # use dinic::Dinic;
@@ -1764,7 +1764,7 @@
     /// # let flow = dinic.flow(0, 5);
     /// # assert_eq!(flow, 2);
     /// #
-    /// # // Actually, the &quot;parallel&quot; ones are the matching edges.
+    /// # // Actually, the "parallel" ones are the matching edges.
     /// # assert_eq!(dinic.get_edge(edge_2).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_3).flow, 0);
     /// # assert_eq!(dinic.get_edge(edge_4).flow, 0);
@@ -1789,13 +1789,13 @@
         <span class="kw">let </span>EdgeKey(edge_key) = edge_key;
         <span class="macro">assert!</span>(
             edge_key &lt; <span class="self">self</span>.pos.len(),
-            <span class="string">&quot;Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}&quot;</span>,
+            <span class="string">"Called `Dinic::get_edge` with `edge_key` = {:?}, but the length of `Dinic::pos` is {}"</span>,
             edge_key,
             <span class="self">self</span>.pos.len()
         );
         <span class="macro">assert!</span>(
             T::zero() &lt;= new_flow &amp;&amp; new_flow &lt;= new_cap,
-            <span class="string">&quot;Called `Dinic::change_edge` by new_flow = {:?}, new_cap = {:?}&quot;</span>,
+            <span class="string">"Called `Dinic::change_edge` by new_flow = {:?}, new_cap = {:?}"</span>,
             new_flow,
             new_cap
         );
@@ -1808,8 +1808,8 @@
     }
 }
 <span class="kw">impl</span>&lt;T: Value&gt; Debug <span class="kw">for </span>Dinic&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(w, <span class="string">&quot;{:?}&quot;</span>, <span class="self">self</span>.get_network())
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(w, <span class="string">"{:?}"</span>, <span class="self">self</span>.get_network())
     }
 }
 
@@ -1826,7 +1826,7 @@
     </span><span class="kw">pub </span>flow: T,
 }
 <span class="kw">impl</span>&lt;T: Debug&gt; Debug <span class="kw">for </span>Edge&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, w: <span class="kw-2">&amp;mut </span>Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">let </span><span class="self">Self </span>{
             from,
             to,
@@ -1836,7 +1836,7 @@
         <span class="macro">write!</span>(
             w,
             <span class="comment">// \x1b[1m: bold, \1b[m: cancel
-            </span><span class="string">&quot;{}-&gt;{}(\x1b[01m{:?}\x1b[m/\x1b[01m{:?}\x1b[m)&quot;</span>,
+            </span><span class="string">"{}-&gt;{}(\x1b[01m{:?}\x1b[m/\x1b[01m{:?}\x1b[m)"</span>,
             from, to, flow, cap,
         )
     }
@@ -1860,12 +1860,12 @@
 
     <span class="kw">loop </span>{
         <span class="comment">// calculate labels
-        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[std::u32::MAX; res.len()];
+        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[u32::MAX; res.len()];
         label[s] = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>queue = VecDeque::from(<span class="macro">vec!</span>[s]);
         <span class="kw">while let </span><span class="prelude-val">Some</span>(from) = queue.pop_front() {
             <span class="kw">for </span><span class="kw-2">&amp;</span>__ResidualEdge { to, cap, .. } <span class="kw">in </span><span class="kw-2">&amp;</span>res[from] {
-                <span class="kw">if </span>cap == T::zero() || label[to] != std::u32::MAX {
+                <span class="kw">if </span>cap == T::zero() || label[to] != u32::MAX {
                     <span class="kw">continue</span>;
                 }
                 label[to] = label[from] + <span class="number">1</span>;
@@ -1873,7 +1873,7 @@
             }
         }
 
-        <span class="kw">if </span>label[t] == std::u32::MAX {
+        <span class="kw">if </span>label[t] == u32::MAX {
             <span class="comment">// saturated
             </span><span class="kw">return </span>flow;
         }
@@ -1883,10 +1883,10 @@
         cur[t] = res[t].len();
 
         <span class="comment">// find augmenting paths
-        </span><span class="lifetime">&#39;PRIMAL_STEP</span>: <span class="kw">loop </span>{
+        </span><span class="lifetime">'PRIMAL_STEP</span>: <span class="kw">loop </span>{
             <span class="kw">let </span><span class="kw-2">mut </span>path = Vec::&lt;(usize, usize)&gt;::new();
             <span class="comment">// depth-first search
-            </span><span class="lifetime">&#39;FIND_AUGUMENTING_PATH</span>: <span class="kw">loop </span>{
+            </span><span class="lifetime">'FIND_AUGUMENTING_PATH</span>: <span class="kw">loop </span>{
                 <span class="kw">let </span>from = path.last().map_or(s, |<span class="kw-2">&amp;</span>(x, i)| res[x][i].to);
                 <span class="kw">loop </span>{
                     <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>__ResidualEdge { to, cap, .. }) = res[from].get(cur[from]) {
@@ -1897,9 +1897,9 @@
                             <span class="kw">break</span>;
                         }
                     } <span class="kw">else if </span>from == s {
-                        <span class="kw">break </span><span class="lifetime">&#39;PRIMAL_STEP</span>;
+                        <span class="kw">break </span><span class="lifetime">'PRIMAL_STEP</span>;
                     } <span class="kw">else if </span>from == t {
-                        <span class="kw">break </span><span class="lifetime">&#39;FIND_AUGUMENTING_PATH</span>;
+                        <span class="kw">break </span><span class="lifetime">'FIND_AUGUMENTING_PATH</span>;
                     } <span class="kw">else </span>{
                         path.pop().unwrap();
                         <span class="kw">let </span>from = path.last().map_or(s, |<span class="kw-2">&amp;</span>(x, i)| res[x][i].to);
@@ -1929,20 +1929,20 @@
     }
 }
 
-<span class="macro">macro_rules! </span>impl_value {
+<span class="macro">macro_rules!</span> impl_value {
     ($(<span class="macro-nonterminal">$T</span>:ident),* $(,)<span class="question-mark">?</span>) =&gt; {$(
         <span class="kw">impl </span>Value <span class="kw">for </span><span class="macro-nonterminal">$T </span>{
             <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
                 <span class="number">0
             </span>}
             <span class="kw">fn </span>infinity() -&gt; <span class="self">Self </span>{
-                std::<span class="macro-nonterminal">$T::MAX
+                <span class="macro-nonterminal">$T::MAX
             </span>}
         }
     )<span class="kw-2">*</span>}
 }
 
-<span class="macro">impl_value! </span>{
+<span class="macro">impl_value!</span> {
     u8, u16, u32, u64, u128, usize,
     i8, i16, i32, i64, i128, isize,
 }
@@ -1975,11 +1975,11 @@
     ////////////////////////////////////////////////////////////////////////////////
 
     </span><span class="attr">#[allow(clippy::unused_unit)]
-    #[test_case(<span class="number">2</span>, <span class="number">1</span>, <span class="number">10</span>; <span class="string">&quot;trivially small graph&quot;</span>)]
-    #[test_case(<span class="number">5</span>, <span class="number">8</span>, <span class="number">1000</span>; <span class="string">&quot;small sparse graph&quot;</span>)]
-    #[test_case(<span class="number">10</span>, <span class="number">8</span>, <span class="number">100</span>; <span class="string">&quot;very sparse graph&quot;</span>)]
-    #[test_case(<span class="number">10</span>, <span class="number">20</span>, <span class="number">100</span>; <span class="string">&quot;sparse graph&quot;</span>)]
-    #[test_case(<span class="number">10</span>, <span class="number">80</span>, <span class="number">50</span>; <span class="string">&quot;dense graph&quot;</span>)]
+    #[test_case(<span class="number">2</span>, <span class="number">1</span>, <span class="number">10</span>; <span class="string">"trivially small graph"</span>)]
+    #[test_case(<span class="number">5</span>, <span class="number">8</span>, <span class="number">1000</span>; <span class="string">"small sparse graph"</span>)]
+    #[test_case(<span class="number">10</span>, <span class="number">8</span>, <span class="number">100</span>; <span class="string">"very sparse graph"</span>)]
+    #[test_case(<span class="number">10</span>, <span class="number">20</span>, <span class="number">100</span>; <span class="string">"sparse graph"</span>)]
+    #[test_case(<span class="number">10</span>, <span class="number">80</span>, <span class="number">50</span>; <span class="string">"dense graph"</span>)]
     </span><span class="kw">fn </span>test_max_flow_min_cut(n: usize, m: usize, iter: usize) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..iter {
@@ -1998,8 +1998,8 @@
     }
 
     <span class="attr">#[allow(clippy::unused_unit)]
-    #[test_case(<span class="number">10</span>; <span class="string">&quot;small hack&quot;</span>)]
-    #[test_case(<span class="number">100</span>; <span class="string">&quot;large hack&quot;</span>)]
+    #[test_case(<span class="number">10</span>; <span class="string">"small hack"</span>)]
+    #[test_case(<span class="number">100</span>; <span class="string">"large hack"</span>)]
     </span><span class="kw">fn </span>test_hack(n: usize) {
         <span class="kw">let </span>(s, t, network) = generate_hack(n);
         test_max_flow_min_cut_impl(n, s, t, <span class="kw-2">&amp;</span>network);
@@ -2026,10 +2026,10 @@
         <span class="kw">let </span>min_cut = dinic.min_cut(s);
 
         <span class="comment">// print
-        </span><span class="macro">println!</span>(<span class="string">&quot;Validating dinic..&quot;</span>);
-        <span class="macro">println!</span>(<span class="string">&quot;flow = {}&quot;</span>, flow);
-        <span class="macro">println!</span>(<span class="string">&quot;min_cut = {:?}&quot;</span>, min_cut);
-        <span class="macro">println!</span>(<span class="string">&quot;s = {}, t = {}&quot;</span>, s, t);
+        </span><span class="macro">println!</span>(<span class="string">"Validating dinic.."</span>);
+        <span class="macro">println!</span>(<span class="string">"flow = {}"</span>, flow);
+        <span class="macro">println!</span>(<span class="string">"min_cut = {:?}"</span>, min_cut);
+        <span class="macro">println!</span>(<span class="string">"s = {}, t = {}"</span>, s, t);
         <span class="macro">println!</span>();
 
         <span class="comment">// cut is feasible
@@ -2089,13 +2089,13 @@
     }
 
     <span class="comment">////////////////////////////////////////////////////////////////////////////////
-    // Kőnig&#39;s theorem test
+    // Kőnig's theorem test
     ////////////////////////////////////////////////////////////////////////////////
 
     </span><span class="attr">#[allow(clippy::unused_unit)]
-    #[test_case(<span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">&quot;small graph&quot;</span>)]
-    #[test_case(<span class="number">5</span>, <span class="number">8</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">&quot;medium graph&quot;</span>)]
-    #[test_case(<span class="number">10</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">&quot;large graph&quot;</span>)]
+    #[test_case(<span class="number">3</span>, <span class="number">5</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">"small graph"</span>)]
+    #[test_case(<span class="number">5</span>, <span class="number">8</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">"medium graph"</span>)]
+    #[test_case(<span class="number">10</span>, <span class="number">20</span>, <span class="number">10</span>, <span class="number">10</span>; <span class="string">"large graph"</span>)]
     </span><span class="kw">fn </span>test_konig(n: usize, m: usize, iter: usize, change_edge_count: usize) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..iter {
@@ -2113,7 +2113,7 @@
                 .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             <span class="kw">let </span><span class="kw-2">mut </span>cnt = dinic.flow(s, t);
-            <span class="macro">println!</span>(<span class="string">&quot;Initial flow = {}&quot;</span>, cnt);
+            <span class="macro">println!</span>(<span class="string">"Initial flow = {}"</span>, cnt);
             validate_konig(n, cnt, <span class="kw-2">&amp;</span>dinic, <span class="kw-2">&amp;</span>edge_keys);
 
             <span class="kw">for _ in </span><span class="number">0</span>..change_edge_count {
@@ -2126,7 +2126,7 @@
                     ..
                 } = dinic.get_edge(edge_key);
                 <span class="kw">if </span>cap == <span class="number">1 </span>{
-                    <span class="macro">println!</span>(<span class="string">&quot;Forbid ({}, {})&quot;</span>, from, to);
+                    <span class="macro">println!</span>(<span class="string">"Forbid ({}, {})"</span>, from, to);
                     <span class="comment">// Forbid this match.
                     </span>dinic.change_edge(edge_key, <span class="number">0</span>, <span class="number">0</span>);
                     <span class="kw">if </span>flow == <span class="number">1 </span>{
@@ -2135,7 +2135,7 @@
                         cnt -= <span class="number">1</span>;
                     }
                 } <span class="kw">else if </span>cap == <span class="number">0 </span>{
-                    <span class="macro">println!</span>(<span class="string">&quot;Remove the ban of ({}, {})&quot;</span>, from, to);
+                    <span class="macro">println!</span>(<span class="string">"Remove the ban of ({}, {})"</span>, from, to);
                     <span class="comment">// Remove the ban of this edge.
                     </span>dinic.change_edge(edge_key, <span class="number">1</span>, <span class="number">0</span>);
                 }
@@ -2148,14 +2148,14 @@
     <span class="kw">fn </span>validate_konig(n: usize, cnt: u32, dinic: <span class="kw-2">&amp;</span>Dinic&lt;u32&gt;, edge_keys: <span class="kw-2">&amp;</span>[EdgeKey]) {
         <span class="kw">let </span>s = <span class="number">2 </span>* n;
 
-        <span class="macro">println!</span>(<span class="string">&quot;dinic: {:?}&quot;</span>, <span class="kw-2">&amp;</span>dinic);
-        <span class="macro">println!</span>(<span class="string">&quot;dinic:&quot;</span>);
+        <span class="macro">println!</span>(<span class="string">"dinic: {:?}"</span>, <span class="kw-2">&amp;</span>dinic);
+        <span class="macro">println!</span>(<span class="string">"dinic:"</span>);
         dinic
             .get_network()
             .iter()
             .enumerate()
-            .for_each(|(i, v)| <span class="macro">println!</span>(<span class="string">&quot;{} {:?}&quot;</span>, i, <span class="kw-2">&amp;</span>v));
-        <span class="macro">println!</span>(<span class="string">&quot;n = {}, cnt = {}&quot;</span>, n, cnt);
+            .for_each(|(i, v)| <span class="macro">println!</span>(<span class="string">"{} {:?}"</span>, i, <span class="kw-2">&amp;</span>v));
+        <span class="macro">println!</span>(<span class="string">"n = {}, cnt = {}"</span>, n, cnt);
         <span class="kw">let </span>edges = edge_keys
             .iter()
             .map(|<span class="kw-2">&amp;</span>edge_key| dinic.get_edge(edge_key))
@@ -2164,7 +2164,7 @@
             })
             .map(|Edge { from, to, .. }| (from, to))
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="macro">println!</span>(<span class="string">&quot;edges = {:?}&quot;</span>, <span class="kw-2">&amp;</span>edges);
+        <span class="macro">println!</span>(<span class="string">"edges = {:?}"</span>, <span class="kw-2">&amp;</span>edges);
 
         <span class="comment">// matching is feasible
         </span><span class="kw">let </span>matching = edge_keys
@@ -2175,7 +2175,7 @@
             })
             .map(|edge| [edge.from, edge.to])
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-        <span class="macro">println!</span>(<span class="string">&quot;matching = {} ({:?})&quot;</span>, matching.len(), <span class="kw-2">&amp;</span>matching);
+        <span class="macro">println!</span>(<span class="string">"matching = {} ({:?})"</span>, matching.len(), <span class="kw-2">&amp;</span>matching);
         <span class="macro">assert_eq!</span>(matching.len() <span class="kw">as </span>u32, cnt);
         <span class="kw">let </span><span class="kw-2">mut </span>ckd = <span class="macro">vec!</span>[<span class="bool-val">false</span>; <span class="number">2 </span>* n];
         matching.iter().flatten().for_each(|<span class="kw-2">&amp;</span>x| {
@@ -2189,7 +2189,7 @@
         max_stable_set[n..].iter_mut().for_each(|x| <span class="kw-2">*</span>x = !<span class="kw-2">*</span>x);
         <span class="kw">let </span>max_stable_set_size = max_stable_set.iter().filter(|&amp;&amp;b| b).count();
         <span class="macro">println!</span>(
-            <span class="string">&quot;max_stable_set = {} ({:?})&quot;</span>,
+            <span class="string">"max_stable_set = {} ({:?})"</span>,
             max_stable_set_size, <span class="kw-2">&amp;</span>max_stable_set
         );
         <span class="kw">for </span><span class="kw-2">&amp;</span>(from, to) <span class="kw">in </span><span class="kw-2">&amp;</span>edges {

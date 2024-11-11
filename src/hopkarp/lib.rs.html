@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/hopkarp/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hopkarp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/hopkarp/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="hopkarp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../hopkarp/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -355,9 +355,7 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
-</pre></div><pre class="rust"><code><span class="doccomment">//! Finds a maximum cardinality bipartite matching by Hopcroft―Karp&#39;s algorithm.
+</pre></div><pre class="rust"><code><span class="doccomment">//! Finds a maximum cardinality bipartite matching by Hopcroft―Karp's algorithm.
 //!
 //! # Basic usage
 //!
@@ -375,7 +373,7 @@
 //! ```
 </span><span class="kw">use </span>std::collections::VecDeque;
 
-<span class="doccomment">/// Summary of the result of Hopcroft―Karp&#39;s algorithm.
+<span class="doccomment">/// Summary of the result of Hopcroft―Karp's algorithm.
 ///
 /// # Maximum cardinality matching
 ///
@@ -430,10 +428,9 @@
     dist: <span class="kw-2">&amp;</span>[u32],
     backward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;],
 ) -&gt; (Box&lt;[bool]&gt;, Box&lt;[bool]&gt;) {
-    <span class="kw">use </span>std::u32::MAX;
     <span class="kw">let </span>left = dist
         .iter()
-        .map(|<span class="kw-2">&amp;</span>x| x != MAX)
+        .map(|<span class="kw-2">&amp;</span>x| x != u32::MAX)
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         .into_boxed_slice();
     <span class="kw">let </span><span class="kw-2">mut </span>right = <span class="macro">vec!</span>[<span class="bool-val">false</span>; backward.len()].into_boxed_slice();
@@ -485,8 +482,7 @@
 }
 
 <span class="kw">fn </span>bfs(graph: <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;], forward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;], backward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;]) -&gt; Vec&lt;u32&gt; {
-    <span class="kw">use </span>std::u32::MAX;
-    <span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[MAX; forward.len()];
+    <span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[u32::MAX; forward.len()];
     <span class="kw">let </span><span class="kw-2">mut </span>queue = forward
         .iter()
         .enumerate()
@@ -497,7 +493,7 @@
     <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = queue.pop_front() {
         <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>graph[x] {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(z) = backward[y] {
-                <span class="kw">if </span>dist[z] == MAX {
+                <span class="kw">if </span>dist[z] == u32::MAX {
                     dist[z] = dist[x] + <span class="number">1</span>;
                     queue.push_back(z);
                 }
@@ -594,76 +590,76 @@
         <span class="macro">assert_eq!</span>(<span class="kw-2">*</span>count, capacity);
     }
 
-    <span class="attr">#[test_case(<span class="number">3</span>, <span class="string">&quot;000000&quot; </span>=&gt; <span class="number">0</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000001&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000010&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000011&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000100&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000101&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000110&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;000111&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001001&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;001111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010010&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;010111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;011111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100100&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;100111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;101111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;110111&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111000&quot; </span>=&gt; <span class="number">1</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111001&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111010&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111011&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111100&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111101&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111110&quot; </span>=&gt; <span class="number">2</span>)]
-    #[test_case(<span class="number">3</span>, <span class="string">&quot;111111&quot; </span>=&gt; <span class="number">2</span>)]
+    <span class="attr">#[test_case(<span class="number">3</span>, <span class="string">"000000" </span>=&gt; <span class="number">0</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000001" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000010" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000011" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000100" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000101" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000110" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"000111" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001001" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"001111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010010" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"010111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"011111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100100" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"100111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"101111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"110111" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111000" </span>=&gt; <span class="number">1</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111001" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111010" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111011" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111100" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111101" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111110" </span>=&gt; <span class="number">2</span>)]
+    #[test_case(<span class="number">3</span>, <span class="string">"111111" </span>=&gt; <span class="number">2</span>)]
     </span><span class="kw">fn </span>test_hopkarp_hand_exhaustive(w: usize, adj: <span class="kw-2">&amp;</span>str) -&gt; usize {
         <span class="kw">let </span>adj = adj
             .chars()
             .map(|c| <span class="kw">match </span>c {
-                <span class="string">&#39;0&#39; </span>=&gt; <span class="bool-val">false</span>,
-                <span class="string">&#39;1&#39; </span>=&gt; <span class="bool-val">true</span>,
+                <span class="string">'0' </span>=&gt; <span class="bool-val">false</span>,
+                <span class="string">'1' </span>=&gt; <span class="bool-val">true</span>,
                 <span class="kw">_ </span>=&gt; <span class="macro">panic!</span>(),
             })
             .collect_vec();

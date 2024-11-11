@@ -1,0 +1,1 @@
+searchState.loadedDescShard("two_sat", 0, "2-SAT を解きます。\n2-SAT の本体です。\nReturns the argument unchanged.\n<code>(x == a) -&gt; (y == b)</code> をかつでつなぎます。\nCalls <code>U::from(self)</code>.\n<code>n</code> 個の不定元を持つ Always true を作ります。\n充足する割り当てがあれば返し、なければ …")

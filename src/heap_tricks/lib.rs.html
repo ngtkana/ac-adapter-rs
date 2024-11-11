@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/heap_tricks/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heap_tricks" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/heap_tricks/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heap_tricks" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../heap_tricks/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1025,6 +1025,11 @@
 <a href="#991" id="991">991</a>
 <a href="#992" id="992">992</a>
 <a href="#993" id="993">993</a>
+<a href="#994" id="994">994</a>
+<a href="#995" id="995">995</a>
+<a href="#996" id="996">996</a>
+<a href="#997" id="997">997</a>
+<a href="#998" id="998">998</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [`remove_unchecked`](RemovableHeap::remove_unchecked) のできるヒープです。
 //!
 //! 本体は [`RemovableHeap`] です。
@@ -1061,9 +1066,9 @@
 //! &gt;         heap.push_left(a[j]);
 //! &gt;         heap.remove_left_unchecked(a[i]);
 //! 33c32
-//! &lt;     println!(&quot;{}&quot;, ans)
+//! &lt;     println!("{}", ans)
 //! ---
-//! &gt;     println!(&quot;{}&quot;, ans / 2)
+//! &gt;     println!("{}", ans / 2)
 //! ```
 //!
 //!
@@ -1072,14 +1077,14 @@
 //! 固定された数列の順位を答えるだけなら、ウェーブレット行列
 //! のほうが楽という説はあります。
 //!
-//! - JAG Practice Contest for ACM-ICPC Asia Regional 2016 C - We Don&#39;t Wanna Work!
+//! - JAG Practice Contest for ACM-ICPC Asia Regional 2016 C - We Don't Wanna Work!
 //!   - 問題: &lt;https://atcoder.jp/contests/jag2016autumn/tasks/icpc2016autumn_c&gt;
 //!   - 提出: TODO
 //!   - 出題日: 2016-09-04
 //!   - 難易度: 易しめ。
 //!   - 制約: N + Q ≤ 70,000
 //!   - コメント: キーに [`Copy`] を課しているので [`String`] がくるとかなり
-//!   めんどくさいことに！！ むーん……
+//!     めんどくさいことに！！ むーん……
 //!   - 使う構造体: [`DoubleHeap`] （左右移動の明示的追跡あり）
 //! - yukicoder No.649 - ここでちょっとQK！
 //!   - 問題: &lt;https://yukicoder.me/problems/no/649&gt;
@@ -1102,7 +1107,7 @@
 //!   - 提出 (211 ms): &lt;https://atcoder.jp/contests/abc127/submissions/28290935&gt;
 //!   - 出題日: 2019-05-25
 //!   - 難易度: 易しめ。`heap_slope_trick` クレートがあるので
-//!   そちらを使ったほうが楽です。
+//!     そちらを使ったほうが楽です。
 //!   - 制約: Q ≤ 200,000
 //!   - 使う構造体: [`DoubleHeap`] （`heap_slope_trick` クレートを使ったほうがよいです。)
 //! - ABC 128 E - Roadwork
@@ -1120,8 +1125,8 @@
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`DoubleHeap`]
 //!   - 難易度: Mo 書かないといけないので先延ばしに……
-//!   ウェーブレット行列で解く問題を Mo で無理やりクエリ
-//!   先読みしているイメージですかね。
+//!     ウェーブレット行列で解く問題を Mo で無理やりクエリ
+//!     先読みしているイメージですかね。
 //! - ABC 170 E - Smart Infants
 //!   - 問題: &lt;https://atcoder.jp/contests/abc170/tasks/abc170_e&gt;
 //!   - 提出 (163 ms): &lt;https://atcoder.jp/contests/abc170/submissions/28296739&gt;
@@ -1133,7 +1138,7 @@
 //!     - C++ の `std::multiset` (488 ms): &lt;https://atcoder.jp/contests/abc170/submissions/14328933&gt;
 //!     - AVL 木 (2477 ms): &lt;https://atcoder.jp/contests/abc170/submissions/24165251&gt;
 //!   - コメント: これフルクラッチで書くとけっこう混乱するので、
-//!   ライブラリがるとかなり助かります。
+//!     ライブラリがるとかなり助かります。
 //! - OUPC 2020 D - 仲良しスライム
 //!   - 問題: &lt;https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D&gt;
 //!   - 提出 (90 ms): &lt;https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242&gt;
@@ -1144,9 +1149,9 @@
 //!   - 他の解法:
 //!     - ウェーブレット行列 (440 ms): &lt;https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171281&gt;
 //!   - コメント: A:B 重み付き中央値クエリ。平衡基準を抽象化して良かった〜〜
-//!   これもウェーブレット行列のほうが思いつきやすそうですが、
-//!   ウェーブレット行列ライブラリの累積和系の機能が使いづらい（あの！？）ので、
-//!   実装は [`DoubleHeap`] を使うほうが楽です。
+//!     これもウェーブレット行列のほうが思いつきやすそうですが、
+//!     ウェーブレット行列ライブラリの累積和系の機能が使いづらい（あの！？）ので、
+//!     実装は [`DoubleHeap`] を使うほうが楽です。
 //! - ABC 213 G - Game on Tree 2
 //!   - 問題: &lt;https://atcoder.jp/contests/abc218/tasks/abc218_g&gt;
 //!   - 提出 (115 ms): &lt;https://atcoder.jp/contests/abc218/submissions/28295770&gt;
@@ -1155,8 +1160,8 @@
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`DoubleHeap`] (削除も使います。)
 //!   - コメント: 本番二分探索を考えてうまく行かず、
-//!   後日 [`std::collections::BTreeMap`] で multiset もどきを作って
-//!   なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
+//!     後日 [`std::collections::BTreeMap`] で multiset もどきを作って
+//!     なんとか通して (181 ms) いました。ヒープ４本の方が速くてきれいで嬉しいですね。
 //! - yukicoder No.1786 - Maximum Suffix Median (Online)
 //!   - 問題: &lt;https://yukicoder.me/problems/no/1786&gt;
 //!   - 提出 TODO
@@ -1243,18 +1248,23 @@
     right: RemovableHeap&lt;Reverse&lt;T&gt;&gt;,
     handler: H,
 }
-<span class="kw">impl</span>&lt;T, H&gt; Debug <span class="kw">for </span>DoubleHeap&lt;T, H&gt;
+<span class="attr">#[allow(clippy::missing_fields_in_debug)]
+</span><span class="kw">impl</span>&lt;T, H&gt; Debug <span class="kw">for </span>DoubleHeap&lt;T, H&gt;
 <span class="kw">where
     </span>T: Copy + Ord + Hash + Debug,
     H: Handler&lt;T&gt; + Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
-        f.debug_struct(<span class="string">&quot;DoubleHeap&quot;</span>)
-            .field(<span class="string">&quot;elm&quot;</span>, <span class="kw-2">&amp;</span>[
-                <span class="self">self</span>.collect_left_sorted_vec(),
-                <span class="self">self</span>.collect_right_sorted_vec(),
-            ])
-            .field(<span class="string">&quot;handler&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.handler)
+    <span class="attr">#[allow(clippy::missing_fields_in_debug)]
+    </span><span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+        f.debug_struct(<span class="string">"DoubleHeap"</span>)
+            .field(
+                <span class="string">"elm"</span>,
+                <span class="kw-2">&amp;</span>[
+                    <span class="self">self</span>.collect_left_sorted_vec(),
+                    <span class="self">self</span>.collect_right_sorted_vec(),
+                ],
+            )
+            .field(<span class="string">"handler"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.handler)
             .finish()
     }
 }
@@ -1499,7 +1509,7 @@
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
     /// ```
     </span><span class="kw">pub fn </span>move_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>elm = <span class="self">self</span>.right.pop().expect(<span class="string">&quot;右側ヒープは空です。&quot;</span>).<span class="number">0</span>;
+        <span class="kw">let </span>elm = <span class="self">self</span>.right.pop().expect(<span class="string">"右側ヒープは空です。"</span>).<span class="number">0</span>;
         <span class="self">self</span>.handler.pop_right(elm);
         <span class="self">self</span>.handler.push_left(elm);
         <span class="self">self</span>.left.push(elm);
@@ -1526,7 +1536,7 @@
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 42, 45]);
     /// ```
     </span><span class="kw">pub fn </span>move_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>elm = <span class="self">self</span>.left.pop().expect(<span class="string">&quot;左側ヒープは空です。&quot;</span>);
+        <span class="kw">let </span>elm = <span class="self">self</span>.left.pop().expect(<span class="string">"左側ヒープは空です。"</span>);
         <span class="self">self</span>.handler.pop_left(elm);
         <span class="self">self</span>.handler.push_right(elm);
         <span class="self">self</span>.right.push(Reverse(elm));
@@ -1785,7 +1795,7 @@
     len: usize,
 }
 <span class="kw">impl</span>&lt;T: Copy + Ord + Hash + Debug&gt; Debug <span class="kw">for </span>RemovableHeap&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_list().entries(<span class="self">self</span>.collect_sorted_vec()).finish()
     }
 }

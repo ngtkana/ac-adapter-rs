@@ -1,0 +1,1 @@
+searchState.loadedDescShard("skew_heap", 0, "Meld のできるヒープ\nMeld のできるヒープ\n中身を殻にします。\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nソート済みの <code>Vec</code> に変換します。\n2 つの <code>SkewHeap</code> …\n2 つの <code>SkewHeap</code> …\n新しく構築します。\n…\n…\n要素を一つ、追加します。\n要素一つからなる <code>SkewHeap</code> を構築します。")

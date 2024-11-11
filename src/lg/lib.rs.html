@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/lg/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/lg/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="lg" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../lg/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -290,9 +290,9 @@
     I: IntoIterator&lt;Item = B&gt;,
 {
     <span class="macro">format!</span>(
-        <span class="string">&quot;[{}]&quot;</span>,
+        <span class="string">"[{}]"</span>,
         iter.into_iter()
-            .map(|b| [<span class="string">&#39;.&#39;</span>, <span class="string">&#39;#&#39;</span>][usize::from(<span class="kw-2">*</span>(b.borrow()))])
+            .map(|b| [<span class="string">'.'</span>, <span class="string">'#'</span>][usize::from(<span class="kw-2">*</span>(b.borrow()))])
             .collect::&lt;String&gt;(),
     )
 }
@@ -306,65 +306,65 @@
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>lg {
+</span><span class="macro">macro_rules!</span> lg {
     (@contents <span class="macro-nonterminal">$head</span>:expr $(, <span class="macro-nonterminal">$tail</span>:expr)<span class="kw-2">*</span>) =&gt; {{
         <span class="macro-nonterminal">$</span><span class="macro">crate::__lg_internal!</span>(<span class="macro-nonterminal">$head</span>);
         $(
-            <span class="macro">eprint!</span>(<span class="string">&quot;,&quot;</span>);
+            <span class="macro">eprint!</span>(<span class="string">","</span>);
             <span class="macro-nonterminal">$</span><span class="macro">crate::__lg_internal!</span>(<span class="macro-nonterminal">$tail</span>);
         )*
         <span class="macro">eprintln!</span>();
     }};
     ($(<span class="macro-nonterminal">$expr</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {{
-        <span class="macro">eprint!</span>(<span class="string">&quot;{} \u{276f}&quot;</span>, <span class="macro">line!</span>());
+        <span class="macro">eprint!</span>(<span class="string">"{} \u{276f}"</span>, <span class="macro">line!</span>());
         <span class="macro-nonterminal">$</span><span class="macro">crate::lg!</span>(@<span class="macro-nonterminal">contents </span>$(<span class="macro-nonterminal">$expr</span>),<span class="kw-2">*</span>)
     }};
 }
 
 <span class="attr">#[doc(hidden)]
 #[macro_export]
-</span><span class="macro">macro_rules! </span>__lg_internal {
+</span><span class="macro">macro_rules!</span> __lg_internal {
     (<span class="macro-nonterminal">$value</span>:expr) =&gt; {{
         <span class="kw">match </span><span class="macro-nonterminal">$value </span>{
             head =&gt; {
-                <span class="macro">eprint!</span>(<span class="string">&quot; {} = {}&quot;</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$value</span>), <span class="macro-nonterminal">$crate::format</span>(<span class="kw-2">&amp;</span>head));
+                <span class="macro">eprint!</span>(<span class="string">" {} = {}"</span>, <span class="macro">stringify!</span>(<span class="macro-nonterminal">$value</span>), <span class="macro-nonterminal">$crate::format</span>(<span class="kw-2">&amp;</span>head));
             }
         }
     }};
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>table {
+</span><span class="macro">macro_rules!</span> table {
     (<span class="macro-nonterminal">$vec2</span>:expr) =&gt; {
         <span class="macro">eprintln!</span>(
-            <span class="string">&quot;{}&quot;</span>,
+            <span class="string">"{}"</span>,
             <span class="macro-nonterminal">$crate::vec2</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$vec2</span>)), <span class="macro-nonterminal">$vec2</span>)
         );
     };
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>vmap {
+</span><span class="macro">macro_rules!</span> vmap {
     (<span class="macro-nonterminal">$map</span>:expr) =&gt; {
         <span class="macro">eprintln!</span>(
-            <span class="string">&quot;{}&quot;</span>,
+            <span class="string">"{}"</span>,
             <span class="macro-nonterminal">$crate::vmap</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$map</span>)), <span class="macro-nonterminal">$map</span>)
         );
     };
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hmap {
+</span><span class="macro">macro_rules!</span> hmap {
     (<span class="macro-nonterminal">$map</span>:expr) =&gt; {
         <span class="macro">eprintln!</span>(
-            <span class="string">&quot;{}&quot;</span>,
+            <span class="string">"{}"</span>,
             <span class="macro-nonterminal">$crate::hmap</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$map</span>)), <span class="macro-nonterminal">$map</span>)
         );
     };
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>vvec {
+</span><span class="macro">macro_rules!</span> vvec {
     ($($(@field <span class="macro-nonterminal">$field</span>:ident)* <span class="macro-nonterminal">$vecs</span>:expr),+ $(,)<span class="question-mark">?</span>) =&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>vecs = Vec::new();
         $(
@@ -376,7 +376,7 @@
                 </span>{
                     <span class="kw">let </span><span class="kw-2">mut </span>name = name.to_owned();
                     has_field = <span class="bool-val">true</span>;
-                    name.push_str(<span class="string">&quot;.&quot;</span>);
+                    name.push_str(<span class="string">"."</span>);
                     name.push_str(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$field</span>));
                     <span class="kw">let </span>values = (<span class="kw-2">&amp;</span><span class="macro-nonterminal">$vecs</span>).into_iter().map(|v| <span class="macro-nonterminal">$crate::format</span>(<span class="kw-2">&amp;</span>v.<span class="macro-nonterminal">$field</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
                     vecs.push((name, values))
@@ -387,12 +387,12 @@
                 vecs.push((name.to_owned(), values))
             }
         )+
-        <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::vvec</span>(<span class="kw-2">&amp;</span>vecs));
+        <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, <span class="macro-nonterminal">$crate::vvec</span>(<span class="kw-2">&amp;</span>vecs));
     };
 }
 
 <span class="attr">#[macro_export]
-</span><span class="macro">macro_rules! </span>hvec {
+</span><span class="macro">macro_rules!</span> hvec {
     ($($(@field <span class="macro-nonterminal">$field</span>:ident)* <span class="macro-nonterminal">$vecs</span>:expr),+ $(,)<span class="question-mark">?</span>) =&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>vecs = Vec::new();
         $(
@@ -404,7 +404,7 @@
                 </span>{
                     <span class="kw">let </span><span class="kw-2">mut </span>name = name.to_owned();
                     has_field = <span class="bool-val">true</span>;
-                    name.push_str(<span class="string">&quot;.&quot;</span>);
+                    name.push_str(<span class="string">"."</span>);
                     name.push_str(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$field</span>));
                     <span class="kw">let </span>values = (<span class="kw-2">&amp;</span><span class="macro-nonterminal">$vecs</span>).into_iter().map(|v| <span class="macro-nonterminal">$crate::format</span>(<span class="kw-2">&amp;</span>v.<span class="macro-nonterminal">$field</span>)).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
                     vecs.push((name, values))
@@ -415,38 +415,38 @@
                 vecs.push((name.to_owned(), values))
             }
         )+
-        <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::hvec</span>(<span class="kw-2">&amp;</span>vecs));
+        <span class="macro">eprintln!</span>(<span class="string">"{}"</span>, <span class="macro-nonterminal">$crate::hvec</span>(<span class="kw-2">&amp;</span>vecs));
     };
 }
 
 <span class="kw">pub fn </span>remove_ampersand(<span class="kw-2">mut </span>s: <span class="kw-2">&amp;</span>str) -&gt; <span class="kw-2">&amp;</span>str {
-    <span class="kw">while let </span><span class="prelude-val">Some</span>(t) = s.strip_prefix(<span class="string">&#39;&amp;&#39;</span>) {
+    <span class="kw">while let </span><span class="prelude-val">Some</span>(t) = s.strip_prefix(<span class="string">'&amp;'</span>) {
         s = t;
     }
     s
 }
 
 <span class="kw">pub fn </span>format&lt;T: fmt::Debug&gt;(t: <span class="kw-2">&amp;</span>T) -&gt; String {
-    <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">&quot;{t:?}&quot;</span>)
-        .replace(<span class="string">&quot;340282366920938463463374607431768211455&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// u128
-        </span>.replace(<span class="string">&quot;170141183460469231731687303715884105727&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// i128
-        </span>.replace(<span class="string">&quot;18446744073709551615&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// u64
-        </span>.replace(<span class="string">&quot;9223372036854775807&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// i64
-        </span>.replace(<span class="string">&quot;-9223372036854775808&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// i64
-        </span>.replace(<span class="string">&quot;4294967295&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// u32
-        </span>.replace(<span class="string">&quot;2147483647&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// i32
-        </span>.replace(<span class="string">&quot;-2147483648&quot;</span>, <span class="string">&quot;*&quot;</span>) <span class="comment">// i32
-        </span>.replace(<span class="string">&quot;None&quot;</span>, <span class="string">&quot;*&quot;</span>)
-        .replace(<span class="string">&quot;true&quot;</span>, <span class="string">&quot;#&quot;</span>)
-        .replace(<span class="string">&quot;false&quot;</span>, <span class="string">&quot;.&quot;</span>);
+    <span class="kw">let </span>s = <span class="macro">format!</span>(<span class="string">"{t:?}"</span>)
+        .replace(<span class="string">"340282366920938463463374607431768211455"</span>, <span class="string">"*"</span>) <span class="comment">// u128
+        </span>.replace(<span class="string">"170141183460469231731687303715884105727"</span>, <span class="string">"*"</span>) <span class="comment">// i128
+        </span>.replace(<span class="string">"18446744073709551615"</span>, <span class="string">"*"</span>) <span class="comment">// u64
+        </span>.replace(<span class="string">"9223372036854775807"</span>, <span class="string">"*"</span>) <span class="comment">// i64
+        </span>.replace(<span class="string">"-9223372036854775808"</span>, <span class="string">"*"</span>) <span class="comment">// i64
+        </span>.replace(<span class="string">"4294967295"</span>, <span class="string">"*"</span>) <span class="comment">// u32
+        </span>.replace(<span class="string">"2147483647"</span>, <span class="string">"*"</span>) <span class="comment">// i32
+        </span>.replace(<span class="string">"-2147483648"</span>, <span class="string">"*"</span>) <span class="comment">// i32
+        </span>.replace(<span class="string">"None"</span>, <span class="string">"*"</span>)
+        .replace(<span class="string">"true"</span>, <span class="string">"#"</span>)
+        .replace(<span class="string">"false"</span>, <span class="string">"."</span>);
     <span class="kw">let </span><span class="kw-2">mut </span>s = s.as_str();
-    <span class="kw">while </span>s.starts_with(<span class="string">&quot;Some(&quot;</span>) {
-        s = s.strip_prefix(<span class="string">&quot;Some(&quot;</span>).unwrap();
-        s = s.strip_suffix(<span class="string">&#39;)&#39;</span>).unwrap();
+    <span class="kw">while </span>s.starts_with(<span class="string">"Some("</span>) {
+        s = s.strip_prefix(<span class="string">"Some("</span>).unwrap();
+        s = s.strip_suffix(<span class="string">')'</span>).unwrap();
     }
-    <span class="kw">while </span>s.len() &gt; <span class="number">2 </span>&amp;&amp; s.starts_with(<span class="string">&#39;&quot;&#39;</span>) &amp;&amp; s.ends_with(<span class="string">&#39;&quot;&#39;</span>) {
-        s = s.strip_prefix(<span class="string">&#39;&quot;&#39;</span>).unwrap();
-        s = s.strip_suffix(<span class="string">&#39;&quot;&#39;</span>).unwrap();
+    <span class="kw">while </span>s.len() &gt; <span class="number">2 </span>&amp;&amp; s.starts_with(<span class="string">'"'</span>) &amp;&amp; s.ends_with(<span class="string">'"'</span>) {
+        s = s.strip_prefix(<span class="string">'"'</span>).unwrap();
+        s = s.strip_suffix(<span class="string">'"'</span>).unwrap();
     }
     s.to_owned()
 }
@@ -462,9 +462,9 @@
         <span class="macro">vmap!</span>(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">0</span>)]);
         <span class="macro">hmap!</span>(<span class="kw-2">&amp;</span>[(<span class="number">0</span>, <span class="number">0</span>)]);
         <span class="macro">hvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>]);
-        <span class="macro">hvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>], <span class="kw-2">&amp;</span>[<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]);
+        <span class="macro">hvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>], <span class="kw-2">&amp;</span>[<span class="string">"a"</span>, <span class="string">"b"</span>]);
         <span class="macro">vvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>]);
-        <span class="macro">vvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>], <span class="kw-2">&amp;</span>[<span class="string">&quot;a&quot;</span>, <span class="string">&quot;b&quot;</span>]);
+        <span class="macro">vvec!</span>(<span class="kw-2">&amp;</span>[<span class="number">0</span>], <span class="kw-2">&amp;</span>[<span class="string">"a"</span>, <span class="string">"b"</span>]);
         <span class="macro">lg!</span>(<span class="number">4</span>);
 
         <span class="kw">let </span>a = [<span class="number">0</span>..<span class="number">3</span>, <span class="number">4</span>..<span class="number">6</span>];
@@ -484,28 +484,28 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_bools_format() {
-        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">false</span>]).as_str(), <span class="string">&quot;[.]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">true</span>]).as_str(), <span class="string">&quot;[#]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">false</span>, <span class="bool-val">true</span>]).as_str(), <span class="string">&quot;[.#]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">true</span>, <span class="bool-val">false</span>]).as_str(), <span class="string">&quot;[#.]&quot;</span>);
+        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">false</span>]).as_str(), <span class="string">"[.]"</span>);
+        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">true</span>]).as_str(), <span class="string">"[#]"</span>);
+        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">false</span>, <span class="bool-val">true</span>]).as_str(), <span class="string">"[.#]"</span>);
+        <span class="macro">assert_eq!</span>(bools([<span class="bool-val">true</span>, <span class="bool-val">false</span>]).as_str(), <span class="string">"[#.]"</span>);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_bools_generics() {
-        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(&lt;[<span class="kw-2">&amp;</span>bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default().as_slice()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(Vec::&lt;<span class="kw-2">&amp;</span>bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(Vec::&lt;<span class="kw-2">&amp;mut </span>bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(BTreeSet::&lt;bool&gt;::new()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(empty::&lt;bool&gt;()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(empty::&lt;bool&gt;()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(empty::&lt;<span class="kw-2">&amp;</span>bool&gt;()).as_str(), <span class="string">&quot;[]&quot;</span>);
-        <span class="macro">assert_eq!</span>(bools(empty::&lt;<span class="kw-2">&amp;</span>bool&gt;()).as_str(), <span class="string">&quot;[]&quot;</span>);
+        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(&lt;[<span class="kw-2">&amp;</span>bool; <span class="number">0</span>]&gt;::default()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(&lt;[bool; <span class="number">0</span>]&gt;::default().as_slice()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(Vec::&lt;<span class="kw-2">&amp;</span>bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(Vec::&lt;<span class="kw-2">&amp;mut </span>bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(Vec::&lt;bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(BTreeSet::&lt;bool&gt;::new()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(empty::&lt;bool&gt;()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(empty::&lt;bool&gt;()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(empty::&lt;<span class="kw-2">&amp;</span>bool&gt;()).as_str(), <span class="string">"[]"</span>);
+        <span class="macro">assert_eq!</span>(bools(empty::&lt;<span class="kw-2">&amp;</span>bool&gt;()).as_str(), <span class="string">"[]"</span>);
     }
 }
 </code></pre></div></section></main></body></html>

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("lagrange", 0, "ラグランジュ補完\n多項式の係数から 1 …\nx 座標の異なるような N 点の評価から、N - 1 …\n0..N の評価から、N - 1 …\n0..N での評価から決まる N - 1 …")

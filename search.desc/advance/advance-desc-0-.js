@@ -1,0 +1,1 @@
+searchState.loadedDescShard("advance", 0, "しゃくとり法ユーティルです。\n<code>checker</code> が <code>true</code> …\n<code>advance_until</code> …")
