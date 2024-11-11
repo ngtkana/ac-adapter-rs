@@ -1004,7 +1004,7 @@ mod test_seg {
         const LEN_LIM: usize = 60;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
-            let mut used = vec![false; LEN_LIM];
+            let mut used = [false; LEN_LIM];
             let mut seg = Seg::<O>::new();
             let mut vec = Vec::new();
             for _ in 0..200 {
