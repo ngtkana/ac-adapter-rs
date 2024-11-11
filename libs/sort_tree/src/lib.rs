@@ -52,7 +52,6 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
     use randtools::Tree;
-    use std::usize::MAX;
 
     #[test]
     fn test_sort_tree_remove_parent() {
@@ -67,11 +66,11 @@ mod tests {
                 assert_eq!(parent.len(), n);
                 assert_eq!(root, parent[root]);
                 assert_eq!(ord[0], root);
-                let mut pos = vec![MAX; n];
+                let mut pos = vec![usize::MAX; n];
                 for (i, &o) in ord.iter().enumerate() {
                     pos[o] = i;
                 }
-                assert!(pos.iter().all(|&x| x != MAX));
+                assert!(pos.iter().all(|&x| x != usize::MAX));
                 for (x, y) in g
                     .iter()
                     .enumerate()

@@ -166,9 +166,11 @@ macro_rules! impl_int {
             fn one() -> Self {
                 1
             }
+            #[allow(clippy::cast_lossless)]
             fn as_f64(self) -> f64 {
                 self as f64
             }
+            #[allow(clippy::cast_lossless)]
             fn f64_as(x: f64) -> Self {
                 x as $Unsigned
             }
@@ -180,9 +182,11 @@ macro_rules! impl_int {
             fn one() -> Self {
                 1
             }
+            #[allow(clippy::cast_lossless)]
             fn as_f64(self) -> f64 {
                 self as f64
             }
+            #[allow(clippy::cast_lossless)]
             fn f64_as(x: f64) -> Self {
                 x as $Signed
             }

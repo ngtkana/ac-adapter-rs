@@ -317,7 +317,7 @@ impl<O: Op> IntoIterator for DequeueSwag<O> {
     type Item = O::Value;
 
     fn into_iter(self) -> Self::IntoIter {
-        self.front.into_iter().rev().chain(self.back.into_iter())
+        self.front.into_iter().rev().chain(self.back)
     }
 }
 

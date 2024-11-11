@@ -6,6 +6,7 @@
 //! 関数とのやり取りは、[`Interval`] 型を使います。これは `[T; 2]` の透明なラッパーです。
 //! - [`Interval`] 型は [`Mul`],[`Product`] を実装しており、これは [`Interval::intersection`] を呼びだします。
 //! - [`full()`](Interval::full), [`contains()`](Interval::contains)
+//!
 //! といった便利なメソッドがあります。
 //!
 //! 一次不等式を解く関数には次のものがあります。
@@ -24,7 +25,7 @@
 //! ```
 //! # use {
 //! #     lin_ineq::solve,
-//! #     std::i64::MIN,
+//! #     i64::MIN,
 //! # };
 //! let sol = solve(2, 10); // 2x <= 10
 //! assert_eq!(sol.0, [MIN, 5]); // x <= 5
@@ -35,7 +36,7 @@
 //! ```
 //! # use {
 //! #     lin_ineq::{solve_squeeze, Interval},
-//! #     std::i64::MIN,
+//! #     i64::MIN,
 //! # };
 //! let sol = solve_squeeze(3, 1, Interval([-5, 5])); // -5 <= 3x + 1 <= 5
 //! assert_eq!(sol.0, [-2, 1]); // -2 <= x <= 1
@@ -61,8 +62,8 @@ pub trait Signed: Sized + Copy + Ord + Neg<Output = Self> + Sub<Output = Self> {
 macro_rules! impl_signed {
     ($($T:ident),*) => {$(
         impl Signed for $T {
-            const MIN: Self = std::$T::MIN;
-            const MAX: Self = std::$T::MAX;
+            const MIN: Self = $T::MIN;
+            const MAX: Self = $T::MAX;
             const ZERO: Self = 0;
             fn div_euclid(self, rhs: Self) -> Self {
                 self.div_euclid(rhs)
@@ -136,6 +137,7 @@ pub fn solve_squeeze<T: Signed>(a: T, b: T, y: Interval<T>) -> Interval<T> {
 /// - [`empty()`](Self::empty) の戻り値は必ず `[MAX, MIN]`（以下、標準形と呼びます。） です。
 /// - [`normalize()`](Self::normalize) を使うと空区間はかならず標準形です。
 /// - [`intersection()`](Self::intersection) により生じる空区間は標準形とは限りません。
+///
 /// と同じ形になります。
 ///
 ///
@@ -186,8 +188,7 @@ impl<T: Signed> Interval<T> {
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{MIN, MAX};
-    /// assert_eq!(Interval::<i64>::full().0, [MIN, MAX]);
+    /// assert_eq!(Interval::<i64>::full().0, [i64::MIN, i64::MAX]);
     /// ```
     pub fn full() -> Self {
         Self([T::MIN, T::MAX])
@@ -199,8 +200,7 @@ impl<T: Signed> Interval<T> {
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{MIN, MAX};
-    /// assert_eq!(Interval::<i64>::empty().0, [MAX, MIN]);
+    /// assert_eq!(Interval::<i64>::empty().0, [i64::MAX, i64::MIN]);
     /// ```
     pub fn empty() -> Self {
         Self([T::MAX, T::MIN])
@@ -226,10 +226,9 @@ impl<T: Signed> Interval<T> {
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{MIN, MAX};
     /// assert_eq!(Interval([0, 10]).normalize().0, [0, 10]);
     /// assert_eq!(Interval([0, 0]).normalize().0, [0, 0]);
-    /// assert_eq!(Interval([0, -10]).normalize().0, [MAX, MIN]);
+    /// assert_eq!(Interval([0, -10]).normalize().0, [i64::MAX, i64::MIN]);
     /// ```
     pub fn normalize(self) -> Self {
         if self.is_empty() {
@@ -342,8 +341,6 @@ mod tests {
     use rand::prelude::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
-    use std::i64::MAX;
-    use std::i64::MIN;
     use std::iter::repeat_with;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -383,12 +380,12 @@ mod tests {
 
     #[test]
     fn test_full() {
-        assert_eq!(Interval::<i64>::full().0, [MIN, MAX]);
+        assert_eq!(Interval::<i64>::full().0, [i64::MIN, i64::MAX]);
     }
 
     #[test]
     fn test_empty() {
-        assert_eq!(Interval::<i64>::empty().0, [MAX, MIN]);
+        assert_eq!(Interval::<i64>::empty().0, [i64::MAX, i64::MIN]);
     }
 
     #[test]
@@ -413,10 +410,10 @@ mod tests {
             format!("{:?}", x)
         }
         assert_eq!(debug(Interval([0, 2])).as_str(), "Finite(0, 2)");
-        assert_eq!(debug(Interval([0, MAX])).as_str(), "Ge(0)");
-        assert_eq!(debug(Interval([MIN, 2])).as_str(), "Le(2)");
-        assert_eq!(debug(Interval([MIN, MAX])).as_str(), "Full");
-        assert_eq!(debug(Interval([MAX, MIN])).as_str(), "Empty");
+        assert_eq!(debug(Interval([0, i64::MAX])).as_str(), "Ge(0)");
+        assert_eq!(debug(Interval([i64::MIN, 2])).as_str(), "Le(2)");
+        assert_eq!(debug(Interval([i64::MIN, i64::MAX])).as_str(), "Full");
+        assert_eq!(debug(Interval([i64::MAX, i64::MIN])).as_str(), "Empty");
         assert_eq!(debug(Interval([2, 0])).as_str(), "Empty");
     }
 

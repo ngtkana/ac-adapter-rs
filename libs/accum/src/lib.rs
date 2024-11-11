@@ -229,13 +229,13 @@ mod tests {
     #[test]
     fn test_skipped_min() {
         let a = vec![4, 2, 6, 1];
-        let skipped = skipped_min(&a, std::i32::MAX);
+        let skipped = skipped_min(&a, i32::MAX);
         assert_eq!(skipped, vec![1, 1, 1, 2]);
     }
     #[test]
     fn test_skipped_max() {
         let a = vec![4, 2, 6, 1];
-        let skipped = skipped_max(&a, std::i32::MIN);
+        let skipped = skipped_max(&a, i32::MIN);
         assert_eq!(skipped, vec![6, 6, 4, 6]);
     }
 }

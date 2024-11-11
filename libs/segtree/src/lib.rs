@@ -205,6 +205,16 @@ impl<O: Op> Segtree<O> {
     }
 }
 
+impl<'a, O: Op> IntoIterator for &'a Segtree<O> {
+    type IntoIter = std::slice::Iter<'a, O::Value>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[allow(clippy::missing_fields_in_debug)]
 impl<O: Op> fmt::Debug for Segtree<O>
 where
     O::Value: fmt::Debug,
@@ -520,7 +530,7 @@ impl<O: Op> Dense2dSegtree<O> {
     {
         let values_ = values;
         let h = values.len();
-        let w = values.get(0).map_or(0, Vec::len);
+        let w = values.first().map_or(0, Vec::len);
         let mut values = vec![vec![O::identity(); 2 * w]; 2 * h];
         for (values, values_) in values[h..].iter_mut().zip(values_) {
             values[w..].clone_from_slice(values_);
@@ -539,7 +549,7 @@ impl<O: Op> Dense2dSegtree<O> {
     /// Fold $\left \lbrace x_{i, j} \mid i \in \text{{range}}_i, j \in \text{{range}}_j \right \rbrace$.
     pub fn fold(&self, i: impl RangeBounds<usize>, j: impl RangeBounds<usize>) -> O::Value {
         let h = self.values.len() / 2;
-        let w = self.values.get(0).map_or(0, |v| v.len() / 2);
+        let w = self.values.first().map_or(0, |v| v.len() / 2);
         let (mut i0, mut i1) = open(i, h);
         assert!(i0 <= i1 && i1 <= h);
         let (mut j0, mut j1) = open(j, w);
@@ -594,7 +604,7 @@ impl<O: Op> Dense2dSegtree<O> {
     /// Returns the entry of $x_{i, j}$.
     pub fn entry(&mut self, i: usize, j: usize) -> Dense2dEntry<O> {
         let h = self.values.len() / 2;
-        let w = self.values.get(0).map_or(0, |v| v.len() / 2);
+        let w = self.values.first().map_or(0, |v| v.len() / 2);
         Dense2dEntry {
             segtree: self,
             i: h + i,

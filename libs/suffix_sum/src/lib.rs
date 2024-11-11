@@ -132,7 +132,7 @@ impl<O: Op> SuffixSum2d<O> {
         let (i0, i1) = open(i, self.values.len() - 1);
         let (j0, j1) = open(j, self.values[0].len());
         assert!(i0 <= i1 && i1 < self.values.len());
-        assert!(j0 <= j1 && j1 <= self.values.get(0).map_or(0, Vec::len));
+        assert!(j0 <= j1 && j1 <= self.values.first().map_or(0, Vec::len));
         O::div(
             &O::mul(&self.values[i0][j0], &self.values[i1][j1]),
             &O::mul(&self.values[i0][j1], &self.values[i1][j0]),
@@ -182,7 +182,7 @@ where
 impl<O: Op> From<Vec<Vec<O::Value>>> for SuffixSum2d<O> {
     fn from(mut values: Vec<Vec<O::Value>>) -> Self {
         let h = values.len();
-        let w = values.get(0).map_or(0, Vec::len);
+        let w = values.first().map_or(0, Vec::len);
         values.push(repeat_with(O::identity).take(w).collect());
         for values in &mut values {
             values.push(O::identity());
@@ -304,6 +304,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::should_panic_without_expect)]
     #[should_panic]
     #[allow(clippy::reversed_empty_ranges)]
     fn test_suffix_sum_invalid_range() {
@@ -313,6 +314,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::should_panic_without_expect)]
     #[should_panic]
     fn test_suffix_sum_out_of_range() {
         let values = vec![1, 2, 3, 4, 5];

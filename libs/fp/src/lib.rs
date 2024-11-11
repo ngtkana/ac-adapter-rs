@@ -242,6 +242,7 @@ macro_rules! impl_from_signed {
     ($($t:ty),*) => {
         $(
             impl<const P: u64> From<$t> for Fp<P> {
+                #[allow(clippy::cast_lossless)]
                 fn from(x: $t) -> Self {
                     if x < 0 {
                         -Self::new((P as i64 - x as i64) as u64)
@@ -258,6 +259,7 @@ macro_rules! impl_from_unsigned {
     ($($t:ty),*) => {
         $(
             impl<const P: u64> From<$t> for Fp<P> {
+                #[allow(clippy::cast_lossless)]
                 fn from(x: $t) -> Self { Self::new(x as u64) }
             }
         )*

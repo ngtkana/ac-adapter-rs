@@ -3,8 +3,7 @@
 //!
 //! - AOJ GRL_3_C - 強連結成分分解
 //!   - 問題: <https://onlinejudge.u-aizu.ac.jp/problems/GRL_3_C>
-//!   - 提出 (8 ms):
-//!   <https://onlinejudge.u-aizu.ac.jp/status/users/ngtkana/submissions/1/GRL_3_C/judge/6179065/Rust>
+//!   - 提出 (8 ms): <https://onlinejudge.u-aizu.ac.jp/status/users/ngtkana/submissions/1/GRL_3_C/judge/6179065/Rust>
 //!   - 出題日: 2016-09-04
 //!   - 難易度: 易しめ。
 //!   - 制約:

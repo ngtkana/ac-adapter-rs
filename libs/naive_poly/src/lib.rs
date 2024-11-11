@@ -30,7 +30,7 @@ where
     T: Copy + Sum<T> + Mul<Output = T> + AddAssign,
 {
     if a.is_empty() || b.is_empty() {
-        return vec![zero(); 0];
+        return Vec::new();
     }
     let mut c = vec![zero(); a.len() + b.len() - 1];
     for (i, &ai) in a.iter().enumerate() {
@@ -92,7 +92,7 @@ where
 {
     assert!(!b.is_empty() && *b.last().unwrap() != zero::<T>());
     if a.len() < b.len() {
-        return vec![zero(); 0];
+        return Vec::new();
     }
     let mut c = vec![zero(); a.len() + 1 - b.len()];
     for i in (0..c.len()).rev() {
@@ -336,7 +336,7 @@ mod tests {
     }
     impl Sum<MinPlus> for MinPlus {
         fn sum<I: Iterator<Item = MinPlus>>(iter: I) -> Self {
-            iter.fold(MinPlus(std::u64::MAX), |a, b| a + b)
+            iter.fold(MinPlus(u64::MAX), |a, b| a + b)
         }
     }
     impl Mul for MinPlus {
@@ -395,7 +395,7 @@ mod tests {
                 assert_eq!(c.len(), a.len() + b.len() - 1);
             }
             for k in 0..c.len() {
-                let mut x = std::u64::MAX;
+                let mut x = u64::MAX;
                 for i in k.saturating_sub(b.len() - 1)..=k.min(a.len() - 1) {
                     x = x.min(a[i].0 + b[k - i].0);
                 }

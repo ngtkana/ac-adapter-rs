@@ -36,7 +36,7 @@
 //! * ちなみに位数の上界は、探索の打ち切りに用いています。
 //! * 群の演算は、モジュラス等が動的に与えられる可能性を考えて、型ではなくオブジェクトにしました。
 //! * たいてい ℤ / n ℤ
-//! の乗法群にしか使わない気がするのですが、それようのユーティルがうまく作れず……
+//!   の乗法群にしか使わない気がするのですが、それようのユーティルがうまく作れず……
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fmt::Formatter;
@@ -124,6 +124,7 @@ where
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<T: Debug, Mul> Debug for Bsgs<T, Mul> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("Bsgs")

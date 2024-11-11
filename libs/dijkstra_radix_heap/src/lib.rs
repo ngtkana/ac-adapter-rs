@@ -4,7 +4,7 @@
 #[deprecated]
 /// 一点からの距離配列を作ります。
 pub fn calc_dist(s: usize, g: &[Vec<(usize, u32)>]) -> Vec<u32> {
-    let mut dist = vec![std::u32::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
     dist[s] = 0;
     let mut heap = radix_heap::RadixHeap::new();
     heap.push(0, s);
@@ -24,8 +24,8 @@ pub fn calc_dist(s: usize, g: &[Vec<(usize, u32)>]) -> Vec<u32> {
 
 /// 一点からの距離配列を作ります。
 pub fn calc_dist_restore(s: usize, g: &[Vec<(usize, u32)>]) -> (Vec<u32>, Vec<usize>) {
-    let mut dist = vec![std::u32::MAX; g.len()];
-    let mut prv = vec![std::usize::MAX; g.len()];
+    let mut dist = vec![u32::MAX; g.len()];
+    let mut prv = vec![usize::MAX; g.len()];
     prv[s] = s;
     dist[s] = 0;
     let mut heap = radix_heap::RadixHeap::new();
@@ -103,8 +103,8 @@ mod tests {
         prv.iter().copied().enumerate().for_each(|(x, p)| {
             let expected = if x == p {
                 0
-            } else if p == std::usize::MAX {
-                std::u32::MAX
+            } else if p == usize::MAX {
+                u32::MAX
             } else {
                 dist[p] + edges.get(&(p, x)).unwrap()
             };
