@@ -147,10 +147,9 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
         (&x.key, &mut x.value)
     }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<(&O::Value, usize), usize>
+    pub fn binary_search<Q: ?Sized + Ord>(&self, key: &Q) -> Result<(&O::Value, usize), usize>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         self.binary_search_ptr(key)
             .map(|(x, i)| (&x.as_longlife_ref().value, i))
@@ -222,10 +221,9 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
         }
     }
 
-    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, O::Value)>
+    pub fn remove<Q: ?Sized + Ord>(&mut self, key: &Q) -> Option<(K, O::Value)>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         let x = self.binary_search_ptr(key).ok()?.0;
         self.remove_ptr(x);
@@ -261,10 +259,12 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
         x
     }
 
-    pub fn binary_search_ptr<Q: ?Sized>(&self, key: &Q) -> Result<(Ptr<Node<K, O>>, usize), usize>
+    pub fn binary_search_ptr<Q: ?Sized + Ord>(
+        &self,
+        key: &Q,
+    ) -> Result<(Ptr<Node<K, O>>, usize), usize>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         let mut x = self.tree.root.ok_or(0usize)?;
         let mut index = 0;
@@ -434,10 +434,9 @@ impl<K: Ord, V> Multimap<K, V> {
         self.segmap.nth(n)
     }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<(&V, usize), usize>
+    pub fn binary_search<Q: ?Sized + Ord>(&self, key: &Q) -> Result<(&V, usize), usize>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         self.segmap.binary_search(key)
     }
@@ -458,10 +457,9 @@ impl<K: Ord, V> Multimap<K, V> {
         self.segmap.insert(key, value)
     }
 
-    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
+    pub fn remove<Q: ?Sized + Ord>(&mut self, key: &Q) -> Option<(K, V)>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         self.segmap.remove(key)
     }
@@ -537,10 +535,9 @@ impl<K: Ord> Multiset<K> {
         self.map.nth(n).0
     }
 
-    pub fn binary_search<Q: ?Sized>(&self, key: &Q) -> Result<usize, usize>
+    pub fn binary_search<Q: ?Sized + Ord>(&self, key: &Q) -> Result<usize, usize>
     where
-        K: Ord + Borrow<Q>,
-        Q: Ord,
+        K: Borrow<Q>,
     {
         self.map.binary_search(key).map(|((), i)| i)
     }
@@ -561,10 +558,9 @@ impl<K: Ord> Multiset<K> {
         self.map.insert(key, ())
     }
 
-    pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<K>
+    pub fn remove<Q: ?Sized + Ord>(&mut self, key: &Q) -> Option<K>
     where
         K: Ord + Borrow<Q>,
-        Q: Ord,
     {
         self.map.remove(key).map(|(k, ())| k)
     }
