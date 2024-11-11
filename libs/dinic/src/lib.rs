@@ -818,7 +818,7 @@ macro_rules! impl_value {
                 0
             }
             fn infinity() -> Self {
-                std::$T::MAX
+                $T::MAX
             }
         }
     )*}

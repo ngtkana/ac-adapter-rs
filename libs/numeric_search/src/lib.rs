@@ -291,8 +291,8 @@ macro_rules! impl_signed {
         impl Signed for $ty {
             const ZERO: Self = 0;
             const ONE: Self = 1;
-            const MIN: Self = std::$ty::MIN;
-            const MAX: Self = std::$ty::MAX;
+            const MIN: Self = $ty::MIN;
+            const MAX: Self = $ty::MAX;
         }
     )*};
 }
