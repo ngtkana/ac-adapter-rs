@@ -205,6 +205,16 @@ impl<O: Op> Segtree<O> {
     }
 }
 
+impl<'a, O: Op> IntoIterator for &'a Segtree<O> {
+    type IntoIter = std::slice::Iter<'a, O::Value>;
+    type Item = &'a O::Value;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.iter()
+    }
+}
+
+#[allow(clippy::missing_fields_in_debug)]
 impl<O: Op> fmt::Debug for Segtree<O>
 where
     O::Value: fmt::Debug,

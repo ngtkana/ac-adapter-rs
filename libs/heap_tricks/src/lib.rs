@@ -216,11 +216,13 @@ pub struct DoubleHeap<T, H> {
     right: RemovableHeap<Reverse<T>>,
     handler: H,
 }
+#[allow(clippy::missing_fields_in_debug)]
 impl<T, H> Debug for DoubleHeap<T, H>
 where
     T: Copy + Ord + Hash + Debug,
     H: Handler<T> + Debug,
 {
+    #[allow(clippy::missing_fields_in_debug)]
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
             .field(

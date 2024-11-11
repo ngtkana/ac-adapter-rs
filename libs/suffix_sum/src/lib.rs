@@ -304,6 +304,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::should_panic_without_expect)]
     #[should_panic]
     #[allow(clippy::reversed_empty_ranges)]
     fn test_suffix_sum_invalid_range() {
@@ -313,6 +314,7 @@ mod tests {
     }
 
     #[test]
+    #[allow(clippy::should_panic_without_expect)]
     #[should_panic]
     fn test_suffix_sum_out_of_range() {
         let values = vec![1, 2, 3, 4, 5];
