@@ -34,8 +34,7 @@ var sourcesIndex = JSON.parse('{\
 "lagrange":["",[],["lib.rs"]],\
 "lazy_segbeats":["",[],["lib.rs"]],\
 "lazy_segtree":["",[],["lib.rs"]],\
-"lg":["",[],["lib.rs"]],\
-"lg2":["",[],["lib.rs","map.rs","table.rs","vec2.rs","vecs.rs"]],\
+"lg":["",[],["lib.rs","map.rs","table.rs","vec2.rs","vecs.rs"]],\
 "lin_ineq":["",[],["lib.rs"]],\
 "link_cut_tree":["",[],["base.rs","lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\

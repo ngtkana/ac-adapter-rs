@@ -20,7 +20,6 @@
 "interval_heap":[["impl&lt;T&gt; Freeze for <a class=\"struct\" href=\"interval_heap/struct.IntervalHeap.html\" title=\"struct interval_heap::IntervalHeap\">IntervalHeap</a>&lt;T&gt;",1,["interval_heap::IntervalHeap"]]],
 "lazy_segbeats":[["impl&lt;T&gt; !Freeze for <a class=\"struct\" href=\"lazy_segbeats/struct.Segbeats.html\" title=\"struct lazy_segbeats::Segbeats\">Segbeats</a>&lt;T&gt;",1,["lazy_segbeats::Segbeats"]]],
 "lazy_segtree":[["impl&lt;O&gt; Freeze for <a class=\"struct\" href=\"lazy_segtree/struct.LazySegtree.html\" title=\"struct lazy_segtree::LazySegtree\">LazySegtree</a>&lt;O&gt;",1,["lazy_segtree::LazySegtree"]]],
-"lg":[["impl Freeze for <a class=\"struct\" href=\"lg/struct.Dict.html\" title=\"struct lg::Dict\">Dict</a>",1,["lg::Dict"]]],
 "lin_ineq":[["impl&lt;T&gt; Freeze for <a class=\"struct\" href=\"lin_ineq/struct.Interval.html\" title=\"struct lin_ineq::Interval\">Interval</a>&lt;T&gt;<span class=\"where fmt-newline\">where\n    T: Freeze,</span>",1,["lin_ineq::Interval"]]],
 "link_cut_tree":[["impl&lt;O&gt; Freeze for <a class=\"struct\" href=\"link_cut_tree/struct.LinkCutTreeBase.html\" title=\"struct link_cut_tree::LinkCutTreeBase\">LinkCutTreeBase</a>&lt;O&gt;",1,["link_cut_tree::base::LinkCutTreeBase"]]],
 "low_link":[["impl Freeze for <a class=\"struct\" href=\"low_link/struct.LowLink.html\" title=\"struct low_link::LowLink\">LowLink</a>",1,["low_link::LowLink"]]],

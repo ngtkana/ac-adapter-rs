@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["align_of","bools","format","hmap","hvec","remove_ampersand","vec2","vmap","vvec"],"macro":["hmap","hvec","lg","table","vmap","vvec"]};
