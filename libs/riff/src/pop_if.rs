@@ -1,21 +1,6 @@
 use std::collections::BinaryHeap;
 
-/// Removes and returns the "top" element in a vector if the predicate
-/// returns `true`, or [`None`] if the predicate returns false or the container
-/// is empty.
-///
-/// # Examples
-///
-/// ```
-/// use riff::PopIf;
-///
-/// let mut vec = vec![1, 2, 3, 4];
-/// let pred = |x: &mut i32| *x % 2 == 0;
-///
-/// assert_eq!(vec.pop_if(pred), Some(4));
-/// assert_eq!(vec, [1, 2, 3]);
-/// assert_eq!(vec.pop_if(pred), None);
-/// ```
+/// Conditional `pop` function.
 pub trait PopIf {
     type Value;
 
