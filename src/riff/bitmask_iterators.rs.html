@@ -117,6 +117,10 @@
 <a href="#83" id="83">83</a>
 <a href="#84" id="84">84</a>
 <a href="#85" id="85">85</a>
+<a href="#86" id="86">86</a>
+<a href="#87" id="87">87</a>
+<a href="#88" id="88">88</a>
+<a href="#89" id="89">89</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">super</span>::numeric_traits::Unsigned;
 
 <span class="doccomment">/// Generates all the $k$-subsets of $[0, N[$
@@ -125,9 +129,11 @@
 ///
 /// Basic usage:
 /// ```
-/// use bitutils::combinations;
+/// use riff::bitmask_combinations;
 ///
-/// assert_eq!(combinations::&lt;u32&gt;(3, 2).collect::&lt;Vec&lt;_&gt;&gt;(), vec![3, 5, 6]);
+/// assert_eq!(bitmask_combinations::&lt;u32&gt;(3, 2).collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+///     3, 5, 6
+/// ]);
 /// ```
 </span><span class="kw">pub fn </span>bitmask_combinations&lt;T: Unsigned&gt;(n: u32, k: u32) -&gt; BitmaskCombinations&lt;T&gt; {
     <span class="macro">assert!</span>(k &lt; T::bit_length() &amp;&amp; k &lt; T::bit_length());
@@ -167,9 +173,11 @@
 ///
 /// Basic usage:
 /// ```
-/// use bitutils::subsets;
+/// use riff::bitmask_subsets;
 ///
-/// assert_eq!(subsets(10u32).collect::&lt;Vec&lt;_&gt;&gt;(), vec![0, 2, 8, 10]);
+/// assert_eq!(bitmask_subsets(10u32).collect::&lt;Vec&lt;_&gt;&gt;(), vec![
+///     0, 2, 8, 10
+/// ]);
 /// ```
 </span><span class="kw">pub fn </span>bitmask_subsets&lt;T: Unsigned&gt;(bs: T) -&gt; BitmaskSubsets&lt;T&gt; {
     BitmaskSubsets {
