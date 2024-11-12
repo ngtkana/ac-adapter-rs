@@ -1,1 +1,0 @@
-searchState.loadedDescShard("bfs", 0, "一点からの距離配列を作ります。\n…\nstart から end …\n…\n…")

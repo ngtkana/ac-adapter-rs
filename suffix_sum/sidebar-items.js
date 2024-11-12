@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["SuffixSum","SuffixSum2d"],"trait":["Op"]};

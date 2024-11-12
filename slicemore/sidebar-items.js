@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["lower_bound","lower_bound_by","lower_bound_by_key","partition_point","upper_bound","upper_bound_by","upper_bound_by_key"],"trait":["SliceMore"]};

@@ -1,1 +1,0 @@
-searchState.loadedDescShard("io", 0, "Read input from stdin and parse it.\nTrait for types that can be parsed.\nRead input from stdin and parse it.")

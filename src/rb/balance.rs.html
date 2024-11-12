@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/balance.rs`."><title>balance.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/balance.rs`."><title>balance.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rb/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1072,6 +1072,12 @@
 <a href="#1038" id="1038">1038</a>
 <a href="#1039" id="1039">1039</a>
 <a href="#1040" id="1040">1040</a>
+<a href="#1041" id="1041">1041</a>
+<a href="#1042" id="1042">1042</a>
+<a href="#1043" id="1043">1043</a>
+<a href="#1044" id="1044">1044</a>
+<a href="#1045" id="1045">1045</a>
+<a href="#1046" id="1046">1046</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::ops::DerefMut;
@@ -1311,8 +1317,11 @@
 }
 <span class="kw">impl</span>&lt;T: Balance&gt; Clone <span class="kw">for </span>Tree&lt;T&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="kw-2">*</span><span class="self">self
-    </span>}
+        <span class="self">Self </span>{
+            root: <span class="self">self</span>.root,
+            black_height: <span class="self">self</span>.black_height,
+        }
+    }
 }
 <span class="kw">impl</span>&lt;T: Balance&gt; Copy <span class="kw">for </span>Tree&lt;T&gt; {}
 
@@ -1326,17 +1335,20 @@
     }
 }
 <span class="kw">impl</span>&lt;T: Balance&gt; fmt::Debug <span class="kw">for </span>BlackViolation&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        f.debug_struct(<span class="string">"BlackViolation"</span>)
-            .field(<span class="string">"p"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.p)
-            .field(<span class="string">"x"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.x)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        f.debug_struct(<span class="string">&quot;BlackViolation&quot;</span>)
+            .field(<span class="string">&quot;p&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.p)
+            .field(<span class="string">&quot;x&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.x)
             .finish()
     }
 }
 <span class="kw">impl</span>&lt;T: Balance&gt; Clone <span class="kw">for </span>BlackViolation&lt;T&gt; {
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
-        <span class="kw-2">*</span><span class="self">self
-    </span>}
+        <span class="self">Self </span>{
+            p: <span class="self">self</span>.p,
+            x: <span class="self">self</span>.x,
+        }
+    }
 }
 <span class="kw">impl</span>&lt;T: Balance&gt; Copy <span class="kw">for </span>BlackViolation&lt;T&gt; {}
 
@@ -1411,11 +1423,11 @@
         x
     }
 
-    <span class="kw">pub fn </span>as_longlife_ref&lt;<span class="lifetime">'a</span>&gt;(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span>T {
+    <span class="kw">pub fn </span>as_longlife_ref&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T {
         <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.as_ref() }
     }
 
-    <span class="kw">pub fn </span>as_longlife_mut&lt;<span class="lifetime">'a</span>&gt;(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="kw-2">mut </span>T {
+    <span class="kw">pub fn </span>as_longlife_mut&lt;<span class="lifetime">&#39;a</span>&gt;(<span class="kw-2">mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span><span class="kw-2">mut </span>T {
         <span class="kw">unsafe </span>{ <span class="self">self</span>.<span class="number">0</span>.as_mut() }
     }
 }
@@ -1438,8 +1450,8 @@
     }
 }
 <span class="kw">impl</span>&lt;T&gt; fmt::Debug <span class="kw">for </span>Ptr&lt;T&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">write!</span>(f, <span class="string">"{:02x}"</span>, <span class="self">self</span>.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize % <span class="number">0x1000 </span>/ <span class="number">0x10</span>)
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">write!</span>(f, <span class="string">&quot;{:02x}&quot;</span>, <span class="self">self</span>.<span class="number">0</span>.as_ptr() <span class="kw">as </span>usize % <span class="number">0x1000 </span>/ <span class="number">0x10</span>)
     }
 }
 <span class="kw">impl</span>&lt;T&gt; PartialEq <span class="kw">for </span>Ptr&lt;T&gt; {
@@ -1461,63 +1473,63 @@
     <span class="kw">use </span>std::fmt;
 
     <span class="kw">impl</span>&lt;T: Balance&gt; fmt::Display <span class="kw">for </span>Tree&lt;T&gt; {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-            <span class="self">self</span>.fmt_by(f, |p| <span class="macro">format!</span>(<span class="string">"{:?}"</span>, p))
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+            <span class="self">self</span>.fmt_by(f, |p| <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, p))
         }
     }
-    <span class="kw">struct </span>TreeFormatter&lt;<span class="lifetime">'a</span>, T: Balance, F: Fn(Ptr&lt;T&gt;) -&gt; String&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Tree&lt;T&gt;, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>F);
-    <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, T: Balance, F: Fn(Ptr&lt;T&gt;) -&gt; String&gt; fmt::Display <span class="kw">for </span>TreeFormatter&lt;<span class="lifetime">'a</span>, T, F&gt; {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">struct </span>TreeFormatter&lt;<span class="lifetime">&#39;a</span>, T: Balance, F: Fn(Ptr&lt;T&gt;) -&gt; String&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Tree&lt;T&gt;, <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>F);
+    <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, T: Balance, F: Fn(Ptr&lt;T&gt;) -&gt; String&gt; fmt::Display <span class="kw">for </span>TreeFormatter&lt;<span class="lifetime">&#39;a</span>, T, F&gt; {
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
             <span class="self">self</span>.<span class="number">0</span>.fmt_by(f, |p| (<span class="self">self</span>.<span class="number">1</span>)(p))
         }
     }
     <span class="kw">impl</span>&lt;T: Balance&gt; Tree&lt;T&gt; {
         <span class="kw">pub fn </span>format_by&lt;F: Fn(Ptr&lt;T&gt;) -&gt; String&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, key: F) -&gt; String {
-            <span class="macro">format!</span>(<span class="string">"{}"</span>, TreeFormatter(<span class="self">self</span>, <span class="kw-2">&amp;</span>key))
+            <span class="macro">format!</span>(<span class="string">&quot;{}&quot;</span>, TreeFormatter(<span class="self">self</span>, <span class="kw-2">&amp;</span>key))
         }
 
         <span class="kw">fn </span>fmt_by(
             <span class="kw-2">&amp;</span><span class="self">self</span>,
-            f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;,
+            f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;,
             <span class="kw-2">mut </span>key: <span class="kw">impl </span>Fn(Ptr&lt;T&gt;) -&gt; String,
         ) -&gt; fmt::Result {
             <span class="kw">fn </span>write&lt;T: Balance&gt;(
-                s: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;,
+                s: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;,
                 x: <span class="prelude-ty">Option</span>&lt;Ptr&lt;T&gt;&gt;,
                 p: <span class="prelude-ty">Option</span>&lt;Ptr&lt;T&gt;&gt;,
                 vios: <span class="kw-2">&amp;</span>Violations&lt;T&gt;,
                 key: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>Fn(Ptr&lt;T&gt;) -&gt; String,
             ) -&gt; fmt::Result {
                 <span class="kw">if </span>vios.black_vios.contains(<span class="kw-2">&amp;</span>BlackViolation { p, x }) {
-                    <span class="macro">write!</span>(s, <span class="string">"\x1b[40m\x1b[37m«\x1b[0m"</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(s, <span class="string">&quot;\x1b[40m\x1b[37m«\x1b[0m&quot;</span>)<span class="question-mark">?</span>;
                 }
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
                     <span class="kw">if </span><span class="kw-2">*</span>x.color() == Color::Black {
-                        <span class="macro">write!</span>(s, <span class="string">"["</span>)<span class="question-mark">?
+                        <span class="macro">write!</span>(s, <span class="string">&quot;[&quot;</span>)<span class="question-mark">?
                     </span>}
                     write(s, <span class="kw-2">*</span>x.left(), <span class="prelude-val">Some</span>(x), vios, key)<span class="question-mark">?</span>;
                     <span class="kw">if </span>vios.red_vios.contains(<span class="kw-2">&amp;</span>x) {
-                        <span class="macro">write!</span>(s, <span class="string">"\x1b[41m\x1b[37m{}\x1b[0m"</span>, key(x))<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(s, <span class="string">&quot;\x1b[41m\x1b[37m{}\x1b[0m&quot;</span>, key(x))<span class="question-mark">?</span>;
                     } <span class="kw">else </span>{
                         <span class="kw">match </span><span class="kw-2">*</span>x.color() {
-                            Color::Black =&gt; <span class="macro">write!</span>(s, <span class="string">"\x1b[30m{}\x1b[0m"</span>, key(x))<span class="question-mark">?</span>,
-                            Color::Red =&gt; <span class="macro">write!</span>(s, <span class="string">"\x1b[31m{}\x1b[0m"</span>, key(x))<span class="question-mark">?</span>,
+                            Color::Black =&gt; <span class="macro">write!</span>(s, <span class="string">&quot;\x1b[30m{}\x1b[0m&quot;</span>, key(x))<span class="question-mark">?</span>,
+                            Color::Red =&gt; <span class="macro">write!</span>(s, <span class="string">&quot;\x1b[31m{}\x1b[0m&quot;</span>, key(x))<span class="question-mark">?</span>,
                         }
                     }
                     write(s, <span class="kw-2">*</span>x.right(), <span class="prelude-val">Some</span>(x), vios, key)<span class="question-mark">?</span>;
                     <span class="kw">if </span><span class="kw-2">*</span>x.color() == Color::Black {
-                        <span class="macro">write!</span>(s, <span class="string">"]"</span>)<span class="question-mark">?</span>;
+                        <span class="macro">write!</span>(s, <span class="string">&quot;]&quot;</span>)<span class="question-mark">?</span>;
                     }
                 }
                 <span class="kw">if </span>vios.black_vios.contains(<span class="kw-2">&amp;</span>BlackViolation { p, x }) {
-                    <span class="macro">write!</span>(s, <span class="string">"\x1b[40m\x1b[37m»\x1b[0m"</span>)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(s, <span class="string">&quot;\x1b[40m\x1b[37m»\x1b[0m&quot;</span>)<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             }
             <span class="kw">let </span>vios = Violations::collect(<span class="self">self</span>);
-            <span class="macro">write!</span>(f, <span class="string">"Tree({}, \""</span>, <span class="self">self</span>.black_height)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;Tree({}, \&quot;&quot;</span>, <span class="self">self</span>.black_height)<span class="question-mark">?</span>;
             write(f, <span class="self">self</span>.root, <span class="prelude-val">None</span>, <span class="kw-2">&amp;</span>vios, <span class="kw-2">&amp;mut </span>key)<span class="question-mark">?</span>;
-            <span class="macro">write!</span>(f, <span class="string">"\")"</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;\&quot;)&quot;</span>)<span class="question-mark">?</span>;
             <span class="prelude-val">Ok</span>(())
         }
 
@@ -1692,7 +1704,7 @@
                     </span>|| left_height + <span class="number">1 </span>== right_height)
                     .then_some(())
                     .ok_or_else(|| {
-                        <span class="macro">format!</span>(<span class="string">"The difference of black height is greater than 1: {:?}"</span>, x)
+                        <span class="macro">format!</span>(<span class="string">&quot;The difference of black height is greater than 1: {:?}&quot;</span>, x)
                     })<span class="question-mark">?</span>;
 
                 <span class="comment">// Parent pointer incinsistency
@@ -1700,8 +1712,8 @@
                     <span class="kw">let </span>p = <span class="kw-2">*</span>left.parent();
                     (p == <span class="prelude-val">Some</span>(x)).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"parent pointer inconsistency between {:?} and its left child {:?}. \
-                             The parent of the left child is {:?}"</span>,
+                            <span class="string">&quot;parent pointer inconsistency between {:?} and its left child {:?}. \
+                             The parent of the left child is {:?}&quot;</span>,
                             x, left, p,
                         )
                     })<span class="question-mark">?</span>;
@@ -1710,8 +1722,8 @@
                     <span class="kw">let </span>p = <span class="kw-2">*</span>right.parent();
                     (p == <span class="prelude-val">Some</span>(x)).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"parent pointer inconsistency between {:?} and its right child {:?}. \
-                             The parent of the right child is {:?}"</span>,
+                            <span class="string">&quot;parent pointer inconsistency between {:?} and its right child {:?}. \
+                             The parent of the right child is {:?}&quot;</span>,
                             x, right, p,
                         )
                     })<span class="question-mark">?</span>;
@@ -1722,16 +1734,16 @@
                 <span class="kw">let </span>h = validate(<span class="self">self</span>.root)<span class="question-mark">?</span>;
                 (<span class="self">self</span>.black_height == h || <span class="self">self</span>.black_height == h + <span class="number">1</span>)
                     .then_some(())
-                    .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"black height of {} is not {}"</span>, <span class="self">self</span>, h))<span class="question-mark">?</span>;
+                    .ok_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;black height of {} is not {}&quot;</span>, <span class="self">self</span>, h))<span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = <span class="self">self</span>.root {
                     <span class="comment">// Parent is None
                     </span>(x.parent().is_none())
                         .then_some(())
-                        .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"parent of {:?} is not None"</span>, x))<span class="question-mark">?</span>;
+                        .ok_or_else(|| <span class="macro">format!</span>(<span class="string">&quot;parent of {:?} is not None&quot;</span>, x))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             }()
-            .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"Validation error: {}\nTree: {}"</span>, e, <span class="self">self</span>))
+            .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">&quot;Validation error: {}\nTree: {}&quot;</span>, e, <span class="self">self</span>))
         }
 
         <span class="kw">pub fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Ptr&lt;T&gt;&gt; {
@@ -1767,10 +1779,10 @@
         }
     }
     <span class="kw">impl</span>&lt;T: Balance&gt; fmt::Debug <span class="kw">for </span>Violations&lt;T&gt; {
-        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-            f.debug_struct(<span class="string">"Violations"</span>)
-                .field(<span class="string">"red_vios"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.red_vios)
-                .field(<span class="string">"black_vios"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.black_vios)
+        <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+            f.debug_struct(<span class="string">&quot;Violations&quot;</span>)
+                .field(<span class="string">&quot;red_vios&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.red_vios)
+                .field(<span class="string">&quot;black_vios&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.black_vios)
                 .finish()
         }
     }
@@ -1875,13 +1887,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">0</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">&quot;{}&quot;</span>, tree);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">&quot;{}&quot;</span>, tree);
         }
     }
 
@@ -1892,13 +1904,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">0</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">1</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">1</span>, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">&quot;{}&quot;</span>, tree);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">&quot;{}&quot;</span>, tree);
         }
     }
 
@@ -1909,13 +1921,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">1</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">1</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">&quot;{}&quot;</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">1</span>, <span class="string">&quot;{}&quot;</span>, tree);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">&quot;{}&quot;</span>, tree);
         }
     }
 
@@ -2044,7 +2056,7 @@
                     <span class="kw">let </span>expected = sum(p.left) + p.value + sum(p.right);
                     (p.sum == expected).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"Sum is incorrect at {:?}. Expected {}, but cached {}"</span>,
+                            <span class="string">&quot;Sum is incorrect at {:?}. Expected {}, but cached {}&quot;</span>,
                             p, expected, p.sum
                         )
                     })<span class="question-mark">?</span>;
@@ -2054,8 +2066,8 @@
             }
             validate_sum(<span class="self">self</span>.root).unwrap_or_else(|e| {
                 <span class="macro">panic!</span>(
-                    <span class="string">"{e}:\n Tree: {}"</span>,
-                    <span class="self">self</span>.format_by(|p| <span class="macro">format!</span>(<span class="string">"&lt;{:?}:{},{}&gt;"</span>, p, p.value, p.sum))
+                    <span class="string">&quot;{e}:\n Tree: {}&quot;</span>,
+                    <span class="self">self</span>.format_by(|p| <span class="macro">format!</span>(<span class="string">&quot;&lt;{:?}:{},{}&gt;&quot;</span>, p, p.value, p.sum))
                 )
             });
         }

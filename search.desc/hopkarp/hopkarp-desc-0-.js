@@ -1,1 +1,0 @@
-searchState.loadedDescShard("hopkarp", 0, "Finds a maximum cardinality bipartite matching by …\nSummary of the result of Hopcroft―Karp’s algorithm.\nCardinality of a maximum cardinality bipartite matching.\nReturns the argument unchanged.\nTakes a <em>forward</em> adjacency list and the length of the right …\nCalls <code>U::from(self)</code>.")

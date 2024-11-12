@@ -1,1 +1,0 @@
-searchState.loadedDescShard("bfs01", 0, "一点からの距離配列を作ります。\n…\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.")

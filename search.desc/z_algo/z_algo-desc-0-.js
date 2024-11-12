@@ -1,1 +1,0 @@
-searchState.loadedDescShard("z_algo", 0, "Z-algorithm")

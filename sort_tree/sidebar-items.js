@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["remove_parent","sort_tree","sort_tree_by","sort_tree_remove_parent"]};

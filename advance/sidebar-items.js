@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["advance_until","advance_visit_until"]};

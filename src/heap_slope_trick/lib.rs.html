@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/heap_slope_trick/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heap_slope_trick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/heap_slope_trick/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="heap_slope_trick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../heap_slope_trick/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -491,6 +491,10 @@
 <a href="#457" id="457">457</a>
 <a href="#458" id="458">458</a>
 <a href="#459" id="459">459</a>
+<a href="#460" id="460">460</a>
+<a href="#461" id="461">461</a>
+<a href="#462" id="462">462</a>
+<a href="#463" id="463">463</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [`BinaryHeap`] 二本で slope trick をします。
 //!
 //! [詳しくは `HeapSlopeTrick` をご覧ください。](HeapSlopeTrick)
@@ -593,10 +597,10 @@
         [
             <span class="self">self</span>.small
                 .peek()
-                .map_or(i64::MIN, |<span class="kw-2">&amp;</span>x| x + <span class="self">self</span>.shift_small),
+                .map_or(std::i64::MIN, |<span class="kw-2">&amp;</span>x| x + <span class="self">self</span>.shift_small),
             <span class="self">self</span>.large
                 .peek()
-                .map_or(i64::MAX, |<span class="kw-2">&amp;</span>Reverse(x)| x + <span class="self">self</span>.shift_large),
+                .map_or(std::i64::MAX, |<span class="kw-2">&amp;</span>Reverse(x)| x + <span class="self">self</span>.shift_large),
         ]
     }
 
@@ -838,13 +842,13 @@
             <span class="kw">let </span>start = <span class="self">self</span>.values.iter().position(|<span class="kw-2">&amp;</span>y| y == min).unwrap();
             <span class="kw">let </span>end = n - <span class="number">1 </span>- <span class="self">self</span>.values.iter().rev().position(|<span class="kw-2">&amp;</span>y| y == min).unwrap();
             [
-                <span class="kw">if </span>start == <span class="number">0 </span>|| <span class="self">self</span>.values[start - <span class="number">1</span>] == i64::MAX {
-                    i64::MIN
+                <span class="kw">if </span>start == <span class="number">0 </span>|| <span class="self">self</span>.values[start - <span class="number">1</span>] == std::i64::MAX {
+                    std::i64::MIN
                 } <span class="kw">else </span>{
                     XMIN + start <span class="kw">as </span>i64
                 },
-                <span class="kw">if </span>end == n - <span class="number">1 </span>|| <span class="self">self</span>.values[end + <span class="number">1</span>] == i64::MAX {
-                    i64::MAX
+                <span class="kw">if </span>end == n - <span class="number">1 </span>|| <span class="self">self</span>.values[end + <span class="number">1</span>] == std::i64::MAX {
+                    std::i64::MAX
                 } <span class="kw">else </span>{
                     XMIN + end <span class="kw">as </span>i64
                 },
@@ -858,14 +862,14 @@
         <span class="kw">fn </span>add_const(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: i64) {
             <span class="self">self</span>.values
                 .iter_mut()
-                .for_each(|x| <span class="kw-2">*</span>x = <span class="kw">if </span><span class="kw-2">*</span>x == i64::MAX { i64::MAX } <span class="kw">else </span>{ <span class="kw-2">*</span>x + c });
+                .for_each(|x| <span class="kw-2">*</span>x = <span class="kw">if </span><span class="kw-2">*</span>x == std::i64::MAX { std::i64::MAX } <span class="kw">else </span>{ <span class="kw-2">*</span>x + c });
         }
 
         <span class="kw">fn </span>add_fn(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw">impl </span>Fn(i64) -&gt; i64) {
             <span class="kw">for </span>x <span class="kw">in </span>XMIN..=XMAX {
                 <span class="kw">let </span>i = (x - XMIN) <span class="kw">as </span>usize;
                 <span class="kw">let </span>orig = <span class="self">self</span>.values[i];
-                <span class="self">self</span>.values[i] = <span class="kw">if </span>orig == i64::MAX { i64::MAX } <span class="kw">else </span>{ orig + f(x) };
+                <span class="self">self</span>.values[i] = <span class="kw">if </span>orig == std::i64::MAX { std::i64::MAX } <span class="kw">else </span>{ orig + f(x) };
             }
         }
 
@@ -899,12 +903,14 @@
                     <span class="kw">let </span>a = -a <span class="kw">as </span>usize;
                     <span class="self">self</span>.values.rotate_left(a);
                     <span class="kw">let </span>n = <span class="self">self</span>.values.len();
-                    <span class="self">self</span>.values[n - a..].iter_mut().for_each(|x| <span class="kw-2">*</span>x = i64::MAX);
+                    <span class="self">self</span>.values[n - a..]
+                        .iter_mut()
+                        .for_each(|x| <span class="kw-2">*</span>x = std::i64::MAX);
                 }
                 Ordering::Greater =&gt; {
                     <span class="kw">let </span>a = a <span class="kw">as </span>usize;
                     <span class="self">self</span>.values.rotate_right(a);
-                    <span class="self">self</span>.values[..a].iter_mut().for_each(|x| <span class="kw-2">*</span>x = i64::MAX);
+                    <span class="self">self</span>.values[..a].iter_mut().for_each(|x| <span class="kw-2">*</span>x = std::i64::MAX);
                 }
                 Ordering::Equal =&gt; (),
             }
@@ -917,7 +923,7 @@
                     (((i - b).max(<span class="number">0</span>).min(n) <span class="kw">as </span>usize)..((i - a + <span class="number">1</span>).min(n).max(<span class="number">0</span>) <span class="kw">as </span>usize))
                         .map(|j| <span class="self">self</span>.values[j])
                         .min()
-                        .unwrap_or(i64::MAX)
+                        .unwrap_or(std::i64::MAX)
                 })
                 .collect();
         }
@@ -925,7 +931,7 @@
         <span class="kw">fn </span>get_tilt_minimum(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
             <span class="self">self</span>.values
                 .windows(<span class="number">2</span>)
-                .filter(|v| v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">1</span>] != i64::MAX)
+                .filter(|v| v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">1</span>] != std::i64::MAX)
                 .map(|v| v[<span class="number">1</span>] - v[<span class="number">0</span>])
                 .min()
                 .unwrap()
@@ -934,7 +940,7 @@
         <span class="kw">fn </span>get_tilt_maximum(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
             <span class="self">self</span>.values
                 .windows(<span class="number">2</span>)
-                .filter(|v| v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">1</span>] != i64::MAX)
+                .filter(|v| v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">1</span>] != std::i64::MAX)
                 .map(|v| v[<span class="number">1</span>] - v[<span class="number">0</span>])
                 .max()
                 .unwrap()
@@ -944,7 +950,9 @@
             <span class="self">self</span>.values
                 .windows(<span class="number">3</span>)
                 .enumerate()
-                .filter(|(<span class="kw">_</span>, v)| v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">2</span>] != i64::MAX &amp;&amp; v[<span class="number">0</span>] + v[<span class="number">2</span>] &gt; v[<span class="number">1</span>] * <span class="number">2</span>)
+                .filter(|(<span class="kw">_</span>, v)| {
+                    v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">2</span>] != std::i64::MAX &amp;&amp; v[<span class="number">0</span>] + v[<span class="number">2</span>] &gt; v[<span class="number">1</span>] * <span class="number">2
+                </span>})
                 .map(|(i, v)| [XMIN + <span class="number">1 </span>+ i <span class="kw">as </span>i64, v[<span class="number">1</span>]])
                 .collect()
         }

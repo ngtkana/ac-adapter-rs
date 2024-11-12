@@ -1,1 +1,0 @@
-searchState.loadedDescShard("uf_checklist", 0, "Union-find …\n<code>UfChecklist::range_check</code> が返すイテレータです。\n…\n指定した場所をチェックします。\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\n指定した場所がチェック済みならば <code>true</code> …\n…\n区間 [0, n[ …\n区間 <code>range</code> …")

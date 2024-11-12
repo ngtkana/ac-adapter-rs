@@ -1,1 +1,0 @@
-searchState.loadedDescShard("elim", 0, "…")

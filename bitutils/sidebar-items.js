@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["combinations","subsets"],"struct":["Combinations","Subsets"],"trait":["Unsigned"]};

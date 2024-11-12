@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/seq.rs`."><title>seq.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/rb/src/seq.rs`."><title>seq.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="rb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../rb/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1099,6 +1099,9 @@
 <a href="#1065" id="1065">1065</a>
 <a href="#1066" id="1066">1066</a>
 <a href="#1067" id="1067">1067</a>
+<a href="#1068" id="1068">1068</a>
+<a href="#1069" id="1069">1069</a>
+<a href="#1070" id="1070">1070</a>
 </pre></div><pre class="rust"><code><span class="attr">#![allow(dead_code)]
 </span><span class="kw">use </span><span class="kw">crate</span>::balance::Balance;
 <span class="kw">use </span><span class="kw">crate</span>::balance::BlackViolation;
@@ -1143,17 +1146,20 @@
     }
 
     <span class="kw">pub fn </span>is_leaf(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
-        <span class="kw">if </span><span class="self">self</span>.left.is_none() {
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.left.is_none());
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.right.is_none());
-            <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.len, <span class="number">1</span>);
-            <span class="bool-val">true
-        </span>} <span class="kw">else </span>{
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.left.is_some());
-            <span class="macro">debug_assert!</span>(<span class="self">self</span>.right.is_some());
-            <span class="macro">debug_assert_ne!</span>(<span class="self">self</span>.len, <span class="number">1</span>);
-            <span class="bool-val">false
-        </span>}
+        <span class="kw">match </span><span class="self">self</span>.left {
+            <span class="prelude-val">None </span>=&gt; {
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.left.is_none());
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.right.is_none());
+                <span class="macro">debug_assert_eq!</span>(<span class="self">self</span>.len, <span class="number">1</span>);
+                <span class="bool-val">true
+            </span>}
+            <span class="prelude-val">Some</span>(<span class="kw">_</span>) =&gt; {
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.left.is_some());
+                <span class="macro">debug_assert!</span>(<span class="self">self</span>.right.is_some());
+                <span class="macro">debug_assert_ne!</span>(<span class="self">self</span>.len, <span class="number">1</span>);
+                <span class="bool-val">false
+            </span>}
+        }
     }
 }
 <span class="kw">impl</span>&lt;O: Op&gt; Balance <span class="kw">for </span>Node&lt;O&gt; {
@@ -1389,7 +1395,7 @@
         <span class="self">self</span>.tree.root.is_none()
     }
 
-    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegIter&lt;<span class="lifetime">'_</span>, O&gt; {
+    <span class="kw">pub fn </span>iter(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegIter&lt;<span class="lifetime">&#39;_</span>, O&gt; {
         SegIter {
             start: <span class="self">self</span>.tree.min(),
             end: <span class="self">self</span>.tree.max(),
@@ -1398,11 +1404,11 @@
         }
     }
 
-    <span class="kw">pub fn </span>display(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegDisplay&lt;<span class="lifetime">'_</span>, O&gt; {
+    <span class="kw">pub fn </span>display(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegDisplay&lt;<span class="lifetime">&#39;_</span>, O&gt; {
         SegDisplay(<span class="self">self</span>)
     }
 
-    <span class="kw">pub fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegTable&lt;<span class="lifetime">'_</span>, O&gt; {
+    <span class="kw">pub fn </span>table(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; SegTable&lt;<span class="lifetime">&#39;_</span>, O&gt; {
         SegTable(<span class="self">self</span>)
     }
 
@@ -1410,7 +1416,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>.nth_ptr(index).as_longlife_ref().value
     }
 
-    <span class="kw">pub fn </span>nth_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; Entry&lt;<span class="lifetime">'_</span>, O&gt; {
+    <span class="kw">pub fn </span>nth_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, index: usize) -&gt; Entry&lt;<span class="lifetime">&#39;_</span>, O&gt; {
         Entry {
             p: <span class="self">self</span>.nth_ptr(index),
             marker: PhantomData,
@@ -1421,7 +1427,7 @@
         <span class="kw">let </span>(start, end) = into_range(range, <span class="self">self</span>.len());
         <span class="macro">assert!</span>(
             start &lt;= end &amp;&amp; end &lt;= <span class="self">self</span>.len(),
-            <span class="string">"Index out of range:\n range: {start}..{end}\n   len:{}"</span>,
+            <span class="string">&quot;Index out of range:\n range: {start}..{end}\n   len:{}&quot;</span>,
             <span class="self">self</span>.len(),
         );
         <span class="kw">if </span>start == end {
@@ -1648,50 +1654,50 @@
 <span class="kw">where
     </span>O::Value: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         f.debug_list().entries(<span class="self">self</span>).finish()
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">'a </span>Seg&lt;O&gt; {
-    <span class="kw">type </span>IntoIter = SegIter&lt;<span class="lifetime">'a</span>, O&gt;;
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>O::Value;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; IntoIterator <span class="kw">for </span><span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Seg&lt;O&gt; {
+    <span class="kw">type </span>IntoIter = SegIter&lt;<span class="lifetime">&#39;a</span>, O&gt;;
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value;
 
     <span class="kw">fn </span>into_iter(<span class="self">self</span>) -&gt; <span class="self">Self</span>::IntoIter {
         <span class="self">self</span>.iter()
     }
 }
-<span class="kw">pub struct </span>Entry&lt;<span class="lifetime">'a</span>, O: Op&gt; {
+<span class="kw">pub struct </span>Entry&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
     p: Ptr&lt;Node&lt;O&gt;&gt;,
-    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>O&gt;,
+    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; ops::Deref <span class="kw">for </span>Entry&lt;<span class="lifetime">'a</span>, O&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; ops::Deref <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">type </span>Target = O::Value;
 
     <span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span><span class="self">Self</span>::Target {
         <span class="kw-2">&amp;</span><span class="self">self</span>.p.as_longlife_ref().value
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; ops::DerefMut <span class="kw">for </span>Entry&lt;<span class="lifetime">'a</span>, O&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; ops::DerefMut <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">fn </span>deref_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Target {
         <span class="kw-2">&amp;mut </span><span class="self">self</span>.p.as_longlife_mut().value
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; Drop <span class="kw">for </span>Entry&lt;<span class="lifetime">'a</span>, O&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; Drop <span class="kw">for </span>Entry&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
         <span class="self">self</span>.p.update();
         <span class="self">self</span>.p.update_ancestors();
     }
 }
-<span class="kw">struct </span>SegTableCell&lt;<span class="lifetime">'a</span>, O: Op&gt; {
+<span class="kw">struct </span>SegTableCell&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
     start: usize,
     end: usize,
-    value: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>O::Value,
+    value: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value,
 }
-<span class="kw">pub struct </span>SegTable&lt;<span class="lifetime">'a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Seg&lt;O&gt;);
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; SegTable&lt;<span class="lifetime">'a</span>, O&gt; {
-    <span class="kw">fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Vec&lt;SegTableCell&lt;<span class="lifetime">'a</span>, O&gt;&gt;&gt; {
-        <span class="kw">fn </span>traverse&lt;<span class="lifetime">'a</span>, O: Op + <span class="lifetime">'a</span>&gt;(
-            vec: <span class="kw-2">&amp;mut </span>Vec&lt;(usize, SegTableCell&lt;<span class="lifetime">'a</span>, O&gt;)&gt;,
+<span class="kw">pub struct </span>SegTable&lt;<span class="lifetime">&#39;a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Seg&lt;O&gt;);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; SegTable&lt;<span class="lifetime">&#39;a</span>, O&gt; {
+    <span class="kw">fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Vec&lt;SegTableCell&lt;<span class="lifetime">&#39;a</span>, O&gt;&gt;&gt; {
+        <span class="kw">fn </span>traverse&lt;<span class="lifetime">&#39;a</span>, O: Op + <span class="lifetime">&#39;a</span>&gt;(
+            vec: <span class="kw-2">&amp;mut </span>Vec&lt;(usize, SegTableCell&lt;<span class="lifetime">&#39;a</span>, O&gt;)&gt;,
             p: Ptr&lt;Node&lt;O&gt;&gt;,
             offset: usize,
         ) -&gt; usize {
@@ -1730,17 +1736,17 @@
         result
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>SegTable&lt;<span class="lifetime">'a</span>, O&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>SegTable&lt;<span class="lifetime">&#39;a</span>, O&gt;
 <span class="kw">where
     </span>O::Value: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="kw">struct </span>Row&lt;<span class="lifetime">'a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>[SegTableCell&lt;<span class="lifetime">'a</span>, O&gt;]);
-        <span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>Row&lt;<span class="lifetime">'a</span>, O&gt;
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="kw">struct </span>Row&lt;<span class="lifetime">&#39;a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>[SegTableCell&lt;<span class="lifetime">&#39;a</span>, O&gt;]);
+        <span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>Row&lt;<span class="lifetime">&#39;a</span>, O&gt;
         <span class="kw">where
             </span>O::Value: fmt::Debug,
         {
-            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+            <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
                 <span class="kw">let </span><span class="kw-2">mut </span>debug_map = f.debug_map();
                 <span class="kw">for </span>cell <span class="kw">in </span><span class="self">self</span>.<span class="number">0 </span>{
                     <span class="kw">if </span>cell.start + <span class="number">1 </span>== cell.end {
@@ -1757,22 +1763,22 @@
             .finish()
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; fmt::Display <span class="kw">for </span>SegTable&lt;<span class="lifetime">'a</span>, O&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Display <span class="kw">for </span>SegTable&lt;<span class="lifetime">&#39;a</span>, O&gt;
 <span class="kw">where
     </span>O::Value: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">let </span>rows = <span class="self">self
             </span>.collect()
             .into_iter()
             .map(|row| {
                 row.into_iter()
-                    .map(|cell| (cell.start..cell.end, <span class="macro">format!</span>(<span class="string">"{:?}"</span>, cell.value)))
+                    .map(|cell| (cell.start..cell.end, <span class="macro">format!</span>(<span class="string">&quot;{:?}&quot;</span>, cell.value)))
                     .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">if </span>rows.is_empty() {
-            <span class="macro">writeln!</span>(f, <span class="string">"SegTable (empty)"</span>)<span class="question-mark">?</span>;
+            <span class="macro">writeln!</span>(f, <span class="string">&quot;SegTable (empty)&quot;</span>)<span class="question-mark">?</span>;
             <span class="kw">return </span><span class="prelude-val">Ok</span>(());
         }
         <span class="kw">let </span>n = rows[<span class="number">0</span>].len();
@@ -1784,12 +1790,12 @@
                 colomn_width[range.end - <span class="number">1</span>] += value.len() - current_width;
             }
         }
-        <span class="macro">write!</span>(f, <span class="string">"\x1b[48;2;127;127;127;37m"</span>)<span class="question-mark">?</span>;
-        <span class="macro">write!</span>(f, <span class="string">"|"</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">&quot;\x1b[48;2;127;127;127;37m&quot;</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">&quot;|&quot;</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, colomn_width) <span class="kw">in </span>colomn_width.iter().enumerate() {
-            <span class="macro">write!</span>(f, <span class="string">"{:width$}|"</span>, i, width = colomn_width)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;{:width$}|&quot;</span>, i, width = colomn_width)<span class="question-mark">?</span>;
         }
-        <span class="macro">write!</span>(f, <span class="string">"\x1b[0m"</span>)<span class="question-mark">?</span>;
+        <span class="macro">write!</span>(f, <span class="string">&quot;\x1b[0m&quot;</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>refinement = <span class="macro">vec!</span>[<span class="bool-val">false</span>; n];
         <span class="kw">let </span>rows = rows
@@ -1798,7 +1804,7 @@
             .map(|row| {
                 <span class="kw">let </span><span class="kw-2">mut </span>swp = Vec::new();
                 <span class="kw">let </span><span class="kw-2">mut </span>offset = <span class="number">0</span>;
-                <span class="kw">for </span>(range, value) <span class="kw">in </span>row {
+                <span class="kw">for </span>(range, value) <span class="kw">in </span>row.iter() {
                     refinement[range.start] = <span class="bool-val">true</span>;
                     <span class="kw">while </span>offset &lt; range.start {
                         <span class="kw">let </span>end = (offset + <span class="number">1</span>..n).find(|<span class="kw-2">&amp;</span>i| refinement[i]).unwrap_or(n);
@@ -1815,23 +1821,23 @@
             })
             .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
         <span class="kw">for </span>row <span class="kw">in </span>rows.iter().rev() {
-            <span class="macro">write!</span>(f, <span class="string">"|"</span>)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">&quot;|&quot;</span>)<span class="question-mark">?</span>;
             <span class="kw">for </span>(range, value) <span class="kw">in </span>row {
                 <span class="kw">let </span>width = range.clone().map(|i| colomn_width[i]).sum::&lt;usize&gt;() + range.len() - <span class="number">1</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = value {
-                    <span class="macro">write!</span>(f, <span class="string">"{:^width$}"</span>, value, width = width)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">&quot;{:^width$}&quot;</span>, value, width = width)<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
-                    <span class="macro">write!</span>(f, <span class="string">"{:^width$}"</span>, <span class="string">""</span>, width = width)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">&quot;{:^width$}&quot;</span>, <span class="string">&quot;&quot;</span>, width = width)<span class="question-mark">?</span>;
                 }
-                <span class="macro">write!</span>(f, <span class="string">"|"</span>)<span class="question-mark">?</span>;
+                <span class="macro">write!</span>(f, <span class="string">&quot;|&quot;</span>)<span class="question-mark">?</span>;
             }
             <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
-<span class="kw">pub struct </span>SegDisplay&lt;<span class="lifetime">'a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Seg&lt;O&gt;);
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; SegDisplay&lt;<span class="lifetime">'a</span>, O&gt; {
+<span class="kw">pub struct </span>SegDisplay&lt;<span class="lifetime">&#39;a</span>, O: Op&gt;(<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>Seg&lt;O&gt;);
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; SegDisplay&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(Range&lt;usize&gt;, <span class="kw-2">&amp;</span>O::Value)&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="macro">vec!</span>[(<span class="number">0</span>..<span class="self">self</span>.<span class="number">0</span>.len(), <span class="self">self</span>.<span class="number">0</span>.tree.root)];
         <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::new();
@@ -1849,25 +1855,25 @@
         vec
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; fmt::Display <span class="kw">for </span>SegDisplay&lt;<span class="lifetime">'a</span>, O&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Display <span class="kw">for </span>SegDisplay&lt;<span class="lifetime">&#39;a</span>, O&gt;
 <span class="kw">where
     </span>O::Value: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-        <span class="macro">writeln!</span>(f, <span class="string">"SegDisplay ({:?}):"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
+        <span class="macro">writeln!</span>(f, <span class="string">&quot;SegDisplay ({:?}):&quot;</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.<span class="number">0</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(range, value) <span class="kw">in </span><span class="self">self</span>.collect() {
             <span class="kw">if </span>range.start + <span class="number">1 </span>&lt; range.end {
-                <span class="macro">writeln!</span>(f, <span class="string">" {}..{}: {:?}"</span>, range.start, range.end, value)<span class="question-mark">?</span>;
+                <span class="macro">writeln!</span>(f, <span class="string">&quot; {}..{}: {:?}&quot;</span>, range.start, range.end, value)<span class="question-mark">?</span>;
             }
         }
         <span class="prelude-val">Ok</span>(())
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>SegDisplay&lt;<span class="lifetime">'a</span>, O&gt;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; fmt::Debug <span class="kw">for </span>SegDisplay&lt;<span class="lifetime">&#39;a</span>, O&gt;
 <span class="kw">where
     </span>O::Value: fmt::Debug,
 {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; fmt::Result {
         <span class="kw">let </span><span class="kw-2">mut </span>debug_map = f.debug_map();
         <span class="kw">for </span>(range, value) <span class="kw">in </span><span class="self">self</span>.collect() {
             <span class="kw">if </span>range.start + <span class="number">1 </span>== range.end {
@@ -1879,14 +1885,14 @@
         debug_map.finish()
     }
 }
-<span class="kw">pub struct </span>SegIter&lt;<span class="lifetime">'a</span>, O: Op&gt; {
+<span class="kw">pub struct </span>SegIter&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; {
     start: <span class="prelude-ty">Option</span>&lt;Ptr&lt;Node&lt;O&gt;&gt;&gt;,
     end: <span class="prelude-ty">Option</span>&lt;Ptr&lt;Node&lt;O&gt;&gt;&gt;,
     len: usize,
-    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span>O&gt;,
+    marker: PhantomData&lt;<span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; Iterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">'a</span>, O&gt; {
-    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span>O::Value;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; Iterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">&#39;a</span>, O&gt; {
+    <span class="kw">type </span>Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>O::Value;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">if </span><span class="self">self</span>.len == <span class="number">0 </span>{
@@ -1903,7 +1909,7 @@
         (<span class="self">self</span>.len, <span class="prelude-val">Some</span>(<span class="self">self</span>.len))
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; DoubleEndedIterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">'a</span>, O&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; DoubleEndedIterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">&#39;a</span>, O&gt; {
     <span class="kw">fn </span>next_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">if </span><span class="self">self</span>.len == <span class="number">0 </span>{
             <span class="kw">return </span><span class="prelude-val">None</span>;
@@ -1915,7 +1921,7 @@
         <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>x.value)
     }
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, O: Op&gt; ExactSizeIterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">'a</span>, O&gt; {}
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>, O: Op&gt; ExactSizeIterator <span class="kw">for </span>SegIter&lt;<span class="lifetime">&#39;a</span>, O&gt; {}
 
 <span class="kw">fn </span>into_range(range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, len: usize) -&gt; (usize, usize) {
     <span class="kw">let </span>start = <span class="kw">match </span>range.start_bound() {
@@ -2020,7 +2026,7 @@
                     expected.push_str(<span class="kw-2">&amp;</span>p.right.unwrap().value);
                     (p.value == expected).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"Value is incorrect at {:?}. Expected {}, but cached {}"</span>,
+                            <span class="string">&quot;Value is incorrect at {:?}. Expected {}, but cached {}&quot;</span>,
                             p, expected, <span class="kw-2">&amp;</span>p.value
                         )
                     })<span class="question-mark">?</span>;
@@ -2031,8 +2037,8 @@
             <span class="self">self</span>.tree.validate();
             validate(<span class="self">self</span>.tree.root).unwrap_or_else(|e| {
                 <span class="macro">panic!</span>(
-                    <span class="string">"{e}:\n Tree: {}"</span>,
-                    <span class="self">self</span>.tree.format_by(|p| <span class="macro">format!</span>(<span class="string">"&lt;{:?}:{}&gt;"</span>, p, p.value))
+                    <span class="string">&quot;{e}:\n Tree: {}&quot;</span>,
+                    <span class="self">self</span>.tree.format_by(|p| <span class="macro">format!</span>(<span class="string">&quot;&lt;{:?}:{}&gt;&quot;</span>, p, p.value))
                 )
             });
         }
@@ -2092,7 +2098,7 @@
                 }
                 <span class="kw">let </span>result = seg.fold(i..j);
                 <span class="kw">let </span>expected = vec[i..j].iter().flat_map(|s| s.chars()).collect::&lt;String&gt;();
-                <span class="macro">assert_eq!</span>(result, expected, <span class="string">"fold({i}..{j})"</span>);
+                <span class="macro">assert_eq!</span>(result, expected, <span class="string">&quot;fold({i}..{j})&quot;</span>);
             }
         }
     }
@@ -2102,7 +2108,7 @@
         <span class="kw">const </span>LEN_LIM: usize = <span class="number">60</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
-            <span class="kw">let </span><span class="kw-2">mut </span>used = [<span class="bool-val">false</span>; LEN_LIM];
+            <span class="kw">let </span><span class="kw-2">mut </span>used = <span class="macro">vec!</span>[<span class="bool-val">false</span>; LEN_LIM];
             <span class="kw">let </span><span class="kw-2">mut </span>seg = Seg::&lt;O&gt;::new();
             <span class="kw">let </span><span class="kw-2">mut </span>vec = Vec::new();
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{

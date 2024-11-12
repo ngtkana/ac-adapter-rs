@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/veb/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="veb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/veb/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="veb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../veb/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -1045,7 +1045,7 @@
 
 </span><span class="kw">use </span>std::collections::HashMap;
 
-<span class="macro">macro_rules!</span> multi_or_else {
+<span class="macro">macro_rules! </span>multi_or_else {
     (<span class="macro-nonterminal">$e</span>:expr, $(<span class="macro-nonterminal">$f</span>:expr),+) =&gt; {
         <span class="macro-nonterminal">$e</span>.or_else(|| <span class="macro">multi_or_else!</span>($(<span class="macro-nonterminal">$f</span>),+))
     };
@@ -1060,14 +1060,14 @@
 /// # Example
 /// ```
 /// use veb::VebMap;
-/// let mut veb = VebMap::from_iter(vec![(42, "foo"), (43, "bar")]);
-/// assert_eq!(veb.get(42), Some(&amp;"foo"));
-/// assert_eq!(veb.get(43), Some(&amp;"bar"));
+/// let mut veb = VebMap::from_iter(vec![(42, &quot;foo&quot;), (43, &quot;bar&quot;)]);
+/// assert_eq!(veb.get(42), Some(&amp;&quot;foo&quot;));
+/// assert_eq!(veb.get(43), Some(&amp;&quot;bar&quot;));
 /// assert_eq!(veb.get(44), None);
 ///
-/// assert_eq!(veb.min(), Some((42, &amp;"foo")));
+/// assert_eq!(veb.min(), Some((42, &amp;&quot;foo&quot;)));
 /// assert_eq!(veb.min_key(), Some(42));
-/// assert_eq!(veb.min_value(), Some(&amp;"foo"));
+/// assert_eq!(veb.min_value(), Some(&amp;&quot;foo&quot;));
 /// ```
 </span><span class="kw">pub struct </span>VebMap&lt;V&gt; {
     veb: VebSet,
@@ -1095,8 +1095,8 @@
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
-    /// assert_eq!(veb.insert(42, "foo"), None);
-    /// assert_eq!(veb.insert(42, "bar"), Some("foo"));
+    /// assert_eq!(veb.insert(42, &quot;foo&quot;), None);
+    /// assert_eq!(veb.insert(42, &quot;bar&quot;), Some(&quot;foo&quot;));
     /// ```
     </span><span class="kw">pub fn </span>insert(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, v: V) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt; {
         <span class="self">self</span>.veb.insert(i);
@@ -1109,8 +1109,8 @@
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
-    /// veb.insert(42, "foo");
-    /// assert_eq!(veb.remove(42), Some("foo"));
+    /// veb.insert(42, &quot;foo&quot;);
+    /// assert_eq!(veb.remove(42), Some(&quot;foo&quot;));
     /// assert_eq!(veb.remove(42), None);
     /// ```
     </span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;V&gt; {
@@ -1123,8 +1123,8 @@
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
-    /// veb.insert(42, "foo");
-    /// assert_eq!(veb.get(42), Some(&amp;"foo"));
+    /// veb.insert(42, &quot;foo&quot;);
+    /// assert_eq!(veb.get(42), Some(&amp;&quot;foo&quot;));
     /// assert_eq!(veb.get(43), None);
     /// ```
     </span><span class="kw">pub fn </span>get(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
@@ -1137,8 +1137,8 @@
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
-    /// veb.insert(42, "foo");
-    /// assert_eq!(veb.get_mut(42), Some(&amp;mut "foo"));
+    /// veb.insert(42, &quot;foo&quot;);
+    /// assert_eq!(veb.get_mut(42), Some(&amp;mut &quot;foo&quot;));
     /// assert_eq!(veb.get_mut(43), None);
     /// ```
     </span><span class="kw">pub fn </span>get_mut(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;mut </span>V&gt; {
@@ -1152,8 +1152,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.min(), Some((42, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.min(), Some((42, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>min_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.veb.min()
@@ -1166,8 +1166,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min_value(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.min_value(), Some(&amp;"foo"));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.min_value(), Some(&amp;&quot;foo&quot;));
     /// ```
     </span><span class="kw">pub fn </span>min_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
         <span class="self">self</span>.veb.min().and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
@@ -1180,8 +1180,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.min(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.min(), Some((42, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.min(), Some((42, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>min(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
         <span class="self">self</span>.veb
@@ -1196,8 +1196,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.max(), Some((42, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.max(), Some((42, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>max_key(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="self">self</span>.veb.max()
@@ -1210,8 +1210,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max_value(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.max_value(), Some(&amp;"foo"));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.max_value(), Some(&amp;&quot;foo&quot;));
     /// ```
     </span><span class="kw">pub fn </span>max_value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
         <span class="self">self</span>.veb.max().and_then(|i| <span class="self">self</span>.map.get(<span class="kw-2">&amp;</span>i))
@@ -1224,8 +1224,8 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.max(), None);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.max(), Some((42, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
+    /// assert_eq!(veb.max(), Some((42, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>max(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
         <span class="self">self</span>.veb
@@ -1238,10 +1238,10 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.succ_key(34), Some(56));
-    /// assert_eq!(veb.succ_value(34), Some(&amp;"baz"));
-    /// assert_eq!(veb.succ(34), Some((56, &amp;"baz")));
+    /// assert_eq!(veb.succ_value(34), Some(&amp;&quot;baz&quot;));
+    /// assert_eq!(veb.succ(34), Some((56, &amp;&quot;baz&quot;)));
     /// assert_eq!(veb.succ(78), None);
     /// ```
     </span><span class="kw">pub fn </span>succ_key(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1253,8 +1253,8 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_value(34), Some(&amp;"baz"));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.succ_value(34), Some(&amp;&quot;baz&quot;));
     /// assert_eq!(veb.succ_value(78), None);
     /// ```
     </span><span class="kw">pub fn </span>succ_value(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
@@ -1266,8 +1266,8 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ(34), Some((56, &amp;"baz")));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.succ(34), Some((56, &amp;&quot;baz&quot;)));
     /// assert_eq!(veb.succ(78), None);
     /// ```
     </span><span class="kw">pub fn </span>succ(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
@@ -1281,7 +1281,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.succ_eq_key(34), Some(34));
     /// assert_eq!(veb.succ_eq_key(35), Some(56));
     /// ```
@@ -1297,9 +1297,9 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq_value(34), Some(&amp;"bar"));
-    /// assert_eq!(veb.succ_eq_value(35), Some(&amp;"baz"));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.succ_eq_value(34), Some(&amp;&quot;bar&quot;));
+    /// assert_eq!(veb.succ_eq_value(35), Some(&amp;&quot;baz&quot;));
     /// ```
     </span><span class="kw">pub fn </span>succ_eq_value(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1313,9 +1313,9 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq(34), Some((34, &amp;"bar")));
-    /// assert_eq!(veb.succ_eq(35), Some((56, &amp;"baz")));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.succ_eq(34), Some((34, &amp;&quot;bar&quot;)));
+    /// assert_eq!(veb.succ_eq(35), Some((56, &amp;&quot;baz&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>succ_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1329,10 +1329,10 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.pred_key(34), Some(12));
-    /// assert_eq!(veb.pred_value(34), Some(&amp;"foo"));
-    /// assert_eq!(veb.pred(34), Some((12, &amp;"foo")));
+    /// assert_eq!(veb.pred_value(34), Some(&amp;&quot;foo&quot;));
+    /// assert_eq!(veb.pred(34), Some((12, &amp;&quot;foo&quot;)));
     /// assert_eq!(veb.pred(12), None);
     /// ```
     </span><span class="kw">pub fn </span>pred_key(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
@@ -1344,8 +1344,8 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_value(34), Some(&amp;"foo"));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.pred_value(34), Some(&amp;&quot;foo&quot;));
     /// assert_eq!(veb.pred_value(12), None);
     /// ```
     </span><span class="kw">pub fn </span>pred_value(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
@@ -1357,8 +1357,8 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred(34), Some((12, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.pred(34), Some((12, &amp;&quot;foo&quot;)));
     /// assert_eq!(veb.pred(12), None);
     /// ```
     </span><span class="kw">pub fn </span>pred(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
@@ -1372,7 +1372,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.pred_eq_key(34), Some(34));
     /// assert_eq!(veb.pred_eq_key(33), Some(12));
     /// ```
@@ -1388,9 +1388,9 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq_value(34), Some(&amp;"bar"));
-    /// assert_eq!(veb.pred_eq_value(33), Some(&amp;"foo"));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.pred_eq_value(34), Some(&amp;&quot;bar&quot;));
+    /// assert_eq!(veb.pred_eq_value(33), Some(&amp;&quot;foo&quot;));
     /// ```
     </span><span class="kw">pub fn </span>pred_eq_value(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>V&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1404,9 +1404,9 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq(34), Some((34, &amp;"bar")));
-    /// assert_eq!(veb.pred_eq(33), Some((12, &amp;"foo")));
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
+    /// assert_eq!(veb.pred_eq(34), Some((34, &amp;&quot;bar&quot;)));
+    /// assert_eq!(veb.pred_eq(33), Some((12, &amp;&quot;foo&quot;)));
     /// ```
     </span><span class="kw">pub fn </span>pred_eq(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; <span class="prelude-ty">Option</span>&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
         <span class="kw">if let </span><span class="prelude-val">Some</span>(v) = <span class="self">self</span>.get(i) {
@@ -1422,7 +1422,7 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.len(), 0);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.len(), 1);
     /// ```
     </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -1435,7 +1435,7 @@
     /// # use veb::VebMap;
     /// let veb = VebMap::&lt;()&gt;::from_iter(vec![]);
     /// assert_eq!(veb.is_empty(), true);
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.is_empty(), false);
     /// ```
     </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -1446,7 +1446,7 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(42, "foo")]);
+    /// let veb = VebMap::from_iter(vec![(42, &quot;foo&quot;)]);
     /// assert_eq!(veb.contains_key(42), true);
     /// assert_eq!(veb.contains_key(43), false);
     /// ```
@@ -1459,12 +1459,12 @@
     /// # Example
     /// ```
     /// # use veb::VebMap;
-    /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
+    /// let veb = VebMap::from_iter(vec![(12, &quot;foo&quot;), (34, &quot;bar&quot;), (56, &quot;baz&quot;), (78, &quot;qux&quot;)]);
     /// assert_eq!(veb.collect(), vec![
-    ///     (12, &amp;"foo"),
-    ///     (34, &amp;"bar"),
-    ///     (56, &amp;"baz"),
-    ///     (78, &amp;"qux")
+    ///     (12, &amp;&quot;foo&quot;),
+    ///     (34, &amp;&quot;bar&quot;),
+    ///     (56, &amp;&quot;baz&quot;),
+    ///     (78, &amp;&quot;qux&quot;)
     /// ]);
     /// ```
     </span><span class="kw">pub fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;(usize, <span class="kw-2">&amp;</span>V)&gt; {
@@ -1477,7 +1477,7 @@
 }
 
 <span class="kw">impl</span>&lt;V: std::fmt::Debug&gt; std::fmt::Debug <span class="kw">for </span>VebMap&lt;V&gt; {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_map().entries(<span class="self">self</span>.collect()).finish()
     }
 }
@@ -1865,7 +1865,7 @@
 }
 
 <span class="kw">impl </span>std::fmt::Debug <span class="kw">for </span>VebSet {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_set().entries(<span class="self">self</span>.collect()).finish()
     }
 }
@@ -1907,19 +1907,19 @@
             <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
                 <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
                 <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">5</span>) {
-                    <span class="number">0 </span>=&gt; <span class="macro">assert_eq!</span>(veb.insert(i), set.insert(i), <span class="string">"insert({i})"</span>),
-                    <span class="number">1 </span>=&gt; <span class="macro">assert_eq!</span>(veb.remove(i), set.remove(<span class="kw-2">&amp;</span>i), <span class="string">"remove({i})"</span>),
-                    <span class="number">2 </span>=&gt; <span class="macro">assert_eq!</span>(veb.succ(i), set.range(i + <span class="number">1</span>..).next().copied(), <span class="string">"succ({i})"</span>),
+                    <span class="number">0 </span>=&gt; <span class="macro">assert_eq!</span>(veb.insert(i), set.insert(i), <span class="string">&quot;insert({i})&quot;</span>),
+                    <span class="number">1 </span>=&gt; <span class="macro">assert_eq!</span>(veb.remove(i), set.remove(<span class="kw-2">&amp;</span>i), <span class="string">&quot;remove({i})&quot;</span>),
+                    <span class="number">2 </span>=&gt; <span class="macro">assert_eq!</span>(veb.succ(i), set.range(i + <span class="number">1</span>..).next().copied(), <span class="string">&quot;succ({i})&quot;</span>),
                     <span class="number">3 </span>=&gt; <span class="macro">assert_eq!</span>(
                         veb.pred(i),
                         set.range(..i).next_back().copied(),
-                        <span class="string">"pred({i})"
+                        <span class="string">&quot;pred({i})&quot;
                     </span>),
-                    <span class="number">4 </span>=&gt; <span class="macro">assert_eq!</span>(veb.contains(i), set.contains(<span class="kw-2">&amp;</span>i), <span class="string">"contains({i})"</span>),
+                    <span class="number">4 </span>=&gt; <span class="macro">assert_eq!</span>(veb.contains(i), set.contains(<span class="kw-2">&amp;</span>i), <span class="string">&quot;contains({i})&quot;</span>),
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
-                <span class="macro">assert_eq!</span>(veb.min(), set.iter().next().copied(), <span class="string">"min"</span>);
-                <span class="macro">assert_eq!</span>(veb.max(), set.iter().next_back().copied(), <span class="string">"max"</span>);
+                <span class="macro">assert_eq!</span>(veb.min(), set.iter().next().copied(), <span class="string">&quot;min&quot;</span>);
+                <span class="macro">assert_eq!</span>(veb.max(), set.iter().next_back().copied(), <span class="string">&quot;max&quot;</span>);
             }
         }
     }
@@ -1936,27 +1936,27 @@
                 <span class="kw">match </span>rng.gen_range(<span class="number">0</span>..<span class="number">5</span>) {
                     <span class="number">0 </span>=&gt; {
                         <span class="kw">let </span>v = rng.gen_range(<span class="number">0</span>..<span class="number">1_000</span>);
-                        <span class="macro">assert_eq!</span>(veb.insert(i, v), map.insert(i, v), <span class="string">"insert({i})"</span>);
+                        <span class="macro">assert_eq!</span>(veb.insert(i, v), map.insert(i, v), <span class="string">&quot;insert({i})&quot;</span>);
                     }
-                    <span class="number">1 </span>=&gt; <span class="macro">assert_eq!</span>(veb.remove(i), map.remove(<span class="kw-2">&amp;</span>i), <span class="string">"remove({i})"</span>),
+                    <span class="number">1 </span>=&gt; <span class="macro">assert_eq!</span>(veb.remove(i), map.remove(<span class="kw-2">&amp;</span>i), <span class="string">&quot;remove({i})&quot;</span>),
                     <span class="number">2 </span>=&gt; <span class="macro">assert_eq!</span>(
                         veb.succ(i),
                         map.range(i + <span class="number">1</span>..).next().map(|(<span class="kw-2">&amp;</span>i, v)| (i, v)),
-                        <span class="string">"succ({i})"
+                        <span class="string">&quot;succ({i})&quot;
                     </span>),
                     <span class="number">3 </span>=&gt; <span class="macro">assert_eq!</span>(
                         veb.pred(i),
                         map.range(..i).next_back().map(|(<span class="kw-2">&amp;</span>i, v)| (i, v)),
-                        <span class="string">"pred({i})"
+                        <span class="string">&quot;pred({i})&quot;
                     </span>),
-                    <span class="number">4 </span>=&gt; <span class="macro">assert_eq!</span>(veb.get(i), map.get(<span class="kw-2">&amp;</span>i), <span class="string">"get({i})"</span>),
+                    <span class="number">4 </span>=&gt; <span class="macro">assert_eq!</span>(veb.get(i), map.get(<span class="kw-2">&amp;</span>i), <span class="string">&quot;get({i})&quot;</span>),
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
-                <span class="macro">assert_eq!</span>(veb.min(), map.iter().next().map(|(<span class="kw-2">&amp;</span>i, v)| (i, v)), <span class="string">"min"</span>);
+                <span class="macro">assert_eq!</span>(veb.min(), map.iter().next().map(|(<span class="kw-2">&amp;</span>i, v)| (i, v)), <span class="string">&quot;min&quot;</span>);
                 <span class="macro">assert_eq!</span>(
                     veb.max(),
                     map.iter().next_back().map(|(<span class="kw-2">&amp;</span>i, v)| (i, v)),
-                    <span class="string">"max"
+                    <span class="string">&quot;max&quot;
                 </span>);
             }
         }

@@ -1,1 +1,0 @@
-searchState.loadedDescShard("dfs", 0, "一点からの到達可能性配列を返します。")

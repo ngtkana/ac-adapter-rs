@@ -1,1 +1,0 @@
-searchState.loadedDescShard("monotone_minima", 0, "Monotone minima のアルゴリズムと、それによる …\nconcave な列に対して max-plus convolution …\nconvex な列に対して min-plus convolution …\n行列 <code>f(i, j)</code> を受け取って、monotone maxima …\n行ごとのセル比較 <code>cmp(i, j, k)</code> …\n行列 <code>f(i, j)</code> を受け取って、monotone minima …\n行ごとのセル比較 <code>cmp(i, j, k)</code> …")

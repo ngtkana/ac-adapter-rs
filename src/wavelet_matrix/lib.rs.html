@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/wavelet_matrix/src/lib.rs`."><title>lib.rs - source</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-492a78a4a87dcc01.css"><meta name="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.82.0 (f6e511eec 2024-10-15)" data-channel="1.82.0" data-search-js="search-a99f1315e7cc5121.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../../static.files/src-script-e66d777a5a92e9b2.js"></script><script defer src="../../src-files.js"></script><script defer src="../../static.files/main-921df33f47b8780c.js"></script><noscript><link rel="stylesheet" href="../../static.files/noscript-3b12f09e550e0385.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Source of the Rust file `libs/wavelet_matrix/src/lib.rs`."><title>lib.rs - source</title><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Regular-46f98efaafac5295.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Regular-018c141bf0843ffd.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/FiraSans-Medium-8f9a781e4970d388.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceSerif4-Bold-a2c9cd1067f8b328.ttf.woff2"><link rel="preload" as="font" type="font/woff2" crossorigin href="../../static.files/SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2"><link rel="stylesheet" href="../../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../../static.files/rustdoc-ba5701c5741a7b69.css" id="mainThemeStyle"><div id="rustdoc-vars" data-root-path="../../" data-static-root-path="../../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.70.0 (90c541806 2023-05-31)" data-search-js="search-e077946657036a58.js" data-settings-js="settings-298e1ea74db45b39.js" data-settings-css="settings-7bfb4c59cc6bc502.css" data-theme-light-css="light-0f8c037637f9eb3e.css" data-theme-dark-css="dark-1097f8e92a01e3cf.css" data-theme-ayu-css="ayu-614652228113ac93.css" ></div><script src="../../static.files/storage-62ce34ea385b278a.js"></script><script defer src="../../static.files/source-script-905937fbbdc8e9ea.js"></script><script defer src="../../source-files.js"></script><script defer src="../../static.files/main-f61008743c98d196.js"></script><noscript><link rel="stylesheet" media="(prefers-color-scheme:light)" href="../../static.files/light-0f8c037637f9eb3e.css"><link rel="stylesheet" media="(prefers-color-scheme:dark)" href="../../static.files/dark-1097f8e92a01e3cf.css"><link rel="stylesheet" href="../../static.files/noscript-13285aec31fa243e.css"></noscript><link rel="alternate icon" type="image/png" href="../../static.files/favicon-16x16-8b506e7a72182f1c.png"><link rel="alternate icon" type="image/png" href="../../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../../static.files/favicon-2c020d218678b618.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
+</head><body class="rustdoc source"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"></nav><main><nav class="sub"><a class="sub-logo-container" href="../../wavelet_matrix/index.html"><img class="rust-logo" src="../../static.files/rust-logo-151179464ae7ed46.svg" alt="logo"></a><form class="search-form"><span></span><input class="search-input" name="search" aria-label="Run search in the documentation" autocomplete="off" spellcheck="false" placeholder="Click or press ‘S’ to search, ‘?’ for more options…" type="search"><div id="help-button" title="help" tabindex="-1"><a href="../../help.html">?</a></div><div id="settings-menu" tabindex="-1"><a href="../../settings.html" title="settings"><img width="22" height="22" alt="Change settings" src="../../static.files/wheel-7b819b6101059cd0.svg"></a></div></form></nav><section id="main-content" class="content"><div class="example-wrap"><div data-nosnippet><pre class="src-line-numbers"><a href="#1" id="1">1</a>
 <a href="#2" id="2">2</a>
 <a href="#3" id="3">3</a>
 <a href="#4" id="4">4</a>
@@ -885,8 +885,8 @@
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq)
 //!   - コメント: 様々な解法があるよう。
-//!     [こちらのブログ](https://blog.hamayanhamayan.com/entry/2017/06/13/103254)
-//!     に各種手法お名前だけ言及ありです。
+//!   [こちらのブログ](https://blog.hamayanhamayan.com/entry/2017/06/13/103254)
+//!   に各種手法お名前だけ言及ありです。
 //! - yukicoder No.738 - 平らな農地
 //!   - 問題: &lt;https://yukicoder.me/problems/no/738&gt;
 //!   - 提出 (895 ms): &lt;https://yukicoder.me/submissions/727730&gt;
@@ -894,10 +894,10 @@
 //!   - 難易度: そこそこ。
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq),
-//!     [`spans`](WaveletMatrix::spans)
+//!   [`spans`](WaveletMatrix::spans)
 //!   - コメント: ヒープ４本でも解けてそちらのほうが一般的？
-//!     ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
-//!     （[自由度の高いメソッド `spans` が活躍します。](WaveletMatrix::spans)）
+//!   ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
+//!   （[自由度の高いメソッド `spans` が活躍します。](WaveletMatrix::spans)）
 //! - yukicoder No.919 - You Are A Project Manager
 //!   - 問題: &lt;https://yukicoder.me/problems/no/919&gt;
 //!   - 提出 (256 ms): &lt;https://yukicoder.me/submissions/727758&gt;
@@ -905,7 +905,7 @@
 //!   - 難易度: そこそこ。
 //!   - 制約: N, Q ≤ 100,000
 //!   - 使用するメソッド: [`range_freq`](WaveletMatrix::range_freq),
-//!     [`spans`](WaveletMatrix::spans)
+//!   [`spans`](WaveletMatrix::spans)
 //!   - コメント: Mo でもできて、それもそれできれいです。
 //! - Library Checker - Range Kth Smallest
 //!   - 問題: &lt;https://judge.yosupo.jp/problem/range_kth_smallest&gt;
@@ -921,7 +921,7 @@
 //!   - 難易度: 簡単。
 //!   - 制約: N ≤ 100,000
 //!   - 使う構造体: [`quantile`](WaveletMatrix::quantile),
-//!     [`range_freq`](WaveletMatrix::range_freq)
+//!   [`range_freq`](WaveletMatrix::range_freq)
 //!   - 他の解法:
 //!     - ヒープ４本 (90 ms): &lt;https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242&gt;
 //!   - コメント: ヒープ４本のほうが楽です。
@@ -966,7 +966,7 @@
     table: Vec&lt;StaticBitVec&gt;,
 }
 <span class="kw">impl </span>Debug <span class="kw">for </span>WaveletMatrix {
-    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">&#39;_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_list()
             .entries((<span class="number">0</span>..<span class="self">self</span>.len()).map(|i| <span class="self">self</span>.access(i)))
             .finish()
@@ -1192,7 +1192,7 @@
         <span class="kw-2">&amp;</span><span class="self">self</span>,
         index: <span class="kw">impl </span>RangeBounds&lt;usize&gt;,
         value: <span class="kw">impl </span>RangeBounds&lt;usize&gt;,
-    ) -&gt; Spans&lt;<span class="lifetime">'_</span>&gt; {
+    ) -&gt; Spans&lt;<span class="lifetime">&#39;_</span>&gt; {
         <span class="kw">let </span>index = open(index, <span class="self">self</span>.len());
         <span class="kw">let </span>target = open(value, <span class="self">self</span>.lim());
         <span class="kw">if </span>target.len() == <span class="number">0 </span>{
@@ -1220,7 +1220,7 @@
         <span class="number">1 </span>&lt;&lt; <span class="self">self</span>.table.len()
     }
 
-    <span class="kw">fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Range&lt;usize&gt;) -&gt; SpanInNode&lt;<span class="lifetime">'_</span>&gt; {
+    <span class="kw">fn </span>root(<span class="kw-2">&amp;</span><span class="self">self</span>, index: Range&lt;usize&gt;) -&gt; SpanInNode&lt;<span class="lifetime">&#39;_</span>&gt; {
         SpanInNode {
             wm: <span class="self">self</span>,
             depth: <span class="number">0</span>,
@@ -1271,13 +1271,13 @@
         <span class="kw">let </span><span class="kw-2">mut </span>rank_c = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>pattern_c = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>len = <span class="number">0</span>;
-        <span class="lifetime">'OUTER</span>: <span class="kw">loop </span>{
+        <span class="lifetime">&#39;OUTER</span>: <span class="kw">loop </span>{
             rank.push(rank_c);
             <span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..UNIT {
                 <span class="kw">match </span>iter.next() {
                     <span class="prelude-val">None </span>=&gt; {
                         pattern.push(pattern_c);
-                        <span class="kw">break </span><span class="lifetime">'OUTER</span>;
+                        <span class="kw">break </span><span class="lifetime">&#39;OUTER</span>;
                     }
                     <span class="prelude-val">Some</span>(<span class="bool-val">false</span>) =&gt; (),
                     <span class="prelude-val">Some</span>(<span class="bool-val">true</span>) =&gt; {
@@ -1344,12 +1344,12 @@
 
 <span class="doccomment">/// イテレータです [詳しくは `WaveletMatrix::spans` をご覧ください。](WaveletMatrix::spans)
 </span><span class="attr">#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>Spans&lt;<span class="lifetime">'a</span>&gt; {
-    stack: Vec&lt;SpanInNode&lt;<span class="lifetime">'a</span>&gt;&gt;,
+</span><span class="kw">pub struct </span>Spans&lt;<span class="lifetime">&#39;a</span>&gt; {
+    stack: Vec&lt;SpanInNode&lt;<span class="lifetime">&#39;a</span>&gt;&gt;,
     target: Range&lt;usize&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>Spans&lt;<span class="lifetime">'a</span>&gt; {
-    <span class="kw">type </span>Item = SpanInNode&lt;<span class="lifetime">'a</span>&gt;;
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; Iterator <span class="kw">for </span>Spans&lt;<span class="lifetime">&#39;a</span>&gt; {
+    <span class="kw">type </span>Item = SpanInNode&lt;<span class="lifetime">&#39;a</span>&gt;;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">let </span>ans = <span class="self">self</span>.stack.pop()<span class="question-mark">?</span>;
@@ -1370,8 +1370,8 @@
 
 <span class="doccomment">/// [`Spans`] のアイテム型です。[詳しくは `WaveletMatrix::spans` をご覧ください。](WaveletMatrix::spans)
 </span><span class="attr">#[derive(Clone, Debug, Hash, PartialEq, Eq)]
-</span><span class="kw">pub struct </span>SpanInNode&lt;<span class="lifetime">'a</span>&gt; {
-    wm: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>WaveletMatrix,
+</span><span class="kw">pub struct </span>SpanInNode&lt;<span class="lifetime">&#39;a</span>&gt; {
+    wm: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>WaveletMatrix,
     <span class="doccomment">/// ウェーブレット行列内の `i` 座標
     </span><span class="kw">pub </span>depth: usize,
     <span class="doccomment">/// ウェーブレット行列内の `j` 座標の範囲
@@ -1379,7 +1379,7 @@
     <span class="doccomment">/// 現在のノードの担当する値の範囲
     </span><span class="kw">pub </span>value: Range&lt;usize&gt;,
 }
-<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; SpanInNode&lt;<span class="lifetime">'a</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">&#39;a</span>&gt; SpanInNode&lt;<span class="lifetime">&#39;a</span>&gt; {
     <span class="kw">fn </span>left_down(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self </span>{
             wm: <span class="self">self</span>.wm,
@@ -1561,13 +1561,13 @@
     </span><span class="kw">fn </span>test_wavelet_matrix_construction() {
         <span class="attr">#[rustfmt::skip]
         </span><span class="kw">let </span>expected = [
-            <span class="string">"111100110010"</span>,
-            <span class="string">"100100000010"</span>,
-            <span class="string">"110101111010"</span>,
+            <span class="string">&quot;111100110010&quot;</span>,
+            <span class="string">&quot;100100000010&quot;</span>,
+            <span class="string">&quot;110101111010&quot;</span>,
         ];
         <span class="kw">let </span>expected = expected
             .iter()
-            .map(|row| row.chars().map(|c| c == <span class="string">'1'</span>).collect_vec())
+            .map(|row| row.chars().map(|c| c == <span class="string">&#39;1&#39;</span>).collect_vec())
             .collect_vec();
         <span class="kw">let </span>(wm, table) = WaveletMatrix::from_iter_collect_vec2(SAMPLE.iter().copied());
         <span class="macro">assert_eq!</span>(table, SAMPLE_ROWS);

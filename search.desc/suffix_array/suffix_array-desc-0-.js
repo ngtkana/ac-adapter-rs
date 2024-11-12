@@ -1,1 +1,0 @@
-searchState.loadedDescShard("suffix_array", 0, "Suffix Array を計算します。\nLCP 配列を計算します。\nSurrix Array を計算します。")

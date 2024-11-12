@@ -1,1 +1,0 @@
-searchState.loadedDescShard("bsgs", 0, "Baby-step giant-step …\nBaby-stpp giant-step のソルバーです。\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n<code>x</code> …\n新しい BSGS ソルバーを構築します。")

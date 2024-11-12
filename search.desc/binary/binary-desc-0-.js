@@ -1,1 +1,0 @@
-searchState.loadedDescShard("binary", 0, "二分法（ダブリング）をします。\n…\n<code>*x != 1</code>\n<code>*x != 0</code>\n<code>x &amp; 1 == 1</code>\naⁿ(x) を計算します。\n<code>self &gt;&gt;= 1</code>\naⁿを計算します。")
