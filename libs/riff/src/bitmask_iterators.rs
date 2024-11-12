@@ -6,9 +6,11 @@ use super::numeric_traits::Unsigned;
 ///
 /// Basic usage:
 /// ```
-/// use bitutils::combinations;
+/// use riff::bitmask_combinations;
 ///
-/// assert_eq!(combinations::<u32>(3, 2).collect::<Vec<_>>(), vec![3, 5, 6]);
+/// assert_eq!(bitmask_combinations::<u32>(3, 2).collect::<Vec<_>>(), vec![
+///     3, 5, 6
+/// ]);
 /// ```
 pub fn bitmask_combinations<T: Unsigned>(n: u32, k: u32) -> BitmaskCombinations<T> {
     assert!(k < T::bit_length() && k < T::bit_length());
@@ -48,9 +50,11 @@ impl<T: Unsigned> Iterator for BitmaskCombinations<T> {
 ///
 /// Basic usage:
 /// ```
-/// use bitutils::subsets;
+/// use riff::bitmask_subsets;
 ///
-/// assert_eq!(subsets(10u32).collect::<Vec<_>>(), vec![0, 2, 8, 10]);
+/// assert_eq!(bitmask_subsets(10u32).collect::<Vec<_>>(), vec![
+///     0, 2, 8, 10
+/// ]);
 /// ```
 pub fn bitmask_subsets<T: Unsigned>(bs: T) -> BitmaskSubsets<T> {
     BitmaskSubsets {
