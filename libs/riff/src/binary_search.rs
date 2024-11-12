@@ -3,7 +3,7 @@ use std::cmp::Ordering::Equal;
 use std::cmp::Ordering::Greater;
 use std::cmp::Ordering::Less;
 
-/// Method versions of functions.
+/// `{lower,upper}_bound`, etc
 pub trait BinarySearch<T> {
     fn partition_point<F: FnMut(&T) -> bool>(&self, pred: F) -> usize;
     fn lower_bound_by<F: FnMut(&T) -> Ordering>(&self, mut f: F) -> usize {
