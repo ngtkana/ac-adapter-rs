@@ -11,9 +11,6 @@ git = "https://github.com/ngtkana/query_test.git"
 tag = "v0.3.0"
 package = "query_test"
 
-[dependencies]
-open = { path = "../open" }
-
 [dev-dependencies]
 rand = { workspace = true }
 

@@ -1,13 +1,28 @@
-use open::open;
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::mem::replace;
 use std::ops::Add;
 use std::ops::AddAssign;
+use std::ops::Bound;
 use std::ops::Range;
 use std::ops::RangeBounds;
 use std::ops::Sub;
 use std::ops::SubAssign;
+
+pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
+    use Bound::Excluded;
+    use Bound::Included;
+    use Bound::Unbounded;
+    (match range.start_bound() {
+        Unbounded => 0,
+        Included(&x) => x,
+        Excluded(&x) => x + 1,
+    })..(match range.end_bound() {
+        Excluded(&x) => x,
+        Included(&x) => x + 1,
+        Unbounded => len,
+    })
+}
 
 #[derive(Clone, PartialEq, Eq)]
 pub struct Segbeats<T> {
