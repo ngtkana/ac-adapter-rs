@@ -336,7 +336,7 @@
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>table {
     (<span class="macro-nonterminal">$vec2</span>:expr) =&gt; {
-        <span class="macro">eprintln!</span>(
+        <span class="macro">eprint!</span>(
             <span class="string">&quot;{}&quot;</span>,
             <span class="macro-nonterminal">$crate::vec2</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$vec2</span>)), <span class="macro-nonterminal">$vec2</span>)
         );
@@ -346,7 +346,7 @@
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>vmap {
     (<span class="macro-nonterminal">$map</span>:expr) =&gt; {
-        <span class="macro">eprintln!</span>(
+        <span class="macro">eprint!</span>(
             <span class="string">&quot;{}&quot;</span>,
             <span class="macro-nonterminal">$crate::vmap</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$map</span>)), <span class="macro-nonterminal">$map</span>)
         );
@@ -356,7 +356,7 @@
 <span class="attr">#[macro_export]
 </span><span class="macro">macro_rules! </span>hmap {
     (<span class="macro-nonterminal">$map</span>:expr) =&gt; {
-        <span class="macro">eprintln!</span>(
+        <span class="macro">eprint!</span>(
             <span class="string">&quot;{}&quot;</span>,
             <span class="macro-nonterminal">$crate::hmap</span>(<span class="macro-nonterminal">$crate::remove_ampersand</span>(<span class="macro">stringify!</span>(<span class="macro-nonterminal">$map</span>)), <span class="macro-nonterminal">$map</span>)
         );
@@ -387,7 +387,7 @@
                 vecs.push((name.to_owned(), values))
             }
         )+
-        <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::vvec</span>(<span class="kw-2">&amp;</span>vecs));
+        <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::vvec</span>(<span class="kw-2">&amp;</span>vecs));
     };
 }
 
@@ -415,7 +415,7 @@
                 vecs.push((name.to_owned(), values))
             }
         )+
-        <span class="macro">eprintln!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::hvec</span>(<span class="kw-2">&amp;</span>vecs));
+        <span class="macro">eprint!</span>(<span class="string">&quot;{}&quot;</span>, <span class="macro-nonterminal">$crate::hvec</span>(<span class="kw-2">&amp;</span>vecs));
     };
 }
 

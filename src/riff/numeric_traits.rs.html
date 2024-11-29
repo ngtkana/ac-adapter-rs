@@ -101,6 +101,10 @@
 <a href="#67" id="67">67</a>
 <a href="#68" id="68">68</a>
 <a href="#69" id="69">69</a>
+<a href="#70" id="70">70</a>
+<a href="#71" id="71">71</a>
+<a href="#72" id="72">72</a>
+<a href="#73" id="73">73</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>std::fmt::Debug;
 <span class="kw">use </span>std::mem::size_of;
 <span class="kw">use </span>std::ops::Add;
@@ -151,6 +155,8 @@
     + ShrAssign&lt;u32&gt;
     + Not&lt;Output = <span class="self">Self</span>&gt;
 {
+    <span class="kw">const </span>BITS: u32;
+    <span class="kw">const </span>MAX: <span class="self">Self</span>;
     <span class="kw">fn </span>zero() -&gt; <span class="self">Self</span>;
     <span class="kw">fn </span>one() -&gt; <span class="self">Self</span>;
     <span class="kw">fn </span>wrapping_neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
@@ -162,6 +168,8 @@
 <span class="macro">macro_rules! </span>impl_unsigned {
     ($(<span class="macro-nonterminal">$T</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {$(
         <span class="kw">impl </span>Unsigned <span class="kw">for </span><span class="macro-nonterminal">$T </span>{
+            <span class="kw">const </span>BITS: u32 = &lt;<span class="macro-nonterminal">$T</span>&gt;::BITS;
+            <span class="kw">const </span>MAX: <span class="self">Self </span>= &lt;<span class="macro-nonterminal">$T</span>&gt;::MAX;
             <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{ <span class="number">0 </span>}
             <span class="kw">fn </span>one() -&gt; <span class="self">Self </span>{ <span class="number">1 </span>}
             <span class="kw">fn </span>wrapping_neg(<span class="self">self</span>) -&gt; <span class="self">Self </span>{ <span class="self">self</span>.wrapping_neg() }
