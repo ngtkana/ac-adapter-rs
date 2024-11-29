@@ -64,7 +64,7 @@ macro_rules! __lg_internal {
 #[macro_export]
 macro_rules! table {
     ($vec2:expr) => {
-        eprintln!(
+        eprint!(
             "{}",
             $crate::vec2($crate::remove_ampersand(stringify!($vec2)), $vec2)
         );
@@ -74,7 +74,7 @@ macro_rules! table {
 #[macro_export]
 macro_rules! vmap {
     ($map:expr) => {
-        eprintln!(
+        eprint!(
             "{}",
             $crate::vmap($crate::remove_ampersand(stringify!($map)), $map)
         );
@@ -84,7 +84,7 @@ macro_rules! vmap {
 #[macro_export]
 macro_rules! hmap {
     ($map:expr) => {
-        eprintln!(
+        eprint!(
             "{}",
             $crate::hmap($crate::remove_ampersand(stringify!($map)), $map)
         );
@@ -115,7 +115,7 @@ macro_rules! vvec {
                 vecs.push((name.to_owned(), values))
             }
         )+
-        eprintln!("{}", $crate::vvec(&vecs));
+        eprint!("{}", $crate::vvec(&vecs));
     };
 }
 
@@ -143,7 +143,7 @@ macro_rules! hvec {
                 vecs.push((name.to_owned(), values))
             }
         )+
-        eprintln!("{}", $crate::hvec(&vecs));
+        eprint!("{}", $crate::hvec(&vecs));
     };
 }
 

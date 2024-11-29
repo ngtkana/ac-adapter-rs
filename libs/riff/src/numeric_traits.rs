@@ -48,6 +48,8 @@ pub trait Unsigned:
     + ShrAssign<u32>
     + Not<Output = Self>
 {
+    const BITS: u32;
+    const MAX: Self;
     fn zero() -> Self;
     fn one() -> Self;
     fn wrapping_neg(self) -> Self;
@@ -59,6 +61,8 @@ pub trait Unsigned:
 macro_rules! impl_unsigned {
     ($($T:ty),* $(,)?) => {$(
         impl Unsigned for $T {
+            const BITS: u32 = <$T>::BITS;
+            const MAX: Self = <$T>::MAX;
             fn zero() -> Self { 0 }
             fn one() -> Self { 1 }
             fn wrapping_neg(self) -> Self { self.wrapping_neg() }
