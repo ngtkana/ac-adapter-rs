@@ -11,6 +11,5 @@ edition = "2021"
 [dev-dependencies]
 bfs = { path = "../bfs/" }
 itertools = { workspace = true }
-make_graph = { path = "../make_graph/" }
 rand = { workspace = true }
 randtools = { path = "../randtools/" }
