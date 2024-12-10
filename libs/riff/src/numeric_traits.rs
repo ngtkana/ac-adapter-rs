@@ -50,8 +50,8 @@ pub trait Unsigned:
 {
     const BITS: u32;
     const MAX: Self;
-    fn zero() -> Self;
-    fn one() -> Self;
+    const ZERO: Self;
+    const ONE: Self;
     fn wrapping_neg(self) -> Self;
     fn bit_length() -> u32 {
         size_of::<Self>() as u32 * 8
@@ -63,8 +63,8 @@ macro_rules! impl_unsigned {
         impl Unsigned for $T {
             const BITS: u32 = <$T>::BITS;
             const MAX: Self = <$T>::MAX;
-            fn zero() -> Self { 0 }
-            fn one() -> Self { 1 }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
             fn wrapping_neg(self) -> Self { self.wrapping_neg() }
         }
     )*}

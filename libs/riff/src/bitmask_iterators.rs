@@ -16,7 +16,7 @@ pub fn bitmask_combinations<T: Unsigned>(n: u32, k: u32) -> BitmaskCombinations<
     assert!(k < T::bit_length() && k < T::bit_length());
     BitmaskCombinations {
         n,
-        bs: (T::one() << k) - T::one(),
+        bs: (T::ONE << k) - T::ONE,
     }
 }
 
@@ -29,12 +29,12 @@ impl<T: Unsigned> Iterator for BitmaskCombinations<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if (T::one() << self.n) <= self.bs {
+        if (T::ONE << self.n) <= self.bs {
             return None;
         }
         let res = Some(self.bs);
-        self.bs = if self.bs == T::zero() {
-            T::one() << self.n
+        self.bs = if self.bs == T::ZERO {
+            T::ONE << self.n
         } else {
             let x = self.bs & self.bs.wrapping_neg();
             let y = self.bs + x;
@@ -78,10 +78,10 @@ impl<T: Unsigned> Iterator for BitmaskSubsets<T> {
             return None;
         }
         let res = Some(self.bs ^ self.full);
-        if self.bs == T::zero() {
+        if self.bs == T::ZERO {
             self.finished = true;
         } else {
-            self.bs -= T::one();
+            self.bs -= T::ONE;
             self.bs &= self.full;
         }
         res
