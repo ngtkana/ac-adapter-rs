@@ -139,7 +139,7 @@
     <span class="macro">assert!</span>(k &lt; T::bit_length() &amp;&amp; k &lt; T::bit_length());
     BitmaskCombinations {
         n,
-        bs: (T::one() &lt;&lt; k) - T::one(),
+        bs: (T::ONE &lt;&lt; k) - T::ONE,
     }
 }
 
@@ -152,12 +152,12 @@
     <span class="kw">type </span>Item = T;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
-        <span class="kw">if </span>(T::one() &lt;&lt; <span class="self">self</span>.n) &lt;= <span class="self">self</span>.bs {
+        <span class="kw">if </span>(T::ONE &lt;&lt; <span class="self">self</span>.n) &lt;= <span class="self">self</span>.bs {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>res = <span class="prelude-val">Some</span>(<span class="self">self</span>.bs);
-        <span class="self">self</span>.bs = <span class="kw">if </span><span class="self">self</span>.bs == T::zero() {
-            T::one() &lt;&lt; <span class="self">self</span>.n
+        <span class="self">self</span>.bs = <span class="kw">if </span><span class="self">self</span>.bs == T::ZERO {
+            T::ONE &lt;&lt; <span class="self">self</span>.n
         } <span class="kw">else </span>{
             <span class="kw">let </span>x = <span class="self">self</span>.bs &amp; <span class="self">self</span>.bs.wrapping_neg();
             <span class="kw">let </span>y = <span class="self">self</span>.bs + x;
@@ -201,10 +201,10 @@
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">let </span>res = <span class="prelude-val">Some</span>(<span class="self">self</span>.bs ^ <span class="self">self</span>.full);
-        <span class="kw">if </span><span class="self">self</span>.bs == T::zero() {
+        <span class="kw">if </span><span class="self">self</span>.bs == T::ZERO {
             <span class="self">self</span>.finished = <span class="bool-val">true</span>;
         } <span class="kw">else </span>{
-            <span class="self">self</span>.bs -= T::one();
+            <span class="self">self</span>.bs -= T::ONE;
             <span class="self">self</span>.bs &amp;= <span class="self">self</span>.full;
         }
         res
