@@ -9,6 +9,7 @@ use std::iter;
 pub fn vec2<'a, T, R, S>(title: &str, vec2: &'a S) -> Table
 where
     T: fmt::Debug + 'a,
+    R: ?Sized,
     &'a R: Copy + IntoIterator<Item = &'a T> + 'a,
     &'a S: Copy + IntoIterator<Item = &'a R>,
 {
