@@ -1,15 +1,12 @@
 var sourcesIndex = JSON.parse('{\
 "accum":["",[],["lib.rs"]],\
 "avl_tree":["",[],["lib.rs"]],\
-"bfs":["",[],["lib.rs"]],\
-"bfs01":["",[],["lib.rs"]],\
 "binary":["",[],["lib.rs"]],\
 "bitvec":["",[],["lib.rs"]],\
 "bsgs":["",[],["lib.rs"]],\
 "cht":["",[],["lib.rs"]],\
 "cipolla":["",[],["lib.rs"]],\
 "convex_hull":["",[],["lib.rs"]],\
-"dfs":["",[],["lib.rs"]],\
 "dijkstra_radix_heap":["",[],["lib.rs"]],\
 "dinic":["",[],["lib.rs"]],\
 "dual_segtree":["",[],["lib.rs"]],\
@@ -35,7 +32,6 @@ var sourcesIndex = JSON.parse('{\
 "lin_ineq":["",[],["lib.rs"]],\
 "link_cut_tree":["",[],["base.rs","lib.rs"]],\
 "low_link":["",[],["lib.rs"]],\
-"make_graph":["",[],["lib.rs"]],\
 "manacher":["",[],["lib.rs"]],\
 "mincost_flow":["",[],["lib.rs"]],\
 "monotone_minima":["",[],["lib.rs"]],\

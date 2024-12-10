@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["array_make_directed","array_make_directed_weighted","array_make_undirected","array_make_undirected_weighted","make_directed_by","make_directed_weighted_by","make_undirected_by","make_undirected_weighted_by","tuple_make_directed","tuple_make_directed_weighted","tuple_make_undirected","tuple_make_undirected_weighted"]};

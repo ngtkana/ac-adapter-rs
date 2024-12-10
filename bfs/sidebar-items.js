@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["calc_dist","calc_dist_restore","find_path","tree_diamter","tree_diamter_restore"]};

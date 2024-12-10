@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"enum":["Weight"],"fn":["calc_dist","calc_dist_restore"]};
