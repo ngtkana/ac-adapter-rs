@@ -7,7 +7,6 @@ var sourcesIndex = JSON.parse('{\
 "cht":["",[],["lib.rs"]],\
 "cipolla":["",[],["lib.rs"]],\
 "convex_hull":["",[],["lib.rs"]],\
-"dijkstra_radix_heap":["",[],["lib.rs"]],\
 "dinic":["",[],["lib.rs"]],\
 "dual_segtree":["",[],["lib.rs"]],\
 "elim":["",[],["lib.rs"]],\
@@ -40,7 +39,6 @@ var sourcesIndex = JSON.parse('{\
 "next_permutation":["",[],["lib.rs"]],\
 "numeric_search":["",[],["lib.rs"]],\
 "partially_persistent_union_find":["",[],["lib.rs"]],\
-"radix_heap":["",[],["lib.rs"]],\
 "randtools":["",[],["algo.rs","lib.rs"]],\
 "rational":["",[],["lib.rs"]],\
 "rb":["",[],["balance.rs","lib.rs","map.rs","seq.rs"]],\
