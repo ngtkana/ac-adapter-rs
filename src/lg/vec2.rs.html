@@ -85,6 +85,7 @@
 <a href="#51" id="51">51</a>
 <a href="#52" id="52">52</a>
 <a href="#53" id="53">53</a>
+<a href="#54" id="54">54</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span><span class="kw">crate</span>::align_of;
 <span class="kw">use </span><span class="kw">crate</span>::format;
 <span class="kw">use </span><span class="kw">crate</span>::table::Align;
@@ -96,6 +97,7 @@
 <span class="kw">pub fn </span>vec2&lt;<span class="lifetime">&#39;a</span>, T, R, S&gt;(title: <span class="kw-2">&amp;</span>str, vec2: <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>S) -&gt; Table
 <span class="kw">where
     </span>T: fmt::Debug + <span class="lifetime">&#39;a</span>,
+    R: <span class="question-mark">?</span>Sized,
     <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>R: Copy + IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>T&gt; + <span class="lifetime">&#39;a</span>,
     <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>S: Copy + IntoIterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">&#39;a </span>R&gt;,
 {
