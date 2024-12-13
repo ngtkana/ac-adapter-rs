@@ -43,7 +43,7 @@ var sourcesIndex = JSON.parse('{\
 "rational":["",[],["lib.rs"]],\
 "rb":["",[],["balance.rs","lib.rs","map.rs","seq.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
-"riff":["",[],["binary_search.rs","bitmask_iterators.rs","bitmask_operations.rs","change_min_max.rs","lib.rs","numeric_traits.rs","pop_if.rs"]],\
+"riff":["",[],["binary_search.rs","bitmask_iterators.rs","bitmask_operations.rs","change_min_max.rs","lib.rs","numeric_traits.rs","pop_if.rs","slice_ext.rs"]],\
 "segbeats":["",[],["lib.rs"]],\
 "segbeats_task3":["",[],["lib.rs"]],\
 "segtree":["",[],["lib.rs"]],\
