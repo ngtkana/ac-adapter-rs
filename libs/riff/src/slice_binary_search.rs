@@ -4,7 +4,7 @@ use std::cmp::Ordering::Greater;
 use std::cmp::Ordering::Less;
 
 /// `{lower,upper}_bound`, etc
-pub trait BinarySearch<T> {
+pub trait SliceBinarySearch<T> {
     fn partition_point<F: FnMut(&T) -> bool>(&self, pred: F) -> usize;
     fn partition_point_value<F: FnMut(&T) -> bool>(&self, pred: F) -> Option<&T>;
     fn lower_bound_by<F: FnMut(&T) -> Ordering>(&self, mut f: F) -> usize {
@@ -57,7 +57,7 @@ pub trait BinarySearch<T> {
     }
 }
 
-impl<T> BinarySearch<T> for [T] {
+impl<T> SliceBinarySearch<T> for [T] {
     fn partition_point<F: FnMut(&T) -> bool>(&self, mut pred: F) -> usize {
         self.binary_search_by(|x| if pred(x) { Less } else { Greater })
             .unwrap_err()

@@ -1,4 +1,4 @@
-/// A trait for slices.
+/// Chunk by predicate.
 pub trait SliceChunks {
     type Item;
     /// Groups adjacent elements by a predicate.
