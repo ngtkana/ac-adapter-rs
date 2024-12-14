@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["bitmask_combinations","bitmask_subsets","i2powm1"],"trait":["BinarySearch","ChangeMinMax","PopIf","SliceChunks","Unsigned"]};
+window.SIDEBAR_ITEMS = {"fn":["bitmask_combinations","bitmask_subsets","i2powm1"],"trait":["ChangeMinMax","PopIf","SliceAccum","SliceBinarySearch","SliceChunks","Unsigned"]};

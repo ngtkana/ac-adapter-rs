@@ -1,5 +1,4 @@
 var sourcesIndex = JSON.parse('{\
-"accum":["",[],["lib.rs"]],\
 "avl_tree":["",[],["lib.rs"]],\
 "binary":["",[],["lib.rs"]],\
 "bitvec":["",[],["lib.rs"]],\
@@ -43,7 +42,7 @@ var sourcesIndex = JSON.parse('{\
 "rational":["",[],["lib.rs"]],\
 "rb":["",[],["balance.rs","lib.rs","map.rs","seq.rs"]],\
 "rbtree":["",[],["lib.rs","nonempty.rs"]],\
-"riff":["",[],["binary_search.rs","bitmask_iterators.rs","bitmask_operations.rs","change_min_max.rs","lib.rs","numeric_traits.rs","pop_if.rs","slice_chunks.rs"]],\
+"riff":["",[],["bitmask_iterators.rs","bitmask_operations.rs","change_min_max.rs","lib.rs","numeric_traits.rs","pop_if.rs","slice_accum.rs","slice_binary_search.rs","slice_chunks.rs"]],\
 "segbeats":["",[],["lib.rs"]],\
 "segbeats_task3":["",[],["lib.rs"]],\
 "segtree":["",[],["lib.rs"]],\
