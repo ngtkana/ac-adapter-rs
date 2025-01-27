@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["any_mod_fps_mul","fft","fps_mul","ifft"],"macro":["fp"],"struct":["Factorial","Fp"],"trait":["PrimitiveRoot"]};
+window.SIDEBAR_ITEMS = {"fn":["any_mod_fps_mul","fft","fps_mul","ifft"],"macro":["fp"],"struct":["Factorial","Fp","Zeroed"],"trait":["PrimitiveRoot"]};

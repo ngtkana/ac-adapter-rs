@@ -11,7 +11,7 @@ var sourcesIndex = JSON.parse('{\
 "elim":["",[],["lib.rs"]],\
 "erato":["",[],["converters.rs","int.rs","lib.rs","lpd_sieve.rs","sieve.rs","sieve_base.rs","sieve_kind.rs"]],\
 "euclid":["",[],["crt.rs","ext_gcd.rs","gcd.rs","lib.rs"]],\
-"fp":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs"]],\
+"fp":["",[],["ext_gcd.rs","factorial.rs","fourier.rs","lib.rs","zeroed.rs"]],\
 "fps":["",[],["lib.rs"]],\
 "gco":["",[],["lib.rs"]],\
 "graph":["",[],["csr.rs","lib.rs"]],\
