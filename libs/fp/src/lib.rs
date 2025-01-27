@@ -37,6 +37,7 @@
 mod ext_gcd;
 mod factorial;
 mod fourier;
+mod zeroed;
 
 use ext_gcd::mod_inv;
 pub use factorial::Factorial;
@@ -56,6 +57,7 @@ use std::ops::MulAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 use std::ops::SubAssign;
+pub use zeroed::Zeroed;
 
 /// Constructs a new instance of [`Fp`]
 /// # Examples
