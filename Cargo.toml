@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ['libs/*', 'snippetter']
+members = ['libs/*', 'benches', 'snippetter']
 
 [workspace.dependencies]
 ansi_term = "0.12.1"
