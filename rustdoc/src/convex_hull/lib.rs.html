@@ -310,8 +310,8 @@
     } <span class="kw">else </span>{
         <span class="kw">let </span>n = a.len();
         <span class="kw">let </span><span class="kw-2">mut </span>d = <span class="number">0</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>ans_i = std::usize::MAX;
-        <span class="kw">let </span><span class="kw-2">mut </span>ans_j = std::usize::MAX;
+        <span class="kw">let </span><span class="kw-2">mut </span>ans_i = usize::MAX;
+        <span class="kw">let </span><span class="kw-2">mut </span>ans_j = usize::MAX;
         <span class="kw">let </span>min_position = (<span class="number">0</span>..n).min_by_key(|<span class="kw-2">&amp;</span>i| a[i][<span class="number">0</span>]).unwrap();
         <span class="kw">let </span>max_position = (<span class="number">0</span>..n).max_by_key(|<span class="kw-2">&amp;</span>i| a[i][<span class="number">0</span>]).unwrap();
         <span class="kw">let </span>start_i = min_position.min(max_position);

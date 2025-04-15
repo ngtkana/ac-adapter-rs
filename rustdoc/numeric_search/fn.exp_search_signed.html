@@ -44,5 +44,5 @@ it try to find $x \in \mathbb Z$ satisfying $\neg f ( x - 1 ) \land f ( x )$ (wh
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="macro">assert_eq!</span>(exp_search_signed(|x| <span class="number">6 </span>&lt;= x), <span class="prelude-val">Some</span>(<span class="number">6</span>));
 <span class="macro">assert_eq!</span>(exp_search_signed(|<span class="kw">_</span>: i32| <span class="bool-val">false</span>), <span class="prelude-val">None</span>);
-<span class="macro">assert_eq!</span>(exp_search_signed(|<span class="kw">_</span>: i32| <span class="bool-val">true</span>), <span class="prelude-val">Some</span>(std::i32::MIN));</code></pre></div>
+<span class="macro">assert_eq!</span>(exp_search_signed(|<span class="kw">_</span>: i32| <span class="bool-val">true</span>), <span class="prelude-val">Some</span>(i32::MIN));</code></pre></div>
 </div></details></section></div></main></body></html>

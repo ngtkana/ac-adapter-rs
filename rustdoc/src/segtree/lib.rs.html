@@ -1618,7 +1618,7 @@
     {
         <span class="kw">let </span>values_ = values;
         <span class="kw">let </span>h = values.len();
-        <span class="kw">let </span>w = values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, Vec::len);
+        <span class="kw">let </span>w = values.first().map_or(<span class="number">0</span>, Vec::len);
         <span class="kw">let </span><span class="kw-2">mut </span>values = <span class="macro">vec!</span>[<span class="macro">vec!</span>[O::identity(); <span class="number">2 </span>* w]; <span class="number">2 </span>* h];
         <span class="kw">for </span>(values, values_) <span class="kw">in </span>values[h..].iter_mut().zip(values_) {
             values[w..].clone_from_slice(values_);
@@ -1637,7 +1637,7 @@
     <span class="doccomment">/// Fold $\left \lbrace x_{i, j} \mid i \in \text{{range}}_i, j \in \text{{range}}_j \right \rbrace$.
     </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, i: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, j: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; O::Value {
         <span class="kw">let </span>h = <span class="self">self</span>.values.len() / <span class="number">2</span>;
-        <span class="kw">let </span>w = <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
+        <span class="kw">let </span>w = <span class="self">self</span>.values.first().map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
         <span class="kw">let </span>(<span class="kw-2">mut </span>i0, <span class="kw-2">mut </span>i1) = open(i, h);
         <span class="macro">assert!</span>(i0 &lt;= i1 &amp;&amp; i1 &lt;= h);
         <span class="kw">let </span>(<span class="kw-2">mut </span>j0, <span class="kw-2">mut </span>j1) = open(j, w);
@@ -1692,7 +1692,7 @@
     <span class="doccomment">/// Returns the entry of $x_{i, j}$.
     </span><span class="kw">pub fn </span>entry(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, j: usize) -&gt; Dense2dEntry&lt;O&gt; {
         <span class="kw">let </span>h = <span class="self">self</span>.values.len() / <span class="number">2</span>;
-        <span class="kw">let </span>w = <span class="self">self</span>.values.get(<span class="number">0</span>).map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
+        <span class="kw">let </span>w = <span class="self">self</span>.values.first().map_or(<span class="number">0</span>, |v| v.len() / <span class="number">2</span>);
         Dense2dEntry {
             segtree: <span class="self">self</span>,
             i: h + i,

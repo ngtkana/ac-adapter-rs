@@ -355,8 +355,6 @@
 <a href="#321" id="321">321</a>
 <a href="#322" id="322">322</a>
 <a href="#323" id="323">323</a>
-<a href="#324" id="324">324</a>
-<a href="#325" id="325">325</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Finds a maximum cardinality bipartite matching by Hopcroft―Karp's algorithm.
 //!
 //! # Basic usage
@@ -430,10 +428,9 @@
     dist: <span class="kw-2">&amp;</span>[u32],
     backward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;],
 ) -&gt; (Box&lt;[bool]&gt;, Box&lt;[bool]&gt;) {
-    <span class="kw">use </span>std::u32::MAX;
     <span class="kw">let </span>left = dist
         .iter()
-        .map(|<span class="kw-2">&amp;</span>x| x != MAX)
+        .map(|<span class="kw-2">&amp;</span>x| x != u32::MAX)
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         .into_boxed_slice();
     <span class="kw">let </span><span class="kw-2">mut </span>right = <span class="macro">vec!</span>[<span class="bool-val">false</span>; backward.len()].into_boxed_slice();
@@ -485,8 +482,7 @@
 }
 
 <span class="kw">fn </span>bfs(graph: <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;], forward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;], backward: <span class="kw-2">&amp;</span>[<span class="prelude-ty">Option</span>&lt;usize&gt;]) -&gt; Vec&lt;u32&gt; {
-    <span class="kw">use </span>std::u32::MAX;
-    <span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[MAX; forward.len()];
+    <span class="kw">let </span><span class="kw-2">mut </span>dist = <span class="macro">vec!</span>[u32::MAX; forward.len()];
     <span class="kw">let </span><span class="kw-2">mut </span>queue = forward
         .iter()
         .enumerate()
@@ -497,7 +493,7 @@
     <span class="kw">while let </span><span class="prelude-val">Some</span>(x) = queue.pop_front() {
         <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>graph[x] {
             <span class="kw">if let </span><span class="prelude-val">Some</span>(z) = backward[y] {
-                <span class="kw">if </span>dist[z] == MAX {
+                <span class="kw">if </span>dist[z] == u32::MAX {
                     dist[z] = dist[x] + <span class="number">1</span>;
                     queue.push_back(z);
                 }

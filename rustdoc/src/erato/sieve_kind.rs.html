@@ -197,15 +197,15 @@
 }
 
 <span class="kw">fn </span>construct_lpd_table(n: usize) -&gt; Vec&lt;usize&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>lpd = <span class="macro">vec!</span>[std::usize::MAX; n];
+    <span class="kw">let </span><span class="kw-2">mut </span>lpd = <span class="macro">vec!</span>[usize::MAX; n];
     <span class="kw">for </span>p <span class="kw">in </span><span class="number">2</span>..n {
-        <span class="kw">if </span>lpd[p] != std::usize::MAX {
+        <span class="kw">if </span>lpd[p] != usize::MAX {
             <span class="kw">continue</span>;
         }
         lpd[p] = p;
         <span class="kw">let </span><span class="kw-2">mut </span>i = p * p;
         <span class="kw">while </span>i &lt; n {
-            <span class="kw">if </span>lpd[i] == std::usize::MAX {
+            <span class="kw">if </span>lpd[i] == usize::MAX {
                 lpd[i] = p;
             }
             i += p;
@@ -231,11 +231,11 @@
     }
 
     <span class="attr">#[test_case(<span class="number">0 </span>=&gt; Vec::&lt;usize&gt;::new())]
-    #[test_case(<span class="number">1 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX]</span>)]
-    <span class="attr">#[test_case(<span class="number">2 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX]</span>)]
-    <span class="attr">#[test_case(<span class="number">3 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>]</span>)]
-    <span class="attr">#[test_case(<span class="number">4 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>, <span class="number">3</span>]</span>)]
-    <span class="attr">#[test_case(<span class="number">5 </span>=&gt; <span class="macro">vec!</span>[std::usize::MAX, std::usize::MAX, <span class="number">2</span>, <span class="number">3</span>, <span class="number">2</span>]</span>)]
+    #[test_case(<span class="number">1 </span>=&gt; <span class="macro">vec!</span>[usize::MAX]</span>)]
+    <span class="attr">#[test_case(<span class="number">2 </span>=&gt; <span class="macro">vec!</span>[usize::MAX, usize::MAX]</span>)]
+    <span class="attr">#[test_case(<span class="number">3 </span>=&gt; <span class="macro">vec!</span>[usize::MAX, usize::MAX, <span class="number">2</span>]</span>)]
+    <span class="attr">#[test_case(<span class="number">4 </span>=&gt; <span class="macro">vec!</span>[usize::MAX, usize::MAX, <span class="number">2</span>, <span class="number">3</span>]</span>)]
+    <span class="attr">#[test_case(<span class="number">5 </span>=&gt; <span class="macro">vec!</span>[usize::MAX, usize::MAX, <span class="number">2</span>, <span class="number">3</span>, <span class="number">2</span>]</span>)]
     <span class="kw">fn </span>test_construct_lpd_table(n: usize) -&gt; Vec&lt;usize&gt; {
         construct_lpd_table(n)
     }

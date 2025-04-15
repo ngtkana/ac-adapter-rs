@@ -368,26 +368,22 @@
 <a href="#334" id="334">334</a>
 <a href="#335" id="335">335</a>
 <a href="#336" id="336">336</a>
-<a href="#337" id="337">337</a>
-<a href="#338" id="338">338</a>
-<a href="#339" id="339">339</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 部分永続化された、素集合データ構造です。
 //!
 //! [構造体 `PartiallyPersistentUnionFind` のドキュメントをご覧ください。](PartiallyPersistentUnionFind)
 
 </span><span class="kw">use </span>std::mem::swap;
-<span class="kw">use </span>std::usize::MAX;
 
 <span class="doccomment">/// 部分永続化された、素集合データ構造です。
 ///
 /// # 時刻について
 ///
-/// `MAX` といえば `std::usize:MAX` のことであるとします。
+/// `usize::MAX` といえば `std::usize:MAX` のことであるとします。
 ///
-/// * 入力できるのは `1..=MAX`。
+/// * 入力できるのは `1..=usize::MAX`。
 /// * 過去クエリで時刻 t を指定すると、t
 /// と同じかそれより小さな時刻のイベントが適用された状態を参照します。
-/// * t = `MAX` でクエリすると最終状態を参照します。（仮に時刻 `MAX`
+/// * t = `usize::MAX` でクエリすると最終状態を参照します。（仮に時刻 `usize::MAX`
 /// にイベントが存在したとしても。）
 ///
 /// # Examples
@@ -430,22 +426,21 @@
 /// ```
 ///
 ///
-/// # 時刻 `MAX` にイベントがある場合も同様です。
+/// # 時刻 `usize::MAX` にイベントがある場合も同様です。
 ///
 /// ```
 /// use partially_persistent_union_find::PartiallyPersistentUnionFind;
-/// use std::usize::MAX;
 ///
 /// let mut uf = PartiallyPersistentUnionFind::new(5);
 ///
-/// // MAX にイベントをセット
-/// uf.union(0, 1, MAX);
+/// // usize::MAX にイベントをセット
+/// uf.union(0, 1, usize::MAX);
 ///
 /// // 適用前を参照
-/// assert!(!uf.same(0, 1, MAX - 1));
+/// assert!(!uf.same(0, 1, usize::MAX - 1));
 ///
 /// // 適用後を参照
-/// assert!(uf.same(0, 1, MAX));
+/// assert!(uf.same(0, 1, usize::MAX));
 /// ```
 ///
 ///
@@ -467,7 +462,7 @@
     ///
     /// # 制約
     ///
-    /// `n &lt; std::isize::MAX`
+    /// `n &lt; isize::MAX`
     ///
     /// # Examples
     ///
@@ -476,10 +471,10 @@
     /// let uf = PartiallyPersistentUnionFind::new(5);
     /// ```
     </span><span class="kw">pub fn </span>new(n: usize) -&gt; <span class="self">Self </span>{
-        <span class="macro">assert!</span>(n &lt; std::isize::MAX <span class="kw">as </span>usize);
+        <span class="macro">assert!</span>(n &lt; isize::MAX <span class="kw">as </span>usize);
         <span class="self">Self </span>{
             parent: <span class="macro">vec!</span>[-<span class="number">1</span>; n],
-            time_stamp: <span class="macro">vec!</span>[MAX; n],
+            time_stamp: <span class="macro">vec!</span>[usize::MAX; n],
             size_history: <span class="macro">vec!</span>[Vec::new(); n],
             last_stamp: <span class="number">0</span>,
         }
@@ -626,7 +621,6 @@
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
     <span class="kw">use </span>randtools::DistinctTwo;
-    <span class="kw">use </span>std::usize::MAX;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_rand() {
@@ -677,8 +671,8 @@
 
     <span class="kw">fn </span>time_brute(uf: <span class="kw-2">&amp;</span>PartiallyPersistentUnionFind, u: usize, v: usize) -&gt; <span class="prelude-ty">Option</span>&lt;usize&gt; {
         <span class="kw">let </span><span class="kw-2">mut </span>left = <span class="number">0</span>;
-        <span class="kw">let </span><span class="kw-2">mut </span>right = MAX;
-        <span class="kw">if </span>uf.find(u, MAX) != uf.find(v, MAX) {
+        <span class="kw">let </span><span class="kw-2">mut </span>right = usize::MAX;
+        <span class="kw">if </span>uf.find(u, usize::MAX) != uf.find(v, usize::MAX) {
             <span class="kw">return </span><span class="prelude-val">None</span>;
         }
         <span class="kw">if </span>u == v {

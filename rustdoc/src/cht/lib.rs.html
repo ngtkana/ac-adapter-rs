@@ -634,8 +634,6 @@
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
 <a href="#602" id="602">602</a>
-<a href="#603" id="603">603</a>
-<a href="#604" id="604">604</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! CHT です。
 //!
 //! # TODO
@@ -694,8 +692,6 @@
 </span><span class="kw">use </span>std::borrow::Borrow;
 <span class="kw">use </span>std::collections::BTreeSet;
 <span class="kw">use </span>std::fmt::Debug;
-<span class="kw">use </span>std::i64::MAX;
-<span class="kw">use </span>std::i64::MIN;
 <span class="kw">use </span>std::marker::PhantomData;
 <span class="kw">use </span>std::ops::Add;
 <span class="kw">use </span>std::ops::Mul;
@@ -789,7 +785,7 @@
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(seg) = <span class="self">self</span>.vec.pop() {
             <span class="kw">let </span>Min(x) = seg.min;
-            <span class="kw">if </span>x == MIN || line.eval(x) &lt; seg.line.eval(x) {
+            <span class="kw">if </span>x == i64::MIN || line.eval(x) &lt; seg.line.eval(x) {
                 <span class="self">self</span>.vec.push(seg);
                 <span class="kw">break</span>;
             }
@@ -808,11 +804,11 @@
                 }
             }
         }
-        <span class="kw">let </span>min = Min(<span class="self">self</span>.vec.last().map_or(MIN, |seg| seg.max.<span class="number">0</span>));
+        <span class="kw">let </span>min = Min(<span class="self">self</span>.vec.last().map_or(i64::MIN, |seg| seg.max.<span class="number">0</span>));
         <span class="self">self</span>.vec.push(Segment {
             line,
             min,
-            max: Max(MAX),
+            max: Max(i64::MAX),
         });
     }
 }
@@ -859,8 +855,8 @@
         <span class="kw">let </span>line = Line { p, q };
         <span class="kw">if let </span><span class="prelude-val">Some</span>(seg) = <span class="self">self</span>.set.range(p..).next() {
             <span class="kw">let </span>Min(x) = seg.min;
-            <span class="kw">if </span>x == MIN &amp;&amp; seg.line.p == p &amp;&amp; seg.line.q &lt;= q
-                || x != MIN &amp;&amp; line.eval(x) &lt;= seg.line.eval(x)
+            <span class="kw">if </span>x == i64::MIN &amp;&amp; seg.line.p == p &amp;&amp; seg.line.q &lt;= q
+                || x != i64::MIN &amp;&amp; line.eval(x) &lt;= seg.line.eval(x)
             {
                 <span class="kw">return</span>;
             }
@@ -870,14 +866,14 @@
 
         <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>seg) = <span class="self">self</span>.set.range(..p).next_back() {
             <span class="kw">let </span>Min(x) = seg.min;
-            <span class="kw">if </span>x == MIN || line.eval(x) &lt; seg.line.eval(x) {
+            <span class="kw">if </span>x == i64::MIN || line.eval(x) &lt; seg.line.eval(x) {
                 <span class="kw">break</span>;
             }
             <span class="self">self</span>.set.remove(<span class="kw-2">&amp;</span>seg);
         }
         <span class="kw">while let </span><span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span>seg) = <span class="self">self</span>.set.range(p..).next() {
             <span class="kw">let </span>Max(x) = seg.max;
-            <span class="kw">if </span>x == MAX || line.eval(x) &lt; seg.line.eval(x) {
+            <span class="kw">if </span>x == i64::MAX || line.eval(x) &lt; seg.line.eval(x) {
                 <span class="kw">break</span>;
             }
             <span class="self">self</span>.set.remove(<span class="kw-2">&amp;</span>seg);
@@ -912,8 +908,8 @@
                 }
             };
         }
-        <span class="kw">let </span>min = Min(<span class="self">self</span>.set.range(..p).next_back().map_or(MIN, |seg| seg.max.<span class="number">0</span>));
-        <span class="kw">let </span>max = Max(<span class="self">self</span>.set.range(p..).next().map_or(MAX, |seg| seg.min.<span class="number">0</span>));
+        <span class="kw">let </span>min = Min(<span class="self">self</span>.set.range(..p).next_back().map_or(i64::MIN, |seg| seg.max.<span class="number">0</span>));
+        <span class="kw">let </span>max = Max(<span class="self">self</span>.set.range(p..).next().map_or(i64::MAX, |seg| seg.min.<span class="number">0</span>));
         <span class="kw">if </span>min.<span class="number">0 </span>&lt; max.<span class="number">0 </span>{
             <span class="self">self</span>.set.insert(Segment { line, min, max });
         }
