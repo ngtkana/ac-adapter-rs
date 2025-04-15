@@ -2,6 +2,7 @@ name: Rust
 
 on:
   push:
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -82,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     needs: changes
-    if: needs.changes.outputs.trigger == 'true'
+    if: needs.changes.outputs.trigger == 'true' || github.event_name == 'workflow_dispatch'
     steps:
       - name: Clone Project
         uses: actions/checkout@v4
