@@ -566,7 +566,7 @@ impl<K: Ord> Multiset<K> {
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        self.map.remove(key).map(|(k, _)| k)
+        self.map.remove(key).map(|(k, ())| k)
     }
 
     pub fn remove_nth(&mut self, n: usize) -> K {

@@ -237,10 +237,7 @@ impl<T: Balance> Tree<T> {
 }
 impl<T: Balance> Clone for Tree<T> {
     fn clone(&self) -> Self {
-        Self {
-            root: self.root,
-            black_height: self.black_height,
-        }
+        *self
     }
 }
 impl<T: Balance> Copy for Tree<T> {}
@@ -264,10 +261,7 @@ impl<T: Balance> fmt::Debug for BlackViolation<T> {
 }
 impl<T: Balance> Clone for BlackViolation<T> {
     fn clone(&self) -> Self {
-        Self {
-            p: self.p,
-            x: self.x,
-        }
+        *self
     }
 }
 impl<T: Balance> Copy for BlackViolation<T> {}

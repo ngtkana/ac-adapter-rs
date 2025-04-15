@@ -216,6 +216,7 @@ pub struct DoubleHeap<T, H> {
     right: RemovableHeap<Reverse<T>>,
     handler: H,
 }
+#[allow(clippy::missing_fields_in_debug)]
 impl<T, H> Debug for DoubleHeap<T, H>
 where
     T: Copy + Ord + Hash + Debug,

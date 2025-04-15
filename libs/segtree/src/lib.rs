@@ -205,6 +205,7 @@ impl<O: Op> Segtree<O> {
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<O: Op> fmt::Debug for Segtree<O>
 where
     O::Value: fmt::Debug,
