@@ -94,8 +94,8 @@ jobs:
         uses: ./.github/actions/setup-rust
       - uses: davidB/rust-cargo-make@v1
 
-      - name: Run makers docs
-        run: cargo make docs
+      - name: Run makers doc
+        run: cargo make doc
 
       - name: Check that crates.js is surely copied
         run: test -e docs/crates.js

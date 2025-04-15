@@ -17,7 +17,7 @@ args = ["nextest", "run"]
 command = "cargo"
 args = ["test", "--doc"]
 
-[tasks.docs]
+[tasks.doc]
 script = '''
 cargo run --bin snippetter
 if [ ! -e "docs" ]; then
@@ -25,7 +25,7 @@ if [ ! -e "docs" ]; then
 fi
 cp contents/* docs/
 cp -r target/doc/* docs/
-RUSTDOCFLAGS = "--html-in-header contents/header.html" \
+RUSTDOCFLAGS="--html-in-header contents/header.html" \
     cargo doc --workspace --no-deps
 '''
 
