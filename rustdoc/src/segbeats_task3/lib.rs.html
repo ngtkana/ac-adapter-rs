@@ -649,17 +649,17 @@
 
     <span class="kw">pub fn </span>change_min(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>Clone + RangeBounds&lt;usize&gt;, x: T) {
         <span class="kw">let </span>range = open(<span class="self">self</span>.len, range);
-        <span class="self">self</span>.dfs::&lt;ChangeMin&lt;T&gt;&gt;(range, x)
+        <span class="self">self</span>.dfs::&lt;ChangeMin&lt;T&gt;&gt;(range, x);
     }
 
     <span class="kw">pub fn </span>change_max(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>Clone + RangeBounds&lt;usize&gt;, x: T) {
         <span class="kw">let </span>range = open(<span class="self">self</span>.len, range);
-        <span class="self">self</span>.dfs::&lt;ChangeMax&lt;T&gt;&gt;(range, x)
+        <span class="self">self</span>.dfs::&lt;ChangeMax&lt;T&gt;&gt;(range, x);
     }
 
     <span class="kw">pub fn </span>range_add(<span class="kw-2">&amp;mut </span><span class="self">self</span>, range: <span class="kw">impl </span>Clone + RangeBounds&lt;usize&gt;, x: T) {
         <span class="kw">let </span>range = open(<span class="self">self</span>.len, range);
-        <span class="self">self</span>.dfs::&lt;RangeAdd&lt;T&gt;&gt;(range, x)
+        <span class="self">self</span>.dfs::&lt;RangeAdd&lt;T&gt;&gt;(range, x);
     }
 
     <span class="kw">pub fn </span>query_min(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;) -&gt; T {
@@ -827,9 +827,9 @@
 
     <span class="kw">fn </span>tag(node: <span class="kw-2">&amp;mut </span>Node&lt;<span class="self">Self</span>::Value&gt;, x: <span class="self">Self</span>::Param) {
         <span class="kw">if </span>x == T::zero() {
-            node.add(x, <span class="number">0</span>)
+            node.add(x, <span class="number">0</span>);
         } <span class="kw">else </span>{
-            node.add(x, <span class="number">1</span>)
+            node.add(x, <span class="number">1</span>);
         }
     }
 
@@ -1076,10 +1076,10 @@
         $(
             <span class="kw">impl </span>Elm <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
                 <span class="kw">fn </span>min_value() -&gt; <span class="self">Self </span>{
-                    <span class="macro-nonterminal">$ty::MIN
+                    std::<span class="macro-nonterminal">$ty::MIN
                 </span>}
                 <span class="kw">fn </span>max_value() -&gt; <span class="self">Self </span>{
-                    <span class="macro-nonterminal">$ty::MAX
+                    std::<span class="macro-nonterminal">$ty::MAX
                 </span>}
                 <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
                     <span class="number">0

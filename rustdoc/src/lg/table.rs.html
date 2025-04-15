@@ -146,9 +146,9 @@
             {
                 <span class="macro">write!</span>(f, <span class="string">"{pre}"</span>)<span class="question-mark">?</span>;
                 <span class="kw">match </span>align {
-                    Align::Left =&gt; <span class="macro">write!</span>(f, <span class="string">"{:&lt;width$}"</span>, text)<span class="question-mark">?</span>,
-                    Align::Center =&gt; <span class="macro">write!</span>(f, <span class="string">"{:^width$}"</span>, text)<span class="question-mark">?</span>,
-                    Align::Right =&gt; <span class="macro">write!</span>(f, <span class="string">"{:&gt;width$}"</span>, text)<span class="question-mark">?</span>,
+                    Align::Left =&gt; <span class="macro">write!</span>(f, <span class="string">"{text:&lt;width$}"</span>)<span class="question-mark">?</span>,
+                    Align::Center =&gt; <span class="macro">write!</span>(f, <span class="string">"{text:^width$}"</span>)<span class="question-mark">?</span>,
+                    Align::Right =&gt; <span class="macro">write!</span>(f, <span class="string">"{text:&gt;width$}"</span>)<span class="question-mark">?</span>,
                 }
                 <span class="macro">write!</span>(f, <span class="string">"{post}"</span>)<span class="question-mark">?</span>;
             }

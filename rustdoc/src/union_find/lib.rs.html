@@ -558,8 +558,8 @@
     }
 
     <span class="kw">fn </span>graft(parent: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value, child: <span class="self">Self</span>::Value) {
-        <span class="kw-2">*</span>parent += child + <span class="number">1
-    </span>}
+        <span class="kw-2">*</span>parent += child + <span class="number">1</span>;
+    }
 }
 <span class="doccomment">/// 頂点の個数
 </span><span class="kw">pub enum </span>VertexCount {}
@@ -573,7 +573,7 @@
     <span class="kw">fn </span>add_edge(_x: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {}
 
     <span class="kw">fn </span>graft(parent: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value, child: <span class="self">Self</span>::Value) {
-        <span class="kw-2">*</span>parent += child
+        <span class="kw-2">*</span>parent += child;
     }
 }
 <span class="doccomment">/// サイクルがあるとき、`true`
@@ -586,11 +586,11 @@
     </span>}
 
     <span class="kw">fn </span>add_edge(x: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value) {
-        <span class="kw-2">*</span>x = <span class="bool-val">true
-    </span>}
+        <span class="kw-2">*</span>x = <span class="bool-val">true</span>;
+    }
 
     <span class="kw">fn </span>graft(parent: <span class="kw-2">&amp;mut </span><span class="self">Self</span>::Value, child: <span class="self">Self</span>::Value) {
-        <span class="kw-2">*</span>parent |= child
+        <span class="kw-2">*</span>parent |= child;
     }
 }
 
@@ -607,7 +607,7 @@
 
     <span class="kw">pub fn </span>from_values(values: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{
         <span class="kw">let </span>n = values.len();
-        <span class="macro">assert!</span>(n &lt;= usize::MAX / <span class="number">2</span>);
+        <span class="macro">assert!</span>(n &lt;= std::usize::MAX / <span class="number">2</span>);
         <span class="self">Self </span>{
             parent_or_size: <span class="macro">vec!</span>[-<span class="number">1</span>; n],
             values,

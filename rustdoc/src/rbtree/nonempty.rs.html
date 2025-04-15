@@ -845,7 +845,7 @@
     </span><span class="kw">fn </span>test_merge(lhs: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;, rhs: <span class="kw">impl </span>Fn() -&gt; Nonempty&lt;()&gt;) -&gt; String {
         <span class="kw">let </span>root = Nonempty::merge(lhs(), rhs());
         <span class="kw">let </span>res = to_structure_sring(<span class="kw-2">&amp;</span>root);
-        <span class="macro">println!</span>(<span class="string">"{}"</span>, res);
+        <span class="macro">println!</span>(<span class="string">"{res}"</span>);
         validate(<span class="kw-2">&amp;</span>root);
         res
     }

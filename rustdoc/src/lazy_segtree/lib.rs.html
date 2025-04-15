@@ -567,7 +567,7 @@
         <span class="self">self</span>.values[i] = O::op(
             <span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i &lt;&lt; <span class="number">1</span>]),
             <span class="kw-2">&amp;</span>O::apply(<span class="kw-2">&amp;</span><span class="self">self</span>.operators[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>], <span class="kw-2">&amp;</span><span class="self">self</span>.values[i &lt;&lt; <span class="number">1 </span>| <span class="number">1</span>]),
-        )
+        );
     }
 }
 
@@ -603,7 +603,7 @@
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
 
-    <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
+    <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
     <span class="attr">#[derive(Debug, Clone, Copy, PartialEq)]
     </span><span class="kw">struct </span>Affine {

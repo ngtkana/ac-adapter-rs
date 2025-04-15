@@ -600,14 +600,14 @@
     <span class="doccomment">/// A primitive root of unity.
     </span><span class="kw">const </span>VALUE: Fp&lt;P&gt;;
 }
-<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">998244353</span>&gt; <span class="kw">for </span>() {
-    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">998244353</span>&gt; = Fp::new(<span class="number">3</span>);
+<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">998_244_353</span>&gt; <span class="kw">for </span>() {
+    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">998_244_353</span>&gt; = Fp::new(<span class="number">3</span>);
 }
-<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">1012924417</span>&gt; <span class="kw">for </span>() {
-    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">1012924417</span>&gt; = Fp::new(<span class="number">5</span>);
+<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">1_012_924_417</span>&gt; <span class="kw">for </span>() {
+    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">1_012_924_417</span>&gt; = Fp::new(<span class="number">5</span>);
 }
-<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">924844033</span>&gt; <span class="kw">for </span>() {
-    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">924844033</span>&gt; = Fp::new(<span class="number">5</span>);
+<span class="kw">impl </span>PrimitiveRoot&lt;<span class="number">924_844_033</span>&gt; <span class="kw">for </span>() {
+    <span class="kw">const </span>VALUE: Fp&lt;<span class="number">924_844_033</span>&gt; = Fp::new(<span class="number">5</span>);
 }
 
 <span class="doccomment">/// A value in $\mathbb{Fp}_p$.
@@ -747,9 +747,9 @@
             den = -den;
         }
         <span class="kw">if </span>den == <span class="number">1 </span>{
-            <span class="macro">write!</span>(f, <span class="string">"{}"</span>, num)
+            <span class="macro">write!</span>(f, <span class="string">"{num}"</span>)
         } <span class="kw">else </span>{
-            <span class="macro">write!</span>(f, <span class="string">"{}/{}"</span>, num, den)
+            <span class="macro">write!</span>(f, <span class="string">"{num}/{den}"</span>)
         }
     }
 }
@@ -808,7 +808,7 @@
 <span class="attr">#[allow(clippy::suspicious_op_assign_impl)]
 </span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; DivAssign&lt;Fp&lt;P&gt;&gt; <span class="kw">for </span>Fp&lt;P&gt; {
     <span class="kw">fn </span>div_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: Fp&lt;P&gt;) {
-        <span class="kw-2">*</span><span class="self">self </span><span class="kw-2">*</span>= rhs.inv()
+        <span class="kw-2">*</span><span class="self">self </span><span class="kw-2">*</span>= rhs.inv();
     }
 }
 <span class="macro">macro_rules!</span> fp_forward_ops {
@@ -894,7 +894,7 @@
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
 
-    <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
+    <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_new() {

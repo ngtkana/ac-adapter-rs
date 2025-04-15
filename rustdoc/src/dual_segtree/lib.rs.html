@@ -371,8 +371,6 @@
 <a href="#337" id="337">337</a>
 <a href="#338" id="338">338</a>
 <a href="#339" id="339">339</a>
-<a href="#340" id="340">340</a>
-<a href="#341" id="341">341</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 双対セグメント木（右作用）
 //!
 //! 作用の方向迷うのですが、右作用にしました。
@@ -559,7 +557,7 @@
         <span class="kw">let </span>x = replace(<span class="kw-2">&amp;mut </span>a[i], O::identity());
         a[<span class="number">2 </span>* i..<span class="number">2 </span>* i + <span class="number">2</span>]
             .iter_mut()
-            .for_each(|y| O::op_assign_from_right(y, x.clone()))
+            .for_each(|y| O::op_assign_from_right(y, x.clone()));
     });
 }
 <span class="comment">// フォーマット
@@ -592,18 +590,16 @@
 
 <span class="kw">fn </span>dual_segtree_index_out_of_range_fail(index: usize, len: usize) -&gt; ! {
     <span class="macro">panic!</span>(
-        <span class="string">"index {} out of range for dual segtree of length {}"</span>,
-        index, len
-    );
+        <span class="string">"index {index} out of range for dual segtree of length {len}"
+    </span>);
 }
 <span class="kw">fn </span>dual_segtree_end_index_len_fail(index: usize, len: usize) -&gt; ! {
     <span class="macro">panic!</span>(
-        <span class="string">"range end index {} out of range for dual segtree of length {}"</span>,
-        index, len
-    );
+        <span class="string">"range end index {index} out of range for dual segtree of length {len}"
+    </span>);
 }
 <span class="kw">fn </span>dual_segtree_index_order_fail(start: usize, end: usize) -&gt; ! {
-    <span class="macro">panic!</span>(<span class="string">"dual segtree index starts at {} but ends at {}"</span>, start, end);
+    <span class="macro">panic!</span>(<span class="string">"dual segtree index starts at {start} but ends at {end}"</span>);
 }
 <span class="kw">fn </span>slice_start_index_overflow_fail() -&gt; ! {
     <span class="macro">panic!</span>(<span class="string">"attempted to index slice from after maximum usize"</span>);

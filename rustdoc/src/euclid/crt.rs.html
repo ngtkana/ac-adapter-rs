@@ -163,7 +163,7 @@
                 <span class="macro">assert_eq!</span>(
                     i.rem_euclid(l) == x &amp;&amp; i.rem_euclid(m) == y,
                     i.rem_euclid(n) == z
-                )
+                );
             });
         } <span class="kw">else </span>{
             (<span class="number">0</span>..l * m).for_each(|i| <span class="macro">assert!</span>(i.rem_euclid(l) != x || i.rem_euclid(m) != y));

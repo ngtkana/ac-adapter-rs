@@ -629,8 +629,8 @@
     </span><span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f32 {
-    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= f32::INFINITY;
-    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= f32::NEG_INFINITY;
+    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= std::f32::INFINITY;
+    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= std::f32::NEG_INFINITY;
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
@@ -639,8 +639,8 @@
     }
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f64 {
-    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= f64::INFINITY;
-    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= f64::NEG_INFINITY;
+    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= std::f64::INFINITY;
+    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= std::f64::NEG_INFINITY;
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
@@ -877,8 +877,8 @@
         <span class="kw">impl </span>Signed <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
             <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
             <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
-            <span class="kw">const </span>MIN: <span class="self">Self </span>= <span class="macro-nonterminal">$ty::MIN</span>;
-            <span class="kw">const </span>MAX: <span class="self">Self </span>= <span class="macro-nonterminal">$ty::MAX</span>;
+            <span class="kw">const </span>MIN: <span class="self">Self </span>= std::<span class="macro-nonterminal">$ty::MIN</span>;
+            <span class="kw">const </span>MAX: <span class="self">Self </span>= std::<span class="macro-nonterminal">$ty::MAX</span>;
         }
     )<span class="kw-2">*</span>};
 }
@@ -902,7 +902,7 @@
 /// # use numeric_search::exp_search_signed;
 /// assert_eq!(exp_search_signed(|x| 6 &lt;= x), Some(6));
 /// assert_eq!(exp_search_signed(|_: i32| false), None);
-/// assert_eq!(exp_search_signed(|_: i32| true), Some(i32::MIN));
+/// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
 /// ```
 </span><span class="kw">pub fn </span>exp_search_signed&lt;T: Signed&gt;(<span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(T) -&gt; bool) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>lower;
@@ -923,7 +923,7 @@
         <span class="kw">while </span>!f(upper) {
             lower = upper;
             <span class="kw">if </span>upper &gt;&gt; (size_of::&lt;T&gt;() * <span class="number">8 </span>- <span class="number">2</span>) &amp; T::ONE == T::ZERO {
-                upper = upper + upper
+                upper = upper + upper;
             } <span class="kw">else if </span>upper == T::MAX {
                 <span class="kw">return </span><span class="prelude-val">None</span>;
             } <span class="kw">else </span>{

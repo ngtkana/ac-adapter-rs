@@ -473,11 +473,11 @@
 }
 <span class="doccomment">/// (+, -) でメビウス変換
 </span><span class="kw">pub fn </span>add_inv&lt;T: Copy + Sub&lt;Output = T&gt;&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
-    zeta(a, |x, y| y - x)
+    zeta(a, |x, y| y - x);
 }
 <span class="doccomment">/// 反転束において (+, -) でメビウス変換
 </span><span class="kw">pub fn </span>add_rinv&lt;T: Copy + Sub&lt;Output = T&gt;&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
-    rzeta(a, |x, y| y - x)
+    rzeta(a, |x, y| y - x);
 }
 <span class="doccomment">/// max でゼータ変換
 </span><span class="kw">pub fn </span>max&lt;T: Copy + Ord&gt;(a: <span class="kw-2">&amp;mut </span>[T]) {
@@ -563,17 +563,17 @@
 
     <span class="attr">#[allow(clippy::unused_unit)]
     #[test_case(Add::add, <span class="number">0</span>, add, Dir::Sub)]
-    #[test_case(cmp::max, u32::MIN, max, Dir::Sub)]
-    #[test_case(cmp::min, u32::MAX, min, Dir::Sub)]
+    #[test_case(cmp::max, std::u32::MIN, max, Dir::Sub)]
+    #[test_case(cmp::min, std::u32::MAX, min, Dir::Sub)]
     #[test_case(BitXor::bitxor, <span class="number">0</span>, bitxor, Dir::Sub)]
     #[test_case(BitOr::bitor, <span class="number">0</span>, bitor, Dir::Sub)]
-    #[test_case(BitAnd::bitand, u32::MAX, bitand, Dir::Sub)]
+    #[test_case(BitAnd::bitand, std::u32::MAX, bitand, Dir::Sub)]
     #[test_case(Add::add, <span class="number">0</span>, radd, Dir::Super)]
-    #[test_case(cmp::max, u32::MIN, rmax, Dir::Super)]
-    #[test_case(cmp::min, u32::MAX, rmin, Dir::Super)]
+    #[test_case(cmp::max, std::u32::MIN, rmax, Dir::Super)]
+    #[test_case(cmp::min, std::u32::MAX, rmin, Dir::Super)]
     #[test_case(BitXor::bitxor, <span class="number">0</span>, rbitxor, Dir::Super)]
     #[test_case(BitOr::bitor, <span class="number">0</span>, rbitor, Dir::Super)]
-    #[test_case(BitAnd::bitand, u32::MAX, rbitand, Dir::Super)]
+    #[test_case(BitAnd::bitand, std::u32::MAX, rbitand, Dir::Super)]
     </span><span class="kw">fn </span>test_zeta_ops(f: <span class="kw">fn</span>(u32, u32) -&gt; u32, e: u32, g: <span class="kw">fn</span>(<span class="kw-2">&amp;mut </span>[u32]), dir: Dir) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{
@@ -604,11 +604,11 @@
 
     <span class="attr">#[allow(clippy::unused_unit)]
     #[test_case(Add::add, <span class="number">0</span>)]
-    #[test_case(cmp::max, u32::MIN)]
-    #[test_case(cmp::min, u32::MAX)]
+    #[test_case(cmp::max, std::u32::MIN)]
+    #[test_case(cmp::min, std::u32::MAX)]
     #[test_case(BitXor::bitxor, <span class="number">0</span>)]
     #[test_case(BitOr::bitor, <span class="number">0</span>)]
-    #[test_case(BitAnd::bitand, u32::MAX)]
+    #[test_case(BitAnd::bitand, std::u32::MAX)]
     </span><span class="kw">fn </span>test_aggr(f: <span class="kw">fn</span>(u32, u32) -&gt; u32, e: u32) {
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">20 </span>{

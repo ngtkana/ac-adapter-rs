@@ -1070,8 +1070,6 @@
 <a href="#1036" id="1036">1036</a>
 <a href="#1037" id="1037">1037</a>
 <a href="#1038" id="1038">1038</a>
-<a href="#1039" id="1039">1039</a>
-<a href="#1040" id="1040">1040</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>core::fmt;
 <span class="kw">use </span>std::ops::Deref;
 <span class="kw">use </span>std::ops::DerefMut;
@@ -1295,7 +1293,7 @@
                 p.unwrap().update_ancestors()
             }
             <span class="prelude-val">Some</span>(x) =&gt; x.update_ancestors(),
-        })
+        });
     }
 
     <span class="kw">pub fn </span>transplant(<span class="kw-2">&amp;mut </span><span class="self">self</span>, <span class="kw-2">mut </span>place: Ptr&lt;T&gt;, new: <span class="prelude-ty">Option</span>&lt;Ptr&lt;T&gt;&gt;) {
@@ -1462,7 +1460,7 @@
 
     <span class="kw">impl</span>&lt;T: Balance&gt; fmt::Display <span class="kw">for </span>Tree&lt;T&gt; {
         <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; fmt::Result {
-            <span class="self">self</span>.fmt_by(f, |p| <span class="macro">format!</span>(<span class="string">"{:?}"</span>, p))
+            <span class="self">self</span>.fmt_by(f, |p| <span class="macro">format!</span>(<span class="string">"{p:?}"</span>))
         }
     }
     <span class="kw">struct </span>TreeFormatter&lt;<span class="lifetime">'a</span>, T: Balance, F: Fn(Ptr&lt;T&gt;) -&gt; String&gt;(<span class="kw-2">&amp;</span><span class="lifetime">'a </span>Tree&lt;T&gt;, <span class="kw-2">&amp;</span><span class="lifetime">'a </span>F);
@@ -1493,8 +1491,8 @@
                 }
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = x {
                     <span class="kw">if </span><span class="kw-2">*</span>x.color() == Color::Black {
-                        <span class="macro">write!</span>(s, <span class="string">"["</span>)<span class="question-mark">?
-                    </span>}
+                        <span class="macro">write!</span>(s, <span class="string">"["</span>)<span class="question-mark">?</span>;
+                    }
                     write(s, <span class="kw-2">*</span>x.left(), <span class="prelude-val">Some</span>(x), vios, key)<span class="question-mark">?</span>;
                     <span class="kw">if </span>vios.red_vios.contains(<span class="kw-2">&amp;</span>x) {
                         <span class="macro">write!</span>(s, <span class="string">"\x1b[41m\x1b[37m{}\x1b[0m"</span>, key(x))<span class="question-mark">?</span>;
@@ -1692,7 +1690,7 @@
                     </span>|| left_height + <span class="number">1 </span>== right_height)
                     .then_some(())
                     .ok_or_else(|| {
-                        <span class="macro">format!</span>(<span class="string">"The difference of black height is greater than 1: {:?}"</span>, x)
+                        <span class="macro">format!</span>(<span class="string">"The difference of black height is greater than 1: {x:?}"</span>)
                     })<span class="question-mark">?</span>;
 
                 <span class="comment">// Parent pointer incinsistency
@@ -1700,9 +1698,8 @@
                     <span class="kw">let </span>p = <span class="kw-2">*</span>left.parent();
                     (p == <span class="prelude-val">Some</span>(x)).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"parent pointer inconsistency between {:?} and its left child {:?}. \
-                             The parent of the left child is {:?}"</span>,
-                            x, left, p,
+                            <span class="string">"parent pointer inconsistency between {x:?} and its left child {left:?}. \
+                             The parent of the left child is {p:?}"</span>,
                         )
                     })<span class="question-mark">?</span>;
                 }
@@ -1710,9 +1707,8 @@
                     <span class="kw">let </span>p = <span class="kw-2">*</span>right.parent();
                     (p == <span class="prelude-val">Some</span>(x)).then_some(()).ok_or_else(|| {
                         <span class="macro">format!</span>(
-                            <span class="string">"parent pointer inconsistency between {:?} and its right child {:?}. \
-                             The parent of the right child is {:?}"</span>,
-                            x, right, p,
+                            <span class="string">"parent pointer inconsistency between {x:?} and its right child {right:?}. \
+                             The parent of the right child is {p:?}"</span>,
                         )
                     })<span class="question-mark">?</span>;
                 }
@@ -1722,16 +1718,16 @@
                 <span class="kw">let </span>h = validate(<span class="self">self</span>.root)<span class="question-mark">?</span>;
                 (<span class="self">self</span>.black_height == h || <span class="self">self</span>.black_height == h + <span class="number">1</span>)
                     .then_some(())
-                    .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"black height of {} is not {}"</span>, <span class="self">self</span>, h))<span class="question-mark">?</span>;
+                    .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"black height of {self} is not {h}"</span>))<span class="question-mark">?</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>x) = <span class="self">self</span>.root {
                     <span class="comment">// Parent is None
                     </span>(x.parent().is_none())
                         .then_some(())
-                        .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"parent of {:?} is not None"</span>, x))<span class="question-mark">?</span>;
+                        .ok_or_else(|| <span class="macro">format!</span>(<span class="string">"parent of {x:?} is not None"</span>))<span class="question-mark">?</span>;
                 }
                 <span class="prelude-val">Ok</span>(())
             }()
-            .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"Validation error: {}\nTree: {}"</span>, e, <span class="self">self</span>))
+            .unwrap_or_else(|e| <span class="macro">panic!</span>(<span class="string">"Validation error: {e}\nTree: {self}"</span>));
         }
 
         <span class="kw">pub fn </span>collect(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;Ptr&lt;T&gt;&gt; {
@@ -1813,7 +1809,7 @@
                 vios.black_vios.push(BlackViolation {
                     p: <span class="prelude-val">None</span>,
                     x: tree.root,
-                })
+                });
             }
             vios
         }
@@ -1875,13 +1871,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">0</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">false</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{tree}"</span>);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{tree}"</span>);
         }
     }
 
@@ -1892,13 +1888,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">0</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">1</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">1</span>, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">0</span>, <span class="string">"{tree}"</span>);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{tree}"</span>);
         }
     }
 
@@ -1909,13 +1905,13 @@
             <span class="kw">let </span>h = rng.gen_range(<span class="number">1</span>..=<span class="number">4</span>);
             <span class="kw">let </span>(tree, expected_violations) =
                 Tree::random(<span class="kw-2">&amp;mut </span>rng, new_node, h, <span class="bool-val">false</span>, <span class="bool-val">true</span>, <span class="bool-val">false</span>);
-            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{}"</span>, tree);
-            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">1</span>, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(tree.black_height, h, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.red_vios.len(), <span class="number">0</span>, <span class="string">"{tree}"</span>);
+            <span class="macro">assert_eq!</span>(expected_violations.black_vios.len(), <span class="number">1</span>, <span class="string">"{tree}"</span>);
             tree.validate();
 
             <span class="kw">let </span>actual_violations = Violations::collect(<span class="kw-2">&amp;</span>tree);
-            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{}"</span>, tree);
+            <span class="macro">assert_eq!</span>(expected_violations, actual_violations, <span class="string">"{tree}"</span>);
         }
     }
 

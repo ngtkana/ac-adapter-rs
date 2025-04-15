@@ -194,7 +194,7 @@
                 .map(|c| c <span class="kw">as </span>char)
                 .take(n)
                 .collect::&lt;String&gt;();
-            <span class="macro">println!</span>(<span class="string">"s = {}"</span>, s);
+            <span class="macro">println!</span>(<span class="string">"s = {s}"</span>);
 
             <span class="kw">let </span>expected = z_brute(s.as_bytes());
             <span class="kw">let </span>result = z_algo(s.as_bytes());

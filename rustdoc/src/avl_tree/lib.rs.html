@@ -1334,7 +1334,7 @@
     </span><span class="kw">pub fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
         <span class="self">self</span>.append(<span class="kw-2">&amp;mut </span><span class="self">Self </span>{
             root: <span class="prelude-val">Some</span>(new(value)),
-        })
+        });
     }
 
     <span class="doccomment">/// 列の先頭に要素を追加します。

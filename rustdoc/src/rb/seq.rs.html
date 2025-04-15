@@ -1793,7 +1793,7 @@
         <span class="macro">write!</span>(f, <span class="string">"\x1b[48;2;127;127;127;37m"</span>)<span class="question-mark">?</span>;
         <span class="macro">write!</span>(f, <span class="string">"|"</span>)<span class="question-mark">?</span>;
         <span class="kw">for </span>(i, colomn_width) <span class="kw">in </span>colomn_width.iter().enumerate() {
-            <span class="macro">write!</span>(f, <span class="string">"{:width$}|"</span>, i, width = colomn_width)<span class="question-mark">?</span>;
+            <span class="macro">write!</span>(f, <span class="string">"{i:colomn_width$}|"</span>)<span class="question-mark">?</span>;
         }
         <span class="macro">write!</span>(f, <span class="string">"\x1b[0m"</span>)<span class="question-mark">?</span>;
         <span class="macro">writeln!</span>(f)<span class="question-mark">?</span>;
@@ -1825,7 +1825,7 @@
             <span class="kw">for </span>(range, value) <span class="kw">in </span>row {
                 <span class="kw">let </span>width = range.clone().map(|i| colomn_width[i]).sum::&lt;usize&gt;() + range.len() - <span class="number">1</span>;
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(value) = value {
-                    <span class="macro">write!</span>(f, <span class="string">"{:^width$}"</span>, value, width = width)<span class="question-mark">?</span>;
+                    <span class="macro">write!</span>(f, <span class="string">"{value:^width$}"</span>)<span class="question-mark">?</span>;
                 } <span class="kw">else </span>{
                     <span class="macro">write!</span>(f, <span class="string">"{:^width$}"</span>, <span class="string">""</span>, width = width)<span class="question-mark">?</span>;
                 }
@@ -2071,7 +2071,7 @@
                     .take(<span class="number">1</span>)
                     .map(char::from)
                     .collect::&lt;String&gt;();
-                <span class="kw-2">*</span>seg.nth_mut(i) = x.clone();
+                seg.nth_mut(i).clone_from(<span class="kw-2">&amp;</span>x);
                 vec[i] = x;
                 seg.validate();
                 <span class="macro">assert_eq!</span>(seg.iter().cloned().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), vec);

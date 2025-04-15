@@ -1113,9 +1113,6 @@
 <a href="#1079" id="1079">1079</a>
 <a href="#1080" id="1080">1080</a>
 <a href="#1081" id="1081">1081</a>
-<a href="#1082" id="1082">1082</a>
-<a href="#1083" id="1083">1083</a>
-<a href="#1084" id="1084">1084</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solves maximum flow problem.
 //!
 //! # Basic usage
@@ -1505,7 +1502,7 @@
                         cap != T::zero() &amp;&amp; !std::mem::replace(<span class="kw-2">&amp;mut </span>visited[to], <span class="bool-val">true</span>)
                     })
                     .map(|__ResidualEdge { to, .. }| to),
-            )
+            );
         }
         visited
     }
@@ -1795,10 +1792,8 @@
         );
         <span class="macro">assert!</span>(
             T::zero() &lt;= new_flow &amp;&amp; new_flow &lt;= new_cap,
-            <span class="string">"Called `Dinic::change_edge` by new_flow = {:?}, new_cap = {:?}"</span>,
-            new_flow,
-            new_cap
-        );
+            <span class="string">"Called `Dinic::change_edge` by new_flow = {new_flow:?}, new_cap = {new_cap:?}"
+        </span>);
         <span class="kw">let </span>__EdgeIndexer { from, index } = <span class="self">self</span>.pos[edge_key];
         <span class="kw">let </span>__ResidualEdge { to, rev, cap } = <span class="kw-2">&amp;mut </span><span class="self">self</span>.res[from][index];
         <span class="kw-2">*</span>cap = new_cap - new_flow;
@@ -1836,8 +1831,7 @@
         <span class="macro">write!</span>(
             w,
             <span class="comment">// \x1b[1m: bold, \1b[m: cancel
-            </span><span class="string">"{}-&gt;{}(\x1b[01m{:?}\x1b[m/\x1b[01m{:?}\x1b[m)"</span>,
-            from, to, flow, cap,
+            </span><span class="string">"{from}-&gt;{to}(\x1b[01m{flow:?}\x1b[m/\x1b[01m{cap:?}\x1b[m)"</span>,
         )
     }
 }
@@ -1860,12 +1854,12 @@
 
     <span class="kw">loop </span>{
         <span class="comment">// calculate labels
-        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[u32::MAX; res.len()];
+        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[std::u32::MAX; res.len()];
         label[s] = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>queue = VecDeque::from(<span class="macro">vec!</span>[s]);
         <span class="kw">while let </span><span class="prelude-val">Some</span>(from) = queue.pop_front() {
             <span class="kw">for </span><span class="kw-2">&amp;</span>__ResidualEdge { to, cap, .. } <span class="kw">in </span><span class="kw-2">&amp;</span>res[from] {
-                <span class="kw">if </span>cap == T::zero() || label[to] != u32::MAX {
+                <span class="kw">if </span>cap == T::zero() || label[to] != std::u32::MAX {
                     <span class="kw">continue</span>;
                 }
                 label[to] = label[from] + <span class="number">1</span>;
@@ -1873,7 +1867,7 @@
             }
         }
 
-        <span class="kw">if </span>label[t] == u32::MAX {
+        <span class="kw">if </span>label[t] == std::u32::MAX {
             <span class="comment">// saturated
             </span><span class="kw">return </span>flow;
         }
@@ -1936,7 +1930,7 @@
                 <span class="number">0
             </span>}
             <span class="kw">fn </span>infinity() -&gt; <span class="self">Self </span>{
-                <span class="macro-nonterminal">$T::MAX
+                std::<span class="macro-nonterminal">$T::MAX
             </span>}
         }
     )<span class="kw-2">*</span>}
@@ -2027,9 +2021,9 @@
 
         <span class="comment">// print
         </span><span class="macro">println!</span>(<span class="string">"Validating dinic.."</span>);
-        <span class="macro">println!</span>(<span class="string">"flow = {}"</span>, flow);
-        <span class="macro">println!</span>(<span class="string">"min_cut = {:?}"</span>, min_cut);
-        <span class="macro">println!</span>(<span class="string">"s = {}, t = {}"</span>, s, t);
+        <span class="macro">println!</span>(<span class="string">"flow = {flow}"</span>);
+        <span class="macro">println!</span>(<span class="string">"min_cut = {min_cut:?}"</span>);
+        <span class="macro">println!</span>(<span class="string">"s = {s}, t = {t}"</span>);
         <span class="macro">println!</span>();
 
         <span class="comment">// cut is feasible
@@ -2113,7 +2107,7 @@
                 .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
                 .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
             <span class="kw">let </span><span class="kw-2">mut </span>cnt = dinic.flow(s, t);
-            <span class="macro">println!</span>(<span class="string">"Initial flow = {}"</span>, cnt);
+            <span class="macro">println!</span>(<span class="string">"Initial flow = {cnt}"</span>);
             validate_konig(n, cnt, <span class="kw-2">&amp;</span>dinic, <span class="kw-2">&amp;</span>edge_keys);
 
             <span class="kw">for _ in </span><span class="number">0</span>..change_edge_count {
@@ -2126,7 +2120,7 @@
                     ..
                 } = dinic.get_edge(edge_key);
                 <span class="kw">if </span>cap == <span class="number">1 </span>{
-                    <span class="macro">println!</span>(<span class="string">"Forbid ({}, {})"</span>, from, to);
+                    <span class="macro">println!</span>(<span class="string">"Forbid ({from}, {to})"</span>);
                     <span class="comment">// Forbid this match.
                     </span>dinic.change_edge(edge_key, <span class="number">0</span>, <span class="number">0</span>);
                     <span class="kw">if </span>flow == <span class="number">1 </span>{
@@ -2135,7 +2129,7 @@
                         cnt -= <span class="number">1</span>;
                     }
                 } <span class="kw">else if </span>cap == <span class="number">0 </span>{
-                    <span class="macro">println!</span>(<span class="string">"Remove the ban of ({}, {})"</span>, from, to);
+                    <span class="macro">println!</span>(<span class="string">"Remove the ban of ({from}, {to})"</span>);
                     <span class="comment">// Remove the ban of this edge.
                     </span>dinic.change_edge(edge_key, <span class="number">1</span>, <span class="number">0</span>);
                 }
@@ -2155,7 +2149,7 @@
             .iter()
             .enumerate()
             .for_each(|(i, v)| <span class="macro">println!</span>(<span class="string">"{} {:?}"</span>, i, <span class="kw-2">&amp;</span>v));
-        <span class="macro">println!</span>(<span class="string">"n = {}, cnt = {}"</span>, n, cnt);
+        <span class="macro">println!</span>(<span class="string">"n = {n}, cnt = {cnt}"</span>);
         <span class="kw">let </span>edges = edge_keys
             .iter()
             .map(|<span class="kw-2">&amp;</span>edge_key| dinic.get_edge(edge_key))
@@ -2193,7 +2187,7 @@
             max_stable_set_size, <span class="kw-2">&amp;</span>max_stable_set
         );
         <span class="kw">for </span><span class="kw-2">&amp;</span>(from, to) <span class="kw">in </span><span class="kw-2">&amp;</span>edges {
-            <span class="macro">assert!</span>(!max_stable_set[from] || !max_stable_set[to])
+            <span class="macro">assert!</span>(!max_stable_set[from] || !max_stable_set[to]);
         }
         <span class="macro">assert_eq!</span>(max_stable_set_size, <span class="number">2 </span>* n - cnt <span class="kw">as </span>usize);
 

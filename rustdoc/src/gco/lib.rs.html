@@ -340,7 +340,6 @@
 <a href="#306" id="306">306</a>
 <a href="#307" id="307">307</a>
 <a href="#308" id="308">308</a>
-<a href="#309" id="309">309</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solve a submodular graph cut optimizaion problem of degree $\le 2$
 //!
 //! As in [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization),
@@ -461,9 +460,8 @@
     </span><span class="kw">pub fn </span>binary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ij: [usize; <span class="number">2</span>], cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) {
         <span class="macro">assert!</span>(
             is_submodular(cost),
-            <span class="string">"The cost should be submodular. cost = {:?}"</span>,
-            cost
-        );
+            <span class="string">"The cost should be submodular. cost = {cost:?}"
+        </span>);
         <span class="self">self</span>.binary.push(Binary { ij, cost });
     }
 

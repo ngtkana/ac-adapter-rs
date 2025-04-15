@@ -419,7 +419,7 @@
 </span><span class="kw">pub fn </span>hungarian&lt;T: Value&gt;(cost_matrix: <span class="kw-2">&amp;</span>[Vec&lt;T&gt;]) -&gt; HungarianResult&lt;T&gt; {
     <span class="kw">let </span>h = cost_matrix.len();
     <span class="kw">let </span>w = cost_matrix[<span class="number">0</span>].len();
-    <span class="kw">let </span><span class="kw-2">mut </span>m = <span class="macro">vec!</span>[usize::MAX; w + <span class="number">1</span>];
+    <span class="kw">let </span><span class="kw-2">mut </span>m = <span class="macro">vec!</span>[std::usize::MAX; w + <span class="number">1</span>];
 
     <span class="comment">// initialize a feasible potential
     </span><span class="kw">let </span><span class="kw-2">mut </span>all_min = T::infinity();
@@ -449,7 +449,7 @@
             m[w] = s;
             <span class="kw">let </span><span class="kw-2">mut </span>x0 = s;
             <span class="kw">let </span><span class="kw-2">mut </span>y0 = w;
-            <span class="kw">while </span>x0 != usize::MAX {
+            <span class="kw">while </span>x0 != std::usize::MAX {
                 <span class="comment">// find y0
                 </span><span class="kw">let </span>(swap, delta) = {
                     <span class="kw">let </span><span class="kw-2">mut </span>swap = w;
@@ -494,17 +494,17 @@
     m.pop();
 
     <span class="kw">let </span>backward = m;
-    <span class="kw">let </span><span class="kw-2">mut </span>forward = <span class="macro">vec!</span>[usize::MAX; h].into_boxed_slice();
+    <span class="kw">let </span><span class="kw-2">mut </span>forward = <span class="macro">vec!</span>[std::usize::MAX; h].into_boxed_slice();
     <span class="kw">let </span><span class="kw-2">mut </span>value = T::zero();
     <span class="kw">for </span>(y, <span class="kw-2">&amp;</span>x) <span class="kw">in </span>backward.iter().enumerate() {
-        <span class="kw">if </span>x != usize::MAX {
+        <span class="kw">if </span>x != std::usize::MAX {
             forward[x] = y;
             value += cost_matrix[x][y];
         }
     }
     <span class="kw">let </span>backward = backward
         .into_iter()
-        .map(|x| <span class="kw">if </span>x == usize::MAX { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(x) })
+        .map(|x| <span class="kw">if </span>x == std::usize::MAX { <span class="prelude-val">None </span>} <span class="kw">else </span>{ <span class="prelude-val">Some</span>(x) })
         .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
         .into_boxed_slice();
     HungarianResult {
@@ -548,7 +548,7 @@
                 <span class="number">0
             </span>}
             <span class="kw">fn </span>infinity() -&gt; <span class="self">Self </span>{
-                <span class="macro-nonterminal">$T::MAX
+                std::<span class="macro-nonterminal">$T::MAX
             </span>}
         }
     )<span class="kw-2">*</span>}
@@ -565,7 +565,7 @@
                 <span class="number">0.
             </span>}
             <span class="kw">fn </span>infinity() -&gt; <span class="self">Self </span>{
-                <span class="macro-nonterminal">$T::INFINITY
+                std::<span class="macro-nonterminal">$T::INFINITY
             </span>}
         }
     )<span class="kw-2">*</span>}

@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../uf_checklist/index.html">uf_checklist</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">uf_checklist</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/uf_checklist/lib.rs.html#1-360">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Union-find を用いて、「一度処理したところを処理しない」区間クエリを線形で処理します。</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../uf_checklist/index.html">uf_checklist</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">uf_checklist</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/uf_checklist/lib.rs.html#1-359">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Union-find を用いて、「一度処理したところを処理しない」区間クエリを線形で処理します。</p>
 <h2 id="データ構造の定義"><a class="doc-anchor" href="#データ構造の定義">§</a>データ構造の定義</h2>
 <p>ブーリアン配列に対応しており、指定した位置の <code>false</code> -&gt; <code>true</code>
 の変更（これをチェックと呼びます。→ <a href="struct.UfChecklist.html#method.check" title="method uf_checklist::UfChecklist::check"><code>check</code></a>）
@@ -53,9 +53,11 @@
 </ul>
 <h3 id="クエリ"><a class="doc-anchor" href="#クエリ">§</a>クエリ</h3>
 <ul>
-<li><a href="struct.UfChecklist.html#method.lower_bound" title="method uf_checklist::UfChecklist::lower_bound"><code>lower_bound</code></a>:
-指定した場所と同じかもっと右にある未チェックな項
-を探します。</li>
+<li><a href="struct.UfChecklist.html#method.lower_bound" title="method uf_checklist::UfChecklist::lower_bound"><code>lower_bound</code></a>:</li>
+</ul>
+<p>指定した場所と同じかもっと右にある未チェックな項
+を探します。</p>
+<ul>
 <li><a href="struct.UfChecklist.html#method.is_checked" title="method uf_checklist::UfChecklist::is_checked"><code>is_checked</code></a>: 指定した位置がチェック済みかどうかを判定します。</li>
 </ul>
 <h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>

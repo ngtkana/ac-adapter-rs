@@ -504,15 +504,20 @@
 <a href="#470" id="470">470</a>
 <a href="#471" id="471">471</a>
 <a href="#472" id="472">472</a>
+<a href="#473" id="473">473</a>
+<a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 一次不等式を解きます。
 //!
 //! CAUTION: [`Interval`] は [`PartialEq`], [`Hash`]
 //! を実装していません。なぜなら空区間を表す状態が一意的ではないからです。
 //!
 //! 関数とのやり取りは、[`Interval`] 型を使います。これは `[T; 2]` の透明なラッパーです。
+//!
 //! - [`Interval`] 型は [`Mul`],[`Product`] を実装しており、これは [`Interval::intersection`] を呼びだします。
 //! - [`full()`](Interval::full), [`contains()`](Interval::contains)
-//! 
+//!
 //! といった便利なメソッドがあります。
 //!
 //! 一次不等式を解く関数には次のものがあります。
@@ -531,10 +536,10 @@
 //! ```
 //! # use {
 //! #     lin_ineq::solve,
-//! #     i64::MIN,
+//! #     std::i64::MIN,
 //! # };
 //! let sol = solve(2, 10); // 2x &lt;= 10
-//! assert_eq!(sol.0, [i64::MIN, 5]); // x &lt;= 5
+//! assert_eq!(sol.0, [MIN, 5]); // x &lt;= 5
 //! ```
 //!
 //! ## 挟み撃ち形 l &lt;= ax + b &lt;= r
@@ -542,7 +547,7 @@
 //! ```
 //! # use {
 //! #     lin_ineq::{solve_squeeze, Interval},
-//! #     i64::MIN,
+//! #     std::i64::MIN,
 //! # };
 //! let sol = solve_squeeze(3, 1, Interval([-5, 5])); // -5 &lt;= 3x + 1 &lt;= 5
 //! assert_eq!(sol.0, [-2, 1]); // -2 &lt;= x &lt;= 1
@@ -568,8 +573,8 @@
 <span class="macro">macro_rules!</span> impl_signed {
     ($(<span class="macro-nonterminal">$T</span>:ident),<span class="kw-2">*</span>) =&gt; {$(
         <span class="kw">impl </span>Signed <span class="kw">for </span><span class="macro-nonterminal">$T </span>{
-            <span class="kw">const </span>MIN: <span class="self">Self </span>= <span class="macro-nonterminal">$T::MIN</span>;
-            <span class="kw">const </span>MAX: <span class="self">Self </span>= <span class="macro-nonterminal">$T::MAX</span>;
+            <span class="kw">const </span>MIN: <span class="self">Self </span>= std::<span class="macro-nonterminal">$T::MIN</span>;
+            <span class="kw">const </span>MAX: <span class="self">Self </span>= std::<span class="macro-nonterminal">$T::MAX</span>;
             <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
             <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
                 <span class="self">self</span>.div_euclid(rhs)
@@ -639,11 +644,13 @@
 ///
 /// 空区間のとき、中身は `l &gt; r` を満たすなかでどれを取っているのかは
 /// 保証されていません。それに関連して、
+/// 
 /// - [`PartialEq`], [`Hash`] を実装していません。
-/// - [`empty()`](Self::empty) の戻り値は必ず `[i64::MAX, i64::MIN]`（以下、標準形と呼びます。） です。
+/// - [`empty()`](Self::empty) の戻り値は必ず `[MAX, MIN]`（以下、標準形と呼びます。） です。
 /// - [`normalize()`](Self::normalize) を使うと空区間はかならず標準形です。
 /// - [`intersection()`](Self::intersection) により生じる空区間は標準形とは限りません。
-///   と同じ形になります。
+/// 
+/// と同じ形になります。
 ///
 ///
 /// # 手動で実装されたトレイトについて
@@ -687,27 +694,27 @@
         <span class="self">Self</span>([<span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>].max(rhs.<span class="number">0</span>[<span class="number">0</span>]), <span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>].min(rhs.<span class="number">0</span>[<span class="number">1</span>])])
     }
 
-    <span class="doccomment">/// 全区間を返します。具体的には、`[i64::MIN, i64::MAX]` を返します。
+    <span class="doccomment">/// 全区間を返します。具体的には、`[MIN, MAX]` を返します。
     ///
     /// # Examples
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{i64::MIN, i64::MAX};
-    /// assert_eq!(Interval::&lt;i64&gt;::full().0, [i64::MIN, i64::MAX]);
+    /// # use std::i64::{MIN, MAX};
+    /// assert_eq!(Interval::&lt;i64&gt;::full().0, [MIN, MAX]);
     /// ```
     </span><span class="kw">pub fn </span>full() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>([T::MIN, T::MAX])
     }
 
-    <span class="doccomment">/// 標準形の空区間を返します。具体的には、`[i64::MAX, i64::MIN]` を返します。
+    <span class="doccomment">/// 標準形の空区間を返します。具体的には、`[MAX, MIN]` を返します。
     ///
     /// # Examples
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{i64::MIN, i64::MAX};
-    /// assert_eq!(Interval::&lt;i64&gt;::empty().0, [i64::MAX, i64::MIN]);
+    /// # use std::i64::{MIN, MAX};
+    /// assert_eq!(Interval::&lt;i64&gt;::empty().0, [MAX, MIN]);
     /// ```
     </span><span class="kw">pub fn </span>empty() -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>([T::MAX, T::MIN])
@@ -733,10 +740,10 @@
     ///
     /// ```
     /// # use lin_ineq::Interval;
-    /// # use std::i64::{i64::MIN, i64::MAX};
+    /// # use std::i64::{MIN, MAX};
     /// assert_eq!(Interval([0, 10]).normalize().0, [0, 10]);
     /// assert_eq!(Interval([0, 0]).normalize().0, [0, 0]);
-    /// assert_eq!(Interval([0, -10]).normalize().0, [i64::MAX, i64::MIN]);
+    /// assert_eq!(Interval([0, -10]).normalize().0, [MAX, MIN]);
     /// ```
     </span><span class="kw">pub fn </span>normalize(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
         <span class="kw">if </span><span class="self">self</span>.is_empty() {
@@ -805,9 +812,9 @@
     ///
     /// - `l &gt; r` のとき、`"Empty"`
     /// - そうでないとき、`[l, r]` が
-    ///     - `[i64::MIN, i64::MAX]` のとき `"Full"`
-    ///     - `[i64::MIN, r]` のとき `"Le(r)"`
-    ///     - `[l, i64::MAX]` のとき `"Ge(l)"`
+    ///     - `[MIN, MAX]` のとき `"Full"`
+    ///     - `[MIN, r]` のとき `"Le(r)"`
+    ///     - `[l, MAX]` のとき `"Ge(l)"`
     ///     - `[l, r]` のとき `"Finite(l, r)"`
     ///
     /// とフォーマットします。
@@ -849,6 +856,8 @@
     <span class="kw">use </span>rand::prelude::StdRng;
     <span class="kw">use </span>rand::Rng;
     <span class="kw">use </span>rand::SeedableRng;
+    <span class="kw">use </span>std::i64::MAX;
+    <span class="kw">use </span>std::i64::MIN;
     <span class="kw">use </span>std::iter::repeat_with;
 
     <span class="comment">////////////////////////////////////////////////////////////////////////////////
@@ -888,12 +897,12 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_full() {
-        <span class="macro">assert_eq!</span>(Interval::&lt;i64&gt;::full().<span class="number">0</span>, [i64::MIN, i64::MAX]);
+        <span class="macro">assert_eq!</span>(Interval::&lt;i64&gt;::full().<span class="number">0</span>, [MIN, MAX]);
     }
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_empty() {
-        <span class="macro">assert_eq!</span>(Interval::&lt;i64&gt;::empty().<span class="number">0</span>, [i64::MAX, i64::MIN]);
+        <span class="macro">assert_eq!</span>(Interval::&lt;i64&gt;::empty().<span class="number">0</span>, [MAX, MIN]);
     }
 
     <span class="attr">#[test]
@@ -915,13 +924,13 @@
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_debug() {
         <span class="kw">fn </span>debug(x: Interval&lt;i64&gt;) -&gt; String {
-            <span class="macro">format!</span>(<span class="string">"{:?}"</span>, x)
+            <span class="macro">format!</span>(<span class="string">"{x:?}"</span>)
         }
         <span class="macro">assert_eq!</span>(debug(Interval([<span class="number">0</span>, <span class="number">2</span>])).as_str(), <span class="string">"Finite(0, 2)"</span>);
-        <span class="macro">assert_eq!</span>(debug(Interval([<span class="number">0</span>, i64::MAX])).as_str(), <span class="string">"Ge(0)"</span>);
-        <span class="macro">assert_eq!</span>(debug(Interval([i64::MIN, <span class="number">2</span>])).as_str(), <span class="string">"Le(2)"</span>);
-        <span class="macro">assert_eq!</span>(debug(Interval([i64::MIN, i64::MAX])).as_str(), <span class="string">"Full"</span>);
-        <span class="macro">assert_eq!</span>(debug(Interval([i64::MAX, i64::MIN])).as_str(), <span class="string">"Empty"</span>);
+        <span class="macro">assert_eq!</span>(debug(Interval([<span class="number">0</span>, MAX])).as_str(), <span class="string">"Ge(0)"</span>);
+        <span class="macro">assert_eq!</span>(debug(Interval([MIN, <span class="number">2</span>])).as_str(), <span class="string">"Le(2)"</span>);
+        <span class="macro">assert_eq!</span>(debug(Interval([MIN, MAX])).as_str(), <span class="string">"Full"</span>);
+        <span class="macro">assert_eq!</span>(debug(Interval([MAX, MIN])).as_str(), <span class="string">"Empty"</span>);
         <span class="macro">assert_eq!</span>(debug(Interval([<span class="number">2</span>, <span class="number">0</span>])).as_str(), <span class="string">"Empty"</span>);
     }
 
@@ -951,7 +960,7 @@
             <span class="kw">let </span>b = rng.gen_range(-<span class="number">9</span>..=<span class="number">9</span>);
             <span class="kw">let </span>sol = solve(a, b);
             <span class="kw">for </span>x <span class="kw">in </span>-<span class="number">200</span>..=<span class="number">200 </span>{
-                <span class="macro">assert_eq!</span>(sol.contains(x), a * x &lt;= b, <span class="string">"x = {}"</span>, x);
+                <span class="macro">assert_eq!</span>(sol.contains(x), a * x &lt;= b, <span class="string">"x = {x}"</span>);
             }
         }
     }
@@ -969,9 +978,8 @@
                 <span class="macro">assert_eq!</span>(
                     sol.contains(x),
                     (y_min..=y_max).contains(<span class="kw-2">&amp;</span>(a * x + b)),
-                    <span class="string">"x = {}"</span>,
-                    x
-                )
+                    <span class="string">"x = {x}"
+                </span>);
             }
         }
     }

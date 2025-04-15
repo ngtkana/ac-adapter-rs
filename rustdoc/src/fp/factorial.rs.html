@@ -500,7 +500,7 @@
 </span><span class="kw">mod </span>tests {
     <span class="kw">use super</span>::<span class="kw-2">*</span>;
 
-    <span class="kw">const </span>P: u64 = <span class="number">998244353</span>;
+    <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_factorial() {
@@ -516,8 +516,8 @@
         <span class="kw">let </span>fact = Factorial::&lt;P&gt;::new(<span class="number">10</span>);
         <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">0</span>).value(), <span class="number">1</span>);
         <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">1</span>).value(), <span class="number">1</span>);
-        <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">2</span>).value(), <span class="number">499122177</span>);
-        <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">3</span>).value(), <span class="number">166374059</span>);
+        <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">2</span>).value(), <span class="number">499_122_177</span>);
+        <span class="macro">assert_eq!</span>(fact.inv_fact(<span class="number">3</span>).value(), <span class="number">166_374_059</span>);
     }
 
     <span class="attr">#[test]

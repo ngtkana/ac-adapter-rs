@@ -763,9 +763,6 @@
 <a href="#729" id="729">729</a>
 <a href="#730" id="730">730</a>
 <a href="#731" id="731">731</a>
-<a href="#732" id="732">732</a>
-<a href="#733" id="733">733</a>
-<a href="#734" id="734">734</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! スプレー木です。
 
 </span><span class="kw">mod </span>node;
@@ -1391,7 +1388,7 @@
     </span>O::Value: Hash,
 {
     <span class="kw">fn </span>hash&lt;H: std::hash::Hasher&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, state: <span class="kw-2">&amp;mut </span>H) {
-        <span class="self">self</span>.iter().for_each(|x| x.hash(state))
+        <span class="self">self</span>.iter().for_each(|x| x.hash(state));
     }
 }
 
@@ -1481,23 +1478,20 @@
 }
 <span class="kw">fn </span>splay_tree_index_out_of_range_fail(index: usize, len: usize) -&gt; ! {
     <span class="macro">panic!</span>(
-        <span class="string">"range index {} out of range for splay tree of length {}"</span>,
-        index, len
-    );
+        <span class="string">"range index {index} out of range for splay tree of length {len}"
+    </span>);
 }
 <span class="kw">fn </span>splay_tree_start_index_len_fail(index: usize, len: usize) -&gt; ! {
     <span class="macro">panic!</span>(
-        <span class="string">"range start index {} out of range for splay tree of length {}"</span>,
-        index, len
-    );
+        <span class="string">"range start index {index} out of range for splay tree of length {len}"
+    </span>);
 }
 <span class="kw">fn </span>splay_tree_end_index_len_fail(index: usize, len: usize) -&gt; ! {
     <span class="macro">panic!</span>(
-        <span class="string">"range end index {} out of range for splay tree of length {}"</span>,
-        index, len
-    );
+        <span class="string">"range end index {index} out of range for splay tree of length {len}"
+    </span>);
 }
 <span class="kw">fn </span>splay_tree_index_order_fail(index: usize, end: usize) -&gt; ! {
-    <span class="macro">panic!</span>(<span class="string">"splay tree index starts at {} but ends at {}"</span>, index, end);
+    <span class="macro">panic!</span>(<span class="string">"splay tree index starts at {index} but ends at {end}"</span>);
 }
 </code></pre></div></section></main></body></html>
