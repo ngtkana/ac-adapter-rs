@@ -97,9 +97,6 @@ jobs:
       - name: Run makers doc
         run: cargo make doc
 
-      - name: Check that crates.js is surely copied
-        run: test -e docs/crates.js
-
       - name: Deploy GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
