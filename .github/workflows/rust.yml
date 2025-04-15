@@ -98,10 +98,10 @@ jobs:
         run: cargo make docs
 
       - name: Check that crates.js is surely copied
-        run: test -e target/doc/crates.js
+        run: test -e docs/crates.js
 
       - name: Deploy GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: target/doc
+          publish_dir: docs

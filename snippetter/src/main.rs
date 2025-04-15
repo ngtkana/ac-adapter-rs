@@ -90,13 +90,12 @@ fn main() {
         .unwrap();
 
     let json = serde_json::to_string(CRATE_METADATAS.get().unwrap()).unwrap();
-    fs::create_dir_all(PROJECT_ROOT.get().unwrap().join("target").join("doc")).unwrap();
+    fs::create_dir_all(PROJECT_ROOT.get().unwrap().join("docs")).unwrap();
     fs::write(
         PROJECT_ROOT
             .get()
             .unwrap()
-            .join("target")
-            .join("doc")
+            .join("docs")
             .join("dependencies.js"),
         format!("dependencies = {}", json),
     )

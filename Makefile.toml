@@ -17,21 +17,17 @@ args = ["nextest", "run"]
 command = "cargo"
 args = ["test", "--doc"]
 
-[tasks.pre-docs]
+[tasks.docs]
 script = '''
 cargo run --bin snippetter
-TARGET_DOC_PATH="target/doc"
-if [ ! -e "${TARGET_DOC_PATH}" ]; then
-    mkdir "${TARGET_DOC_PATH}"
+if [ ! -e "docs" ]; then
+    mkdir -p "docs"
 fi
-cp contents/* ${TARGET_DOC_PATH}
+cp contents/* docs/
+cp -r target/doc/* docs/
+RUSTDOCFLAGS = "--html-in-header contents/header.html" \
+    cargo doc --workspace --no-deps
 '''
-
-[tasks.docs]
-env = { RUSTDOCFLAGS = "--html-in-header contents/header.html" }
-command = "cargo"
-args = ["doc", "--workspace", "--no-deps"]
-dependencies = ["pre-docs"]
 
 [tasks.clippy]
 command = "cargo"
@@ -64,3 +60,9 @@ args = [
 script = '''
 cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'note: `-W clippy::' | sed -n 's/.*note: `-W clippy::\([a-z|-]*\).*/\1/p' | sort | uniq
 '''
+
+[tasks.dev]
+script = '''
+cd docs && python3 -m http.server 8000
+'''
+description = "Serve documentation locally at http://localhost:8000"
