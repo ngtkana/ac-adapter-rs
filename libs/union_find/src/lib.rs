@@ -135,7 +135,7 @@ impl Op for EdgeCount {
     }
 
     fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent += child + 1
+        *parent += child + 1;
     }
 }
 /// 頂点の個数
@@ -150,7 +150,7 @@ impl Op for VertexCount {
     fn add_edge(_x: &mut Self::Value) {}
 
     fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent += child
+        *parent += child;
     }
 }
 /// サイクルがあるとき、`true`
@@ -163,11 +163,11 @@ impl Op for HasCycle {
     }
 
     fn add_edge(x: &mut Self::Value) {
-        *x = true
+        *x = true;
     }
 
     fn graft(parent: &mut Self::Value, child: Self::Value) {
-        *parent |= child
+        *parent |= child;
     }
 }
 

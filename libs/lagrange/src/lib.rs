@@ -231,7 +231,7 @@ mod tests {
     use std::iter::repeat_with;
     use test_case::test_case;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
     type Fp = fp::Fp<P>;
 
     #[test_case(3; "small")]

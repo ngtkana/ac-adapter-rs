@@ -221,7 +221,7 @@ impl<T: Balance> Tree<T> {
                 p.unwrap().update_ancestors()
             }
             Some(x) => x.update_ancestors(),
-        })
+        });
     }
 
     pub fn transplant(&mut self, mut place: Ptr<T>, new: Option<Ptr<T>>) {
@@ -388,7 +388,7 @@ pub mod test_utils {
 
     impl<T: Balance> fmt::Display for Tree<T> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-            self.fmt_by(f, |p| format!("{:?}", p))
+            self.fmt_by(f, |p| format!("{p:?}"))
         }
     }
     struct TreeFormatter<'a, T: Balance, F: Fn(Ptr<T>) -> String>(&'a Tree<T>, &'a F);
@@ -419,7 +419,7 @@ pub mod test_utils {
                 }
                 if let Some(mut x) = x {
                     if *x.color() == Color::Black {
-                        write!(s, "[")?
+                        write!(s, "[")?;
                     }
                     write(s, *x.left(), Some(x), vios, key)?;
                     if vios.red_vios.contains(&x) {
@@ -618,7 +618,7 @@ pub mod test_utils {
                     || left_height + 1 == right_height)
                     .then_some(())
                     .ok_or_else(|| {
-                        format!("The difference of black height is greater than 1: {:?}", x)
+                        format!("The difference of black height is greater than 1: {x:?}")
                     })?;
 
                 // Parent pointer incinsistency
@@ -626,9 +626,8 @@ pub mod test_utils {
                     let p = *left.parent();
                     (p == Some(x)).then_some(()).ok_or_else(|| {
                         format!(
-                            "parent pointer inconsistency between {:?} and its left child {:?}. \
-                             The parent of the left child is {:?}",
-                            x, left, p,
+                            "parent pointer inconsistency between {x:?} and its left child {left:?}. \
+                             The parent of the left child is {p:?}",
                         )
                     })?;
                 }
@@ -636,9 +635,8 @@ pub mod test_utils {
                     let p = *right.parent();
                     (p == Some(x)).then_some(()).ok_or_else(|| {
                         format!(
-                            "parent pointer inconsistency between {:?} and its right child {:?}. \
-                             The parent of the right child is {:?}",
-                            x, right, p,
+                            "parent pointer inconsistency between {x:?} and its right child {right:?}. \
+                             The parent of the right child is {p:?}",
                         )
                     })?;
                 }
@@ -648,16 +646,16 @@ pub mod test_utils {
                 let h = validate(self.root)?;
                 (self.black_height == h || self.black_height == h + 1)
                     .then_some(())
-                    .ok_or_else(|| format!("black height of {} is not {}", self, h))?;
+                    .ok_or_else(|| format!("black height of {self} is not {h}"))?;
                 if let Some(mut x) = self.root {
                     // Parent is None
                     (x.parent().is_none())
                         .then_some(())
-                        .ok_or_else(|| format!("parent of {:?} is not None", x))?;
+                        .ok_or_else(|| format!("parent of {x:?} is not None"))?;
                 }
                 Ok(())
             }()
-            .unwrap_or_else(|e| panic!("Validation error: {}\nTree: {}", e, self))
+            .unwrap_or_else(|e| panic!("Validation error: {e}\nTree: {self}"));
         }
 
         pub fn collect(&self) -> Vec<Ptr<T>> {
@@ -739,7 +737,7 @@ pub mod test_utils {
                 vios.black_vios.push(BlackViolation {
                     p: None,
                     x: tree.root,
-                })
+                });
             }
             vios
         }
@@ -801,13 +799,13 @@ mod test_fix {
             let h = rng.gen_range(0..=4);
             let (tree, expected_violations) =
                 Tree::random(&mut rng, new_node, h, false, false, false);
-            assert_eq!(tree.black_height, h, "{}", tree);
-            assert_eq!(expected_violations.red_vios.len(), 0, "{}", tree);
-            assert_eq!(expected_violations.black_vios.len(), 0, "{}", tree);
+            assert_eq!(tree.black_height, h, "{tree}");
+            assert_eq!(expected_violations.red_vios.len(), 0, "{tree}");
+            assert_eq!(expected_violations.black_vios.len(), 0, "{tree}");
             tree.validate();
 
             let actual_violations = Violations::collect(&tree);
-            assert_eq!(expected_violations, actual_violations, "{}", tree);
+            assert_eq!(expected_violations, actual_violations, "{tree}");
         }
     }
 
@@ -818,13 +816,13 @@ mod test_fix {
             let h = rng.gen_range(0..=4);
             let (tree, expected_violations) =
                 Tree::random(&mut rng, new_node, h, true, false, false);
-            assert_eq!(tree.black_height, h, "{}", tree);
-            assert_eq!(expected_violations.red_vios.len(), 1, "{}", tree);
-            assert_eq!(expected_violations.black_vios.len(), 0, "{}", tree);
+            assert_eq!(tree.black_height, h, "{tree}");
+            assert_eq!(expected_violations.red_vios.len(), 1, "{tree}");
+            assert_eq!(expected_violations.black_vios.len(), 0, "{tree}");
             tree.validate();
 
             let actual_violations = Violations::collect(&tree);
-            assert_eq!(expected_violations, actual_violations, "{}", tree);
+            assert_eq!(expected_violations, actual_violations, "{tree}");
         }
     }
 
@@ -835,13 +833,13 @@ mod test_fix {
             let h = rng.gen_range(1..=4);
             let (tree, expected_violations) =
                 Tree::random(&mut rng, new_node, h, false, true, false);
-            assert_eq!(tree.black_height, h, "{}", tree);
-            assert_eq!(expected_violations.red_vios.len(), 0, "{}", tree);
-            assert_eq!(expected_violations.black_vios.len(), 1, "{}", tree);
+            assert_eq!(tree.black_height, h, "{tree}");
+            assert_eq!(expected_violations.red_vios.len(), 0, "{tree}");
+            assert_eq!(expected_violations.black_vios.len(), 1, "{tree}");
             tree.validate();
 
             let actual_violations = Violations::collect(&tree);
-            assert_eq!(expected_violations, actual_violations, "{}", tree);
+            assert_eq!(expected_violations, actual_violations, "{tree}");
         }
     }
 

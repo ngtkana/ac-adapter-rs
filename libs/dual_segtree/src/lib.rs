@@ -184,7 +184,7 @@ fn update_all<O: Ops>(a: &mut [O::Value]) {
         let x = replace(&mut a[i], O::identity());
         a[2 * i..2 * i + 2]
             .iter_mut()
-            .for_each(|y| O::op_assign_from_right(y, x.clone()))
+            .for_each(|y| O::op_assign_from_right(y, x.clone()));
     });
 }
 // フォーマット
@@ -217,18 +217,16 @@ fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> 
 
 fn dual_segtree_index_out_of_range_fail(index: usize, len: usize) -> ! {
     panic!(
-        "index {} out of range for dual segtree of length {}",
-        index, len
+        "index {index} out of range for dual segtree of length {len}"
     );
 }
 fn dual_segtree_end_index_len_fail(index: usize, len: usize) -> ! {
     panic!(
-        "range end index {} out of range for dual segtree of length {}",
-        index, len
+        "range end index {index} out of range for dual segtree of length {len}"
     );
 }
 fn dual_segtree_index_order_fail(start: usize, end: usize) -> ! {
-    panic!("dual segtree index starts at {} but ends at {}", start, end);
+    panic!("dual segtree index starts at {start} but ends at {end}");
 }
 fn slice_start_index_overflow_fail() -> ! {
     panic!("attempted to index slice from after maximum usize");

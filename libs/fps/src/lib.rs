@@ -414,7 +414,7 @@ mod tests {
     use std::iter;
     use std::iter::repeat_with;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
     type Fp = fp::Fp<P>;
 
     fn random_fps(rng: &mut StdRng, head: Fp, precision: usize) -> Vec<Fp> {

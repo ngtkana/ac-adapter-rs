@@ -689,7 +689,7 @@ where
         write!(f, "\x1b[48;2;127;127;127;37m")?;
         write!(f, "|")?;
         for (i, colomn_width) in colomn_width.iter().enumerate() {
-            write!(f, "{:width$}|", i, width = colomn_width)?;
+            write!(f, "{i:colomn_width$}|")?;
         }
         write!(f, "\x1b[0m")?;
         writeln!(f)?;
@@ -721,7 +721,7 @@ where
             for (range, value) in row {
                 let width = range.clone().map(|i| colomn_width[i]).sum::<usize>() + range.len() - 1;
                 if let Some(value) = value {
-                    write!(f, "{:^width$}", value, width = width)?;
+                    write!(f, "{value:^width$}")?;
                 } else {
                     write!(f, "{:^width$}", "", width = width)?;
                 }

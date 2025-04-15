@@ -226,8 +226,8 @@ mod tests {
                 _ => unreachable!(),
             }
 
-            println!("trie = {:?}", trie);
-            println!("btree_set = {:?}", btree_set);
+            println!("trie = {trie:?}");
+            println!("btree_set = {btree_set:?}");
             println!();
         }
     }

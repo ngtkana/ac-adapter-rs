@@ -97,7 +97,7 @@ fn main() {
             .unwrap()
             .join("docs")
             .join("dependencies.js"),
-        format!("dependencies = {}", json),
+        format!("dependencies = {json}"),
     )
     .unwrap();
 }

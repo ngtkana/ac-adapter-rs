@@ -364,7 +364,7 @@ mod tests {
     use std::ops::Add;
     use std::ops::Mul;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
 
     #[derive(Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
     struct Fp(u64);
@@ -431,8 +431,8 @@ mod tests {
                     }
                     _ => unreachable!(),
                 }
-                eprintln!("{:?}", deque);
-                eprintln!("{:?}", swag);
+                eprintln!("{deque:?}");
+                eprintln!("{swag:?}");
                 let result = swag.fold().unwrap_or((Fp(1), Fp(0)));
                 let expected = deque
                     .iter()

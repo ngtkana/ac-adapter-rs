@@ -337,7 +337,7 @@ pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
         while !f(upper) {
             lower = upper;
             if upper >> (size_of::<T>() * 8 - 2) & T::ONE == T::ZERO {
-                upper = upper + upper
+                upper = upper + upper;
             } else if upper == T::MAX {
                 return None;
             } else {

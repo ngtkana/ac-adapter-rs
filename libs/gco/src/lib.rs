@@ -118,8 +118,7 @@ impl Gco {
     pub fn binary(&mut self, ij: [usize; 2], cost: [[i64; 2]; 2]) {
         assert!(
             is_submodular(cost),
-            "The cost should be submodular. cost = {:?}",
-            cost
+            "The cost should be submodular. cost = {cost:?}"
         );
         self.binary.push(Binary { ij, cost });
     }

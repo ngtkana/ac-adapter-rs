@@ -82,14 +82,14 @@ pub trait PrimitiveRoot<const P: u64> {
     /// A primitive root of unity.
     const VALUE: Fp<P>;
 }
-impl PrimitiveRoot<998244353> for () {
-    const VALUE: Fp<998244353> = Fp::new(3);
+impl PrimitiveRoot<998_244_353> for () {
+    const VALUE: Fp<998_244_353> = Fp::new(3);
 }
-impl PrimitiveRoot<1012924417> for () {
-    const VALUE: Fp<1012924417> = Fp::new(5);
+impl PrimitiveRoot<1_012_924_417> for () {
+    const VALUE: Fp<1_012_924_417> = Fp::new(5);
 }
-impl PrimitiveRoot<924844033> for () {
-    const VALUE: Fp<924844033> = Fp::new(5);
+impl PrimitiveRoot<924_844_033> for () {
+    const VALUE: Fp<924_844_033> = Fp::new(5);
 }
 
 /// A value in $\mathbb{Fp}_p$.
@@ -229,9 +229,9 @@ impl<const P: u64> std::fmt::Debug for Fp<P> {
             den = -den;
         }
         if den == 1 {
-            write!(f, "{}", num)
+            write!(f, "{num}")
         } else {
-            write!(f, "{}/{}", num, den)
+            write!(f, "{num}/{den}")
         }
     }
 }
@@ -290,7 +290,7 @@ impl<const P: u64> MulAssign<Fp<P>> for Fp<P> {
 #[allow(clippy::suspicious_op_assign_impl)]
 impl<const P: u64> DivAssign<Fp<P>> for Fp<P> {
     fn div_assign(&mut self, rhs: Fp<P>) {
-        *self *= rhs.inv()
+        *self *= rhs.inv();
     }
 }
 macro_rules! fp_forward_ops {
@@ -376,7 +376,7 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
 
     #[test]
     fn test_new() {

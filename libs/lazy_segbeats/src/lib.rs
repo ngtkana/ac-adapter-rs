@@ -50,17 +50,17 @@ impl<T: Elm> Segbeats<T> {
 
     pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<ChangeMin<T>>(range, x)
+        self.dfs::<ChangeMin<T>>(range, x);
     }
 
     pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<ChangeMax<T>>(range, x)
+        self.dfs::<ChangeMax<T>>(range, x);
     }
 
     pub fn range_add(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<RangeAdd<T>>(range, x)
+        self.dfs::<RangeAdd<T>>(range, x);
     }
 
     pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {

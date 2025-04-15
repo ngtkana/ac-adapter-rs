@@ -86,17 +86,17 @@ impl<T: Signed> FromStr for Rational<T> {
 }
 impl<T: Signed> AddAssign for Rational<T> {
     fn add_assign(&mut self, rhs: Self) {
-        *self = Self::new(self.0 * rhs.1 + self.1 * rhs.0, self.1 * rhs.1)
+        *self = Self::new(self.0 * rhs.1 + self.1 * rhs.0, self.1 * rhs.1);
     }
 }
 impl<T: Signed> SubAssign for Rational<T> {
     fn sub_assign(&mut self, rhs: Self) {
-        *self = Self::new(self.0 * rhs.1 - self.1 * rhs.0, self.1 * rhs.1)
+        *self = Self::new(self.0 * rhs.1 - self.1 * rhs.0, self.1 * rhs.1);
     }
 }
 impl<T: Signed> MulAssign for Rational<T> {
     fn mul_assign(&mut self, rhs: Self) {
-        *self = Self::new(self.0 * rhs.0, self.1 * rhs.1)
+        *self = Self::new(self.0 * rhs.0, self.1 * rhs.1);
     }
 }
 impl<T: Signed> DivAssign for Rational<T> {
@@ -104,11 +104,9 @@ impl<T: Signed> DivAssign for Rational<T> {
         assert_ne!(
             rhs.0,
             T::zero(),
-            "有理数の 0 除算はだめです。: self = {:?}, rhs = {:?}",
-            self,
-            rhs
+            "有理数の 0 除算はだめです。: self = {self:?}, rhs = {rhs:?}"
         );
-        *self = Self::new(self.0 * rhs.1, self.1 * rhs.0)
+        *self = Self::new(self.0 * rhs.1, self.1 * rhs.0);
     }
 }
 impl<T: Signed> Neg for Rational<T> {
@@ -247,8 +245,7 @@ mod tests {
             let z = x + y;
             let zf64 = xf64 + yf64;
             println!(
-                "{:?} + {:?} = {:?} ({:.3} + {:.3} = {:.3})",
-                x, y, z, xf64, yf64, zf64
+                "{x:?} + {y:?} = {z:?} ({xf64:.3} + {yf64:.3} = {zf64:.3})"
             );
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
@@ -263,8 +260,7 @@ mod tests {
             let z = x - y;
             let zf64 = xf64 - yf64;
             println!(
-                "{:?} - {:?} = {:?} ({:.3} - {:.3} = {:.3})",
-                x, y, z, xf64, yf64, zf64
+                "{x:?} - {y:?} = {z:?} ({xf64:.3} - {yf64:.3} = {zf64:.3})"
             );
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
@@ -279,8 +275,7 @@ mod tests {
             let z = x * y;
             let zf64 = xf64 * yf64;
             println!(
-                "{:?} * {:?} = {:?} ({:.3} * {:.3} = {:.3})",
-                x, y, z, xf64, yf64, zf64
+                "{x:?} * {y:?} = {z:?} ({xf64:.3} * {yf64:.3} = {zf64:.3})"
             );
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
@@ -295,8 +290,7 @@ mod tests {
             let z = x / y;
             let zf64 = xf64 / yf64;
             println!(
-                "{:?} / {:?} = {:?} ({:.3} / {:.3} = {:.3})",
-                x, y, z, xf64, yf64, zf64
+                "{x:?} / {y:?} = {z:?} ({xf64:.3} / {yf64:.3} = {zf64:.3})"
             );
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
@@ -309,7 +303,7 @@ mod tests {
             let (x, xf64) = gen_rational_and_f64(&mut rng);
             let y = -x;
             let yf64 = -xf64;
-            println!("neg({:?})  = -{:?} (neg({:.3}) = {:.3})", x, y, xf64, yf64);
+            println!("neg({x:?})  = -{y:?} (neg({xf64:.3}) = {yf64:.3})");
             assert_abs_diff_eq!(y.into_f64(), yf64, epsilon = 1e-6);
         }
     }
@@ -323,8 +317,7 @@ mod tests {
             let z = x.cmp(&y);
             let zf64 = OrderedFloat(xf64).cmp(&OrderedFloat(yf64));
             println!(
-                "cmp({:?}, {:?}) = {:?} (cmp({:.3}, {:.3}) = {:?})",
-                x, y, z, xf64, yf64, zf64
+                "cmp({x:?}, {y:?}) = {z:?} (cmp({xf64:.3}, {yf64:.3}) = {zf64:?})"
             );
             assert_eq!(z, zf64);
         }

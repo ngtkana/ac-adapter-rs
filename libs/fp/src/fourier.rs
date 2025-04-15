@@ -2,9 +2,9 @@ use super::mod_inv;
 use super::Fp;
 use super::PrimitiveRoot;
 
-const P1: u64 = 924844033;
-const P2: u64 = 998244353;
-const P3: u64 = 1012924417;
+const P1: u64 = 924_844_033;
+const P2: u64 = 998_244_353;
+const P3: u64 = 1_012_924_417;
 type F1 = Fp<P1>;
 type F2 = Fp<P2>;
 type F3 = Fp<P3>;
@@ -249,7 +249,7 @@ mod tests {
 
     #[test]
     fn test_fps_mul_random() {
-        type F = Fp<998244353>;
+        type F = Fp<998_244_353>;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..80 {
             let n = rng.gen_range(1..=40);
@@ -267,7 +267,7 @@ mod tests {
 
     #[test]
     fn test_any_mod_fps_mul_random() {
-        type F = Fp<1000000007>;
+        type F = Fp<1_000_000_007>;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..80 {
             let n = rng.gen_range(1..=40);
@@ -289,7 +289,7 @@ mod tests {
         for _ in 0..2000 {
             let x = rng.gen_range(0..u64::MAX);
             let result = garner(F1::new(x), F2::new(x), F3::new(x));
-            assert_eq!(result, Fp::<1000000007>::new(x));
+            assert_eq!(result, Fp::<1_000_000_007>::new(x));
         }
     }
 }

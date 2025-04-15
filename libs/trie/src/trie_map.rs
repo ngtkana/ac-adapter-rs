@@ -390,8 +390,8 @@ mod tests {
                 _ => unreachable!(),
             }
 
-            println!("trie = {:?}", trie);
-            println!("btree_map = {:?}", btree_map);
+            println!("trie = {trie:?}");
+            println!("btree_map = {btree_map:?}");
             println!();
         }
     }

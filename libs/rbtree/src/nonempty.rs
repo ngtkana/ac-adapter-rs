@@ -402,7 +402,7 @@ mod tests {
     fn test_merge(lhs: impl Fn() -> Nonempty<()>, rhs: impl Fn() -> Nonempty<()>) -> String {
         let root = Nonempty::merge(lhs(), rhs());
         let res = to_structure_sring(&root);
-        println!("{}", res);
+        println!("{res}");
         validate(&root);
         res
     }

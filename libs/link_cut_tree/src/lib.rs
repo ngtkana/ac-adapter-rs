@@ -423,7 +423,7 @@ mod tests {
 
     #[test]
     fn test_link_cut_tree_rolling_hash() {
-        const P: u64 = 998244353;
+        const P: u64 = 998_244_353;
         const BASE: u64 = 100;
         #[derive(Clone, Copy, Debug, PartialEq)]
         struct RollingHash {

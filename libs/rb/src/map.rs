@@ -455,7 +455,7 @@ impl<K: Ord, V> Multimap<K, V> {
     }
 
     pub fn insert(&mut self, key: K, value: V) {
-        self.segmap.insert(key, value)
+        self.segmap.insert(key, value);
     }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
@@ -542,7 +542,7 @@ impl<K: Ord> Multiset<K> {
         K: Ord + Borrow<Q>,
         Q: Ord,
     {
-        self.map.binary_search(key).map(|(_, i)| i)
+        self.map.binary_search(key).map(|((), i)| i)
     }
 
     pub fn partition_point(&self, f: impl FnMut(&K) -> bool) -> usize {
@@ -558,7 +558,7 @@ impl<K: Ord> Multiset<K> {
     }
 
     pub fn insert(&mut self, key: K) {
-        self.map.insert(key, ())
+        self.map.insert(key, ());
     }
 
     pub fn remove<Q: ?Sized>(&mut self, key: &Q) -> Option<K>
@@ -598,7 +598,7 @@ impl<'a, K: Ord> Iterator for MultisetIter<'a, K> {
     type Item = &'a K;
 
     fn next(&mut self) -> Option<Self::Item> {
-        self.iter.next().map(|(k, _)| k)
+        self.iter.next().map(|(k, ())| k)
     }
 
     fn size_hint(&self) -> (usize, Option<usize>) {
@@ -607,7 +607,7 @@ impl<'a, K: Ord> Iterator for MultisetIter<'a, K> {
 }
 impl<'a, K: Ord> DoubleEndedIterator for MultisetIter<'a, K> {
     fn next_back(&mut self) -> Option<Self::Item> {
-        self.iter.next_back().map(|(k, _)| k)
+        self.iter.next_back().map(|(k, ())| k)
     }
 }
 impl<'a, K: Ord> ExactSizeIterator for MultisetIter<'a, K> {}
