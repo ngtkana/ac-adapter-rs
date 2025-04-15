@@ -1,0 +1,57 @@
+/* 全体のスタイル */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* ヘッダー */
+.header-title {
+    font-weight: 700;
+}
+
+/* クレートカード */
+.crate-card {
+    transition: transform 0.2s, box-shadow 0.2s;
+    height: 100%;
+    border-radius: 8px;
+}
+
+.crate-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* 検索ハイライト */
+.highlight {
+    background-color: yellow;
+    color: black;
+    padding: 0 2px;
+    border-radius: 2px;
+}
+
+/* ダークモード対応 */
+@media (prefers-color-scheme: dark) {
+    body {
+        background-color: #121212;
+        color: #e0e0e0;
+    }
+
+    .card {
+        background-color: #1e1e1e;
+        border-color: #333;
+    }
+
+    .card-header {
+        background-color: #2a2a2a;
+        color: #e0e0e0;
+    }
+
+    .bg-light {
+        background-color: #2a2a2a !important;
+        color: #e0e0e0;
+    }
+
+    .highlight {
+        background-color: #ffd700;
+        color: #000;
+    }
+}
