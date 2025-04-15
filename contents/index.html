@@ -22,35 +22,29 @@
   </header>
 
   <main class="container my-4">
-    <div class="row">
-      <div class="col-md-3">
-        <!-- サイドバー: フィルターと検索 -->
-        <div class="card mb-4">
-          <div class="card-header">検索</div>
-          <div class="card-body">
-            <input type="text" id="search-input" class="form-control" placeholder="クレート名で検索..." />
-          </div>
+    <!-- 検索セクション -->
+    <div class="card mb-4">
+      <div class="card-header">検索</div>
+      <div class="card-body">
+        <input type="text" id="search-input" class="form-control" placeholder="クレート名で検索..." />
+      </div>
+    </div>
+
+    <!-- ライブラリ一覧セクション -->
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span>ライブラリ一覧</span>
+        <div class="btn-group">
+          <button class="btn btn-sm btn-outline-secondary" id="view-grid">
+            <i class="bi bi-grid"></i> グリッド
+          </button>
+          <button class="btn btn-sm btn-outline-secondary active" id="view-list">
+            <i class="bi bi-list-ul"></i> リスト
+          </button>
         </div>
       </div>
-
-      <div class="col-md-9">
-        <!-- メインコンテンツ: クレートリスト -->
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <span>ライブラリ一覧</span>
-            <div class="btn-group">
-              <button class="btn btn-sm btn-outline-secondary" id="view-grid">
-                <i class="bi bi-grid"></i> グリッド
-              </button>
-              <button class="btn btn-sm btn-outline-secondary active" id="view-list">
-                <i class="bi bi-list-ul"></i> リスト
-              </button>
-            </div>
-          </div>
-          <div class="card-body">
-            <div id="crate-list" class="row"></div>
-          </div>
-        </div>
+      <div class="card-body">
+        <div id="crate-list" class="row"></div>
       </div>
     </div>
   </main>
