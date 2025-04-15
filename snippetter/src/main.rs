@@ -13,6 +13,23 @@ static CRATE_METADATAS: OnceCell<HashMap<String, CrateMetadata>> = OnceCell::new
 struct CrateMetadata {
     dependencies: Vec<String>,
     tags: Vec<String>,
+    description: Option<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
+struct MetadataFile {
+    tags: Option<TagsSection>,
+    description: Option<DescriptionSection>,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
+struct TagsSection {
+    list: Vec<String>,
+}
+
+#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
+struct DescriptionSection {
+    short: String,
 }
 
 // TODO: use crates.js etc. in target/doc/{crates.js,source-files.js} to bundle files
@@ -30,31 +47,43 @@ fn main() {
                 .unwrap()
                 .filter_map(Result::ok)
                 .filter_map(|crate_entry| {
-                    crate_entry
-                        .path()
-                        .read_dir()
-                        .unwrap()
-                        .filter_map(Result::ok)
-                        .find(|crate_entry| {
-                            crate_entry.path().as_path().file_name()
-                                == Some(OsStr::new("Cargo.toml"))
-                        })
-                        .map(|cargo_toml_entry| {
-                            (
-                                crate_entry
-                                    .path()
-                                    .file_name()
-                                    .unwrap()
-                                    .to_string_lossy()
-                                    .into_owned(),
-                                CrateMetadata {
-                                    dependencies: parse_local_dependencies_from_cargo_toml(
-                                        &fs::read_to_string(cargo_toml_entry.path()).unwrap(),
-                                    ),
-                                    tags: Vec::new(),
-                                },
-                            )
-                        })
+                    let crate_path = crate_entry.path();
+                    let cargo_toml_path = crate_path.join("Cargo.toml");
+                    let metadata_path = crate_path.join("metadata.toml");
+                    
+                    if cargo_toml_path.exists() {
+                        let crate_name = crate_path.file_name().unwrap().to_string_lossy().into_owned();
+                        let dependencies = parse_local_dependencies_from_cargo_toml(
+                            &fs::read_to_string(&cargo_toml_path).unwrap(),
+                        );
+                        
+                        // メタデータファイルからタグと説明を読み取る
+                        let (tags, description) = if metadata_path.exists() {
+                            let metadata_content = fs::read_to_string(&metadata_path).unwrap_or_default();
+                            let metadata: MetadataFile = toml::from_str(&metadata_content).unwrap_or(MetadataFile {
+                                tags: None,
+                                description: None,
+                            });
+                            
+                            let tags = metadata.tags.map_or(Vec::new(), |t| t.list);
+                            let description = metadata.description.map(|d| d.short);
+                            
+                            (tags, description)
+                        } else {
+                            (Vec::new(), None)
+                        };
+                        
+                        Some((
+                            crate_name,
+                            CrateMetadata {
+                                dependencies,
+                                tags,
+                                description,
+                            },
+                        ))
+                    } else {
+                        None
+                    }
                 })
                 .collect(),
         )
