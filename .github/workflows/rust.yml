@@ -24,6 +24,7 @@ jobs:
           filters: |
             triggers:
               - 'libs/**'
+              - 'contents/**'
               - '.github/workflows/rust.yml'
   lint:
     runs-on: ubuntu-latest
