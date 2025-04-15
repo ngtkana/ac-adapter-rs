@@ -967,7 +967,7 @@ mod test_seg {
                     .take(1)
                     .map(char::from)
                     .collect::<String>();
-                *seg.nth_mut(i) = x.clone();
+                seg.nth_mut(i).clone_from(&x);
                 vec[i] = x;
                 seg.validate();
                 assert_eq!(seg.iter().cloned().collect::<Vec<_>>(), vec);

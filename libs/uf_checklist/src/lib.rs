@@ -30,8 +30,10 @@
 //! ## クエリ
 //!
 //! * [`lower_bound`](UfChecklist::lower_bound):
+//!
 //! 指定した場所と同じかもっと右にある未チェックな項
 //! を探します。
+//!
 //! * [`is_checked`](UfChecklist::is_checked): 指定した位置がチェック済みかどうかを判定します。
 //!
 //!

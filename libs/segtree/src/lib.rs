@@ -195,13 +195,22 @@ impl<O: Op> Segtree<O> {
     }
 
     /// Returns an iterator of $x_0, x_1, \ldots, x_{n-1}$.
-    pub fn iter(&self) -> std::slice::Iter<O::Value> {
-        self.values[self.offset..self.offset + self.len].iter()
+    pub fn iter(&self) -> std::slice::Iter<'_, O::Value> {
+        self.into_iter()
     }
 
     /// Returns a slice of $x_0, x_1, \ldots, x_{n-1}$.
     pub fn as_slice(&self) -> &[O::Value] {
         &self.values[self.offset..self.offset + self.len]
+    }
+}
+
+impl<'a, O: Op> IntoIterator for &'a Segtree<O> {
+    type Item = &'a O::Value;
+    type IntoIter = std::slice::Iter<'a, O::Value>;
+
+    fn into_iter(self) -> Self::IntoIter {
+        self.values[self.offset..self.offset + self.len].iter()
     }
 }
 
