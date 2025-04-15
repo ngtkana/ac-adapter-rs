@@ -1,0 +1,105 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="赤黒木"><title>rbtree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="rbtree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../rbtree/index.html">rbtree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">rbtree</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/rbtree/lib.rs.html#1-600">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>赤黒木</p>
+<h2 id="主な機能"><a class="doc-anchor" href="#主な機能">§</a>主な機能</h2>
+<ul>
+<li>merge, split</li>
+<li>insert, delete</li>
+<li>get</li>
+<li>fold</li>
+<li>iter, <a href="https://doc.rust-lang.org/1.81.0/core/iter/traits/collect/trait.FromIterator.html" title="trait core::iter::traits::collect::FromIterator"><code>FromIterator</code></a></li>
+</ul>
+<h2 id="使い方fold-しない場合"><a class="doc-anchor" href="#使い方fold-しない場合">§</a>使い方（fold しない場合）</h2>
+<p><a href="struct.RbTree.html" title="struct rbtree::RbTree"><code>RbTree</code></a>
+の第二ジェネリック型引数をデフォルトのままにしておくと、ランダムアクセスリストを実現します。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>rbtree::RbTree;
+
+<span class="kw">let </span><span class="kw-2">mut </span>a = RbTree::&lt;i32&gt;::new(); <span class="comment">// `i32` まで省略すると型推論に失敗します。
+
+// 挿入や削除など
+</span>a.push_back(<span class="number">12</span>);
+a.push_front(<span class="number">10</span>);
+a.insert(<span class="number">1</span>, <span class="number">11</span>);
+a.push_back(<span class="number">13</span>);
+a.delete(<span class="number">2</span>);
+<span class="macro">assert_eq!</span>(a.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">13</span>]);
+<span class="macro">assert_eq!</span>(a.get(<span class="number">0</span>), <span class="number">10</span>);
+<span class="macro">assert_eq!</span>(a.get(<span class="number">1</span>), <span class="number">11</span>);
+<span class="macro">assert_eq!</span>(a.get(<span class="number">2</span>), <span class="number">13</span>);
+
+<span class="comment">// マージ
+</span><span class="kw">let </span>a = RbTree::merge(a.clone(), a);
+<span class="macro">assert_eq!</span>(a.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[
+    <span class="number">10</span>, <span class="number">11</span>, <span class="number">13</span>, <span class="number">10</span>, <span class="number">11</span>, <span class="number">13
+</span>]);
+
+<span class="comment">// スプリット
+</span><span class="kw">let </span>[b, c] = a.split(<span class="number">4</span>);
+<span class="macro">assert_eq!</span>(b.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">10</span>, <span class="number">11</span>, <span class="number">13</span>, <span class="number">10</span>]);
+<span class="macro">assert_eq!</span>(c.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">11</span>, <span class="number">13</span>]);</code></pre></div>
+<h2 id="使い方fold"><a class="doc-anchor" href="#使い方fold">§</a>使い方（fold)</h2>
+<p><a href="trait.Op.html" title="trait rbtree::Op"><code>Op</code></a> トレイトを実装した型を作って入れましょう。（これめんどくさいですね……）</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>rbtree::Op;
+<span class="kw">use </span>rbtree::RbTree;
+
+<span class="comment">// 加法を実現する型を定義です。
+</span><span class="kw">enum </span>O {}
+<span class="kw">impl </span>Op <span class="kw">for </span>O {
+    <span class="kw">type </span>Summary = i32;
+    <span class="kw">type </span>Value = i32;
+
+    <span class="kw">fn </span>summarize(value: <span class="kw-2">&amp;</span>i32) -&gt; i32 {
+        <span class="kw-2">*</span>value
+    }
+
+    <span class="kw">fn </span>op(lhs: i32, rhs: i32) -&gt; i32 {
+        lhs + rhs
+    }
+}
+
+<span class="kw">let </span><span class="kw-2">mut </span>a = (<span class="number">0</span>..<span class="number">10</span>).collect::&lt;RbTree&lt;<span class="kw">_</span>, O&gt;&gt;(); <span class="comment">// これは mut ないといけません。
+</span><span class="macro">assert_eq!</span>(a.fold(..), <span class="prelude-val">Some</span>(<span class="number">45</span>));
+<span class="macro">assert_eq!</span>(a.fold(<span class="number">4</span>..=<span class="number">5</span>), <span class="prelude-val">Some</span>(<span class="number">9</span>));
+<span class="macro">assert_eq!</span>(a.fold(<span class="number">8</span>..), <span class="prelude-val">Some</span>(<span class="number">17</span>));
+<span class="macro">assert_eq!</span>(a.fold(<span class="number">3</span>..<span class="number">3</span>), <span class="prelude-val">None</span>);</code></pre></div>
+<h2 id="所有権について"><a class="doc-anchor" href="#所有権について">§</a>所有権について</h2>
+<p><a href="struct.RbTree.html#method.fold" title="method rbtree::RbTree::fold"><code>fold</code></a> が を要求します。ごめんなさい……（これ <code>RefCell</code> などにすると今度は
+参照を返せなくなって詰んでしまいます。）それと <a href="struct.RbTree.html#method.get" title="method rbtree::RbTree::get"><code>get</code></a> が <code>T: Copy</code>
+を要求しており、値返しとなっております。</p>
+<h2 id="愚痴"><a class="doc-anchor" href="#愚痴">§</a>愚痴</h2>
+<p><a href="https://doc.rust-lang.org/1.81.0/core/clone/trait.Clone.html" title="trait core::clone::Clone"><code>Clone</code></a>, <a href="https://doc.rust-lang.org/1.81.0/core/hash/trait.Hash.html" title="trait core::hash::Hash"><code>Hash</code></a>, <a href="https://doc.rust-lang.org/1.81.0/core/cmp/trait.PartialEq.html" title="trait core::cmp::PartialEq"><code>PartialEq</code></a> をて実装するはめになったのですが！？</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Iter.html" title="struct rbtree::Iter">Iter</a></div><div class="desc docblock-short"><a href="struct.RbTree.html#method.iter" title="method rbtree::RbTree::iter"><code>iter</code></a> の返す型</div></li><li><div class="item-name"><a class="struct" href="struct.Nop.html" title="struct rbtree::Nop">Nop</a></div><div class="desc docblock-short">赤黒木に演算を載せないときに使う型です。<a href="struct.RbTree.html" title="struct rbtree::RbTree"><code>RbTree</code></a> のデフォルト引数になっています。</div></li><li><div class="item-name"><a class="struct" href="struct.RbTree.html" title="struct rbtree::RbTree">RbTree</a></div><div class="desc docblock-short">赤黒木です。</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Op.html" title="trait rbtree::Op">Op</a></div><div class="desc docblock-short">赤黒木に演算を載せたいときに実装するトレイトです。（演算を載せないときには使いません）</div></li></ul></section></div></main></body></html>

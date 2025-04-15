@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A predecessor data structure based on van Emde Boas trees."><title>veb - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="veb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../veb/index.html">veb</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#enums">Enums</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">veb</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/veb/lib.rs.html#1-965">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A predecessor data structure based on van Emde Boas trees.</p>
+<p>This is implemented with hash maps, so <code>new()</code> is $O(\log\log n)$.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span><span class="kw-2">mut </span>veb = VebSet::new(<span class="number">1000</span>); <span class="comment">// capacity
+</span>veb.insert(<span class="number">42</span>);
+<span class="macro">assert!</span>(veb.contains(<span class="number">42</span>));
+veb.remove(<span class="number">42</span>);
+<span class="macro">assert!</span>(!veb.contains(<span class="number">42</span>));
+
+<span class="kw">let </span>veb: VebSet = <span class="macro">vec!</span>[<span class="number">12</span>, <span class="number">34</span>, <span class="number">56</span>, <span class="number">78</span>].into_iter().collect();
+<span class="macro">assert_eq!</span>(veb.collect(), <span class="macro">vec!</span>[<span class="number">12</span>, <span class="number">34</span>, <span class="number">56</span>, <span class="number">78</span>]);
+<span class="macro">assert_eq!</span>(veb.min(), <span class="prelude-val">Some</span>(<span class="number">12</span>));
+<span class="macro">assert_eq!</span>(veb.max(), <span class="prelude-val">Some</span>(<span class="number">78</span>));
+<span class="macro">assert_eq!</span>(veb.succ(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">56</span>));
+<span class="macro">assert_eq!</span>(veb.pred(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">12</span>));
+<span class="macro">assert_eq!</span>(veb.contains(<span class="number">34</span>), <span class="bool-val">true</span>);
+<span class="macro">assert_eq!</span>(veb.contains(<span class="number">35</span>), <span class="bool-val">false</span>);
+<span class="macro">assert_eq!</span>(veb.len(), <span class="number">4</span>);
+
+<span class="macro">assert_eq!</span>(veb.collect(), <span class="macro">vec!</span>[<span class="number">12</span>, <span class="number">34</span>, <span class="number">56</span>, <span class="number">78</span>]); <span class="comment">// Useful for debugging</span></code></pre></div>
+<h2 id="operations"><a class="doc-anchor" href="#operations">§</a>Operations</h2>
+<p>NOTE: <code>min</code>, <code>max</code>, <code>succ</code>, and <code>pred</code> return <code>None</code> if the set is empty.</p>
+<div><table><thead><tr><th>Operation</th><th>Time Complexity</th><th>Explanation</th></tr></thead><tbody>
+<tr><td><code>insert(x)</code></td><td>$O(\log\log n)$</td><td>$S \leftarrow S \cup {x}$</td></tr>
+<tr><td><code>remove(x)</code></td><td>$O(\log\log n)$</td><td>$S \leftarrow S \setminus {x}$</td></tr>
+<tr><td><code>contains(x)</code></td><td>$O(\log\log n)$</td><td>$x \in S$</td></tr>
+<tr><td><code>min()</code></td><td>$O(1)$</td><td>$\min\left( S \right)$</td></tr>
+<tr><td><code>max()</code></td><td>$O(1)$</td><td>$\max\left( S \right)$</td></tr>
+<tr><td><code>succ(x)</code></td><td>$O(\log\log n)$</td><td>$\min\left( x^△ \right)$</td></tr>
+<tr><td><code>succ_eq(x)</code></td><td>$O(\log\log n)$</td><td>$\min\left( x^▲ \right)$</td></tr>
+<tr><td><code>pred(x)</code></td><td>$O(\log\log n)$</td><td>$\max\left( x^▽ \right)$</td></tr>
+<tr><td><code>pred_eq(x)</code></td><td>$O(\log\log n)$</td><td>$\max\left( x^▲ \right)$</td></tr>
+<tr><td><code>len()</code></td><td>$O(1)$</td><td>$|S|$</td></tr>
+<tr><td><code>is_empty()</code></td><td>$O(1)$</td><td>$S = \emptyset$</td></tr>
+<tr><td><code>collect()</code></td><td>$O(|S|\log\log n)$</td><td>Convert to a <a href="https://doc.rust-lang.org/1.81.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec"><code>Vec</code></a></td></tr>
+</tbody></table>
+</div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.VebMap.html" title="struct veb::VebMap">VebMap</a></div><div class="desc docblock-short">A van Emde Boas tree-based map.
+The map is implemented as a van Emde Boas tree with a hash map.</div></li></ul><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="enum" href="enum.VebSet.html" title="enum veb::VebSet">VebSet</a></div><div class="desc docblock-short">A van Emde Boas tree.</div></li></ul></section></div></main></body></html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Solve a submodular graph cut optimizaion problem of degree $\le 2$"><title>gco - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="gco" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../gco/index.html">gco</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">gco</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/gco/lib.rs.html#1-309">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Solve a submodular graph cut optimizaion problem of degree $\le 2$</p>
+<p>As in <a href="https://en.wikipedia.org/wiki/Graph_cut_optimization">Graph cut optimization - Wikipedia</a>,
+any pseudo-boolean function $f: \lbrace 0, 1 \rbrace ^ n → \mathbb R$ can be written uniquely
+as a multi-linear polynominal:</p>
+<p>$$
+f ( \boldsymbol x ) =
+a
++ \sum _ { i } a _ i x _ i
++ \sum _ { i, j } a _ { i, j } x _ i x _ j
++ \dots
+$$</p>
+<p>This library can solve the minimum value of $f$ satisfying</p>
+<ul>
+<li>$\mathop { \mathrm { deg } } f \le 2$</li>
+<li>$f$ is submodular $a _ { i, i } + a _ { j , j } \le a _ { i, j } + a _ { j, i }$</li>
+</ul>
+<h2 id="dependencies"><a class="doc-anchor" href="#dependencies">§</a>Dependencies</h2>
+<p>[<code>dinic</code>]</p>
+<h2 id="usages"><a class="doc-anchor" href="#usages">§</a>Usages</h2>
+<ul>
+<li>Use two methods <a href="struct.Gco.html#method.unary" title="method gco::Gco::unary"><code>unary</code></a>, <a href="struct.Gco.html#method.binary" title="method gco::Gco::binary"><code>binary</code></a> to add terms.</li>
+<li>The cost must has a type <a href="https://doc.rust-lang.org/1.81.0/std/primitive.i64.html" title="primitive i64"><code>i64</code></a>.</li>
+<li>The result has a type <a href="https://doc.rust-lang.org/1.81.0/std/primitive.bool.html" title="primitive bool"><code>bool</code></a>. ($0$ is <code>false</code>, $1$ is <code>true</code>)</li>
+<li>We cannot automatically “filp” variables.</li>
+</ul>
+<p>This example code shows that a function</p>
+<p>$$
+f (x, y) = (10 + 10 x) + (40 - 30 y) + 99 (x + y - 2xy)
+$$</p>
+<p>takes its minimum $30$ at $(x, y) = (1, 1)$.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>gco::Gco;
+
+<span class="kw">let </span><span class="kw-2">mut </span>gco = gco::Gco::new(<span class="number">2</span>);
+gco.unary(<span class="number">0</span>, [<span class="number">10</span>, <span class="number">20</span>]);
+gco.unary(<span class="number">1</span>, [<span class="number">40</span>, <span class="number">10</span>]);
+gco.binary([<span class="number">0</span>, <span class="number">1</span>], [[<span class="number">0</span>, <span class="number">99</span>], [<span class="number">99</span>, <span class="number">0</span>]]);
+
+<span class="kw">let </span>result = gco.solve();
+<span class="macro">assert_eq!</span>(result.value, <span class="number">30</span>);
+<span class="macro">assert_eq!</span>(<span class="kw-2">&amp;</span>result.args, <span class="kw-2">&amp;</span>[<span class="bool-val">true</span>, <span class="bool-val">true</span>]);</code></pre></div>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Gco.html" title="struct gco::Gco">Gco</a></div><div class="desc docblock-short">A solver of graph cut optimization problems.</div></li><li><div class="item-name"><a class="struct" href="struct.GcoResult.html" title="struct gco::GcoResult">GcoResult</a></div><div class="desc docblock-short">The minimum value and and an argmin of $f$.</div></li></ul></section></div></main></body></html>

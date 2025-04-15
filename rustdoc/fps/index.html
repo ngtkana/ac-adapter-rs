@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Arithmetic of formal power series."><title>fps - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fps" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fps/index.html">fps</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#macros">Macros</a></li><li><a href="#functions">Functions</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">fps</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/fps/lib.rs.html#1-691">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Arithmetic of formal power series.</p>
+<h2 id="data-representation"><a class="doc-anchor" href="#data-representation">§</a>Data representation</h2>
+<p>In fact a formal power series $f = f_0 x + f_1 x + f_2 x^2 + \dots \in \mathbb{F}_p[[x]]$ has an infinite number of coefficients, but it is too hard for computers to handle it.
+Therefore, we represent a formal power series $f$ as a finite sequence $f_0, f_1, \dots, f_{d-1}$ of length $d$.
+This $d$ is called precision.
+Trailing zeros are also allowed in this representation.</p>
+<p>Furthermore, higher-degree coefficients are regarded as zero.</p>
+<p>In conclution, the set of values that <code>Vec&lt;Fp&lt;P&gt;&gt;</code> can represent is exactly the same as the
+following set:</p>
+<p>$$
+\bigsqcup_{d=0}^\infty \mathbb{F}_p[x] / (x^d)
+$$</p>
+<p>Especially, any two intances of different precisions are assumed not to be equal to each other.</p>
+<h2 id="note-on-complexity"><a class="doc-anchor" href="#note-on-complexity">§</a>Note on complexity</h2>
+<p><em>We only consider cases where the precision is a power of 2.
+If the precision is not a power of 2, the complexity is twice as bad as otherwise.</em></p>
+<p>We may assume the complexity $\mathcal{M}(d)$ of multiplication of two polynomials of degree $d$ and
+the complexity $\mathcal{F}(d)$ of FFT/IFFT of length $d$ satisfies the following property:</p>
+<p>$$
+\begin{aligned}
+\mathcal{M}(d) &amp;= \Theta(d\log d) , \mathcal{F}(d) = \Theta(d\log d), \\
+\mathcal{M}(d) &amp;= 3 \mathcal{F}(2d) + O(d) \ \left( = 6 \mathcal{F}(d) + O(d) \right).
+\end{aligned}
+$$</p>
+<p>If each step in Newton’s method is performed in $a\mathcal{M}(d)$ time (where $d$ is the resulting precision of each iteration),
+then the total complexity is $2a\mathcal{M}(d) + O(d)$.</p>
+<p>We omit $O(d)$ terms when it is not important.</p>
+<h2 id="table-of-contents"><a class="doc-anchor" href="#table-of-contents">§</a>Table of contents</h2>
+<p>$O(d)$ is omitted here.</p>
+<div><table><thead><tr><th>Name</th><th>Complexity</th></tr></thead><tbody>
+<tr><td><a href="fn.fps_inv.html" title="fn fps::fps_inv"><code>fps_inv</code></a></td><td>$2\mathcal{M}(d)$</td></tr>
+<tr><td><a href="fn.fps_sqrt.html" title="fn fps::fps_sqrt"><code>fps_sqrt</code></a></td><td>$6\mathcal{M}(d)$</td></tr>
+<tr><td><a href="fn.fps_deriv.html" title="fn fps::fps_deriv"><code>fps_deriv</code></a></td><td>$O(d)$</td></tr>
+<tr><td><a href="fn.fps_int.html" title="fn fps::fps_int"><code>fps_int</code></a></td><td>$O(d)$</td></tr>
+<tr><td><a href="fn.fps_log.html" title="fn fps::fps_log"><code>fps_log</code></a></td><td>$3\mathcal{M}(d)$</td></tr>
+<tr><td><a href="fn.fps_exp.html" title="fn fps::fps_exp"><code>fps_exp</code></a></td><td>$(10+2/3)\mathcal{M}(d)$</td></tr>
+</tbody></table>
+</div></div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="macro" href="macro.fps.html" title="macro fps::fps">fps</a></div><div class="desc docblock-short">Define a formal power series in the same way as <code>vec!</code>.</div></li></ul><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="fn" href="fn.fps_deriv.html" title="fn fps::fps_deriv">fps_deriv</a></div><div class="desc docblock-short">Returns the derivative of a formal power series.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_exp.html" title="fn fps::fps_exp">fps_exp</a></div><div class="desc docblock-short">Returns the exponential of a formal power series.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_int.html" title="fn fps::fps_int">fps_int</a></div><div class="desc docblock-short">Returns the integral of a formal power series with zero constant term.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_inv.html" title="fn fps::fps_inv">fps_inv</a></div><div class="desc docblock-short">Returns the multiplicative inverse of a formal power series.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_log.html" title="fn fps::fps_log">fps_log</a></div><div class="desc docblock-short">Returns the logarithm of a formal power series.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_pow.html" title="fn fps::fps_pow">fps_pow</a></div><div class="desc docblock-short">Resutns the $n$-th power of a formal power series.</div></li><li><div class="item-name"><a class="fn" href="fn.fps_sqrt.html" title="fn fps::fps_sqrt">fps_sqrt</a></div><div class="desc docblock-short">Returns the square root of a formal power series.</div></li></ul></section></div></main></body></html>

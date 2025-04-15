@@ -1,0 +1,170 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Solves maximum flow problem."><title>dinic - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="dinic" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../dinic/index.html">dinic</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li><li><a href="#traits">Traits</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">dinic</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/dinic/lib.rs.html#1-1084">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Solves maximum flow problem.</p>
+<h2 id="basic-usage"><a class="doc-anchor" href="#basic-usage">§</a>Basic usage</h2>
+<ol>
+<li>First, initialize <a href="struct.Dinic.html" title="struct dinic::Dinic"><code>Dinic</code></a> with the number of vertices.</li>
+<li>Insert edges with a method <a href="struct.Dinic.html#method.add_edge" title="method dinic::Dinic::add_edge"><code>add_edge</code></a>.</li>
+<li>Execute the algorithm by calling a method <a href="struct.Dinic.html#method.flow" title="method dinic::Dinic::flow"><code>flow</code></a> with the source <code>s</code> and sink <code>t</code>.</li>
+</ol>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+
+<span class="kw">let </span>flow = dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(flow, <span class="number">30</span>);</code></pre></div>
+<h2 id="restore-the-minimum-cut"><a class="doc-anchor" href="#restore-the-minimum-cut">§</a>Restore the minimum cut</h2>
+<p>If <a href="struct.Dinic.html#method.flow" title="method dinic::Dinic::flow"><code>flow</code></a> has called exactly once before, <a href="struct.Dinic.html#method.min_cut" title="method dinic::Dinic::min_cut"><code>min_cut</code></a> will
+return the minimum cut. <a href="struct.Dinic.html#method.min_cut" title="method dinic::Dinic::min_cut">See the API document to detailed specs.</a></p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+
+<span class="macro">assert_eq!</span>(dinic.min_cut(<span class="number">0</span>).as_slice(), <span class="kw-2">&amp;</span>[<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>]);</code></pre></div>
+<h2 id="get-the-state-of-an-edge-or-a-vertex"><a class="doc-anchor" href="#get-the-state-of-an-edge-or-a-vertex">§</a>Get the state of an edge or a vertex</h2>
+<p>You can query the state of an edge via <a href="struct.Dinic.html#method.get_edge" title="method dinic::Dinic::get_edge"><code>get_edge</code></a>. An <a href="struct.EdgeKey.html" title="struct dinic::EdgeKey"><code>EdgeKey</code></a> object returned
+by <a href="struct.Dinic.html#method.add_edge" title="method dinic::Dinic::add_edge"><code>add_edge</code></a> is necessary to query it.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+<span class="kw">use </span>dinic::Edge;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+<span class="kw">let </span>key = dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+
+<span class="macro">assert_eq!</span>(dinic.get_edge(key), Edge {
+    from: <span class="number">1</span>,
+    to: <span class="number">2</span>,
+    cap: <span class="number">15</span>,
+    flow: <span class="number">10
+</span>});</code></pre></div>
+<p>Moreover <a href="struct.Dinic.html#method.get_edges" title="method dinic::Dinic::get_edges"><code>get_edges</code></a>, <a href="struct.Dinic.html#method.get_network" title="method dinic::Dinic::get_network"><code>get_network</code></a> will summarize the
+whole network.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+<span class="kw">use </span>dinic::Edge;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+<span class="kw">let </span>key = dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+
+<span class="kw">let </span>edges = dinic.get_edges();
+<span class="kw">let </span>network = dinic.get_network();
+
+<span class="comment">// 0th edge
+</span><span class="macro">assert_eq!</span>(network[<span class="number">0</span>][<span class="number">0</span>], edges[<span class="number">0</span>]);
+<span class="macro">assert_eq!</span>(edges[<span class="number">0</span>], Edge {
+    from: <span class="number">0</span>,
+    to: <span class="number">1</span>,
+    cap: <span class="number">10</span>,
+    flow: <span class="number">10
+</span>});
+
+<span class="comment">// 1st edge
+</span><span class="macro">assert_eq!</span>(network[<span class="number">1</span>][<span class="number">0</span>], edges[<span class="number">1</span>]);
+<span class="macro">assert_eq!</span>(edges[<span class="number">1</span>], Edge {
+    from: <span class="number">1</span>,
+    to: <span class="number">2</span>,
+    cap: <span class="number">15</span>,
+    flow: <span class="number">10
+</span>});
+
+<span class="comment">// 2nd edge
+</span><span class="macro">assert_eq!</span>(network[<span class="number">0</span>][<span class="number">1</span>], edges[<span class="number">2</span>]);
+<span class="macro">assert_eq!</span>(edges[<span class="number">2</span>], Edge {
+    from: <span class="number">0</span>,
+    to: <span class="number">2</span>,
+    cap: <span class="number">20</span>,
+    flow: <span class="number">20
+</span>});</code></pre></div>
+<p>You also can get the excess of vertices, but we do not provide an interface to get the excess of <em>a vertex</em> because
+it will take O ( m ) time.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+<span class="kw">use </span>dinic::Edge;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+<span class="kw">let </span>key = dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+
+<span class="macro">assert_eq!</span>(dinic.get_excess().as_slice(), <span class="kw-2">&amp;</span>[-<span class="number">30</span>, <span class="number">0</span>, <span class="number">30</span>]);</code></pre></div>
+<p>If you use an unsigned type, <a href="struct.Dinic.html#method.get_excess" title="method dinic::Dinic::get_excess"><code>get_excess</code></a> will surely overflow because the
+excess of the source is almost always negative.</p>
+
+<div class="example-wrap should_panic"><a href="#" class="tooltip" title="This example panics">ⓘ</a><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+<span class="kw">use </span>dinic::Edge;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::&lt;u32&gt;::new(<span class="number">2</span>); <span class="comment">// Force to use `u32` instead of `i32`.
+</span>dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+dinic.flow(<span class="number">0</span>, <span class="number">1</span>);
+
+dinic.get_excess(); <span class="comment">// panics</span></code></pre></div>
+<h2 id="call-flow-more-than-once"><a class="doc-anchor" href="#call-flow-more-than-once">§</a>Call <code>flow</code> more than once</h2>
+<p>You can call <a href="struct.Dinic.html#method.flow" title="method dinic::Dinic::flow"><code>flow</code></a> more than once. <code>flow(s, t)</code> will augment the flow from <code>s</code>
+to <code>t</code> as much as possible. If <a href="struct.Dinic.html#method.flow" title="method dinic::Dinic::flow"><code>flow</code></a> is called with different <code>s</code> or <code>t</code> from
+the previous ones, it may yield non-zero excess at more than two points.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
+
+<span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::new(<span class="number">3</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <span class="number">10</span>);
+dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
+dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
+
+dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
+<span class="kw">let </span>aug = dinic.flow(<span class="number">1</span>, <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(aug, <span class="number">5</span>);
+<span class="macro">assert_eq!</span>(dinic.get_excess().as_slice(), <span class="kw-2">&amp;</span>[-<span class="number">30</span>, -<span class="number">5</span>, <span class="number">35</span>]);</code></pre></div>
+<h2 id="change-the-capacity-or-the-amount-of-flow-dangerous-operation"><a class="doc-anchor" href="#change-the-capacity-or-the-amount-of-flow-dangerous-operation">§</a>Change the capacity or the amount of flow. (dangerous operation)</h2>
+<p><a href="struct.Dinic.html#method.change_edge" title="method dinic::Dinic::change_edge"><code>change_edge</code></a> changes the capacity and the amount of flow of an edge.
+While it is so dangerous operation (safe variant wanted!), it is sometimes useful, for example,
+when solve a <em>maximum flow problem with lower limit</em>. <a href="struct.Dinic.html#method.change_edge" title="method dinic::Dinic::change_edge">See the API document for detailed
+specs.</a></p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.Dinic.html" title="struct dinic::Dinic">Dinic</a></div><div class="desc docblock-short">A struct to execute Dinic’s algorithm.</div></li><li><div class="item-name"><a class="struct" href="struct.Edge.html" title="struct dinic::Edge">Edge</a></div><div class="desc docblock-short">A summary of the state of an edge, which is returned by <a href="struct.Dinic.html#method.get_edge" title="method dinic::Dinic::get_edge"><code>Dinic::get_edge</code></a>.</div></li><li><div class="item-name"><a class="struct" href="struct.EdgeKey.html" title="struct dinic::EdgeKey">EdgeKey</a></div><div class="desc docblock-short">A key object to query an edge.</div></li></ul><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="trait" href="trait.Value.html" title="trait dinic::Value">Value</a></div><div class="desc docblock-short">An adapter trait of the capacity.</div></li></ul></section></div></main></body></html>

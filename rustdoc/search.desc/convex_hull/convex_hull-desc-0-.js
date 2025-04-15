@@ -1,0 +1,1 @@
+searchState.loadedDescShard("convex_hull", 0, "凸包を求めます。 …\ndet(p1 - p0, p2 - p0) を求めます。\n凸包を求めます。 …\n凸であれば true を返します。\n|p0 - p1| ^ 2 を求めます。")

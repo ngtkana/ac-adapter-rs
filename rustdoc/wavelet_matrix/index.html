@@ -1,0 +1,157 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="ウェーブレット行列"><title>wavelet_matrix - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-46f98efaafac5295.ttf.woff2,FiraSans-Regular-018c141bf0843ffd.woff2,FiraSans-Medium-8f9a781e4970d388.woff2,SourceCodePro-Regular-562dcc5011b6de7d.ttf.woff2,SourceCodePro-Semibold-d899c5a5c4aeb14a.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-76eba96aa4d2e634.css"><link rel="stylesheet" href="../static.files/rustdoc-c5d6553a23f1e5a6.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="wavelet_matrix" data-themes="" data-resource-suffix="" data-rustdoc-version="1.81.0 (eeb90cda1 2024-09-04)" data-channel="1.81.0" data-search-js="search-d234aafac6c221dd.js" data-settings-js="settings-4313503d2e1961c2.js" ><script src="../static.files/storage-118b08c4c78b968e.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-d2fab2bf619172d3.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-df360f571f6edeae.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-422f7d1d52889060.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-2c020d218678b618.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../wavelet_matrix/index.html">wavelet_matrix</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section><ul class="block"><li><a href="#structs">Structs</a></li></ul></section></div></nav><div class="sidebar-resizer"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <a class="mod" href="#">wavelet_matrix</a><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><span class="out-of-band"><a class="src" href="../src/wavelet_matrix/lib.rs.html#1-814">source</a> · <button id="toggle-all-docs" title="collapse all docs">[<span>&#x2212;</span>]</button></span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>ウェーブレット行列</p>
+<p>本体は <a href="struct.WaveletMatrix.html" title="struct wavelet_matrix::WaveletMatrix"><code>WaveletMatrix</code></a> です。</p>
+<h2 id="パフォーマンスについての実験結果"><a class="doc-anchor" href="#パフォーマンスについての実験結果">§</a>パフォーマンスについての実験結果</h2>
+<p>実はちゃんとした対照実験にはなっていませんが、気になったらそのとき
+頑張るということで……（あの？）</p>
+<h3 id="実験-1-sort_by_key-の代わりに-stable_partition_by_key-を自作"><a class="doc-anchor" href="#実験-1-sort_by_key-の代わりに-stable_partition_by_key-を自作">§</a>実験 1: <code>sort_by_key</code> の代わりに <code>stable_partition_by_key</code> を自作</h3>
+<p>僅差ですが、自作のほうが若干速いようなので、そちらを採用しています。</p>
+<ul>
+<li><a href="https://doc.rust-lang.org/1.81.0/std/index.html" title="mod std"><code>std</code></a> の <code>sort_by_key</code> (26 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045</a></li>
+<li>自作 <code>stable_partition_by_key</code> (22 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169045</a></li>
+</ul>
+<h3 id="実験-2-再帰の代わりにスタックを管理するイテレータを自作"><a class="doc-anchor" href="#実験-2-再帰の代わりにスタックを管理するイテレータを自作">§</a>実験 2: 再帰の代わりにスタックを管理するイテレータを自作</h3>
+<p>僅差で自作の方が早かったですが、これはどちらにしてもないと <a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a> の
+実装がつらそうですから、致命的に遅くなければ使うつもりでした。</p>
+<ul>
+<li>AOJ 2674 - Disordered Data Detection
+<ul>
+<li>再帰 (44 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530</a></li>
+<li>スタック (40 ms): <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169694">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6169694</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="このライブラリを使える問題"><a class="doc-anchor" href="#このライブラリを使える問題">§</a>このライブラリを使える問題</h2>
+<ul>
+<li>ECR 22 E - Army Creation
+<ul>
+<li>問題: <a href="http://codeforces.com/contest/813/problem/E">http://codeforces.com/contest/813/problem/E</a></li>
+<li>提出 (1117 ms): <a href="http://codeforces.com/contest/813/submission/141316921">http://codeforces.com/contest/813/submission/141316921</a></li>
+<li>出題日: 2017-06-06</li>
+<li>難易度: そこそこ。</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
+<li>コメント: 様々な解法があるよう。
+<a href="https://blog.hamayanhamayan.com/entry/2017/06/13/103254">こちらのブログ</a>
+に各種手法お名前だけ言及ありです。</li>
+</ul>
+</li>
+<li>yukicoder No.738 - 平らな農地
+<ul>
+<li>問題: <a href="https://yukicoder.me/problems/no/738">https://yukicoder.me/problems/no/738</a></li>
+<li>提出 (895 ms): <a href="https://yukicoder.me/submissions/727730">https://yukicoder.me/submissions/727730</a></li>
+<li>出題日: 2018-09-28</li>
+<li>難易度: そこそこ。</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a>,
+<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a></li>
+<li>コメント: ヒープ４本でも解けてそちらのほうが一般的？
+ウェーブレット行列を使うなら累積和が必要で、ちょっと面倒です。
+（<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">自由度の高いメソッド <code>spans</code> が活躍します。</a>）</li>
+</ul>
+</li>
+<li>yukicoder No.919 - You Are A Project Manager
+<ul>
+<li>問題: <a href="https://yukicoder.me/problems/no/919">https://yukicoder.me/problems/no/919</a></li>
+<li>提出 (256 ms): <a href="https://yukicoder.me/submissions/727758">https://yukicoder.me/submissions/727758</a></li>
+<li>出題日: 2019-10-25</li>
+<li>難易度: そこそこ。</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a>,
+<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans"><code>spans</code></a></li>
+<li>コメント: Mo でもできて、それもそれできれいです。</li>
+</ul>
+</li>
+<li>Library Checker - Range Kth Smallest
+<ul>
+<li>問題: <a href="https://judge.yosupo.jp/problem/range_kth_smallest">https://judge.yosupo.jp/problem/range_kth_smallest</a></li>
+<li>提出 (640 ms): <a href="https://judge.yosupo.jp/submission/72220">https://judge.yosupo.jp/submission/72220</a></li>
+<li>出題日: 2020-02-08</li>
+<li>難易度: 易しめ。</li>
+<li>制約: N, Q ≤ 200,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.quantile" title="method wavelet_matrix::WaveletMatrix::quantile"><code>quantile</code></a></li>
+</ul>
+</li>
+<li>OUPC 2020 D - 仲良しスライム
+<ul>
+<li>問題: <a href="https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D">https://onlinejudge.u-aizu.ac.jp/beta/room.html#OUPC2020/problems/D</a></li>
+<li>提出 (440 ms): <a href="https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171281">https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171281</a></li>
+<li>出題日: 2020-12-12</li>
+<li>難易度: 簡単。</li>
+<li>制約: N ≤ 100,000</li>
+<li>使う構造体: <a href="struct.WaveletMatrix.html#method.quantile" title="method wavelet_matrix::WaveletMatrix::quantile"><code>quantile</code></a>,
+<a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
+<li>他の解法:
+<ul>
+<li>ヒープ４本 (90 ms): <a href="https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242">https://onlinejudge.u-aizu.ac.jp/beta/review.html#OUPC2020/6171242</a></li>
+</ul>
+</li>
+<li>コメント: ヒープ４本のほうが楽です。</li>
+</ul>
+</li>
+<li>AOJ 2674 - Disordered Data Detection
+<ul>
+<li>問題: <a href="https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=2674">https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=2674</a></li>
+<li>提出: <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168530</a></li>
+<li>出題日: 不明</li>
+<li>難易度: 易しめ。</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
+</ul>
+</li>
+<li>AOJ 1549 - Hard Beans
+<ul>
+<li>問題: <a href="https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=1549">https://judge.u-aizu.ac.jp/onlinejudge/description.jsp?id=1549</a></li>
+<li>提出: <a href="https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168616">https://judge.u-aizu.ac.jp/onlinejudge/review.jsp?rid=6168616</a></li>
+<li>出題日: 不明</li>
+<li>難易度: 貼るだけ</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.next_value" title="method wavelet_matrix::WaveletMatrix::next_value"><code>next_value</code></a>, <a href="struct.WaveletMatrix.html#method.prev_value" title="method wavelet_matrix::WaveletMatrix::prev_value"><code>prev_value</code></a></li>
+</ul>
+</li>
+<li>AtCoder 競プロ典型 90 問 017 - Crossing Segments（★7）
+<ul>
+<li>問題: <a href="https://atcoder.jp/contests/typical90/tasks/typical90_q">https://atcoder.jp/contests/typical90/tasks/typical90_q</a></li>
+<li>提出 (549 ms): <a href="https://atcoder.jp/contests/typical90/submissions/28306990">https://atcoder.jp/contests/typical90/submissions/28306990</a></li>
+<li>出題日: 2021-04-20</li>
+<li>難易度: 易しめ</li>
+<li>制約: N, Q ≤ 100,000</li>
+<li>使用するメソッド: <a href="struct.WaveletMatrix.html#method.range_freq" title="method wavelet_matrix::WaveletMatrix::range_freq"><code>range_freq</code></a></li>
+<li>コメント: 想定は余事象を考えて RSQ</li>
+</ul>
+</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><ul class="item-table"><li><div class="item-name"><a class="struct" href="struct.SpanInNode.html" title="struct wavelet_matrix::SpanInNode">SpanInNode</a></div><div class="desc docblock-short"><a href="struct.Spans.html" title="struct wavelet_matrix::Spans"><code>Spans</code></a> のアイテム型です。<a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></li><li><div class="item-name"><a class="struct" href="struct.Spans.html" title="struct wavelet_matrix::Spans">Spans</a></div><div class="desc docblock-short">イテレータです <a href="struct.WaveletMatrix.html#method.spans" title="method wavelet_matrix::WaveletMatrix::spans">詳しくは <code>WaveletMatrix::spans</code> をご覧ください。</a></div></li><li><div class="item-name"><a class="struct" href="struct.StaticBitVec.html" title="struct wavelet_matrix::StaticBitVec">StaticBitVec</a></div><div class="desc docblock-short">累積和のできる静的なビットベクター</div></li><li><div class="item-name"><a class="struct" href="struct.WaveletMatrix.html" title="struct wavelet_matrix::WaveletMatrix">WaveletMatrix</a></div><div class="desc docblock-short">ウェーブレット行列</div></li></ul></section></div></main></body></html>
