@@ -24,9 +24,12 @@ if [ ! -e "docs" ]; then
     mkdir -p "docs"
 fi
 cp contents/* docs/
+if [ ! -e "docs/rustdoc" ]; then
+    mkdir -p "docs/rustdoc"
+fi
 RUSTDOCFLAGS="--html-in-header contents/header.html" \
     cargo doc --workspace --no-deps
-cp -r target/doc/* docs/
+cp -r target/doc/* docs/rustdoc/
 '''
 
 [tasks.clippy]
