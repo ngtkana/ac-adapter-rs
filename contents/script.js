@@ -29,7 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
       title.className = "card-title";
 
       const link = document.createElement("a");
-      link.href = `${crateName}/index.html`;
+      link.href = `rustdoc/${crateName}/index.html`;
 
       // 検索ハイライト
       if (filter && crateName.toLowerCase().includes(filter.toLowerCase())) {
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const deps = document.createElement("p");
         deps.className = "card-text small text-muted";
         deps.innerHTML = `<strong>依存:</strong> ${crateMetadata.dependencies.map(dep =>
-          `<a href="${dep}/index.html">${dep}</a>`).join(', ')}`;
+          `<a href="rustdoc/${dep}/index.html">${dep}</a>`).join(', ')}`;
         cardBody.appendChild(deps);
       }
 
