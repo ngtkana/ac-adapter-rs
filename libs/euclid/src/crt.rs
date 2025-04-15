@@ -60,7 +60,7 @@ mod tests {
                 assert_eq!(
                     i.rem_euclid(l) == x && i.rem_euclid(m) == y,
                     i.rem_euclid(n) == z
-                )
+                );
             });
         } else {
             (0..l * m).for_each(|i| assert!(i.rem_euclid(l) != x || i.rem_euclid(m) != y));

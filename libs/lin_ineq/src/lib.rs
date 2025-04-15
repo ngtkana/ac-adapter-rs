@@ -410,7 +410,7 @@ mod tests {
     #[test]
     fn test_debug() {
         fn debug(x: Interval<i64>) -> String {
-            format!("{:?}", x)
+            format!("{x:?}")
         }
         assert_eq!(debug(Interval([0, 2])).as_str(), "Finite(0, 2)");
         assert_eq!(debug(Interval([0, MAX])).as_str(), "Ge(0)");
@@ -446,7 +446,7 @@ mod tests {
             let b = rng.gen_range(-9..=9);
             let sol = solve(a, b);
             for x in -200..=200 {
-                assert_eq!(sol.contains(x), a * x <= b, "x = {}", x);
+                assert_eq!(sol.contains(x), a * x <= b, "x = {x}");
             }
         }
     }
@@ -464,9 +464,8 @@ mod tests {
                 assert_eq!(
                     sol.contains(x),
                     (y_min..=y_max).contains(&(a * x + b)),
-                    "x = {}",
-                    x
-                )
+                    "x = {x}"
+                );
             }
         }
     }

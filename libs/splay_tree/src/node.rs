@@ -114,7 +114,7 @@ impl<O: LazyOps> Node<O> {
         println!(
             "{:?}: parent = {:?},  left = {:?}, right = {:?}, len = {}, rev = {}, value = {:?}, \
              acc = {:?}, lazy = {:?}",
-            self as *const _,
+            std::ptr::from_ref(self),
             self.parent,
             self.left,
             self.right,

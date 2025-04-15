@@ -134,7 +134,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
             assert_eq!(
                 self.coeff_at_two, second,
                 "added a expression with different `second` from the before.",
-            )
+            );
         }
 
         let p = C::negate_if_concave(first);
@@ -166,7 +166,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
                             ..seg
                         });
                     }
-                    self.vec.push(brace)
+                    self.vec.push(brace);
                 }
             }
         }
@@ -213,7 +213,7 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
             assert_eq!(
                 self.coeff_at_two, second,
                 "added a expression with different `second` from the before.",
-            )
+            );
         }
 
         let p = C::negate_if_concave(first);

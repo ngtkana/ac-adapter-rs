@@ -48,9 +48,9 @@ impl fmt::Display for Table {
             {
                 write!(f, "{pre}")?;
                 match align {
-                    Align::Left => write!(f, "{:<width$}", text)?,
-                    Align::Center => write!(f, "{:^width$}", text)?,
-                    Align::Right => write!(f, "{:>width$}", text)?,
+                    Align::Left => write!(f, "{text:<width$}")?,
+                    Align::Center => write!(f, "{text:^width$}")?,
+                    Align::Right => write!(f, "{text:>width$}")?,
                 }
                 write!(f, "{post}")?;
             }

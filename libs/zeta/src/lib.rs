@@ -141,11 +141,11 @@ pub fn radd<T: Copy + Add<Output = T>>(a: &mut [T]) {
 }
 /// (+, -) でメビウス変換
 pub fn add_inv<T: Copy + Sub<Output = T>>(a: &mut [T]) {
-    zeta(a, |x, y| y - x)
+    zeta(a, |x, y| y - x);
 }
 /// 反転束において (+, -) でメビウス変換
 pub fn add_rinv<T: Copy + Sub<Output = T>>(a: &mut [T]) {
-    rzeta(a, |x, y| y - x)
+    rzeta(a, |x, y| y - x);
 }
 /// max でゼータ変換
 pub fn max<T: Copy + Ord>(a: &mut [T]) {

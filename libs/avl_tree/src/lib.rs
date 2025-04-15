@@ -116,7 +116,7 @@ impl<T> AvlTree<T> {
     pub fn push_back(&mut self, value: T) {
         self.append(&mut Self {
             root: Some(new(value)),
-        })
+        });
     }
 
     /// 列の先頭に要素を追加します。

@@ -130,10 +130,7 @@ impl UfChecklist {
         let Range { mut start, end } = open(range, n);
         assert!(
             start <= end && end <= n,
-            "範囲外です。start = {}, end = {}, n = {}",
-            start,
-            end,
-            n
+            "範囲外です。start = {start}, end = {end}, n = {n}"
         );
         start = __next_unckecked_cell(self, start);
         Iter {
@@ -173,7 +170,7 @@ impl UfChecklist {
     /// ```
     pub fn lower_bound(&self, i: usize) -> Option<usize> {
         let n = self.rightmost.len() - 1;
-        assert!(i < n, "範囲外です。 i = {}, n = {}", i, n);
+        assert!(i < n, "範囲外です。 i = {i}, n = {n}");
         let i = __next_unckecked_cell(self, i);
         if i == self.rightmost.len() - 1 {
             None
@@ -211,7 +208,7 @@ impl UfChecklist {
     /// ```
     pub fn is_checked(&self, i: usize) -> bool {
         let n = self.rightmost.len() - 1;
-        assert!(i < n, "範囲外です。 i = {}, n = {}", i, n);
+        assert!(i < n, "範囲外です。 i = {i}, n = {n}");
         self.rightmost[self.uf.find(i)] != i
     }
 
@@ -250,7 +247,7 @@ impl UfChecklist {
     /// ```
     pub fn check(&mut self, i: usize) -> bool {
         let n = self.rightmost.len() - 1;
-        assert!(i < n, "範囲外です。 i = {}, n = {}", i, n);
+        assert!(i < n, "範囲外です。 i = {i}, n = {n}");
         if self.rightmost[self.uf.find(i)] == i {
             let next = __next_unckecked_cell(self, i + 1);
             self.uf.union(i, next);

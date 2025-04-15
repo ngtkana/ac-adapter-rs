@@ -75,7 +75,7 @@ mod tests {
                 .map(|c| c as char)
                 .take(n)
                 .collect::<String>();
-            println!("s = {}", s);
+            println!("s = {s}");
 
             let expected = z_brute(s.as_bytes());
             let result = z_algo(s.as_bytes());

@@ -151,7 +151,7 @@ mod tests {
                 .map(|c| c as char)
                 .take(n)
                 .collect::<String>();
-            println!("s = {}", s);
+            println!("s = {s}");
 
             let expected = sa_brute(s.as_bytes());
             let result = suffix_array(s.as_bytes());

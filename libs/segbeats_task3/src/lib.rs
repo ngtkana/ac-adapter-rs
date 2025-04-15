@@ -63,17 +63,17 @@ impl<T: Elm> Segbeats<T> {
 
     pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<ChangeMin<T>>(range, x)
+        self.dfs::<ChangeMin<T>>(range, x);
     }
 
     pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<ChangeMax<T>>(range, x)
+        self.dfs::<ChangeMax<T>>(range, x);
     }
 
     pub fn range_add(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
-        self.dfs::<RangeAdd<T>>(range, x)
+        self.dfs::<RangeAdd<T>>(range, x);
     }
 
     pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {
@@ -241,9 +241,9 @@ impl<T: Elm> Dfs for RangeAdd<T> {
 
     fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
         if x == T::zero() {
-            node.add(x, 0)
+            node.add(x, 0);
         } else {
-            node.add(x, 1)
+            node.add(x, 1);
         }
     }
 

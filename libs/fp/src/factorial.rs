@@ -188,7 +188,7 @@ impl<const P: u64> Index<usize> for Factorial<P> {
 mod tests {
     use super::*;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
 
     #[test]
     fn test_factorial() {
@@ -204,8 +204,8 @@ mod tests {
         let fact = Factorial::<P>::new(10);
         assert_eq!(fact.inv_fact(0).value(), 1);
         assert_eq!(fact.inv_fact(1).value(), 1);
-        assert_eq!(fact.inv_fact(2).value(), 499122177);
-        assert_eq!(fact.inv_fact(3).value(), 166374059);
+        assert_eq!(fact.inv_fact(2).value(), 499_122_177);
+        assert_eq!(fact.inv_fact(3).value(), 166_374_059);
     }
 
     #[test]

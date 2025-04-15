@@ -387,7 +387,7 @@ where
                         cap != T::zero() && !std::mem::replace(&mut visited[to], true)
                     })
                     .map(|__ResidualEdge { to, .. }| to),
-            )
+            );
         }
         visited
     }
@@ -677,9 +677,7 @@ where
         );
         assert!(
             T::zero() <= new_flow && new_flow <= new_cap,
-            "Called `Dinic::change_edge` by new_flow = {:?}, new_cap = {:?}",
-            new_flow,
-            new_cap
+            "Called `Dinic::change_edge` by new_flow = {new_flow:?}, new_cap = {new_cap:?}"
         );
         let __EdgeIndexer { from, index } = self.pos[edge_key];
         let __ResidualEdge { to, rev, cap } = &mut self.res[from][index];
@@ -718,8 +716,7 @@ impl<T: Debug> Debug for Edge<T> {
         write!(
             w,
             // \x1b[1m: bold, \1b[m: cancel
-            "{}->{}(\x1b[01m{:?}\x1b[m/\x1b[01m{:?}\x1b[m)",
-            from, to, flow, cap,
+            "{from}->{to}(\x1b[01m{flow:?}\x1b[m/\x1b[01m{cap:?}\x1b[m)",
         )
     }
 }
@@ -909,9 +906,9 @@ mod tests {
 
         // print
         println!("Validating dinic..");
-        println!("flow = {}", flow);
-        println!("min_cut = {:?}", min_cut);
-        println!("s = {}, t = {}", s, t);
+        println!("flow = {flow}");
+        println!("min_cut = {min_cut:?}");
+        println!("s = {s}, t = {t}");
         println!();
 
         // cut is feasible
@@ -995,7 +992,7 @@ mod tests {
                 .map(|(from, to, cap)| dinic.add_edge(from, to, cap))
                 .collect::<Vec<_>>();
             let mut cnt = dinic.flow(s, t);
-            println!("Initial flow = {}", cnt);
+            println!("Initial flow = {cnt}");
             validate_konig(n, cnt, &dinic, &edge_keys);
 
             for _ in 0..change_edge_count {
@@ -1008,7 +1005,7 @@ mod tests {
                     ..
                 } = dinic.get_edge(edge_key);
                 if cap == 1 {
-                    println!("Forbid ({}, {})", from, to);
+                    println!("Forbid ({from}, {to})");
                     // Forbid this match.
                     dinic.change_edge(edge_key, 0, 0);
                     if flow == 1 {
@@ -1017,7 +1014,7 @@ mod tests {
                         cnt -= 1;
                     }
                 } else if cap == 0 {
-                    println!("Remove the ban of ({}, {})", from, to);
+                    println!("Remove the ban of ({from}, {to})");
                     // Remove the ban of this edge.
                     dinic.change_edge(edge_key, 1, 0);
                 }
@@ -1037,7 +1034,7 @@ mod tests {
             .iter()
             .enumerate()
             .for_each(|(i, v)| println!("{} {:?}", i, &v));
-        println!("n = {}, cnt = {}", n, cnt);
+        println!("n = {n}, cnt = {cnt}");
         let edges = edge_keys
             .iter()
             .map(|&edge_key| dinic.get_edge(edge_key))
@@ -1075,7 +1072,7 @@ mod tests {
             max_stable_set_size, &max_stable_set
         );
         for &(from, to) in &edges {
-            assert!(!max_stable_set[from] || !max_stable_set[to])
+            assert!(!max_stable_set[from] || !max_stable_set[to]);
         }
         assert_eq!(max_stable_set_size, 2 * n - cnt as usize);
 

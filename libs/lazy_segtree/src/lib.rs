@@ -199,7 +199,7 @@ impl<O: Op> LazySegtree<O> {
         self.values[i] = O::op(
             &O::apply(&self.operators[i << 1], &self.values[i << 1]),
             &O::apply(&self.operators[i << 1 | 1], &self.values[i << 1 | 1]),
-        )
+        );
     }
 }
 
@@ -235,7 +235,7 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
 
-    const P: u64 = 998244353;
+    const P: u64 = 998_244_353;
 
     #[derive(Debug, Clone, Copy, PartialEq)]
     struct Affine {

@@ -601,10 +601,10 @@ where
     pub fn balance_left(&mut self, k: usize) {
         assert!(k <= self.len());
         while self.left_len() < k {
-            self.move_left()
+            self.move_left();
         }
         while self.left_len() > k {
-            self.move_right()
+            self.move_right();
         }
     }
 
@@ -634,10 +634,10 @@ where
     pub fn balance_right(&mut self, k: usize) {
         assert!(k <= self.len());
         while self.right_len() < k {
-            self.move_right()
+            self.move_right();
         }
         while self.right_len() > k {
-            self.move_left()
+            self.move_left();
         }
     }
 
