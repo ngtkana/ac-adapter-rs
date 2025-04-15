@@ -4,8 +4,10 @@
 //! を実装していません。なぜなら空区間を表す状態が一意的ではないからです。
 //!
 //! 関数とのやり取りは、[`Interval`] 型を使います。これは `[T; 2]` の透明なラッパーです。
+//!
 //! - [`Interval`] 型は [`Mul`],[`Product`] を実装しており、これは [`Interval::intersection`] を呼びだします。
 //! - [`full()`](Interval::full), [`contains()`](Interval::contains)
+//!
 //! といった便利なメソッドがあります。
 //!
 //! 一次不等式を解く関数には次のものがあります。
@@ -132,10 +134,12 @@ pub fn solve_squeeze<T: Signed>(a: T, b: T, y: Interval<T>) -> Interval<T> {
 ///
 /// 空区間のとき、中身は `l > r` を満たすなかでどれを取っているのかは
 /// 保証されていません。それに関連して、
+/// 
 /// - [`PartialEq`], [`Hash`] を実装していません。
 /// - [`empty()`](Self::empty) の戻り値は必ず `[MAX, MIN]`（以下、標準形と呼びます。） です。
 /// - [`normalize()`](Self::normalize) を使うと空区間はかならず標準形です。
 /// - [`intersection()`](Self::intersection) により生じる空区間は標準形とは限りません。
+/// 
 /// と同じ形になります。
 ///
 ///

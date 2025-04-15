@@ -12,6 +12,7 @@ use super::SieveBase;
 ///
 /// - Construction: Θ ( n / lg lg n )
 /// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than
+///
 /// n.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sieve {

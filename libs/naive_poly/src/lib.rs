@@ -30,7 +30,7 @@ where
     T: Copy + Sum<T> + Mul<Output = T> + AddAssign,
 {
     if a.is_empty() || b.is_empty() {
-        return vec![zero(); 0];
+        return vec![];
     }
     let mut c = vec![zero(); a.len() + b.len() - 1];
     for (i, &ai) in a.iter().enumerate() {
@@ -92,7 +92,7 @@ where
 {
     assert!(!b.is_empty() && *b.last().unwrap() != zero::<T>());
     if a.len() < b.len() {
-        return vec![zero(); 0];
+        return vec![];
     }
     let mut c = vec![zero(); a.len() + 1 - b.len()];
     for i in (0..c.len()).rev() {

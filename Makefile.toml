@@ -40,6 +40,7 @@ args = [
   "--all-targets",
   "--",
   "-Dwarnings",
+  "-Aunstable_name_collisions",
   "-Wclippy::pedantic",
   "-Aclippy::cast-possible-truncation",
   "-Aclippy::cast-possible-wrap",
@@ -57,6 +58,8 @@ args = [
   "-Aclippy::similar-names",
   "-Aclippy::uninlined-format-args",
   "-Aclippy::unreadable_literal",
+  "-Aclippy::cast_lossless",
+  "-Aclippy::legacy_numeric_constants",
 ]
 
 [tasks.pedantics]

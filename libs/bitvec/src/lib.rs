@@ -270,12 +270,12 @@ impl<'a> IntoIterator for &'a BitVec {
 }
 impl Debug for BitVec {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.to_string())
+        write!(f, "{}", self.format('1', '0'))
     }
 }
-impl ToString for BitVec {
-    fn to_string(&self) -> String {
-        self.format('1', '0')
+impl std::fmt::Display for BitVec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.format('1', '0'))
     }
 }
 
