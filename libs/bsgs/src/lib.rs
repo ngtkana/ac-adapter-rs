@@ -124,6 +124,7 @@ where
     }
 }
 
+#[allow(clippy::missing_fields_in_debug)]
 impl<T: Debug, Mul> Debug for Bsgs<T, Mul> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
         f.debug_struct("Bsgs")
