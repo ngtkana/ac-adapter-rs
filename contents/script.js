@@ -27,8 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     searchIndex = window.searchIndex;
 
     // クレートごとにアイテムをマッピング
-    Object.keys(searchIndex).forEach(crateName => {
-      const crateData = searchIndex[crateName];
+    searchIndex.forEach((crateData, crateName) => {
       if (!itemsByCrate[crateName]) {
         itemsByCrate[crateName] = [];
       }
