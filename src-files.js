@@ -1,4 +1,4 @@
-var sourcesIndex = JSON.parse('{\
+var srcIndex = JSON.parse('{\
 "avl_tree":["",[],["lib.rs"]],\
 "binary":["",[],["lib.rs"]],\
 "bitvec":["",[],["lib.rs"]],\
@@ -63,4 +63,4 @@ var sourcesIndex = JSON.parse('{\
 "z_algo":["",[],["lib.rs"]],\
 "zeta":["",[],["lib.rs"]]\
 }');
-createSourceSidebar();
+createSrcSidebar();
