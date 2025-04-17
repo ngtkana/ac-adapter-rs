@@ -56,8 +56,6 @@
 use std::borrow::Borrow;
 use std::collections::BTreeSet;
 use std::fmt::Debug;
-use std::i64::MAX;
-use std::i64::MIN;
 use std::marker::PhantomData;
 use std::ops::Add;
 use std::ops::Mul;
@@ -151,7 +149,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
 
         while let Some(seg) = self.vec.pop() {
             let Min(x) = seg.min;
-            if x == MIN || line.eval(x) < seg.line.eval(x) {
+            if x == i64::MIN || line.eval(x) < seg.line.eval(x) {
                 self.vec.push(seg);
                 break;
             }
@@ -170,11 +168,11 @@ impl<C: ConvexOrConcave> VecCht<C> {
                 }
             }
         }
-        let min = Min(self.vec.last().map_or(MIN, |seg| seg.max.0));
+        let min = Min(self.vec.last().map_or(i64::MIN, |seg| seg.max.0));
         self.vec.push(Segment {
             line,
             min,
-            max: Max(MAX),
+            max: Max(i64::MAX),
         });
     }
 }
@@ -221,8 +219,8 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
         let line = Line { p, q };
         if let Some(seg) = self.set.range(p..).next() {
             let Min(x) = seg.min;
-            if x == MIN && seg.line.p == p && seg.line.q <= q
-                || x != MIN && line.eval(x) <= seg.line.eval(x)
+            if x == i64::MIN && seg.line.p == p && seg.line.q <= q
+                || x != i64::MIN && line.eval(x) <= seg.line.eval(x)
             {
                 return;
             }
@@ -232,14 +230,14 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
 
         while let Some(&seg) = self.set.range(..p).next_back() {
             let Min(x) = seg.min;
-            if x == MIN || line.eval(x) < seg.line.eval(x) {
+            if x == i64::MIN || line.eval(x) < seg.line.eval(x) {
                 break;
             }
             self.set.remove(&seg);
         }
         while let Some(&seg) = self.set.range(p..).next() {
             let Max(x) = seg.max;
-            if x == MAX || line.eval(x) < seg.line.eval(x) {
+            if x == i64::MAX || line.eval(x) < seg.line.eval(x) {
                 break;
             }
             self.set.remove(&seg);
@@ -274,8 +272,8 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
                 }
             };
         }
-        let min = Min(self.set.range(..p).next_back().map_or(MIN, |seg| seg.max.0));
-        let max = Max(self.set.range(p..).next().map_or(MAX, |seg| seg.min.0));
+        let min = Min(self.set.range(..p).next_back().map_or(i64::MIN, |seg| seg.max.0));
+        let max = Max(self.set.range(p..).next().map_or(i64::MAX, |seg| seg.min.0));
         if min.0 < max.0 {
             self.set.insert(Segment { line, min, max });
         }

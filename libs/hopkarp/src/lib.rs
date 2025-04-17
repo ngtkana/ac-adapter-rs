@@ -71,10 +71,9 @@ fn construct_minimum_cut(
     dist: &[u32],
     backward: &[Option<usize>],
 ) -> (Box<[bool]>, Box<[bool]>) {
-    use std::u32::MAX;
     let left = dist
         .iter()
-        .map(|&x| x != MAX)
+        .map(|&x| x != u32::MAX)
         .collect::<Vec<_>>()
         .into_boxed_slice();
     let mut right = vec![false; backward.len()].into_boxed_slice();
@@ -126,8 +125,7 @@ fn dfs(
 }
 
 fn bfs(graph: &[Vec<usize>], forward: &[Option<usize>], backward: &[Option<usize>]) -> Vec<u32> {
-    use std::u32::MAX;
-    let mut dist = vec![MAX; forward.len()];
+    let mut dist = vec![u32::MAX; forward.len()];
     let mut queue = forward
         .iter()
         .enumerate()
@@ -138,7 +136,7 @@ fn bfs(graph: &[Vec<usize>], forward: &[Option<usize>], backward: &[Option<usize
     while let Some(x) = queue.pop_front() {
         for &y in &graph[x] {
             if let Some(z) = backward[y] {
-                if dist[z] == MAX {
+                if dist[z] == u32::MAX {
                     dist[z] = dist[x] + 1;
                     queue.push_back(z);
                 }

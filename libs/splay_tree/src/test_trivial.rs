@@ -82,11 +82,11 @@ fn test_partial_cmp() {
         Some(Ordering::Greater)
     );
     assert_eq!(
-        from_slice(&[0.0, 2.0]).partial_cmp(&from_slice(&[0.0, std::f64::NAN])),
+        from_slice(&[0.0, 2.0]).partial_cmp(&from_slice(&[0.0, f64::NAN])),
         None,
     );
     assert_eq!(
-        from_slice(&[0.0, 1.0]).partial_cmp(&from_slice(&[2.0, std::f64::NAN])),
+        from_slice(&[0.0, 1.0]).partial_cmp(&from_slice(&[2.0, f64::NAN])),
         Some(Ordering::Less)
     );
 }

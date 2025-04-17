@@ -26,7 +26,7 @@
 //! ```
 //! # use {
 //! #     lin_ineq::solve,
-//! #     std::i64::MIN,
+//! #     i64::MIN,
 //! # };
 //! let sol = solve(2, 10); // 2x <= 10
 //! assert_eq!(sol.0, [MIN, 5]); // x <= 5
@@ -37,7 +37,7 @@
 //! ```
 //! # use {
 //! #     lin_ineq::{solve_squeeze, Interval},
-//! #     std::i64::MIN,
+//! #     i64::MIN,
 //! # };
 //! let sol = solve_squeeze(3, 1, Interval([-5, 5])); // -5 <= 3x + 1 <= 5
 //! assert_eq!(sol.0, [-2, 1]); // -2 <= x <= 1
@@ -63,8 +63,8 @@ pub trait Signed: Sized + Copy + Ord + Neg<Output = Self> + Sub<Output = Self> {
 macro_rules! impl_signed {
     ($($T:ident),*) => {$(
         impl Signed for $T {
-            const MIN: Self = std::$T::MIN;
-            const MAX: Self = std::$T::MAX;
+            const MIN: Self = $T::MIN;
+            const MAX: Self = $T::MAX;
             const ZERO: Self = 0;
             fn div_euclid(self, rhs: Self) -> Self {
                 self.div_euclid(rhs)
@@ -346,8 +346,6 @@ mod tests {
     use rand::prelude::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
-    use std::i64::MAX;
-    use std::i64::MIN;
     use std::iter::repeat_with;
 
     ////////////////////////////////////////////////////////////////////////////////
@@ -387,12 +385,12 @@ mod tests {
 
     #[test]
     fn test_full() {
-        assert_eq!(Interval::<i64>::full().0, [MIN, MAX]);
+        assert_eq!(Interval::<i64>::full().0, [i64::MIN, i64::MAX]);
     }
 
     #[test]
     fn test_empty() {
-        assert_eq!(Interval::<i64>::empty().0, [MAX, MIN]);
+        assert_eq!(Interval::<i64>::empty().0, [i64::MAX, i64::MIN]);
     }
 
     #[test]
@@ -417,10 +415,10 @@ mod tests {
             format!("{x:?}")
         }
         assert_eq!(debug(Interval([0, 2])).as_str(), "Finite(0, 2)");
-        assert_eq!(debug(Interval([0, MAX])).as_str(), "Ge(0)");
-        assert_eq!(debug(Interval([MIN, 2])).as_str(), "Le(2)");
-        assert_eq!(debug(Interval([MIN, MAX])).as_str(), "Full");
-        assert_eq!(debug(Interval([MAX, MIN])).as_str(), "Empty");
+        assert_eq!(debug(Interval([0, i64::MAX])).as_str(), "Ge(0)");
+        assert_eq!(debug(Interval([i64::MIN, 2])).as_str(), "Le(2)");
+        assert_eq!(debug(Interval([i64::MIN, i64::MAX])).as_str(), "Full");
+        assert_eq!(debug(Interval([i64::MAX, i64::MIN])).as_str(), "Empty");
         assert_eq!(debug(Interval([2, 0])).as_str(), "Empty");
     }
 

@@ -3,13 +3,12 @@
 //! [構造体 `PartiallyPersistentUnionFind` のドキュメントをご覧ください。](PartiallyPersistentUnionFind)
 
 use std::mem::swap;
-use std::usize::MAX;
 
 /// 部分永続化された、素集合データ構造です。
 ///
 /// # 時刻について
 ///
-/// `MAX` といえば `std::usize:MAX` のことであるとします。
+/// `MAX` といえば `usize:MAX` のことであるとします。
 ///
 /// * 入力できるのは `1..=MAX`。
 /// * 過去クエリで時刻 t を指定すると、t
@@ -64,18 +63,17 @@ use std::usize::MAX;
 ///
 /// ```
 /// use partially_persistent_union_find::PartiallyPersistentUnionFind;
-/// use std::usize::MAX;
 ///
 /// let mut uf = PartiallyPersistentUnionFind::new(5);
 ///
 /// // MAX にイベントをセット
-/// uf.union(0, 1, MAX);
+/// uf.union(0, 1, usize::MAX);
 ///
 /// // 適用前を参照
-/// assert!(!uf.same(0, 1, MAX - 1));
+/// assert!(!uf.same(0, 1, usize::MAX - 1));
 ///
 /// // 適用後を参照
-/// assert!(uf.same(0, 1, MAX));
+/// assert!(uf.same(0, 1, usize::MAX));
 /// ```
 ///
 ///
@@ -98,7 +96,7 @@ impl PartiallyPersistentUnionFind {
     ///
     /// # 制約
     ///
-    /// `n < std::isize::MAX`
+    /// `n < isize::MAX`
     ///
     /// # Examples
     ///
@@ -107,10 +105,10 @@ impl PartiallyPersistentUnionFind {
     /// let uf = PartiallyPersistentUnionFind::new(5);
     /// ```
     pub fn new(n: usize) -> Self {
-        assert!(n < std::isize::MAX as usize);
+        assert!(n < isize::MAX as usize);
         Self {
             parent: vec![-1; n],
-            time_stamp: vec![MAX; n],
+            time_stamp: vec![usize::MAX; n],
             size_history: vec![Vec::new(); n],
             last_stamp: 0,
         }
@@ -257,7 +255,6 @@ mod tests {
     use rand::Rng;
     use rand::SeedableRng;
     use randtools::DistinctTwo;
-    use std::usize::MAX;
 
     #[test]
     fn test_rand() {
@@ -308,8 +305,8 @@ mod tests {
 
     fn time_brute(uf: &PartiallyPersistentUnionFind, u: usize, v: usize) -> Option<usize> {
         let mut left = 0;
-        let mut right = MAX;
-        if uf.find(u, MAX) != uf.find(v, MAX) {
+        let mut right = usize::MAX;
+        if uf.find(u, usize::MAX) != uf.find(v, usize::MAX) {
             return None;
         }
         if u == v {

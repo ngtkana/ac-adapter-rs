@@ -231,17 +231,17 @@ mod tests {
 
     #[allow(clippy::unused_unit)]
     #[test_case(Add::add, 0, add, Dir::Sub)]
-    #[test_case(cmp::max, std::u32::MIN, max, Dir::Sub)]
-    #[test_case(cmp::min, std::u32::MAX, min, Dir::Sub)]
+    #[test_case(cmp::max, u32::MIN, max, Dir::Sub)]
+    #[test_case(cmp::min, u32::MAX, min, Dir::Sub)]
     #[test_case(BitXor::bitxor, 0, bitxor, Dir::Sub)]
     #[test_case(BitOr::bitor, 0, bitor, Dir::Sub)]
-    #[test_case(BitAnd::bitand, std::u32::MAX, bitand, Dir::Sub)]
+    #[test_case(BitAnd::bitand, u32::MAX, bitand, Dir::Sub)]
     #[test_case(Add::add, 0, radd, Dir::Super)]
-    #[test_case(cmp::max, std::u32::MIN, rmax, Dir::Super)]
-    #[test_case(cmp::min, std::u32::MAX, rmin, Dir::Super)]
+    #[test_case(cmp::max, u32::MIN, rmax, Dir::Super)]
+    #[test_case(cmp::min, u32::MAX, rmin, Dir::Super)]
     #[test_case(BitXor::bitxor, 0, rbitxor, Dir::Super)]
     #[test_case(BitOr::bitor, 0, rbitor, Dir::Super)]
-    #[test_case(BitAnd::bitand, std::u32::MAX, rbitand, Dir::Super)]
+    #[test_case(BitAnd::bitand, u32::MAX, rbitand, Dir::Super)]
     fn test_zeta_ops(f: fn(u32, u32) -> u32, e: u32, g: fn(&mut [u32]), dir: Dir) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -272,11 +272,11 @@ mod tests {
 
     #[allow(clippy::unused_unit)]
     #[test_case(Add::add, 0)]
-    #[test_case(cmp::max, std::u32::MIN)]
-    #[test_case(cmp::min, std::u32::MAX)]
+    #[test_case(cmp::max, u32::MIN)]
+    #[test_case(cmp::min, u32::MAX)]
     #[test_case(BitXor::bitxor, 0)]
     #[test_case(BitOr::bitor, 0)]
-    #[test_case(BitAnd::bitand, std::u32::MAX)]
+    #[test_case(BitAnd::bitand, u32::MAX)]
     fn test_aggr(f: fn(u32, u32) -> u32, e: u32) {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {

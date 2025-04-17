@@ -59,15 +59,15 @@ pub fn construct_is_prime_table(n: usize) -> Vec<bool> {
 }
 
 fn construct_lpd_table(n: usize) -> Vec<usize> {
-    let mut lpd = vec![std::usize::MAX; n];
+    let mut lpd = vec![usize::MAX; n];
     for p in 2..n {
-        if lpd[p] != std::usize::MAX {
+        if lpd[p] != usize::MAX {
             continue;
         }
         lpd[p] = p;
         let mut i = p * p;
         while i < n {
-            if lpd[i] == std::usize::MAX {
+            if lpd[i] == usize::MAX {
                 lpd[i] = p;
             }
             i += p;
@@ -93,11 +93,11 @@ mod tests {
     }
 
     #[test_case(0 => Vec::<usize>::new())]
-    #[test_case(1 => vec![std::usize::MAX])]
-    #[test_case(2 => vec![std::usize::MAX, std::usize::MAX])]
-    #[test_case(3 => vec![std::usize::MAX, std::usize::MAX, 2])]
-    #[test_case(4 => vec![std::usize::MAX, std::usize::MAX, 2, 3])]
-    #[test_case(5 => vec![std::usize::MAX, std::usize::MAX, 2, 3, 2])]
+    #[test_case(1 => vec![usize::MAX])]
+    #[test_case(2 => vec![usize::MAX, usize::MAX])]
+    #[test_case(3 => vec![usize::MAX, usize::MAX, 2])]
+    #[test_case(4 => vec![usize::MAX, usize::MAX, 2, 3])]
+    #[test_case(5 => vec![usize::MAX, usize::MAX, 2, 3, 2])]
     fn test_construct_lpd_table(n: usize) -> Vec<usize> {
         construct_lpd_table(n)
     }

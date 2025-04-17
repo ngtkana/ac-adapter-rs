@@ -396,10 +396,10 @@ macro_rules! impl_elm {
         $(
             impl Elm for $ty {
                 fn min_value() -> Self {
-                    std::$ty::MIN
+                    $ty::MIN
                 }
                 fn max_value() -> Self {
-                    std::$ty::MAX
+                    $ty::MAX
                 }
                 fn zero() -> Self {
                     0

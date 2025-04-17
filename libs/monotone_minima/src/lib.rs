@@ -251,8 +251,7 @@ mod tests {
     }
 
     fn minplus_convolution_brute(a: &[i32], b: &[i32]) -> Vec<i32> {
-        use std::i32::MAX;
-        let mut c = vec![MAX; a.len() + b.len() - 1];
+        let mut c = vec![i32::MAX; a.len() + b.len() - 1];
         for (i, &x) in a.iter().enumerate() {
             for (j, &y) in b.iter().enumerate() {
                 c[i + j] = c[i + j].min(x + y);
@@ -288,8 +287,7 @@ mod tests {
     }
 
     fn maxplus_convolution_brute(a: &[i32], b: &[i32]) -> Vec<i32> {
-        use std::i32::MIN;
-        let mut c = vec![MIN; a.len() + b.len() - 1];
+        let mut c = vec![i32::MIN; a.len() + b.len() - 1];
         for (i, &x) in a.iter().enumerate() {
             for (j, &y) in b.iter().enumerate() {
                 c[i + j] = c[i + j].max(x + y);

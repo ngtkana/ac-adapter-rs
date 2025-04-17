@@ -24,7 +24,7 @@ use std::ops::SubAssign;
 pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let h = cost_matrix.len();
     let w = cost_matrix[0].len();
-    let mut m = vec![std::usize::MAX; w + 1];
+    let mut m = vec![usize::MAX; w + 1];
 
     // initialize a feasible potential
     let mut all_min = T::infinity();
@@ -54,7 +54,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
             m[w] = s;
             let mut x0 = s;
             let mut y0 = w;
-            while x0 != std::usize::MAX {
+            while x0 != usize::MAX {
                 // find y0
                 let (swap, delta) = {
                     let mut swap = w;
@@ -99,17 +99,17 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     m.pop();
 
     let backward = m;
-    let mut forward = vec![std::usize::MAX; h].into_boxed_slice();
+    let mut forward = vec![usize::MAX; h].into_boxed_slice();
     let mut value = T::zero();
     for (y, &x) in backward.iter().enumerate() {
-        if x != std::usize::MAX {
+        if x != usize::MAX {
             forward[x] = y;
             value += cost_matrix[x][y];
         }
     }
     let backward = backward
         .into_iter()
-        .map(|x| if x == std::usize::MAX { None } else { Some(x) })
+        .map(|x| if x == usize::MAX { None } else { Some(x) })
         .collect::<Vec<_>>()
         .into_boxed_slice();
     HungarianResult {
@@ -153,7 +153,7 @@ macro_rules! impl_value_int {
                 0
             }
             fn infinity() -> Self {
-                std::$T::MAX
+                $T::MAX
             }
         }
     )*}
@@ -170,7 +170,7 @@ macro_rules! impl_value_float {
                 0.
             }
             fn infinity() -> Self {
-                std::$T::INFINITY
+                $T::INFINITY
             }
         }
     )*}
