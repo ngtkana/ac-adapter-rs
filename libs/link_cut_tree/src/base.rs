@@ -229,10 +229,7 @@ struct Node<O: OpBase> {
 
 unsafe fn is_splay_root<O: OpBase>(x: *mut Node<O>) -> bool {
     let x = &*x;
-    let p = match x.parent.as_ref() {
-        Some(p) => p,
-        None => return true,
-    };
+    let Some(p) = x.parent.as_ref() else { return true };
     !std::ptr::eq(x, p.left) && !std::ptr::eq(x, p.right)
 }
 

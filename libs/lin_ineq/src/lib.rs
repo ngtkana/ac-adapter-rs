@@ -58,6 +58,7 @@ pub trait Signed: Sized + Copy + Ord + Neg<Output = Self> + Sub<Output = Self> {
     const MIN: Self;
     const MAX: Self;
     const ZERO: Self;
+    #[must_use]
     fn div_euclid(self, rhs: Self) -> Self;
 }
 macro_rules! impl_signed {
@@ -180,6 +181,7 @@ impl<T: Signed> Interval<T> {
     ///     -5, 10
     /// ]);
     /// ```
+    #[must_use]
     pub fn intersection(self, rhs: Self) -> Self {
         Self([self.0[0].max(rhs.0[0]), self.0[1].min(rhs.0[1])])
     }
