@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["solve","solve_squeeze"],"struct":["Interval"],"trait":["Signed"]};
