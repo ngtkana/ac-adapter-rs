@@ -577,6 +577,7 @@ mod tests {
 
                 // select
                 for j in 0..=bs.count_ones() as usize {
+                    #[allow(clippy::maybe_infinite_iter)]
                     let expected = (0..).find(|&i| j <= bitvec.rank(i)).unwrap();
                     assert_eq!(bitvec.select(j), expected);
                 }
@@ -606,6 +607,7 @@ mod tests {
                 // select
                 let count = vec.iter().filter(|&&b| b).count();
                 for j in 0..=count {
+                    #[allow(clippy::maybe_infinite_iter)]
                     let expected = (0..).find(|&i| j <= bitvec.rank(i)).unwrap();
                     assert_eq!(bitvec.select(j), expected);
                 }

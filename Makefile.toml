@@ -46,19 +46,15 @@ args = [
   "-Aclippy::cast-possible-wrap",
   "-Aclippy::cast-precision-loss",
   "-Aclippy::cast-sign-loss",
+  "-Aclippy::cast_lossless",
   "-Aclippy::doc-markdown",
-  "-Aclippy::manual-let-else",
   "-Aclippy::maybe-infinite-iter",
   "-Aclippy::missing-errors-doc",
   "-Aclippy::missing-panics-doc",
   "-Aclippy::module-name-repetitions",
   "-Aclippy::must-use-candidate",
   "-Aclippy::return-self-not-must-use",
-  "-Aclippy::semicolon-if-nothing-returned",
   "-Aclippy::similar-names",
-  "-Aclippy::uninlined-format-args",
-  "-Aclippy::unreadable_literal",
-  "-Aclippy::cast_lossless",
 ]
 
 [tasks.pedantics]
