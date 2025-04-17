@@ -1854,12 +1854,12 @@
 
     <span class="kw">loop </span>{
         <span class="comment">// calculate labels
-        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[std::u32::MAX; res.len()];
+        </span><span class="kw">let </span><span class="kw-2">mut </span>label = <span class="macro">vec!</span>[u32::MAX; res.len()];
         label[s] = <span class="number">0</span>;
         <span class="kw">let </span><span class="kw-2">mut </span>queue = VecDeque::from(<span class="macro">vec!</span>[s]);
         <span class="kw">while let </span><span class="prelude-val">Some</span>(from) = queue.pop_front() {
             <span class="kw">for </span><span class="kw-2">&amp;</span>__ResidualEdge { to, cap, .. } <span class="kw">in </span><span class="kw-2">&amp;</span>res[from] {
-                <span class="kw">if </span>cap == T::zero() || label[to] != std::u32::MAX {
+                <span class="kw">if </span>cap == T::zero() || label[to] != u32::MAX {
                     <span class="kw">continue</span>;
                 }
                 label[to] = label[from] + <span class="number">1</span>;
@@ -1867,7 +1867,7 @@
             }
         }
 
-        <span class="kw">if </span>label[t] == std::u32::MAX {
+        <span class="kw">if </span>label[t] == u32::MAX {
             <span class="comment">// saturated
             </span><span class="kw">return </span>flow;
         }
@@ -1930,7 +1930,7 @@
                 <span class="number">0
             </span>}
             <span class="kw">fn </span>infinity() -&gt; <span class="self">Self </span>{
-                std::<span class="macro-nonterminal">$T::MAX
+                <span class="macro-nonterminal">$T::MAX
             </span>}
         }
     )<span class="kw-2">*</span>}

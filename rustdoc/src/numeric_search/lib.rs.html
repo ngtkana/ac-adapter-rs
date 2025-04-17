@@ -574,16 +574,6 @@
 <a href="#540" id="540">540</a>
 <a href="#541" id="541">541</a>
 <a href="#542" id="542">542</a>
-<a href="#543" id="543">543</a>
-<a href="#544" id="544">544</a>
-<a href="#545" id="545">545</a>
-<a href="#546" id="546">546</a>
-<a href="#547" id="547">547</a>
-<a href="#548" id="548">548</a>
-<a href="#549" id="549">549</a>
-<a href="#550" id="550">550</a>
-<a href="#551" id="551">551</a>
-<a href="#552" id="552">552</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Run classic binary or exponential search on integer or floating point numbers.
 //!
 //! Both classic binary seach and exponential search has their streangth and weakness.
@@ -629,8 +619,8 @@
     </span><span class="kw">fn </span>sqrt(<span class="self">self</span>) -&gt; <span class="self">Self</span>;
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f32 {
-    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= std::f32::INFINITY;
-    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= std::f32::NEG_INFINITY;
+    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= f32::INFINITY;
+    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= f32::NEG_INFINITY;
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
@@ -639,8 +629,8 @@
     }
 }
 <span class="kw">impl </span>Float <span class="kw">for </span>f64 {
-    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= std::f64::INFINITY;
-    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= std::f64::NEG_INFINITY;
+    <span class="kw">const </span>INFINITY: <span class="self">Self </span>= f64::INFINITY;
+    <span class="kw">const </span>NEG_INFINITY: <span class="self">Self </span>= f64::NEG_INFINITY;
     <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1.0</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0.0</span>;
 
@@ -877,8 +867,8 @@
         <span class="kw">impl </span>Signed <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
             <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
             <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
-            <span class="kw">const </span>MIN: <span class="self">Self </span>= std::<span class="macro-nonterminal">$ty::MIN</span>;
-            <span class="kw">const </span>MAX: <span class="self">Self </span>= std::<span class="macro-nonterminal">$ty::MAX</span>;
+            <span class="kw">const </span>MIN: <span class="self">Self </span>= <span class="macro-nonterminal">$ty::MIN</span>;
+            <span class="kw">const </span>MAX: <span class="self">Self </span>= <span class="macro-nonterminal">$ty::MAX</span>;
         }
     )<span class="kw-2">*</span>};
 }
@@ -902,7 +892,7 @@
 /// # use numeric_search::exp_search_signed;
 /// assert_eq!(exp_search_signed(|x| 6 &lt;= x), Some(6));
 /// assert_eq!(exp_search_signed(|_: i32| false), None);
-/// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
+/// assert_eq!(exp_search_signed(|_: i32| true), Some(i32::MIN));
 /// ```
 </span><span class="kw">pub fn </span>exp_search_signed&lt;T: Signed&gt;(<span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(T) -&gt; bool) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
     <span class="kw">let </span><span class="kw-2">mut </span>lower;
@@ -988,11 +978,6 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_exponential_search_f64() {
-        <span class="kw">use </span>std::f64::EPSILON;
-        <span class="kw">use </span>std::f64::INFINITY;
-        <span class="kw">use </span>std::f64::MAX;
-        <span class="kw">use </span>std::f64::MIN_POSITIVE;
-        <span class="kw">use </span>std::f64::NEG_INFINITY;
 
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2000 </span>{
@@ -1011,16 +996,16 @@
             <span class="comment">// Succeeds
             </span>(<span class="number">0.0</span>, <span class="number">0.0</span>),
             (-<span class="number">0.0</span>, <span class="number">0.0</span>),
-            (INFINITY, INFINITY),
-            (NEG_INFINITY, NEG_INFINITY),
-            (EPSILON, EPSILON),
-            (MAX.sqrt(), MAX.sqrt()),
-            (-MAX.sqrt(), -MAX.sqrt()),
-            (MIN_POSITIVE, MIN_POSITIVE),
-            (-MIN_POSITIVE, -MIN_POSITIVE),
+            (f64::INFINITY, f64::INFINITY),
+            (f64::NEG_INFINITY, f64::NEG_INFINITY),
+            (f64::EPSILON, f64::EPSILON),
+            (f64::MAX.sqrt(), f64::MAX.sqrt()),
+            (-f64::MAX.sqrt(), -f64::MAX.sqrt()),
+            (f64::MIN_POSITIVE, f64::MIN_POSITIVE),
+            (-f64::MIN_POSITIVE, -f64::MIN_POSITIVE),
             <span class="comment">// Fails
-            </span>(MAX.sqrt() * <span class="number">1.000_000_000_001</span>, INFINITY),
-            (-MAX.sqrt() * <span class="number">1.000_000_000_001</span>, NEG_INFINITY),
+            </span>(f64::MAX.sqrt() * <span class="number">1.000_000_000_001</span>, f64::INFINITY),
+            (-f64::MAX.sqrt() * <span class="number">1.000_000_000_001</span>, f64::NEG_INFINITY),
         ] {
             <span class="kw">let </span>result = exp_search_float(|x| threshold &lt;= x);
             <span class="macro">assert_eq!</span>(result, expected);
@@ -1029,11 +1014,6 @@
 
     <span class="attr">#[test]
     </span><span class="kw">fn </span>test_exponential_search_f32() {
-        <span class="kw">use </span>std::f32::EPSILON;
-        <span class="kw">use </span>std::f32::INFINITY;
-        <span class="kw">use </span>std::f32::MAX;
-        <span class="kw">use </span>std::f32::MIN_POSITIVE;
-        <span class="kw">use </span>std::f32::NEG_INFINITY;
 
         <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
         <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">2000 </span>{
@@ -1052,16 +1032,16 @@
             <span class="comment">// Succeeds
             </span>(<span class="number">0.0</span>, <span class="number">0.0</span>),
             (-<span class="number">0.0</span>, <span class="number">0.0</span>),
-            (INFINITY, INFINITY),
-            (NEG_INFINITY, NEG_INFINITY),
-            (EPSILON, EPSILON),
-            (MAX.sqrt(), MAX.sqrt()),
-            (-MAX.sqrt(), -MAX.sqrt()),
-            (MIN_POSITIVE, MIN_POSITIVE),
-            (-MIN_POSITIVE, -MIN_POSITIVE),
+            (f32::INFINITY, f32::INFINITY),
+            (f32::NEG_INFINITY, f32::NEG_INFINITY),
+            (f32::EPSILON, f32::EPSILON),
+            (f32::MAX.sqrt(), f32::MAX.sqrt()),
+            (-f32::MAX.sqrt(), -f32::MAX.sqrt()),
+            (f32::MIN_POSITIVE, f32::MIN_POSITIVE),
+            (-f32::MIN_POSITIVE, -f32::MIN_POSITIVE),
             <span class="comment">// Fails
-            </span>(MAX.sqrt() * <span class="number">1.000_001</span>, INFINITY),
-            (-MAX.sqrt() * <span class="number">1.000_001</span>, NEG_INFINITY),
+            </span>(f32::MAX.sqrt() * <span class="number">1.000_001</span>, f32::INFINITY),
+            (-f32::MAX.sqrt() * <span class="number">1.000_001</span>, f32::NEG_INFINITY),
         ] {
             <span class="kw">let </span>result = exp_search_float(|x| threshold &lt;= x);
             <span class="macro">assert_eq!</span>(result, expected);

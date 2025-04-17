@@ -597,10 +597,10 @@
         [
             <span class="self">self</span>.small
                 .peek()
-                .map_or(std::i64::MIN, |<span class="kw-2">&amp;</span>x| x + <span class="self">self</span>.shift_small),
+                .map_or(i64::MIN, |<span class="kw-2">&amp;</span>x| x + <span class="self">self</span>.shift_small),
             <span class="self">self</span>.large
                 .peek()
-                .map_or(std::i64::MAX, |<span class="kw-2">&amp;</span>Reverse(x)| x + <span class="self">self</span>.shift_large),
+                .map_or(i64::MAX, |<span class="kw-2">&amp;</span>Reverse(x)| x + <span class="self">self</span>.shift_large),
         ]
     }
 
@@ -842,13 +842,13 @@
             <span class="kw">let </span>start = <span class="self">self</span>.values.iter().position(|<span class="kw-2">&amp;</span>y| y == min).unwrap();
             <span class="kw">let </span>end = n - <span class="number">1 </span>- <span class="self">self</span>.values.iter().rev().position(|<span class="kw-2">&amp;</span>y| y == min).unwrap();
             [
-                <span class="kw">if </span>start == <span class="number">0 </span>|| <span class="self">self</span>.values[start - <span class="number">1</span>] == std::i64::MAX {
-                    std::i64::MIN
+                <span class="kw">if </span>start == <span class="number">0 </span>|| <span class="self">self</span>.values[start - <span class="number">1</span>] == i64::MAX {
+                    i64::MIN
                 } <span class="kw">else </span>{
                     XMIN + start <span class="kw">as </span>i64
                 },
-                <span class="kw">if </span>end == n - <span class="number">1 </span>|| <span class="self">self</span>.values[end + <span class="number">1</span>] == std::i64::MAX {
-                    std::i64::MAX
+                <span class="kw">if </span>end == n - <span class="number">1 </span>|| <span class="self">self</span>.values[end + <span class="number">1</span>] == i64::MAX {
+                    i64::MAX
                 } <span class="kw">else </span>{
                     XMIN + end <span class="kw">as </span>i64
                 },
@@ -862,14 +862,14 @@
         <span class="kw">fn </span>add_const(<span class="kw-2">&amp;mut </span><span class="self">self</span>, c: i64) {
             <span class="self">self</span>.values
                 .iter_mut()
-                .for_each(|x| <span class="kw-2">*</span>x = <span class="kw">if </span><span class="kw-2">*</span>x == std::i64::MAX { std::i64::MAX } <span class="kw">else </span>{ <span class="kw-2">*</span>x + c });
+                .for_each(|x| <span class="kw-2">*</span>x = <span class="kw">if </span><span class="kw-2">*</span>x == i64::MAX { i64::MAX } <span class="kw">else </span>{ <span class="kw-2">*</span>x + c });
         }
 
         <span class="kw">fn </span>add_fn(<span class="kw-2">&amp;mut </span><span class="self">self</span>, f: <span class="kw">impl </span>Fn(i64) -&gt; i64) {
             <span class="kw">for </span>x <span class="kw">in </span>XMIN..=XMAX {
                 <span class="kw">let </span>i = (x - XMIN) <span class="kw">as </span>usize;
                 <span class="kw">let </span>orig = <span class="self">self</span>.values[i];
-                <span class="self">self</span>.values[i] = <span class="kw">if </span>orig == std::i64::MAX { std::i64::MAX } <span class="kw">else </span>{ orig + f(x) };
+                <span class="self">self</span>.values[i] = <span class="kw">if </span>orig == i64::MAX { i64::MAX } <span class="kw">else </span>{ orig + f(x) };
             }
         }
 
@@ -905,12 +905,12 @@
                     <span class="kw">let </span>n = <span class="self">self</span>.values.len();
                     <span class="self">self</span>.values[n - a..]
                         .iter_mut()
-                        .for_each(|x| <span class="kw-2">*</span>x = std::i64::MAX);
+                        .for_each(|x| <span class="kw-2">*</span>x = i64::MAX);
                 }
                 Ordering::Greater =&gt; {
                     <span class="kw">let </span>a = a <span class="kw">as </span>usize;
                     <span class="self">self</span>.values.rotate_right(a);
-                    <span class="self">self</span>.values[..a].iter_mut().for_each(|x| <span class="kw-2">*</span>x = std::i64::MAX);
+                    <span class="self">self</span>.values[..a].iter_mut().for_each(|x| <span class="kw-2">*</span>x = i64::MAX);
                 }
                 Ordering::Equal =&gt; (),
             }
@@ -923,7 +923,7 @@
                     (((i - b).max(<span class="number">0</span>).min(n) <span class="kw">as </span>usize)..((i - a + <span class="number">1</span>).min(n).max(<span class="number">0</span>) <span class="kw">as </span>usize))
                         .map(|j| <span class="self">self</span>.values[j])
                         .min()
-                        .unwrap_or(std::i64::MAX)
+                        .unwrap_or(i64::MAX)
                 })
                 .collect();
         }
@@ -931,7 +931,7 @@
         <span class="kw">fn </span>get_tilt_minimum(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
             <span class="self">self</span>.values
                 .windows(<span class="number">2</span>)
-                .filter(|v| v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">1</span>] != std::i64::MAX)
+                .filter(|v| v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">1</span>] != i64::MAX)
                 .map(|v| v[<span class="number">1</span>] - v[<span class="number">0</span>])
                 .min()
                 .unwrap()
@@ -940,7 +940,7 @@
         <span class="kw">fn </span>get_tilt_maximum(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i64 {
             <span class="self">self</span>.values
                 .windows(<span class="number">2</span>)
-                .filter(|v| v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">1</span>] != std::i64::MAX)
+                .filter(|v| v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">1</span>] != i64::MAX)
                 .map(|v| v[<span class="number">1</span>] - v[<span class="number">0</span>])
                 .max()
                 .unwrap()
@@ -951,7 +951,7 @@
                 .windows(<span class="number">3</span>)
                 .enumerate()
                 .filter(|(<span class="kw">_</span>, v)| {
-                    v[<span class="number">0</span>] != std::i64::MAX &amp;&amp; v[<span class="number">2</span>] != std::i64::MAX &amp;&amp; v[<span class="number">0</span>] + v[<span class="number">2</span>] &gt; v[<span class="number">1</span>] * <span class="number">2
+                    v[<span class="number">0</span>] != i64::MAX &amp;&amp; v[<span class="number">2</span>] != i64::MAX &amp;&amp; v[<span class="number">0</span>] + v[<span class="number">2</span>] &gt; v[<span class="number">1</span>] * <span class="number">2
                 </span>})
                 .map(|(i, v)| [XMIN + <span class="number">1 </span>+ i <span class="kw">as </span>i64, v[<span class="number">1</span>]])
                 .collect()
