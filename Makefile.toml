@@ -59,7 +59,6 @@ args = [
   "-Aclippy::uninlined-format-args",
   "-Aclippy::unreadable_literal",
   "-Aclippy::cast_lossless",
-  "-Aclippy::legacy_numeric_constants",
 ]
 
 [tasks.pedantics]

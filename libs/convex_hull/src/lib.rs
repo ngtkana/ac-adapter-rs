@@ -78,8 +78,8 @@ pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
     } else {
         let n = a.len();
         let mut d = 0;
-        let mut ans_i = std::usize::MAX;
-        let mut ans_j = std::usize::MAX;
+        let mut ans_i = usize::MAX;
+        let mut ans_j = usize::MAX;
         let min_position = (0..n).min_by_key(|&i| a[i][0]).unwrap();
         let max_position = (0..n).max_by_key(|&i| a[i][0]).unwrap();
         let start_i = min_position.min(max_position);

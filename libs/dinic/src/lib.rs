@@ -739,12 +739,12 @@ where
 
     loop {
         // calculate labels
-        let mut label = vec![std::u32::MAX; res.len()];
+        let mut label = vec![u32::MAX; res.len()];
         label[s] = 0;
         let mut queue = VecDeque::from(vec![s]);
         while let Some(from) = queue.pop_front() {
             for &__ResidualEdge { to, cap, .. } in &res[from] {
-                if cap == T::zero() || label[to] != std::u32::MAX {
+                if cap == T::zero() || label[to] != u32::MAX {
                     continue;
                 }
                 label[to] = label[from] + 1;
@@ -752,7 +752,7 @@ where
             }
         }
 
-        if label[t] == std::u32::MAX {
+        if label[t] == u32::MAX {
             // saturated
             return flow;
         }
@@ -815,7 +815,7 @@ macro_rules! impl_value {
                 0
             }
             fn infinity() -> Self {
-                std::$T::MAX
+                $T::MAX
             }
         }
     )*}

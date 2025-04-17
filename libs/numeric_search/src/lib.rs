@@ -43,8 +43,8 @@ pub trait Float:
     fn sqrt(self) -> Self;
 }
 impl Float for f32 {
-    const INFINITY: Self = std::f32::INFINITY;
-    const NEG_INFINITY: Self = std::f32::NEG_INFINITY;
+    const INFINITY: Self = f32::INFINITY;
+    const NEG_INFINITY: Self = f32::NEG_INFINITY;
     const ONE: Self = 1.0;
     const ZERO: Self = 0.0;
 
@@ -53,8 +53,8 @@ impl Float for f32 {
     }
 }
 impl Float for f64 {
-    const INFINITY: Self = std::f64::INFINITY;
-    const NEG_INFINITY: Self = std::f64::NEG_INFINITY;
+    const INFINITY: Self = f64::INFINITY;
+    const NEG_INFINITY: Self = f64::NEG_INFINITY;
     const ONE: Self = 1.0;
     const ZERO: Self = 0.0;
 
@@ -291,8 +291,8 @@ macro_rules! impl_signed {
         impl Signed for $ty {
             const ZERO: Self = 0;
             const ONE: Self = 1;
-            const MIN: Self = std::$ty::MIN;
-            const MAX: Self = std::$ty::MAX;
+            const MIN: Self = $ty::MIN;
+            const MAX: Self = $ty::MAX;
         }
     )*};
 }
@@ -316,7 +316,7 @@ impl_signed! { i8, i16, i32, i64, i128 }
 /// # use numeric_search::exp_search_signed;
 /// assert_eq!(exp_search_signed(|x| 6 <= x), Some(6));
 /// assert_eq!(exp_search_signed(|_: i32| false), None);
-/// assert_eq!(exp_search_signed(|_: i32| true), Some(std::i32::MIN));
+/// assert_eq!(exp_search_signed(|_: i32| true), Some(i32::MIN));
 /// ```
 pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     let mut lower;
@@ -402,11 +402,6 @@ mod tests {
 
     #[test]
     fn test_exponential_search_f64() {
-        use std::f64::EPSILON;
-        use std::f64::INFINITY;
-        use std::f64::MAX;
-        use std::f64::MIN_POSITIVE;
-        use std::f64::NEG_INFINITY;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
@@ -425,16 +420,16 @@ mod tests {
             // Succeeds
             (0.0, 0.0),
             (-0.0, 0.0),
-            (INFINITY, INFINITY),
-            (NEG_INFINITY, NEG_INFINITY),
-            (EPSILON, EPSILON),
-            (MAX.sqrt(), MAX.sqrt()),
-            (-MAX.sqrt(), -MAX.sqrt()),
-            (MIN_POSITIVE, MIN_POSITIVE),
-            (-MIN_POSITIVE, -MIN_POSITIVE),
+            (f64::INFINITY, f64::INFINITY),
+            (f64::NEG_INFINITY, f64::NEG_INFINITY),
+            (f64::EPSILON, f64::EPSILON),
+            (f64::MAX.sqrt(), f64::MAX.sqrt()),
+            (-f64::MAX.sqrt(), -f64::MAX.sqrt()),
+            (f64::MIN_POSITIVE, f64::MIN_POSITIVE),
+            (-f64::MIN_POSITIVE, -f64::MIN_POSITIVE),
             // Fails
-            (MAX.sqrt() * 1.000_000_000_001, INFINITY),
-            (-MAX.sqrt() * 1.000_000_000_001, NEG_INFINITY),
+            (f64::MAX.sqrt() * 1.000_000_000_001, f64::INFINITY),
+            (-f64::MAX.sqrt() * 1.000_000_000_001, f64::NEG_INFINITY),
         ] {
             let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
@@ -443,11 +438,6 @@ mod tests {
 
     #[test]
     fn test_exponential_search_f32() {
-        use std::f32::EPSILON;
-        use std::f32::INFINITY;
-        use std::f32::MAX;
-        use std::f32::MIN_POSITIVE;
-        use std::f32::NEG_INFINITY;
 
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
@@ -466,16 +456,16 @@ mod tests {
             // Succeeds
             (0.0, 0.0),
             (-0.0, 0.0),
-            (INFINITY, INFINITY),
-            (NEG_INFINITY, NEG_INFINITY),
-            (EPSILON, EPSILON),
-            (MAX.sqrt(), MAX.sqrt()),
-            (-MAX.sqrt(), -MAX.sqrt()),
-            (MIN_POSITIVE, MIN_POSITIVE),
-            (-MIN_POSITIVE, -MIN_POSITIVE),
+            (f32::INFINITY, f32::INFINITY),
+            (f32::NEG_INFINITY, f32::NEG_INFINITY),
+            (f32::EPSILON, f32::EPSILON),
+            (f32::MAX.sqrt(), f32::MAX.sqrt()),
+            (-f32::MAX.sqrt(), -f32::MAX.sqrt()),
+            (f32::MIN_POSITIVE, f32::MIN_POSITIVE),
+            (-f32::MIN_POSITIVE, -f32::MIN_POSITIVE),
             // Fails
-            (MAX.sqrt() * 1.000_001, INFINITY),
-            (-MAX.sqrt() * 1.000_001, NEG_INFINITY),
+            (f32::MAX.sqrt() * 1.000_001, f32::INFINITY),
+            (-f32::MAX.sqrt() * 1.000_001, f32::NEG_INFINITY),
         ] {
             let result = exp_search_float(|x| threshold <= x);
             assert_eq!(result, expected);
