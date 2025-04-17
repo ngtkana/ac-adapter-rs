@@ -506,6 +506,8 @@
 <a href="#472" id="472">472</a>
 <a href="#473" id="473">473</a>
 <a href="#474" id="474">474</a>
+<a href="#475" id="475">475</a>
+<a href="#476" id="476">476</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! 一次不等式を解きます。
 //!
 //! CAUTION: [`Interval`] は [`PartialEq`], [`Hash`]
@@ -566,7 +568,8 @@
     <span class="kw">const </span>MIN: <span class="self">Self</span>;
     <span class="kw">const </span>MAX: <span class="self">Self</span>;
     <span class="kw">const </span>ZERO: <span class="self">Self</span>;
-    <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
+    <span class="attr">#[must_use]
+    </span><span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>;
 }
 <span class="macro">macro_rules!</span> impl_signed {
     ($(<span class="macro-nonterminal">$T</span>:ident),<span class="kw-2">*</span>) =&gt; {$(
@@ -688,6 +691,7 @@
     ///     -5, 10
     /// ]);
     /// ```
+    </span><span class="attr">#[must_use]
     </span><span class="kw">pub fn </span>intersection(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
         <span class="self">Self</span>([<span class="self">self</span>.<span class="number">0</span>[<span class="number">0</span>].max(rhs.<span class="number">0</span>[<span class="number">0</span>]), <span class="self">self</span>.<span class="number">0</span>[<span class="number">1</span>].min(rhs.<span class="number">0</span>[<span class="number">1</span>])])
     }

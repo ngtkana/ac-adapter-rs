@@ -750,6 +750,8 @@
 <a href="#716" id="716">716</a>
 <a href="#717" id="717">717</a>
 <a href="#718" id="718">718</a>
+<a href="#719" id="719">719</a>
+<a href="#720" id="720">720</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! ウェーブレット行列
 //!
 //! 本体は [`WaveletMatrix`] です。
@@ -1329,7 +1331,8 @@
 
                 <span class="comment">// select
                 </span><span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..=bs.count_ones() <span class="kw">as </span>usize {
-                    <span class="kw">let </span>expected = (<span class="number">0</span>..).find(|<span class="kw-2">&amp;</span>i| j &lt;= bitvec.rank(i)).unwrap();
+                    <span class="attr">#[allow(clippy::maybe_infinite_iter)]
+                    </span><span class="kw">let </span>expected = (<span class="number">0</span>..).find(|<span class="kw-2">&amp;</span>i| j &lt;= bitvec.rank(i)).unwrap();
                     <span class="macro">assert_eq!</span>(bitvec.select(j), expected);
                 }
             }
@@ -1358,7 +1361,8 @@
                 <span class="comment">// select
                 </span><span class="kw">let </span>count = vec.iter().filter(|&amp;&amp;b| b).count();
                 <span class="kw">for </span>j <span class="kw">in </span><span class="number">0</span>..=count {
-                    <span class="kw">let </span>expected = (<span class="number">0</span>..).find(|<span class="kw-2">&amp;</span>i| j &lt;= bitvec.rank(i)).unwrap();
+                    <span class="attr">#[allow(clippy::maybe_infinite_iter)]
+                    </span><span class="kw">let </span>expected = (<span class="number">0</span>..).find(|<span class="kw-2">&amp;</span>i| j &lt;= bitvec.rank(i)).unwrap();
                     <span class="macro">assert_eq!</span>(bitvec.select(j), expected);
                 }
             }
