@@ -559,6 +559,8 @@
 <a href="#525" id="525">525</a>
 <a href="#526" id="526">526</a>
 <a href="#527" id="527">527</a>
+<a href="#528" id="528">528</a>
+<a href="#529" id="529">529</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Heavy-Light Decomposition
 
 </span><span class="kw">use </span>std::iter::FusedIterator;
@@ -651,7 +653,7 @@
 }
 
 <span class="doccomment">/// An item of [`Hld::path_segments()`].
-</span><span class="attr">#[derive(Clone, Copy, Debug)]
+</span><span class="attr">#[derive(Clone, Copy)]
 </span><span class="kw">pub struct </span>PathSegment {
     <span class="doccomment">/// the original id on the root side
     </span><span class="kw">pub </span>higher: usize,
@@ -662,6 +664,20 @@
     <span class="doccomment">/// true if from --&gt; to and i --&gt; j are in the opposite direction
     </span><span class="kw">pub </span>oppsite: bool,
 }
+<span class="kw">impl </span>PathSegment {
+    <span class="doccomment">/// Returns the serial id on the root side
+    </span><span class="kw">pub fn </span>higher_serial_id(<span class="kw-2">&amp;</span><span class="self">self</span>, hld: <span class="kw-2">&amp;</span>Hld) -&gt; usize {
+        hld.index[<span class="self">self</span>.higher]
+    }
+    <span class="doccomment">/// Returns the serial id on the leaf side
+    </span><span class="kw">pub fn </span>deeper_serial_id(<span class="kw-2">&amp;</span><span class="self">self</span>, hld: <span class="kw-2">&amp;</span>Hld) -&gt; usize {
+        hld.index[<span class="self">self</span>.deeper]
+    }
+    <span class="doccomment">/// Returns the number of vertices in the path segment.
+    </span><span class="kw">pub fn </span>vertex_count(<span class="kw-2">&amp;</span><span class="self">self</span>, hld: <span class="kw-2">&amp;</span>Hld) -&gt; usize {
+        hld.index[<span class="self">self</span>.deeper] - hld.index[<span class="self">self</span>.higher] + <span class="number">1
+    </span>}
+}
 
 <span class="doccomment">/// Iterator for [`Hld::path_segments()`].
 </span><span class="kw">pub struct </span>PathSegments&lt;<span class="lifetime">'a</span>&gt; {
@@ -670,58 +686,46 @@
     to: usize,
     exhausted: bool,
 }
-<span class="kw">impl </span>Iterator <span class="kw">for </span>PathSegments&lt;<span class="lifetime">'_</span>&gt; {
+<span class="kw">impl</span>&lt;<span class="lifetime">'a</span>&gt; Iterator <span class="kw">for </span>PathSegments&lt;<span class="lifetime">'a</span>&gt; {
     <span class="kw">type </span>Item = PathSegment;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">let </span><span class="self">Self </span>{
-            hld,
+            hld:
+                Hld {
+                    index,
+                    head,
+                    parent,
+                },
             from,
             to,
             exhausted,
         } = <span class="kw-2">*</span><span class="self">self</span>;
         (!exhausted).then_some(())<span class="question-mark">?</span>;
-        <span class="kw">let </span>Hld {
-            index,
-            head,
-            parent,
-        } = hld;
+        <span class="kw">let </span>contains_lca = head[from] == head[to];
+        <span class="kw">let </span>oppsite = index[from] &gt; index[to];
         <span class="attr">#[allow(clippy::collapsible_else_if)]
-        </span><span class="prelude-val">Some</span>(<span class="kw">if </span>head[from] == head[to] {
+        </span><span class="kw">let </span>(higher, deeper) = <span class="kw">if </span>contains_lca {
             <span class="self">self</span>.exhausted = <span class="bool-val">true</span>;
-            <span class="kw">if </span>index[from] &lt; index[to] {
-                PathSegment {
-                    higher: from,
-                    deeper: to,
-                    contains_lca: <span class="bool-val">true</span>,
-                    oppsite: <span class="bool-val">false</span>,
-                }
+            <span class="kw">if </span>oppsite {
+                (to, from)
             } <span class="kw">else </span>{
-                PathSegment {
-                    higher: to,
-                    deeper: from,
-                    contains_lca: <span class="bool-val">true</span>,
-                    oppsite: <span class="bool-val">true</span>,
-                }
+                (from, to)
             }
         } <span class="kw">else </span>{
-            <span class="kw">if </span>index[from] &lt; index[to] {
-                <span class="self">self</span>.to = parent[head[to]];
-                PathSegment {
-                    higher: head[to],
-                    deeper: to,
-                    contains_lca: <span class="bool-val">false</span>,
-                    oppsite: <span class="bool-val">false</span>,
-                }
-            } <span class="kw">else </span>{
+            <span class="kw">if </span>oppsite {
                 <span class="self">self</span>.from = parent[head[from]];
-                PathSegment {
-                    higher: head[from],
-                    deeper: from,
-                    contains_lca: <span class="bool-val">false</span>,
-                    oppsite: <span class="bool-val">true</span>,
-                }
+                (head[from], from)
+            } <span class="kw">else </span>{
+                <span class="self">self</span>.to = parent[head[to]];
+                (head[to], to)
             }
+        };
+        <span class="prelude-val">Some</span>(PathSegment {
+            higher,
+            deeper,
+            contains_lca,
+            oppsite,
         })
     }
 }
