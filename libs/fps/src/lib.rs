@@ -550,16 +550,19 @@ mod tests {
         assert_eq!(fps_log(fps![1, 2], 1), fps![0]);
         assert_eq!(fps_log(fps![1, 2], 2), fps![0, 2]);
         assert_eq!(fps_log(fps![1, 2], 3), fps![0, 2, -2]);
-        assert_eq!(fps_log(fps![1, 2], 8), vec![
-            fp!(0),
-            fp!(2),
-            fp!(-4) / 2,
-            fp!(8) / 3,
-            fp!(-16) / 4,
-            fp!(32) / 5,
-            fp!(-64) / 6,
-            fp!(128) / 7,
-        ]);
+        assert_eq!(
+            fps_log(fps![1, 2], 8),
+            vec![
+                fp!(0),
+                fp!(2),
+                fp!(-4) / 2,
+                fp!(8) / 3,
+                fp!(-16) / 4,
+                fp!(32) / 5,
+                fp!(-64) / 6,
+                fp!(128) / 7,
+            ]
+        );
         assert_eq!(fps_log(fps![1, 2, 3, 4, 5, 6], 1), fps![0]);
     }
 
@@ -603,16 +606,19 @@ mod tests {
         assert_eq!(fps_exp(fps![0, 2], 1), fps![1]);
         assert_eq!(fps_exp(fps![0, 2], 2), fps![1, 2]);
         assert_eq!(fps_exp(fps![0, 2], 3), fps![1, 2, 2]);
-        assert_eq!(fps_exp(fps![0, 2], 8), vec![
-            fp!(1),
-            fp!(2),
-            fp!(4) / 2,
-            fp!(8) / 6,
-            fp!(16) / 24,
-            fp!(32) / 120,
-            fp!(64) / 720,
-            fp!(128) / 5040,
-        ]);
+        assert_eq!(
+            fps_exp(fps![0, 2], 8),
+            vec![
+                fp!(1),
+                fp!(2),
+                fp!(4) / 2,
+                fp!(8) / 6,
+                fp!(16) / 24,
+                fp!(32) / 120,
+                fp!(64) / 720,
+                fp!(128) / 5040,
+            ]
+        );
         assert_eq!(fps_exp(fps![0, 2, 3, 4, 5, 6], 1), fps![1]);
     }
 

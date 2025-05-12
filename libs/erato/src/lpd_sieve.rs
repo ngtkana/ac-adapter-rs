@@ -12,7 +12,7 @@ use super::SieveBase;
 ///
 /// - Construction: O ( n lg n )
 /// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
-/// 
+///
 /// multiple divisors counted repeatedly.
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {

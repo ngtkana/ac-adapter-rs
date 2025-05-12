@@ -259,7 +259,10 @@ impl<K: Ord, O: MultimapOp> MultimapSeg<K, O> {
         x
     }
 
-    pub fn binary_search_ptr<Q: ?Sized + Ord>(&self, key: &Q) -> Result<(Ptr<Node<K, O>>, usize), usize>
+    pub fn binary_search_ptr<Q: ?Sized + Ord>(
+        &self,
+        key: &Q,
+    ) -> Result<(Ptr<Node<K, O>>, usize), usize>
     where
         K: Ord + Borrow<Q>,
     {

@@ -588,16 +588,7 @@ where
     ///
     /// # Examples
     ///
-    /// Let us consider a bipartite matching problem on the graph `K _ 2`. Obviously this graph has
-    /// a perfect matching.
-    ///
-    /// ```[no run]
-    /// o--o
-    ///  \/
-    ///  /\
-    /// o--o
-    /// ```
-    ///
+    /// Let us consider a bipartite matching problem on the graph `K _ 2`.
     /// It can be solved as a maximum flow problem.
     ///
     /// ```
@@ -665,8 +656,8 @@ where
     /// # assert_eq!(dinic.get_edge(edge_3).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_4).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_5).flow, 0);
-    /// #
     /// ```
+    ///
     pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         let EdgeKey(edge_key) = edge_key;
         assert!(

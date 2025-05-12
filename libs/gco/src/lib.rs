@@ -280,10 +280,10 @@ mod tests {
                 let (i, j) = rng.sample(DistinctTwo(0..n));
                 let ij = [i, j];
                 let cost = loop {
-                    let cost = [[rng.gen_range(-9..10), rng.gen_range(-9..10)], [
-                        rng.gen_range(-9..10),
-                        rng.gen_range(-9..10),
-                    ]];
+                    let cost = [
+                        [rng.gen_range(-9..10), rng.gen_range(-9..10)],
+                        [rng.gen_range(-9..10), rng.gen_range(-9..10)],
+                    ];
                     if is_submodular(cost) {
                         break cost;
                     }

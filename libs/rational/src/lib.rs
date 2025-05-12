@@ -244,9 +244,7 @@ mod tests {
             let (y, yf64) = gen_rational_and_f64(&mut rng);
             let z = x + y;
             let zf64 = xf64 + yf64;
-            println!(
-                "{x:?} + {y:?} = {z:?} ({xf64:.3} + {yf64:.3} = {zf64:.3})"
-            );
+            println!("{x:?} + {y:?} = {z:?} ({xf64:.3} + {yf64:.3} = {zf64:.3})");
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
@@ -259,9 +257,7 @@ mod tests {
             let (y, yf64) = gen_rational_and_f64(&mut rng);
             let z = x - y;
             let zf64 = xf64 - yf64;
-            println!(
-                "{x:?} - {y:?} = {z:?} ({xf64:.3} - {yf64:.3} = {zf64:.3})"
-            );
+            println!("{x:?} - {y:?} = {z:?} ({xf64:.3} - {yf64:.3} = {zf64:.3})");
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
@@ -274,9 +270,7 @@ mod tests {
             let (y, yf64) = gen_rational_and_f64(&mut rng);
             let z = x * y;
             let zf64 = xf64 * yf64;
-            println!(
-                "{x:?} * {y:?} = {z:?} ({xf64:.3} * {yf64:.3} = {zf64:.3})"
-            );
+            println!("{x:?} * {y:?} = {z:?} ({xf64:.3} * {yf64:.3} = {zf64:.3})");
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
@@ -289,9 +283,7 @@ mod tests {
             let (y, yf64) = gen_nonzero_rational_and_f64(&mut rng);
             let z = x / y;
             let zf64 = xf64 / yf64;
-            println!(
-                "{x:?} / {y:?} = {z:?} ({xf64:.3} / {yf64:.3} = {zf64:.3})"
-            );
+            println!("{x:?} / {y:?} = {z:?} ({xf64:.3} / {yf64:.3} = {zf64:.3})");
             assert_abs_diff_eq!(z.into_f64(), zf64, epsilon = 1e-6);
         }
     }
@@ -316,9 +308,7 @@ mod tests {
             let (y, yf64) = gen_rational_and_f64(&mut rng);
             let z = x.cmp(&y);
             let zf64 = OrderedFloat(xf64).cmp(&OrderedFloat(yf64));
-            println!(
-                "cmp({x:?}, {y:?}) = {z:?} (cmp({xf64:.3}, {yf64:.3}) = {zf64:?})"
-            );
+            println!("cmp({x:?}, {y:?}) = {z:?} (cmp({xf64:.3}, {yf64:.3}) = {zf64:?})");
             assert_eq!(z, zf64);
         }
     }

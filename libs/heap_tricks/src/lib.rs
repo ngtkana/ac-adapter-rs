@@ -94,10 +94,13 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
-            .field("elm", &[
-                self.collect_left_sorted_vec(),
-                self.collect_right_sorted_vec(),
-            ])
+            .field(
+                "elm",
+                &[
+                    self.collect_left_sorted_vec(),
+                    self.collect_right_sorted_vec(),
+                ],
+            )
             .field("handler", &self.handler)
             .finish()
     }
