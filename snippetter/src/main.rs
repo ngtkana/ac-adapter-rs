@@ -50,29 +50,35 @@ fn main() {
                     let crate_path = crate_entry.path();
                     let cargo_toml_path = crate_path.join("Cargo.toml");
                     let metadata_path = crate_path.join("metadata.toml");
-                    
+
                     if cargo_toml_path.exists() {
-                        let crate_name = crate_path.file_name().unwrap().to_string_lossy().into_owned();
+                        let crate_name = crate_path
+                            .file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .into_owned();
                         let dependencies = parse_local_dependencies_from_cargo_toml(
                             &fs::read_to_string(&cargo_toml_path).unwrap(),
                         );
-                        
+
                         // メタデータファイルからタグと説明を読み取る
                         let (tags, description) = if metadata_path.exists() {
-                            let metadata_content = fs::read_to_string(&metadata_path).unwrap_or_default();
-                            let metadata: MetadataFile = toml::from_str(&metadata_content).unwrap_or(MetadataFile {
-                                tags: None,
-                                description: None,
-                            });
-                            
+                            let metadata_content =
+                                fs::read_to_string(&metadata_path).unwrap_or_default();
+                            let metadata: MetadataFile = toml::from_str(&metadata_content)
+                                .unwrap_or(MetadataFile {
+                                    tags: None,
+                                    description: None,
+                                });
+
                             let tags = metadata.tags.map_or(Vec::new(), |t| t.list);
                             let description = metadata.description.map(|d| d.short);
-                            
+
                             (tags, description)
                         } else {
                             (Vec::new(), None)
                         };
-                        
+
                         Some((
                             crate_name,
                             CrateMetadata {

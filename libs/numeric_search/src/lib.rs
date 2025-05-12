@@ -402,7 +402,6 @@ mod tests {
 
     #[test]
     fn test_exponential_search_f64() {
-
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
             let expected: f64 = if rng.gen_bool(0.5) { 1.0 } else { -1.0 }
@@ -438,7 +437,6 @@ mod tests {
 
     #[test]
     fn test_exponential_search_f32() {
-
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..2000 {
             let expected: f32 =

@@ -406,9 +406,7 @@ mod tests {
                     let a = -a as usize;
                     self.values.rotate_left(a);
                     let n = self.values.len();
-                    self.values[n - a..]
-                        .iter_mut()
-                        .for_each(|x| *x = i64::MAX);
+                    self.values[n - a..].iter_mut().for_each(|x| *x = i64::MAX);
                 }
                 Ordering::Greater => {
                     let a = a as usize;
@@ -453,9 +451,7 @@ mod tests {
             self.values
                 .windows(3)
                 .enumerate()
-                .filter(|(_, v)| {
-                    v[0] != i64::MAX && v[2] != i64::MAX && v[0] + v[2] > v[1] * 2
-                })
+                .filter(|(_, v)| v[0] != i64::MAX && v[2] != i64::MAX && v[0] + v[2] > v[1] * 2)
                 .map(|(i, v)| [XMIN + 1 + i as i64, v[1]])
                 .collect()
         }

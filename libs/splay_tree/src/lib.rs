@@ -712,19 +712,13 @@ fn into_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     start..end
 }
 fn splay_tree_index_out_of_range_fail(index: usize, len: usize) -> ! {
-    panic!(
-        "range index {index} out of range for splay tree of length {len}"
-    );
+    panic!("range index {index} out of range for splay tree of length {len}");
 }
 fn splay_tree_start_index_len_fail(index: usize, len: usize) -> ! {
-    panic!(
-        "range start index {index} out of range for splay tree of length {len}"
-    );
+    panic!("range start index {index} out of range for splay tree of length {len}");
 }
 fn splay_tree_end_index_len_fail(index: usize, len: usize) -> ! {
-    panic!(
-        "range end index {index} out of range for splay tree of length {len}"
-    );
+    panic!("range end index {index} out of range for splay tree of length {len}");
 }
 fn splay_tree_index_order_fail(index: usize, end: usize) -> ! {
     panic!("splay tree index starts at {index} but ends at {end}");

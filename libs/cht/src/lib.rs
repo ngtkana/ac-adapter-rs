@@ -272,7 +272,11 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
                 }
             };
         }
-        let min = Min(self.set.range(..p).next_back().map_or(i64::MIN, |seg| seg.max.0));
+        let min = Min(self
+            .set
+            .range(..p)
+            .next_back()
+            .map_or(i64::MIN, |seg| seg.max.0));
         let max = Max(self.set.range(p..).next().map_or(i64::MAX, |seg| seg.min.0));
         if min.0 < max.0 {
             self.set.insert(Segment { line, min, max });

@@ -216,14 +216,10 @@ fn into_slice_range(len: usize, range: impl RangeBounds<usize>) -> Range<usize> 
 }
 
 fn dual_segtree_index_out_of_range_fail(index: usize, len: usize) -> ! {
-    panic!(
-        "index {index} out of range for dual segtree of length {len}"
-    );
+    panic!("index {index} out of range for dual segtree of length {len}");
 }
 fn dual_segtree_end_index_len_fail(index: usize, len: usize) -> ! {
-    panic!(
-        "range end index {index} out of range for dual segtree of length {len}"
-    );
+    panic!("range end index {index} out of range for dual segtree of length {len}");
 }
 fn dual_segtree_index_order_fail(start: usize, end: usize) -> ! {
     panic!("dual segtree index starts at {start} but ends at {end}");

@@ -1,42 +1,38 @@
 //! Heavy-Light Decomposition
-//!
-//! # Usage
-//!
-//! - Constructor: [`Hld::from_edges()`]
-//! - Iterator: [`Hld::path_segments()`]
-//! - Fields: [`parent`](Hld::parent), [`index`](Hld::index), [`head`](Hld::head)
 
 use std::iter::FusedIterator;
 
-/// Heavy-Light Decomposition
+/// The result of the heavy-light decomposition.
 pub struct Hld {
-    /// vertex id -> parent vertex id
-    pub parent: Vec<usize>,
-    /// vertex id -> vertex index (in the hld order)
-    pub index: Vec<usize>,
-    /// vertex id -> head vertex id
-    pub head: Vec<usize>,
+    /// original id -> parent original id
+    parent: Vec<usize>,
+    /// original id -> serial id
+    index: Vec<usize>,
+    /// original id -> head original id
+    head: Vec<usize>,
 }
 impl Hld {
-    /// From $p _ 1, \dots, p _ { n - 1 }$. Root is always $0$.
-    pub fn from_short_parents(mut parent: Vec<usize>) -> (Self, Vec<Vec<usize>>) {
-        parent.insert(0, 0);
-        let mut g = vec![Vec::new(); parent.len()];
-        for (i, &p) in parent.iter().enumerate().skip(1) {
-            g[p].push(i);
-        }
-        (__build_hld(0, &mut g, parent), g)
+    /// Returns the serial id of the given vertex.
+    pub fn serial_id(&self, i: usize) -> usize {
+        self.index[i]
     }
 
-    /// From the set of undirected edges $(u _ 0, v _ 0), \dots ( u _ { n - 2 } , v _ { n - 2 } )$
-    ///
-    /// The second return value `g` is the graph with parents removed.
-    pub fn from_edges(root: usize, edges: &[(usize, usize)]) -> (Self, Vec<Vec<usize>>) {
-        Self::from_edge_iterator(root, edges.iter().copied())
+    /// From $p _ 0, \dots, p _ { n - 1 }$. The parent of the root **must be itself**.
+    pub fn from_parents(parent: Vec<usize>) -> (Self, Vec<Vec<usize>>) {
+        let mut g = vec![Vec::new(); parent.len()];
+        let mut root = usize::MAX;
+        for (i, &p) in parent.iter().enumerate() {
+            g[p].push(i);
+            if p == i {
+                assert_eq!(root, usize::MAX, "multiple roots");
+                root = i;
+            }
+        }
+        (build_hld(root, &mut g, parent), g)
     }
 
     /// Iterator version of [`from_edges`](Self::from_edges)
-    pub fn from_edge_iterator(
+    pub fn from_edges(
         root: usize,
         edges: impl ExactSizeIterator<Item = (usize, usize)>,
     ) -> (Self, Vec<Vec<usize>>) {
@@ -45,18 +41,22 @@ impl Hld {
             g[i].push(j);
             g[j].push(i);
         }
-        let parent = __remove_parent(root, &mut g);
-        (__build_hld(root, &mut g, parent), g)
+        let mut stack = vec![root];
+        let mut parent = vec![usize::MAX; g.len()];
+        parent[root] = root;
+        while let Some(i) = stack.pop() {
+            g[i].retain(|&j| parent[i] != j);
+            for &j in &g[i] {
+                parent[j] = i;
+                stack.push(j);
+            }
+        }
+        (build_hld(root, &mut g, parent), g)
     }
 
     /// Decompose the (directed) path `from --> to` to the path segments.
     ///
-    /// # Items
-    ///
-    /// * `i`: root-side
-    /// * `j`: left-side
-    /// * `last`: last path segments (i.e. contains the LCA)
-    /// * `reverse`: `from --> to` and `i --> j` is in the different direction
+    /// The item type is [`PathSegment`].
     pub fn path_segments(&self, from: usize, to: usize) -> PathSegments<'_> {
         PathSegments {
             hld: self,
@@ -66,46 +66,43 @@ impl Hld {
         }
     }
 
-    /// Variation of [`path_segments`](Self::path_segments) that returns the `index`.
-    pub fn path_segments_by_index(
-        &self,
-        i: usize,
-        j: usize,
-    ) -> impl Iterator<Item = (usize, usize, bool, bool)> + '_ {
-        self.path_segments(i, j)
-            .map(move |(i, j, last, reverse)| (self.index[i], self.index[j], last, reverse))
-    }
-
-    /// deprecated
-    pub fn ledacy_iter_v(&self, i: usize, j: usize) -> impl Iterator<Item = (usize, usize)> + '_ {
-        self.path_segments_by_index(i, j)
-            .map(|(i, j, _last, _revresed)| (i, j))
-    }
-
     /// Returns the lca
     pub fn lca(&self, i: usize, j: usize) -> usize {
         self.path_segments(i, j)
-            .find(|&(_, _, last, _)| last)
-            .map(|(q, _, _, _)| q)
+            .find(|s| s.contains_lca)
+            .map(|s| s.higher)
             .unwrap()
     }
 
     /// Returns the distance between two vertices
     pub fn dist(&self, i: usize, j: usize) -> usize {
-        self.path_segments_by_index(i, j)
-            .map(|(l, r, last, _)| r - l + usize::from(!last))
+        self.path_segments(i, j)
+            .map(|s| self.index[s.deeper] - self.index[s.higher] + usize::from(!s.contains_lca))
             .sum()
     }
 
-    /// `j` lies between `i` and `k`
-    pub fn between(&self, i: usize, j: usize, k: usize) -> bool {
+    /// `i`, `j`, and `k` appear in this order.
+    pub fn in_this_order(&self, i: usize, j: usize, k: usize) -> bool {
         let m = self.index[j];
-        self.path_segments_by_index(i, k)
-            .any(|(l, r, _, _)| (l..=r).contains(&m))
+        self.path_segments(i, k)
+            .any(|s| (self.index[s.higher]..=self.index[s.deeper]).contains(&m))
     }
 }
 
-/// Iterator
+/// An item of [`Hld::path_segments()`].
+#[derive(Clone, Copy, Debug)]
+pub struct PathSegment {
+    /// the original id on the root side
+    pub higher: usize,
+    /// the original id on the leaf side
+    pub deeper: usize,
+    /// true contains the lca
+    pub contains_lca: bool,
+    /// true if from --> to and i --> j are in the opposite direction
+    pub oppsite: bool,
+}
+
+/// Iterator for [`Hld::path_segments()`].
 pub struct PathSegments<'a> {
     hld: &'a Hld,
     from: usize,
@@ -113,11 +110,7 @@ pub struct PathSegments<'a> {
     exhausted: bool,
 }
 impl Iterator for PathSegments<'_> {
-    // i: usize         root-side,
-    // j: usize         leaf-side,
-    // last: bool       contains-lca
-    // reverse: bool    false if from --> to and i --> j coincide
-    type Item = (usize, usize, bool, bool);
+    type Item = PathSegment;
 
     fn next(&mut self) -> Option<Self::Item> {
         let Self {
@@ -136,37 +129,58 @@ impl Iterator for PathSegments<'_> {
         Some(if head[from] == head[to] {
             self.exhausted = true;
             if index[from] < index[to] {
-                (from, to, true, false)
+                PathSegment {
+                    higher: from,
+                    deeper: to,
+                    contains_lca: true,
+                    oppsite: false,
+                }
             } else {
-                (to, from, true, true)
+                PathSegment {
+                    higher: to,
+                    deeper: from,
+                    contains_lca: true,
+                    oppsite: true,
+                }
             }
         } else {
             if index[from] < index[to] {
                 self.to = parent[head[to]];
-                (head[to], to, false, false)
+                PathSegment {
+                    higher: head[to],
+                    deeper: to,
+                    contains_lca: false,
+                    oppsite: false,
+                }
             } else {
                 self.from = parent[head[from]];
-                (head[from], from, false, true)
+                PathSegment {
+                    higher: head[from],
+                    deeper: from,
+                    contains_lca: false,
+                    oppsite: true,
+                }
             }
         })
     }
 }
 impl FusedIterator for PathSegments<'_> {}
 
-fn __build_hld(root: usize, g: &mut [Vec<usize>], parent: Vec<usize>) -> Hld {
+fn build_hld(root: usize, g: &mut [Vec<usize>], parent: Vec<usize>) -> Hld {
     let n = g.len();
-    __heavy_first(root, g);
+    dfs_heavy_first(root, g);
     let mut index = vec![usize::MAX; n];
     let mut head = vec![usize::MAX; n];
     head[root] = root;
-    __head_and_index(root, &*g, &mut head, &mut index, &mut (0..));
+    dfs_calculate(root, g, &mut head, &mut index, &mut (0..));
     Hld {
         parent,
         index,
         head,
     }
 }
-fn __head_and_index(
+
+fn dfs_calculate(
     i: usize,
     g: &[Vec<usize>],
     head: &mut [usize],
@@ -176,15 +190,15 @@ fn __head_and_index(
     index[i] = current.next().unwrap();
     for &j in &g[i] {
         head[j] = if j == g[i][0] { head[i] } else { j };
-        __head_and_index(j, g, head, index, current);
+        dfs_calculate(j, g, head, index, current);
     }
 }
 
-fn __heavy_first(i: usize, g: &mut [Vec<usize>]) -> usize {
+fn dfs_heavy_first(i: usize, g: &mut [Vec<usize>]) -> usize {
     let mut max = 0;
     let mut size = 1;
     for e in 0..g[i].len() {
-        let csize = __heavy_first(g[i][e], g);
+        let csize = dfs_heavy_first(g[i][e], g);
         if max < csize {
             max = csize;
             g[i].swap(0, e);
@@ -192,20 +206,6 @@ fn __heavy_first(i: usize, g: &mut [Vec<usize>]) -> usize {
         size += csize;
     }
     size
-}
-
-fn __remove_parent(root: usize, g: &mut [Vec<usize>]) -> Vec<usize> {
-    let mut stack = vec![root];
-    let mut parent = vec![usize::MAX; g.len()];
-    parent[root] = root;
-    while let Some(i) = stack.pop() {
-        g[i].retain(|&j| parent[i] != j);
-        for &j in &g[i] {
-            parent[j] = i;
-            stack.push(j);
-        }
-    }
-    parent
 }
 
 #[cfg(test)]
@@ -257,7 +257,7 @@ mod tests {
             let n = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let (hld, g) = Hld::from_edges(root, &edges);
+            let (hld, g) = Hld::from_edges(root, edges.iter().copied());
             let Hld {
                 index,
                 parent,
@@ -268,9 +268,9 @@ mod tests {
             {
                 let mut stack = vec![root];
                 let mut parent = vec![usize::MAX; n];
-                let mut sorted = Vec::new();
+                let mut serial = Vec::new();
                 while let Some(i) = stack.pop() {
-                    sorted.push(i);
+                    serial.push(i);
                     for &j in &g[i] {
                         if parent[i] == j {
                             continue;
@@ -279,7 +279,7 @@ mod tests {
                         parent[j] = i;
                     }
                 }
-                for &i in sorted.iter().rev() {
+                for &i in serial.iter().rev() {
                     for &j in &g[i] {
                         if parent[i] == j {
                             continue;
@@ -364,7 +364,7 @@ mod tests {
             let q = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let (hld, g) = Hld::from_edges(root, &edges);
+            let (hld, g) = Hld::from_edges(root, edges.iter().copied());
             let Hld {
                 index,
                 parent,
@@ -409,48 +409,50 @@ mod tests {
                 assert_eq!(
                     path_segments
                         .iter()
-                        .map(|&(i, j, _, _)| index[j] - index[i] + 1)
+                        .map(|&s| index[s.deeper] - index[s.higher] + 1)
                         .sum::<usize>(),
                     path.len()
                 );
 
                 // validate the vertex set
-                for &(i, j, _, _) in &path_segments {
+                for &s in &path_segments {
                     #[allow(clippy::needless_range_loop)]
-                    for k in index[i]..=index[j] {
+                    for k in index[s.higher]..=index[s.deeper] {
                         assert_ne!(index_to_path_position[k], usize::MAX);
                     }
                 }
 
                 // validate the direction (root --> leaf)
-                for &(i, j, _, _) in &path_segments {
-                    assert!(index[i] <= index[j]);
+                for &s in &path_segments {
+                    assert!(index[s.higher] <= index[s.deeper]);
                 }
 
-                // validate the sortedness (leafside to rootside)
-                for ((_, j, _, _), (k, _, _, _)) in path_segments.iter().copied().tuple_windows() {
-                    assert!(index[j] >= index[k]);
+                // validate the serialness (leafside to rootside)
+                for (s, t) in path_segments.iter().copied().tuple_windows() {
+                    assert!(index[s.deeper] >= index[t.higher]);
                 }
 
                 // validate last
-                for (e, &(_, _, last, _)) in path_segments.iter().enumerate() {
-                    assert_eq!(last, (e == path_segments.len() - 1));
+                for (e, &s) in path_segments.iter().enumerate() {
+                    assert_eq!(s.contains_lca, (e == path_segments.len() - 1));
                 }
 
                 // validate reverse
-                for &(i, j, _, reverse) in &path_segments {
-                    match index_to_path_position[index[i]].cmp(&index_to_path_position[index[j]]) {
-                        Ordering::Less => assert!(!reverse),
+                for &s in &path_segments {
+                    match index_to_path_position[index[s.higher]]
+                        .cmp(&index_to_path_position[index[s.deeper]])
+                    {
+                        Ordering::Less => assert!(!s.oppsite),
                         Ordering::Equal => (),
-                        Ordering::Greater => assert!(reverse),
+                        Ordering::Greater => assert!(s.oppsite),
                     }
                 }
 
                 // validate greedyness
                 {
-                    for &(i, _, last, _) in &path_segments {
-                        if !last {
-                            assert_eq!(head[i], i);
+                    for &s in &path_segments {
+                        if !s.contains_lca {
+                            assert_eq!(head[s.higher], s.higher);
                         }
                     }
                 }
@@ -466,13 +468,13 @@ mod tests {
             let q = rng.gen_range(1..=100);
             let edges = random_tree(&mut rng, n);
             let root = rng.gen_range(0..n);
-            let (hld, g) = Hld::from_edges(root, &edges);
+            let (hld, g) = Hld::from_edges(root, edges.iter().copied());
             let Hld { index, parent, .. } = &hld;
 
-            let mut sorted = (0..n).collect_vec();
-            sorted.sort_by_key(|&i| index[i]);
+            let mut serial = (0..n).collect_vec();
+            serial.sort_by_key(|&i| index[i]);
             let mut depth = vec![0; n];
-            for &i in &sorted {
+            for &i in &serial {
                 for &j in &g[i] {
                     depth[j] = depth[i] + 1;
                 }
@@ -516,7 +518,7 @@ mod tests {
                 let i = rng.gen_range(0..n);
                 let j = rng.gen_range(0..n);
                 let k = rng.gen_range(0..n);
-                let result = hld.between(i, j, k);
+                let result = hld.in_this_order(i, j, k);
                 let expected = hld.dist(i, j) + hld.dist(j, k) == hld.dist(i, k);
                 assert_eq!(result, expected);
             }
