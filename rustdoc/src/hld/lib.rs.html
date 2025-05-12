@@ -561,6 +561,8 @@
 <a href="#527" id="527">527</a>
 <a href="#528" id="528">528</a>
 <a href="#529" id="529">529</a>
+<a href="#530" id="530">530</a>
+<a href="#531" id="531">531</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Heavy-Light Decomposition
 
 </span><span class="kw">use </span>std::iter::FusedIterator;
@@ -585,10 +587,11 @@
         <span class="kw">let </span><span class="kw-2">mut </span>g = <span class="macro">vec!</span>[Vec::new(); parent.len()];
         <span class="kw">let </span><span class="kw-2">mut </span>root = usize::MAX;
         <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>p) <span class="kw">in </span>parent.iter().enumerate() {
-            g[p].push(i);
             <span class="kw">if </span>p == i {
                 <span class="macro">assert_eq!</span>(root, usize::MAX, <span class="string">"multiple roots"</span>);
                 root = i;
+            } <span class="kw">else </span>{
+                g[p].push(i);
             }
         }
         (build_hld(root, <span class="kw-2">&amp;mut </span>g, parent), g)
@@ -640,11 +643,12 @@
     <span class="doccomment">/// Returns the distance between two vertices
     </span><span class="kw">pub fn </span>dist(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize) -&gt; usize {
         <span class="self">self</span>.path_segments(i, j)
-            .map(|s| <span class="self">self</span>.index[s.deeper] - <span class="self">self</span>.index[s.higher] + usize::from(!s.contains_lca))
-            .sum()
-    }
+            .map(|s| s.vertex_count(<span class="self">self</span>))
+            .sum::&lt;usize&gt;()
+            - <span class="number">1
+    </span>}
 
-    <span class="doccomment">/// `i`, `j`, and `k` appear in this order.
+    <span class="doccomment">/// `i`, `j`, and `k` appear in this order
     </span><span class="kw">pub fn </span>in_this_order(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize, k: usize) -&gt; bool {
         <span class="kw">let </span>m = <span class="self">self</span>.index[j];
         <span class="self">self</span>.path_segments(i, k)
@@ -1078,7 +1082,7 @@
                 <span class="macro">assert_eq!</span>(result, expected);
             }
 
-            <span class="comment">// validate betweenness
+            <span class="comment">// validate ordering of three vertices
             </span><span class="kw">for _ in </span><span class="number">0</span>..q {
                 <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
                 <span class="kw">let </span>j = rng.gen_range(<span class="number">0</span>..n);
