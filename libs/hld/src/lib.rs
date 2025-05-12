@@ -22,10 +22,11 @@ impl Hld {
         let mut g = vec![Vec::new(); parent.len()];
         let mut root = usize::MAX;
         for (i, &p) in parent.iter().enumerate() {
-            g[p].push(i);
             if p == i {
                 assert_eq!(root, usize::MAX, "multiple roots");
                 root = i;
+            } else {
+                g[p].push(i);
             }
         }
         (build_hld(root, &mut g, parent), g)
@@ -77,11 +78,12 @@ impl Hld {
     /// Returns the distance between two vertices
     pub fn dist(&self, i: usize, j: usize) -> usize {
         self.path_segments(i, j)
-            .map(|s| self.index[s.deeper] - self.index[s.higher] + usize::from(!s.contains_lca))
-            .sum()
+            .map(|s| s.vertex_count(self))
+            .sum::<usize>()
+            - 1
     }
 
-    /// `i`, `j`, and `k` appear in this order.
+    /// `i`, `j`, and `k` appear in this order
     pub fn in_this_order(&self, i: usize, j: usize, k: usize) -> bool {
         let m = self.index[j];
         self.path_segments(i, k)
@@ -515,7 +517,7 @@ mod tests {
                 assert_eq!(result, expected);
             }
 
-            // validate betweenness
+            // validate ordering of three vertices
             for _ in 0..q {
                 let i = rng.gen_range(0..n);
                 let j = rng.gen_range(0..n);
