@@ -1104,15 +1104,6 @@
 <a href="#1070" id="1070">1070</a>
 <a href="#1071" id="1071">1071</a>
 <a href="#1072" id="1072">1072</a>
-<a href="#1073" id="1073">1073</a>
-<a href="#1074" id="1074">1074</a>
-<a href="#1075" id="1075">1075</a>
-<a href="#1076" id="1076">1076</a>
-<a href="#1077" id="1077">1077</a>
-<a href="#1078" id="1078">1078</a>
-<a href="#1079" id="1079">1079</a>
-<a href="#1080" id="1080">1080</a>
-<a href="#1081" id="1081">1081</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Solves maximum flow problem.
 //!
 //! # Basic usage
@@ -1703,16 +1694,7 @@
     ///
     /// # Examples
     ///
-    /// Let us consider a bipartite matching problem on the graph `K _ 2`. Obviously this graph has
-    /// a perfect matching.
-    ///
-    /// ```[no run]
-    /// o--o
-    ///  \/
-    ///  /\
-    /// o--o
-    /// ```
-    ///
+    /// Let us consider a bipartite matching problem on the graph `K _ 2`.
     /// It can be solved as a maximum flow problem.
     ///
     /// ```
@@ -1780,8 +1762,8 @@
     /// # assert_eq!(dinic.get_edge(edge_3).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_4).flow, 1);
     /// # assert_eq!(dinic.get_edge(edge_5).flow, 0);
-    /// #
     /// ```
+    ///
     </span><span class="kw">pub fn </span>change_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         <span class="kw">let </span>EdgeKey(edge_key) = edge_key;
         <span class="macro">assert!</span>(

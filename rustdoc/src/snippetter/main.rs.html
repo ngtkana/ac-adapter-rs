@@ -172,6 +172,12 @@
 <a href="#138" id="138">138</a>
 <a href="#139" id="139">139</a>
 <a href="#140" id="140">140</a>
+<a href="#141" id="141">141</a>
+<a href="#142" id="142">142</a>
+<a href="#143" id="143">143</a>
+<a href="#144" id="144">144</a>
+<a href="#145" id="145">145</a>
+<a href="#146" id="146">146</a>
 </pre></div><pre class="rust"><code><span class="kw">use </span>itertools::Itertools;
 <span class="kw">use </span>once_cell::sync::OnceCell;
 <span class="kw">use </span>std::collections::HashMap;
@@ -224,29 +230,35 @@
                     <span class="kw">let </span>crate_path = crate_entry.path();
                     <span class="kw">let </span>cargo_toml_path = crate_path.join(<span class="string">"Cargo.toml"</span>);
                     <span class="kw">let </span>metadata_path = crate_path.join(<span class="string">"metadata.toml"</span>);
-                    
+
                     <span class="kw">if </span>cargo_toml_path.exists() {
-                        <span class="kw">let </span>crate_name = crate_path.file_name().unwrap().to_string_lossy().into_owned();
+                        <span class="kw">let </span>crate_name = crate_path
+                            .file_name()
+                            .unwrap()
+                            .to_string_lossy()
+                            .into_owned();
                         <span class="kw">let </span>dependencies = parse_local_dependencies_from_cargo_toml(
                             <span class="kw-2">&amp;</span>fs::read_to_string(<span class="kw-2">&amp;</span>cargo_toml_path).unwrap(),
                         );
-                        
+
                         <span class="comment">// メタデータファイルからタグと説明を読み取る
                         </span><span class="kw">let </span>(tags, description) = <span class="kw">if </span>metadata_path.exists() {
-                            <span class="kw">let </span>metadata_content = fs::read_to_string(<span class="kw-2">&amp;</span>metadata_path).unwrap_or_default();
-                            <span class="kw">let </span>metadata: MetadataFile = toml::from_str(<span class="kw-2">&amp;</span>metadata_content).unwrap_or(MetadataFile {
-                                tags: <span class="prelude-val">None</span>,
-                                description: <span class="prelude-val">None</span>,
-                            });
-                            
+                            <span class="kw">let </span>metadata_content =
+                                fs::read_to_string(<span class="kw-2">&amp;</span>metadata_path).unwrap_or_default();
+                            <span class="kw">let </span>metadata: MetadataFile = toml::from_str(<span class="kw-2">&amp;</span>metadata_content)
+                                .unwrap_or(MetadataFile {
+                                    tags: <span class="prelude-val">None</span>,
+                                    description: <span class="prelude-val">None</span>,
+                                });
+
                             <span class="kw">let </span>tags = metadata.tags.map_or(Vec::new(), |t| t.list);
                             <span class="kw">let </span>description = metadata.description.map(|d| d.short);
-                            
+
                             (tags, description)
                         } <span class="kw">else </span>{
                             (Vec::new(), <span class="prelude-val">None</span>)
                         };
-                        
+
                         <span class="prelude-val">Some</span>((
                             crate_name,
                             CrateMetadata {

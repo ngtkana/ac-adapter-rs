@@ -896,6 +896,9 @@
 <a href="#862" id="862">862</a>
 <a href="#863" id="863">863</a>
 <a href="#864" id="864">864</a>
+<a href="#865" id="865">865</a>
+<a href="#866" id="866">866</a>
+<a href="#867" id="867">867</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! [`remove_unchecked`](RemovableHeap::remove_unchecked) のできるヒープです。
 //!
 //! 本体は [`RemovableHeap`] です。
@@ -992,10 +995,13 @@
 {
     <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
         f.debug_struct(<span class="string">"DoubleHeap"</span>)
-            .field(<span class="string">"elm"</span>, <span class="kw-2">&amp;</span>[
-                <span class="self">self</span>.collect_left_sorted_vec(),
-                <span class="self">self</span>.collect_right_sorted_vec(),
-            ])
+            .field(
+                <span class="string">"elm"</span>,
+                <span class="kw-2">&amp;</span>[
+                    <span class="self">self</span>.collect_left_sorted_vec(),
+                    <span class="self">self</span>.collect_right_sorted_vec(),
+                ],
+            )
             .field(<span class="string">"handler"</span>, <span class="kw-2">&amp;</span><span class="self">self</span>.handler)
             .finish()
     }

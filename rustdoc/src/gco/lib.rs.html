@@ -622,10 +622,10 @@
                 <span class="kw">let </span>(i, j) = rng.sample(DistinctTwo(<span class="number">0</span>..n));
                 <span class="kw">let </span>ij = [i, j];
                 <span class="kw">let </span>cost = <span class="kw">loop </span>{
-                    <span class="kw">let </span>cost = [[rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>), rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>)], [
-                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
-                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
-                    ]];
+                    <span class="kw">let </span>cost = [
+                        [rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>), rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>)],
+                        [rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>), rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>)],
+                    ];
                     <span class="kw">if </span>is_submodular(cost) {
                         <span class="kw">break </span>cost;
                     }

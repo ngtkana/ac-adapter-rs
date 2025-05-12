@@ -634,6 +634,10 @@
 <a href="#600" id="600">600</a>
 <a href="#601" id="601">601</a>
 <a href="#602" id="602">602</a>
+<a href="#603" id="603">603</a>
+<a href="#604" id="604">604</a>
+<a href="#605" id="605">605</a>
+<a href="#606" id="606">606</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! CHT です。
 //!
 //! # TODO
@@ -908,7 +912,11 @@
                 }
             };
         }
-        <span class="kw">let </span>min = Min(<span class="self">self</span>.set.range(..p).next_back().map_or(i64::MIN, |seg| seg.max.<span class="number">0</span>));
+        <span class="kw">let </span>min = Min(<span class="self">self
+            </span>.set
+            .range(..p)
+            .next_back()
+            .map_or(i64::MIN, |seg| seg.max.<span class="number">0</span>));
         <span class="kw">let </span>max = Max(<span class="self">self</span>.set.range(p..).next().map_or(i64::MAX, |seg| seg.min.<span class="number">0</span>));
         <span class="kw">if </span>min.<span class="number">0 </span>&lt; max.<span class="number">0 </span>{
             <span class="self">self</span>.set.insert(Segment { line, min, max });

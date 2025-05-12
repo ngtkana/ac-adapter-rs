@@ -557,45 +557,43 @@
 <a href="#523" id="523">523</a>
 <a href="#524" id="524">524</a>
 <a href="#525" id="525">525</a>
+<a href="#526" id="526">526</a>
+<a href="#527" id="527">527</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Heavy-Light Decomposition
-//!
-//! # Usage
-//!
-//! - Constructor: [`Hld::from_edges()`]
-//! - Iterator: [`Hld::path_segments()`]
-//! - Fields: [`parent`](Hld::parent), [`index`](Hld::index), [`head`](Hld::head)
 
 </span><span class="kw">use </span>std::iter::FusedIterator;
 
-<span class="doccomment">/// Heavy-Light Decomposition
+<span class="doccomment">/// The result of the heavy-light decomposition.
 </span><span class="kw">pub struct </span>Hld {
-    <span class="doccomment">/// vertex id -&gt; parent vertex id
-    </span><span class="kw">pub </span>parent: Vec&lt;usize&gt;,
-    <span class="doccomment">/// vertex id -&gt; vertex index (in the hld order)
-    </span><span class="kw">pub </span>index: Vec&lt;usize&gt;,
-    <span class="doccomment">/// vertex id -&gt; head vertex id
-    </span><span class="kw">pub </span>head: Vec&lt;usize&gt;,
+    <span class="doccomment">/// original id -&gt; parent original id
+    </span>parent: Vec&lt;usize&gt;,
+    <span class="doccomment">/// original id -&gt; serial id
+    </span>index: Vec&lt;usize&gt;,
+    <span class="doccomment">/// original id -&gt; head original id
+    </span>head: Vec&lt;usize&gt;,
 }
 <span class="kw">impl </span>Hld {
-    <span class="doccomment">/// From $p _ 1, \dots, p _ { n - 1 }$. Root is always $0$.
-    </span><span class="kw">pub fn </span>from_short_parents(<span class="kw-2">mut </span>parent: Vec&lt;usize&gt;) -&gt; (<span class="self">Self</span>, Vec&lt;Vec&lt;usize&gt;&gt;) {
-        parent.insert(<span class="number">0</span>, <span class="number">0</span>);
-        <span class="kw">let </span><span class="kw-2">mut </span>g = <span class="macro">vec!</span>[Vec::new(); parent.len()];
-        <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>p) <span class="kw">in </span>parent.iter().enumerate().skip(<span class="number">1</span>) {
-            g[p].push(i);
-        }
-        (__build_hld(<span class="number">0</span>, <span class="kw-2">&amp;mut </span>g, parent), g)
+    <span class="doccomment">/// Returns the serial id of the given vertex.
+    </span><span class="kw">pub fn </span>serial_id(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize) -&gt; usize {
+        <span class="self">self</span>.index[i]
     }
 
-    <span class="doccomment">/// From the set of undirected edges $(u _ 0, v _ 0), \dots ( u _ { n - 2 } , v _ { n - 2 } )$
-    ///
-    /// The second return value `g` is the graph with parents removed.
-    </span><span class="kw">pub fn </span>from_edges(root: usize, edges: <span class="kw-2">&amp;</span>[(usize, usize)]) -&gt; (<span class="self">Self</span>, Vec&lt;Vec&lt;usize&gt;&gt;) {
-        <span class="self">Self</span>::from_edge_iterator(root, edges.iter().copied())
+    <span class="doccomment">/// From $p _ 0, \dots, p _ { n - 1 }$. The parent of the root **must be itself**.
+    </span><span class="kw">pub fn </span>from_parents(parent: Vec&lt;usize&gt;) -&gt; (<span class="self">Self</span>, Vec&lt;Vec&lt;usize&gt;&gt;) {
+        <span class="kw">let </span><span class="kw-2">mut </span>g = <span class="macro">vec!</span>[Vec::new(); parent.len()];
+        <span class="kw">let </span><span class="kw-2">mut </span>root = usize::MAX;
+        <span class="kw">for </span>(i, <span class="kw-2">&amp;</span>p) <span class="kw">in </span>parent.iter().enumerate() {
+            g[p].push(i);
+            <span class="kw">if </span>p == i {
+                <span class="macro">assert_eq!</span>(root, usize::MAX, <span class="string">"multiple roots"</span>);
+                root = i;
+            }
+        }
+        (build_hld(root, <span class="kw-2">&amp;mut </span>g, parent), g)
     }
 
     <span class="doccomment">/// Iterator version of [`from_edges`](Self::from_edges)
-    </span><span class="kw">pub fn </span>from_edge_iterator(
+    </span><span class="kw">pub fn </span>from_edges(
         root: usize,
         edges: <span class="kw">impl </span>ExactSizeIterator&lt;Item = (usize, usize)&gt;,
     ) -&gt; (<span class="self">Self</span>, Vec&lt;Vec&lt;usize&gt;&gt;) {
@@ -604,18 +602,22 @@
             g[i].push(j);
             g[j].push(i);
         }
-        <span class="kw">let </span>parent = __remove_parent(root, <span class="kw-2">&amp;mut </span>g);
-        (__build_hld(root, <span class="kw-2">&amp;mut </span>g, parent), g)
+        <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="macro">vec!</span>[root];
+        <span class="kw">let </span><span class="kw-2">mut </span>parent = <span class="macro">vec!</span>[usize::MAX; g.len()];
+        parent[root] = root;
+        <span class="kw">while let </span><span class="prelude-val">Some</span>(i) = stack.pop() {
+            g[i].retain(|<span class="kw-2">&amp;</span>j| parent[i] != j);
+            <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
+                parent[j] = i;
+                stack.push(j);
+            }
+        }
+        (build_hld(root, <span class="kw-2">&amp;mut </span>g, parent), g)
     }
 
     <span class="doccomment">/// Decompose the (directed) path `from --&gt; to` to the path segments.
     ///
-    /// # Items
-    ///
-    /// * `i`: root-side
-    /// * `j`: left-side
-    /// * `last`: last path segments (i.e. contains the LCA)
-    /// * `reverse`: `from --&gt; to` and `i --&gt; j` is in the different direction
+    /// The item type is [`PathSegment`].
     </span><span class="kw">pub fn </span>path_segments(<span class="kw-2">&amp;</span><span class="self">self</span>, from: usize, to: usize) -&gt; PathSegments&lt;<span class="lifetime">'_</span>&gt; {
         PathSegments {
             hld: <span class="self">self</span>,
@@ -625,46 +627,43 @@
         }
     }
 
-    <span class="doccomment">/// Variation of [`path_segments`](Self::path_segments) that returns the `index`.
-    </span><span class="kw">pub fn </span>path_segments_by_index(
-        <span class="kw-2">&amp;</span><span class="self">self</span>,
-        i: usize,
-        j: usize,
-    ) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (usize, usize, bool, bool)&gt; + <span class="lifetime">'_ </span>{
-        <span class="self">self</span>.path_segments(i, j)
-            .map(<span class="kw">move </span>|(i, j, last, reverse)| (<span class="self">self</span>.index[i], <span class="self">self</span>.index[j], last, reverse))
-    }
-
-    <span class="doccomment">/// deprecated
-    </span><span class="kw">pub fn </span>ledacy_iter_v(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize) -&gt; <span class="kw">impl </span>Iterator&lt;Item = (usize, usize)&gt; + <span class="lifetime">'_ </span>{
-        <span class="self">self</span>.path_segments_by_index(i, j)
-            .map(|(i, j, _last, _revresed)| (i, j))
-    }
-
     <span class="doccomment">/// Returns the lca
     </span><span class="kw">pub fn </span>lca(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize) -&gt; usize {
         <span class="self">self</span>.path_segments(i, j)
-            .find(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="kw">_</span>, last, <span class="kw">_</span>)| last)
-            .map(|(q, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)| q)
+            .find(|s| s.contains_lca)
+            .map(|s| s.higher)
             .unwrap()
     }
 
     <span class="doccomment">/// Returns the distance between two vertices
     </span><span class="kw">pub fn </span>dist(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize) -&gt; usize {
-        <span class="self">self</span>.path_segments_by_index(i, j)
-            .map(|(l, r, last, <span class="kw">_</span>)| r - l + usize::from(!last))
+        <span class="self">self</span>.path_segments(i, j)
+            .map(|s| <span class="self">self</span>.index[s.deeper] - <span class="self">self</span>.index[s.higher] + usize::from(!s.contains_lca))
             .sum()
     }
 
-    <span class="doccomment">/// `j` lies between `i` and `k`
-    </span><span class="kw">pub fn </span>between(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize, k: usize) -&gt; bool {
+    <span class="doccomment">/// `i`, `j`, and `k` appear in this order.
+    </span><span class="kw">pub fn </span>in_this_order(<span class="kw-2">&amp;</span><span class="self">self</span>, i: usize, j: usize, k: usize) -&gt; bool {
         <span class="kw">let </span>m = <span class="self">self</span>.index[j];
-        <span class="self">self</span>.path_segments_by_index(i, k)
-            .any(|(l, r, <span class="kw">_</span>, <span class="kw">_</span>)| (l..=r).contains(<span class="kw-2">&amp;</span>m))
+        <span class="self">self</span>.path_segments(i, k)
+            .any(|s| (<span class="self">self</span>.index[s.higher]..=<span class="self">self</span>.index[s.deeper]).contains(<span class="kw-2">&amp;</span>m))
     }
 }
 
-<span class="doccomment">/// Iterator
+<span class="doccomment">/// An item of [`Hld::path_segments()`].
+</span><span class="attr">#[derive(Clone, Copy, Debug)]
+</span><span class="kw">pub struct </span>PathSegment {
+    <span class="doccomment">/// the original id on the root side
+    </span><span class="kw">pub </span>higher: usize,
+    <span class="doccomment">/// the original id on the leaf side
+    </span><span class="kw">pub </span>deeper: usize,
+    <span class="doccomment">/// true contains the lca
+    </span><span class="kw">pub </span>contains_lca: bool,
+    <span class="doccomment">/// true if from --&gt; to and i --&gt; j are in the opposite direction
+    </span><span class="kw">pub </span>oppsite: bool,
+}
+
+<span class="doccomment">/// Iterator for [`Hld::path_segments()`].
 </span><span class="kw">pub struct </span>PathSegments&lt;<span class="lifetime">'a</span>&gt; {
     hld: <span class="kw-2">&amp;</span><span class="lifetime">'a </span>Hld,
     from: usize,
@@ -672,11 +671,7 @@
     exhausted: bool,
 }
 <span class="kw">impl </span>Iterator <span class="kw">for </span>PathSegments&lt;<span class="lifetime">'_</span>&gt; {
-    <span class="comment">// i: usize         root-side,
-    // j: usize         leaf-side,
-    // last: bool       contains-lca
-    // reverse: bool    false if from --&gt; to and i --&gt; j coincide
-    </span><span class="kw">type </span>Item = (usize, usize, bool, bool);
+    <span class="kw">type </span>Item = PathSegment;
 
     <span class="kw">fn </span>next(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="self">Self</span>::Item&gt; {
         <span class="kw">let </span><span class="self">Self </span>{
@@ -695,37 +690,58 @@
         </span><span class="prelude-val">Some</span>(<span class="kw">if </span>head[from] == head[to] {
             <span class="self">self</span>.exhausted = <span class="bool-val">true</span>;
             <span class="kw">if </span>index[from] &lt; index[to] {
-                (from, to, <span class="bool-val">true</span>, <span class="bool-val">false</span>)
+                PathSegment {
+                    higher: from,
+                    deeper: to,
+                    contains_lca: <span class="bool-val">true</span>,
+                    oppsite: <span class="bool-val">false</span>,
+                }
             } <span class="kw">else </span>{
-                (to, from, <span class="bool-val">true</span>, <span class="bool-val">true</span>)
+                PathSegment {
+                    higher: to,
+                    deeper: from,
+                    contains_lca: <span class="bool-val">true</span>,
+                    oppsite: <span class="bool-val">true</span>,
+                }
             }
         } <span class="kw">else </span>{
             <span class="kw">if </span>index[from] &lt; index[to] {
                 <span class="self">self</span>.to = parent[head[to]];
-                (head[to], to, <span class="bool-val">false</span>, <span class="bool-val">false</span>)
+                PathSegment {
+                    higher: head[to],
+                    deeper: to,
+                    contains_lca: <span class="bool-val">false</span>,
+                    oppsite: <span class="bool-val">false</span>,
+                }
             } <span class="kw">else </span>{
                 <span class="self">self</span>.from = parent[head[from]];
-                (head[from], from, <span class="bool-val">false</span>, <span class="bool-val">true</span>)
+                PathSegment {
+                    higher: head[from],
+                    deeper: from,
+                    contains_lca: <span class="bool-val">false</span>,
+                    oppsite: <span class="bool-val">true</span>,
+                }
             }
         })
     }
 }
 <span class="kw">impl </span>FusedIterator <span class="kw">for </span>PathSegments&lt;<span class="lifetime">'_</span>&gt; {}
 
-<span class="kw">fn </span>__build_hld(root: usize, g: <span class="kw-2">&amp;mut </span>[Vec&lt;usize&gt;], parent: Vec&lt;usize&gt;) -&gt; Hld {
+<span class="kw">fn </span>build_hld(root: usize, g: <span class="kw-2">&amp;mut </span>[Vec&lt;usize&gt;], parent: Vec&lt;usize&gt;) -&gt; Hld {
     <span class="kw">let </span>n = g.len();
-    __heavy_first(root, g);
+    dfs_heavy_first(root, g);
     <span class="kw">let </span><span class="kw-2">mut </span>index = <span class="macro">vec!</span>[usize::MAX; n];
     <span class="kw">let </span><span class="kw-2">mut </span>head = <span class="macro">vec!</span>[usize::MAX; n];
     head[root] = root;
-    __head_and_index(root, <span class="kw-2">&amp;*</span>g, <span class="kw-2">&amp;mut </span>head, <span class="kw-2">&amp;mut </span>index, <span class="kw-2">&amp;mut </span>(<span class="number">0</span>..));
+    dfs_calculate(root, g, <span class="kw-2">&amp;mut </span>head, <span class="kw-2">&amp;mut </span>index, <span class="kw-2">&amp;mut </span>(<span class="number">0</span>..));
     Hld {
         parent,
         index,
         head,
     }
 }
-<span class="kw">fn </span>__head_and_index(
+
+<span class="kw">fn </span>dfs_calculate(
     i: usize,
     g: <span class="kw-2">&amp;</span>[Vec&lt;usize&gt;],
     head: <span class="kw-2">&amp;mut </span>[usize],
@@ -735,15 +751,15 @@
     index[i] = current.next().unwrap();
     <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
         head[j] = <span class="kw">if </span>j == g[i][<span class="number">0</span>] { head[i] } <span class="kw">else </span>{ j };
-        __head_and_index(j, g, head, index, current);
+        dfs_calculate(j, g, head, index, current);
     }
 }
 
-<span class="kw">fn </span>__heavy_first(i: usize, g: <span class="kw-2">&amp;mut </span>[Vec&lt;usize&gt;]) -&gt; usize {
+<span class="kw">fn </span>dfs_heavy_first(i: usize, g: <span class="kw-2">&amp;mut </span>[Vec&lt;usize&gt;]) -&gt; usize {
     <span class="kw">let </span><span class="kw-2">mut </span>max = <span class="number">0</span>;
     <span class="kw">let </span><span class="kw-2">mut </span>size = <span class="number">1</span>;
     <span class="kw">for </span>e <span class="kw">in </span><span class="number">0</span>..g[i].len() {
-        <span class="kw">let </span>csize = __heavy_first(g[i][e], g);
+        <span class="kw">let </span>csize = dfs_heavy_first(g[i][e], g);
         <span class="kw">if </span>max &lt; csize {
             max = csize;
             g[i].swap(<span class="number">0</span>, e);
@@ -751,20 +767,6 @@
         size += csize;
     }
     size
-}
-
-<span class="kw">fn </span>__remove_parent(root: usize, g: <span class="kw-2">&amp;mut </span>[Vec&lt;usize&gt;]) -&gt; Vec&lt;usize&gt; {
-    <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="macro">vec!</span>[root];
-    <span class="kw">let </span><span class="kw-2">mut </span>parent = <span class="macro">vec!</span>[usize::MAX; g.len()];
-    parent[root] = root;
-    <span class="kw">while let </span><span class="prelude-val">Some</span>(i) = stack.pop() {
-        g[i].retain(|<span class="kw-2">&amp;</span>j| parent[i] != j);
-        <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
-            parent[j] = i;
-            stack.push(j);
-        }
-    }
-    parent
 }
 
 <span class="attr">#[cfg(test)]
@@ -816,7 +818,7 @@
             <span class="kw">let </span>n = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
-            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
+            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, edges.iter().copied());
             <span class="kw">let </span>Hld {
                 index,
                 parent,
@@ -827,9 +829,9 @@
             {
                 <span class="kw">let </span><span class="kw-2">mut </span>stack = <span class="macro">vec!</span>[root];
                 <span class="kw">let </span><span class="kw-2">mut </span>parent = <span class="macro">vec!</span>[usize::MAX; n];
-                <span class="kw">let </span><span class="kw-2">mut </span>sorted = Vec::new();
+                <span class="kw">let </span><span class="kw-2">mut </span>serial = Vec::new();
                 <span class="kw">while let </span><span class="prelude-val">Some</span>(i) = stack.pop() {
-                    sorted.push(i);
+                    serial.push(i);
                     <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
                         <span class="kw">if </span>parent[i] == j {
                             <span class="kw">continue</span>;
@@ -838,7 +840,7 @@
                         parent[j] = i;
                     }
                 }
-                <span class="kw">for </span><span class="kw-2">&amp;</span>i <span class="kw">in </span>sorted.iter().rev() {
+                <span class="kw">for </span><span class="kw-2">&amp;</span>i <span class="kw">in </span>serial.iter().rev() {
                     <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
                         <span class="kw">if </span>parent[i] == j {
                             <span class="kw">continue</span>;
@@ -923,7 +925,7 @@
             <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
-            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
+            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, edges.iter().copied());
             <span class="kw">let </span>Hld {
                 index,
                 parent,
@@ -968,48 +970,50 @@
                 </span><span class="macro">assert_eq!</span>(
                     path_segments
                         .iter()
-                        .map(|<span class="kw-2">&amp;</span>(i, j, <span class="kw">_</span>, <span class="kw">_</span>)| index[j] - index[i] + <span class="number">1</span>)
+                        .map(|<span class="kw-2">&amp;</span>s| index[s.deeper] - index[s.higher] + <span class="number">1</span>)
                         .sum::&lt;usize&gt;(),
                     path.len()
                 );
 
                 <span class="comment">// validate the vertex set
-                </span><span class="kw">for </span><span class="kw-2">&amp;</span>(i, j, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
+                </span><span class="kw">for </span><span class="kw-2">&amp;</span>s <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
                     <span class="attr">#[allow(clippy::needless_range_loop)]
-                    </span><span class="kw">for </span>k <span class="kw">in </span>index[i]..=index[j] {
+                    </span><span class="kw">for </span>k <span class="kw">in </span>index[s.higher]..=index[s.deeper] {
                         <span class="macro">assert_ne!</span>(index_to_path_position[k], usize::MAX);
                     }
                 }
 
                 <span class="comment">// validate the direction (root --&gt; leaf)
-                </span><span class="kw">for </span><span class="kw-2">&amp;</span>(i, j, <span class="kw">_</span>, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
-                    <span class="macro">assert!</span>(index[i] &lt;= index[j]);
+                </span><span class="kw">for </span><span class="kw-2">&amp;</span>s <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
+                    <span class="macro">assert!</span>(index[s.higher] &lt;= index[s.deeper]);
                 }
 
-                <span class="comment">// validate the sortedness (leafside to rootside)
-                </span><span class="kw">for </span>((<span class="kw">_</span>, j, <span class="kw">_</span>, <span class="kw">_</span>), (k, <span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>)) <span class="kw">in </span>path_segments.iter().copied().tuple_windows() {
-                    <span class="macro">assert!</span>(index[j] &gt;= index[k]);
+                <span class="comment">// validate the serialness (leafside to rootside)
+                </span><span class="kw">for </span>(s, t) <span class="kw">in </span>path_segments.iter().copied().tuple_windows() {
+                    <span class="macro">assert!</span>(index[s.deeper] &gt;= index[t.higher]);
                 }
 
                 <span class="comment">// validate last
-                </span><span class="kw">for </span>(e, <span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="kw">_</span>, last, <span class="kw">_</span>)) <span class="kw">in </span>path_segments.iter().enumerate() {
-                    <span class="macro">assert_eq!</span>(last, (e == path_segments.len() - <span class="number">1</span>));
+                </span><span class="kw">for </span>(e, <span class="kw-2">&amp;</span>s) <span class="kw">in </span>path_segments.iter().enumerate() {
+                    <span class="macro">assert_eq!</span>(s.contains_lca, (e == path_segments.len() - <span class="number">1</span>));
                 }
 
                 <span class="comment">// validate reverse
-                </span><span class="kw">for </span><span class="kw-2">&amp;</span>(i, j, <span class="kw">_</span>, reverse) <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
-                    <span class="kw">match </span>index_to_path_position[index[i]].cmp(<span class="kw-2">&amp;</span>index_to_path_position[index[j]]) {
-                        Ordering::Less =&gt; <span class="macro">assert!</span>(!reverse),
+                </span><span class="kw">for </span><span class="kw-2">&amp;</span>s <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
+                    <span class="kw">match </span>index_to_path_position[index[s.higher]]
+                        .cmp(<span class="kw-2">&amp;</span>index_to_path_position[index[s.deeper]])
+                    {
+                        Ordering::Less =&gt; <span class="macro">assert!</span>(!s.oppsite),
                         Ordering::Equal =&gt; (),
-                        Ordering::Greater =&gt; <span class="macro">assert!</span>(reverse),
+                        Ordering::Greater =&gt; <span class="macro">assert!</span>(s.oppsite),
                     }
                 }
 
                 <span class="comment">// validate greedyness
                 </span>{
-                    <span class="kw">for </span><span class="kw-2">&amp;</span>(i, <span class="kw">_</span>, last, <span class="kw">_</span>) <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
-                        <span class="kw">if </span>!last {
-                            <span class="macro">assert_eq!</span>(head[i], i);
+                    <span class="kw">for </span><span class="kw-2">&amp;</span>s <span class="kw">in </span><span class="kw-2">&amp;</span>path_segments {
+                        <span class="kw">if </span>!s.contains_lca {
+                            <span class="macro">assert_eq!</span>(head[s.higher], s.higher);
                         }
                     }
                 }
@@ -1025,13 +1029,13 @@
             <span class="kw">let </span>q = rng.gen_range(<span class="number">1</span>..=<span class="number">100</span>);
             <span class="kw">let </span>edges = random_tree(<span class="kw-2">&amp;mut </span>rng, n);
             <span class="kw">let </span>root = rng.gen_range(<span class="number">0</span>..n);
-            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, <span class="kw-2">&amp;</span>edges);
+            <span class="kw">let </span>(hld, g) = Hld::from_edges(root, edges.iter().copied());
             <span class="kw">let </span>Hld { index, parent, .. } = <span class="kw-2">&amp;</span>hld;
 
-            <span class="kw">let </span><span class="kw-2">mut </span>sorted = (<span class="number">0</span>..n).collect_vec();
-            sorted.sort_by_key(|<span class="kw-2">&amp;</span>i| index[i]);
+            <span class="kw">let </span><span class="kw-2">mut </span>serial = (<span class="number">0</span>..n).collect_vec();
+            serial.sort_by_key(|<span class="kw-2">&amp;</span>i| index[i]);
             <span class="kw">let </span><span class="kw-2">mut </span>depth = <span class="macro">vec!</span>[<span class="number">0</span>; n];
-            <span class="kw">for </span><span class="kw-2">&amp;</span>i <span class="kw">in </span><span class="kw-2">&amp;</span>sorted {
+            <span class="kw">for </span><span class="kw-2">&amp;</span>i <span class="kw">in </span><span class="kw-2">&amp;</span>serial {
                 <span class="kw">for </span><span class="kw-2">&amp;</span>j <span class="kw">in </span><span class="kw-2">&amp;</span>g[i] {
                     depth[j] = depth[i] + <span class="number">1</span>;
                 }
@@ -1075,7 +1079,7 @@
                 <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
                 <span class="kw">let </span>j = rng.gen_range(<span class="number">0</span>..n);
                 <span class="kw">let </span>k = rng.gen_range(<span class="number">0</span>..n);
-                <span class="kw">let </span>result = hld.between(i, j, k);
+                <span class="kw">let </span>result = hld.in_this_order(i, j, k);
                 <span class="kw">let </span>expected = hld.dist(i, j) + hld.dist(j, k) == hld.dist(i, k);
                 <span class="macro">assert_eq!</span>(result, expected);
             }

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["Hld","PathSegments"]};
+window.SIDEBAR_ITEMS = {"struct":["Hld","PathSegment","PathSegments"]};

@@ -723,6 +723,12 @@
 <a href="#689" id="689">689</a>
 <a href="#690" id="690">690</a>
 <a href="#691" id="691">691</a>
+<a href="#692" id="692">692</a>
+<a href="#693" id="693">693</a>
+<a href="#694" id="694">694</a>
+<a href="#695" id="695">695</a>
+<a href="#696" id="696">696</a>
+<a href="#697" id="697">697</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Arithmetic of formal power series.
 //!
 //! # Data representation
@@ -1275,16 +1281,19 @@
         <span class="macro">assert_eq!</span>(fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="number">1</span>), <span class="macro">fps!</span>[<span class="number">0</span>]);
         <span class="macro">assert_eq!</span>(fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="number">2</span>), <span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>]);
         <span class="macro">assert_eq!</span>(fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="number">3</span>), <span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>, -<span class="number">2</span>]);
-        <span class="macro">assert_eq!</span>(fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="number">8</span>), <span class="macro">vec!</span>[
-            <span class="macro">fp!</span>(<span class="number">0</span>),
-            <span class="macro">fp!</span>(<span class="number">2</span>),
-            <span class="macro">fp!</span>(-<span class="number">4</span>) / <span class="number">2</span>,
-            <span class="macro">fp!</span>(<span class="number">8</span>) / <span class="number">3</span>,
-            <span class="macro">fp!</span>(-<span class="number">16</span>) / <span class="number">4</span>,
-            <span class="macro">fp!</span>(<span class="number">32</span>) / <span class="number">5</span>,
-            <span class="macro">fp!</span>(-<span class="number">64</span>) / <span class="number">6</span>,
-            <span class="macro">fp!</span>(<span class="number">128</span>) / <span class="number">7</span>,
-        ]);
+        <span class="macro">assert_eq!</span>(
+            fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="number">8</span>),
+            <span class="macro">vec!</span>[
+                <span class="macro">fp!</span>(<span class="number">0</span>),
+                <span class="macro">fp!</span>(<span class="number">2</span>),
+                <span class="macro">fp!</span>(-<span class="number">4</span>) / <span class="number">2</span>,
+                <span class="macro">fp!</span>(<span class="number">8</span>) / <span class="number">3</span>,
+                <span class="macro">fp!</span>(-<span class="number">16</span>) / <span class="number">4</span>,
+                <span class="macro">fp!</span>(<span class="number">32</span>) / <span class="number">5</span>,
+                <span class="macro">fp!</span>(-<span class="number">64</span>) / <span class="number">6</span>,
+                <span class="macro">fp!</span>(<span class="number">128</span>) / <span class="number">7</span>,
+            ]
+        );
         <span class="macro">assert_eq!</span>(fps_log(<span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>], <span class="number">1</span>), <span class="macro">fps!</span>[<span class="number">0</span>]);
     }
 
@@ -1328,16 +1337,19 @@
         <span class="macro">assert_eq!</span>(fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>], <span class="number">1</span>), <span class="macro">fps!</span>[<span class="number">1</span>]);
         <span class="macro">assert_eq!</span>(fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>], <span class="number">2</span>), <span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>]);
         <span class="macro">assert_eq!</span>(fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>], <span class="number">3</span>), <span class="macro">fps!</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">2</span>]);
-        <span class="macro">assert_eq!</span>(fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>], <span class="number">8</span>), <span class="macro">vec!</span>[
-            <span class="macro">fp!</span>(<span class="number">1</span>),
-            <span class="macro">fp!</span>(<span class="number">2</span>),
-            <span class="macro">fp!</span>(<span class="number">4</span>) / <span class="number">2</span>,
-            <span class="macro">fp!</span>(<span class="number">8</span>) / <span class="number">6</span>,
-            <span class="macro">fp!</span>(<span class="number">16</span>) / <span class="number">24</span>,
-            <span class="macro">fp!</span>(<span class="number">32</span>) / <span class="number">120</span>,
-            <span class="macro">fp!</span>(<span class="number">64</span>) / <span class="number">720</span>,
-            <span class="macro">fp!</span>(<span class="number">128</span>) / <span class="number">5040</span>,
-        ]);
+        <span class="macro">assert_eq!</span>(
+            fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>], <span class="number">8</span>),
+            <span class="macro">vec!</span>[
+                <span class="macro">fp!</span>(<span class="number">1</span>),
+                <span class="macro">fp!</span>(<span class="number">2</span>),
+                <span class="macro">fp!</span>(<span class="number">4</span>) / <span class="number">2</span>,
+                <span class="macro">fp!</span>(<span class="number">8</span>) / <span class="number">6</span>,
+                <span class="macro">fp!</span>(<span class="number">16</span>) / <span class="number">24</span>,
+                <span class="macro">fp!</span>(<span class="number">32</span>) / <span class="number">120</span>,
+                <span class="macro">fp!</span>(<span class="number">64</span>) / <span class="number">720</span>,
+                <span class="macro">fp!</span>(<span class="number">128</span>) / <span class="number">5040</span>,
+            ]
+        );
         <span class="macro">assert_eq!</span>(fps_exp(<span class="macro">fps!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>], <span class="number">1</span>), <span class="macro">fps!</span>[<span class="number">1</span>]);
     }
 
