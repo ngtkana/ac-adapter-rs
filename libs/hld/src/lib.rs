@@ -90,7 +90,7 @@ impl Hld {
 }
 
 /// An item of [`Hld::path_segments()`].
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy)]
 pub struct PathSegment {
     /// the original id on the root side
     pub higher: usize,
@@ -101,6 +101,20 @@ pub struct PathSegment {
     /// true if from --> to and i --> j are in the opposite direction
     pub oppsite: bool,
 }
+impl PathSegment {
+    /// Returns the serial id on the root side
+    pub fn higher_serial_id(&self, hld: &Hld) -> usize {
+        hld.index[self.higher]
+    }
+    /// Returns the serial id on the leaf side
+    pub fn deeper_serial_id(&self, hld: &Hld) -> usize {
+        hld.index[self.deeper]
+    }
+    /// Returns the number of vertices in the path segment.
+    pub fn vertex_count(&self, hld: &Hld) -> usize {
+        hld.index[self.deeper] - hld.index[self.higher] + 1
+    }
+}
 
 /// Iterator for [`Hld::path_segments()`].
 pub struct PathSegments<'a> {
@@ -109,58 +123,46 @@ pub struct PathSegments<'a> {
     to: usize,
     exhausted: bool,
 }
-impl Iterator for PathSegments<'_> {
+impl<'a> Iterator for PathSegments<'a> {
     type Item = PathSegment;
 
     fn next(&mut self) -> Option<Self::Item> {
         let Self {
-            hld,
+            hld:
+                Hld {
+                    index,
+                    head,
+                    parent,
+                },
             from,
             to,
             exhausted,
         } = *self;
         (!exhausted).then_some(())?;
-        let Hld {
-            index,
-            head,
-            parent,
-        } = hld;
+        let contains_lca = head[from] == head[to];
+        let oppsite = index[from] > index[to];
         #[allow(clippy::collapsible_else_if)]
-        Some(if head[from] == head[to] {
+        let (higher, deeper) = if contains_lca {
             self.exhausted = true;
-            if index[from] < index[to] {
-                PathSegment {
-                    higher: from,
-                    deeper: to,
-                    contains_lca: true,
-                    oppsite: false,
-                }
+            if oppsite {
+                (to, from)
             } else {
-                PathSegment {
-                    higher: to,
-                    deeper: from,
-                    contains_lca: true,
-                    oppsite: true,
-                }
+                (from, to)
             }
         } else {
-            if index[from] < index[to] {
-                self.to = parent[head[to]];
-                PathSegment {
-                    higher: head[to],
-                    deeper: to,
-                    contains_lca: false,
-                    oppsite: false,
-                }
-            } else {
+            if oppsite {
                 self.from = parent[head[from]];
-                PathSegment {
-                    higher: head[from],
-                    deeper: from,
-                    contains_lca: false,
-                    oppsite: true,
-                }
+                (head[from], from)
+            } else {
+                self.to = parent[head[to]];
+                (head[to], to)
             }
+        };
+        Some(PathSegment {
+            higher,
+            deeper,
+            contains_lca,
+            oppsite,
         })
     }
 }
