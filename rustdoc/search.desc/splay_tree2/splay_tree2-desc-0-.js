@@ -1,0 +1,1 @@
+searchState.loadedDescShard("splay_tree2", 0, "<strong>WIP</strong> A new implementation of a splay tree.\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")
