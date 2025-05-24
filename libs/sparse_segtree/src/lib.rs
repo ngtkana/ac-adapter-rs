@@ -3,7 +3,7 @@ use std::ops::{Range, RangeBounds};
 
 /// Trait for operations on the segment tree.
 pub trait Op {
-    type Value: Clone;
+    type Value;
     fn identity() -> Self::Value;
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
@@ -114,7 +114,10 @@ impl<O: Op> Default for SparseSegtree<O> {
         SparseSegtree { root: None }
     }
 }
-impl<O: Op> Clone for SparseSegtree<O> {
+impl<O: Op> Clone for SparseSegtree<O>
+where
+    O::Value: Clone,
+{
     fn clone(&self) -> Self {
         SparseSegtree {
             root: self.root.clone(),
@@ -236,18 +239,19 @@ impl<O: Op> Node<O> {
         }
     }
     fn recalculate_value(&mut self) {
-        let left_value = self
-            .left
-            .as_ref()
-            .map_or_else(O::identity, |n| n.value.clone());
-        let right_value = self
-            .right
-            .as_ref()
-            .map_or_else(O::identity, |n| n.value.clone());
-        self.value = O::mul(&left_value, &right_value);
+        self.value = O::identity();
+        if let Some(left) = &self.left {
+            self.value = O::mul(&self.value, &left.value);
+        }
+        if let Some(right) = &self.right {
+            self.value = O::mul(&self.value, &right.value);
+        }
     }
 }
-impl<O: Op> Clone for Node<O> {
+impl<O: Op> Clone for Node<O>
+where
+    O::Value: Clone,
+{
     fn clone(&self) -> Self {
         Node {
             start: self.start,
