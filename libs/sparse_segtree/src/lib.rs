@@ -1,5 +1,5 @@
 //! Sparse Segment Tree
-use std::ops::Range;
+use std::ops::{Range, RangeBounds};
 
 /// Trait for operations on the segment tree.
 pub trait Op {
@@ -76,7 +76,7 @@ impl<O: Op> SparseSegtree<O> {
             O::identity()
         }
     }
-    /// Call $f(i, x_i)$ for each $x_i$ in the segment tree.
+    /// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
     ///
     /// # Notes
     ///
@@ -102,14 +102,15 @@ impl<O: Op> SparseSegtree<O> {
     /// seg.update(2, |x| *x += 5);
     /// seg.update(5, |x| *x += 3);
     /// let mut values = vec![];
-    /// seg.visit(|i, x| {
+    /// seg.visit(4.., |i, x| {
     ///    values.push((i, *x));
     /// });
-    /// assert_eq!(values, vec![(2, 5), (5, 3)]);
+    /// assert_eq!(values, vec![(5, 3)]);
     /// ```
-    pub fn visit(&self, mut f: impl FnMut(usize, &O::Value)) {
+    pub fn visit(&self, range: impl RangeBounds<usize>, mut f: impl FnMut(usize, &O::Value)) {
+        let range = open(range, self.root.as_ref().map_or(0..0, |n| n.start..n.end));
         if let Some(root) = &self.root {
-            root.visit(&mut f);
+            root.visit(range, &mut f);
         }
     }
 }
@@ -224,15 +225,20 @@ impl<O: Op> Node<O> {
             O::mul(&left_value, &right_value)
         }
     }
-    fn visit(&self, f: &mut impl FnMut(usize, &O::Value)) {
+    fn visit(&self, range: Range<usize>, f: &mut impl FnMut(usize, &O::Value)) {
         if self.start + 1 == self.end {
             f(self.start, &self.value);
         } else {
-            if let Some(left) = &self.left {
-                left.visit(f);
+            let mid = (self.start + self.end) / 2;
+            if range.start < mid {
+                if let Some(left) = &self.left {
+                    left.visit(open(range.start..range.end, self.start..mid), f);
+                }
             }
-            if let Some(right) = &self.right {
-                right.visit(f);
+            if range.end > mid {
+                if let Some(right) = &self.right {
+                    right.visit(open(range.start..range.end, mid..self.end), f);
+                }
             }
         }
     }
@@ -258,6 +264,20 @@ impl<O: Op> Clone for Node<O> {
             right: self.right.clone(),
         }
     }
+}
+
+fn open(a: impl RangeBounds<usize>, b: Range<usize>) -> Range<usize> {
+    let start = match a.start_bound() {
+        std::ops::Bound::Included(&s) => s,
+        std::ops::Bound::Excluded(&s) => s + 1,
+        std::ops::Bound::Unbounded => b.start,
+    };
+    let end = match a.end_bound() {
+        std::ops::Bound::Included(&e) => e + 1,
+        std::ops::Bound::Excluded(&e) => e,
+        std::ops::Bound::Unbounded => b.end,
+    };
+    Range { start, end }
 }
 
 #[cfg(test)]
@@ -355,31 +375,34 @@ mod tests {
                             *v = O::mul(v, &Value { a, b });
                         });
                     }
+                    // Visit [l..r[
+                    3 => {
+                        let mut l = rng.gen_range(0..=n);
+                        let mut r = rng.gen_range(0..n);
+                        if l > r {
+                            mem::swap(&mut l, &mut r);
+                        }
+                        let mut iter = mock.map.range(l..r).map(|(&i, &v)| (i, v));
+                        seg.visit(l..r, |i, &v| {
+                            if v == O::identity() {
+                                return;
+                            }
+                            let expected = iter
+                                .next()
+                                .expect("Segment tree visit should match mock visit");
+                            let result = (i, v);
+                            assert_eq!(
+                                result, expected,
+                                "Segment tree visit mismatch: expected {result:?}, got {expected:?}"
+                            );
+                        });
+                        assert!(
+                            iter.next().is_none(),
+                            "Segment tree visit should not have extra elements"
+                        );
+                    }
                     _ => unreachable!(),
                 }
-                // Visit elements
-                let mut iter = mock
-                    .map
-                    .iter()
-                    .map(|(&i, &v)| (i, v))
-                    .filter(|&(_, v)| v != O::identity());
-                seg.visit(|i, &v| {
-                    if v == O::identity() {
-                        return;
-                    }
-                    let expected = iter
-                        .next()
-                        .expect("Segment tree visit should match mock visit");
-                    let result = (i, v);
-                    assert_eq!(
-                        result, expected,
-                        "Segment tree visit mismatch: expected {result:?}, got {expected:?}"
-                    );
-                });
-                assert!(
-                    iter.next().is_none(),
-                    "Segment tree visit should not have extra elements"
-                );
             }
         }
     }
