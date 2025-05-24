@@ -434,13 +434,6 @@
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
-<a href="#403" id="403">403</a>
-<a href="#404" id="404">404</a>
-<a href="#405" id="405">405</a>
-<a href="#406" id="406">406</a>
-<a href="#407" id="407">407</a>
-<a href="#408" id="408">408</a>
-<a href="#409" id="409">409</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Sparse Segment Tree
 </span><span class="kw">use </span>std::ops::{Range, RangeBounds};
 
@@ -500,24 +493,11 @@
     }
     <span class="doccomment">/// Return $x_l \cdot x_{l+1} \cdots x_{r-1}$.
     </span><span class="kw">pub fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;) -&gt; O::Value {
-        <span class="kw">let </span>Range { start, end } = range;
-        <span class="macro">assert!</span>(
-            start &lt;= end,
-            <span class="string">"Invalid range: start must be less than or equal to end"
-        </span>);
-        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = <span class="kw-2">&amp;</span><span class="self">self</span>.root {
-            <span class="macro">assert!</span>(
-                root.start &lt;= start &amp;&amp; end &lt;= root.end,
-                <span class="string">"Range must be within the bounds of the segment tree"
-            </span>);
-            root.fold(start..end)
-        } <span class="kw">else </span>{
-            <span class="macro">assert!</span>(
-                start == end,
-                <span class="string">"Empty segment tree cannot fold non-empty range"
-            </span>);
-            O::identity()
-        }
+        <span class="kw">let </span><span class="kw-2">mut </span>result = O::identity();
+        <span class="self">self</span>.visit_ranges(range, |<span class="kw">_</span>, value| {
+            result = O::mul(<span class="kw-2">&amp;</span>result, value);
+        });
+        result
     }
     <span class="doccomment">/// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
     ///
@@ -544,16 +524,24 @@
     /// let mut seg = SparseSegtree::&lt;SumOp&gt;::from_range(0..10);
     /// seg.update(2, |x| *x += 5);
     /// seg.update(5, |x| *x += 3);
-    /// let mut values = vec![];
-    /// seg.visit(4.., |i, x| {
-    ///    values.push((i, *x));
-    /// });
-    /// assert_eq!(values, vec![(5, 3)]);
+    /// assert_eq!(seg.fold(0..10), 8);
     /// ```
-    </span><span class="kw">pub fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
+    </span><span class="kw">pub fn </span>visit_items(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
         <span class="kw">let </span>range = open(range, <span class="self">self</span>.root.as_ref().map_or(<span class="number">0</span>..<span class="number">0</span>, |n| n.start..n.end));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = <span class="kw-2">&amp;</span><span class="self">self</span>.root {
-            root.visit(range, <span class="kw-2">&amp;mut </span>f);
+            root.visit_items(range, <span class="kw-2">&amp;mut </span>f);
+        }
+    }
+
+    <span class="doccomment">/// Call $f(l..r, \mathrm{fold}(l..r))$ decomposing the range into segments.
+    </span><span class="kw">pub fn </span>visit_ranges(
+        <span class="kw-2">&amp;</span><span class="self">self</span>,
+        range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;,
+        <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(Range&lt;usize&gt;, <span class="kw-2">&amp;</span>O::Value),
+    ) {
+        <span class="kw">let </span>range = open(range, <span class="self">self</span>.root.as_ref().map_or(<span class="number">0</span>..<span class="number">0</span>, |n| n.start..n.end));
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = <span class="kw-2">&amp;</span><span class="self">self</span>.root {
+            root.visit_ranges(range, <span class="kw-2">&amp;mut </span>f);
         }
     }
 }
@@ -642,46 +630,44 @@
         }
         <span class="self">self</span>.recalculate_value();
     }
-    <span class="kw">fn </span>fold(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;) -&gt; O::Value {
-        <span class="kw">let </span>Range { start, end } = range;
-        <span class="kw">if </span>(start, end) == (<span class="self">self</span>.start, <span class="self">self</span>.end) {
-            <span class="kw">return </span><span class="self">self</span>.value.clone();
-        }
-        <span class="kw">let </span>mid = (<span class="self">self</span>.start + <span class="self">self</span>.end) / <span class="number">2</span>;
-        <span class="kw">if </span>end &lt;= mid {
-            <span class="self">self</span>.left
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(range))
-        } <span class="kw">else if </span>mid &lt;= start {
-            <span class="self">self</span>.right
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(range))
-        } <span class="kw">else </span>{
-            <span class="kw">let </span>left_value = <span class="self">self
-                </span>.left
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(start..mid));
-            <span class="kw">let </span>right_value = <span class="self">self
-                </span>.right
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(mid..end));
-            O::mul(<span class="kw-2">&amp;</span>left_value, <span class="kw-2">&amp;</span>right_value)
-        }
-    }
-    <span class="kw">fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
+    <span class="kw">fn </span>visit_items(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
         <span class="kw">if </span><span class="self">self</span>.start + <span class="number">1 </span>== <span class="self">self</span>.end {
             f(<span class="self">self</span>.start, <span class="kw-2">&amp;</span><span class="self">self</span>.value);
         } <span class="kw">else </span>{
             <span class="kw">let </span>mid = (<span class="self">self</span>.start + <span class="self">self</span>.end) / <span class="number">2</span>;
             <span class="kw">if </span>range.start &lt; mid {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
-                    left.visit(open(range.start..range.end, <span class="self">self</span>.start..mid), f);
+                    left.visit_items(open(range.start..range.end, <span class="self">self</span>.start..mid), f);
                 }
             }
             <span class="kw">if </span>range.end &gt; mid {
                 <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
-                    right.visit(open(range.start..range.end, mid..<span class="self">self</span>.end), f);
+                    right.visit_items(open(range.start..range.end, mid..<span class="self">self</span>.end), f);
                 }
+            }
+        }
+    }
+    <span class="kw">fn </span>visit_ranges(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(Range&lt;usize&gt;, <span class="kw-2">&amp;</span>O::Value)) {
+        <span class="kw">let </span>Range { start, end } = range;
+        <span class="kw">if </span>(start, end) == (<span class="self">self</span>.start, <span class="self">self</span>.end) {
+            f(<span class="self">self</span>.start..<span class="self">self</span>.end, <span class="kw-2">&amp;</span><span class="self">self</span>.value);
+            <span class="kw">return</span>;
+        }
+        <span class="kw">let </span>mid = (<span class="self">self</span>.start + <span class="self">self</span>.end) / <span class="number">2</span>;
+        <span class="kw">if </span>end &lt;= mid {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
+                left.visit_ranges(range, f);
+            }
+        } <span class="kw">else if </span>mid &lt;= start {
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
+                right.visit_ranges(range, f);
+            }
+        } <span class="kw">else </span>{
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
+                left.visit_ranges(start..mid, f);
+            }
+            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
+                right.visit_ranges(mid..end, f);
             }
         }
     }
@@ -826,13 +812,13 @@
                             mem::swap(<span class="kw-2">&amp;mut </span>l, <span class="kw-2">&amp;mut </span>r);
                         }
                         <span class="kw">let </span><span class="kw-2">mut </span>iter = mock.map.range(l..r).map(|(<span class="kw-2">&amp;</span>i, <span class="kw-2">&amp;</span>v)| (i, v));
-                        seg.visit(l..r, |i, <span class="kw-2">&amp;</span>v| {
+                        seg.visit_items(l..r, |i, <span class="kw-2">&amp;</span>v| {
                             <span class="kw">if </span>v == O::identity() {
                                 <span class="kw">return</span>;
                             }
                             <span class="kw">let </span>expected = iter
                                 .next()
-                                .expect(<span class="string">"Segment tree visit should match mock visit"</span>);
+                                .expect(<span class="string">"Segment tree visit_leaves should match mock visit_leaves"</span>);
                             <span class="kw">let </span>result = (i, v);
                             <span class="macro">assert_eq!</span>(
                                 result, expected,
@@ -841,7 +827,7 @@
                         });
                         <span class="macro">assert!</span>(
                             iter.next().is_none(),
-                            <span class="string">"Segment tree visit should not have extra elements"
+                            <span class="string">"Segment tree visit_leaves should not have extra elements"
                         </span>);
                     }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
