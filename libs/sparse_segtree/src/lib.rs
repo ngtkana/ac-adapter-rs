@@ -57,24 +57,11 @@ impl<O: Op> SparseSegtree<O> {
     }
     /// Return $x_l \cdot x_{l+1} \cdots x_{r-1}$.
     pub fn fold(&self, range: Range<usize>) -> O::Value {
-        let Range { start, end } = range;
-        assert!(
-            start <= end,
-            "Invalid range: start must be less than or equal to end"
-        );
-        if let Some(root) = &self.root {
-            assert!(
-                root.start <= start && end <= root.end,
-                "Range must be within the bounds of the segment tree"
-            );
-            root.fold(start..end)
-        } else {
-            assert!(
-                start == end,
-                "Empty segment tree cannot fold non-empty range"
-            );
-            O::identity()
-        }
+        let mut result = O::identity();
+        self.visit_ranges(range, |_, value| {
+            result = O::mul(&result, value);
+        });
+        result
     }
     /// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
     ///
@@ -101,16 +88,24 @@ impl<O: Op> SparseSegtree<O> {
     /// let mut seg = SparseSegtree::<SumOp>::from_range(0..10);
     /// seg.update(2, |x| *x += 5);
     /// seg.update(5, |x| *x += 3);
-    /// let mut values = vec![];
-    /// seg.visit(4.., |i, x| {
-    ///    values.push((i, *x));
-    /// });
-    /// assert_eq!(values, vec![(5, 3)]);
+    /// assert_eq!(seg.fold(0..10), 8);
     /// ```
-    pub fn visit(&self, range: impl RangeBounds<usize>, mut f: impl FnMut(usize, &O::Value)) {
+    pub fn visit_items(&self, range: impl RangeBounds<usize>, mut f: impl FnMut(usize, &O::Value)) {
         let range = open(range, self.root.as_ref().map_or(0..0, |n| n.start..n.end));
         if let Some(root) = &self.root {
-            root.visit(range, &mut f);
+            root.visit_items(range, &mut f);
+        }
+    }
+
+    /// Call $f(l..r, \mathrm{fold}(l..r))$ decomposing the range into segments.
+    pub fn visit_ranges(
+        &self,
+        range: impl RangeBounds<usize>,
+        mut f: impl FnMut(Range<usize>, &O::Value),
+    ) {
+        let range = open(range, self.root.as_ref().map_or(0..0, |n| n.start..n.end));
+        if let Some(root) = &self.root {
+            root.visit_ranges(range, &mut f);
         }
     }
 }
@@ -199,46 +194,44 @@ impl<O: Op> Node<O> {
         }
         self.recalculate_value();
     }
-    fn fold(&self, range: Range<usize>) -> O::Value {
-        let Range { start, end } = range;
-        if (start, end) == (self.start, self.end) {
-            return self.value.clone();
-        }
-        let mid = (self.start + self.end) / 2;
-        if end <= mid {
-            self.left
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(range))
-        } else if mid <= start {
-            self.right
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(range))
-        } else {
-            let left_value = self
-                .left
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(start..mid));
-            let right_value = self
-                .right
-                .as_ref()
-                .map_or_else(O::identity, |n| n.fold(mid..end));
-            O::mul(&left_value, &right_value)
-        }
-    }
-    fn visit(&self, range: Range<usize>, f: &mut impl FnMut(usize, &O::Value)) {
+    fn visit_items(&self, range: Range<usize>, f: &mut impl FnMut(usize, &O::Value)) {
         if self.start + 1 == self.end {
             f(self.start, &self.value);
         } else {
             let mid = (self.start + self.end) / 2;
             if range.start < mid {
                 if let Some(left) = &self.left {
-                    left.visit(open(range.start..range.end, self.start..mid), f);
+                    left.visit_items(open(range.start..range.end, self.start..mid), f);
                 }
             }
             if range.end > mid {
                 if let Some(right) = &self.right {
-                    right.visit(open(range.start..range.end, mid..self.end), f);
+                    right.visit_items(open(range.start..range.end, mid..self.end), f);
                 }
+            }
+        }
+    }
+    fn visit_ranges(&self, range: Range<usize>, f: &mut impl FnMut(Range<usize>, &O::Value)) {
+        let Range { start, end } = range;
+        if (start, end) == (self.start, self.end) {
+            f(self.start..self.end, &self.value);
+            return;
+        }
+        let mid = (self.start + self.end) / 2;
+        if end <= mid {
+            if let Some(left) = &self.left {
+                left.visit_ranges(range, f);
+            }
+        } else if mid <= start {
+            if let Some(right) = &self.right {
+                right.visit_ranges(range, f);
+            }
+        } else {
+            if let Some(left) = &self.left {
+                left.visit_ranges(start..mid, f);
+            }
+            if let Some(right) = &self.right {
+                right.visit_ranges(mid..end, f);
             }
         }
     }
@@ -383,13 +376,13 @@ mod tests {
                             mem::swap(&mut l, &mut r);
                         }
                         let mut iter = mock.map.range(l..r).map(|(&i, &v)| (i, v));
-                        seg.visit(l..r, |i, &v| {
+                        seg.visit_items(l..r, |i, &v| {
                             if v == O::identity() {
                                 return;
                             }
                             let expected = iter
                                 .next()
-                                .expect("Segment tree visit should match mock visit");
+                                .expect("Segment tree visit_leaves should match mock visit_leaves");
                             let result = (i, v);
                             assert_eq!(
                                 result, expected,
@@ -398,7 +391,7 @@ mod tests {
                         });
                         assert!(
                             iter.next().is_none(),
-                            "Segment tree visit should not have extra elements"
+                            "Segment tree visit_leaves should not have extra elements"
                         );
                     }
                     _ => unreachable!(),
