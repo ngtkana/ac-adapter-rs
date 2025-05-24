@@ -418,8 +418,31 @@
 <a href="#384" id="384">384</a>
 <a href="#385" id="385">385</a>
 <a href="#386" id="386">386</a>
+<a href="#387" id="387">387</a>
+<a href="#388" id="388">388</a>
+<a href="#389" id="389">389</a>
+<a href="#390" id="390">390</a>
+<a href="#391" id="391">391</a>
+<a href="#392" id="392">392</a>
+<a href="#393" id="393">393</a>
+<a href="#394" id="394">394</a>
+<a href="#395" id="395">395</a>
+<a href="#396" id="396">396</a>
+<a href="#397" id="397">397</a>
+<a href="#398" id="398">398</a>
+<a href="#399" id="399">399</a>
+<a href="#400" id="400">400</a>
+<a href="#401" id="401">401</a>
+<a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
+<a href="#407" id="407">407</a>
+<a href="#408" id="408">408</a>
+<a href="#409" id="409">409</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Sparse Segment Tree
-</span><span class="kw">use </span>std::ops::Range;
+</span><span class="kw">use </span>std::ops::{Range, RangeBounds};
 
 <span class="doccomment">/// Trait for operations on the segment tree.
 </span><span class="kw">pub trait </span>Op {
@@ -496,7 +519,7 @@
             O::identity()
         }
     }
-    <span class="doccomment">/// Call $f(i, x_i)$ for each $x_i$ in the segment tree.
+    <span class="doccomment">/// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
     ///
     /// # Notes
     ///
@@ -522,14 +545,15 @@
     /// seg.update(2, |x| *x += 5);
     /// seg.update(5, |x| *x += 3);
     /// let mut values = vec![];
-    /// seg.visit(|i, x| {
+    /// seg.visit(4.., |i, x| {
     ///    values.push((i, *x));
     /// });
-    /// assert_eq!(values, vec![(2, 5), (5, 3)]);
+    /// assert_eq!(values, vec![(5, 3)]);
     /// ```
-    </span><span class="kw">pub fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
+    </span><span class="kw">pub fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, range: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, <span class="kw-2">mut </span>f: <span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
+        <span class="kw">let </span>range = open(range, <span class="self">self</span>.root.as_ref().map_or(<span class="number">0</span>..<span class="number">0</span>, |n| n.start..n.end));
         <span class="kw">if let </span><span class="prelude-val">Some</span>(root) = <span class="kw-2">&amp;</span><span class="self">self</span>.root {
-            root.visit(<span class="kw-2">&amp;mut </span>f);
+            root.visit(range, <span class="kw-2">&amp;mut </span>f);
         }
     }
 }
@@ -644,15 +668,20 @@
             O::mul(<span class="kw-2">&amp;</span>left_value, <span class="kw-2">&amp;</span>right_value)
         }
     }
-    <span class="kw">fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
+    <span class="kw">fn </span>visit(<span class="kw-2">&amp;</span><span class="self">self</span>, range: Range&lt;usize&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(usize, <span class="kw-2">&amp;</span>O::Value)) {
         <span class="kw">if </span><span class="self">self</span>.start + <span class="number">1 </span>== <span class="self">self</span>.end {
             f(<span class="self">self</span>.start, <span class="kw-2">&amp;</span><span class="self">self</span>.value);
         } <span class="kw">else </span>{
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
-                left.visit(f);
+            <span class="kw">let </span>mid = (<span class="self">self</span>.start + <span class="self">self</span>.end) / <span class="number">2</span>;
+            <span class="kw">if </span>range.start &lt; mid {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
+                    left.visit(open(range.start..range.end, <span class="self">self</span>.start..mid), f);
+                }
             }
-            <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
-                right.visit(f);
+            <span class="kw">if </span>range.end &gt; mid {
+                <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
+                    right.visit(open(range.start..range.end, mid..<span class="self">self</span>.end), f);
+                }
             }
         }
     }
@@ -678,6 +707,20 @@
             right: <span class="self">self</span>.right.clone(),
         }
     }
+}
+
+<span class="kw">fn </span>open(a: <span class="kw">impl </span>RangeBounds&lt;usize&gt;, b: Range&lt;usize&gt;) -&gt; Range&lt;usize&gt; {
+    <span class="kw">let </span>start = <span class="kw">match </span>a.start_bound() {
+        std::ops::Bound::Included(<span class="kw-2">&amp;</span>s) =&gt; s,
+        std::ops::Bound::Excluded(<span class="kw-2">&amp;</span>s) =&gt; s + <span class="number">1</span>,
+        std::ops::Bound::Unbounded =&gt; b.start,
+    };
+    <span class="kw">let </span>end = <span class="kw">match </span>a.end_bound() {
+        std::ops::Bound::Included(<span class="kw-2">&amp;</span>e) =&gt; e + <span class="number">1</span>,
+        std::ops::Bound::Excluded(<span class="kw-2">&amp;</span>e) =&gt; e,
+        std::ops::Bound::Unbounded =&gt; b.end,
+    };
+    Range { start, end }
 }
 
 <span class="attr">#[cfg(test)]
@@ -775,31 +818,34 @@
                             <span class="kw-2">*</span>v = O::mul(v, <span class="kw-2">&amp;</span>Value { a, b });
                         });
                     }
+                    <span class="comment">// Visit [l..r[
+                    </span><span class="number">3 </span>=&gt; {
+                        <span class="kw">let </span><span class="kw-2">mut </span>l = rng.gen_range(<span class="number">0</span>..=n);
+                        <span class="kw">let </span><span class="kw-2">mut </span>r = rng.gen_range(<span class="number">0</span>..n);
+                        <span class="kw">if </span>l &gt; r {
+                            mem::swap(<span class="kw-2">&amp;mut </span>l, <span class="kw-2">&amp;mut </span>r);
+                        }
+                        <span class="kw">let </span><span class="kw-2">mut </span>iter = mock.map.range(l..r).map(|(<span class="kw-2">&amp;</span>i, <span class="kw-2">&amp;</span>v)| (i, v));
+                        seg.visit(l..r, |i, <span class="kw-2">&amp;</span>v| {
+                            <span class="kw">if </span>v == O::identity() {
+                                <span class="kw">return</span>;
+                            }
+                            <span class="kw">let </span>expected = iter
+                                .next()
+                                .expect(<span class="string">"Segment tree visit should match mock visit"</span>);
+                            <span class="kw">let </span>result = (i, v);
+                            <span class="macro">assert_eq!</span>(
+                                result, expected,
+                                <span class="string">"Segment tree visit mismatch: expected {result:?}, got {expected:?}"
+                            </span>);
+                        });
+                        <span class="macro">assert!</span>(
+                            iter.next().is_none(),
+                            <span class="string">"Segment tree visit should not have extra elements"
+                        </span>);
+                    }
                     <span class="kw">_ </span>=&gt; <span class="macro">unreachable!</span>(),
                 }
-                <span class="comment">// Visit elements
-                </span><span class="kw">let </span><span class="kw-2">mut </span>iter = mock
-                    .map
-                    .iter()
-                    .map(|(<span class="kw-2">&amp;</span>i, <span class="kw-2">&amp;</span>v)| (i, v))
-                    .filter(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, v)| v != O::identity());
-                seg.visit(|i, <span class="kw-2">&amp;</span>v| {
-                    <span class="kw">if </span>v == O::identity() {
-                        <span class="kw">return</span>;
-                    }
-                    <span class="kw">let </span>expected = iter
-                        .next()
-                        .expect(<span class="string">"Segment tree visit should match mock visit"</span>);
-                    <span class="kw">let </span>result = (i, v);
-                    <span class="macro">assert_eq!</span>(
-                        result, expected,
-                        <span class="string">"Segment tree visit mismatch: expected {result:?}, got {expected:?}"
-                    </span>);
-                });
-                <span class="macro">assert!</span>(
-                    iter.next().is_none(),
-                    <span class="string">"Segment tree visit should not have extra elements"
-                </span>);
             }
         }
     }
