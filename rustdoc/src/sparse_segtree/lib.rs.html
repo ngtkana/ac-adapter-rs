@@ -434,12 +434,16 @@
 <a href="#400" id="400">400</a>
 <a href="#401" id="401">401</a>
 <a href="#402" id="402">402</a>
+<a href="#403" id="403">403</a>
+<a href="#404" id="404">404</a>
+<a href="#405" id="405">405</a>
+<a href="#406" id="406">406</a>
 </pre></div><pre class="rust"><code><span class="doccomment">//! Sparse Segment Tree
 </span><span class="kw">use </span>std::ops::{Range, RangeBounds};
 
 <span class="doccomment">/// Trait for operations on the segment tree.
 </span><span class="kw">pub trait </span>Op {
-    <span class="kw">type </span>Value: Clone;
+    <span class="kw">type </span>Value;
     <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value;
     <span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
 }
@@ -550,7 +554,10 @@
         SparseSegtree { root: <span class="prelude-val">None </span>}
     }
 }
-<span class="kw">impl</span>&lt;O: Op&gt; Clone <span class="kw">for </span>SparseSegtree&lt;O&gt; {
+<span class="kw">impl</span>&lt;O: Op&gt; Clone <span class="kw">for </span>SparseSegtree&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: Clone,
+{
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         SparseSegtree {
             root: <span class="self">self</span>.root.clone(),
@@ -672,18 +679,19 @@
         }
     }
     <span class="kw">fn </span>recalculate_value(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-        <span class="kw">let </span>left_value = <span class="self">self
-            </span>.left
-            .as_ref()
-            .map_or_else(O::identity, |n| n.value.clone());
-        <span class="kw">let </span>right_value = <span class="self">self
-            </span>.right
-            .as_ref()
-            .map_or_else(O::identity, |n| n.value.clone());
-        <span class="self">self</span>.value = O::mul(<span class="kw-2">&amp;</span>left_value, <span class="kw-2">&amp;</span>right_value);
+        <span class="self">self</span>.value = O::identity();
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(left) = <span class="kw-2">&amp;</span><span class="self">self</span>.left {
+            <span class="self">self</span>.value = O::mul(<span class="kw-2">&amp;</span><span class="self">self</span>.value, <span class="kw-2">&amp;</span>left.value);
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(right) = <span class="kw-2">&amp;</span><span class="self">self</span>.right {
+            <span class="self">self</span>.value = O::mul(<span class="kw-2">&amp;</span><span class="self">self</span>.value, <span class="kw-2">&amp;</span>right.value);
+        }
     }
 }
-<span class="kw">impl</span>&lt;O: Op&gt; Clone <span class="kw">for </span>Node&lt;O&gt; {
+<span class="kw">impl</span>&lt;O: Op&gt; Clone <span class="kw">for </span>Node&lt;O&gt;
+<span class="kw">where
+    </span>O::Value: Clone,
+{
     <span class="kw">fn </span>clone(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="self">Self </span>{
         Node {
             start: <span class="self">self</span>.start,
