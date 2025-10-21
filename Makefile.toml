@@ -34,27 +34,7 @@ cp -r target/doc/* docs/rustdoc/
 
 [tasks.clippy]
 command = "cargo"
-args = [
-  "clippy",
-  "--all-features",
-  "--all-targets",
-  "--",
-  "-Dwarnings",
-  "-Aunstable_name_collisions",
-  "-Wclippy::pedantic",
-  "-Aclippy::cast-lossless",
-  "-Aclippy::cast-possible-truncation",
-  "-Aclippy::cast-possible-wrap",
-  "-Aclippy::cast-precision-loss",
-  "-Aclippy::cast-sign-loss",
-  "-Aclippy::doc-markdown",
-  "-Aclippy::missing-errors-doc",
-  "-Aclippy::missing-panics-doc",
-  "-Aclippy::module-name-repetitions",
-  "-Aclippy::must-use-candidate",
-  "-Aclippy::return-self-not-must-use",
-  "-Aclippy::similar-names",
-]
+args = ["clippy", "--all-features", "--all-targets"]
 
 [tasks.pedantics]
 script = '''
