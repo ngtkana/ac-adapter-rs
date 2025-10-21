@@ -131,7 +131,7 @@ impl Sieve {
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
-    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Boolean, T> {
+    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, sieve_kind::Boolean, T> {
         self.base.prime_numbers()
     }
 
@@ -150,7 +150,7 @@ impl Sieve {
     /// let mut sieve = Sieve::new();
     /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
-    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByTrialDivision<T> {
+    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByTrialDivision<'_, T> {
         self.base.prime_factors_by_trial_division(n)
     }
 }

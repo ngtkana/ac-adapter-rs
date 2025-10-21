@@ -145,7 +145,7 @@ impl<T> Csr<T> {
     /// csr.last_mut().push(42);
     /// assert_eq!(csr.section(1), &[4, 5, 42]);
     /// ```
-    pub fn last_mut(&mut self) -> LastMut<T> {
+    pub fn last_mut(&mut self) -> LastMut<'_, T> {
         LastMut { csr: self }
     }
     /// Push an empty section $A_m = [\ ]$.
@@ -178,7 +178,7 @@ impl<T> Csr<T> {
     }
     /// Return an iterator over the sections.
     ///
-    pub fn iter(&self) -> Iter<T> {
+    pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             data: &self.data,
             boundary: &self.boundary,

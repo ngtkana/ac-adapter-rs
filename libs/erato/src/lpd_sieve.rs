@@ -150,7 +150,7 @@ impl LpdSieve {
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
-    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<sieve_kind::Usize, T> {
+    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, sieve_kind::Usize, T> {
         self.base.prime_numbers()
     }
 
@@ -169,7 +169,7 @@ impl LpdSieve {
     /// let mut sieve = LpdSieve::new();
     /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
-    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
+    pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<'_, T> {
         self.base.prime_factors_by_lookup(n)
     }
 }

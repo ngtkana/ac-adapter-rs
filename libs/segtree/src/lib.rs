@@ -186,7 +186,7 @@ impl<O: Op> Segtree<O> {
     }
 
     /// Returns the entry of $x_i$.
-    pub fn entry(&mut self, index: usize) -> Entry<O> {
+    pub fn entry(&mut self, index: usize) -> Entry<'_, O> {
         let offset = self.offset;
         Entry {
             segtree: self,
@@ -602,7 +602,7 @@ impl<O: Op> Dense2dSegtree<O> {
     }
 
     /// Returns the entry of $x_{i, j}$.
-    pub fn entry(&mut self, i: usize, j: usize) -> Dense2dEntry<O> {
+    pub fn entry(&mut self, i: usize, j: usize) -> Dense2dEntry<'_, O> {
         let h = self.values.len() / 2;
         let w = self.values.first().map_or(0, |v| v.len() / 2);
         Dense2dEntry {
