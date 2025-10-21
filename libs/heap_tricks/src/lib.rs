@@ -402,7 +402,7 @@ where
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 45]);
     /// ```
     pub fn remove_left_unchecked(&mut self, elm: T) {
-        if self.left.peek().map_or(false, |lmax| elm <= lmax) {
+        if self.left.peek().is_some_and(|lmax| elm <= lmax) {
             self.handler.pop_left(elm);
             self.left.remove_unchecked(elm);
             self.settle();
@@ -436,7 +436,7 @@ where
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
     /// ```
     pub fn remove_right_unchecked(&mut self, elm: T) {
-        if self.left.peek().map_or(false, |lmax| elm <= lmax) {
+        if self.left.peek().is_some_and(|lmax| elm <= lmax) {
             self.handler.pop_left(elm);
             self.left.remove_unchecked(elm);
             self.settle();

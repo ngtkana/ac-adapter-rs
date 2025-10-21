@@ -142,7 +142,7 @@ impl<O: Op> DequeueSwag<O> {
         if self.front.is_empty() {
             let n = self.back.len();
             let mut swp = Self::new();
-            for x in self.back.drain(..(n + 1) / 2).rev() {
+            for x in self.back.drain(..n.div_ceil(2)).rev() {
                 swp.push_front(x);
             }
             for x in self.back.drain(..) {
@@ -178,7 +178,7 @@ impl<O: Op> DequeueSwag<O> {
         if self.back.is_empty() {
             let n = self.front.len();
             let mut swp = Self::new();
-            for x in self.front.drain((n + 1) / 2..) {
+            for x in self.front.drain(n.div_ceil(2)..) {
                 swp.push_front(x);
             }
             for x in self.front.drain(..).rev() {

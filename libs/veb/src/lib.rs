@@ -532,7 +532,7 @@ impl VebSet {
             VebSet::Leaf(0)
         } else {
             let csize = (n as f64).sqrt().ceil() as usize;
-            let ccount = (n + csize - 1) / csize;
+            let ccount = n.div_ceil(csize);
             Self::Internal {
                 min: 0,
                 max: 0,
@@ -707,7 +707,7 @@ impl VebSet {
                     }
                     let j = i / *csize;
                     let k = i % *csize;
-                    let result = chunks.get_mut(&j).map_or(false, |chunk| chunk.remove(k));
+                    let result = chunks.get_mut(&j).is_some_and(|chunk| chunk.remove(k));
                     if result {
                         *len -= 1;
                         if chunks[&j].is_empty() {
@@ -846,7 +846,7 @@ impl VebSet {
             } => {
                 let j = i / csize;
                 let k = i % csize;
-                *len != 0 && (i == *min || chunks.get(&j).map_or(false, |chunk| chunk.contains(k)))
+                *len != 0 && (i == *min || chunks.get(&j).is_some_and(|chunk| chunk.contains(k)))
             }
             Self::Leaf(bs) => bs >> i & 1 == 1,
         }

@@ -397,8 +397,7 @@ where
     );
     let mul_log = log.into_iter().map(|log_f| log_f * pow).collect::<Vec<_>>();
     let exp_mul_log = fps_exp(mul_log, precision);
-    repeat(Fp::new(0))
-        .take(leading_zeros * pow)
+    std::iter::repeat_n(Fp::new(0), leading_zeros * pow)
         .chain(exp_mul_log.into_iter().map(|result| result * head_pow))
         .collect()
 }
@@ -682,8 +681,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let leading_zeros = rng.gen_range(0..4);
-            let f = repeat(fp!(0))
-                .take(leading_zeros)
+            let f = std::iter::repeat_n(fp!(0), leading_zeros)
                 .chain(repeat_with(|| Fp::new(rng.gen_range(0..100))))
                 .take(PRECISION)
                 .collect::<Vec<_>>();
