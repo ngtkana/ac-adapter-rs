@@ -103,7 +103,7 @@ fn dfs(
     ) -> bool {
         used[x] = true;
         for &y in &graph[x] {
-            let found = backward[y].map_or(true, |z| {
+            let found = backward[y].is_none_or(|z| {
                 !used[z] && dist[x] + 1 == dist[z] && rec(z, graph, dist, used, forward, backward)
             });
             if found {

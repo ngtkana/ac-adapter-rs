@@ -114,7 +114,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
         while self
             .vec
             .get(self.current)
-            .map_or(false, |last| Min(x) <= last.min)
+            .is_some_and(|last| Min(x) <= last.min)
         {
             self.current -= 1;
         }

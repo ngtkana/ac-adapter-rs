@@ -30,7 +30,7 @@ impl Debug for WaveletMatrix {
 }
 impl FromIterator<usize> for WaveletMatrix {
     fn from_iter<I: IntoIterator<Item = usize>>(iter: I) -> Self {
-        let mut slice = iter.into_iter().map(Into::into).collect::<Vec<_>>();
+        let mut slice = iter.into_iter().collect::<Vec<_>>();
         Self::from_slice_of_usize_mut(&mut slice, |_| ())
     }
 }
@@ -85,7 +85,7 @@ impl WaveletMatrix {
     pub fn from_iter_collect_vec2(
         iter: impl IntoIterator<Item = usize>,
     ) -> (Self, Vec<Vec<usize>>) {
-        let mut slice = iter.into_iter().map(Into::into).collect::<Vec<_>>();
+        let mut slice = iter.into_iter().collect::<Vec<_>>();
         let mut table = Vec::new();
         let wm = Self::from_slice_of_usize_mut(&mut slice, |row| table.push(row.to_vec()));
         (wm, table)

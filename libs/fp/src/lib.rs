@@ -477,7 +477,7 @@ mod tests {
             let result = a.pow(b);
             assert_eq!(
                 result,
-                std::iter::repeat(a).take(b as usize).product::<Fp<P>>()
+                std::iter::repeat_n(a, b as usize).product::<Fp<P>>()
             );
         }
     }

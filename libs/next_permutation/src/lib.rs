@@ -102,9 +102,9 @@ pub fn next_partition(a: &mut Vec<usize>) -> bool {
     }
     while let Some(x) = a.pop() {
         sum += x;
-        if a.last().map_or(true, |&last| last > x) {
+        if a.last().is_none_or(|&last| last > x) {
             a.push(x + 1);
-            a.extend(std::iter::repeat(1).take(sum - x - 1));
+            a.extend(std::iter::repeat_n(1, sum - x - 1));
             break;
         }
     }

@@ -183,7 +183,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
         assert!(
             self.lines
                 .last()
-                .map_or(true, |prv| C::ok(*prv, Line(line))),
+                .is_none_or(|prv| C::ok(*prv, Line(line))),
             "傾きの単調性に違反しています。"
         );
         if let Some(&Line(prv)) = self.lines.last() {
