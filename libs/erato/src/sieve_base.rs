@@ -49,7 +49,7 @@ impl<S: SieveKind> SieveBase<S> {
         S::is_prime(x, self.sieve[x.as_usize()])
     }
 
-    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<S, T> {
+    pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, S, T> {
         PrimeNumbers {
             sieve: self,
             index: 0,
@@ -73,7 +73,7 @@ impl SieveBase<sieve_kind::Boolean> {
     pub fn prime_factors_by_trial_division<T: Int>(
         &mut self,
         n: T,
-    ) -> PrimeFactorsByTrialDivision<T> {
+    ) -> PrimeFactorsByTrialDivision<'_, T> {
         assert!(T::zero() < n);
         let mut prime_numbers = self.prime_numbers();
         PrimeFactorsByTrialDivision {
@@ -152,7 +152,7 @@ pub struct PrimeFactorsByLookup<'a, T: Int> {
     n: T,
 }
 impl SieveBase<sieve_kind::Usize> {
-    pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<T> {
+    pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<'_, T> {
         assert!(T::zero() < n);
         PrimeFactorsByLookup { sieve: self, n }
     }
