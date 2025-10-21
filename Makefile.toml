@@ -38,7 +38,6 @@ args = [
   "clippy",
   "--all-features",
   "--all-targets",
-  "--fix",
   "--",
   "-Dwarnings",
   "-Aunstable_name_collisions",
