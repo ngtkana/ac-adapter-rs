@@ -1,0 +1,5 @@
+{
+  "rust-analyzer.check.command": "cargo",
+  "rust-analyzer.check.extraArgs": ["make", "clippy"]
+}
+
