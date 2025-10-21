@@ -46,8 +46,8 @@ pub trait PrimeFactors<T: Int>: Sized + Iterator<Item = T> {
         }
     }
 }
-impl<'a, T: Int> PrimeFactors<T> for PrimeFactorsByTrialDivision<'a, T> {}
-impl<'a, T: Int> PrimeFactors<T> for PrimeFactorsByLookup<'a, T> {}
+impl<T: Int> PrimeFactors<T> for PrimeFactorsByTrialDivision<'_, T> {}
+impl<T: Int> PrimeFactors<T> for PrimeFactorsByLookup<'_, T> {}
 
 /// An iterator returned by [`PrimeFactors::unique`]
 pub struct Unique<T: Int, P: PrimeFactors<T>> {

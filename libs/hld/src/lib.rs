@@ -125,7 +125,7 @@ pub struct PathSegments<'a> {
     to: usize,
     exhausted: bool,
 }
-impl<'a> Iterator for PathSegments<'a> {
+impl Iterator for PathSegments<'_> {
     type Item = PathSegment;
 
     fn next(&mut self) -> Option<Self::Item> {

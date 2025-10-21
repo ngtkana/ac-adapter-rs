@@ -70,7 +70,7 @@ impl<T: Ord> IntervalHeap<T> {
                 }
             }
             _ => unreachable!(),
-        };
+        }
     }
 }
 impl<T: Ord> Default for IntervalHeap<T> {

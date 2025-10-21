@@ -392,7 +392,7 @@ pub mod test_utils {
         }
     }
     struct TreeFormatter<'a, T: Balance, F: Fn(Ptr<T>) -> String>(&'a Tree<T>, &'a F);
-    impl<'a, T: Balance, F: Fn(Ptr<T>) -> String> fmt::Display for TreeFormatter<'a, T, F> {
+    impl<T: Balance, F: Fn(Ptr<T>) -> String> fmt::Display for TreeFormatter<'_, T, F> {
         fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             self.0.fmt_by(f, |p| (self.1)(p))
         }

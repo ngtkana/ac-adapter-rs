@@ -219,7 +219,7 @@ where
         quarter = fft_len;
     }
     let d = Fp::from(f.len()).inv();
-    f.iter_mut().for_each(|x| *x *= d);
+    for x in f.iter_mut() { *x *= d; }
 }
 
 /// Restore the original value from the remainder of the division by `P1`, `P2`, and `P3`.

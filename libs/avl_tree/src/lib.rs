@@ -686,7 +686,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
         Some(&current.value)
     }
 }
-impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
+impl<T> DoubleEndedIterator for Iter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         let current = self.rstack.pop()?;
         self.rstack

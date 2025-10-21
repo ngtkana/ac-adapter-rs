@@ -346,8 +346,8 @@ mod tests {
                     .iter_mut()
                     .flatten()
                     .for_each(|v| v.sort_unstable());
-                result.iter_mut().for_each(|v| v.sort_unstable());
-                expected.iter_mut().for_each(|v| v.sort_unstable());
+                for v in result.iter_mut() { v.sort_unstable(); }
+                for v in expected.iter_mut() { v.sort_unstable(); }
                 result.sort();
                 expected.sort();
                 assert_eq!(&result, &expected);
@@ -357,8 +357,8 @@ mod tests {
             {
                 let mut result = low_link.two_edge_components();
                 let mut expected = two_edge_components(n, &edges);
-                result.iter_mut().for_each(|v| v.sort_unstable());
-                expected.iter_mut().for_each(|v| v.sort_unstable());
+                for v in result.iter_mut() { v.sort_unstable(); }
+                for v in expected.iter_mut() { v.sort_unstable(); }
                 result.sort();
                 expected.sort();
                 assert_eq!(&result, &expected);

@@ -384,8 +384,8 @@ mod tests {
                     let trie_value = trie.get_mut(s.iter().copied());
                     let btree_map_value = btree_map.get_mut(&s);
                     assert_eq!(trie_value, btree_map_value);
-                    trie_value.into_iter().for_each(|x| *x += 1);
-                    btree_map_value.into_iter().for_each(|x| *x += 1);
+                    for x in trie_value.into_iter() { *x += 1; }
+                    for x in btree_map_value.into_iter() { *x += 1; }
                 }
                 _ => unreachable!(),
             }

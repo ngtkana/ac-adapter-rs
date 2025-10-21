@@ -97,7 +97,7 @@ pub struct PrimeFactorsByTrialDivision<'a, T: Int> {
     p: T,
     n: T,
 }
-impl<'a, S: SieveKind, T: Int> Iterator for PrimeNumbers<'a, S, T> {
+impl<S: SieveKind, T: Int> Iterator for PrimeNumbers<'_, S, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -121,7 +121,7 @@ impl<T: Int> PrimeFactorsByTrialDivision<'_, T> {
         PrimeFactors::rle(self)
     }
 }
-impl<'a, T: Int> Iterator for PrimeFactorsByTrialDivision<'a, T> {
+impl<T: Int> Iterator for PrimeFactorsByTrialDivision<'_, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -176,7 +176,7 @@ impl<T: Int> PrimeFactorsByLookup<'_, T> {
         PrimeFactors::rle(self)
     }
 }
-impl<'a, T: Int> Iterator for PrimeFactorsByLookup<'a, T> {
+impl<T: Int> Iterator for PrimeFactorsByLookup<'_, T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
