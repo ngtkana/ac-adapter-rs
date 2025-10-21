@@ -248,7 +248,7 @@ pub struct Entry<'a, O: Op> {
     segtree: &'a mut Segtree<O>,
     index: usize,
 }
-impl<'a, O: Op> Drop for Entry<'a, O> {
+impl<O: Op> Drop for Entry<'_, O> {
     fn drop(&mut self) {
         let mut index = self.index;
         while index != 0 {
@@ -260,19 +260,19 @@ impl<'a, O: Op> Drop for Entry<'a, O> {
         }
     }
 }
-impl<'a, O: Op> Deref for Entry<'a, O> {
+impl<O: Op> Deref for Entry<'_, O> {
     type Target = O::Value;
 
     fn deref(&self) -> &Self::Target {
         &self.segtree.values[self.index]
     }
 }
-impl<'a, O: Op> DerefMut for Entry<'a, O> {
+impl<O: Op> DerefMut for Entry<'_, O> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.segtree.values[self.index]
     }
 }
-impl<'a, O: Op> fmt::Debug for Entry<'a, O>
+impl<O: Op> fmt::Debug for Entry<'_, O>
 where
     O::Value: fmt::Debug,
 {
@@ -653,7 +653,7 @@ pub struct Dense2dEntry<'a, O: Op> {
     i: usize,
     j: usize,
 }
-impl<'a, O: Op> Drop for Dense2dEntry<'a, O> {
+impl<O: Op> Drop for Dense2dEntry<'_, O> {
     fn drop(&mut self) {
         let mut i = self.i;
         let mut j = self.j / 2;
@@ -678,14 +678,14 @@ impl<'a, O: Op> Drop for Dense2dEntry<'a, O> {
         }
     }
 }
-impl<'a, O: Op> Deref for Dense2dEntry<'a, O> {
+impl<O: Op> Deref for Dense2dEntry<'_, O> {
     type Target = O::Value;
 
     fn deref(&self) -> &Self::Target {
         &self.segtree.values[self.i][self.j]
     }
 }
-impl<'a, O: Op> DerefMut for Dense2dEntry<'a, O> {
+impl<O: Op> DerefMut for Dense2dEntry<'_, O> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.segtree.values[self.i][self.j]
     }

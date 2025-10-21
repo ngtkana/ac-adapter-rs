@@ -338,7 +338,7 @@ unsafe fn rotate_left<O: OpBase>(l: *mut Node<O>) {
         } else if std::ptr::eq((*p).right, l) {
             (*p).right = r;
         }
-        update(&mut *p);
+        update(&raw mut *p);
     }
 }
 
@@ -362,6 +362,6 @@ unsafe fn rotate_right<O: OpBase>(r: *mut Node<O>) {
         } else if std::ptr::eq((*p).right, r) {
             (*p).right = l;
         }
-        update(&mut *p);
+        update(&raw mut *p);
     }
 }

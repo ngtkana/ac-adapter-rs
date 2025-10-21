@@ -560,19 +560,19 @@ pub struct Entry<'a, O: Op> {
     p: Ptr<Node<O>>,
     marker: PhantomData<&'a O>,
 }
-impl<'a, O: Op> ops::Deref for Entry<'a, O> {
+impl<O: Op> ops::Deref for Entry<'_, O> {
     type Target = O::Value;
 
     fn deref(&self) -> &Self::Target {
         &self.p.as_longlife_ref().value
     }
 }
-impl<'a, O: Op> ops::DerefMut for Entry<'a, O> {
+impl<O: Op> ops::DerefMut for Entry<'_, O> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.p.as_longlife_mut().value
     }
 }
-impl<'a, O: Op> Drop for Entry<'a, O> {
+impl<O: Op> Drop for Entry<'_, O> {
     fn drop(&mut self) {
         self.p.update();
         self.p.update_ancestors();
@@ -632,13 +632,13 @@ impl<'a, O: Op> SegTable<'a, O> {
         result
     }
 }
-impl<'a, O: Op> fmt::Debug for SegTable<'a, O>
+impl<O: Op> fmt::Debug for SegTable<'_, O>
 where
     O::Value: fmt::Debug,
 {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         struct Row<'a, O: Op>(&'a [SegTableCell<'a, O>]);
-        impl<'a, O: Op> fmt::Debug for Row<'a, O>
+        impl<O: Op> fmt::Debug for Row<'_, O>
         where
             O::Value: fmt::Debug,
         {
@@ -659,7 +659,7 @@ where
             .finish()
     }
 }
-impl<'a, O: Op> fmt::Display for SegTable<'a, O>
+impl<O: Op> fmt::Display for SegTable<'_, O>
 where
     O::Value: fmt::Debug,
 {
@@ -733,7 +733,7 @@ where
     }
 }
 pub struct SegDisplay<'a, O: Op>(&'a Seg<O>);
-impl<'a, O: Op> SegDisplay<'a, O> {
+impl<O: Op> SegDisplay<'_, O> {
     fn collect(&self) -> Vec<(Range<usize>, &O::Value)> {
         let mut stack = vec![(0..self.0.len(), self.0.tree.root)];
         let mut vec = Vec::new();
@@ -751,7 +751,7 @@ impl<'a, O: Op> SegDisplay<'a, O> {
         vec
     }
 }
-impl<'a, O: Op> fmt::Display for SegDisplay<'a, O>
+impl<O: Op> fmt::Display for SegDisplay<'_, O>
 where
     O::Value: fmt::Debug,
 {
@@ -765,7 +765,7 @@ where
         Ok(())
     }
 }
-impl<'a, O: Op> fmt::Debug for SegDisplay<'a, O>
+impl<O: Op> fmt::Debug for SegDisplay<'_, O>
 where
     O::Value: fmt::Debug,
 {
@@ -805,7 +805,7 @@ impl<'a, O: Op> Iterator for SegIter<'a, O> {
         (self.len, Some(self.len))
     }
 }
-impl<'a, O: Op> DoubleEndedIterator for SegIter<'a, O> {
+impl<O: Op> DoubleEndedIterator for SegIter<'_, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             return None;
@@ -817,7 +817,7 @@ impl<'a, O: Op> DoubleEndedIterator for SegIter<'a, O> {
         Some(&x.value)
     }
 }
-impl<'a, O: Op> ExactSizeIterator for SegIter<'a, O> {}
+impl<O: Op> ExactSizeIterator for SegIter<'_, O> {}
 
 fn into_range(range: impl RangeBounds<usize>, len: usize) -> (usize, usize) {
     let start = match range.start_bound() {

@@ -234,7 +234,7 @@ mod tests {
             .collect();
         let d = ans.last().unwrap() - ans.first().unwrap();
         let init = rng.gen_range(-d..=0);
-        ans.iter_mut().for_each(|x| *x += init);
+        for x in ans.iter_mut() { *x += init; }
         ans = once(0)
             .chain(ans)
             .scan(0, |state, x| {
@@ -243,10 +243,10 @@ mod tests {
             })
             .collect();
         let init = -ans.iter().copied().min().unwrap();
-        ans.iter_mut().for_each(|x| *x += init);
+        for x in ans.iter_mut() { *x += init; }
         let init =
             rng.gen_range(ans.iter().copied().min().unwrap()..=ans.iter().copied().max().unwrap());
-        ans.iter_mut().for_each(|x| *x += init);
+        for x in ans.iter_mut() { *x += init; }
         ans
     }
 
@@ -279,10 +279,10 @@ mod tests {
     fn generate_concave_sequence(rng: &mut StdRng, n: usize) -> Vec<i32> {
         let mut ans = generate_convex_sequence(rng, n);
         let max = *ans.iter().max().unwrap();
-        ans.iter_mut().for_each(|x| *x = max - *x);
+        for x in ans.iter_mut() { *x = max - *x; }
         let init =
             rng.gen_range(ans.iter().copied().min().unwrap()..=ans.iter().copied().max().unwrap());
-        ans.iter_mut().for_each(|x| *x += init);
+        for x in ans.iter_mut() { *x += init; }
         ans
     }
 

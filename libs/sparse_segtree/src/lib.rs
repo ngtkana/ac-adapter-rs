@@ -185,7 +185,7 @@ impl<O: Op> Node<O> {
             f(&mut self.value);
             return;
         }
-        let mid = (self.start + self.end) / 2;
+        let mid = usize::midpoint(self.start, self.end);
         if i < mid {
             self.left
                 .get_or_insert_with(|| Box::new(Node::new_leaf(self.start..mid)))
@@ -201,7 +201,7 @@ impl<O: Op> Node<O> {
         if self.start + 1 == self.end {
             f(self.start, &self.value);
         } else {
-            let mid = (self.start + self.end) / 2;
+            let mid = usize::midpoint(self.start, self.end);
             if range.start < mid {
                 if let Some(left) = &self.left {
                     left.visit_items(open(range.start..range.end, self.start..mid), f);
@@ -220,7 +220,7 @@ impl<O: Op> Node<O> {
             f(self.start..self.end, &self.value);
             return;
         }
-        let mid = (self.start + self.end) / 2;
+        let mid = usize::midpoint(self.start, self.end);
         if end <= mid {
             if let Some(left) = &self.left {
                 left.visit_ranges(range, f);

@@ -435,7 +435,7 @@ pub struct SpanInNode<'a> {
     /// 現在のノードの担当する値の範囲
     pub value: Range<usize>,
 }
-impl<'a> SpanInNode<'a> {
+impl SpanInNode<'_> {
     fn left_down(&self) -> Self {
         Self {
             wm: self.wm,

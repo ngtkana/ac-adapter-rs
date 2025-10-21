@@ -657,7 +657,7 @@ impl<'a, O: LazyOps> Iterator for Iter<'a, O> {
         }
     }
 }
-impl<'a, O: LazyOps> DoubleEndedIterator for Iter<'a, O> {
+impl<O: LazyOps> DoubleEndedIterator for Iter<'_, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.start == self.end {
             None

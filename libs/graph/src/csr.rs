@@ -204,7 +204,7 @@ impl<T> Csr<T> {
 pub struct LastMut<'a, T> {
     csr: &'a mut Csr<T>,
 }
-impl<'a, T> LastMut<'a, T> {
+impl<T> LastMut<'_, T> {
     /// Push an element to the last section.
     ///
     /// # Example
@@ -369,7 +369,7 @@ impl<'a, T> Iterator for Iter<'a, T> {
         Some(&self.data[l..r])
     }
 }
-impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
+impl<T> DoubleEndedIterator for Iter<'_, T> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.boundary.len() <= 1 {
             return None;
@@ -379,7 +379,7 @@ impl<'a, T> DoubleEndedIterator for Iter<'a, T> {
         Some(&self.data[l..r])
     }
 }
-impl<'a, T> ExactSizeIterator for Iter<'a, T> {
+impl<T> ExactSizeIterator for Iter<'_, T> {
     fn len(&self) -> usize {
         self.boundary.len() - 1
     }

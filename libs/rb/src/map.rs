@@ -377,7 +377,7 @@ impl<'a, K: Ord, O: MultimapOp> Iterator for SegmapIter<'a, K, O> {
         (self.len, Some(self.len))
     }
 }
-impl<'a, K: Ord, O: MultimapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
+impl<K: Ord, O: MultimapOp> DoubleEndedIterator for SegmapIter<'_, K, O> {
     fn next_back(&mut self) -> Option<Self::Item> {
         if self.len == 0 {
             return None;
@@ -389,7 +389,7 @@ impl<'a, K: Ord, O: MultimapOp> DoubleEndedIterator for SegmapIter<'a, K, O> {
         Some((&x.key, &x.value))
     }
 }
-impl<'a, K: Ord, O: MultimapOp> ExactSizeIterator for SegmapIter<'a, K, O> {}
+impl<K: Ord, O: MultimapOp> ExactSizeIterator for SegmapIter<'_, K, O> {}
 
 struct Nop<T>(PhantomData<T>);
 impl<T> MultimapOp for Nop<T> {
@@ -500,12 +500,12 @@ impl<'a, K: Ord, V> Iterator for MultimapIter<'a, K, V> {
         self.iter.size_hint()
     }
 }
-impl<'a, K: Ord, V> DoubleEndedIterator for MultimapIter<'a, K, V> {
+impl<K: Ord, V> DoubleEndedIterator for MultimapIter<'_, K, V> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.iter.next_back()
     }
 }
-impl<'a, K: Ord, V> ExactSizeIterator for MultimapIter<'a, K, V> {}
+impl<K: Ord, V> ExactSizeIterator for MultimapIter<'_, K, V> {}
 
 pub struct Multiset<K> {
     map: Multimap<K, ()>,
@@ -601,12 +601,12 @@ impl<'a, K: Ord> Iterator for MultisetIter<'a, K> {
         self.iter.size_hint()
     }
 }
-impl<'a, K: Ord> DoubleEndedIterator for MultisetIter<'a, K> {
+impl<K: Ord> DoubleEndedIterator for MultisetIter<'_, K> {
     fn next_back(&mut self) -> Option<Self::Item> {
         self.iter.next_back().map(|(k, ())| k)
     }
 }
-impl<'a, K: Ord> ExactSizeIterator for MultisetIter<'a, K> {}
+impl<K: Ord> ExactSizeIterator for MultisetIter<'_, K> {}
 
 #[cfg(test)]
 mod test_multiset {

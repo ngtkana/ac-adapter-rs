@@ -59,7 +59,7 @@ pub fn manacher<T: Eq>(s: &[T]) -> Vec<usize> {
     let mut i = 1;
     let mut j = 1;
     while i <= 2 * n {
-        while j < i && i + j < 2 * n && s[(i - j) / 2 - 1] == s[(i + j) / 2] {
+        while j < i && i + j < 2 * n && s[(i - j) / 2 - 1] == s[usize::midpoint(i, j)] {
             j += 2;
         }
         a[i] = j;

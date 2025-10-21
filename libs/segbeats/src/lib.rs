@@ -108,7 +108,7 @@ impl<T: Elm> Segbeats<T> {
             D::extract(self.table.borrow()[root])
         } else {
             let Range { start, end } = subtree;
-            let mid = (start + end) / 2;
+            let mid = usize::midpoint(start, end);
             self.push(root);
             let l = self.dfs_impl::<D>(root * 2, start..mid, range.clone(), x);
             let r = self.dfs_impl::<D>(root * 2 + 1, mid..end, range, x);

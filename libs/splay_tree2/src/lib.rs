@@ -368,7 +368,7 @@ where
 struct SplayTreeLeafFormatter<'a, O: Op> {
     tree: &'a SplayTree<O>,
 }
-impl<'a, O: Op> std::fmt::Debug for SplayTreeLeafFormatter<'a, O>
+impl<O: Op> std::fmt::Debug for SplayTreeLeafFormatter<'_, O>
 where
     O: Op,
     O::LeafValue: std::fmt::Debug,
@@ -402,7 +402,7 @@ where
 struct SplayTreeInternalFormatter<'a, O: Op> {
     tree: &'a SplayTree<O>,
 }
-impl<'a, O: Op> std::fmt::Debug for SplayTreeInternalFormatter<'a, O>
+impl<O: Op> std::fmt::Debug for SplayTreeInternalFormatter<'_, O>
 where
     O: Op,
     O::InternalValue: std::fmt::Debug,
