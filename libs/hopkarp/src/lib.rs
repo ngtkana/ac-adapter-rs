@@ -217,12 +217,12 @@ mod tests {
             .collect::<Vec<_>>();
 
         // Check that the residual capacity of the cut is zero.
-        match_edges
-            .iter()
-            .for_each(|&(x, y)| assert!(left[x] || !right[y]));
-        unmach_edges
-            .iter()
-            .for_each(|&(x, y)| assert!(!left[x] || right[y]));
+        for &(x, y) in &match_edges {
+            assert!(left[x] || !right[y]);
+        }
+        for &(x, y) in &unmach_edges {
+            assert!(!left[x] || right[y]);
+        }
 
         // Check that the capacity of the cut equals count.
         let capacity = left

@@ -45,13 +45,17 @@ impl<K: Ord, O: MultimapOp> Node<K, O> {
 fn len<K, O: MultimapOp>(node: Option<Ptr<Node<K, O>>>) -> usize {
     node.as_ref().map_or(0, |node| node.len)
 }
-fn acc<K, O: MultimapOp>(node: &Option<Ptr<Node<K, O>>>) -> Option<&O::Acc> {
-    node.as_ref().map(|node| &node.acc)
+fn acc<K, O: MultimapOp>(node: Option<&Ptr<Node<K, O>>>) -> Option<&O::Acc> {
+    node.map(|node| &node.acc)
 }
 impl<K, O: MultimapOp> Balance for Node<K, O> {
     fn update(&mut self) {
         self.len = len(self.left) + 1 + len(self.right);
-        self.acc = O::join(acc(&self.left), &self.value, acc(&self.right));
+        self.acc = O::join(
+            acc(self.left.as_ref()),
+            &self.value,
+            acc(self.right.as_ref()),
+        );
     }
 
     fn push(&mut self) {}

@@ -480,7 +480,7 @@ impl<T> AvlTree<T> {
     where
         T: Borrow<Q>,
     {
-        self.binary_search_by(|x| x.borrow().cmp(value))
+        self.binary_search_by(|x| <T as Borrow<Q>>::borrow(x).cmp(value))
     }
 
     pub fn partition_point(&self, mut is_right: impl FnMut(&T) -> bool) -> usize {
@@ -864,10 +864,7 @@ fn binary_search_by<T>(
     tree: Option<&Node<T>>,
     mut f: impl FnMut(&T) -> Ordering,
 ) -> Result<usize, usize> {
-    let node = match tree {
-        None => return Err(0),
-        Some(node) => node,
-    };
+    let node = tree.ok_or(0usize)?;
     let lsize = len(node.left.as_deref());
     match f(&node.value) {
         Ordering::Less => binary_search_by(node.right.as_deref(), f)
@@ -878,10 +875,7 @@ fn binary_search_by<T>(
     }
 }
 fn partition_point<T>(tree: Option<&Node<T>>, mut is_right: impl FnMut(&Node<T>) -> bool) -> usize {
-    let node = match tree {
-        None => return 0,
-        Some(node) => node,
-    };
+    let Some(node) = tree else { return 0 };
     let lsize = len(node.left.as_deref());
     if is_right(node) {
         partition_point(node.left.as_deref(), is_right)
