@@ -28,15 +28,15 @@ impl PrimitiveRoot<P3> for () {
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fp_fft::fps_mul;
+/// use fp_fft::poly_mul;
 /// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3)];
 /// let b: Vec<F> = vec![fp!(4), fp!(5), fp!(6)];
-/// let c = fps_mul(&a, &b);
+/// let c = poly_mul(&a, &b);
 /// assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
 /// ```
-pub fn fps_mul<const P: u64>(a: impl AsRef<[Fp<P>]>, b: impl AsRef<[Fp<P>]>) -> Vec<Fp<P>>
+pub fn poly_mul<const P: u64>(a: impl AsRef<[Fp<P>]>, b: impl AsRef<[Fp<P>]>) -> Vec<Fp<P>>
 where
     (): PrimitiveRoot<P>,
 {
@@ -63,15 +63,15 @@ where
 
 /// Multiplies two polynomials.
 pub fn any_mod_fps_mul<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Vec<Fp<P>> {
-    let v1 = fps_mul(
+    let v1 = poly_mul(
         a.iter().map(|&x| F1::new(x.value())).collect::<Vec<_>>(),
         b.iter().map(|&x| F1::new(x.value())).collect::<Vec<_>>(),
     );
-    let v2 = fps_mul(
+    let v2 = poly_mul(
         a.iter().map(|&x| F2::new(x.value())).collect::<Vec<_>>(),
         b.iter().map(|&x| F2::new(x.value())).collect::<Vec<_>>(),
     );
-    let v3 = fps_mul(
+    let v3 = poly_mul(
         a.iter().map(|&x| F3::new(x.value())).collect::<Vec<_>>(),
         b.iter().map(|&x| F3::new(x.value())).collect::<Vec<_>>(),
     );
@@ -276,7 +276,7 @@ mod tests {
                 continue;
             }
             let expected = naive_mul(&a, &b);
-            let result = fps_mul(&a, &b);
+            let result = poly_mul(&a, &b);
             assert_eq!(result, expected);
         }
     }
