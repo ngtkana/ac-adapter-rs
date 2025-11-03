@@ -1,6 +1,5 @@
-use super::mod_inv;
-use super::Fp;
-use super::PrimitiveRoot;
+use fp::mod_inv;
+use fp::Fp;
 
 const P1: u64 = 924_844_033;
 const P2: u64 = 998_244_353;
@@ -9,12 +8,27 @@ type F1 = Fp<P1>;
 type F2 = Fp<P2>;
 type F3 = Fp<P3>;
 
+/// A primitive root of unity.
+pub trait PrimitiveRoot<const P: u64> {
+    /// A primitive root of unity.
+    const VALUE: Fp<P>;
+}
+impl PrimitiveRoot<P1> for () {
+    const VALUE: Fp<P1> = Fp::new(5);
+}
+impl PrimitiveRoot<P2> for () {
+    const VALUE: Fp<P2> = Fp::new(3);
+}
+impl PrimitiveRoot<P3> for () {
+    const VALUE: Fp<P3> = Fp::new(5);
+}
+
 /// Multiplies two polynomials.
 ///
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fp::fps_mul;
+/// use fp_fft::fps_mul;
 /// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let a: Vec<F> = vec![fp!(1), fp!(2), fp!(3)];
@@ -83,7 +97,7 @@ pub fn any_mod_fps_mul<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Vec<Fp<P>> {
 /// # Examples
 ///
 /// ```
-/// use fp::fft;
+/// use fp_fft::fft;
 /// use fp::fp;
 /// use fp::Fp;
 /// type F = Fp<998244353>;
@@ -158,7 +172,7 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fp::ifft;
+/// use fp_fft::ifft;
 /// use fp::Fp;
 /// type F = Fp<998244353>;
 /// let i = fp!(3).pow(998244352 / 4);
