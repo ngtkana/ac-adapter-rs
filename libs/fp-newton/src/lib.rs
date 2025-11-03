@@ -45,29 +45,18 @@
 //! | [`fps_inv`] | $2\mathcal{M}(d)$ |
 //! | [`fps_sqrt`] | $6\mathcal{M}(d)$ |
 //! | [`fps_deriv`] | $O(d)$ |
-//! | [`fps_int`] | $O(d)$ |
+//! | [`integ`] | $O(d)$ |
 //! | [`fps_log`] | $3\mathcal{M}(d)$ |
 //! | [`fps_exp`] | $(10+2/3)\mathcal{M}(d)$ |
+//! | [`fps_pow`] | $(13+2/3)\mathcal{M}(d) + O(d + \log P)$ |
 
 use fp::Fp;
 use fp_fft::fft;
-use fp_fft::fps_mul;
 use fp_fft::ifft;
+use fp_fft::poly_mul;
 use fp_fft::PrimitiveRoot;
 use std::iter::repeat;
 
-/// Define a formal power series in the same way as `vec!`.
-///
-/// This calls [`Fp::from`] for each element.
-///
-/// # Examples
-/// ```
-/// use fp::fp;
-/// use fp::Fp;
-/// use fps::fps;
-/// let f: Vec<Fp<998244353>> = fps![1, 2, 3];
-/// assert_eq!(f, vec![fp!(1), fp!(2), fp!(3)]);
-/// ```
 #[macro_export]
 macro_rules! fps {
     () => (
@@ -93,9 +82,11 @@ macro_rules! fps {
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps_inv;
-/// let g = fps_inv::<998244353>(&[fp!(1), fp!(2)], 4);
-/// assert_eq!(g, vec![fp!(1), fp!(-2), fp!(4), fp!(-8)]);
+/// use fp_newton::fps;
+/// use fp_newton::fps_inv;
+///
+/// let g = fps_inv::<998244353>(&fps![1, 2], 4);
+/// assert_eq!(g, fps![1, -2, 4, -8]);
 /// ```
 pub fn fps_inv<const P: u64>(f: impl AsRef<[Fp<P>]>, precision: usize) -> Vec<Fp<P>>
 where
@@ -149,7 +140,8 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps_sqrt;
+/// use fp_newton::fps_sqrt;
+///
 /// let g = fps_sqrt::<998244353>(&[fp!(1), fp!(2)], 4);
 /// assert_eq!(g, vec![fp!(1), fp!(1), -fp!(2).inv(), fp!(2).inv()]);
 /// ```
@@ -174,7 +166,7 @@ where
                 .collect::<Vec<_>>();
             let mut g_inv = fps_inv(&g, precision);
             g_inv.resize(fft_size, Fp::new(0));
-            let mut f_div_g = fps_mul(&f, &g_inv);
+            let mut f_div_g = poly_mul(&f, &g_inv);
             f_div_g.truncate(precision);
             f_div_g
                 .iter()
@@ -194,8 +186,8 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps;
-/// let g = fps::fps_deriv::<998244353>(fps![1, 2], 4);
+/// use fp_newton::fps;
+/// let g = fp_newton::fps_deriv::<998244353>(fps![1, 2], 4);
 /// assert_eq!(g, fps![2, 0, 0, 0]);
 /// ```
 pub fn fps_deriv<const P: u64>(f: impl AsRef<[Fp<P>]>, precision: usize) -> Vec<Fp<P>>
@@ -217,11 +209,11 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps;
-/// let g = fps::fps_int::<998244353>(&fps![1, 2], 4);
+/// use fp_newton::fps;
+/// let g = fp_newton::integ::<998244353>(&fps![1, 2], 4);
 /// assert_eq!(g, fps![0, 1, 1, 0]);
 /// ```
-pub fn fps_int<const P: u64>(f: impl AsRef<[Fp<P>]>, precision: usize) -> Vec<Fp<P>>
+pub fn integ<const P: u64>(f: impl AsRef<[Fp<P>]>, precision: usize) -> Vec<Fp<P>>
 where
     (): PrimitiveRoot<P>,
 {
@@ -262,9 +254,11 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps_log;
-/// let g = fps_log::<998244353>(&[fp!(1), fp!(2)], 4);
-/// assert_eq!(g, vec![fp!(0), fp!(2), fp!(-2), fp!(8) / fp!(3)]);
+/// use fp_newton::fps_log;
+/// use fp_newton::fps;
+///
+/// let g = fps_log::<998244353>(&fps![1, 2], 4);
+/// assert_eq!(g, fps![fp!(0), fp!(2), fp!(-2), fp!(8) / fp!(3)]);
 /// ```
 pub fn fps_log<const P: u64>(f: impl AsRef<[Fp<P>]>, precision: usize) -> Vec<Fp<P>>
 where
@@ -279,8 +273,8 @@ where
     if precision == 0 {
         return Vec::new();
     }
-    fps_int(
-        fps_mul(fps_deriv(f, precision - 1), fps_inv(f, precision - 1)),
+    integ(
+        poly_mul(fps_deriv(f, precision - 1), fps_inv(f, precision - 1)),
         precision,
     )
 }
@@ -358,16 +352,16 @@ where
 /// # Examples
 /// ```
 /// use fp::fp;
-/// use fps::fps;
-/// use fps::fps_pow;
+/// use fp_newton::fps;
+/// use fp_newton::fps_pow;
 /// let g = fps_pow::<998244353>([fp!(1), fp!(2)], 3, 4);
 /// assert_eq!(g, fps![1, 6, 12, 8]);
 /// ```
-pub fn fps_pow<const P: u64>(f: impl AsRef<[Fp<P>]>, pow: usize, precision: usize) -> Vec<Fp<P>>
+pub fn fps_pow<const P: u64>(f: impl AsRef<[Fp<P>]>, e: usize, precision: usize) -> Vec<Fp<P>>
 where
     (): PrimitiveRoot<P>,
 {
-    if pow == 0 {
+    if e == 0 {
         let mut result = vec![Fp::new(0); precision];
         if precision > 0 {
             result[0] = Fp::new(1);
@@ -382,12 +376,12 @@ where
     let leading_zeros = f.iter().take_while(|&&f| f == Fp::new(0)).count();
     let (Some(&head), Some(precision)) = (
         f.get(leading_zeros),
-        precision.checked_sub(leading_zeros.saturating_mul(pow)),
+        precision.checked_sub(leading_zeros.saturating_mul(e)),
     ) else {
         return vec![Fp::new(0); precision];
     };
     let head_inv = head.inv();
-    let head_pow = head.pow(pow as u64);
+    let head_pow = head.pow(e as u64);
     let log = fps_log(
         f[leading_zeros..]
             .iter()
@@ -395,9 +389,9 @@ where
             .collect::<Vec<_>>(),
         precision,
     );
-    let mul_log = log.into_iter().map(|log_f| log_f * pow).collect::<Vec<_>>();
+    let mul_log = log.into_iter().map(|log_f| log_f * e).collect::<Vec<_>>();
     let exp_mul_log = fps_exp(mul_log, precision);
-    std::iter::repeat_n(Fp::new(0), leading_zeros * pow)
+    std::iter::repeat_n(Fp::new(0), leading_zeros * e)
         .chain(exp_mul_log.into_iter().map(|result| result * head_pow))
         .collect()
 }
@@ -406,7 +400,7 @@ where
 mod tests {
     use super::*;
     use fp::fp;
-    use fp_fft::fps_mul;
+    use fp_fft::poly_mul;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
@@ -424,30 +418,30 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_inv_hand() {
-        let fps_inv = fps_inv::<P>;
+    fn test_inv_hand() {
+        let inv = fps_inv::<P>;
         let inv2 = Fp::new(2).inv().value() as i32;
-        assert_eq!(fps_inv(fps![2], 0), fps![]);
-        assert_eq!(fps_inv(fps![2], 1), fps![inv2]);
-        assert_eq!(fps_inv(fps![2], 2), fps![inv2, 0]);
-        assert_eq!(fps_inv(fps![2, 0], 0), fps![]);
-        assert_eq!(fps_inv(fps![2, 0], 1), fps![inv2]);
-        assert_eq!(fps_inv(fps![2, 0], 2), fps![inv2, 0]);
-        assert_eq!(fps_inv(fps![2, 0], 3), fps![inv2, 0, 0]);
-        assert_eq!(fps_inv(fps![1, 2], 1), fps![1]);
-        assert_eq!(fps_inv(fps![1, 2], 2), fps![1, -2]);
-        assert_eq!(fps_inv(fps![1, 2], 3), fps![1, -2, 4]);
+        assert_eq!(inv(fps![2], 0), fps![]);
+        assert_eq!(inv(fps![2], 1), fps![inv2]);
+        assert_eq!(inv(fps![2], 2), fps![inv2, 0]);
+        assert_eq!(inv(fps![2, 0], 0), fps![]);
+        assert_eq!(inv(fps![2, 0], 1), fps![inv2]);
+        assert_eq!(inv(fps![2, 0], 2), fps![inv2, 0]);
+        assert_eq!(inv(fps![2, 0], 3), fps![inv2, 0, 0]);
+        assert_eq!(inv(fps![1, 2], 1), fps![1]);
+        assert_eq!(inv(fps![1, 2], 2), fps![1, -2]);
+        assert_eq!(inv(fps![1, 2], 3), fps![1, -2, 4]);
     }
 
     #[test]
-    fn test_fps_inv_random() {
+    fn test_inv_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let f = random_fps(&mut rng, fp!(1), PRECISION);
             let g = fps_inv(&f, PRECISION);
             assert_eq!(g.len(), PRECISION);
-            let mut result = fps_mul(&f, &g);
+            let mut result = poly_mul(&f, &g);
             result.truncate(PRECISION);
             let mut expected = vec![Fp::new(0); PRECISION];
             expected[0] = Fp::new(1);
@@ -456,48 +450,48 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_sqrt_hand() {
-        let fps_sqrt = fps_sqrt::<P>;
-        assert_eq!(fps_sqrt(fps![1], 0), fps![]);
-        assert_eq!(fps_sqrt(fps![1], 1), fps![1]);
-        assert_eq!(fps_sqrt(fps![1], 2), fps![1, 0]);
-        assert_eq!(fps_sqrt(fps![1, 4], 0), fps![]);
-        assert_eq!(fps_sqrt(fps![1, 4], 1), fps![1]);
-        assert_eq!(fps_sqrt(fps![1, 4], 2), fps![1, 2]);
-        assert_eq!(fps_sqrt(fps![1, 4], 3), fps![1, 2, -2]);
+    fn test_sqrt_hand() {
+        let sqrt = fps_sqrt::<P>;
+        assert_eq!(sqrt(fps![1], 0), fps![]);
+        assert_eq!(sqrt(fps![1], 1), fps![1]);
+        assert_eq!(sqrt(fps![1], 2), fps![1, 0]);
+        assert_eq!(sqrt(fps![1, 4], 0), fps![]);
+        assert_eq!(sqrt(fps![1, 4], 1), fps![1]);
+        assert_eq!(sqrt(fps![1, 4], 2), fps![1, 2]);
+        assert_eq!(sqrt(fps![1, 4], 3), fps![1, 2, -2]);
     }
 
     #[test]
-    fn test_fps_sqrt_random() {
+    fn test_sqrt_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let f = random_fps(&mut rng, fp!(1), PRECISION);
             let g = fps_sqrt(&f, PRECISION);
             assert_eq!(g.len(), PRECISION);
-            let mut result = fps_mul(&g, &g);
+            let mut result = poly_mul(&g, &g);
             result.truncate(PRECISION);
             assert_eq!(result, f);
         }
     }
 
     #[test]
-    fn test_fps_deriv_hand() {
-        let fps_deriv = fps_deriv::<P>;
-        assert_eq!(fps_deriv(fps![1], 0), fps![]);
-        assert_eq!(fps_deriv(fps![1], 1), fps![0]);
-        assert_eq!(fps_deriv(fps![1], 2), fps![0, 0]);
-        assert_eq!(fps_deriv(fps![1, 2], 0), fps![]);
-        assert_eq!(fps_deriv(fps![1, 2], 1), fps![2]);
-        assert_eq!(fps_deriv(fps![1, 2], 2), fps![2, 0]);
-        assert_eq!(fps_deriv(fps![1, 2], 3), fps![2, 0, 0]);
-        assert_eq!(fps_deriv(fps![1, 2], 8), fps![2, 0, 0, 0, 0, 0, 0, 0]);
-        assert_eq!(fps_deriv(fps![1, 2, 3, 4], 4), fps![2, 6, 12, 0]);
-        assert_eq!(fps_deriv(fps![1, 2, 3, 4, 5, 6], 1), fps![2]);
+    fn test_deriv_hand() {
+        let deriv = fps_deriv::<P>;
+        assert_eq!(deriv(fps![1], 0), fps![]);
+        assert_eq!(deriv(fps![1], 1), fps![0]);
+        assert_eq!(deriv(fps![1], 2), fps![0, 0]);
+        assert_eq!(deriv(fps![1, 2], 0), fps![]);
+        assert_eq!(deriv(fps![1, 2], 1), fps![2]);
+        assert_eq!(deriv(fps![1, 2], 2), fps![2, 0]);
+        assert_eq!(deriv(fps![1, 2], 3), fps![2, 0, 0]);
+        assert_eq!(deriv(fps![1, 2], 8), fps![2, 0, 0, 0, 0, 0, 0, 0]);
+        assert_eq!(deriv(fps![1, 2, 3, 4], 4), fps![2, 6, 12, 0]);
+        assert_eq!(deriv(fps![1, 2, 3, 4, 5, 6], 1), fps![2]);
     }
 
     #[test]
-    fn test_fps_deriv_random() {
+    fn test_deriv_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
@@ -511,27 +505,27 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_int_hand() {
-        let fps_int = fps_int::<P>;
-        assert_eq!(fps_int(fps![1], 0), fps![]);
-        assert_eq!(fps_int(fps![1], 1), fps![0]);
-        assert_eq!(fps_int(fps![1], 2), fps![0, 1]);
-        assert_eq!(fps_int(fps![1, 2], 0), fps![]);
-        assert_eq!(fps_int(fps![1, 2], 1), fps![0]);
-        assert_eq!(fps_int(fps![1, 2], 2), fps![0, 1]);
-        assert_eq!(fps_int(fps![1, 2], 3), fps![0, 1, 1]);
-        assert_eq!(fps_int(fps![1, 2], 8), fps![0, 1, 1, 0, 0, 0, 0, 0]);
-        assert_eq!(fps_int(fps![1, 2, 3, 4], 4), fps![0, 1, 1, 1]);
-        assert_eq!(fps_int(fps![1, 2, 3, 4, 5, 6], 1), fps![0]);
+    fn test_int_hand() {
+        let integ = integ::<P>;
+        assert_eq!(integ(fps![1], 0), fps![]);
+        assert_eq!(integ(fps![1], 1), fps![0]);
+        assert_eq!(integ(fps![1], 2), fps![0, 1]);
+        assert_eq!(integ(fps![1, 2], 0), fps![]);
+        assert_eq!(integ(fps![1, 2], 1), fps![0]);
+        assert_eq!(integ(fps![1, 2], 2), fps![0, 1]);
+        assert_eq!(integ(fps![1, 2], 3), fps![0, 1, 1]);
+        assert_eq!(integ(fps![1, 2], 8), fps![0, 1, 1, 0, 0, 0, 0, 0]);
+        assert_eq!(integ(fps![1, 2, 3, 4], 4), fps![0, 1, 1, 1]);
+        assert_eq!(integ(fps![1, 2, 3, 4, 5, 6], 1), fps![0]);
     }
 
     #[test]
-    fn test_fps_int_random() {
+    fn test_int_random() {
         const PRECISION: usize = 40;
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..20 {
             let f = random_fps(&mut rng, fp!(1), PRECISION);
-            let g = fps_int(&f, PRECISION);
+            let g = integ(&f, PRECISION);
             assert_eq!(g.len(), PRECISION);
             let result = fps_deriv(&g, PRECISION);
             assert_eq!(result[..PRECISION - 1], f[..PRECISION - 1]);
@@ -540,17 +534,17 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_log_hand() {
-        let fps_log = fps_log::<P>;
-        assert_eq!(fps_log(fps![1], 0), fps![]);
-        assert_eq!(fps_log(fps![1], 1), fps![0]);
-        assert_eq!(fps_log(fps![1], 2), fps![0, 0]);
-        assert_eq!(fps_log(fps![1, 2], 0), fps![]);
-        assert_eq!(fps_log(fps![1, 2], 1), fps![0]);
-        assert_eq!(fps_log(fps![1, 2], 2), fps![0, 2]);
-        assert_eq!(fps_log(fps![1, 2], 3), fps![0, 2, -2]);
+    fn test_log_hand() {
+        let log = fps_log::<P>;
+        assert_eq!(log(fps![1], 0), fps![]);
+        assert_eq!(log(fps![1], 1), fps![0]);
+        assert_eq!(log(fps![1], 2), fps![0, 0]);
+        assert_eq!(log(fps![1, 2], 0), fps![]);
+        assert_eq!(log(fps![1, 2], 1), fps![0]);
+        assert_eq!(log(fps![1, 2], 2), fps![0, 2]);
+        assert_eq!(log(fps![1, 2], 3), fps![0, 2, -2]);
         assert_eq!(
-            fps_log(fps![1, 2], 8),
+            log(fps![1, 2], 8),
             vec![
                 fp!(0),
                 fp!(2),
@@ -562,11 +556,11 @@ mod tests {
                 fp!(128) / 7,
             ]
         );
-        assert_eq!(fps_log(fps![1, 2, 3, 4, 5, 6], 1), fps![0]);
+        assert_eq!(log(fps![1, 2, 3, 4, 5, 6], 1), fps![0]);
     }
 
     #[test]
-    fn test_fps_log_random() {
+    fn test_log_random() {
         fn log_naive(f: &[Fp]) -> Vec<Fp> {
             let precision = f.len();
             let mut f = f.to_vec();
@@ -577,7 +571,7 @@ mod tests {
                 for (g, cum) in g.iter_mut().zip(&cum) {
                     *g += cum * Fp::from(p).inv() * Fp::sign(p - 1);
                 }
-                cum = fps_mul(&cum, &f);
+                cum = poly_mul(&cum, &f);
             }
             g
         }
@@ -593,20 +587,20 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_exp_hand() {
-        let fps_exp = fps_exp::<P>;
-        assert_eq!(fps_exp(fps![], 0), fps![]);
-        assert_eq!(fps_exp(fps![], 1), fps![1]);
-        assert_eq!(fps_exp(fps![], 2), fps![1, 0]);
-        assert_eq!(fps_exp(fps![], 3), fps![1, 0, 0]);
-        assert_eq!(fps_exp(fps![0], 1), fps![1]);
-        assert_eq!(fps_exp(fps![0], 2), fps![1, 0]);
-        assert_eq!(fps_exp(fps![0, 2], 0), fps![]);
-        assert_eq!(fps_exp(fps![0, 2], 1), fps![1]);
-        assert_eq!(fps_exp(fps![0, 2], 2), fps![1, 2]);
-        assert_eq!(fps_exp(fps![0, 2], 3), fps![1, 2, 2]);
+    fn test_exp_hand() {
+        let exp = fps_exp::<P>;
+        assert_eq!(exp(fps![], 0), fps![]);
+        assert_eq!(exp(fps![], 1), fps![1]);
+        assert_eq!(exp(fps![], 2), fps![1, 0]);
+        assert_eq!(exp(fps![], 3), fps![1, 0, 0]);
+        assert_eq!(exp(fps![0], 1), fps![1]);
+        assert_eq!(exp(fps![0], 2), fps![1, 0]);
+        assert_eq!(exp(fps![0, 2], 0), fps![]);
+        assert_eq!(exp(fps![0, 2], 1), fps![1]);
+        assert_eq!(exp(fps![0, 2], 2), fps![1, 2]);
+        assert_eq!(exp(fps![0, 2], 3), fps![1, 2, 2]);
         assert_eq!(
-            fps_exp(fps![0, 2], 8),
+            exp(fps![0, 2], 8),
             vec![
                 fp!(1),
                 fp!(2),
@@ -618,11 +612,11 @@ mod tests {
                 fp!(128) / 5040,
             ]
         );
-        assert_eq!(fps_exp(fps![0, 2, 3, 4, 5, 6], 1), fps![1]);
+        assert_eq!(exp(fps![0, 2, 3, 4, 5, 6], 1), fps![1]);
     }
 
     #[test]
-    fn test_fps_exp_random() {
+    fn test_exp_random() {
         fn exp_naive(f: &[Fp]) -> Vec<Fp> {
             let precision = f.len();
             let mut g = vec![Fp::new(0); precision];
@@ -634,7 +628,7 @@ mod tests {
                 for (g, cum) in g.iter_mut().zip(&cum) {
                     *g += cum * coeff;
                 }
-                cum = fps_mul(cum, f);
+                cum = poly_mul(cum, f);
             }
             g
         }
@@ -650,29 +644,29 @@ mod tests {
     }
 
     #[test]
-    fn test_fps_pow_hand() {
-        let fps_pow = fps_pow::<P>;
-        assert_eq!(fps_pow(fps![1], 0, 0), fps![]);
-        assert_eq!(fps_pow(fps![1], 0, 1), fps![1]);
-        assert_eq!(fps_pow(fps![1], 0, 2), fps![1, 0]);
-        assert_eq!(fps_pow(fps![1, 1], 2, 4), fps![1, 2, 1, 0]);
-        assert_eq!(fps_pow(fps![1, 1], 3, 4), fps![1, 3, 3, 1]);
-        assert_eq!(fps_pow(fps![1, 1], 4, 4), fps![1, 4, 6, 4]);
-        assert_eq!(fps_pow(fps![0, 2], 2, 4), fps![0, 0, 4, 0]);
-        assert_eq!(fps_pow(fps![0, 2], 3, 4), fps![0, 0, 0, 8]);
-        assert_eq!(fps_pow(fps![0, 2], 4, 4), fps![0, 0, 0, 0]);
-        assert_eq!(fps_pow(fps![0, 0, 0], 12, 3), fps![0, 0, 0]);
-        assert_eq!(fps_pow(fps![0, 0, 0], 0, 3), fps![1, 0, 0]);
+    fn test_pow_hand() {
+        let pow = fps_pow::<P>;
+        assert_eq!(pow(fps![1], 0, 0), fps![]);
+        assert_eq!(pow(fps![1], 0, 1), fps![1]);
+        assert_eq!(pow(fps![1], 0, 2), fps![1, 0]);
+        assert_eq!(pow(fps![1, 1], 2, 4), fps![1, 2, 1, 0]);
+        assert_eq!(pow(fps![1, 1], 3, 4), fps![1, 3, 3, 1]);
+        assert_eq!(pow(fps![1, 1], 4, 4), fps![1, 4, 6, 4]);
+        assert_eq!(pow(fps![0, 2], 2, 4), fps![0, 0, 4, 0]);
+        assert_eq!(pow(fps![0, 2], 3, 4), fps![0, 0, 0, 8]);
+        assert_eq!(pow(fps![0, 2], 4, 4), fps![0, 0, 0, 0]);
+        assert_eq!(pow(fps![0, 0, 0], 12, 3), fps![0, 0, 0]);
+        assert_eq!(pow(fps![0, 0, 0], 0, 3), fps![1, 0, 0]);
     }
 
     #[test]
-    fn test_fps_pow_random() {
+    fn test_pow_random() {
         fn pow_naive(f: &[Fp], pow: usize) -> Vec<Fp> {
             let precision = f.len();
             let mut result = vec![Fp::new(0); precision];
             result[0] = fp!(1);
             for _ in 0..pow {
-                result = fps_mul(result, f);
+                result = poly_mul(result, f);
                 result.truncate(precision);
             }
             result
@@ -685,10 +679,10 @@ mod tests {
                 .chain(repeat_with(|| Fp::new(rng.gen_range(0..100))))
                 .take(PRECISION)
                 .collect::<Vec<_>>();
-            let pow = rng.gen_range(0..10);
-            let g = fps_pow(&f, pow, PRECISION);
+            let exp = rng.gen_range(0..10);
+            let g = fps_pow(&f, exp, PRECISION);
             assert_eq!(g.len(), PRECISION);
-            let expected = pow_naive(&f, pow);
+            let expected = pow_naive(&f, exp);
             assert_eq!(g, expected);
         }
     }
