@@ -1,4 +1,5 @@
 //! A library for modular arithmetic.
+//!
 //! # Examples
 //! ```
 //! use fp::fp;
@@ -11,49 +12,7 @@
 //! assert_eq!(a / b * b, Fp::new(3));
 //! assert_eq!(a.pow(3), Fp::new(27));
 //! ```
-//!
-//! ## Precalculations
-//!
-//! ```
-//! use fp::fp;
-//! const P: u64 = 998_244_353;
-//!
-//! let fact = fp::Fact::<P>::new(10);
-//! assert_eq!(fact[5], fp!(120));
-//!
-//! let ifact = fp::IFact::new(&fact);
-//! assert_eq!(ifact[5], fp!(120).inv());
-//!
-//! let binom = fp::Binom::new(&fact, &ifact);
-//! let binom = binom.as_fn();
-//! assert_eq!(binom(5, 3), fp!(10));
-//! ```
-//!
-//! ## Convolution by Fast Fourier transform (FFT)
-//! ```
-//! use fp::fp;
-//! const P: u64 = 998_244_353;
-//!
-//! let a = vec![fp!(1; mod P), fp!(2), fp!(3)];
-//! let b = vec![fp!(4), fp!(5), fp!(6)];
-//! let c = fp::fps_mul(&a, &b);
-//! assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
-//! ```
-mod ext_gcd;
-mod fourier;
-mod precalc;
-mod zplt;
 
-use ext_gcd::mod_inv;
-pub use fourier::any_mod_fps_mul;
-pub use fourier::fft;
-pub use fourier::fps_mul;
-pub use fourier::ifft;
-pub use precalc::Binom;
-pub use precalc::Fact;
-pub use precalc::IFact;
-pub use precalc::Inv;
-pub use precalc::Pow;
 use std::iter::Product;
 use std::iter::Sum;
 use std::mem::swap;
@@ -66,7 +25,6 @@ use std::ops::MulAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 use std::ops::SubAssign;
-pub use zplt::ZpLt;
 
 /// Constructs a new instance of [`Fp`]
 /// # Examples
@@ -84,21 +42,6 @@ macro_rules! fp {
     ($value:expr; mod $p:expr) => {
         $crate::Fp::<$p>::from($value)
     };
-}
-
-/// A primitive root of unity.
-pub trait PrimitiveRoot<const P: u64> {
-    /// A primitive root of unity.
-    const VALUE: Fp<P>;
-}
-impl PrimitiveRoot<998_244_353> for () {
-    const VALUE: Fp<998_244_353> = Fp::new(3);
-}
-impl PrimitiveRoot<1_012_924_417> for () {
-    const VALUE: Fp<1_012_924_417> = Fp::new(5);
-}
-impl PrimitiveRoot<924_844_033> for () {
-    const VALUE: Fp<924_844_033> = Fp::new(5);
 }
 
 /// $𝔽_p$.
@@ -361,6 +304,32 @@ impl<'a, const P: u64> Product<&'a Self> for Fp<P> {
     }
 }
 
+/// Return the multiplicative inverse of `x` modulo `P`.
+/// # Requirements
+/// - $P$ is odd and prime ($P ≥ 2³¹$)
+/// - $x < P$
+/// # Returns
+/// $x⁻¹ \mod P$
+/// # Postconditions
+/// - $0 ≤ \text{result} < P$
+pub fn mod_inv<const P: u64>(x: u64) -> u64 {
+    debug_assert!(P % 2 == 1);
+    debug_assert!(P < 1 << 31);
+    debug_assert!(x < P);
+    mod_inv_signed(x as i64, P as i64) as u64
+}
+/// Returns $a⁻¹ \mod m$.
+/// # Requirements
+/// - $m > 0, 0 < a < m$
+fn mod_inv_signed(a: i64, m: i64) -> i64 {
+    debug_assert!(a > 0);
+    debug_assert!(m > 0);
+    if a == 1 {
+        return 1;
+    }
+    m + (1 - m * mod_inv_signed(m % a, a)) / a
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -369,6 +338,21 @@ mod tests {
     use rand::SeedableRng;
 
     const P: u64 = 998_244_353;
+
+    #[test]
+    fn test_mod_inverse() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..256 {
+            let m = rng.gen_range(2..256);
+            let a = rng.gen_range(1..m);
+            if num::integer::gcd(a, m) != 1 {
+                continue;
+            }
+            let c = mod_inv_signed(a, m);
+            assert_eq!(a * c % m, 1, "a = {a}, c = {c}, ");
+            assert!((0..m).contains(&c));
+        }
+    }
 
     #[test]
     fn test_new() {

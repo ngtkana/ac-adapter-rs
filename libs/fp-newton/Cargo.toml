@@ -1,5 +1,5 @@
 [package]
-name = "fps"
+name = "fp-newton"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,6 +7,7 @@ edition = "2021"
 
 [dependencies]
 fp = { version = "0.1.0", path = "../fp" }
+fp-fft = { version = "0.1.0", path = "../fp-fft" }
 
 [dev-dependencies]
 num.workspace = true

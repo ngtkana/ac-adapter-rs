@@ -49,11 +49,11 @@
 //! | [`fps_log`] | $3\mathcal{M}(d)$ |
 //! | [`fps_exp`] | $(10+2/3)\mathcal{M}(d)$ |
 
-use fp::fft;
-use fp::fps_mul;
-use fp::ifft;
 use fp::Fp;
-use fp::PrimitiveRoot;
+use fp_fft::fft;
+use fp_fft::fps_mul;
+use fp_fft::ifft;
+use fp_fft::PrimitiveRoot;
 use std::iter::repeat;
 
 /// Define a formal power series in the same way as `vec!`.
@@ -406,7 +406,7 @@ where
 mod tests {
     use super::*;
     use fp::fp;
-    use fp::fps_mul;
+    use fp_fft::fps_mul;
     use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;

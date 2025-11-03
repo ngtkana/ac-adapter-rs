@@ -1,0 +1,10 @@
+[package]
+name = "fp-fft"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+fp = { version = "0.1.0", path = "../fp" }
+
+[dev-dependencies]
+rand.workspace = true

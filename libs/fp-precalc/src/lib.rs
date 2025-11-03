@@ -1,4 +1,23 @@
-use crate::Fp;
+//! Prealculation of $x⁻¹$, $x!$, etc.
+//!
+//! # Examples
+//!
+//! ```
+//! use fp::fp;
+//! const P: u64 = 998_244_353;
+//!
+//! let fact = fp_precalc::Fact::<P>::new(10);
+//! assert_eq!(fact[5], fp!(120));
+//!
+//! let ifact = fp_precalc::IFact::new(&fact);
+//! assert_eq!(ifact[5], fp!(120).inv());
+//!
+//! let binom = fp_precalc::Binom::new(&fact, &ifact);
+//! let binom = binom.as_fn();
+//! assert_eq!(binom(5, 3), fp!(10));
+//! ```
+
+use fp::Fp;
 use std::ops::Deref;
 
 /// $x⁻¹$ for small $x$'s
