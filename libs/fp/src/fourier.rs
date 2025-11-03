@@ -74,11 +74,11 @@ pub fn any_mod_fps_mul<const P: u64>(a: &[Fp<P>], b: &[Fp<P>]) -> Vec<Fp<P>> {
 /// - The length $n$ of $f$ is a power of two.
 /// - $n | (p - 1)$
 ///
-/// Especially, if $p = 998244353$, $n \leq 2^{23}$ must hold.
+/// Especially, if $p = 998244353$, then $n ≤ 2^{23}$ must hold.
 ///
 /// # Replaced by
 ///
-/// $f(1), f(-1), f(i), f(-i), f(e^{\pi/2}), f(e^{5\pi/2}), \dots$
+/// $f(1), f(-1), f(i), f(-i), f(e^{π/2}), f(e^{5π/2}), \dots$
 ///
 /// # Examples
 ///
@@ -149,7 +149,7 @@ where
 /// - The length $n$ of $f$ is a power of two.
 /// - $n | (p - 1)$
 ///
-/// Especially, if $p = 998244353$, $n \leq 2^{23}$ must hold.
+/// Especially, if $p = 998244353$, $n ≤ 2^{23}$ must hold.
 ///
 /// # Replaced by
 ///
@@ -219,7 +219,9 @@ where
         quarter = fft_len;
     }
     let d = Fp::from(f.len()).inv();
-    for x in f.iter_mut() { *x *= d; }
+    for x in f.iter_mut() {
+        *x *= d;
+    }
 }
 
 /// Restore the original value from the remainder of the division by `P1`, `P2`, and `P3`.
