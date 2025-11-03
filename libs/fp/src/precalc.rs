@@ -1,7 +1,7 @@
 use crate::Fp;
 use std::ops::Deref;
 
-/// $x⁻¹ for small $x$'s
+/// $x⁻¹$ for small $x$'s
 pub struct Inv<const P: u64> {
     values: Vec<Fp<P>>,
 }
@@ -49,7 +49,7 @@ impl<const P: u64> Deref for Fact<P> {
     }
 }
 
-/// $x!⁻¹ for small $x$'s
+/// $x!⁻¹$ for small $x$'s
 pub struct IFact<const P: u64> {
     values: Vec<Fp<P>>,
 }
@@ -90,6 +90,27 @@ impl<'a, const P: u64> Binom<'a, P> {
             assert!(n < fact.len());
             fact[n] * ifact[k] * ifact[n - k]
         }
+    }
+}
+
+/// $x^n$ for small $n$'s
+pub struct Pow<const P: u64> {
+    values: Vec<Fp<P>>,
+}
+impl<const P: u64> Pow<P> {
+    pub fn new(x: Fp<P>, len: usize) -> Self {
+        let mut values = vec![Fp::new(1); len];
+        for i in 1..len {
+            values[i] = values[i - 1] * x;
+        }
+        Self { values }
+    }
+}
+impl<const P: u64> Deref for Pow<P> {
+    type Target = [Fp<P>];
+
+    fn deref(&self) -> &Self::Target {
+        &self.values
     }
 }
 
@@ -143,6 +164,17 @@ mod tests {
                     if i < j { Fp::new(0) } else { fact[i] * ifact[j] * ifact[i - j] }
                 );
             }
+        }
+    }
+
+    #[test]
+    fn test_pow() {
+        let pow = Pow::<P>::new(Fp::new(2), P as usize);
+        for i in 0..P {
+            assert_eq!(
+                pow[i as usize],
+                std::iter::repeat_n(Fp::new(2), i as usize).product::<Fp<_>>(),
+            );
         }
     }
 }

@@ -14,7 +14,7 @@ impl<const P: u64> ZpLt<P> {
     /// ```
     /// use fp::{ZpLt, Fp};
     /// let x = ZpLt::<998244353>::one();
-    /// assert_eq!(x.value(), Fp::new(1));
+    /// assert_eq!(x.as_fp(), Fp::new(1));
     /// ```
     pub fn one() -> Self {
         Self {
@@ -27,7 +27,7 @@ impl<const P: u64> ZpLt<P> {
     /// ```
     /// use fp::{ZpLt, Fp};
     /// const P: u64 = 998244353;
-    /// let x = ZpLt::<P>::new(2 * P);
+    /// let x = ZpLt::<P>::from(Fp::new(2 * P));
     /// assert_eq!(x.as_fp(), Fp::new(0));
     /// ```
     pub fn as_fp(&self) -> Fp<P> {

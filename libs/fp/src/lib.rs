@@ -53,6 +53,7 @@ pub use precalc::Binom;
 pub use precalc::Fact;
 pub use precalc::IFact;
 pub use precalc::Inv;
+pub use precalc::Pow;
 use std::iter::Product;
 use std::iter::Sum;
 use std::mem::swap;
