@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["any_mod_fps_mul","fft","fps_mul","ifft"],"trait":["PrimitiveRoot"]};
