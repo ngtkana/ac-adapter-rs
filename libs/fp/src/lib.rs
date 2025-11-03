@@ -12,39 +12,47 @@
 //! assert_eq!(a.pow(3), Fp::new(27));
 //! ```
 //!
-//! ## Factorials
+//! ## Precalculations
+//!
 //! ```
 //! use fp::fp;
-//! use fp::Factorial;
-//! let f = Factorial::<998244353>::new(10);
-//! assert_eq!(f.fact(5), fp!(120));
-//! assert_eq!(f.inv_fact(5), fp!(120).inv());
-//! assert_eq!(f.falling(5, 3), fp!(60));
-//! assert_eq!(f.binom(5, 3), fp!(10));
-//! assert_eq!(f.multiset_number(5, 3), fp!(35));
+//! const P: u64 = 998_244_353;
+//!
+//! let fact = fp::Fact::<P>::new(10);
+//! assert_eq!(fact[5], fp!(120));
+//!
+//! let ifact = fp::IFact::new(&fact);
+//! assert_eq!(ifact[5], fp!(120).inv());
+//!
+//! let binom = fp::Binom::new(&fact, &ifact);
+//! let binom = binom.as_fn();
+//! assert_eq!(binom(5, 3), fp!(10));
 //! ```
 //!
 //! ## Convolution by Fast Fourier transform (FFT)
 //! ```
-//! use fp::Fp;
-//! use fp::fps_mul;
 //! use fp::fp;
-//! let a = vec![fp!(1; mod 998244353), fp!(2), fp!(3)];
+//! const P: u64 = 998_244_353;
+//!
+//! let a = vec![fp!(1; mod P), fp!(2), fp!(3)];
 //! let b = vec![fp!(4), fp!(5), fp!(6)];
-//! let c = fps_mul(&a, &b);
+//! let c = fp::fps_mul(&a, &b);
 //! assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
 //! ```
 mod ext_gcd;
-mod factorial;
 mod fourier;
-mod zeroed;
+mod precalc;
+mod zplt;
 
 use ext_gcd::mod_inv;
-pub use factorial::Factorial;
 pub use fourier::any_mod_fps_mul;
 pub use fourier::fft;
 pub use fourier::fps_mul;
 pub use fourier::ifft;
+pub use precalc::Binom;
+pub use precalc::Fact;
+pub use precalc::IFact;
+pub use precalc::Inv;
 use std::iter::Product;
 use std::iter::Sum;
 use std::mem::swap;
@@ -57,7 +65,7 @@ use std::ops::MulAssign;
 use std::ops::Neg;
 use std::ops::Sub;
 use std::ops::SubAssign;
-pub use zeroed::Zeroed;
+pub use zplt::ZpLt;
 
 /// Constructs a new instance of [`Fp`]
 /// # Examples
@@ -92,11 +100,11 @@ impl PrimitiveRoot<924_844_033> for () {
     const VALUE: Fp<924_844_033> = Fp::new(5);
 }
 
-/// A value in $\mathbb{Fp}_p$.
+/// $𝔽_p$.
 /// # Requirements
-/// - $P$ is odd and prime ($P \gt 2^{31}$)
+/// - $P$ is odd and prime ($P < 2³¹$)
 /// # Invariants
-/// - $0 \le \text{value} < P$
+/// - $0 ≤ \text{value} < P$
 /// # Examples
 /// ```
 /// type Fp = fp::Fp<998244353>;
@@ -134,23 +142,6 @@ impl<const P: u64> Fp<P> {
         self.value
     }
 
-    /// $(-1) ^ e$.
-    /// # Examples
-    /// ```
-    /// use fp::Fp;
-    /// const P: u64 = 998244353;
-    /// assert_eq!(Fp::<P>::m1pow(0), Fp::new(1));
-    /// assert_eq!(Fp::<P>::m1pow(1), Fp::from(-1));
-    /// assert_eq!(Fp::<P>::m1pow(2), Fp::new(1));
-    /// ```
-    pub const fn m1pow(exp: usize) -> Self {
-        match exp % 2 {
-            0 => Self { value: 1 },
-            1 => Self { value: P - 1 },
-            _ => unreachable!(),
-        }
-    }
-
     /// Returns the multiplicative inverse.
     /// # Examples
     /// ```
@@ -186,7 +177,7 @@ impl<const P: u64> Fp<P> {
         result
     }
 
-    /// Returns $(-1)^{\text{pow}}$.
+    /// Returns $(-1)^e$.
     ///
     /// # Examples
     /// ```
@@ -196,8 +187,8 @@ impl<const P: u64> Fp<P> {
     /// assert_eq!(Fp::sign(2), Fp::from(1));
     /// assert_eq!(Fp::sign(3), Fp::from(-1));
     /// ```
-    pub fn sign(pow: usize) -> Self {
-        Self::new(if pow % 2 == 0 { 1 } else { P - 1 })
+    pub fn sign(exp: usize) -> Self {
+        Self::new(if exp % 2 == 0 { 1 } else { P - 1 })
     }
 }
 impl<const P: u64> std::fmt::Debug for Fp<P> {
