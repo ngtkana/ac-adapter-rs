@@ -62,15 +62,15 @@
 <a href=#28 id=28 data-nosnippet>28</a>/// # Examples
 <a href=#29 id=29 data-nosnippet>29</a>/// ```
 <a href=#30 id=30 data-nosnippet>30</a>/// use fp::fp;
-<a href=#31 id=31 data-nosnippet>31</a>/// use fp_fft::fps_mul;
+<a href=#31 id=31 data-nosnippet>31</a>/// use fp_fft::poly_mul;
 <a href=#32 id=32 data-nosnippet>32</a>/// use fp::Fp;
 <a href=#33 id=33 data-nosnippet>33</a>/// type F = Fp&lt;998244353&gt;;
 <a href=#34 id=34 data-nosnippet>34</a>/// let a: Vec&lt;F&gt; = vec![fp!(1), fp!(2), fp!(3)];
 <a href=#35 id=35 data-nosnippet>35</a>/// let b: Vec&lt;F&gt; = vec![fp!(4), fp!(5), fp!(6)];
-<a href=#36 id=36 data-nosnippet>36</a>/// let c = fps_mul(&amp;a, &amp;b);
+<a href=#36 id=36 data-nosnippet>36</a>/// let c = poly_mul(&amp;a, &amp;b);
 <a href=#37 id=37 data-nosnippet>37</a>/// assert_eq!(c, vec![fp!(4), fp!(13), fp!(28), fp!(27), fp!(18)]);
 <a href=#38 id=38 data-nosnippet>38</a>/// ```
-<a href=#39 id=39 data-nosnippet>39</a></span><span class="kw">pub fn </span>fps_mul&lt;<span class="kw">const </span>P: u64&gt;(a: <span class="kw">impl </span>AsRef&lt;[Fp&lt;P&gt;]&gt;, b: <span class="kw">impl </span>AsRef&lt;[Fp&lt;P&gt;]&gt;) -&gt; Vec&lt;Fp&lt;P&gt;&gt;
+<a href=#39 id=39 data-nosnippet>39</a></span><span class="kw">pub fn </span>poly_mul&lt;<span class="kw">const </span>P: u64&gt;(a: <span class="kw">impl </span>AsRef&lt;[Fp&lt;P&gt;]&gt;, b: <span class="kw">impl </span>AsRef&lt;[Fp&lt;P&gt;]&gt;) -&gt; Vec&lt;Fp&lt;P&gt;&gt;
 <a href=#40 id=40 data-nosnippet>40</a><span class="kw">where
 <a href=#41 id=41 data-nosnippet>41</a>    </span>(): PrimitiveRoot&lt;P&gt;,
 <a href=#42 id=42 data-nosnippet>42</a>{
@@ -97,15 +97,15 @@
 <a href=#63 id=63 data-nosnippet>63</a>
 <a href=#64 id=64 data-nosnippet>64</a><span class="doccomment">/// Multiplies two polynomials.
 <a href=#65 id=65 data-nosnippet>65</a></span><span class="kw">pub fn </span>any_mod_fps_mul&lt;<span class="kw">const </span>P: u64&gt;(a: <span class="kw-2">&amp;</span>[Fp&lt;P&gt;], b: <span class="kw-2">&amp;</span>[Fp&lt;P&gt;]) -&gt; Vec&lt;Fp&lt;P&gt;&gt; {
-<a href=#66 id=66 data-nosnippet>66</a>    <span class="kw">let </span>v1 = fps_mul(
+<a href=#66 id=66 data-nosnippet>66</a>    <span class="kw">let </span>v1 = poly_mul(
 <a href=#67 id=67 data-nosnippet>67</a>        a.iter().map(|<span class="kw-2">&amp;</span>x| F1::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#68 id=68 data-nosnippet>68</a>        b.iter().map(|<span class="kw-2">&amp;</span>x| F1::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#69 id=69 data-nosnippet>69</a>    );
-<a href=#70 id=70 data-nosnippet>70</a>    <span class="kw">let </span>v2 = fps_mul(
+<a href=#70 id=70 data-nosnippet>70</a>    <span class="kw">let </span>v2 = poly_mul(
 <a href=#71 id=71 data-nosnippet>71</a>        a.iter().map(|<span class="kw-2">&amp;</span>x| F2::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#72 id=72 data-nosnippet>72</a>        b.iter().map(|<span class="kw-2">&amp;</span>x| F2::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#73 id=73 data-nosnippet>73</a>    );
-<a href=#74 id=74 data-nosnippet>74</a>    <span class="kw">let </span>v3 = fps_mul(
+<a href=#74 id=74 data-nosnippet>74</a>    <span class="kw">let </span>v3 = poly_mul(
 <a href=#75 id=75 data-nosnippet>75</a>        a.iter().map(|<span class="kw-2">&amp;</span>x| F3::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#76 id=76 data-nosnippet>76</a>        b.iter().map(|<span class="kw-2">&amp;</span>x| F3::new(x.value())).collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(),
 <a href=#77 id=77 data-nosnippet>77</a>    );
@@ -310,7 +310,7 @@
 <a href=#276 id=276 data-nosnippet>276</a>                <span class="kw">continue</span>;
 <a href=#277 id=277 data-nosnippet>277</a>            }
 <a href=#278 id=278 data-nosnippet>278</a>            <span class="kw">let </span>expected = naive_mul(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b);
-<a href=#279 id=279 data-nosnippet>279</a>            <span class="kw">let </span>result = fps_mul(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b);
+<a href=#279 id=279 data-nosnippet>279</a>            <span class="kw">let </span>result = poly_mul(<span class="kw-2">&amp;</span>a, <span class="kw-2">&amp;</span>b);
 <a href=#280 id=280 data-nosnippet>280</a>            <span class="macro">assert_eq!</span>(result, expected);
 <a href=#281 id=281 data-nosnippet>281</a>        }
 <a href=#282 id=282 data-nosnippet>282</a>    }
