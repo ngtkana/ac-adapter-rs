@@ -34,21 +34,21 @@
 
 </head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">fp/</div>ext_gcd.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// Return the multiplicative inverse of `x` modulo `P`.
 <a href=#2 id=2 data-nosnippet>2</a>/// # Requirements
-<a href=#3 id=3 data-nosnippet>3</a>/// - $P$ is odd and prime ($P \ge 2^{31}$)
+<a href=#3 id=3 data-nosnippet>3</a>/// - $P$ is odd and prime ($P ≥ 2³¹$)
 <a href=#4 id=4 data-nosnippet>4</a>/// - $x &lt; P$
 <a href=#5 id=5 data-nosnippet>5</a>/// # Returns
-<a href=#6 id=6 data-nosnippet>6</a>/// $x^{-1} \mod P$
+<a href=#6 id=6 data-nosnippet>6</a>/// $x⁻¹ \mod P$
 <a href=#7 id=7 data-nosnippet>7</a>/// # Postconditions
-<a href=#8 id=8 data-nosnippet>8</a>/// - $0 \le \text{result} &lt; P$
+<a href=#8 id=8 data-nosnippet>8</a>/// - $0 ≤ \text{result} &lt; P$
 <a href=#9 id=9 data-nosnippet>9</a></span><span class="kw">pub</span>(<span class="kw">crate</span>) <span class="kw">fn </span>mod_inv&lt;<span class="kw">const </span>P: u64&gt;(x: u64) -&gt; u64 {
 <a href=#10 id=10 data-nosnippet>10</a>    <span class="macro">debug_assert!</span>(P % <span class="number">2 </span>== <span class="number">1</span>);
 <a href=#11 id=11 data-nosnippet>11</a>    <span class="macro">debug_assert!</span>(P &lt; <span class="number">1 </span>&lt;&lt; <span class="number">31</span>);
 <a href=#12 id=12 data-nosnippet>12</a>    <span class="macro">debug_assert!</span>(x &lt; P);
 <a href=#13 id=13 data-nosnippet>13</a>    mod_inv_signed(x <span class="kw">as </span>i64, P <span class="kw">as </span>i64) <span class="kw">as </span>u64
 <a href=#14 id=14 data-nosnippet>14</a>}
-<a href=#15 id=15 data-nosnippet>15</a><span class="doccomment">/// Returns $a^{-1} \mod m$.
+<a href=#15 id=15 data-nosnippet>15</a><span class="doccomment">/// Returns $a⁻¹ \mod m$.
 <a href=#16 id=16 data-nosnippet>16</a>/// # Requirements
-<a href=#17 id=17 data-nosnippet>17</a>/// - $m \gt 0, 0 \lt a \lt m$
+<a href=#17 id=17 data-nosnippet>17</a>/// - $m &gt; 0, 0 &lt; a &lt; m$
 <a href=#18 id=18 data-nosnippet>18</a></span><span class="kw">fn </span>mod_inv_signed(a: i64, m: i64) -&gt; i64 {
 <a href=#19 id=19 data-nosnippet>19</a>    <span class="macro">debug_assert!</span>(a &gt; <span class="number">0</span>);
 <a href=#20 id=20 data-nosnippet>20</a>    <span class="macro">debug_assert!</span>(m &gt; <span class="number">0</span>);
