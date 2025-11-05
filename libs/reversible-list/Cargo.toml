@@ -4,3 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+procon-lg = { git = "https://github.com/ngtkana/procon-lg.git", version = "0.1.0" }
+
+[dev-dependencies]
+rand.workspace = true
+

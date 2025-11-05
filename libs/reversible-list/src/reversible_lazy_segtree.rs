@@ -1,4 +1,5 @@
 use super::node::{Node, NodeMarker};
+use std::marker::PhantomData;
 
 pub struct ReversibleLazySegtree<O: Op> {
     _node: Option<Node<Marker<O>>>,
@@ -18,7 +19,7 @@ pub trait Op {
     fn compose(f: &Self::Operator, g: &Self::Operator) -> Self::Operator;
 }
 struct Marker<O> {
-    __marker: O,
+    __marker: PhantomData<O>,
 }
 #[allow(dead_code)]
 struct Data<O: Op> {
