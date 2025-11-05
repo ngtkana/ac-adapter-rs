@@ -1,4 +1,5 @@
 use super::node::{Node, NodeMarker};
+use std::marker::PhantomData;
 
 pub struct ReversibleSegtree<O: Op> {
     _node: Option<Node<Marker<O>>>,
@@ -10,7 +11,7 @@ pub trait Op {
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 struct Marker<O> {
-    __marker: O,
+    __marker: PhantomData<O>,
 }
 #[allow(dead_code)]
 struct Data<O: Op> {
