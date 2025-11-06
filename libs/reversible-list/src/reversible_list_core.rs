@@ -6,7 +6,7 @@
 use crate::reversible_list_core::debug::display;
 
 use procon_lg::lg_recur;
-use std::cmp::Ordering;
+use std::{cmp::Ordering, mem};
 
 pub(crate) struct Node<C: NodeMarker + ?Sized> {
     pub(crate) left: Option<Box<Self>>,
@@ -37,6 +37,19 @@ impl<C: NodeMarker> Node<C> {
             .map_or(0, |l| l.ht)
             .max(self.right.as_ref().map_or(0, |r| r.ht));
         C::update(self);
+    }
+    fn push(&mut self) {
+        if self.rev {
+            self.rev = false;
+            mem::swap(&mut self.left, &mut self.right);
+            if let Some(l) = self.left.as_mut() {
+                l.rev ^= true;
+            }
+            if let Some(r) = self.right.as_mut() {
+                r.rev ^= true;
+            }
+        }
+        C::push(self);
     }
 }
 
@@ -93,8 +106,9 @@ pub(crate) fn split2<C: NodeMarker>(
 #[lg_recur]
 pub(crate) fn split3_by_index<C: NodeMarker>(
     mut x: Box<Node<C>>,
-    index: usize,
+    #[show] index: usize,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
+    x.push();
     let llen = x.left.as_ref().map_or(0, |l| l.len);
     let l = x.left.take();
     let r = x.right.take();
@@ -119,7 +133,7 @@ pub(crate) fn split3<C: NodeMarker>(
     mut x: Box<Node<C>>,
     mut cmp: impl FnMut(&Node<C>) -> Ordering,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
-    C::push(&mut x);
+    x.push();
     match cmp(&*x) {
         Ordering::Less => {
             let (ll, lc, lr) = split3(x.left.take().unwrap(), cmp);
@@ -149,7 +163,7 @@ pub(crate) fn merge3<C: NodeMarker>(
     match ht(l.as_deref()).cmp(&ht(r.as_deref())) {
         Ordering::Less => {
             let mut r = r.unwrap();
-            C::push(&mut r);
+            r.push();
             r.left = Some(merge3(l, c, r.left));
             balance(r)
         }
@@ -161,7 +175,7 @@ pub(crate) fn merge3<C: NodeMarker>(
         }
         Ordering::Greater => {
             let mut l = l.unwrap();
-            C::push(&mut l);
+            l.push();
             l.right = Some(merge3(l.right, c, r));
             balance(l)
         }
@@ -174,7 +188,7 @@ fn balance<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
         -2 => {
             x.right = x.right.map(|mut r| {
                 if ht(r.left.as_deref()) > ht(r.right.as_deref()) {
-                    C::push(&mut r);
+                    r.push();
                     r = rotate_right(r);
                 }
                 r
@@ -185,7 +199,7 @@ fn balance<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
         2 => {
             x.left = x.left.map(|mut l| {
                 if ht(l.left.as_deref()) < ht(l.right.as_deref()) {
-                    C::push(&mut l);
+                    l.push();
                     l = rotate_left(l);
                 }
                 l
@@ -201,27 +215,25 @@ fn ht<C: NodeMarker>(x: Option<&Node<C>>) -> u8 {
     x.as_ref().map_or(0, |x| x.ht)
 }
 
-#[lg_recur]
 fn rotate_left<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
-    C::push(&mut *x);
+    x.push();
     let mut y = x.right.take().unwrap();
-    C::push(&mut y);
+    y.push();
     x.right = y.left.take();
-    (*x).update();
+    x.update();
     y.left = Some(x);
-    (*y).update();
+    y.update();
     y
 }
 
-#[lg_recur]
 fn rotate_right<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
-    C::push(&mut *x);
+    x.push();
     let mut y = x.left.take().unwrap();
-    C::push(&mut y);
+    y.push();
     x.left = y.right.take();
-    (*x).update();
+    x.update();
     y.right = Some(x);
-    (*y).update();
+    y.update();
     y
 }
 
@@ -242,11 +254,12 @@ pub(crate) mod debug {
             }
             writeln!(
                 s,
-                "{space1}●{space2} len={len} ht={ht} {data:?}",
+                "{space1}●{space2} len={len} ht={ht}{rev} {data:?}",
                 space1 = " ".repeat(d as usize),
                 space2 = " ".repeat(4_usize.saturating_sub(d as usize)),
                 len = x.len,
                 ht = x.ht,
+                rev = if x.rev { "[rev] " } else { "" },
                 data = x.data,
             )
             .unwrap();
@@ -287,21 +300,22 @@ pub(crate) mod debug {
     where
         C::Data: Clone,
     {
-        fn collect_recur<C: NodeMarker>(x: &Node<C>, out: &mut Vec<C::Data>)
+        fn collect_recur<C: NodeMarker>(x: &Node<C>, out: &mut Vec<C::Data>, mut rev: bool)
         where
             C::Data: Clone,
         {
-            if let Some(l) = x.left.as_ref() {
-                collect_recur(l, out);
+            rev ^= x.rev;
+            if let Some(y) = if rev { x.right.as_ref() } else { x.left.as_ref() } {
+                collect_recur(y, out, rev);
             }
             out.push(x.data.clone());
-            if let Some(r) = x.right.as_ref() {
-                collect_recur(r, out);
+            if let Some(y) = if rev { x.left.as_ref() } else { x.right.as_ref() } {
+                collect_recur(y, out, rev);
             }
         }
         let Some(x) = x else { return vec![] };
         let mut out = Vec::new();
-        collect_recur(x, &mut out);
+        collect_recur(x, &mut out, false);
         out
     }
 }
