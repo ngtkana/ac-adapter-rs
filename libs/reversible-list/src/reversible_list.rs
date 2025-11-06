@@ -1,6 +1,5 @@
 use super::reversible_list_core::{Node, NodeMarker};
 use crate::reversible_list_core::{merge2, merge3, split2_by_index, split3_by_index};
-use procon_lg::lg_recur;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
@@ -30,21 +29,27 @@ impl<T: Debug> ReversibleList<T> {
     pub fn len(&self) -> usize {
         self.root.as_ref().map_or(0, |x| x.len)
     }
-    #[lg_recur]
     pub fn insert(&mut self, index: usize, value: T) {
         assert!(index <= self.len());
         let c = Box::new(Node::new(value));
         let (l, r) = split2_by_index(self.root.take(), index);
         self.root = Some(merge3(l, c, r));
     }
-    #[lg_recur]
     pub fn remove(&mut self, index: usize) -> T {
         assert!(index < self.len());
         let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
         self.root = merge2(l, r);
         c.data
     }
-    #[lg_recur]
+    pub fn split(&mut self, index: usize) -> (Self, Self) {
+        assert!(index <= self.len());
+        let (l, r) = split2_by_index(self.root.take(), index);
+        (Self { root: l }, Self { root: r })
+    }
+    pub fn merge(lhs: Self, rhs: Self) -> Self {
+        let root = merge2(lhs.root, rhs.root);
+        Self { root }
+    }
     pub fn reverse(&mut self, start: usize, end: usize) {
         assert!(start <= end && end <= self.len());
         let (lc, r) = split2_by_index(self.root.take(), end);
