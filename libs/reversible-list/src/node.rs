@@ -91,7 +91,7 @@ pub(crate) fn split2<C: NodeMarker>(
 }
 
 #[lg_recur]
-fn split3_by_index<C: NodeMarker>(
+pub(crate) fn split3_by_index<C: NodeMarker>(
     mut x: Box<Node<C>>,
     index: usize,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {

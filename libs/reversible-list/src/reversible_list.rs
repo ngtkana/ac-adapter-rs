@@ -1,5 +1,5 @@
 use super::node::{Node, NodeMarker};
-use crate::node::{merge3, split2_by_index};
+use crate::node::{merge2, merge3, split2_by_index, split3_by_index};
 use procon_lg::lg_recur;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -24,11 +24,25 @@ impl<T: Debug> ReversibleList<T> {
     pub fn new() -> Self {
         Self { root: None }
     }
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
+    pub fn len(&self) -> usize {
+        self.root.as_ref().map_or(0, |x| x.len)
+    }
     #[lg_recur]
     pub fn insert(&mut self, index: usize, value: T) {
+        assert!(index <= self.len());
         let c = Box::new(Node::new(value));
         let (l, r) = split2_by_index(self.root.take(), index);
         self.root = Some(merge3(l, c, r));
+    }
+    #[lg_recur]
+    pub fn remove(&mut self, index: usize) -> T {
+        assert!(index < self.len());
+        let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
+        self.root = merge2(l, r);
+        c.data
     }
 }
 
@@ -50,26 +64,47 @@ mod tests {
     use rand::Rng;
     use rand::{SeedableRng, rngs::StdRng};
 
+    #[derive(Debug)]
+    enum Query {
+        Insert { index: usize, value: i32 },
+        Remove { index: usize },
+    }
+
     #[test]
     fn test() {
         let mut rng = StdRng::seed_from_u64(42);
         for tid in 1..=200 {
-            let q = 20;
+            let q = 50;
             let value_lim = 10;
-            let mut n = 0;
+            let len_max = rng.gen_range(5..=50);
+            let mut n = 0usize;
             let mut rlist = ReversibleList::new();
             let mut vec = vec![];
             #[allow(clippy::explicit_counter_loop)]
             for qid in 1..=q {
-                {
+                let query = if rng.gen_ratio(n as u32, len_max) {
+                    let index = rng.gen_range(0..n);
+                    Query::Remove { index }
+                } else {
                     let index = rng.gen_range(0..=n);
                     let value = rng.gen_range(0..value_lim);
-                    eprintln!("Query #{tid}.{qid}: Insert({index}, {value})");
-                    rlist.insert(index, value);
-                    vec.insert(index, value);
-                    eprintln!("{}", display(rlist.root.as_deref()));
-                    n += 1;
+                    Query::Insert { index, value }
+                };
+                eprintln!("Query #{tid}.{qid}: {query:?}");
+                match query {
+                    Query::Insert { index, value } => {
+                        rlist.insert(index, value);
+                        vec.insert(index, value);
+                        n += 1;
+                    }
+                    Query::Remove { index } => {
+                        let result = rlist.remove(index);
+                        let expected = vec.remove(index);
+                        assert_eq!(result, expected);
+                        n -= 1;
+                    }
                 }
+                eprintln!("{}", display(rlist.root.as_deref()));
                 let result = collect(rlist.root.as_deref());
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
