@@ -3,7 +3,7 @@
 #![allow(dead_code)]
 
 #[allow(unused_imports)]
-use crate::node::debug::display;
+use crate::reversible_list_core::debug::display;
 
 use procon_lg::lg_recur;
 use std::cmp::Ordering;

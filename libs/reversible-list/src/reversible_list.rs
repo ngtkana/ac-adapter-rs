@@ -1,11 +1,11 @@
-use super::node::{Node, NodeMarker};
-use crate::node::{merge2, merge3, split2_by_index, split3_by_index};
+use super::reversible_list_core::{Node, NodeMarker};
+use crate::reversible_list_core::{merge2, merge3, split2_by_index, split3_by_index};
 use procon_lg::lg_recur;
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 #[allow(unused_imports)]
-use crate::node::debug::display;
+use crate::reversible_list_core::debug::display;
 
 pub struct ReversibleList<T: Debug> {
     // TODO: remove

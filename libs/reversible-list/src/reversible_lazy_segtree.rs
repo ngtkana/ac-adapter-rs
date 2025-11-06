@@ -1,4 +1,4 @@
-use super::node::{Node, NodeMarker};
+use super::reversible_list_core::{Node, NodeMarker};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
