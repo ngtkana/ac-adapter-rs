@@ -1,12 +1,12 @@
 use super::node::{Node, NodeMarker};
-use std::marker::PhantomData;
+use std::{fmt::Debug, marker::PhantomData};
 
 pub struct ReversibleSegtree<O: Op> {
     _node: Option<Node<Marker<O>>>,
 }
 
 pub trait Op {
-    type Value: Clone;
+    type Value: Clone + Debug; // TODO: remove
 
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
@@ -17,6 +17,14 @@ struct Marker<O> {
 struct Data<O: Op> {
     value: O::Value,
     sum: O::Value,
+}
+impl<O: Op> Debug for Data<O> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Data")
+            .field("value", &self.value)
+            .field("sum", &self.sum)
+            .finish()
+    }
 }
 impl<O: Op> NodeMarker for Marker<O> {
     type Data = Data<O>;

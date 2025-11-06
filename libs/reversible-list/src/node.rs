@@ -2,6 +2,10 @@
 #![allow(clippy::type_complexity)]
 #![allow(dead_code)]
 
+#[allow(unused_imports)]
+use crate::node::debug::display;
+
+use procon_lg::lg_recur;
 use std::cmp::Ordering;
 
 pub(crate) struct Node<C: NodeMarker + ?Sized> {
@@ -24,30 +28,45 @@ impl<C: NodeMarker> Node<C> {
             data,
         }
     }
+    fn update(&mut self) {
+        self.len =
+            self.left.as_ref().map_or(0, |l| l.len) + 1 + self.right.as_ref().map_or(0, |r| r.len);
+        self.ht = 1 + self
+            .left
+            .as_ref()
+            .map_or(0, |l| l.ht)
+            .max(self.right.as_ref().map_or(0, |r| r.ht));
+        C::update(self);
+    }
 }
 
 pub(crate) trait NodeMarker {
-    type Data;
+    type Data: std::fmt::Debug; // remove
 
     fn update(node: &mut Node<Self>);
 
     fn push(node: &mut Node<Self>);
 }
 
+pub(crate) fn merge2<C: NodeMarker>(
+    l: Option<Box<Node<C>>>,
+    mut r: Option<Box<Node<C>>>,
+) -> Option<Box<Node<C>>> {
+    let Some(r) = r.take() else { return l };
+    let (_, c, r) = split3(r, |node| {
+        if node.left.is_some() { Ordering::Less } else { Ordering::Equal }
+    });
+    Some(merge3(l, c, r))
+}
+
 pub(crate) fn split2_by_index<C: NodeMarker>(
     x: Option<Box<Node<C>>>,
-    mut index: usize,
+    index: usize,
 ) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
     assert!(index <= x.as_ref().map_or(0, |x| x.len));
-    split2(x, |node| {
-        let llen = node.left.as_ref().map_or(0, |l| l.len);
-        if llen < index {
-            index -= llen + 1;
-            false
-        } else {
-            true
-        }
-    })
+    let Some(indexm1) = index.checked_sub(1) else { return (None, x) };
+    let (l, c, r) = split3_by_index(x.unwrap(), indexm1);
+    (merge2(l, Some(c)), r)
 }
 
 pub(crate) fn split2<C: NodeMarker>(
@@ -64,45 +83,64 @@ pub(crate) fn split2<C: NodeMarker>(
             Ordering::Greater
         }
     });
-    if pred(&*c) {
+    if pred(c.as_ref()) {
         (Some(merge3(l, c, None)), r)
     } else {
         (l, Some(merge3(None, c, r)))
     }
 }
 
-pub(crate) fn merge2<C: NodeMarker>(
-    l: Option<Box<Node<C>>>,
-    mut r: Option<Box<Node<C>>>,
-) -> Option<Box<Node<C>>> {
-    let Some(r) = r.take() else { return l };
-    let (_, c, r) = split3(r, |_| Ordering::Less);
-    Some(merge3(l, c, r))
-}
-
-pub(crate) fn split3<C: NodeMarker>(
+#[lg_recur]
+fn split3_by_index<C: NodeMarker>(
     mut x: Box<Node<C>>,
-    mut cmp: impl FnMut(&Node<C>) -> Ordering,
+    index: usize,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
-    C::push(&mut x);
+    let llen = x.left.as_ref().map_or(0, |l| l.len);
     let l = x.left.take();
     let r = x.right.take();
-    match cmp(&*x) {
+    match index.cmp(&llen) {
         Ordering::Less => {
-            let (ll, lc, lr) = split3(l.unwrap(), cmp);
+            let (ll, lc, lr) = split3_by_index(l.unwrap(), index);
             (ll, lc, Some(merge3(lr, x, r)))
         }
         Ordering::Equal => {
-            C::update(&mut x);
+            x.update();
             (l, x, r)
         }
         Ordering::Greater => {
-            let (rl, rc, rr) = split3(r.unwrap(), cmp);
+            let (rl, rc, rr) = split3_by_index(r.unwrap(), index - 1 - llen);
             (Some(merge3(l, x, rl)), rc, rr)
         }
     }
 }
 
+#[lg_recur]
+pub(crate) fn split3<C: NodeMarker>(
+    mut x: Box<Node<C>>,
+    mut cmp: impl FnMut(&Node<C>) -> Ordering,
+) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
+    C::push(&mut x);
+    match cmp(&*x) {
+        Ordering::Less => {
+            let (ll, lc, lr) = split3(x.left.take().unwrap(), cmp);
+            let r = x.right.take();
+            (ll, lc, Some(merge3(lr, x, r)))
+        }
+        Ordering::Equal => {
+            let l = x.left.take();
+            let r = x.right.take();
+            x.update();
+            (l, x, r)
+        }
+        Ordering::Greater => {
+            let (rl, rc, rr) = split3(x.right.take().unwrap(), cmp);
+            let l = x.left.take();
+            (Some(merge3(l, x, rl)), rc, rr)
+        }
+    }
+}
+
+#[lg_recur]
 pub(crate) fn merge3<C: NodeMarker>(
     l: Option<Box<Node<C>>>,
     mut c: Box<Node<C>>,
@@ -118,7 +156,7 @@ pub(crate) fn merge3<C: NodeMarker>(
         Ordering::Equal => {
             c.left = l;
             c.right = r;
-            C::update(&mut c);
+            c.update();
             c
         }
         Ordering::Greater => {
@@ -130,6 +168,7 @@ pub(crate) fn merge3<C: NodeMarker>(
     }
 }
 
+#[lg_recur]
 fn balance<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     match ht(x.left.as_deref()) as i8 - ht(x.right.as_deref()) as i8 {
         -2 => {
@@ -142,16 +181,16 @@ fn balance<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
             });
             x = rotate_left(x);
         }
-        -1..=1 => C::update(&mut x),
+        -1..=1 => x.update(),
         2 => {
             x.left = x.left.map(|mut l| {
                 if ht(l.left.as_deref()) < ht(l.right.as_deref()) {
                     C::push(&mut l);
-                    l = rotate_right(l);
+                    l = rotate_left(l);
                 }
                 l
             });
-            x = rotate_left(x);
+            x = rotate_right(x);
         }
         _ => unreachable!(),
     }
@@ -162,31 +201,32 @@ fn ht<C: NodeMarker>(x: Option<&Node<C>>) -> u8 {
     x.as_ref().map_or(0, |x| x.ht)
 }
 
+#[lg_recur]
 fn rotate_left<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     C::push(&mut *x);
     let mut y = x.right.take().unwrap();
     C::push(&mut y);
     x.right = y.left.take();
-    C::update(&mut *x);
+    (*x).update();
     y.left = Some(x);
-    C::update(&mut *y);
+    (*y).update();
     y
 }
 
+#[lg_recur]
 fn rotate_right<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     C::push(&mut *x);
     let mut y = x.left.take().unwrap();
     C::push(&mut y);
     x.left = y.right.take();
-    C::update(&mut *x);
+    (*x).update();
     y.right = Some(x);
-    C::update(&mut *y);
+    (*y).update();
     y
 }
 
-#[cfg(test)]
-pub(crate) mod tests {
-    use super::*;
+pub(crate) mod debug {
+    use super::{Node, NodeMarker};
 
     pub(crate) fn display<C: NodeMarker>(x: Option<&Node<C>>) -> String
     where
@@ -218,5 +258,50 @@ pub(crate) mod tests {
         let mut s = String::new();
         display_recur(x, &mut s, 1);
         s
+    }
+
+    pub(crate) fn validate<C: NodeMarker>(x: Option<&Node<C>>)
+    where
+        C::Data: std::fmt::Debug,
+    {
+        fn validate_recur<C: NodeMarker>(x: &Node<C>)
+        where
+            C::Data: std::fmt::Debug,
+        {
+            let lh = x.left.as_ref().map_or(0, |l| l.ht);
+            let rh = x.right.as_ref().map_or(0, |r| r.ht);
+            assert!(matches!(lh as i8 - rh as i8, -1..=1));
+            assert_eq!(lh.max(rh) + 1, x.ht);
+            if let Some(l) = x.left.as_ref() {
+                validate_recur(l);
+            }
+            if let Some(r) = x.right.as_ref() {
+                validate_recur(r);
+            }
+        }
+        let Some(x) = x else { return };
+        validate_recur(x);
+    }
+
+    pub(crate) fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Data>
+    where
+        C::Data: Clone,
+    {
+        fn collect_recur<C: NodeMarker>(x: &Node<C>, out: &mut Vec<C::Data>)
+        where
+            C::Data: Clone,
+        {
+            if let Some(l) = x.left.as_ref() {
+                collect_recur(l, out);
+            }
+            out.push(x.data.clone());
+            if let Some(r) = x.right.as_ref() {
+                collect_recur(r, out);
+            }
+        }
+        let Some(x) = x else { return vec![] };
+        let mut out = Vec::new();
+        collect_recur(x, &mut out);
+        out
     }
 }

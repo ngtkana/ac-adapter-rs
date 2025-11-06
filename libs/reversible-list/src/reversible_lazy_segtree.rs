@@ -1,4 +1,5 @@
 use super::node::{Node, NodeMarker};
+use std::fmt::Debug;
 use std::marker::PhantomData;
 
 pub struct ReversibleLazySegtree<O: Op> {
@@ -6,9 +7,9 @@ pub struct ReversibleLazySegtree<O: Op> {
 }
 
 pub trait Op {
-    type Value: Clone;
+    type Value: Clone + Debug; // TODO: remove
 
-    type Operator: PartialEq + Eq;
+    type Operator: PartialEq + Eq + Debug; // TODO: remove
 
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 
@@ -26,6 +27,15 @@ struct Data<O: Op> {
     value: O::Value,
     sum: O::Value,
     op: O::Operator,
+}
+impl<O: Op> Debug for Data<O> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Data")
+            .field("value", &self.value)
+            .field("sum", &self.sum)
+            .field("op", &self.op)
+            .finish()
+    }
 }
 impl<O: Op> NodeMarker for Marker<O> {
     type Data = Data<O>;
