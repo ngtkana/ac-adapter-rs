@@ -89,6 +89,7 @@ pub(crate) struct Node<C: NodeMarker + ?Sized> {
     pub(crate) len: usize,
     pub(crate) rev: bool,
     pub(crate) data: C::Data,
+    pub(crate) op: C::Operator,
 }
 
 impl<C: NodeMarker> Node<C> {
@@ -100,6 +101,7 @@ impl<C: NodeMarker> Node<C> {
             len: 1,
             rev: false,
             data,
+            op: C::nop(),
         }
     }
     fn update(&mut self) {
@@ -123,7 +125,17 @@ impl<C: NodeMarker> Node<C> {
                 r.rev ^= true;
             }
         }
-        C::push(self);
+        if self.op != C::nop() {
+            let op = std::mem::replace(&mut self.op, C::nop());
+            if let Some(l) = self.left.as_deref_mut() {
+                C::op(&op, &mut l.data);
+                C::compose(&op, &mut l.op);
+            }
+            if let Some(r) = self.right.as_deref_mut() {
+                C::op(&op, &mut r.data);
+                C::compose(&op, &mut r.op);
+            }
+        }
     }
 }
 
@@ -131,9 +143,15 @@ impl<C: NodeMarker> Node<C> {
 pub(crate) trait NodeMarker {
     type Data;
 
+    type Operator: PartialEq;
+
     fn update(node: &mut Node<Self>);
 
-    fn push(node: &mut Node<Self>);
+    fn nop() -> Self::Operator;
+
+    fn op(f: &Self::Operator, x: &mut Self::Data);
+
+    fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
 
 pub(crate) fn merge2<C: NodeMarker>(
@@ -374,23 +392,33 @@ pub(crate) mod debug {
     pub(crate) fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Data>
     where
         C::Data: Clone,
+        C::Operator: Clone,
     {
-        fn collect_recur<C: NodeMarker>(x: &Node<C>, out: &mut Vec<C::Data>, mut rev: bool)
-        where
+        fn collect_recur<C: NodeMarker>(
+            x: &Node<C>,
+            out: &mut Vec<C::Data>,
+            mut rev: bool,
+            op: C::Operator,
+        ) where
             C::Data: Clone,
+            C::Operator: Clone,
         {
+            let mut value = x.data.clone();
+            C::op(&op, &mut value);
+            let mut next_op = x.op.clone();
             rev ^= x.rev;
+            C::compose(&op, &mut next_op);
             if let Some(y) = if rev { x.right.as_ref() } else { x.left.as_ref() } {
-                collect_recur(y, out, rev);
+                collect_recur(y, out, rev, next_op.clone());
             }
-            out.push(x.data.clone());
+            out.push(value);
             if let Some(y) = if rev { x.left.as_ref() } else { x.right.as_ref() } {
-                collect_recur(y, out, rev);
+                collect_recur(y, out, rev, next_op);
             }
         }
         let Some(x) = x else { return vec![] };
         let mut out = Vec::new();
-        collect_recur(x, &mut out, false);
+        collect_recur(x, &mut out, false, C::nop());
         out
     }
 }
