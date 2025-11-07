@@ -52,8 +52,8 @@ impl<O: Op> AvlLazySegtree<O> {
 
     pub fn apply(&mut self, start: usize, end: usize, op: &O::Operator) {
         self.core.touch(start, end, |c| {
-            O::op(op, &mut c.data.value);
-            O::op(op, &mut c.data.prod);
+            O::op(op, &mut c.data.value, 1);
+            O::op(op, &mut c.data.prod, c.len);
             O::compose(op, &mut c.op);
         });
     }
@@ -78,7 +78,7 @@ pub trait Op {
 
     fn nop() -> Self::Operator;
 
-    fn op(f: &Self::Operator, x: &mut Self::Value);
+    fn op(f: &Self::Operator, x: &mut Self::Value, len: usize);
 
     fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
@@ -144,9 +144,9 @@ impl<O: Op> NodeMarker for Marker<O> {
         O::nop()
     }
 
-    fn op(f: &Self::Operator, x: &mut Self::Data) {
-        O::op(f, &mut x.value);
-        O::op(f, &mut x.prod);
+    fn op(f: &Self::Operator, x: &mut Self::Data, len: usize) {
+        O::op(f, &mut x.value, 1);
+        O::op(f, &mut x.prod, len);
     }
 
     fn compose(f: &Self::Operator, g: &mut Self::Operator) {
@@ -170,7 +170,7 @@ mod tests {
     enum Query {
         Insert {
             index: usize,
-            value: (Fp, usize),
+            value: Fp,
         },
         Remove {
             index: usize,
@@ -193,23 +193,23 @@ mod tests {
     enum O {}
 
     impl Op for O {
-        type Value = (Fp, usize);
+        type Value = Fp;
         type Operator = [Fp; 2];
 
         fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
-            (lhs.0 + rhs.0, lhs.1 + rhs.1)
+            lhs + rhs
         }
 
         fn identity() -> Self::Value {
-            (fp!(0), 0)
+            fp!(0)
         }
 
         fn nop() -> Self::Operator {
             [fp!(1), fp!(0)]
         }
 
-        fn op(f: &Self::Operator, x: &mut Self::Value) {
-            *x = (f[0] * x.0 + f[1] * fp!(x.1), x.1);
+        fn op(f: &Self::Operator, x: &mut Self::Value, len: usize) {
+            *x = f[0] * *x + f[1] * fp!(len);
         }
 
         fn compose(f: &Self::Operator, g: &mut Self::Operator) {
@@ -263,7 +263,7 @@ mod tests {
                             Query::Remove { index }
                         } else {
                             let index = rng.gen_range(0..=n);
-                            let value = (Fp::new(rng.gen_range(0..value_lim)), 1);
+                            let value = Fp::new(rng.gen_range(0..value_lim));
                             Query::Insert { index, value }
                         }
                     }
@@ -296,7 +296,7 @@ mod tests {
                     Query::Apply { start, end, op } => {
                         seg.apply(start, end, &op);
                         for x in &mut vec[start..end] {
-                            O::op(&op, x);
+                            O::op(&op, x, 1);
                         }
                     }
                 }

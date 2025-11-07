@@ -64,7 +64,7 @@ impl<T> NodeMarker for Marker<T> {
 
     fn nop() {}
 
-    fn op(&(): &(), _: &mut T) {}
+    fn op(&(): &(), _: &mut T, _len: usize) {}
 
     fn compose(&(): &(), &mut (): &mut ()) {}
 }
