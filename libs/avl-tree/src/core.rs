@@ -82,13 +82,32 @@ impl<C: NodeMarker> AvlTree<C> {
     }
 }
 
-impl<C: NodeMarker> FromIterator<C::Value> for AvlTree<C> {
+impl<C: NodeMarker> FromIterator<C::Value> for AvlTree<C>
+// TODO: I don't want to require clone here
+where
+    C::Value: Clone,
+{
     fn from_iter<T: IntoIterator<Item = C::Value>>(iter: T) -> Self {
-        let mut result = Self::new();
-        for x in iter {
-            result.insert(result.len(), x);
+        fn from_slice<C: NodeMarker>(slice: &[C::Value]) -> Option<Box<Node<C>>>
+        where
+            C::Value: Clone,
+        {
+            if slice.is_empty() {
+                return None;
+            }
+            let i = slice.len() / 2;
+            let left = from_slice(&slice[..i]);
+            let right = from_slice(&slice[i + 1..]);
+            let mut x = Box::new(Node::new(slice[i].clone()));
+            x.left = left;
+            x.right = right;
+            x.update();
+            Some(x)
         }
-        result
+        let slice: Vec<_> = iter.into_iter().collect();
+        AvlTree {
+            root: from_slice(&slice),
+        }
     }
 }
 
