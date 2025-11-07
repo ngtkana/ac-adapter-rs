@@ -164,7 +164,7 @@ mod tests {
         for tid in 1..=200 {
             let q = 50;
             let value_lim = 3;
-            let len_max = 3;
+            let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
             let mut seg = AvlSegtree::<O>::new();
             let mut vec = vec![];
