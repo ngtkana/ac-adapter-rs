@@ -1,8 +1,8 @@
-use super::reversible_list_core::{Node, NodeMarker};
+use super::core::{Node, NodeMarker};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
-pub struct ReversibleLazySegtree<O: Op> {
+pub struct AvlLazySegtree<O: Op> {
     _node: Option<Node<Marker<O>>>,
 }
 

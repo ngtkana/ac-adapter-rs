@@ -1,24 +1,24 @@
-use super::reversible_list_core::{Node, NodeMarker};
-use crate::reversible_list_core::{merge2, merge3, split2_by_index, split3_by_index};
+use super::core::{Node, NodeMarker};
+use crate::core::{merge2, merge3, split2_by_index, split3_by_index};
 use std::fmt::Debug;
 use std::marker::PhantomData;
 
 #[allow(unused_imports)]
-use crate::reversible_list_core::debug::display;
+use crate::core::debug::display;
 
-pub struct ReversibleList<T: Debug> {
+pub struct AvlList<T: Debug> {
     // TODO: remove
     root: Option<Box<Node<Marker<T>>>>,
 }
 
-impl<T: Debug> Default for ReversibleList<T> {
+impl<T: Debug> Default for AvlList<T> {
     // TODO: remove
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: Debug> ReversibleList<T> {
+impl<T: Debug> AvlList<T> {
     // TODO: remove
     pub fn new() -> Self {
         Self { root: None }
@@ -76,7 +76,7 @@ impl<T: std::fmt::Debug> NodeMarker for Marker<T> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::reversible_list_core::debug::{collect, display, validate};
+    use crate::core::debug::{collect, display, validate};
     use rand::Rng;
     use rand::{SeedableRng, rngs::StdRng};
 
@@ -95,7 +95,7 @@ mod tests {
             let value_lim = 10;
             let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
-            let mut rlist = ReversibleList::new();
+            let mut rlist = AvlList::new();
             let mut vec = vec![];
             for qid in 1..=q {
                 let query = match rng.gen_range(0..3) {

@@ -2,9 +2,6 @@
 #![allow(clippy::type_complexity)]
 #![allow(dead_code)]
 
-#[allow(unused_imports)]
-use crate::reversible_list_core::debug::display;
-
 use procon_lg::lg_recur;
 use std::{cmp::Ordering, mem};
 
