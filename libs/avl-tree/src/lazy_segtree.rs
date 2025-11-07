@@ -52,9 +52,9 @@ impl<O: Op> AvlLazySegtree<O> {
 
     pub fn apply(&mut self, start: usize, end: usize, op: &O::Operator) {
         self.core.touch(start, end, |c| {
-            c.data.value = O::op(op, &c.data.value);
-            c.data.prod = O::op(op, &c.data.prod);
-            c.data.op = O::compose(op, &c.data.op);
+            O::op(op, &mut c.data.value);
+            O::op(op, &mut c.data.prod);
+            O::compose(op, &mut c.op);
         });
     }
 }
@@ -78,9 +78,9 @@ pub trait Op {
 
     fn nop() -> Self::Operator;
 
-    fn op(f: &Self::Operator, x: &Self::Value) -> Self::Value;
+    fn op(f: &Self::Operator, x: &mut Self::Value);
 
-    fn compose(f: &Self::Operator, g: &Self::Operator) -> Self::Operator;
+    fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
 
 struct Marker<O> {
@@ -90,7 +90,6 @@ struct Marker<O> {
 struct Data<O: Op> {
     value: O::Value,
     prod: O::Value,
-    op: O::Operator,
 }
 
 impl<O: Op> Data<O> {
@@ -101,7 +100,6 @@ impl<O: Op> Data<O> {
         Self {
             prod: value.clone(),
             value,
-            op: O::nop(),
         }
     }
 }
@@ -111,7 +109,6 @@ impl<O: Op> Debug for Data<O> {
         f.debug_struct("Data")
             .field("value", &self.value)
             .field("sum", &self.prod)
-            .field("op", &self.op)
             .finish()
     }
 }
@@ -124,13 +121,13 @@ where
         Self {
             value: self.value.clone(),
             prod: self.prod.clone(),
-            op: self.op.clone(),
         }
     }
 }
 
 impl<O: Op> NodeMarker for Marker<O> {
     type Data = Data<O>;
+    type Operator = O::Operator;
 
     fn update(node: &mut Node<Self>) {
         let mut sum = node.data.value.clone();
@@ -143,27 +140,24 @@ impl<O: Op> NodeMarker for Marker<O> {
         node.data.prod = sum;
     }
 
-    fn push(node: &mut Node<Self>) {
-        if node.data.op != O::nop() {
-            let op = std::mem::replace(&mut node.data.op, O::nop());
-            if let Some(l) = node.left.as_deref_mut() {
-                l.data.prod = O::op(&op, &l.data.prod);
-                l.data.value = O::op(&op, &l.data.value);
-                l.data.op = O::compose(&op, &l.data.op);
-            }
-            if let Some(r) = node.right.as_deref_mut() {
-                r.data.prod = O::op(&op, &r.data.prod);
-                r.data.value = O::op(&op, &r.data.value);
-                r.data.op = O::compose(&op, &r.data.op);
-            }
-        }
+    fn nop() -> Self::Operator {
+        O::nop()
+    }
+
+    fn op(f: &Self::Operator, x: &mut Self::Data) {
+        O::op(f, &mut x.value);
+        O::op(f, &mut x.prod);
+    }
+
+    fn compose(f: &Self::Operator, g: &mut Self::Operator) {
+        O::compose(f, g);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::core::debug::{display, validate};
+    use crate::core::debug::{collect, display, validate};
     use fp::fp;
     use rand::Rng;
     use rand::{SeedableRng, rngs::StdRng};
@@ -214,12 +208,12 @@ mod tests {
             [fp!(1), fp!(0)]
         }
 
-        fn op(f: &Self::Operator, x: &Self::Value) -> Self::Value {
-            (f[0] * x.0 + f[1] * fp!(x.1), x.1)
+        fn op(f: &Self::Operator, x: &mut Self::Value) {
+            *x = (f[0] * x.0 + f[1] * fp!(x.1), x.1);
         }
 
-        fn compose(f: &Self::Operator, g: &Self::Operator) -> Self::Operator {
-            [f[0] * g[0], f[0] * g[1] + f[1]]
+        fn compose(f: &Self::Operator, g: &mut Self::Operator) {
+            *g = [f[0] * g[0], f[0] * g[1] + f[1]];
         }
     }
 
@@ -302,19 +296,18 @@ mod tests {
                     Query::Apply { start, end, op } => {
                         seg.apply(start, end, &op);
                         for x in &mut vec[start..end] {
-                            *x = O::op(&op, x);
+                            O::op(&op, x);
                         }
                     }
                 }
                 eprintln!("{}", display(seg.core.root.as_deref()));
-                // TODO: fix collect
-                // let result: Vec<_> = collect(seg.core.root.as_deref())
-                //     .into_iter()
-                //     .map(|data| data.value)
-                //     .collect();
-                // eprintln!("   vec: {:?}", &vec);
-                // eprintln!(" rlist: {:?}", &result);
-                // assert_eq!(&vec, &result);
+                let result: Vec<_> = collect(seg.core.root.as_deref())
+                    .into_iter()
+                    .map(|data| data.value)
+                    .collect();
+                eprintln!("   vec: {:?}", &vec);
+                eprintln!(" rlist: {:?}", &result);
+                assert_eq!(&vec, &result);
                 validate(seg.core.root.as_deref());
                 eprintln!();
             }

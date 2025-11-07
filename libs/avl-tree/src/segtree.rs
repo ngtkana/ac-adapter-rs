@@ -102,6 +102,8 @@ impl<O: Op> Clone for Data<O> {
 impl<O: Op> NodeMarker for Marker<O> {
     type Data = Data<O>;
 
+    type Operator = ();
+
     fn update(node: &mut Node<Self>) {
         let mut sum = node.data.value.clone();
         if let Some(l) = node.left.as_ref() {
@@ -113,7 +115,11 @@ impl<O: Op> NodeMarker for Marker<O> {
         node.data.prod = sum;
     }
 
-    fn push(_node: &mut Node<Self>) {}
+    fn nop() -> () {}
+
+    fn op(&(): &(), _: &mut Data<O>) {}
+
+    fn compose(&(): &(), &mut (): &mut ()) {}
 }
 
 #[cfg(test)]

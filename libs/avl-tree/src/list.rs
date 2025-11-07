@@ -58,9 +58,15 @@ struct Marker<T> {
 impl<T> NodeMarker for Marker<T> {
     type Data = T;
 
+    type Operator = ();
+
     fn update(_node: &mut Node<Self>) {}
 
-    fn push(_node: &mut Node<Self>) {}
+    fn nop() -> () {}
+
+    fn op(&(): &(), _: &mut T) {}
+
+    fn compose(&(): &(), &mut (): &mut ()) {}
 }
 
 #[cfg(test)]
