@@ -37,14 +37,14 @@ impl<C: NodeMarker> AvlTree<C> {
         self.root = merge2(l, r);
         c.data
     }
-    pub fn split(&mut self, index: usize) -> (Self, Self) {
+    pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
         let (l, r) = split2_by_index(self.root.take(), index);
-        (Self { root: l }, Self { root: r })
+        self.root = l;
+        Self { root: r }
     }
-    pub fn merge(lhs: Self, rhs: Self) -> Self {
-        let root = merge2(lhs.root, rhs.root);
-        Self { root }
+    pub fn append(&mut self, rhs: Self) {
+        self.root = merge2(self.root.take(), rhs.root);
     }
     pub fn reverse(&mut self, start: usize, end: usize) {
         assert!(start <= end && end <= self.len());
@@ -68,6 +68,16 @@ impl<C: NodeMarker> AvlTree<C> {
         let result = c.as_deref_mut().map(f);
         let lc = merge2(l, c);
         self.root = merge2(lc, r);
+        result
+    }
+}
+
+impl<C: NodeMarker> FromIterator<C::Data> for AvlTree<C> {
+    fn from_iter<T: IntoIterator<Item = C::Data>>(iter: T) -> Self {
+        let mut result = Self::new();
+        for x in iter {
+            result.insert(result.len(), x);
+        }
         result
     }
 }

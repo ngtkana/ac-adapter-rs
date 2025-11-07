@@ -2,7 +2,7 @@ use super::core::{AvlTree, Node, NodeMarker};
 use std::{fmt::Debug, marker::PhantomData};
 
 pub struct AvlSegtree<O: Op> {
-    tree: AvlTree<Marker<O>>,
+    core: AvlTree<Marker<O>>,
 }
 
 impl<O: Op> Default for AvlSegtree<O> {
@@ -14,37 +14,43 @@ impl<O: Op> Default for AvlSegtree<O> {
 impl<O: Op> AvlSegtree<O> {
     pub fn new() -> Self {
         Self {
-            tree: AvlTree::new(),
+            core: AvlTree::new(),
         }
     }
     pub fn is_empty(&self) -> bool {
-        self.tree.is_empty()
+        self.core.is_empty()
     }
     pub fn len(&self) -> usize {
-        self.tree.len()
+        self.core.len()
     }
     pub fn insert(&mut self, index: usize, value: O::Value) {
-        self.tree.insert(index, Data::new(value));
+        self.core.insert(index, Data::new(value));
     }
     pub fn remove(&mut self, index: usize) -> O::Value {
-        self.tree.remove(index).value
+        self.core.remove(index).value
     }
-    pub fn split(&mut self, index: usize) -> (Self, Self) {
-        let (l, r) = self.tree.split(index);
-        (Self { tree: l }, Self { tree: r })
-    }
-    pub fn merge(lhs: Self, rhs: Self) -> Self {
+    pub fn split_off(&mut self, index: usize) -> Self {
         Self {
-            tree: AvlTree::merge(lhs.tree, rhs.tree),
+            core: self.core.split_off(index),
         }
     }
+    pub fn append(&mut self, other: Self) {
+        self.core.append(other.core);
+    }
     pub fn reverse(&mut self, start: usize, end: usize) {
-        self.tree.touch(start, end, |c| c.rev ^= true);
+        self.core.touch(start, end, |c| c.rev ^= true);
     }
     pub fn product(&mut self, start: usize, end: usize) -> O::Value {
-        self.tree
+        self.core
             .touch(start, end, |c| c.data.sum.clone())
             .unwrap_or_else(O::identity)
+    }
+}
+impl<O: Op> FromIterator<O::Value> for AvlSegtree<O> {
+    fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
+        Self {
+            core: iter.into_iter().map(Data::new).collect(),
+        }
     }
 }
 
@@ -211,15 +217,15 @@ mod tests {
                         assert_eq!(result, expected);
                     }
                 }
-                eprintln!("{}", display(seg.tree.root.as_deref()));
-                let result: Vec<_> = collect(seg.tree.root.as_deref())
+                eprintln!("{}", display(seg.core.root.as_deref()));
+                let result: Vec<_> = collect(seg.core.root.as_deref())
                     .into_iter()
                     .map(|data| data.value)
                     .collect();
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
                 assert_eq!(&vec, &result);
-                validate(seg.tree.root.as_deref());
+                validate(seg.core.root.as_deref());
                 eprintln!();
             }
         }
