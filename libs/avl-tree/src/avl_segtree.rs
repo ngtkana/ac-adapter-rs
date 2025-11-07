@@ -1,70 +1,50 @@
-use crate::core::{merge2, merge3, split2_by_index, split3_by_index};
-
-use super::core::{Node, NodeMarker};
+use super::core::{AvlTree, Node, NodeMarker};
 use std::{fmt::Debug, marker::PhantomData};
 
 pub struct AvlSegtree<O: Op> {
-    root: Option<Box<Node<Marker<O>>>>,
-}
-
-impl<O: Op> AvlSegtree<O> {
-    pub fn new() -> Self {
-        Self::default()
-    }
-    pub fn is_empty(&self) -> bool {
-        self.root.is_none()
-    }
-    pub fn len(&self) -> usize {
-        self.root.as_ref().map_or(0, |x| x.len)
-    }
-    pub fn insert(&mut self, index: usize, value: O::Value) {
-        assert!(index <= self.len());
-        let c = Box::new(Node::new(Data {
-            sum: value.clone(),
-            value,
-        }));
-        let (l, r) = split2_by_index(self.root.take(), index);
-        self.root = Some(merge3(l, c, r));
-    }
-    pub fn remove(&mut self, index: usize) -> O::Value {
-        assert!(index < self.len());
-        let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
-        self.root = merge2(l, r);
-        c.data.value
-    }
-    pub fn split(&mut self, index: usize) -> (Self, Self) {
-        assert!(index <= self.len());
-        let (l, r) = split2_by_index(self.root.take(), index);
-        (Self { root: l }, Self { root: r })
-    }
-    pub fn merge(lhs: Self, rhs: Self) -> Self {
-        let root = merge2(lhs.root, rhs.root);
-        Self { root }
-    }
-    pub fn reverse(&mut self, start: usize, end: usize) {
-        assert!(start <= end && end <= self.len());
-        let (lc, r) = split2_by_index(self.root.take(), end);
-        let (l, mut c) = split2_by_index(lc, start);
-        if let Some(c) = c.as_deref_mut() {
-            c.rev ^= true;
-        }
-        let lc = merge2(l, c);
-        self.root = merge2(lc, r);
-    }
-    pub fn product(&mut self, start: usize, end: usize) -> Option<O::Value> {
-        assert!(start <= end && end <= self.len());
-        let (lc, r) = split2_by_index(self.root.take(), end);
-        let (l, c) = split2_by_index(lc, start);
-        let ans = c.as_deref().map(|c| c.data.sum.clone());
-        let lc = merge2(l, c);
-        self.root = merge2(lc, r);
-        ans
-    }
+    tree: AvlTree<Marker<O>>,
 }
 
 impl<O: Op> Default for AvlSegtree<O> {
     fn default() -> Self {
-        Self { root: None }
+        Self::new()
+    }
+}
+
+impl<O: Op> AvlSegtree<O> {
+    pub fn new() -> Self {
+        Self {
+            tree: AvlTree::new(),
+        }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.tree.is_empty()
+    }
+    pub fn len(&self) -> usize {
+        self.tree.len()
+    }
+    pub fn insert(&mut self, index: usize, value: O::Value) {
+        self.tree.insert(index, Data::new(value));
+    }
+    pub fn remove(&mut self, index: usize) -> O::Value {
+        self.tree.remove(index).value
+    }
+    pub fn split(&mut self, index: usize) -> (Self, Self) {
+        let (l, r) = self.tree.split(index);
+        (Self { tree: l }, Self { tree: r })
+    }
+    pub fn merge(lhs: Self, rhs: Self) -> Self {
+        Self {
+            tree: AvlTree::merge(lhs.tree, rhs.tree),
+        }
+    }
+    pub fn reverse(&mut self, start: usize, end: usize) {
+        self.tree.touch(start, end, |c| c.rev ^= true);
+    }
+    pub fn product(&mut self, start: usize, end: usize) -> O::Value {
+        self.tree
+            .touch(start, end, |c| c.data.sum.clone())
+            .unwrap_or_else(O::identity)
     }
 }
 
@@ -72,6 +52,8 @@ pub trait Op {
     type Value: Clone + Debug; // TODO: remove
 
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+
+    fn identity() -> Self::Value;
 }
 
 struct Marker<O> {
@@ -81,6 +63,15 @@ struct Marker<O> {
 struct Data<O: Op> {
     value: O::Value,
     sum: O::Value,
+}
+
+impl<O: Op> Data<O> {
+    fn new(value: O::Value) -> Self {
+        Self {
+            sum: value.clone(),
+            value,
+        }
+    }
 }
 
 impl<O: Op> Debug for Data<O> {
@@ -146,6 +137,10 @@ mod tests {
         fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
             [lhs[0] * rhs[0], lhs[0] * rhs[1] + lhs[1]]
         }
+
+        fn identity() -> Self::Value {
+            [fp!(1), fp!(0)]
+        }
     }
 
     #[test]
@@ -209,23 +204,22 @@ mod tests {
                         vec[start..end].reverse();
                     }
                     Query::Product { start, end } => {
-                        let identity = [fp!(1), fp!(0)];
-                        let result = seg.product(start, end).unwrap_or(identity);
+                        let result = seg.product(start, end);
                         let expected = vec[start..end]
                             .iter()
-                            .fold(identity, |x, &y| O::mul(&x, &y));
+                            .fold(O::identity(), |x, &y| O::mul(&x, &y));
                         assert_eq!(result, expected);
                     }
                 }
-                eprintln!("{}", display(seg.root.as_deref()));
-                let result: Vec<_> = collect(seg.root.as_deref())
+                eprintln!("{}", display(seg.tree.root.as_deref()));
+                let result: Vec<_> = collect(seg.tree.root.as_deref())
                     .into_iter()
                     .map(|data| data.value)
                     .collect();
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
                 assert_eq!(&vec, &result);
-                validate(seg.root.as_deref());
+                validate(seg.tree.root.as_deref());
                 eprintln!();
             }
         }
