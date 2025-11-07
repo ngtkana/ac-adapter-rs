@@ -42,10 +42,11 @@ impl<O: Op> AvlSegtree<O> {
     }
     pub fn product(&mut self, start: usize, end: usize) -> O::Value {
         self.core
-            .touch(start, end, |c| c.data.sum.clone())
+            .touch(start, end, |c| c.data.prod.clone())
             .unwrap_or_else(O::identity)
     }
 }
+
 impl<O: Op> FromIterator<O::Value> for AvlSegtree<O> {
     fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
         Self {
@@ -68,13 +69,13 @@ struct Marker<O> {
 
 struct Data<O: Op> {
     value: O::Value,
-    sum: O::Value,
+    prod: O::Value,
 }
 
 impl<O: Op> Data<O> {
     fn new(value: O::Value) -> Self {
         Self {
-            sum: value.clone(),
+            prod: value.clone(),
             value,
         }
     }
@@ -84,7 +85,7 @@ impl<O: Op> Debug for Data<O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Data")
             .field("value", &self.value)
-            .field("sum", &self.sum)
+            .field("sum", &self.prod)
             .finish()
     }
 }
@@ -93,7 +94,7 @@ impl<O: Op> Clone for Data<O> {
     fn clone(&self) -> Self {
         Self {
             value: self.value.clone(),
-            sum: self.sum.clone(),
+            prod: self.prod.clone(),
         }
     }
 }
@@ -104,12 +105,12 @@ impl<O: Op> NodeMarker for Marker<O> {
     fn update(node: &mut Node<Self>) {
         let mut sum = node.data.value.clone();
         if let Some(l) = node.left.as_ref() {
-            sum = O::mul(&l.data.sum, &sum);
+            sum = O::mul(&l.data.prod, &sum);
         }
         if let Some(r) = node.right.as_ref() {
-            sum = O::mul(&sum, &r.data.sum);
+            sum = O::mul(&sum, &r.data.prod);
         }
-        node.data.sum = sum;
+        node.data.prod = sum;
     }
 
     fn push(_node: &mut Node<Self>) {}
