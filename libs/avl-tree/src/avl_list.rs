@@ -4,7 +4,7 @@ use super::core::{AvlTree, NodeMarker};
 use std::marker::PhantomData;
 
 pub struct AvlList<T> {
-    tree: AvlTree<Marker<T>>,
+    core: AvlTree<Marker<T>>,
 }
 
 impl<T> Default for AvlList<T> {
@@ -16,32 +16,39 @@ impl<T> Default for AvlList<T> {
 impl<T> AvlList<T> {
     pub fn new() -> Self {
         Self {
-            tree: AvlTree::new(),
+            core: AvlTree::new(),
         }
     }
     pub fn is_empty(&self) -> bool {
-        self.tree.is_empty()
+        self.core.is_empty()
     }
     pub fn len(&self) -> usize {
-        self.tree.len()
+        self.core.len()
     }
     pub fn insert(&mut self, index: usize, value: T) {
-        self.tree.insert(index, value);
+        self.core.insert(index, value);
     }
     pub fn remove(&mut self, index: usize) -> T {
-        self.tree.remove(index)
+        self.core.remove(index)
     }
-    pub fn split(&mut self, index: usize) -> (Self, Self) {
-        let (l, r) = self.tree.split(index);
-        (Self { tree: l }, Self { tree: r })
-    }
-    pub fn merge(lhs: Self, rhs: Self) -> Self {
+    pub fn split_off(&mut self, index: usize) -> Self {
         Self {
-            tree: AvlTree::merge(lhs.tree, rhs.tree),
+            core: self.core.split_off(index),
         }
     }
+    pub fn append(&mut self, other: Self) {
+        self.core.append(other.core);
+    }
     pub fn reverse(&mut self, start: usize, end: usize) {
-        self.tree.reverse(start, end);
+        self.core.reverse(start, end);
+    }
+}
+
+impl<T> FromIterator<T> for AvlList<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self {
+            core: iter.into_iter().collect(),
+        }
     }
 }
 
@@ -120,12 +127,12 @@ mod tests {
                         vec[start..end].reverse();
                     }
                 }
-                eprintln!("{}", display(rlist.tree.root.as_deref()));
-                let result = collect(rlist.tree.root.as_deref());
+                eprintln!("{}", display(rlist.core.root.as_deref()));
+                let result = collect(rlist.core.root.as_deref());
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
                 assert_eq!(&vec, &result);
-                validate(rlist.tree.root.as_deref());
+                validate(rlist.core.root.as_deref());
                 eprintln!();
             }
         }
