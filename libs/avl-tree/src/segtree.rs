@@ -117,7 +117,7 @@ impl<O: Op> NodeMarker for Marker<O> {
 
     fn nop() {}
 
-    fn op(&(): &(), _: &mut Data<O>) {}
+    fn op(&(): &(), _: &mut Data<O>, _len: usize) {}
 
     fn compose(&(): &(), &mut (): &mut ()) {}
 }

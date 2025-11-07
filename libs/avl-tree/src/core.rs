@@ -128,11 +128,11 @@ impl<C: NodeMarker> Node<C> {
         if self.op != C::nop() {
             let op = std::mem::replace(&mut self.op, C::nop());
             if let Some(l) = self.left.as_deref_mut() {
-                C::op(&op, &mut l.data);
+                C::op(&op, &mut l.data, l.len);
                 C::compose(&op, &mut l.op);
             }
             if let Some(r) = self.right.as_deref_mut() {
-                C::op(&op, &mut r.data);
+                C::op(&op, &mut r.data, r.len);
                 C::compose(&op, &mut r.op);
             }
         }
@@ -149,7 +149,7 @@ pub trait NodeMarker {
 
     fn nop() -> Self::Operator;
 
-    fn op(f: &Self::Operator, x: &mut Self::Data);
+    fn op(f: &Self::Operator, x: &mut Self::Data, len: usize);
 
     fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
@@ -404,7 +404,7 @@ pub mod debug {
             C::Operator: Clone,
         {
             let mut value = x.data.clone();
-            C::op(&op, &mut value);
+            C::op(&op, &mut value, x.len);
             let mut next_op = x.op.clone();
             rev ^= x.rev;
             C::compose(&op, &mut next_op);
