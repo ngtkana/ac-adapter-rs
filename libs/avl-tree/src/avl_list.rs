@@ -1,72 +1,55 @@
-use super::core::{Node, NodeMarker};
-use crate::core::{merge2, merge3, split2_by_index, split3_by_index};
-use std::fmt::Debug;
+use crate::core::Node;
+
+use super::core::{AvlTree, NodeMarker};
 use std::marker::PhantomData;
 
-#[allow(unused_imports)]
-use crate::core::debug::display;
-
-pub struct AvlList<T: Debug> {
-    // TODO: remove
-    root: Option<Box<Node<Marker<T>>>>,
+pub struct AvlList<T> {
+    tree: AvlTree<Marker<T>>,
 }
 
-impl<T: Debug> Default for AvlList<T> {
-    // TODO: remove
+impl<T> Default for AvlList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: Debug> AvlList<T> {
-    // TODO: remove
+impl<T> AvlList<T> {
     pub fn new() -> Self {
-        Self { root: None }
+        Self {
+            tree: AvlTree::new(),
+        }
     }
     pub fn is_empty(&self) -> bool {
-        self.root.is_none()
+        self.tree.is_empty()
     }
     pub fn len(&self) -> usize {
-        self.root.as_ref().map_or(0, |x| x.len)
+        self.tree.len()
     }
     pub fn insert(&mut self, index: usize, value: T) {
-        assert!(index <= self.len());
-        let c = Box::new(Node::new(value));
-        let (l, r) = split2_by_index(self.root.take(), index);
-        self.root = Some(merge3(l, c, r));
+        self.tree.insert(index, value);
     }
     pub fn remove(&mut self, index: usize) -> T {
-        assert!(index < self.len());
-        let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
-        self.root = merge2(l, r);
-        c.data
+        self.tree.remove(index)
     }
     pub fn split(&mut self, index: usize) -> (Self, Self) {
-        assert!(index <= self.len());
-        let (l, r) = split2_by_index(self.root.take(), index);
-        (Self { root: l }, Self { root: r })
+        let (l, r) = self.tree.split(index);
+        (Self { tree: l }, Self { tree: r })
     }
     pub fn merge(lhs: Self, rhs: Self) -> Self {
-        let root = merge2(lhs.root, rhs.root);
-        Self { root }
+        Self {
+            tree: AvlTree::merge(lhs.tree, rhs.tree),
+        }
     }
     pub fn reverse(&mut self, start: usize, end: usize) {
-        assert!(start <= end && end <= self.len());
-        let (lc, r) = split2_by_index(self.root.take(), end);
-        let (l, mut c) = split2_by_index(lc, start);
-        if let Some(c) = c.as_deref_mut() {
-            c.rev ^= true;
-        }
-        let lc = merge2(l, c);
-        self.root = merge2(lc, r);
+        self.tree.reverse(start, end);
     }
 }
 
 struct Marker<T> {
     __marker: PhantomData<T>,
 }
-impl<T: std::fmt::Debug> NodeMarker for Marker<T> {
-    type Data = T; // remove
+impl<T> NodeMarker for Marker<T> {
+    type Data = T;
 
     fn update(_node: &mut Node<Self>) {}
 
@@ -137,12 +120,12 @@ mod tests {
                         vec[start..end].reverse();
                     }
                 }
-                eprintln!("{}", display(rlist.root.as_deref()));
-                let result = collect(rlist.root.as_deref());
+                eprintln!("{}", display(rlist.tree.root.as_deref()));
+                let result = collect(rlist.tree.root.as_deref());
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
                 assert_eq!(&vec, &result);
-                validate(rlist.root.as_deref());
+                validate(rlist.tree.root.as_deref());
                 eprintln!();
             }
         }

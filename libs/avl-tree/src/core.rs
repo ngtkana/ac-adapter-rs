@@ -5,6 +5,73 @@
 use procon_lg::lg_recur;
 use std::{cmp::Ordering, mem};
 
+pub struct AvlTree<C: NodeMarker> {
+    pub root: Option<Box<Node<C>>>,
+}
+
+impl<C: NodeMarker> Default for AvlTree<C> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<C: NodeMarker> AvlTree<C> {
+    pub fn new() -> Self {
+        Self { root: None }
+    }
+    pub fn is_empty(&self) -> bool {
+        self.root.is_none()
+    }
+    pub fn len(&self) -> usize {
+        self.root.as_ref().map_or(0, |x| x.len)
+    }
+    pub fn insert(&mut self, index: usize, value: C::Data) {
+        assert!(index <= self.len());
+        let c = Box::new(Node::new(value));
+        let (l, r) = split2_by_index(self.root.take(), index);
+        self.root = Some(merge3(l, c, r));
+    }
+    pub fn remove(&mut self, index: usize) -> C::Data {
+        assert!(index < self.len());
+        let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
+        self.root = merge2(l, r);
+        c.data
+    }
+    pub fn split(&mut self, index: usize) -> (Self, Self) {
+        assert!(index <= self.len());
+        let (l, r) = split2_by_index(self.root.take(), index);
+        (Self { root: l }, Self { root: r })
+    }
+    pub fn merge(lhs: Self, rhs: Self) -> Self {
+        let root = merge2(lhs.root, rhs.root);
+        Self { root }
+    }
+    pub fn reverse(&mut self, start: usize, end: usize) {
+        assert!(start <= end && end <= self.len());
+        let (lc, r) = split2_by_index(self.root.take(), end);
+        let (l, mut c) = split2_by_index(lc, start);
+        if let Some(c) = c.as_deref_mut() {
+            c.rev ^= true;
+        }
+        let lc = merge2(l, c);
+        self.root = merge2(lc, r);
+    }
+    pub fn touch<T>(
+        &mut self,
+        start: usize,
+        end: usize,
+        f: impl FnMut(&mut Node<C>) -> T,
+    ) -> Option<T> {
+        assert!(start <= end && end <= self.len());
+        let (lc, r) = split2_by_index(self.root.take(), end);
+        let (l, mut c) = split2_by_index(lc, start);
+        let result = c.as_deref_mut().map(f);
+        let lc = merge2(l, c);
+        self.root = merge2(lc, r);
+        result
+    }
+}
+
 pub(crate) struct Node<C: NodeMarker + ?Sized> {
     pub(crate) left: Option<Box<Self>>,
     pub(crate) right: Option<Box<Self>>,
@@ -50,8 +117,9 @@ impl<C: NodeMarker> Node<C> {
     }
 }
 
+// TODO: I don't want to expose `Node` here
 pub(crate) trait NodeMarker {
-    type Data: std::fmt::Debug; // remove
+    type Data;
 
     fn update(node: &mut Node<Self>);
 
