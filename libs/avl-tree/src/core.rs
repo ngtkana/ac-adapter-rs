@@ -26,18 +26,18 @@ impl<C: NodeMarker> AvlTree<C> {
         self.root.as_ref().map_or(0, |x| x.len)
     }
 
-    pub fn insert(&mut self, index: usize, value: C::Data) {
+    pub fn insert(&mut self, index: usize, value: C::Value) {
         assert!(index <= self.len());
         let c = Box::new(Node::new(value));
         let (l, r) = split2(self.root.take(), index);
         self.root = Some(merge3(l, c, r));
     }
 
-    pub fn remove(&mut self, index: usize) -> C::Data {
+    pub fn remove(&mut self, index: usize) -> C::Value {
         assert!(index < self.len());
         let (l, c, r) = split3(self.root.take().unwrap(), index);
         self.root = merge2(l, r);
-        c.data
+        c.value
     }
 
     pub fn split_off(&mut self, index: usize) -> Self {
@@ -78,8 +78,8 @@ impl<C: NodeMarker> AvlTree<C> {
     }
 }
 
-impl<C: NodeMarker> FromIterator<C::Data> for AvlTree<C> {
-    fn from_iter<T: IntoIterator<Item = C::Data>>(iter: T) -> Self {
+impl<C: NodeMarker> FromIterator<C::Value> for AvlTree<C> {
+    fn from_iter<T: IntoIterator<Item = C::Value>>(iter: T) -> Self {
         let mut result = Self::new();
         for x in iter {
             result.insert(result.len(), x);
@@ -94,19 +94,21 @@ pub struct Node<C: NodeMarker + ?Sized> {
     pub ht: u8,
     pub len: usize,
     pub rev: bool,
-    pub data: C::Data,
+    pub value: C::Value,
+    pub prod: C::Prod,
     pub op: C::Operator,
 }
 
 impl<C: NodeMarker> Node<C> {
-    pub fn new(data: C::Data) -> Self {
+    pub fn new(value: C::Value) -> Self {
         Self {
             left: None,
             right: None,
             ht: 1,
             len: 1,
             rev: false,
-            data,
+            prod: C::singleton(&value),
+            value,
             op: C::nop(),
         }
     }
@@ -118,11 +120,14 @@ impl<C: NodeMarker> Node<C> {
             .as_ref()
             .map_or(0, |l| l.ht)
             .max(self.right.as_ref().map_or(0, |r| r.ht));
-        C::update(
-            &mut self.data,
-            self.left.as_deref().map(|l| &l.data),
-            self.right.as_deref().map(|r| &r.data),
-        );
+        self.prod = C::identity();
+        if let Some(l) = self.left.as_mut() {
+            self.prod = C::mul(&self.prod, &l.prod);
+        }
+        self.prod = C::mul(&self.prod, &C::singleton(&self.value));
+        if let Some(r) = self.right.as_mut() {
+            self.prod = C::mul(&self.prod, &r.prod);
+        }
     }
     fn push(&mut self) {
         if self.rev {
@@ -138,11 +143,13 @@ impl<C: NodeMarker> Node<C> {
         if self.op != C::nop() {
             let op = std::mem::replace(&mut self.op, C::nop());
             if let Some(l) = self.left.as_deref_mut() {
-                C::op(&op, &mut l.data, l.len);
+                C::op_value(&op, &mut l.value);
+                C::op_prod(&op, &mut l.prod, l.len);
                 C::compose(&op, &mut l.op);
             }
             if let Some(r) = self.right.as_deref_mut() {
-                C::op(&op, &mut r.data, r.len);
+                C::op_value(&op, &mut r.value);
+                C::op_prod(&op, &mut r.prod, r.len);
                 C::compose(&op, &mut r.op);
             }
         }
@@ -150,15 +157,23 @@ impl<C: NodeMarker> Node<C> {
 }
 
 pub trait NodeMarker {
-    type Data;
+    type Value;
+
+    type Prod;
 
     type Operator: PartialEq;
 
-    fn update(data: &mut Self::Data, left: Option<&Self::Data>, right: Option<&Self::Data>);
+    fn singleton(value: &Self::Value) -> Self::Prod;
+
+    fn mul(lhs: &Self::Prod, rhs: &Self::Prod) -> Self::Prod;
+
+    fn identity() -> Self::Prod;
 
     fn nop() -> Self::Operator;
 
-    fn op(f: &Self::Operator, x: &mut Self::Data, len: usize);
+    fn op_value(f: &Self::Operator, x: &mut Self::Value);
+
+    fn op_prod(f: &Self::Operator, x: &mut Self::Prod, len: usize);
 
     fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
@@ -293,11 +308,11 @@ pub mod debug {
 
     pub fn display<C: NodeMarker>(x: Option<&Node<C>>) -> String
     where
-        C::Data: std::fmt::Debug,
+        C::Value: std::fmt::Debug,
     {
         fn display_recur<C: NodeMarker>(x: &Node<C>, s: &mut String, d: u8)
         where
-            C::Data: std::fmt::Debug,
+            C::Value: std::fmt::Debug,
         {
             use std::fmt::Write;
             if let Some(l) = x.left.as_ref() {
@@ -311,7 +326,7 @@ pub mod debug {
                 len = x.len,
                 ht = x.ht,
                 rev = if x.rev { "[rev] " } else { "" },
-                data = x.data,
+                data = x.value,
             )
             .unwrap();
             if let Some(r) = x.right.as_ref() {
@@ -326,11 +341,11 @@ pub mod debug {
 
     pub fn validate<C: NodeMarker>(x: Option<&Node<C>>)
     where
-        C::Data: std::fmt::Debug,
+        C::Value: std::fmt::Debug,
     {
         fn validate_recur<C: NodeMarker>(x: &Node<C>)
         where
-            C::Data: std::fmt::Debug,
+            C::Value: std::fmt::Debug,
         {
             let lh = x.left.as_ref().map_or(0, |l| l.ht);
             let rh = x.right.as_ref().map_or(0, |r| r.ht);
@@ -347,22 +362,22 @@ pub mod debug {
         validate_recur(x);
     }
 
-    pub fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Data>
+    pub fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Value>
     where
-        C::Data: Clone,
+        C::Value: Clone,
         C::Operator: Clone,
     {
         fn collect_recur<C: NodeMarker>(
             x: &Node<C>,
-            out: &mut Vec<C::Data>,
+            out: &mut Vec<C::Value>,
             mut rev: bool,
             op: C::Operator,
         ) where
-            C::Data: Clone,
+            C::Value: Clone,
             C::Operator: Clone,
         {
-            let mut value = x.data.clone();
-            C::op(&op, &mut value, x.len);
+            let mut value = x.value.clone();
+            C::op_value(&op, &mut value);
             let mut next_op = x.op.clone();
             rev ^= x.rev;
             C::compose(&op, &mut next_op);
