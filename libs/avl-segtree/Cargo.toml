@@ -1,0 +1,11 @@
+[package]
+name = "avl-segtree"
+version = "0.1.0"
+edition = "2024"
+
+[dev-dependencies]
+fp = { path = "../fp" }
+rand.workspace = true
+
+[dependencies]
+avl-core = { version = "0.1.0", path = "../avl-core" }
