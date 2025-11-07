@@ -125,39 +125,38 @@
 <a href=#91 id=91 data-nosnippet>91</a>    }
 <a href=#92 id=92 data-nosnippet>92</a>
 <a href=#93 id=93 data-nosnippet>93</a>    <span class="kw">pub fn </span>reverse(<span class="kw-2">&amp;mut </span><span class="self">self</span>, start: usize, end: usize) {
-<a href=#94 id=94 data-nosnippet>94</a>        <span class="macro">assert!</span>(start &lt;= end &amp;&amp; end &lt;= <span class="self">self</span>.len());
-<a href=#95 id=95 data-nosnippet>95</a>        <span class="kw">let </span>(lc, r) = split2(<span class="self">self</span>.root.take(), end);
-<a href=#96 id=96 data-nosnippet>96</a>        <span class="kw">let </span>(l, <span class="kw-2">mut </span>c) = split2(lc, start);
-<a href=#97 id=97 data-nosnippet>97</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = c.as_deref_mut() {
-<a href=#98 id=98 data-nosnippet>98</a>            c.rev ^= <span class="bool-val">true</span>;
-<a href=#99 id=99 data-nosnippet>99</a>        }
-<a href=#100 id=100 data-nosnippet>100</a>        <span class="kw">let </span>lc = merge2(l, c);
-<a href=#101 id=101 data-nosnippet>101</a>        <span class="self">self</span>.root = merge2(lc, r);
-<a href=#102 id=102 data-nosnippet>102</a>    }
-<a href=#103 id=103 data-nosnippet>103</a>
-<a href=#104 id=104 data-nosnippet>104</a>    <span class="kw">pub fn </span>total(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>C::Data&gt; {
-<a href=#105 id=105 data-nosnippet>105</a>        <span class="self">self</span>.root.as_deref_mut().map(|node| <span class="kw-2">&amp;</span>node.data)
-<a href=#106 id=106 data-nosnippet>106</a>    }
-<a href=#107 id=107 data-nosnippet>107</a>
-<a href=#108 id=108 data-nosnippet>108</a>    <span class="kw">pub fn </span>to_vec&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>C::Data) -&gt; T) -&gt; Vec&lt;T&gt; {
-<a href=#109 id=109 data-nosnippet>109</a>        <span class="kw">fn </span>collect_recur&lt;T, C: NodeMarker&gt;(
-<a href=#110 id=110 data-nosnippet>110</a>            x: <span class="kw-2">&amp;</span>Node&lt;C&gt;,
-<a href=#111 id=111 data-nosnippet>111</a>            f: <span class="kw-2">&amp;</span><span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>C::Data) -&gt; T,
-<a href=#112 id=112 data-nosnippet>112</a>            out: <span class="kw-2">&amp;mut </span>Vec&lt;T&gt;,
-<a href=#113 id=113 data-nosnippet>113</a>            <span class="kw-2">mut </span>rev: bool,
-<a href=#114 id=114 data-nosnippet>114</a>        ) {
-<a href=#115 id=115 data-nosnippet>115</a>            rev ^= x.rev;
-<a href=#116 id=116 data-nosnippet>116</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(y) = <span class="kw">if </span>rev { x.right.as_ref() } <span class="kw">else </span>{ x.left.as_ref() } {
-<a href=#117 id=117 data-nosnippet>117</a>                collect_recur(y, f, out, rev);
-<a href=#118 id=118 data-nosnippet>118</a>            }
-<a href=#119 id=119 data-nosnippet>119</a>            out.push(f(<span class="kw-2">&amp;</span>x.data));
-<a href=#120 id=120 data-nosnippet>120</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(y) = <span class="kw">if </span>rev { x.left.as_ref() } <span class="kw">else </span>{ x.right.as_ref() } {
-<a href=#121 id=121 data-nosnippet>121</a>                collect_recur(y, f, out, rev);
-<a href=#122 id=122 data-nosnippet>122</a>            }
-<a href=#123 id=123 data-nosnippet>123</a>        }
-<a href=#124 id=124 data-nosnippet>124</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(x) = <span class="self">self</span>.root.as_deref() <span class="kw">else </span>{ <span class="kw">return </span><span class="macro">vec!</span>[] };
-<a href=#125 id=125 data-nosnippet>125</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
-<a href=#126 id=126 data-nosnippet>126</a>        collect_recur(x, <span class="kw-2">&amp;</span>f, <span class="kw-2">&amp;mut </span>out, <span class="bool-val">false</span>);
-<a href=#127 id=127 data-nosnippet>127</a>        out
-<a href=#128 id=128 data-nosnippet>128</a>    }
-<a href=#129 id=129 data-nosnippet>129</a>}</code></pre></div></section></main></body></html>
+<a href=#94 id=94 data-nosnippet>94</a>        <span class="kw">let </span>r = <span class="self">self</span>.split_off(end);
+<a href=#95 id=95 data-nosnippet>95</a>        <span class="kw">let </span><span class="kw-2">mut </span>c = <span class="self">self</span>.split_off(start);
+<a href=#96 id=96 data-nosnippet>96</a>        <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = c.root.as_deref_mut() {
+<a href=#97 id=97 data-nosnippet>97</a>            c.rev ^= <span class="bool-val">true</span>;
+<a href=#98 id=98 data-nosnippet>98</a>        }
+<a href=#99 id=99 data-nosnippet>99</a>        <span class="self">self</span>.append(c);
+<a href=#100 id=100 data-nosnippet>100</a>        <span class="self">self</span>.append(r);
+<a href=#101 id=101 data-nosnippet>101</a>    }
+<a href=#102 id=102 data-nosnippet>102</a>
+<a href=#103 id=103 data-nosnippet>103</a>    <span class="kw">pub fn </span>touch(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>C::Data&gt; {
+<a href=#104 id=104 data-nosnippet>104</a>        <span class="self">self</span>.root.as_deref_mut().map(|node| <span class="kw-2">&amp;</span>node.data)
+<a href=#105 id=105 data-nosnippet>105</a>    }
+<a href=#106 id=106 data-nosnippet>106</a>
+<a href=#107 id=107 data-nosnippet>107</a>    <span class="kw">pub fn </span>to_vec&lt;T&gt;(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>C::Data) -&gt; T) -&gt; Vec&lt;T&gt; {
+<a href=#108 id=108 data-nosnippet>108</a>        <span class="kw">fn </span>collect_recur&lt;T, C: NodeMarker&gt;(
+<a href=#109 id=109 data-nosnippet>109</a>            x: <span class="kw-2">&amp;</span>Node&lt;C&gt;,
+<a href=#110 id=110 data-nosnippet>110</a>            f: <span class="kw-2">&amp;</span><span class="kw">impl </span>Fn(<span class="kw-2">&amp;</span>C::Data) -&gt; T,
+<a href=#111 id=111 data-nosnippet>111</a>            out: <span class="kw-2">&amp;mut </span>Vec&lt;T&gt;,
+<a href=#112 id=112 data-nosnippet>112</a>            <span class="kw-2">mut </span>rev: bool,
+<a href=#113 id=113 data-nosnippet>113</a>        ) {
+<a href=#114 id=114 data-nosnippet>114</a>            rev ^= x.rev;
+<a href=#115 id=115 data-nosnippet>115</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(y) = <span class="kw">if </span>rev { x.right.as_ref() } <span class="kw">else </span>{ x.left.as_ref() } {
+<a href=#116 id=116 data-nosnippet>116</a>                collect_recur(y, f, out, rev);
+<a href=#117 id=117 data-nosnippet>117</a>            }
+<a href=#118 id=118 data-nosnippet>118</a>            out.push(f(<span class="kw-2">&amp;</span>x.data));
+<a href=#119 id=119 data-nosnippet>119</a>            <span class="kw">if let </span><span class="prelude-val">Some</span>(y) = <span class="kw">if </span>rev { x.left.as_ref() } <span class="kw">else </span>{ x.right.as_ref() } {
+<a href=#120 id=120 data-nosnippet>120</a>                collect_recur(y, f, out, rev);
+<a href=#121 id=121 data-nosnippet>121</a>            }
+<a href=#122 id=122 data-nosnippet>122</a>        }
+<a href=#123 id=123 data-nosnippet>123</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(x) = <span class="self">self</span>.root.as_deref() <span class="kw">else </span>{ <span class="kw">return </span><span class="macro">vec!</span>[] };
+<a href=#124 id=124 data-nosnippet>124</a>        <span class="kw">let </span><span class="kw-2">mut </span>out = Vec::new();
+<a href=#125 id=125 data-nosnippet>125</a>        collect_recur(x, <span class="kw-2">&amp;</span>f, <span class="kw-2">&amp;mut </span>out, <span class="bool-val">false</span>);
+<a href=#126 id=126 data-nosnippet>126</a>        out
+<a href=#127 id=127 data-nosnippet>127</a>    }
+<a href=#128 id=128 data-nosnippet>128</a>}</code></pre></div></section></main></body></html>

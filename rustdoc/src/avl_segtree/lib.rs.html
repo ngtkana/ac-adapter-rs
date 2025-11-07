@@ -87,7 +87,7 @@
 <a href=#53 id=53 data-nosnippet>53</a>        <span class="kw">let </span><span class="kw-2">mut </span>c = <span class="self">self</span>.split_off(start);
 <a href=#54 id=54 data-nosnippet>54</a>        <span class="kw">let </span>result = c
 <a href=#55 id=55 data-nosnippet>55</a>            .core
-<a href=#56 id=56 data-nosnippet>56</a>            .total()
+<a href=#56 id=56 data-nosnippet>56</a>            .touch()
 <a href=#57 id=57 data-nosnippet>57</a>            .map_or_else(O::identity, |data| data.prod.clone());
 <a href=#58 id=58 data-nosnippet>58</a>        <span class="self">self</span>.append(c);
 <a href=#59 id=59 data-nosnippet>59</a>        <span class="self">self</span>.append(r);
@@ -196,8 +196,8 @@
 <a href=#162 id=162 data-nosnippet>162</a>    </span><span class="kw">fn </span>test_segtree() {
 <a href=#163 id=163 data-nosnippet>163</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
 <a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">for </span>tid <span class="kw">in </span><span class="number">1</span>..=<span class="number">200 </span>{
-<a href=#165 id=165 data-nosnippet>165</a>            <span class="kw">let </span>q = <span class="number">50</span>;
-<a href=#166 id=166 data-nosnippet>166</a>            <span class="kw">let </span>value_lim = <span class="number">3</span>;
+<a href=#165 id=165 data-nosnippet>165</a>            <span class="kw">let </span>q = <span class="number">200</span>;
+<a href=#166 id=166 data-nosnippet>166</a>            <span class="kw">let </span>value_lim = <span class="number">10</span>;
 <a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">let </span>len_max = rng.gen_range(<span class="number">5</span>..=<span class="number">50</span>);
 <a href=#168 id=168 data-nosnippet>168</a>            <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0usize</span>;
 <a href=#169 id=169 data-nosnippet>169</a>            <span class="kw">let </span><span class="kw-2">mut </span>seg = AvlSegtree::&lt;O&gt;::new();
