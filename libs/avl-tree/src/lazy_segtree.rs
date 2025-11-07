@@ -191,7 +191,7 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for tid in 1..=200 {
             let q = 50;
-            let value_lim = 3;
+            let value_lim = 10;
             let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
             let mut seg = AvlLazySegtree::<O>::new();
