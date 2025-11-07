@@ -198,7 +198,7 @@
 <a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">for </span>tid <span class="kw">in </span><span class="number">1</span>..=<span class="number">200 </span>{
 <a href=#165 id=165 data-nosnippet>165</a>            <span class="kw">let </span>q = <span class="number">50</span>;
 <a href=#166 id=166 data-nosnippet>166</a>            <span class="kw">let </span>value_lim = <span class="number">3</span>;
-<a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">let </span>len_max = <span class="number">3</span>;
+<a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">let </span>len_max = rng.gen_range(<span class="number">5</span>..=<span class="number">50</span>);
 <a href=#168 id=168 data-nosnippet>168</a>            <span class="kw">let </span><span class="kw-2">mut </span>n = <span class="number">0usize</span>;
 <a href=#169 id=169 data-nosnippet>169</a>            <span class="kw">let </span><span class="kw-2">mut </span>seg = AvlSegtree::&lt;O&gt;::new();
 <a href=#170 id=170 data-nosnippet>170</a>            <span class="kw">let </span><span class="kw-2">mut </span>vec = <span class="macro">vec!</span>[];
