@@ -4,10 +4,20 @@
 mod debug;
 mod internal;
 
-use crate::internal::{Node, merge2, merge3, split2, split3};
+use crate::internal::{merge2, merge3, split2, split3};
 use std::cmp::Ordering;
 
 pub use debug::*;
+
+// TODO: make this private
+pub struct Node<C: NodeMarker + ?Sized> {
+    pub left: Option<Box<Self>>,
+    pub right: Option<Box<Self>>,
+    pub ht: u8,
+    pub len: usize,
+    pub rev: bool,
+    pub data: C::Data,
+}
 
 pub struct CoreTree<C: NodeMarker> {
     root: Option<Box<Node<C>>>,
@@ -53,6 +63,12 @@ impl<C: NodeMarker> CoreTree<C> {
         let (l, r) = split2(self.root.take(), index);
         self.root = Some(merge3(l, node, r));
     }
+    pub fn remove(&mut self, index: usize) -> C::Data {
+        assert!(index < self.len());
+        let (l, c, r) = split3(self.root.take().unwrap(), index);
+        self.root = merge2(l, r);
+        c.data
+    }
     pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
         if index == self.len() {
@@ -63,6 +79,19 @@ impl<C: NodeMarker> CoreTree<C> {
         Self {
             root: merge2(Some(c), r),
         }
+    }
+    pub fn append(&mut self, other: Self) {
+        self.root = merge2(self.root.take(), other.root);
+    }
+    pub fn reverse(&mut self, start: usize, end: usize) {
+        assert!(start <= end && end <= self.len());
+        let (lc, r) = split2(self.root.take(), end);
+        let (l, mut c) = split2(lc, start);
+        if let Some(c) = c.as_deref_mut() {
+            c.rev ^= true;
+        }
+        let lc = merge2(l, c);
+        self.root = merge2(lc, r);
     }
     pub fn visit_roots(&mut self, start: usize, end: usize, mut visitor: impl FnMut(&mut Node<C>)) {
         fn visit_roots_recurse<C: NodeMarker>(
@@ -92,7 +121,7 @@ impl<C: NodeMarker> CoreTree<C> {
         let Some(root) = self.root.as_deref_mut() else { return };
         visit_roots_recurse(root, 0, root.len, start, end, &mut visitor);
     }
-    pub fn collect(&self) -> Vec<C::Data>
+    pub fn to_vec(&self) -> Vec<C::Data>
     where
         C::Data: Clone,
     {
