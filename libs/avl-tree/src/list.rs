@@ -62,7 +62,7 @@ impl<T> NodeMarker for Marker<T> {
 
     fn update(_node: &mut Node<Self>) {}
 
-    fn nop() -> () {}
+    fn nop() {}
 
     fn op(&(): &(), _: &mut T) {}
 
