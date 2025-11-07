@@ -115,7 +115,7 @@ impl<O: Op> NodeMarker for Marker<O> {
         node.data.prod = sum;
     }
 
-    fn nop() -> () {}
+    fn nop() {}
 
     fn op(&(): &(), _: &mut Data<O>) {}
 

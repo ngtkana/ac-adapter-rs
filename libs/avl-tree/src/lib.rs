@@ -1,4 +1,4 @@
-pub(crate) mod core;
+mod core;
 
 pub mod lazy_segtree;
 pub mod list;

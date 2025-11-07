@@ -82,18 +82,18 @@ impl<C: NodeMarker> FromIterator<C::Data> for AvlTree<C> {
     }
 }
 
-pub(crate) struct Node<C: NodeMarker + ?Sized> {
-    pub(crate) left: Option<Box<Self>>,
-    pub(crate) right: Option<Box<Self>>,
-    pub(crate) ht: u8,
-    pub(crate) len: usize,
-    pub(crate) rev: bool,
-    pub(crate) data: C::Data,
-    pub(crate) op: C::Operator,
+pub struct Node<C: NodeMarker + ?Sized> {
+    pub left: Option<Box<Self>>,
+    pub right: Option<Box<Self>>,
+    pub ht: u8,
+    pub len: usize,
+    pub rev: bool,
+    pub data: C::Data,
+    pub op: C::Operator,
 }
 
 impl<C: NodeMarker> Node<C> {
-    pub(crate) fn new(data: C::Data) -> Self {
+    pub fn new(data: C::Data) -> Self {
         Self {
             left: None,
             right: None,
@@ -140,7 +140,7 @@ impl<C: NodeMarker> Node<C> {
 }
 
 // TODO: I don't want to expose `Node` here
-pub(crate) trait NodeMarker {
+pub trait NodeMarker {
     type Data;
 
     type Operator: PartialEq;
@@ -154,7 +154,7 @@ pub(crate) trait NodeMarker {
     fn compose(f: &Self::Operator, g: &mut Self::Operator);
 }
 
-pub(crate) fn merge2<C: NodeMarker>(
+pub fn merge2<C: NodeMarker>(
     l: Option<Box<Node<C>>>,
     mut r: Option<Box<Node<C>>>,
 ) -> Option<Box<Node<C>>> {
@@ -165,7 +165,7 @@ pub(crate) fn merge2<C: NodeMarker>(
     Some(merge3(l, c, r))
 }
 
-pub(crate) fn split2_by_index<C: NodeMarker>(
+pub fn split2_by_index<C: NodeMarker>(
     x: Option<Box<Node<C>>>,
     index: usize,
 ) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
@@ -175,7 +175,7 @@ pub(crate) fn split2_by_index<C: NodeMarker>(
     (merge2(l, Some(c)), r)
 }
 
-pub(crate) fn split2<C: NodeMarker>(
+pub fn split2<C: NodeMarker>(
     x: Option<Box<Node<C>>>,
     mut pred: impl FnMut(&Node<C>) -> bool,
 ) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
@@ -197,7 +197,7 @@ pub(crate) fn split2<C: NodeMarker>(
 }
 
 #[lg_recur]
-pub(crate) fn split3_by_index<C: NodeMarker>(
+pub fn split3_by_index<C: NodeMarker>(
     mut x: Box<Node<C>>,
     #[show] index: usize,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
@@ -222,7 +222,7 @@ pub(crate) fn split3_by_index<C: NodeMarker>(
 }
 
 #[lg_recur]
-pub(crate) fn split3<C: NodeMarker>(
+pub fn split3<C: NodeMarker>(
     mut x: Box<Node<C>>,
     mut cmp: impl FnMut(&Node<C>) -> Ordering,
 ) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
@@ -248,7 +248,7 @@ pub(crate) fn split3<C: NodeMarker>(
 }
 
 #[lg_recur]
-pub(crate) fn merge3<C: NodeMarker>(
+pub fn merge3<C: NodeMarker>(
     l: Option<Box<Node<C>>>,
     mut c: Box<Node<C>>,
     r: Option<Box<Node<C>>>,
@@ -330,10 +330,10 @@ fn rotate_right<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     y
 }
 
-pub(crate) mod debug {
+pub mod debug {
     use super::{Node, NodeMarker};
 
-    pub(crate) fn display<C: NodeMarker>(x: Option<&Node<C>>) -> String
+    pub fn display<C: NodeMarker>(x: Option<&Node<C>>) -> String
     where
         C::Data: std::fmt::Debug,
     {
@@ -366,7 +366,7 @@ pub(crate) mod debug {
         s
     }
 
-    pub(crate) fn validate<C: NodeMarker>(x: Option<&Node<C>>)
+    pub fn validate<C: NodeMarker>(x: Option<&Node<C>>)
     where
         C::Data: std::fmt::Debug,
     {
@@ -389,7 +389,7 @@ pub(crate) mod debug {
         validate_recur(x);
     }
 
-    pub(crate) fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Data>
+    pub fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Data>
     where
         C::Data: Clone,
         C::Operator: Clone,
