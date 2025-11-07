@@ -1,4 +1,4 @@
-use super::core::{Node, NodeMarker};
+use super::core::NodeMarker;
 use crate::core::AvlTree;
 use std::fmt::Debug;
 use std::marker::PhantomData;
@@ -70,7 +70,7 @@ impl<O: Op> FromIterator<O::Value> for AvlLazySegtree<O> {
 pub trait Op {
     type Value: Clone + Debug; // TODO: remove
 
-    type Operator: PartialEq + Eq + Debug; // TODO: remove
+    type Operator: PartialEq + Debug; // TODO: remove
 
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 
@@ -127,17 +127,19 @@ where
 
 impl<O: Op> NodeMarker for Marker<O> {
     type Data = Data<O>;
+
     type Operator = O::Operator;
 
-    fn update(node: &mut Node<Self>) {
-        let mut sum = node.data.value.clone();
-        if let Some(l) = node.left.as_deref() {
-            sum = O::mul(&l.data.prod, &sum);
+    fn update(data: &mut Data<O>, left: Option<&Data<O>>, right: Option<&Data<O>>) {
+        let mut prod = O::identity();
+        if let Some(l) = left {
+            prod = O::mul(&prod, &l.prod);
         }
-        if let Some(r) = node.right.as_deref() {
-            sum = O::mul(&sum, &r.data.prod);
+        prod = O::mul(&prod, &data.value);
+        if let Some(r) = right {
+            prod = O::mul(&prod, &r.prod);
         }
-        node.data.prod = sum;
+        data.prod = prod;
     }
 
     fn nop() -> Self::Operator {

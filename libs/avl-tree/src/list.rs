@@ -1,5 +1,3 @@
-use crate::core::Node;
-
 use super::core::{AvlTree, NodeMarker};
 use std::marker::PhantomData;
 
@@ -19,26 +17,33 @@ impl<T> AvlList<T> {
             core: AvlTree::new(),
         }
     }
+
     pub fn is_empty(&self) -> bool {
         self.core.is_empty()
     }
+
     pub fn len(&self) -> usize {
         self.core.len()
     }
+
     pub fn insert(&mut self, index: usize, value: T) {
         self.core.insert(index, value);
     }
+
     pub fn remove(&mut self, index: usize) -> T {
         self.core.remove(index)
     }
+
     pub fn split_off(&mut self, index: usize) -> Self {
         Self {
             core: self.core.split_off(index),
         }
     }
+
     pub fn append(&mut self, other: Self) {
         self.core.append(other.core);
     }
+
     pub fn reverse(&mut self, start: usize, end: usize) {
         self.core.reverse(start, end);
     }
@@ -60,7 +65,7 @@ impl<T> NodeMarker for Marker<T> {
 
     type Operator = ();
 
-    fn update(_node: &mut Node<Self>) {}
+    fn update(_data: &mut T, _left: Option<&T>, _right: Option<&T>) {}
 
     fn nop() {}
 

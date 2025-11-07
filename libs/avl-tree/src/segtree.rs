@@ -1,4 +1,4 @@
-use super::core::{AvlTree, Node, NodeMarker};
+use super::core::{AvlTree, NodeMarker};
 use std::{fmt::Debug, marker::PhantomData};
 
 pub struct AvlSegtree<O: Op> {
@@ -17,29 +17,37 @@ impl<O: Op> AvlSegtree<O> {
             core: AvlTree::new(),
         }
     }
+
     pub fn is_empty(&self) -> bool {
         self.core.is_empty()
     }
+
     pub fn len(&self) -> usize {
         self.core.len()
     }
+
     pub fn insert(&mut self, index: usize, value: O::Value) {
         self.core.insert(index, Data::new(value));
     }
+
     pub fn remove(&mut self, index: usize) -> O::Value {
         self.core.remove(index).value
     }
+
     pub fn split_off(&mut self, index: usize) -> Self {
         Self {
             core: self.core.split_off(index),
         }
     }
+
     pub fn append(&mut self, other: Self) {
         self.core.append(other.core);
     }
+
     pub fn reverse(&mut self, start: usize, end: usize) {
         self.core.touch(start, end, |c| c.rev ^= true);
     }
+
     pub fn product(&mut self, start: usize, end: usize) -> O::Value {
         self.core
             .touch(start, end, |c| c.data.prod.clone())
@@ -104,15 +112,16 @@ impl<O: Op> NodeMarker for Marker<O> {
 
     type Operator = ();
 
-    fn update(node: &mut Node<Self>) {
-        let mut sum = node.data.value.clone();
-        if let Some(l) = node.left.as_ref() {
-            sum = O::mul(&l.data.prod, &sum);
+    fn update(data: &mut Data<O>, left: Option<&Data<O>>, right: Option<&Data<O>>) {
+        let mut prod = O::identity();
+        if let Some(l) = left {
+            prod = O::mul(&prod, &l.prod);
         }
-        if let Some(r) = node.right.as_ref() {
-            sum = O::mul(&sum, &r.data.prod);
+        prod = O::mul(&prod, &data.value);
+        if let Some(r) = right {
+            prod = O::mul(&prod, &r.prod);
         }
-        node.data.prod = sum;
+        data.prod = prod;
     }
 
     fn nop() {}
