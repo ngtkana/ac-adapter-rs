@@ -13,6 +13,14 @@ impl<O: Op> Default for AvlSegtree<O> {
     }
 }
 
+impl<O: Op> FromIterator<O::Value> for AvlSegtree<O> {
+    fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
+        Self {
+            core: iter.into_iter().map(Data::new).collect(),
+        }
+    }
+}
+
 impl<O: Op> AvlSegtree<O> {
     pub fn new() -> Self {
         Self::default()
@@ -24,11 +32,7 @@ impl<O: Op> AvlSegtree<O> {
         self.core.len()
     }
     pub fn insert(&mut self, index: usize, value: O::Value) {
-        let data = Data {
-            prod: value.clone(),
-            value,
-        };
-        self.core.insert(index, data);
+        self.core.insert(index, Data::new(value));
     }
     pub fn remove(&mut self, index: usize) -> O::Value {
         self.core.remove(index).value
@@ -75,6 +79,18 @@ struct Marker<O> {
 struct Data<O: Op> {
     value: O::Value,
     prod: O::Value,
+}
+
+impl<O: Op> Data<O> {
+    fn new(value: O::Value) -> Self
+    where
+        O::Value: Clone,
+    {
+        Self {
+            prod: value.clone(),
+            value,
+        }
+    }
 }
 
 // TODO: this is needless
