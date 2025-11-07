@@ -53,7 +53,7 @@ impl<O: Op> AvlSegtree<O> {
         let mut c = self.split_off(start);
         let result = c
             .core
-            .total()
+            .touch()
             .map_or_else(O::identity, |data| data.prod.clone());
         self.append(c);
         self.append(r);
@@ -162,8 +162,8 @@ mod tests {
     fn test_segtree() {
         let mut rng = StdRng::seed_from_u64(42);
         for tid in 1..=200 {
-            let q = 50;
-            let value_lim = 3;
+            let q = 200;
+            let value_lim = 10;
             let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
             let mut seg = AvlSegtree::<O>::new();

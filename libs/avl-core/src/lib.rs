@@ -91,17 +91,16 @@ impl<C: NodeMarker> CoreTree<C> {
     }
 
     pub fn reverse(&mut self, start: usize, end: usize) {
-        assert!(start <= end && end <= self.len());
-        let (lc, r) = split2(self.root.take(), end);
-        let (l, mut c) = split2(lc, start);
-        if let Some(c) = c.as_deref_mut() {
+        let r = self.split_off(end);
+        let mut c = self.split_off(start);
+        if let Some(c) = c.root.as_deref_mut() {
             c.rev ^= true;
         }
-        let lc = merge2(l, c);
-        self.root = merge2(lc, r);
+        self.append(c);
+        self.append(r);
     }
 
-    pub fn total(&mut self) -> Option<&C::Data> {
+    pub fn touch(&mut self) -> Option<&C::Data> {
         self.root.as_deref_mut().map(|node| &node.data)
     }
 
