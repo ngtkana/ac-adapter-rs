@@ -1,8 +1,6 @@
 #![allow(clippy::unnecessary_box_returns)]
 #![allow(clippy::type_complexity)]
-#![allow(dead_code)]
 
-use procon_lg::lg_recur;
 use std::{cmp::Ordering, mem};
 
 pub struct AvlTree<C: NodeMarker> {
@@ -19,43 +17,51 @@ impl<C: NodeMarker> AvlTree<C> {
     pub fn new() -> Self {
         Self { root: None }
     }
+
     pub fn is_empty(&self) -> bool {
         self.root.is_none()
     }
+
     pub fn len(&self) -> usize {
         self.root.as_ref().map_or(0, |x| x.len)
     }
+
     pub fn insert(&mut self, index: usize, value: C::Data) {
         assert!(index <= self.len());
         let c = Box::new(Node::new(value));
-        let (l, r) = split2_by_index(self.root.take(), index);
+        let (l, r) = split2(self.root.take(), index);
         self.root = Some(merge3(l, c, r));
     }
+
     pub fn remove(&mut self, index: usize) -> C::Data {
         assert!(index < self.len());
-        let (l, c, r) = split3_by_index(self.root.take().unwrap(), index);
+        let (l, c, r) = split3(self.root.take().unwrap(), index);
         self.root = merge2(l, r);
         c.data
     }
+
     pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
-        let (l, r) = split2_by_index(self.root.take(), index);
+        let (l, r) = split2(self.root.take(), index);
         self.root = l;
         Self { root: r }
     }
+
     pub fn append(&mut self, rhs: Self) {
         self.root = merge2(self.root.take(), rhs.root);
     }
+
     pub fn reverse(&mut self, start: usize, end: usize) {
         assert!(start <= end && end <= self.len());
-        let (lc, r) = split2_by_index(self.root.take(), end);
-        let (l, mut c) = split2_by_index(lc, start);
+        let (lc, r) = split2(self.root.take(), end);
+        let (l, mut c) = split2(lc, start);
         if let Some(c) = c.as_deref_mut() {
             c.rev ^= true;
         }
         let lc = merge2(l, c);
         self.root = merge2(lc, r);
     }
+
     pub fn touch<T>(
         &mut self,
         start: usize,
@@ -63,8 +69,8 @@ impl<C: NodeMarker> AvlTree<C> {
         f: impl FnMut(&mut Node<C>) -> T,
     ) -> Option<T> {
         assert!(start <= end && end <= self.len());
-        let (lc, r) = split2_by_index(self.root.take(), end);
-        let (l, mut c) = split2_by_index(lc, start);
+        let (lc, r) = split2(self.root.take(), end);
+        let (l, mut c) = split2(lc, start);
         let result = c.as_deref_mut().map(f);
         let lc = merge2(l, c);
         self.root = merge2(lc, r);
@@ -112,7 +118,11 @@ impl<C: NodeMarker> Node<C> {
             .as_ref()
             .map_or(0, |l| l.ht)
             .max(self.right.as_ref().map_or(0, |r| r.ht));
-        C::update(self);
+        C::update(
+            &mut self.data,
+            self.left.as_deref().map(|l| &l.data),
+            self.right.as_deref().map(|r| &r.data),
+        );
     }
     fn push(&mut self) {
         if self.rev {
@@ -139,13 +149,12 @@ impl<C: NodeMarker> Node<C> {
     }
 }
 
-// TODO: I don't want to expose `Node` here
 pub trait NodeMarker {
     type Data;
 
     type Operator: PartialEq;
 
-    fn update(node: &mut Node<Self>);
+    fn update(data: &mut Self::Data, left: Option<&Self::Data>, right: Option<&Self::Data>);
 
     fn nop() -> Self::Operator;
 
@@ -159,95 +168,10 @@ pub fn merge2<C: NodeMarker>(
     mut r: Option<Box<Node<C>>>,
 ) -> Option<Box<Node<C>>> {
     let Some(r) = r.take() else { return l };
-    let (_, c, r) = split3(r, |node| {
-        if node.left.is_some() { Ordering::Less } else { Ordering::Equal }
-    });
+    let (_, c, r) = split3(r, 0);
     Some(merge3(l, c, r))
 }
 
-pub fn split2_by_index<C: NodeMarker>(
-    x: Option<Box<Node<C>>>,
-    index: usize,
-) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
-    assert!(index <= x.as_ref().map_or(0, |x| x.len));
-    let Some(indexm1) = index.checked_sub(1) else { return (None, x) };
-    let (l, c, r) = split3_by_index(x.unwrap(), indexm1);
-    (merge2(l, Some(c)), r)
-}
-
-pub fn split2<C: NodeMarker>(
-    x: Option<Box<Node<C>>>,
-    mut pred: impl FnMut(&Node<C>) -> bool,
-) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
-    let Some(x) = x else { return (None, None) };
-    let (l, c, r) = split3(x, |node| {
-        if node.left.is_none() && node.right.is_none() {
-            Ordering::Equal
-        } else if pred(node) {
-            Ordering::Less
-        } else {
-            Ordering::Greater
-        }
-    });
-    if pred(c.as_ref()) {
-        (Some(merge3(l, c, None)), r)
-    } else {
-        (l, Some(merge3(None, c, r)))
-    }
-}
-
-#[lg_recur]
-pub fn split3_by_index<C: NodeMarker>(
-    mut x: Box<Node<C>>,
-    #[show] index: usize,
-) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
-    x.push();
-    let llen = x.left.as_ref().map_or(0, |l| l.len);
-    let l = x.left.take();
-    let r = x.right.take();
-    match index.cmp(&llen) {
-        Ordering::Less => {
-            let (ll, lc, lr) = split3_by_index(l.unwrap(), index);
-            (ll, lc, Some(merge3(lr, x, r)))
-        }
-        Ordering::Equal => {
-            x.update();
-            (l, x, r)
-        }
-        Ordering::Greater => {
-            let (rl, rc, rr) = split3_by_index(r.unwrap(), index - 1 - llen);
-            (Some(merge3(l, x, rl)), rc, rr)
-        }
-    }
-}
-
-#[lg_recur]
-pub fn split3<C: NodeMarker>(
-    mut x: Box<Node<C>>,
-    mut cmp: impl FnMut(&Node<C>) -> Ordering,
-) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
-    x.push();
-    match cmp(&*x) {
-        Ordering::Less => {
-            let (ll, lc, lr) = split3(x.left.take().unwrap(), cmp);
-            let r = x.right.take();
-            (ll, lc, Some(merge3(lr, x, r)))
-        }
-        Ordering::Equal => {
-            let l = x.left.take();
-            let r = x.right.take();
-            x.update();
-            (l, x, r)
-        }
-        Ordering::Greater => {
-            let (rl, rc, rr) = split3(x.right.take().unwrap(), cmp);
-            let l = x.left.take();
-            (Some(merge3(l, x, rl)), rc, rr)
-        }
-    }
-}
-
-#[lg_recur]
 pub fn merge3<C: NodeMarker>(
     l: Option<Box<Node<C>>>,
     mut c: Box<Node<C>>,
@@ -275,7 +199,40 @@ pub fn merge3<C: NodeMarker>(
     }
 }
 
-#[lg_recur]
+pub fn split2<C: NodeMarker>(
+    x: Option<Box<Node<C>>>,
+    index: usize,
+) -> (Option<Box<Node<C>>>, Option<Box<Node<C>>>) {
+    assert!(index <= x.as_ref().map_or(0, |x| x.len));
+    let Some(indexm1) = index.checked_sub(1) else { return (None, x) };
+    let (l, c, r) = split3(x.unwrap(), indexm1);
+    (merge2(l, Some(c)), r)
+}
+
+pub fn split3<C: NodeMarker>(
+    mut x: Box<Node<C>>,
+    index: usize,
+) -> (Option<Box<Node<C>>>, Box<Node<C>>, Option<Box<Node<C>>>) {
+    x.push();
+    let llen = x.left.as_ref().map_or(0, |l| l.len);
+    let l = x.left.take();
+    let r = x.right.take();
+    match index.cmp(&llen) {
+        Ordering::Less => {
+            let (ll, lc, lr) = split3(l.unwrap(), index);
+            (ll, lc, Some(merge3(lr, x, r)))
+        }
+        Ordering::Equal => {
+            x.update();
+            (l, x, r)
+        }
+        Ordering::Greater => {
+            let (rl, rc, rr) = split3(r.unwrap(), index - 1 - llen);
+            (Some(merge3(l, x, rl)), rc, rr)
+        }
+    }
+}
+
 fn balance<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     match ht(x.left.as_deref()) as i8 - ht(x.right.as_deref()) as i8 {
         -2 => {
@@ -330,6 +287,7 @@ fn rotate_right<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
     y
 }
 
+#[cfg(test)]
 pub mod debug {
     use super::{Node, NodeMarker};
 
