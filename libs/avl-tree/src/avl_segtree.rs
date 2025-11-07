@@ -1,13 +1,13 @@
-use crate::reversible_list_core::{merge2, merge3, split2_by_index, split3_by_index};
+use crate::core::{merge2, merge3, split2_by_index, split3_by_index};
 
-use super::reversible_list_core::{Node, NodeMarker};
+use super::core::{Node, NodeMarker};
 use std::{fmt::Debug, marker::PhantomData};
 
-pub struct ReversibleSegtree<O: Op> {
+pub struct AvlSegtree<O: Op> {
     root: Option<Box<Node<Marker<O>>>>,
 }
 
-impl<O: Op> ReversibleSegtree<O> {
+impl<O: Op> AvlSegtree<O> {
     pub fn new() -> Self {
         Self::default()
     }
@@ -62,7 +62,7 @@ impl<O: Op> ReversibleSegtree<O> {
     }
 }
 
-impl<O: Op> Default for ReversibleSegtree<O> {
+impl<O: Op> Default for AvlSegtree<O> {
     fn default() -> Self {
         Self { root: None }
     }
@@ -121,7 +121,7 @@ impl<O: Op> NodeMarker for Marker<O> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::reversible_list_core::debug::{collect, display, validate};
+    use crate::core::debug::{collect, display, validate};
     use fp::fp;
     use rand::Rng;
     use rand::{SeedableRng, rngs::StdRng};
@@ -156,7 +156,7 @@ mod tests {
             let value_lim = 3;
             let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
-            let mut seg = ReversibleSegtree::<O>::new();
+            let mut seg = AvlSegtree::<O>::new();
             let mut vec = vec![];
             for qid in 1..=q {
                 let query = match rng.gen_range(0..4) {
