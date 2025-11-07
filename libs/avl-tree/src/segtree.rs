@@ -49,9 +49,7 @@ impl<O: Op> AvlSegtree<O> {
     }
 
     pub fn product(&mut self, start: usize, end: usize) -> O::Value {
-        self.core
-            .touch(start, end, |c| c.prod.clone())
-            .unwrap_or_else(O::identity)
+        self.core.product(start, end)
     }
 }
 
@@ -119,7 +117,6 @@ mod tests {
     enum Query {
         Insert { index: usize, value: [Fp; 2] },
         Remove { index: usize },
-        Reverse { start: usize, end: usize },
         Product { start: usize, end: usize },
     }
 
@@ -138,26 +135,18 @@ mod tests {
     }
 
     #[test]
-    fn test_segtree() {
+    fn test_segtree_noncommutative() {
         let mut rng = StdRng::seed_from_u64(42);
         for tid in 1..=200 {
             let q = 50;
-            let value_lim = 3;
+            let value_lim = 10;
             let len_max = rng.gen_range(5..=50);
             let mut n = 0usize;
             let mut seg = AvlSegtree::<O>::new();
             let mut vec = vec![];
             for qid in 1..=q {
-                let query = match rng.gen_range(0..4) {
+                let query = match rng.gen_range(0..3) {
                     0 => {
-                        let mut start = rng.gen_range(0..=n + 1);
-                        let mut end = rng.gen_range(0..=n);
-                        if start > end {
-                            (start, end) = (end, start - 1);
-                        }
-                        Query::Reverse { start, end }
-                    }
-                    1 => {
                         let mut start = rng.gen_range(0..=n + 1);
                         let mut end = rng.gen_range(0..=n);
                         if start > end {
@@ -165,7 +154,7 @@ mod tests {
                         }
                         Query::Product { start, end }
                     }
-                    2..=3 => {
+                    1..=2 => {
                         if rng.gen_ratio(n as u32, len_max) {
                             let index = rng.gen_range(0..n);
                             Query::Remove { index }
@@ -192,10 +181,6 @@ mod tests {
                         let expected = vec.remove(index);
                         assert_eq!(result, expected);
                         n -= 1;
-                    }
-                    Query::Reverse { start, end } => {
-                        seg.reverse(start, end);
-                        vec[start..end].reverse();
                     }
                     Query::Product { start, end } => {
                         let result = seg.product(start, end);

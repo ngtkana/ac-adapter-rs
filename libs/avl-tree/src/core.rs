@@ -62,6 +62,10 @@ impl<C: NodeMarker> AvlTree<C> {
         self.root = merge2(lc, r);
     }
 
+    pub fn product(&mut self, start: usize, end: usize) -> C::Prod {
+        fold(self.root.as_deref_mut(), start, end, 0, C::identity())
+    }
+
     pub fn touch<T>(
         &mut self,
         start: usize,
@@ -176,6 +180,31 @@ pub trait NodeMarker {
     fn op_prod(f: &Self::Operator, x: &mut Self::Prod, len: usize);
 
     fn compose(f: &Self::Operator, g: &mut Self::Operator);
+}
+
+pub fn fold<C: NodeMarker>(
+    x: Option<&mut Node<C>>,
+    start: usize,
+    end: usize,
+    offset: usize,
+    mut init: C::Prod,
+) -> C::Prod {
+    let Some(x) = x else { return init };
+    x.push();
+    if start <= offset && offset + x.len <= end {
+        return C::mul(&init, &x.prod);
+    }
+    let pivot = offset + x.left.as_deref().map_or(0, |l| l.len);
+    if start < pivot {
+        init = fold(x.left.as_deref_mut(), start, end, offset, init);
+    }
+    if (start..end).contains(&pivot) {
+        init = C::mul(&init, &C::singleton(&x.value));
+    }
+    if pivot + 1 < end {
+        init = fold(x.right.as_deref_mut(), start, end, pivot + 1, init);
+    }
+    init
 }
 
 pub fn merge2<C: NodeMarker>(
@@ -304,29 +333,41 @@ fn rotate_right<C: NodeMarker>(mut x: Box<Node<C>>) -> Box<Node<C>> {
 
 #[cfg(test)]
 pub mod debug {
+    use std::fmt::Debug;
+
     use super::{Node, NodeMarker};
 
     pub fn display<C: NodeMarker>(x: Option<&Node<C>>) -> String
     where
-        C::Value: std::fmt::Debug,
+        C::Value: Debug,
+        C::Prod: Debug,
+        C::Operator: Debug,
     {
         fn display_recur<C: NodeMarker>(x: &Node<C>, s: &mut String, d: u8)
         where
-            C::Value: std::fmt::Debug,
+            C::Value: Debug,
+            C::Prod: Debug,
+            C::Operator: Debug,
         {
             use std::fmt::Write;
             if let Some(l) = x.left.as_ref() {
                 display_recur(l, s, d + 1);
             }
+            let Node {
+                ht,
+                len,
+                rev,
+                value,
+                prod,
+                op,
+                ..
+            } = x;
             writeln!(
                 s,
-                "{space1}●{space2} len={len} ht={ht}{rev} {data:?}",
+                "{space1}●{space2} len={len:2} ht={ht} {rev}{{ value: {value:?}, prod: {prod:?}, op: {op:?} }}",
                 space1 = " ".repeat(d as usize),
-                space2 = " ".repeat(4_usize.saturating_sub(d as usize)),
-                len = x.len,
-                ht = x.ht,
-                rev = if x.rev { "[rev] " } else { "" },
-                data = x.value,
+                space2 = " ".repeat(6_usize.saturating_sub(d as usize)),
+                rev = if *rev { "[rev] " } else { "      " },
             )
             .unwrap();
             if let Some(r) = x.right.as_ref() {
@@ -341,25 +382,38 @@ pub mod debug {
 
     pub fn validate<C: NodeMarker>(x: Option<&Node<C>>)
     where
-        C::Value: std::fmt::Debug,
+        C::Value: Debug,
+        C::Prod: Debug + PartialEq + Clone,
+        C::Operator: Clone,
     {
-        fn validate_recur<C: NodeMarker>(x: &Node<C>)
+        fn validate_recur<C: NodeMarker>(x: &Node<C>, rev: bool)
         where
-            C::Value: std::fmt::Debug,
+            C::Value: Debug,
+            C::Prod: Debug + PartialEq + Clone,
+            C::Operator: Clone,
         {
             let lh = x.left.as_ref().map_or(0, |l| l.ht);
             let rh = x.right.as_ref().map_or(0, |r| r.ht);
             assert!(matches!(lh as i8 - rh as i8, -1..=1));
             assert_eq!(lh.max(rh) + 1, x.ht);
-            if let Some(l) = x.left.as_ref() {
-                validate_recur(l);
+            let mut prod = C::identity();
+            if let Some(p) = if rev { x.right.as_ref() } else { x.left.as_ref() } {
+                let mut p_prod = p.prod.clone();
+                C::op_prod(&x.op, &mut p_prod, p.len);
+                prod = C::mul(&prod, &p_prod);
+                validate_recur(p, rev ^ x.rev);
             }
-            if let Some(r) = x.right.as_ref() {
-                validate_recur(r);
+            prod = C::mul(&prod, &C::singleton(&x.value));
+            if let Some(p) = if rev { x.left.as_ref() } else { x.right.as_ref() } {
+                let mut p_prod = p.prod.clone();
+                C::op_prod(&x.op, &mut p_prod, p.len);
+                prod = C::mul(&prod, &p_prod);
+                validate_recur(p, rev ^ x.rev);
             }
+            assert_eq!(&prod, &x.prod);
         }
         let Some(x) = x else { return };
-        validate_recur(x);
+        validate_recur(x, false);
     }
 
     pub fn collect<C: NodeMarker>(x: Option<&Node<C>>) -> Vec<C::Value>
@@ -379,8 +433,8 @@ pub mod debug {
             let mut value = x.value.clone();
             C::op_value(&op, &mut value);
             let mut next_op = x.op.clone();
-            rev ^= x.rev;
             C::compose(&op, &mut next_op);
+            rev ^= x.rev;
             if let Some(y) = if rev { x.right.as_ref() } else { x.left.as_ref() } {
                 collect_recur(y, out, rev, next_op.clone());
             }
