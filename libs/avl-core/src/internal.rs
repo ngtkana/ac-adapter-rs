@@ -1,13 +1,4 @@
-use super::{NodeMarker, Ordering};
-
-pub struct Node<C: NodeMarker + ?Sized> {
-    pub left: Option<Box<Self>>,
-    pub right: Option<Box<Self>>,
-    pub ht: u8,
-    pub len: usize,
-    pub rev: bool,
-    pub data: C::Data,
-}
+use super::{Node, NodeMarker, Ordering};
 
 impl<C: NodeMarker> Node<C> {
     pub fn new(data: C::Data) -> Self {

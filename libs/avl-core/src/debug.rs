@@ -33,7 +33,7 @@ where
     s
 }
 
-pub fn validate<C: NodeMarker>(x: Option<&Node<C>>)
+pub fn validate<C: NodeMarker>(tree: &CoreTree<C>)
 where
     C::Data: std::fmt::Debug,
 {
@@ -52,6 +52,6 @@ where
             validate_recur(r);
         }
     }
-    let Some(x) = x else { return };
+    let Some(x) = tree.root.as_deref() else { return };
     validate_recur(x);
 }

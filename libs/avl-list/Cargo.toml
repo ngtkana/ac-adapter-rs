@@ -1,0 +1,10 @@
+[package]
+name = "avl-list"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+avl-core = { version = "0.1.0", path = "../avl-core" }
+
+[dev-dependencies]
+rand.workspace = true
