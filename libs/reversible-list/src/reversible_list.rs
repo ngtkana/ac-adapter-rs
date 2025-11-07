@@ -97,7 +97,6 @@ mod tests {
             let mut n = 0usize;
             let mut rlist = ReversibleList::new();
             let mut vec = vec![];
-            #[allow(clippy::explicit_counter_loop)]
             for qid in 1..=q {
                 let query = match rng.gen_range(0..3) {
                     0 => {
