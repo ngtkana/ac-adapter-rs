@@ -13,6 +13,14 @@ impl<T> Default for AvlList<T> {
     }
 }
 
+impl<T> FromIterator<T> for AvlList<T> {
+    fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
+        Self {
+            core: iter.into_iter().collect(),
+        }
+    }
+}
+
 impl<T> AvlList<T> {
     pub fn new() -> Self {
         Self::default()
