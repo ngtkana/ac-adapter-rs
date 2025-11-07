@@ -49,7 +49,7 @@ impl<T> AvlList<T> {
     }
 }
 
-impl<T> FromIterator<T> for AvlList<T> {
+impl<T: Clone> FromIterator<T> for AvlList<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         Self {
             core: iter.into_iter().collect(),
