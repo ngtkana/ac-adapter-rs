@@ -27,11 +27,11 @@ impl<O: Op> AvlSegtree<O> {
     }
 
     pub fn insert(&mut self, index: usize, value: O::Value) {
-        self.core.insert(index, Data::new(value));
+        self.core.insert(index, value);
     }
 
     pub fn remove(&mut self, index: usize) -> O::Value {
-        self.core.remove(index).value
+        self.core.remove(index)
     }
 
     pub fn split_off(&mut self, index: usize) -> Self {
@@ -50,7 +50,7 @@ impl<O: Op> AvlSegtree<O> {
 
     pub fn product(&mut self, start: usize, end: usize) -> O::Value {
         self.core
-            .touch(start, end, |c| c.data.prod.clone())
+            .touch(start, end, |c| c.prod.clone())
             .unwrap_or_else(O::identity)
     }
 }
@@ -58,7 +58,7 @@ impl<O: Op> AvlSegtree<O> {
 impl<O: Op> FromIterator<O::Value> for AvlSegtree<O> {
     fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
         Self {
-            core: iter.into_iter().map(Data::new).collect(),
+            core: iter.into_iter().collect(),
         }
     }
 }
@@ -75,58 +75,30 @@ struct Marker<O> {
     __marker: PhantomData<O>,
 }
 
-struct Data<O: Op> {
-    value: O::Value,
-    prod: O::Value,
-}
-
-impl<O: Op> Data<O> {
-    fn new(value: O::Value) -> Self {
-        Self {
-            prod: value.clone(),
-            value,
-        }
-    }
-}
-
-impl<O: Op> Debug for Data<O> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("Data")
-            .field("value", &self.value)
-            .field("sum", &self.prod)
-            .finish()
-    }
-}
-
-impl<O: Op> Clone for Data<O> {
-    fn clone(&self) -> Self {
-        Self {
-            value: self.value.clone(),
-            prod: self.prod.clone(),
-        }
-    }
-}
-
 impl<O: Op> NodeMarker for Marker<O> {
-    type Data = Data<O>;
+    type Value = O::Value;
+
+    type Prod = O::Value;
 
     type Operator = ();
 
-    fn update(data: &mut Data<O>, left: Option<&Data<O>>, right: Option<&Data<O>>) {
-        let mut prod = O::identity();
-        if let Some(l) = left {
-            prod = O::mul(&prod, &l.prod);
-        }
-        prod = O::mul(&prod, &data.value);
-        if let Some(r) = right {
-            prod = O::mul(&prod, &r.prod);
-        }
-        data.prod = prod;
+    fn singleton(value: &O::Value) -> Self::Prod {
+        value.clone()
+    }
+
+    fn mul(lhs: &Self::Prod, rhs: &Self::Prod) -> Self::Prod {
+        O::mul(lhs, rhs)
+    }
+
+    fn identity() -> Self::Prod {
+        O::identity()
     }
 
     fn nop() {}
 
-    fn op(&(): &(), _: &mut Data<O>, _len: usize) {}
+    fn op_value(&(): &Self::Operator, _: &mut Self::Value) {}
+
+    fn op_prod(&(): &Self::Operator, _: &mut Self::Prod, _len: usize) {}
 
     fn compose(&(): &(), &mut (): &mut ()) {}
 }
@@ -234,10 +206,7 @@ mod tests {
                     }
                 }
                 eprintln!("{}", display(seg.core.root.as_deref()));
-                let result: Vec<_> = collect(seg.core.root.as_deref())
-                    .into_iter()
-                    .map(|data| data.value)
-                    .collect();
+                let result: Vec<_> = collect(seg.core.root.as_deref()).into_iter().collect();
                 eprintln!("   vec: {:?}", &vec);
                 eprintln!(" rlist: {:?}", &result);
                 assert_eq!(&vec, &result);

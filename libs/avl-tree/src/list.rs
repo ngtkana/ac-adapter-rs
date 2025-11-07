@@ -61,17 +61,25 @@ struct Marker<T> {
     __marker: PhantomData<T>,
 }
 impl<T> NodeMarker for Marker<T> {
-    type Data = T;
+    type Value = T;
+
+    type Prod = ();
 
     type Operator = ();
 
-    fn update(_data: &mut T, _left: Option<&T>, _right: Option<&T>) {}
+    fn singleton(_value: &T) -> Self::Prod {}
+
+    fn mul(&(): &Self::Prod, &(): &Self::Prod) -> Self::Prod {}
+
+    fn identity() -> Self::Prod {}
 
     fn nop() {}
 
-    fn op(&(): &(), _: &mut T, _len: usize) {}
+    fn op_value(&(): &Self::Operator, _: &mut T) {}
 
-    fn compose(&(): &(), &mut (): &mut ()) {}
+    fn op_prod(&(): &Self::Operator, (): &mut Self::Prod, _len: usize) {}
+
+    fn compose(&(): &Self::Operator, &mut (): &mut Self::Operator) {}
 }
 
 #[cfg(test)]
