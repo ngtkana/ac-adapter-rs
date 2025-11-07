@@ -1,6 +1,6 @@
-use avl_core::{CoreTree, Node, NodeMarker};
 use std::marker::PhantomData;
 
+use avl_core::{CoreTree, Node, NodeMarker};
 pub struct AvlList<T> {
     core: CoreTree<Marker<T>>,
 }
@@ -38,13 +38,13 @@ impl<T> AvlList<T> {
         self.core.append(other.core);
     }
     pub fn reverse(&mut self, start: usize, end: usize) {
-        self.core.reverse(start, end)
+        self.core.reverse(start, end);
     }
     pub fn to_vec(&mut self) -> Vec<T>
     where
         T: Clone,
     {
-        self.core.to_vec()
+        self.core.to_vec(Clone::clone)
     }
 }
 

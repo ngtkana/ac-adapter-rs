@@ -51,28 +51,33 @@ impl<C: NodeMarker> CoreTree<C> {
     pub fn new() -> Self {
         Self::default()
     }
+
     pub fn is_empty(&self) -> bool {
         self.root.is_none()
     }
+
     pub fn len(&self) -> usize {
         self.root.as_ref().map_or(0, |x| x.len)
     }
+
     pub fn insert(&mut self, index: usize, data: C::Data) {
         assert!(index <= self.len());
         let node = Box::new(Node::new(data));
         let (l, r) = split2(self.root.take(), index);
         self.root = Some(merge3(l, node, r));
     }
+
     pub fn remove(&mut self, index: usize) -> C::Data {
         assert!(index < self.len());
         let (l, c, r) = split3(self.root.take().unwrap(), index);
         self.root = merge2(l, r);
         c.data
     }
+
     pub fn split_off(&mut self, index: usize) -> Self {
         assert!(index <= self.len());
         if index == self.len() {
-            Self::new();
+            return Self::new();
         }
         let (l, c, r) = split3(self.root.take().unwrap(), index);
         self.root = l;
@@ -80,9 +85,11 @@ impl<C: NodeMarker> CoreTree<C> {
             root: merge2(Some(c), r),
         }
     }
+
     pub fn append(&mut self, other: Self) {
         self.root = merge2(self.root.take(), other.root);
     }
+
     pub fn reverse(&mut self, start: usize, end: usize) {
         assert!(start <= end && end <= self.len());
         let (lc, r) = split2(self.root.take(), end);
@@ -93,54 +100,30 @@ impl<C: NodeMarker> CoreTree<C> {
         let lc = merge2(l, c);
         self.root = merge2(lc, r);
     }
-    pub fn visit_roots(&mut self, start: usize, end: usize, mut visitor: impl FnMut(&mut Node<C>)) {
-        fn visit_roots_recurse<C: NodeMarker>(
-            root: &mut Node<C>,
-            root_start: usize,
-            root_end: usize,
-            start: usize,
-            end: usize,
-            visitor: &mut impl FnMut(&mut Node<C>),
-        ) {
-            if start <= root_start && root_end <= end {
-                visitor(root);
-                return;
-            }
-            if root_end <= start || end <= root_start {
-                return;
-            }
-            root.push();
-            if let Some(l) = root.left.as_mut() {
-                visit_roots_recurse(l, root_start, root_start + l.len, start, end, visitor);
-            }
-            if let Some(r) = root.left.as_mut() {
-                visit_roots_recurse(r, root_end - r.len, root_end, start, end, visitor);
-            }
-        }
-        assert!(start <= end && end <= self.len());
-        let Some(root) = self.root.as_deref_mut() else { return };
-        visit_roots_recurse(root, 0, root.len, start, end, &mut visitor);
+
+    pub fn total(&mut self) -> Option<&C::Data> {
+        self.root.as_deref_mut().map(|node| &node.data)
     }
-    pub fn to_vec(&self) -> Vec<C::Data>
-    where
-        C::Data: Clone,
-    {
-        fn collect_recur<C: NodeMarker>(x: &Node<C>, out: &mut Vec<C::Data>, mut rev: bool)
-        where
-            C::Data: Clone,
-        {
+
+    pub fn to_vec<T>(&self, f: impl Fn(&C::Data) -> T) -> Vec<T> {
+        fn collect_recur<T, C: NodeMarker>(
+            x: &Node<C>,
+            f: &impl Fn(&C::Data) -> T,
+            out: &mut Vec<T>,
+            mut rev: bool,
+        ) {
             rev ^= x.rev;
             if let Some(y) = if rev { x.right.as_ref() } else { x.left.as_ref() } {
-                collect_recur(y, out, rev);
+                collect_recur(y, f, out, rev);
             }
-            out.push(x.data.clone());
+            out.push(f(&x.data));
             if let Some(y) = if rev { x.left.as_ref() } else { x.right.as_ref() } {
-                collect_recur(y, out, rev);
+                collect_recur(y, f, out, rev);
             }
         }
         let Some(x) = self.root.as_deref() else { return vec![] };
         let mut out = Vec::new();
-        collect_recur(x, &mut out, false);
+        collect_recur(x, &f, &mut out, false);
         out
     }
 }
