@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["AvlTree","IntoIter","Iter"]};
+window.SIDEBAR_ITEMS = {"mod":["lazy_segtree","list","segtree"]};

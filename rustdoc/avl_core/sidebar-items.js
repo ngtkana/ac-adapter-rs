@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["display","validate"],"struct":["CoreTree","Node"],"trait":["NodeMarker"]};

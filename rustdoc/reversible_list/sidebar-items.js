@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"mod":["reversible_lazy_segtree","reversible_list","reversible_segtree"]};
