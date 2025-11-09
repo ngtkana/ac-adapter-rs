@@ -67,7 +67,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let avl = AvlTree::<()>::new();
     /// assert!(avl.is_empty());
     /// ```
@@ -80,7 +80,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let avl = AvlTree::<()>::new();
     /// assert!(avl.is_empty());
     /// ```
@@ -93,7 +93,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// use std::iter::repeat;
     /// assert_eq!(AvlTree::<()>::new().len(), 0);
     /// assert_eq!(repeat(()).take(3).collect::<AvlTree::<_>>().len(), 3);
@@ -107,7 +107,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_back(1);
     /// avl.push_back(3);
@@ -124,7 +124,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_front(1);
     /// avl.push_front(2);
@@ -143,7 +143,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// assert_eq!(avl.pop_back(), None);
     /// avl.push_back(1);
@@ -163,7 +163,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_front(1);
     /// avl.push_front(2);
@@ -180,7 +180,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// assert_eq!(avl.back(), None);
     ///
@@ -197,7 +197,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// assert_eq!(avl.front(), None);
     ///
@@ -214,17 +214,17 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
-    /// let mut avl_tree = AvlTree::new();
-    /// assert_eq!(avl_tree.back(), None);
+    /// # use old_avl_tree::AvlTree;
+    /// let mut old_avl_tree = AvlTree::new();
+    /// assert_eq!(old_avl_tree.back(), None);
     ///
-    /// avl_tree.push_back(1);
-    /// avl_tree.push_back(2);
-    /// match avl_tree.back_mut() {
+    /// old_avl_tree.push_back(1);
+    /// old_avl_tree.push_back(2);
+    /// match old_avl_tree.back_mut() {
     ///     Some(x) => *x = 9,
     ///     None => (),
     /// }
-    /// assert_eq!(avl_tree.back(), Some(&9));
+    /// assert_eq!(old_avl_tree.back(), Some(&9));
     /// ```
     pub fn back_mut(&mut self) -> Option<&mut T> {
         self.get_mut(self.len().checked_sub(1)?)
@@ -235,7 +235,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// assert_eq!(avl.front_mut(), None);
     ///
@@ -256,7 +256,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut buf: AvlTree<_> = vec![1, 2].into_iter().collect();
     /// let mut buf2: AvlTree<_> = vec![3, 4].into_iter().collect();
     /// buf.append(&mut buf2);
@@ -277,7 +277,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut buf: AvlTree<_> = vec![1, 2, 3].into_iter().collect();
     /// let buf2 = buf.split_off(1);
     /// assert_eq!(buf, [1][..]);
@@ -300,7 +300,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_back('a');
     /// avl.push_back('b');
@@ -321,7 +321,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_back(1);
     /// avl.push_back(2);
@@ -346,7 +346,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_back(3);
     /// avl.push_back(4);
@@ -366,7 +366,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut avl = AvlTree::new();
     /// avl.push_back(3);
     /// avl.push_back(4);
@@ -396,7 +396,7 @@ impl<T> AvlTree<T> {
     ///
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let avl: AvlTree<_> = vec![0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55]
     ///     .into_iter()
     ///     .collect();
@@ -422,7 +422,7 @@ impl<T> AvlTree<T> {
     ///
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let avl: AvlTree<_> = vec![
     ///     (0, 0),
     ///     (2, 1),
@@ -465,7 +465,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let avl: AvlTree<_> = vec![0, 1, 1, 1, 1, 2, 3, 5, 8, 13, 21, 34, 55]
     ///     .into_iter()
     ///     .collect();
@@ -498,7 +498,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let a: AvlTree<_> = [10, 11, 13, 13, 15].iter().copied().collect();
     /// assert_eq!(a.lower_bound(&9), 0);
     /// assert_eq!(a.lower_bound(&10), 0);
@@ -527,7 +527,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let a: AvlTree<_> = [10, 11, 13, 13, 15].iter().copied().collect();
     /// assert_eq!(a.upper_bound(&9), 0);
     /// assert_eq!(a.upper_bound(&10), 1);
@@ -552,7 +552,7 @@ impl<T> AvlTree<T> {
     /// # Examples
     ///
     /// ```
-    /// # use avl_tree::AvlTree;
+    /// # use old_avl_tree::AvlTree;
     /// let mut buf = AvlTree::new();
     /// buf.push_back(5);
     /// buf.push_back(3);
