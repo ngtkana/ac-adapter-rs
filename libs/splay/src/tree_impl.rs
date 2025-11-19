@@ -89,6 +89,7 @@ unsafe fn split2<N: MarkerTrait>(
 ) -> (*mut Node<N>, *mut Node<N>) {
     let Some(mut x) = x.as_mut() else { return (null_mut(), null_mut()) };
     let is_less = loop {
+        x.push();
         let llen = x.left.as_ref().map_or(0, |y| y.len);
         if index <= llen {
             let Some(l) = x.left.as_mut() else { break false };
@@ -124,6 +125,7 @@ unsafe fn split3<N: MarkerTrait>(
     mut index: usize,
 ) -> (*mut Node<N>, &mut Node<N>, *mut Node<N>) {
     loop {
+        x.push();
         let llen = x.left.as_ref().map_or(0, |y| y.len);
         match index.cmp(&llen) {
             Ordering::Less => x = &mut *x.left,
@@ -155,6 +157,7 @@ unsafe fn merge2<N: MarkerTrait>(l: *mut Node<N>, r: *mut Node<N>) -> *mut Node<
         r = l;
     }
     splay(r);
+    r.push();
     r.left = l;
     if let Some(l) = l.as_mut() {
         l.parent = r;
