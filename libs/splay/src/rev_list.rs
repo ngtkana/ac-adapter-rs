@@ -52,7 +52,7 @@ impl<T> Marker for ListMarker<T> {
     }
 }
 
-// Public inherent methods for SplayList<T>
+// Public inherent methods for RevList<T>
 impl<T> Default for RevList<T> {
     fn default() -> Self {
         Self::new()
