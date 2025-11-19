@@ -105,6 +105,7 @@ impl<N: MarkerTrait> Node<N> {
                     N::act_on_prod(&self.op, &mut r.prod);
                     N::act_on_op(&self.op, &mut r.op);
                 }
+                self.op = N::nop();
             }
         }
     }
