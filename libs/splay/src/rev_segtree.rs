@@ -94,7 +94,7 @@ impl<O: RevSegtreeOp> RevSegtree<O> {
         self.tree.remove(index)
     }
 
-    /// Appends another SplaySegtree to this one.
+    /// Appends another RevSegtree to this one.
     pub fn append(&mut self, other: Self) {
         self.tree.append(other.tree);
     }
