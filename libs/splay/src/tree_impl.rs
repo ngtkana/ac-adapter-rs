@@ -127,6 +127,7 @@ unsafe fn merge3<N: MarkerTrait>(
             l = r;
         }
         c.left = splay(l);
+        c.left.as_mut().unwrap().parent = c;
     }
     if let Some(mut r) = r.as_mut() {
         assert!(r.parent.is_null());
