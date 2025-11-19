@@ -169,6 +169,12 @@ impl<O: SegtreeOp> SplaySegtree<O> {
         self.tree.min_right(end, pred)
     }
 }
+
+impl<O: SegtreeOp> Default for SplaySegtree<O> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
 impl<O: SegtreeOp> From<Tree<SegtreeMarker<O>>> for SplaySegtree<O> {
     fn from(tree: Tree<SegtreeMarker<O>>) -> Self {
         Self { tree }

@@ -39,6 +39,12 @@ impl<T> MarkerTrait for ListMarker<T> {
 }
 
 // Public inherent methods for SplayList<T>
+impl<T> Default for SplayList<T> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T> SplayList<T> {
     pub fn new() -> Self {
         Tree::new().into()
