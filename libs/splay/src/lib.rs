@@ -90,7 +90,7 @@ impl<N: MarkerTrait> Node<N> {
                 if let Some(l) = self.left.as_mut() {
                     l.rev ^= true;
                 }
-                if let Some(r) = self.left.as_mut() {
+                if let Some(r) = self.right.as_mut() {
                     r.rev ^= true;
                 }
             }
