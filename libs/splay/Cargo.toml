@@ -1,5 +1,5 @@
 [package]
-name = "bbst"
+name = "splay"
 version = "0.1.0"
 edition = "2021"
 
