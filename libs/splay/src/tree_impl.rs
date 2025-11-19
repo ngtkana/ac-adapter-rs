@@ -83,17 +83,18 @@ unsafe fn split2<N: MarkerTrait>(
     mut index: usize,
 ) -> (*mut Node<N>, *mut Node<N>) {
     let Some(mut x) = x.as_mut() else { return (null_mut(), null_mut()) };
-    let (x, is_less) = loop {
+    let is_less = loop {
         let llen = x.left.as_ref().map_or(0, |y| y.len);
         if index <= llen {
-            let Some(l) = x.left.as_mut() else { break (splay(x), false) };
+            let Some(l) = x.left.as_mut() else { break false };
             x = l;
         } else {
-            let Some(r) = x.right.as_mut() else { break (splay(x), true) };
+            let Some(r) = x.right.as_mut() else { break true };
             x = r;
             index -= llen + 1;
         }
     };
+    splay(x);
     if is_less {
         let r = x.right;
         if let Some(r) = r.as_mut() {
