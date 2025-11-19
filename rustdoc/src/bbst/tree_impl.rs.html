@@ -161,7 +161,7 @@
 <a href=#127 id=127 data-nosnippet>127</a>            l = r;
 <a href=#128 id=128 data-nosnippet>128</a>        }
 <a href=#129 id=129 data-nosnippet>129</a>        c.left = splay(l);
-<a href=#130 id=130 data-nosnippet>130</a>        c.left.as_mut().unwrap().parent = c;
+<a href=#130 id=130 data-nosnippet>130</a>        l.parent = c;
 <a href=#131 id=131 data-nosnippet>131</a>    }
 <a href=#132 id=132 data-nosnippet>132</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(<span class="kw-2">mut </span>r) = r.as_mut() {
 <a href=#133 id=133 data-nosnippet>133</a>        <span class="macro">assert!</span>(r.parent.is_null());
@@ -169,7 +169,7 @@
 <a href=#135 id=135 data-nosnippet>135</a>            r = l;
 <a href=#136 id=136 data-nosnippet>136</a>        }
 <a href=#137 id=137 data-nosnippet>137</a>        c.right = splay(r);
-<a href=#138 id=138 data-nosnippet>138</a>        c.right.parent = c;
+<a href=#138 id=138 data-nosnippet>138</a>        r.parent = c;
 <a href=#139 id=139 data-nosnippet>139</a>    }
 <a href=#140 id=140 data-nosnippet>140</a>    c.update();
 <a href=#141 id=141 data-nosnippet>141</a>    c
@@ -212,8 +212,8 @@
 <a href=#178 id=178 data-nosnippet>178</a>    <span class="kw">let </span>y = <span class="kw-2">&amp;mut *</span>x.right;
 <a href=#179 id=179 data-nosnippet>179</a>    y.push();
 <a href=#180 id=180 data-nosnippet>180</a>    x.right = y.left;
-<a href=#181 id=181 data-nosnippet>181</a>    <span class="kw">if </span>!x.right.is_null() {
-<a href=#182 id=182 data-nosnippet>182</a>        (<span class="kw-2">*</span>x.right).parent = x;
+<a href=#181 id=181 data-nosnippet>181</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = x.right.as_mut() {
+<a href=#182 id=182 data-nosnippet>182</a>        c.parent = x;
 <a href=#183 id=183 data-nosnippet>183</a>    }
 <a href=#184 id=184 data-nosnippet>184</a>    y.parent = x.parent;
 <a href=#185 id=185 data-nosnippet>185</a>    y.left = x;
@@ -237,8 +237,8 @@
 <a href=#203 id=203 data-nosnippet>203</a>    <span class="kw">let </span>y = <span class="kw-2">&amp;mut *</span>x.left;
 <a href=#204 id=204 data-nosnippet>204</a>    y.push();
 <a href=#205 id=205 data-nosnippet>205</a>    x.left = y.right;
-<a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">if </span>!x.left.is_null() {
-<a href=#207 id=207 data-nosnippet>207</a>        (<span class="kw-2">*</span>x.left).parent = x;
+<a href=#206 id=206 data-nosnippet>206</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(c) = x.left.as_mut() {
+<a href=#207 id=207 data-nosnippet>207</a>        c.parent = x;
 <a href=#208 id=208 data-nosnippet>208</a>    }
 <a href=#209 id=209 data-nosnippet>209</a>    y.parent = x.parent;
 <a href=#210 id=210 data-nosnippet>210</a>    y.right = x;
