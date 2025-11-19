@@ -177,7 +177,7 @@ mod test_util {
             pretty_impl(x.left, s, &mut *header);
             header.pop().unwrap();
 
-            writeln!(s, "{}{neck}○ {:?}", *header, x.value).unwrap();
+            writeln!(s, "{}{neck}🂠 {:?}", *header, x.value).unwrap();
 
             header.push(if is_left_child { '│' } else { ' ' });
             pretty_impl(x.right, s, &mut *header);
