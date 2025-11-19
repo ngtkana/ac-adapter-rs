@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["SplayLazySegtree","SplayList","SplaySegtree"],"trait":["LazySegtreeOp","SegtreeOp"]};
+window.SIDEBAR_ITEMS = {"struct":["RevLazySegtree","RevList","RevSegtree"],"trait":["RevLazySegtreeOp","RevSegtreeOp"]};
