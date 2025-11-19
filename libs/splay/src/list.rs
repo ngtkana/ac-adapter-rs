@@ -93,3 +93,44 @@ impl<T> FromIterator<T> for SplayList<T> {
         iter.into_iter().collect::<Tree<_>>().into()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use rand::{rngs::StdRng, Rng, SeedableRng};
+
+    use crate::test_util::pretty;
+
+    use super::*;
+
+    #[derive(Debug)]
+    enum Query {
+        Insert { index: usize, value: u32 },
+    }
+
+    #[test]
+    fn test_insert_list() {
+        let mut rng = StdRng::seed_from_u64(42);
+        let value_lim = 100;
+        for tid in 1..=200 {
+            let mut list = SplayList::new();
+            let mut vec = vec![];
+            for qid in 1..=20 {
+                let index = rng.gen_range(0..=vec.len());
+                let value = rng.gen_range(0..value_lim);
+                let query = Query::Insert { index, value };
+                eprintln!("Query #{tid}.{qid}: {query:?}");
+
+                match query {
+                    Query::Insert { index, value } => {
+                        vec.insert(index, value);
+                        list.insert(index, value);
+                    }
+                }
+
+                eprintln!("vec = {:?}", &vec);
+                eprintln!("list =\n{}", pretty(&list.tree));
+                assert_eq!(list.collect_vec(), vec);
+            }
+        }
+    }
+}

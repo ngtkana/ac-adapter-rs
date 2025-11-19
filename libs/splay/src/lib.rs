@@ -136,3 +136,50 @@ impl<N: MarkerTrait> Drop for Entry<'_, N> {
         self.node.prod = N::to_prod(&self.node.value);
     }
 }
+
+#[cfg(test)]
+mod test_util {
+    use super::*;
+    use std::fmt::Write;
+
+    pub fn pretty<N: MarkerTrait>(tree: &Tree<N>) -> String
+    where
+        N::Value: std::fmt::Debug,
+    {
+        unsafe fn pretty_impl<N: MarkerTrait>(x: *mut Node<N>, s: &mut String, header: &mut String)
+        where
+            N::Value: std::fmt::Debug,
+        {
+            let Some(x) = x.as_mut() else { return };
+
+            let is_left_child = x.parent.as_ref().is_some_and(|p| std::ptr::eq(p.left, x));
+            let is_right_child = x.parent.as_ref().is_some_and(|p| std::ptr::eq(p.right, x));
+            let neck = if let Some(p) = x.parent.as_ref() {
+                if std::ptr::eq(p.left, x) {
+                    '┌'
+                } else if std::ptr::eq(p.right, x) {
+                    '└'
+                } else {
+                    unreachable!()
+                }
+            } else {
+                '╶'
+            };
+
+            header.push(if is_right_child { '│' } else { ' ' });
+            pretty_impl(x.left, s, &mut *header);
+            header.pop().unwrap();
+
+            writeln!(s, "{}{neck}○ {:?}", *header, x.value).unwrap();
+
+            header.push(if is_left_child { '│' } else { ' ' });
+            pretty_impl(x.right, s, &mut *header);
+            header.pop().unwrap();
+        }
+        unsafe {
+            let mut s = String::new();
+            pretty_impl(tree.root, &mut s, &mut String::new());
+            s
+        }
+    }
+}

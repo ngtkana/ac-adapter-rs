@@ -3,4 +3,5 @@ name = "bbst"
 version = "0.1.0"
 edition = "2021"
 
-[dependencies]
+[dev-dependencies]
+rand.workspace = true
