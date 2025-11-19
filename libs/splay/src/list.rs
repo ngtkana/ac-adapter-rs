@@ -73,6 +73,13 @@ impl<T> SplayList<T> {
     pub fn split_off(&mut self, index: usize) -> Self {
         self.tree.split_off(index).into()
     }
+
+    pub fn collect_vec(&self) -> Vec<T>
+    where
+        T: Clone,
+    {
+        self.tree.collect_vec()
+    }
 }
 
 impl<T> From<Tree<ListMarker<T>>> for SplayList<T> {

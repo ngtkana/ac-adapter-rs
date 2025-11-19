@@ -99,6 +99,10 @@ impl<O: LazySegtreeOp> SplayLazySegtree<O> {
         self.tree.split_off(index).into()
     }
 
+    pub fn collect_vec(&self) -> Vec<O::Value> {
+        self.tree.collect_vec()
+    }
+
     pub fn prod(&mut self, range: impl RangeBounds<usize>) -> O::Value {
         self.tree.prod(range)
     }

@@ -154,6 +154,10 @@ impl<O: SegtreeOp> SplaySegtree<O> {
         self.tree.split_off(index).into()
     }
 
+    pub fn collect_vec(&self) -> Vec<O::Value> {
+        self.tree.collect_vec()
+    }
+
     /// Returns the product of the values in the given range.
     pub fn prod(&mut self, range: impl RangeBounds<usize>) -> O::Value {
         self.tree.prod(range)

@@ -1,8 +1,11 @@
 #![allow(unused_variables)]
 #![allow(clippy::needless_pass_by_value)]
-use std::{ops::RangeBounds, ptr::null_mut};
+use std::{
+    ops::RangeBounds,
+    ptr::{self, null_mut},
+};
 
-use crate::{MarkerTrait, Tree};
+use crate::{MarkerTrait, Node, Tree};
 
 impl<N: MarkerTrait> Tree<N> {
     pub fn new() -> Self {
@@ -18,7 +21,11 @@ impl<N: MarkerTrait> Tree<N> {
     }
 
     pub fn insert(&mut self, index: usize, value: N::Value) {
-        todo!()
+        unsafe {
+            let (l, r) = split2(self.root, index);
+            let c = Box::leak(Box::new(Node::new(value)));
+            self.root = merge3(l, c, r);
+        }
     }
 
     pub fn remove(&mut self, index: usize) -> N::Value {
@@ -31,6 +38,15 @@ impl<N: MarkerTrait> Tree<N> {
 
     pub fn split_off(&mut self, index: usize) -> Self {
         todo!()
+    }
+
+    pub fn collect_vec(&self) -> Vec<N::Value>
+    where
+        N::Value: Clone,
+    {
+        let mut out = vec![];
+        visit(self.root, &mut |x| out.push(x.value.clone()));
+        out
     }
 
     pub fn prod(&mut self, range: impl RangeBounds<usize>) -> N::Prod {
@@ -59,5 +75,151 @@ impl<N: MarkerTrait> Default for Tree<N> {
 impl<N: MarkerTrait> FromIterator<N::Value> for Tree<N> {
     fn from_iter<T: IntoIterator<Item = N::Value>>(iter: T) -> Self {
         todo!()
+    }
+}
+
+unsafe fn split2<N: MarkerTrait>(
+    x: *mut Node<N>,
+    mut index: usize,
+) -> (*mut Node<N>, *mut Node<N>) {
+    let Some(mut x) = x.as_mut() else { return (null_mut(), null_mut()) };
+    let (x, is_less) = loop {
+        let llen = x.left.as_ref().map_or(0, |y| y.len);
+        if index <= llen {
+            let Some(l) = x.left.as_mut() else { break (splay(x), false) };
+            x = l;
+        } else {
+            let Some(r) = x.right.as_mut() else { break (splay(x), true) };
+            x = r;
+            index -= llen + 1;
+        }
+    };
+    if is_less {
+        let r = x.right;
+        if let Some(r) = r.as_mut() {
+            r.parent = null_mut();
+        }
+        x.right = null_mut();
+        x.update();
+        (x, r)
+    } else {
+        let l = x.left;
+        if let Some(l) = l.as_mut() {
+            l.parent = null_mut();
+        }
+        x.left = null_mut();
+        x.update();
+        (l, x)
+    }
+}
+
+unsafe fn merge3<N: MarkerTrait>(
+    l: *mut Node<N>,
+    c: &mut Node<N>,
+    r: *mut Node<N>,
+) -> &mut Node<N> {
+    assert!(c.left.is_null());
+    assert!(c.right.is_null());
+    assert!(c.parent.is_null());
+    if let Some(mut l) = l.as_mut() {
+        assert!(l.parent.is_null());
+        while let Some(r) = l.right.as_mut() {
+            l = r;
+        }
+        c.left = splay(l);
+    }
+    if let Some(mut r) = r.as_mut() {
+        assert!(r.parent.is_null());
+        while let Some(l) = r.left.as_mut() {
+            r = l;
+        }
+        c.right = r;
+    }
+    c.update();
+    c
+}
+
+unsafe fn splay<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+    while let Some(p) = x.parent.as_mut() {
+        let Some(pp) = p.parent.as_mut() else {
+            if ptr::eq(p.left, x) {
+                rotate_right(p);
+            } else {
+                rotate_left(p);
+            }
+            break;
+        };
+        match (ptr::eq(pp.left, p), ptr::eq(p.left, x)) {
+            (true, true) => {
+                rotate_right(pp);
+                rotate_right(p);
+            }
+            (true, false) => {
+                rotate_left(p);
+                rotate_right(pp);
+            }
+            (false, true) => {
+                rotate_right(p);
+                rotate_left(pp);
+            }
+            (false, false) => {
+                rotate_left(pp);
+                rotate_left(p);
+            }
+        }
+    }
+    x
+}
+
+unsafe fn rotate_left<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+    x.push();
+    let y = &mut *x.right;
+    y.push();
+    x.right = y.left;
+    y.parent = x.parent;
+    y.left = x;
+    x.parent = y;
+    if let Some(p) = y.parent.as_mut() {
+        if ptr::eq(p.left, x) {
+            p.left = y;
+        } else if ptr::eq(p.right, x) {
+            p.right = y;
+        } else {
+            unreachable!()
+        }
+    }
+    x.update();
+    y.update();
+    y
+}
+
+unsafe fn rotate_right<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+    x.push();
+    let y = &mut *x.left;
+    y.push();
+    x.left = y.right;
+    y.parent = x.parent;
+    y.right = x;
+    x.parent = y;
+    if let Some(p) = y.parent.as_mut() {
+        if ptr::eq(p.left, x) {
+            p.left = y;
+        } else if ptr::eq(p.right, x) {
+            p.right = y;
+        } else {
+            unreachable!()
+        }
+    }
+    x.update();
+    y.update();
+    y
+}
+
+fn visit<N: MarkerTrait>(x: *mut Node<N>, f: &mut impl FnMut(&mut Node<N>)) {
+    unsafe {
+        let Some(x) = x.as_mut() else { return };
+        visit(x.left, f);
+        f(x);
+        visit(x.right, f);
     }
 }
