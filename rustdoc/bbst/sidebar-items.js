@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["SplayLazySegtree","SplayList","SplaySegtree"],"trait":["LazySegtreeOp","SegtreeOp"]};
