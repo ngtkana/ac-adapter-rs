@@ -118,6 +118,57 @@ impl<O: SegtreeOp> NewTrait<O> for SplaySegtree<O> {
     }
 }
 
+impl<O: SegtreeOp> SplaySegtree<O> {
+    /// Creates a new, empty SplaySegtree.
+    pub fn new() -> Self {
+        Tree::new().into()
+    }
+
+    /// Returns true if the segtree is empty.
+    pub fn is_empty(&self) -> bool {
+        self.tree.is_empty()
+    }
+
+    /// Returns the number of elements in the segtree.
+    pub fn len(&self) -> usize {
+        self.tree.len()
+    }
+
+    /// Inserts a value at the given index.
+    pub fn insert(&mut self, index: usize, value: O::Value) {
+        self.tree.insert(index, value);
+    }
+
+    /// Removes and returns the value at the given index.
+    pub fn remove(&mut self, index: usize) -> O::Value {
+        self.tree.remove(index)
+    }
+
+    /// Appends another SplaySegtree to this one.
+    pub fn append(&mut self, other: Self) {
+        self.tree.append(other.tree);
+    }
+
+    /// Splits off the segtree at the given index.
+    pub fn split_off(&mut self, index: usize) -> Self {
+        self.tree.split_off(index).into()
+    }
+
+    /// Returns the product of the values in the given range.
+    pub fn prod(&mut self, range: impl RangeBounds<usize>) -> O::Value {
+        self.tree.prod(range)
+    }
+
+    /// Returns the maximum left index for which the predicate holds.
+    pub fn max_left(&mut self, start: usize, pred: impl FnMut(&O::Value) -> bool) -> usize {
+        self.tree.max_left(start, pred)
+    }
+
+    /// Returns the minimum right index for which the predicate holds.
+    pub fn min_right(&mut self, end: usize, pred: impl FnMut(&O::Value) -> bool) -> usize {
+        self.tree.min_right(end, pred)
+    }
+}
 impl<O: SegtreeOp> From<Tree<SegtreeMarker<O>>> for SplaySegtree<O> {
     fn from(tree: Tree<SegtreeMarker<O>>) -> Self {
         Self { tree }
