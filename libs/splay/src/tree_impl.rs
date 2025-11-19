@@ -127,7 +127,7 @@ unsafe fn merge3<N: MarkerTrait>(
             l = r;
         }
         c.left = splay(l);
-        c.left.as_mut().unwrap().parent = c;
+        l.parent = c;
     }
     if let Some(mut r) = r.as_mut() {
         assert!(r.parent.is_null());
@@ -135,7 +135,7 @@ unsafe fn merge3<N: MarkerTrait>(
             r = l;
         }
         c.right = splay(r);
-        c.right.parent = c;
+        r.parent = c;
     }
     c.update();
     c
@@ -178,8 +178,8 @@ unsafe fn rotate_left<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     let y = &mut *x.right;
     y.push();
     x.right = y.left;
-    if !x.right.is_null() {
-        (*x.right).parent = x;
+    if let Some(c) = x.right.as_mut() {
+        c.parent = x;
     }
     y.parent = x.parent;
     y.left = x;
@@ -203,8 +203,8 @@ unsafe fn rotate_right<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     let y = &mut *x.left;
     y.push();
     x.left = y.right;
-    if !x.left.is_null() {
-        (*x.left).parent = x;
+    if let Some(c) = x.left.as_mut() {
+        c.parent = x;
     }
     y.parent = x.parent;
     y.right = x;
