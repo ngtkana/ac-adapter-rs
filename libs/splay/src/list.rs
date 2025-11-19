@@ -102,9 +102,10 @@ mod tests {
 
     use super::*;
 
-    #[derive(Debug)]
+    #[derive(Debug, Clone, Copy)]
     enum Query {
         Insert { index: usize, value: u32 },
+        Remove { index: usize },
     }
 
     #[test]
@@ -112,24 +113,43 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         let value_lim = 100;
         for tid in 1..=200 {
+            let len_max = 20usize;
+            let queries: Vec<_> = std::iter::repeat_n((), 100)
+                .scan(0usize, |n, ()| {
+                    Some(if rng.gen_ratio(*n as u32, len_max as u32) {
+                        let index = rng.gen_range(0..*n);
+                        *n -= 1;
+                        Query::Remove { index }
+                    } else {
+                        let index = rng.gen_range(0..=*n);
+                        let value = rng.gen_range(0..value_lim);
+                        *n += 1;
+                        Query::Insert { index, value }
+                    })
+                })
+                .collect();
+
             let mut list = SplayList::new();
             let mut vec = vec![];
-            for qid in 1..=20 {
-                let index = rng.gen_range(0..=vec.len());
-                let value = rng.gen_range(0..value_lim);
-                let query = Query::Insert { index, value };
-                eprintln!("Query #{tid}.{qid}: {query:?}");
+            for (qid, &query) in queries.iter().enumerate() {
+                eprintln!("=== Query #{tid}.{qid}: {query:?}");
 
                 match query {
                     Query::Insert { index, value } => {
                         vec.insert(index, value);
                         list.insert(index, value);
                     }
+                    Query::Remove { index } => {
+                        let expected = vec.remove(index);
+                        let result = list.remove(index);
+                        assert_eq!(result, expected);
+                    }
                 }
 
                 eprintln!("vec = {:?}", &vec);
                 eprintln!("list =\n{}", pretty(&list.tree));
                 assert_eq!(list.collect_vec(), vec);
+                eprintln!();
             }
         }
     }

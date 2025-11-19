@@ -1,6 +1,7 @@
 #![allow(unused_variables)]
 #![allow(clippy::needless_pass_by_value)]
 use std::{
+    cmp::Ordering,
     ops::RangeBounds,
     ptr::{self, null_mut},
 };
@@ -29,7 +30,11 @@ impl<N: MarkerTrait> Tree<N> {
     }
 
     pub fn remove(&mut self, index: usize) -> N::Value {
-        todo!()
+        unsafe {
+            let (l, c, r) = split3(&mut *self.root, index);
+            self.root = merge2(l, r);
+            Box::from_raw(c).value
+        }
     }
 
     pub fn append(&mut self, other: Self) {
@@ -112,6 +117,50 @@ unsafe fn split2<N: MarkerTrait>(
         x.update();
         (l, x)
     }
+}
+
+unsafe fn split3<N: MarkerTrait>(
+    mut x: &mut Node<N>,
+    mut index: usize,
+) -> (*mut Node<N>, &mut Node<N>, *mut Node<N>) {
+    loop {
+        let llen = x.left.as_ref().map_or(0, |y| y.len);
+        match index.cmp(&llen) {
+            Ordering::Less => x = &mut *x.left,
+            Ordering::Equal => break,
+            Ordering::Greater => {
+                index -= llen + 1;
+                x = &mut *x.right;
+            }
+        }
+    }
+    splay(x);
+    let l = x.left;
+    let r = x.right;
+    x.left = null_mut();
+    x.right = null_mut();
+    if let Some(l) = l.as_mut() {
+        l.parent = null_mut();
+    }
+    if let Some(r) = r.as_mut() {
+        r.parent = null_mut();
+    }
+    x.update();
+    (l, x, r)
+}
+
+unsafe fn merge2<N: MarkerTrait>(l: *mut Node<N>, r: *mut Node<N>) -> *mut Node<N> {
+    let Some(mut r) = r.as_mut() else { return l };
+    while let Some(l) = r.left.as_mut() {
+        r = l;
+    }
+    splay(r);
+    r.left = l;
+    if let Some(l) = l.as_mut() {
+        l.parent = r;
+    }
+    r.update();
+    r
 }
 
 unsafe fn merge3<N: MarkerTrait>(
