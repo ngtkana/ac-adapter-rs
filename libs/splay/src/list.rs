@@ -38,48 +38,33 @@ impl<T> MarkerTrait for ListMarker<T> {
     }
 }
 
-trait NewTrait<T> {
-    fn new() -> Self;
-
-    fn is_empty(&self) -> bool;
-
-    fn len(&self) -> usize;
-
-    fn insert(&mut self, index: usize, value: T);
-
-    fn remove(&mut self, index: usize) -> T;
-
-    fn append(&mut self, other: Self);
-
-    fn split_off(&mut self, index: usize) -> Self;
-}
-
-impl<T> NewTrait<T> for SplayList<T> {
-    fn new() -> Self {
+// Public inherent methods for SplayList<T>
+impl<T> SplayList<T> {
+    pub fn new() -> Self {
         Tree::new().into()
     }
 
-    fn is_empty(&self) -> bool {
+    pub fn is_empty(&self) -> bool {
         self.tree.is_empty()
     }
 
-    fn len(&self) -> usize {
+    pub fn len(&self) -> usize {
         self.tree.len()
     }
 
-    fn insert(&mut self, index: usize, value: T) {
+    pub fn insert(&mut self, index: usize, value: T) {
         self.tree.insert(index, value);
     }
 
-    fn remove(&mut self, index: usize) -> T {
+    pub fn remove(&mut self, index: usize) -> T {
         self.tree.remove(index)
     }
 
-    fn append(&mut self, other: Self) {
+    pub fn append(&mut self, other: Self) {
         self.tree.append(other.tree);
     }
 
-    fn split_off(&mut self, index: usize) -> Self {
+    pub fn split_off(&mut self, index: usize) -> Self {
         self.tree.split_off(index).into()
     }
 }
