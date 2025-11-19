@@ -134,7 +134,8 @@ unsafe fn merge3<N: MarkerTrait>(
         while let Some(l) = r.left.as_mut() {
             r = l;
         }
-        c.right = r;
+        c.right = splay(r);
+        c.right.parent = c;
     }
     c.update();
     c
