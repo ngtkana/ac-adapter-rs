@@ -42,6 +42,7 @@ trait MarkerTrait {
 }
 
 struct Node<N: MarkerTrait> {
+    parent: *mut Self,
     left: *mut Self,
     right: *mut Self,
     len: usize,
@@ -55,6 +56,7 @@ impl<N: MarkerTrait> Node<N> {
     pub fn new(value: N::Value) -> Self {
         let prod = N::to_prod(&value);
         Self {
+            parent: null_mut(),
             left: null_mut(),
             right: null_mut(),
             len: 1,
@@ -134,4 +136,3 @@ impl<N: MarkerTrait> Drop for Entry<'_, N> {
         self.node.prod = N::to_prod(&self.node.value);
     }
 }
-
