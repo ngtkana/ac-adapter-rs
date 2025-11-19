@@ -235,28 +235,31 @@
 <a href=#201 id=201 data-nosnippet>201</a>    <span class="kw">let </span>y = <span class="kw-2">&amp;mut *</span>x.left;
 <a href=#202 id=202 data-nosnippet>202</a>    y.push();
 <a href=#203 id=203 data-nosnippet>203</a>    x.left = y.right;
-<a href=#204 id=204 data-nosnippet>204</a>    y.parent = x.parent;
-<a href=#205 id=205 data-nosnippet>205</a>    y.right = x;
-<a href=#206 id=206 data-nosnippet>206</a>    x.parent = y;
-<a href=#207 id=207 data-nosnippet>207</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = y.parent.as_mut() {
-<a href=#208 id=208 data-nosnippet>208</a>        <span class="kw">if </span>ptr::eq(p.left, x) {
-<a href=#209 id=209 data-nosnippet>209</a>            p.left = y;
-<a href=#210 id=210 data-nosnippet>210</a>        } <span class="kw">else if </span>ptr::eq(p.right, x) {
-<a href=#211 id=211 data-nosnippet>211</a>            p.right = y;
-<a href=#212 id=212 data-nosnippet>212</a>        } <span class="kw">else </span>{
-<a href=#213 id=213 data-nosnippet>213</a>            <span class="macro">unreachable!</span>()
-<a href=#214 id=214 data-nosnippet>214</a>        }
-<a href=#215 id=215 data-nosnippet>215</a>    }
-<a href=#216 id=216 data-nosnippet>216</a>    x.update();
-<a href=#217 id=217 data-nosnippet>217</a>    y.update();
-<a href=#218 id=218 data-nosnippet>218</a>    y
-<a href=#219 id=219 data-nosnippet>219</a>}
-<a href=#220 id=220 data-nosnippet>220</a>
-<a href=#221 id=221 data-nosnippet>221</a><span class="kw">fn </span>visit&lt;N: MarkerTrait&gt;(x: <span class="kw-2">*mut </span>Node&lt;N&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>Node&lt;N&gt;)) {
-<a href=#222 id=222 data-nosnippet>222</a>    <span class="kw">unsafe </span>{
-<a href=#223 id=223 data-nosnippet>223</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(x) = x.as_mut() <span class="kw">else </span>{ <span class="kw">return </span>};
-<a href=#224 id=224 data-nosnippet>224</a>        visit(x.left, f);
-<a href=#225 id=225 data-nosnippet>225</a>        f(x);
-<a href=#226 id=226 data-nosnippet>226</a>        visit(x.right, f);
-<a href=#227 id=227 data-nosnippet>227</a>    }
-<a href=#228 id=228 data-nosnippet>228</a>}</code></pre></div></section></main></body></html>
+<a href=#204 id=204 data-nosnippet>204</a>    <span class="kw">if </span>!x.left.is_null() {
+<a href=#205 id=205 data-nosnippet>205</a>        (<span class="kw-2">*</span>x.left).parent = x;
+<a href=#206 id=206 data-nosnippet>206</a>    }
+<a href=#207 id=207 data-nosnippet>207</a>    y.parent = x.parent;
+<a href=#208 id=208 data-nosnippet>208</a>    y.right = x;
+<a href=#209 id=209 data-nosnippet>209</a>    x.parent = y;
+<a href=#210 id=210 data-nosnippet>210</a>    <span class="kw">if let </span><span class="prelude-val">Some</span>(p) = y.parent.as_mut() {
+<a href=#211 id=211 data-nosnippet>211</a>        <span class="kw">if </span>ptr::eq(p.left, x) {
+<a href=#212 id=212 data-nosnippet>212</a>            p.left = y;
+<a href=#213 id=213 data-nosnippet>213</a>        } <span class="kw">else if </span>ptr::eq(p.right, x) {
+<a href=#214 id=214 data-nosnippet>214</a>            p.right = y;
+<a href=#215 id=215 data-nosnippet>215</a>        } <span class="kw">else </span>{
+<a href=#216 id=216 data-nosnippet>216</a>            <span class="macro">unreachable!</span>()
+<a href=#217 id=217 data-nosnippet>217</a>        }
+<a href=#218 id=218 data-nosnippet>218</a>    }
+<a href=#219 id=219 data-nosnippet>219</a>    x.update();
+<a href=#220 id=220 data-nosnippet>220</a>    y.update();
+<a href=#221 id=221 data-nosnippet>221</a>    y
+<a href=#222 id=222 data-nosnippet>222</a>}
+<a href=#223 id=223 data-nosnippet>223</a>
+<a href=#224 id=224 data-nosnippet>224</a><span class="kw">fn </span>visit&lt;N: MarkerTrait&gt;(x: <span class="kw-2">*mut </span>Node&lt;N&gt;, f: <span class="kw-2">&amp;mut </span><span class="kw">impl </span>FnMut(<span class="kw-2">&amp;mut </span>Node&lt;N&gt;)) {
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">unsafe </span>{
+<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">let </span><span class="prelude-val">Some</span>(x) = x.as_mut() <span class="kw">else </span>{ <span class="kw">return </span>};
+<a href=#227 id=227 data-nosnippet>227</a>        visit(x.left, f);
+<a href=#228 id=228 data-nosnippet>228</a>        f(x);
+<a href=#229 id=229 data-nosnippet>229</a>        visit(x.right, f);
+<a href=#230 id=230 data-nosnippet>230</a>    }
+<a href=#231 id=231 data-nosnippet>231</a>}</code></pre></div></section></main></body></html>
