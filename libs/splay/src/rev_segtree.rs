@@ -69,7 +69,7 @@ impl<O: RevSegtreeOp> Marker for RevSegtreeMarker<O> {
 }
 
 impl<O: RevSegtreeOp> RevSegtree<O> {
-    /// Creates a new, empty SplaySegtree.
+    /// Creates a new, empty RevSegtree.
     pub fn new() -> Self {
         Tree::new().into()
     }
