@@ -1,16 +1,16 @@
 use std::{marker::PhantomData, ops::RangeBounds};
 
-use crate::{MarkerTrait, Tree};
+use crate::{Marker, Tree};
 
-pub struct SplaySegtree<O: SegtreeOp> {
-    tree: Tree<SegtreeMarker<O>>,
+pub struct RevSegtree<O: RevSegtreeOp> {
+    tree: Tree<RevSegtreeMarker<O>>,
 }
 
-struct SegtreeMarker<O> {
+struct RevSegtreeMarker<O> {
     __marker: PhantomData<O>,
 }
 
-pub trait SegtreeOp {
+pub trait RevSegtreeOp {
     type Value: Clone;
 
     fn identity() -> Self::Value;
@@ -18,12 +18,14 @@ pub trait SegtreeOp {
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
-impl<O: SegtreeOp> MarkerTrait for SegtreeMarker<O> {
+impl<O: RevSegtreeOp> Marker for RevSegtreeMarker<O> {
     type Value = O::Value;
 
     type Prod = O::Value;
 
     type Op = ();
+
+    type Rev = bool;
 
     fn identity() -> Self::Prod {
         O::identity()
@@ -52,9 +54,21 @@ impl<O: SegtreeOp> MarkerTrait for SegtreeMarker<O> {
     fn is_nop(_op: &Self::Op) -> bool {
         true
     }
+
+    fn rev(rev: &Self::Rev) -> bool {
+        *rev
+    }
+
+    fn rev_false() -> Self::Rev {
+        false
+    }
+
+    fn flip_rev(rev: &mut Self::Rev) {
+        *rev ^= true;
+    }
 }
 
-impl<O: SegtreeOp> SplaySegtree<O> {
+impl<O: RevSegtreeOp> RevSegtree<O> {
     /// Creates a new, empty SplaySegtree.
     pub fn new() -> Self {
         Tree::new().into()
@@ -90,6 +104,10 @@ impl<O: SegtreeOp> SplaySegtree<O> {
         self.tree.split_off(index).into()
     }
 
+    pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
+        self.tree.reverse(range);
+    }
+
     pub fn collect_vec(&self) -> Vec<O::Value> {
         self.tree.collect_vec()
     }
@@ -110,18 +128,18 @@ impl<O: SegtreeOp> SplaySegtree<O> {
     }
 }
 
-impl<O: SegtreeOp> Default for SplaySegtree<O> {
+impl<O: RevSegtreeOp> Default for RevSegtree<O> {
     fn default() -> Self {
         Self::new()
     }
 }
-impl<O: SegtreeOp> From<Tree<SegtreeMarker<O>>> for SplaySegtree<O> {
-    fn from(tree: Tree<SegtreeMarker<O>>) -> Self {
+impl<O: RevSegtreeOp> From<Tree<RevSegtreeMarker<O>>> for RevSegtree<O> {
+    fn from(tree: Tree<RevSegtreeMarker<O>>) -> Self {
         Self { tree }
     }
 }
 
-impl<O: SegtreeOp> FromIterator<O::Value> for SplaySegtree<O> {
+impl<O: RevSegtreeOp> FromIterator<O::Value> for RevSegtree<O> {
     fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
         iter.into_iter().collect::<Tree<_>>().into()
     }

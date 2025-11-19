@@ -6,9 +6,9 @@ use std::{
     ptr::{self, null_mut},
 };
 
-use crate::{MarkerTrait, Node, Tree};
+use crate::{Marker, Node, Tree};
 
-impl<N: MarkerTrait> Tree<N> {
+impl<N: Marker> Tree<N> {
     pub fn new() -> Self {
         Self { root: null_mut() }
     }
@@ -45,6 +45,10 @@ impl<N: MarkerTrait> Tree<N> {
         todo!()
     }
 
+    pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
+        todo!()
+    }
+
     pub fn collect_vec(&self) -> Vec<N::Value>
     where
         N::Value: Clone,
@@ -71,22 +75,19 @@ impl<N: MarkerTrait> Tree<N> {
     }
 }
 
-impl<N: MarkerTrait> Default for Tree<N> {
+impl<N: Marker> Default for Tree<N> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<N: MarkerTrait> FromIterator<N::Value> for Tree<N> {
+impl<N: Marker> FromIterator<N::Value> for Tree<N> {
     fn from_iter<T: IntoIterator<Item = N::Value>>(iter: T) -> Self {
         todo!()
     }
 }
 
-unsafe fn split2<N: MarkerTrait>(
-    x: *mut Node<N>,
-    mut index: usize,
-) -> (*mut Node<N>, *mut Node<N>) {
+unsafe fn split2<N: Marker>(x: *mut Node<N>, mut index: usize) -> (*mut Node<N>, *mut Node<N>) {
     let Some(mut x) = x.as_mut() else { return (null_mut(), null_mut()) };
     let is_less = loop {
         x.push();
@@ -120,7 +121,7 @@ unsafe fn split2<N: MarkerTrait>(
     }
 }
 
-unsafe fn split3<N: MarkerTrait>(
+unsafe fn split3<N: Marker>(
     mut x: &mut Node<N>,
     mut index: usize,
 ) -> (*mut Node<N>, &mut Node<N>, *mut Node<N>) {
@@ -151,7 +152,7 @@ unsafe fn split3<N: MarkerTrait>(
     (l, x, r)
 }
 
-unsafe fn merge2<N: MarkerTrait>(l: *mut Node<N>, r: *mut Node<N>) -> *mut Node<N> {
+unsafe fn merge2<N: Marker>(l: *mut Node<N>, r: *mut Node<N>) -> *mut Node<N> {
     let Some(mut r) = r.as_mut() else { return l };
     while let Some(l) = r.left.as_mut() {
         r = l;
@@ -166,11 +167,7 @@ unsafe fn merge2<N: MarkerTrait>(l: *mut Node<N>, r: *mut Node<N>) -> *mut Node<
     r
 }
 
-unsafe fn merge3<N: MarkerTrait>(
-    l: *mut Node<N>,
-    c: &mut Node<N>,
-    r: *mut Node<N>,
-) -> &mut Node<N> {
+unsafe fn merge3<N: Marker>(l: *mut Node<N>, c: &mut Node<N>, r: *mut Node<N>) -> &mut Node<N> {
     assert!(c.left.is_null());
     assert!(c.right.is_null());
     assert!(c.parent.is_null());
@@ -194,7 +191,7 @@ unsafe fn merge3<N: MarkerTrait>(
     c
 }
 
-unsafe fn splay<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+unsafe fn splay<N: Marker>(x: &mut Node<N>) -> &mut Node<N> {
     while let Some(p) = x.parent.as_mut() {
         let Some(pp) = p.parent.as_mut() else {
             if ptr::eq(p.left, x) {
@@ -226,7 +223,7 @@ unsafe fn splay<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     x
 }
 
-unsafe fn rotate_left<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+unsafe fn rotate_left<N: Marker>(x: &mut Node<N>) -> &mut Node<N> {
     x.push();
     let y = &mut *x.right;
     y.push();
@@ -251,7 +248,7 @@ unsafe fn rotate_left<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     y
 }
 
-unsafe fn rotate_right<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
+unsafe fn rotate_right<N: Marker>(x: &mut Node<N>) -> &mut Node<N> {
     x.push();
     let y = &mut *x.left;
     y.push();
@@ -276,7 +273,7 @@ unsafe fn rotate_right<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     y
 }
 
-fn visit<N: MarkerTrait>(x: *mut Node<N>, f: &mut impl FnMut(&mut Node<N>)) {
+fn visit<N: Marker>(x: *mut Node<N>, f: &mut impl FnMut(&mut Node<N>)) {
     unsafe {
         let Some(x) = x.as_mut() else { return };
         visit(x.left, f);

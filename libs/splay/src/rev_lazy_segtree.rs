@@ -1,16 +1,16 @@
 use std::{marker::PhantomData, ops::RangeBounds};
 
-use crate::{MarkerTrait, Tree};
+use crate::{Marker, Tree};
 
-pub struct SplayLazySegtree<O: LazySegtreeOp> {
-    tree: Tree<LazySegtreeMarker<O>>,
+pub struct RevLazySegtree<O: RevLazySegtreeOp> {
+    tree: Tree<RevLazySegtreeMarker<O>>,
 }
 
-struct LazySegtreeMarker<O> {
+struct RevLazySegtreeMarker<O> {
     __marker: PhantomData<O>,
 }
 
-pub trait LazySegtreeOp {
+pub trait RevLazySegtreeOp {
     type Value: Clone;
 
     type Op: PartialEq;
@@ -26,12 +26,14 @@ pub trait LazySegtreeOp {
     fn nop() -> Self::Op;
 }
 
-impl<O: LazySegtreeOp> MarkerTrait for LazySegtreeMarker<O> {
+impl<O: RevLazySegtreeOp> Marker for RevLazySegtreeMarker<O> {
     type Value = O::Value;
 
     type Prod = O::Value;
 
     type Op = O::Op;
+
+    type Rev = bool;
 
     fn identity() -> Self::Prod {
         O::identity()
@@ -68,9 +70,21 @@ impl<O: LazySegtreeOp> MarkerTrait for LazySegtreeMarker<O> {
     fn is_nop(op: &Self::Op) -> bool {
         *op == O::nop()
     }
+
+    fn rev(rev: &Self::Rev) -> bool {
+        *rev
+    }
+
+    fn rev_false() -> Self::Rev {
+        false
+    }
+
+    fn flip_rev(rev: &mut Self::Rev) {
+        *rev ^= true;
+    }
 }
 
-impl<O: LazySegtreeOp> SplayLazySegtree<O> {
+impl<O: RevLazySegtreeOp> RevLazySegtree<O> {
     pub fn new() -> Self {
         Tree::new().into()
     }
@@ -99,6 +113,10 @@ impl<O: LazySegtreeOp> SplayLazySegtree<O> {
         self.tree.split_off(index).into()
     }
 
+    pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
+        self.tree.reverse(range);
+    }
+
     pub fn collect_vec(&self) -> Vec<O::Value> {
         self.tree.collect_vec()
     }
@@ -120,19 +138,19 @@ impl<O: LazySegtreeOp> SplayLazySegtree<O> {
     }
 }
 
-impl<O: LazySegtreeOp> Default for SplayLazySegtree<O> {
+impl<O: RevLazySegtreeOp> Default for RevLazySegtree<O> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<O: LazySegtreeOp> From<Tree<LazySegtreeMarker<O>>> for SplayLazySegtree<O> {
-    fn from(tree: Tree<LazySegtreeMarker<O>>) -> Self {
+impl<O: RevLazySegtreeOp> From<Tree<RevLazySegtreeMarker<O>>> for RevLazySegtree<O> {
+    fn from(tree: Tree<RevLazySegtreeMarker<O>>) -> Self {
         Self { tree }
     }
 }
 
-impl<O: LazySegtreeOp> FromIterator<O::Value> for SplayLazySegtree<O> {
+impl<O: RevLazySegtreeOp> FromIterator<O::Value> for RevLazySegtree<O> {
     fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
         iter.into_iter().collect::<Tree<_>>().into()
     }

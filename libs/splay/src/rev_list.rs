@@ -1,8 +1,8 @@
-use std::marker::PhantomData;
+use std::{marker::PhantomData, ops::RangeBounds};
 
-use crate::{MarkerTrait, Tree};
+use crate::{Marker, Tree};
 
-pub struct SplayList<T> {
+pub struct RevList<T> {
     tree: Tree<ListMarker<T>>,
 }
 
@@ -10,12 +10,14 @@ struct ListMarker<T> {
     __marker: PhantomData<T>,
 }
 
-impl<T> MarkerTrait for ListMarker<T> {
+impl<T> Marker for ListMarker<T> {
     type Value = T;
 
     type Prod = ();
 
     type Op = ();
+
+    type Rev = bool;
 
     fn identity() -> Self::Prod {}
 
@@ -36,16 +38,28 @@ impl<T> MarkerTrait for ListMarker<T> {
     fn is_nop(_op: &Self::Op) -> bool {
         true
     }
+
+    fn rev(rev: &Self::Rev) -> bool {
+        *rev
+    }
+
+    fn rev_false() -> Self::Rev {
+        false
+    }
+
+    fn flip_rev(rev: &mut Self::Rev) {
+        *rev ^= true;
+    }
 }
 
 // Public inherent methods for SplayList<T>
-impl<T> Default for SplayList<T> {
+impl<T> Default for RevList<T> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T> SplayList<T> {
+impl<T> RevList<T> {
     pub fn new() -> Self {
         Tree::new().into()
     }
@@ -74,6 +88,10 @@ impl<T> SplayList<T> {
         self.tree.split_off(index).into()
     }
 
+    pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
+        self.tree.reverse(range);
+    }
+
     pub fn collect_vec(&self) -> Vec<T>
     where
         T: Clone,
@@ -82,13 +100,13 @@ impl<T> SplayList<T> {
     }
 }
 
-impl<T> From<Tree<ListMarker<T>>> for SplayList<T> {
+impl<T> From<Tree<ListMarker<T>>> for RevList<T> {
     fn from(tree: Tree<ListMarker<T>>) -> Self {
         Self { tree }
     }
 }
 
-impl<T> FromIterator<T> for SplayList<T> {
+impl<T> FromIterator<T> for RevList<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         iter.into_iter().collect::<Tree<_>>().into()
     }
@@ -129,7 +147,7 @@ mod tests {
                 })
                 .collect();
 
-            let mut list = SplayList::new();
+            let mut list = RevList::new();
             let mut vec = vec![];
             for (qid, &query) in queries.iter().enumerate() {
                 eprintln!("=== Query #{tid}.{qid}: {query:?}");

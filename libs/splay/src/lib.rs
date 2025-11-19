@@ -1,26 +1,27 @@
 #![allow(dead_code)]
-mod lazy_segtree;
-mod list;
-mod segtree;
+mod rev_lazy_segtree;
+mod rev_list;
+mod rev_segtree;
 mod tree_impl;
 
-pub use lazy_segtree::{LazySegtreeOp, SplayLazySegtree};
-pub use list::SplayList;
-pub use segtree::{SegtreeOp, SplaySegtree};
+pub use rev_lazy_segtree::{RevLazySegtree, RevLazySegtreeOp};
+pub use rev_list::RevList;
+pub use rev_segtree::{RevSegtree, RevSegtreeOp};
 
 use std::{
     ops::{Deref, DerefMut},
     ptr::null_mut,
 };
 
-struct Tree<N: MarkerTrait> {
+struct Tree<N: Marker> {
     root: *mut Node<N>,
 }
 
-trait MarkerTrait {
+trait Marker {
     type Value;
     type Prod;
     type Op;
+    type Rev;
 
     fn identity() -> Self::Prod;
 
@@ -39,20 +40,26 @@ trait MarkerTrait {
     fn nop() -> Self::Op;
 
     fn is_nop(op: &Self::Op) -> bool;
+
+    fn rev(rev: &Self::Rev) -> bool;
+
+    fn rev_false() -> Self::Rev;
+
+    fn flip_rev(rev: &mut Self::Rev);
 }
 
-struct Node<N: MarkerTrait> {
+struct Node<N: Marker> {
     parent: *mut Self,
     left: *mut Self,
     right: *mut Self,
     len: usize,
-    rev: bool,
+    rev: N::Rev,
     value: N::Value,
     prod: N::Prod,
     op: N::Op,
 }
 
-impl<N: MarkerTrait> Node<N> {
+impl<N: Marker> Node<N> {
     pub fn new(value: N::Value) -> Self {
         let prod = N::to_prod(&value);
         Self {
@@ -60,7 +67,7 @@ impl<N: MarkerTrait> Node<N> {
             left: null_mut(),
             right: null_mut(),
             len: 1,
-            rev: false,
+            rev: N::rev_false(),
             value,
             prod,
             op: N::nop(),
@@ -69,7 +76,7 @@ impl<N: MarkerTrait> Node<N> {
 
     pub fn update(&mut self) {
         unsafe {
-            assert!(!self.rev);
+            assert!(!N::rev(&self.rev));
             assert!(N::is_nop(&self.op));
             self.len = 1;
             self.prod = N::to_prod(&self.value);
@@ -86,14 +93,14 @@ impl<N: MarkerTrait> Node<N> {
 
     pub fn push(&mut self) {
         unsafe {
-            if self.rev {
-                self.rev = false;
+            if N::rev(&self.rev) {
+                self.rev = N::rev_false();
                 std::mem::swap(&mut self.left, &mut self.right);
                 if let Some(l) = self.left.as_mut() {
-                    l.rev ^= true;
+                    N::flip_rev(&mut l.rev);
                 }
                 if let Some(r) = self.right.as_mut() {
-                    r.rev ^= true;
+                    N::flip_rev(&mut r.rev);
                 }
             }
             if !N::is_nop(&self.op) {
@@ -113,11 +120,11 @@ impl<N: MarkerTrait> Node<N> {
     }
 }
 
-struct Entry<'a, N: MarkerTrait> {
+struct Entry<'a, N: Marker> {
     node: &'a mut Node<N>,
 }
 
-impl<N: MarkerTrait> Deref for Entry<'_, N> {
+impl<N: Marker> Deref for Entry<'_, N> {
     type Target = N::Value;
 
     fn deref(&self) -> &Self::Target {
@@ -125,13 +132,13 @@ impl<N: MarkerTrait> Deref for Entry<'_, N> {
     }
 }
 
-impl<N: MarkerTrait> DerefMut for Entry<'_, N> {
+impl<N: Marker> DerefMut for Entry<'_, N> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.node.value
     }
 }
 
-impl<N: MarkerTrait> Drop for Entry<'_, N> {
+impl<N: Marker> Drop for Entry<'_, N> {
     fn drop(&mut self) {
         self.node.prod = N::to_prod(&self.node.value);
     }
@@ -142,11 +149,11 @@ mod test_util {
     use super::*;
     use std::fmt::Write;
 
-    pub fn pretty<N: MarkerTrait>(tree: &Tree<N>) -> String
+    pub fn pretty<N: Marker>(tree: &Tree<N>) -> String
     where
         N::Value: std::fmt::Debug,
     {
-        unsafe fn pretty_impl<N: MarkerTrait>(x: *mut Node<N>, s: &mut String, header: &mut String)
+        unsafe fn pretty_impl<N: Marker>(x: *mut Node<N>, s: &mut String, header: &mut String)
         where
             N::Value: std::fmt::Debug,
         {
