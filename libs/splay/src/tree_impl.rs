@@ -176,6 +176,9 @@ unsafe fn rotate_left<N: MarkerTrait>(x: &mut Node<N>) -> &mut Node<N> {
     let y = &mut *x.right;
     y.push();
     x.right = y.left;
+    if !x.right.is_null() {
+        (*x.right).parent = x;
+    }
     y.parent = x.parent;
     y.left = x;
     x.parent = y;
