@@ -1,148 +1,235 @@
 use std::borrow::Borrow;
+use std::cell::Cell;
 use std::fmt;
 use std::ptr::NonNull;
 
 // v1では未対応: entry, range/range_mut, append, split_off, retain, values_mut, into_iter
 
-#[allow(dead_code)]
 pub struct OrderStatisticMap<K, V> {
-    root: Option<NonNull<Node<K, V>>>,
-    len: usize,
+    root: Cell<Option<NonNull<Node<K, V>>>>,
 }
 
 impl<K: Ord, V> OrderStatisticMap<K, V> {
     // Group A: Core API
     pub fn new() -> Self {
-        todo!()
+        Self {
+            root: Cell::new(None),
+        }
     }
 
     pub fn len(&self) -> usize {
-        todo!()
+        self.root.get().map_or(0, |r| unsafe { (*r.as_ptr()).len })
     }
 
     pub fn is_empty(&self) -> bool {
-        todo!()
+        self.root.get().is_none()
     }
 
     pub fn clear(&mut self) {
-        todo!()
+        free_subtree(self.root.get());
+        self.root.set(None);
     }
 
-    pub fn insert(&mut self, _key: K, _value: V) -> Option<V> {
-        todo!()
+    pub fn insert(&mut self, key: K, value: V) -> Option<V> {
+        match self.root.get() {
+            None => {
+                let node = Box::into_raw(Box::new(Node {
+                    key,
+                    value,
+                    parent: None,
+                    left: None,
+                    right: None,
+                    len: 1,
+                }));
+                self.root.set(Some(NonNull::new(node).unwrap()));
+                None
+            }
+            Some(root) => unsafe {
+                let mut current = root;
+                loop {
+                    let key_cmp = key.cmp(&(*current.as_ptr()).key);
+                    match key_cmp {
+                        std::cmp::Ordering::Less => {
+                            if let Some(left) = (*current.as_ptr()).left {
+                                current = left;
+                            } else {
+                                let new_node = Box::into_raw(Box::new(Node {
+                                    key,
+                                    value,
+                                    parent: Some(current),
+                                    left: None,
+                                    right: None,
+                                    len: 1,
+                                }));
+                                (*current.as_ptr()).left = Some(NonNull::new(new_node).unwrap());
+                                current = NonNull::new(new_node).unwrap();
+                                break;
+                            }
+                        }
+                        std::cmp::Ordering::Greater => {
+                            if let Some(right) = (*current.as_ptr()).right {
+                                current = right;
+                            } else {
+                                let new_node = Box::into_raw(Box::new(Node {
+                                    key,
+                                    value,
+                                    parent: Some(current),
+                                    left: None,
+                                    right: None,
+                                    len: 1,
+                                }));
+                                (*current.as_ptr()).right = Some(NonNull::new(new_node).unwrap());
+                                current = NonNull::new(new_node).unwrap();
+                                break;
+                            }
+                        }
+                        std::cmp::Ordering::Equal => {
+                            let old_value =
+                                std::mem::replace(&mut (*current.as_ptr()).value, value);
+                            current = splay(current);
+                            self.root.set(Some(current));
+                            return Some(old_value);
+                        }
+                    }
+                }
+                current = splay(current);
+                self.root.set(Some(current));
+                None
+            },
+        }
     }
 
-    pub fn remove<Q: Ord + ?Sized>(&mut self, _key: &Q) -> Option<V>
+    pub fn remove<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key).map(|_| detach_root(self).1)
     }
 
-    pub fn get<Q: Ord + ?Sized>(&self, _key: &Q) -> Option<&V>
+    pub fn get<Q: Ord + ?Sized>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key).map(|node| unsafe { &(*node.as_ptr()).value })
     }
 
-    pub fn contains_key<Q: Ord + ?Sized>(&self, _key: &Q) -> bool
+    pub fn contains_key<Q: Ord + ?Sized>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key).is_some()
     }
 
-    pub fn iter(&self) -> Box<dyn Iterator<Item = (&K, &V)>> {
-        todo!()
+    pub fn iter(&self) -> Box<dyn Iterator<Item = (&K, &V)> + '_> {
+        let mut stack = Vec::new();
+        if let Some(root) = self.root.get() {
+            let mut current = Some(root);
+            while let Some(c) = current {
+                stack.push(c);
+                current = unsafe { (*c.as_ptr()).left };
+            }
+        }
+        Box::new(InOrderIterator {
+            stack,
+            _phantom: std::marker::PhantomData,
+        })
     }
 
     // Group B: Frequently used
-    pub fn get_mut<Q: Ord + ?Sized>(&mut self, _key: &Q) -> Option<&mut V>
+    pub fn get_mut<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key).map(|node| unsafe { &mut (*node.as_ptr()).value })
     }
 
-    pub fn get_key_value<Q: Ord + ?Sized>(&self, _key: &Q) -> Option<(&K, &V)>
+    pub fn get_key_value<Q: Ord + ?Sized>(&self, key: &Q) -> Option<(&K, &V)>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key)
+            .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
-    pub fn remove_entry<Q: Ord + ?Sized>(&mut self, _key: &Q) -> Option<(K, V)>
+    pub fn remove_entry<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        find_and_splay(self, key).map(|_| detach_root(self))
     }
 
     pub fn first_key_value(&self) -> Option<(&K, &V)> {
-        todo!()
+        leftmost_and_splay(self)
+            .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
     pub fn last_key_value(&self) -> Option<(&K, &V)> {
-        todo!()
+        rightmost_and_splay(self)
+            .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
     pub fn pop_first(&mut self) -> Option<(K, V)> {
-        todo!()
+        leftmost_and_splay(self).map(|_| detach_root(self))
     }
 
     pub fn pop_last(&mut self) -> Option<(K, V)> {
-        todo!()
+        rightmost_and_splay(self).map(|_| detach_root(self))
     }
 
-    pub fn keys(&self) -> Box<dyn Iterator<Item = &K>> {
-        todo!()
+    pub fn keys(&self) -> Box<dyn Iterator<Item = &K> + '_> {
+        Box::new(self.iter().map(|(k, _)| k))
     }
 
-    pub fn values(&self) -> Box<dyn Iterator<Item = &V>> {
-        todo!()
+    pub fn values(&self) -> Box<dyn Iterator<Item = &V> + '_> {
+        Box::new(self.iter().map(|(_, v)| v))
     }
 
     // Group C: Order statistic
-    pub fn nth(&self, _n: usize) -> (&K, &V) {
-        todo!()
+    pub fn nth(&self, n: usize) -> (&K, &V) {
+        let node = nth_and_splay(self, n);
+        unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) }
     }
 
-    pub fn remove_nth(&mut self, _n: usize) -> (K, V) {
-        todo!()
+    pub fn remove_nth(&mut self, n: usize) -> (K, V) {
+        nth_and_splay(self, n);
+        detach_root(self)
     }
 
-    pub fn binary_search<Q: Ord + ?Sized>(&self, _key: &Q) -> Result<usize, usize>
+    pub fn binary_search<Q: Ord + ?Sized>(&self, key: &Q) -> Result<usize, usize>
     where
         K: Borrow<Q>,
     {
-        todo!()
+        let (pos, found) = locate_and_splay(self, key, false);
+        match found {
+            Some(_) => Ok(pos),
+            None => Err(pos),
+        }
     }
 
-    pub fn lower_bound<Q: Ord + ?Sized>(&self, _key: &Q) -> usize
+    pub fn lower_bound<Q: Ord + ?Sized>(&self, key: &Q) -> usize
     where
         K: Borrow<Q>,
     {
-        todo!()
+        locate_and_splay(self, key, false).0
     }
 
-    pub fn upper_bound<Q: Ord + ?Sized>(&self, _key: &Q) -> usize
+    pub fn upper_bound<Q: Ord + ?Sized>(&self, key: &Q) -> usize
     where
         K: Borrow<Q>,
     {
-        todo!()
+        locate_and_splay(self, key, true).0
     }
 }
 
 impl<K: Ord, V> Default for OrderStatisticMap<K, V> {
     fn default() -> Self {
-        todo!()
+        Self::new()
     }
 }
 
 impl<K: Ord + fmt::Debug, V: fmt::Debug> fmt::Debug for OrderStatisticMap<K, V> {
-    fn fmt(&self, _f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        todo!()
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.debug_map().entries(self.iter()).finish()
     }
 }
 
@@ -151,23 +238,55 @@ impl<'a, K: Ord, V> IntoIterator for &'a OrderStatisticMap<K, V> {
     type IntoIter = Box<dyn Iterator<Item = Self::Item> + 'a>;
 
     fn into_iter(self) -> Self::IntoIter {
-        todo!()
+        self.iter()
     }
 }
 
 impl<K: Ord, V> FromIterator<(K, V)> for OrderStatisticMap<K, V> {
-    fn from_iter<T: IntoIterator<Item = (K, V)>>(_iter: T) -> Self {
-        todo!()
+    fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
+        let mut map = Self::new();
+        map.extend(iter);
+        map
     }
 }
 
 impl<K: Ord, V> Extend<(K, V)> for OrderStatisticMap<K, V> {
-    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, _iter: T) {
-        todo!()
+    fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
+        for (k, v) in iter {
+            self.insert(k, v);
+        }
     }
 }
 
-#[allow(dead_code)]
+impl<K, V> Drop for OrderStatisticMap<K, V> {
+    fn drop(&mut self) {
+        free_subtree(self.root.get());
+    }
+}
+
+struct InOrderIterator<'a, K, V> {
+    stack: Vec<NonNull<Node<K, V>>>,
+    _phantom: std::marker::PhantomData<&'a Node<K, V>>,
+}
+
+impl<'a, K, V> Iterator for InOrderIterator<'a, K, V> {
+    type Item = (&'a K, &'a V);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let node = self.stack.pop()?;
+        unsafe {
+            if let Some(right) = (*node.as_ptr()).right {
+                let mut current = Some(right);
+                while let Some(c) = current {
+                    self.stack.push(c);
+                    current = (*c.as_ptr()).left;
+                }
+            }
+            Some((&(*node.as_ptr()).key, &(*node.as_ptr()).value))
+        }
+    }
+}
+
 struct Node<K, V> {
     key: K,
     value: V,
@@ -177,7 +296,6 @@ struct Node<K, V> {
     len: usize,
 }
 
-#[allow(dead_code)]
 impl<K, V> Node<K, V> {
     fn update(&mut self) {
         unsafe {
@@ -188,17 +306,37 @@ impl<K, V> Node<K, V> {
     }
 }
 
-#[allow(dead_code)]
-fn splay<K, V>(mut x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
+fn splay<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     unsafe {
         while let Some(p) = (*x.as_ptr()).parent {
-            if let Some(_q) = (*p.as_ptr()).parent {
-                todo!()
+            if let Some(q) = (*p.as_ptr()).parent {
+                if (*q.as_ptr()).left == Some(p) && (*p.as_ptr()).left == Some(x) {
+                    // zig-zig: left-left
+                    rotate_right(q);
+                    rotate_right(p);
+                } else if (*q.as_ptr()).right == Some(p) && (*p.as_ptr()).right == Some(x) {
+                    // zig-zig: right-right
+                    rotate_left(q);
+                    rotate_left(p);
+                } else {
+                    // zig-zag
+                    if (*p.as_ptr()).left == Some(x) {
+                        rotate_right(p);
+                    } else {
+                        rotate_left(p);
+                    }
+                    if (*q.as_ptr()).left == Some(x) {
+                        rotate_right(q);
+                    } else {
+                        rotate_left(q);
+                    }
+                }
             } else {
+                // zig: parent is root
                 if (*p.as_ptr()).left == Some(x) {
-                    x = rotate_right(p);
+                    rotate_right(p);
                 } else if (*p.as_ptr()).right == Some(x) {
-                    x = rotate_left(p);
+                    rotate_left(p);
                 } else {
                     unreachable!()
                 }
@@ -208,10 +346,8 @@ fn splay<K, V>(mut x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     }
 }
 
-#[allow(dead_code)]
 fn rotate_left<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     unsafe {
-        assert!((*x.as_ptr()).parent.is_none());
         let y = (*x.as_ptr()).right.unwrap();
         let c = (*y.as_ptr()).left;
 
@@ -220,16 +356,28 @@ fn rotate_left<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
             (*c.as_ptr()).parent = Some(x);
         }
         (*y.as_ptr()).left = Some(x);
+
+        if let Some(q) = (*x.as_ptr()).parent {
+            if (*q.as_ptr()).left == Some(x) {
+                (*q.as_ptr()).left = Some(y);
+            } else {
+                (*q.as_ptr()).right = Some(y);
+            }
+            (*y.as_ptr()).parent = Some(q);
+        } else {
+            (*y.as_ptr()).parent = None;
+        }
         (*x.as_ptr()).parent = Some(y);
-        (*y.as_ptr()).parent = None;
+
+        (*x.as_ptr()).update();
+        (*y.as_ptr()).update();
+
         y
     }
 }
 
-#[allow(dead_code)]
 fn rotate_right<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     unsafe {
-        assert!((*x.as_ptr()).parent.is_none());
         let y = (*x.as_ptr()).left.unwrap();
         let c = (*y.as_ptr()).right;
 
@@ -238,9 +386,242 @@ fn rotate_right<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
             (*c.as_ptr()).parent = Some(x);
         }
         (*y.as_ptr()).right = Some(x);
+
+        if let Some(q) = (*x.as_ptr()).parent {
+            if (*q.as_ptr()).left == Some(x) {
+                (*q.as_ptr()).left = Some(y);
+            } else {
+                (*q.as_ptr()).right = Some(y);
+            }
+            (*y.as_ptr()).parent = Some(q);
+        } else {
+            (*y.as_ptr()).parent = None;
+        }
         (*x.as_ptr()).parent = Some(y);
-        (*y.as_ptr()).parent = None;
+
+        (*x.as_ptr()).update();
+        (*y.as_ptr()).update();
+
         y
+    }
+}
+
+fn free_subtree<K, V>(root: Option<NonNull<Node<K, V>>>) {
+    let mut stack = Vec::new();
+    if let Some(r) = root {
+        stack.push(r);
+    }
+    while let Some(node) = stack.pop() {
+        unsafe {
+            if let Some(left) = (*node.as_ptr()).left {
+                stack.push(left);
+            }
+            if let Some(right) = (*node.as_ptr()).right {
+                stack.push(right);
+            }
+            drop(Box::from_raw(node.as_ptr()));
+        }
+    }
+}
+
+fn find_and_splay<K, Q: Ord + ?Sized, V>(
+    map: &OrderStatisticMap<K, V>,
+    key: &Q,
+) -> Option<NonNull<Node<K, V>>>
+where
+    K: Ord + Borrow<Q>,
+{
+    match map.root.get() {
+        None => None,
+        Some(root) => unsafe {
+            let mut current = root;
+            let mut found = false;
+            loop {
+                let key_cmp = key.cmp((*current.as_ptr()).key.borrow());
+                match key_cmp {
+                    std::cmp::Ordering::Less => {
+                        if let Some(left) = (*current.as_ptr()).left {
+                            current = left;
+                        } else {
+                            break;
+                        }
+                    }
+                    std::cmp::Ordering::Greater => {
+                        if let Some(right) = (*current.as_ptr()).right {
+                            current = right;
+                        } else {
+                            break;
+                        }
+                    }
+                    std::cmp::Ordering::Equal => {
+                        found = true;
+                        break;
+                    }
+                }
+            }
+            current = splay(current);
+            map.root.set(Some(current));
+            if found { Some(current) } else { None }
+        },
+    }
+}
+
+fn nth_and_splay<K, V>(map: &OrderStatisticMap<K, V>, mut n: usize) -> NonNull<Node<K, V>> {
+    let root = map.root.get().unwrap();
+    unsafe {
+        let mut current = root;
+        loop {
+            let left_len = (*current.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len);
+            match n.cmp(&left_len) {
+                std::cmp::Ordering::Less => {
+                    current = (*current.as_ptr()).left.unwrap();
+                }
+                std::cmp::Ordering::Greater => {
+                    n -= left_len + 1;
+                    current = (*current.as_ptr()).right.unwrap();
+                }
+                std::cmp::Ordering::Equal => {
+                    break;
+                }
+            }
+        }
+        current = splay(current);
+        map.root.set(Some(current));
+        current
+    }
+}
+
+fn locate_and_splay<K, Q: Ord + ?Sized, V>(
+    map: &OrderStatisticMap<K, V>,
+    key: &Q,
+    include_equal: bool,
+) -> (usize, Option<NonNull<Node<K, V>>>)
+where
+    K: Ord + Borrow<Q>,
+{
+    match map.root.get() {
+        None => (0, None),
+        Some(root) => unsafe {
+            let mut current = root;
+            let mut pos = 0;
+            let mut found_node = None;
+
+            loop {
+                let left_len = (*current.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len);
+                let key_cmp = key.cmp((*current.as_ptr()).key.borrow());
+                match key_cmp {
+                    std::cmp::Ordering::Less => {
+                        if let Some(left) = (*current.as_ptr()).left {
+                            current = left;
+                        } else {
+                            break;
+                        }
+                    }
+                    std::cmp::Ordering::Greater => {
+                        pos += left_len + 1;
+                        if let Some(right) = (*current.as_ptr()).right {
+                            current = right;
+                        } else {
+                            break;
+                        }
+                    }
+                    std::cmp::Ordering::Equal => {
+                        pos += left_len;
+                        found_node = Some(current);
+                        if include_equal {
+                            pos += 1;
+                            if let Some(right) = (*current.as_ptr()).right {
+                                current = right;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            break;
+                        }
+                    }
+                }
+            }
+            current = splay(current);
+            map.root.set(Some(current));
+            (pos, found_node)
+        },
+    }
+}
+
+fn leftmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<Node<K, V>>> {
+    match map.root.get() {
+        None => None,
+        Some(root) => unsafe {
+            let mut current = root;
+            while let Some(left) = (*current.as_ptr()).left {
+                current = left;
+            }
+            current = splay(current);
+            map.root.set(Some(current));
+            Some(current)
+        },
+    }
+}
+
+fn rightmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<Node<K, V>>> {
+    match map.root.get() {
+        None => None,
+        Some(root) => unsafe {
+            let mut current = root;
+            while let Some(right) = (*current.as_ptr()).right {
+                current = right;
+            }
+            current = splay(current);
+            map.root.set(Some(current));
+            Some(current)
+        },
+    }
+}
+
+fn detach_root<K, V>(map: &mut OrderStatisticMap<K, V>) -> (K, V) {
+    let root = map.root.get().unwrap();
+    unsafe {
+        let (key, value) = (
+            std::ptr::read(&raw const (*root.as_ptr()).key),
+            std::ptr::read(&raw const (*root.as_ptr()).value),
+        );
+
+        let left = (*root.as_ptr()).left;
+        let right = (*root.as_ptr()).right;
+
+        // Merge left and right subtrees
+        let new_root = match (left, right) {
+            (None, None) => None,
+            (Some(l), None) => {
+                (*l.as_ptr()).parent = None;
+                Some(l)
+            }
+            (None, Some(r)) => {
+                (*r.as_ptr()).parent = None;
+                Some(r)
+            }
+            (Some(l), Some(r)) => {
+                // Find the maximum of left and make it connect to right
+                // Walk to the rightmost node of l (which should have no right child)
+                let mut curr = l;
+                while let Some(next) = (*curr.as_ptr()).right {
+                    curr = next;
+                }
+                // curr is the maximum of the left subtree
+                // Attach right as its right child
+                (*curr.as_ptr()).right = Some(r);
+                (*r.as_ptr()).parent = Some(curr);
+                (*curr.as_ptr()).update();
+
+                // Make l the new root
+                (*l.as_ptr()).parent = None;
+                Some(l)
+            }
+        };
+
+        drop(Box::from_raw(root.as_ptr()));
+        map.root.set(new_root);
+        (key, value)
     }
 }
 
@@ -251,6 +632,7 @@ mod tests {
     use rand::{Rng, SeedableRng};
 
     #[test]
+    #[allow(clippy::too_many_lines)]
     fn test_insert_remove_nth_random() {
         const VALUE_LIM: i32 = 200;
         let mut rng = StdRng::seed_from_u64(42);
@@ -263,7 +645,8 @@ mod tests {
             let mut vec: Vec<(i32, i32)> = Vec::new();
 
             for _ in 0..q {
-                match rng.gen_range(0..5) {
+                let op_type = rng.gen_range(0..5);
+                match op_type {
                     0 | 1 => {
                         // insert
                         let key = rng.gen_range(0..n);
@@ -278,12 +661,11 @@ mod tests {
                     }
                     2 => {
                         // remove or remove_entry
+                        let key = rng.gen_range(0..n);
                         if rng.gen_bool(0.5) {
-                            let key = rng.gen_range(0..n);
                             map.remove(&key);
                             vec.retain(|(k, _)| k != &key);
                         } else {
-                            let key = rng.gen_range(0..n);
                             map.remove_entry(&key);
                             vec.retain(|(k, _)| k != &key);
                         }
@@ -315,7 +697,10 @@ mod tests {
                 assert_eq!(map.len(), vec.len(), "Length mismatch");
                 assert_eq!(map.is_empty(), vec.is_empty(), "Empty mismatch");
 
-                if !vec.is_empty() {
+                if vec.is_empty() {
+                    assert_eq!(map.first_key_value(), None);
+                    assert_eq!(map.last_key_value(), None);
+                } else {
                     assert_eq!(
                         map.first_key_value(),
                         Some((&vec[0].0, &vec[0].1)),
@@ -326,80 +711,60 @@ mod tests {
                         Some((&vec[vec.len() - 1].0, &vec[vec.len() - 1].1)),
                         "Last key-value mismatch"
                     );
-                } else {
-                    assert_eq!(map.first_key_value(), None);
-                    assert_eq!(map.last_key_value(), None);
                 }
 
                 let collected: Vec<_> = map.iter().collect();
                 let expected: Vec<_> = vec.iter().map(|(k, v)| (k, v)).collect();
                 assert_eq!(collected, expected, "iter() mismatch");
 
-                for i in 0..vec.len() {
-                    assert_eq!(
-                        map.nth(i),
-                        (&vec[i].0, &vec[i].1),
-                        "nth({}) mismatch",
-                        i
-                    );
+                for (i, expected_kv) in vec.iter().enumerate() {
+                    assert_eq!(map.nth(i), (&expected_kv.0, &expected_kv.1), "nth({i}) mismatch");
                 }
 
                 // Query: get, get_key_value, contains_key, binary_search, lower_bound, upper_bound
                 for key in 0..n {
                     let expected_get = vec.iter().find(|(k, _)| k == &key).map(|(_, v)| v);
-                    assert_eq!(map.get(&key), expected_get, "get({}) mismatch", key);
+                    assert_eq!(map.get(&key), expected_get, "get({key}) mismatch");
 
-                    let expected_get_key_value = vec.iter().find(|(k, _)| k == &key).map(|(k, v)| (k, v));
+                    let expected_get_key_value =
+                        vec.iter().find(|(k, _)| k == &key).map(|(k, v)| (k, v));
                     assert_eq!(
                         map.get_key_value(&key),
                         expected_get_key_value,
-                        "get_key_value({}) mismatch",
-                        key
+                        "get_key_value({key}) mismatch"
                     );
 
                     let expected_contains = vec.iter().any(|(k, _)| k == &key);
                     assert_eq!(
                         map.contains_key(&key),
                         expected_contains,
-                        "contains_key({}) mismatch",
-                        key
+                        "contains_key({key}) mismatch"
                     );
 
                     let expected_binary_search = vec
                         .iter()
                         .position(|(k, _)| k == &key)
-                        .ok_or_else(|| {
-                            vec.iter()
-                                .position(|(k, _)| k > &key)
-                                .unwrap_or(vec.len())
-                        });
+                        .ok_or_else(|| vec.iter().position(|(k, _)| k > &key).unwrap_or(vec.len()));
                     assert_eq!(
                         map.binary_search(&key),
                         expected_binary_search,
-                        "binary_search({}) mismatch",
-                        key
+                        "binary_search({key}) mismatch"
                     );
 
-                    let expected_lower_bound = vec
-                        .iter()
-                        .position(|(k, _)| k >= &key)
-                        .unwrap_or(vec.len());
+                    let expected_lower_bound =
+                        vec.iter().position(|(k, _)| k >= &key).unwrap_or(vec.len());
                     assert_eq!(
                         map.lower_bound(&key),
                         expected_lower_bound,
-                        "lower_bound({}) mismatch",
-                        key
+                        "lower_bound({key}) mismatch"
                     );
 
-                    let expected_upper_bound = vec
-                        .iter()
-                        .position(|(k, _)| k > &key)
-                        .unwrap_or(vec.len());
+                    let expected_upper_bound =
+                        vec.iter().position(|(k, _)| k > &key).unwrap_or(vec.len());
                     assert_eq!(
                         map.upper_bound(&key),
                         expected_upper_bound,
-                        "upper_bound({}) mismatch",
-                        key
+                        "upper_bound({key}) mismatch"
                     );
                 }
             }
@@ -448,5 +813,32 @@ mod tests {
 
         let values: Vec<_> = map.values().collect();
         assert_eq!(values.len(), 3);
+    }
+
+    #[test]
+    fn test_simple_operations() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        assert_eq!(map.len(), 0);
+
+        map.insert(2, 20);
+        assert_eq!(map.len(), 1, "After insert 2");
+
+        map.insert(1, 10);
+        assert_eq!(map.len(), 2, "After insert 1");
+
+        map.insert(3, 30);
+        assert_eq!(map.len(), 3, "After insert 3");
+
+        // Insert duplicate
+        map.insert(2, 25);
+        assert_eq!(map.len(), 3, "After duplicate insert");
+
+        // Remove
+        map.remove(&2);
+        assert_eq!(map.len(), 2, "After remove");
+
+        // Check iteration
+        let collected: Vec<_> = map.iter().collect();
+        assert_eq!(collected.len(), 2);
     }
 }
