@@ -1,3 +1,5 @@
+//! v1では未対応: entry, range/range_mut, retain, values_mut, into_iter
+
 use super::map::OrderStatisticMap;
 use std::borrow::Borrow;
 use std::fmt;
@@ -414,6 +416,70 @@ impl<T: Ord> OrderStatisticSet<T> {
     {
         self.map.upper_bound(value)
     }
+
+    /// Concatenates `other` into `self`, requiring all values in `self` to be strictly less than
+    /// all values in `other`.
+    ///
+    /// After this operation, `other` becomes empty and `self` contains all values from both
+    /// sets, sorted. This operation takes O(log n) amortized time.
+    ///
+    /// # Panics
+    ///
+    /// Panics if both sets are non-empty and the maximum value in `self` is not strictly less
+    /// than the minimum value in `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticSet;
+    ///
+    /// let mut set1 = OrderStatisticSet::new();
+    /// set1.insert(1);
+    /// set1.insert(2);
+    ///
+    /// let mut set2 = OrderStatisticSet::new();
+    /// set2.insert(3);
+    /// set2.insert(4);
+    ///
+    /// set1.concat(&mut set2);
+    /// assert_eq!(set1.len(), 4);
+    /// assert!(set2.is_empty());
+    /// ```
+    pub fn concat(&mut self, other: &mut Self) {
+        self.map.concat(&mut other.map);
+    }
+
+    /// Splits the set into two at the given split value, returning a new set containing all
+    /// values greater than or equal to the split value.
+    ///
+    /// This operation takes O(log n) amortized time. The original set retains all values
+    /// strictly less than the split value.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticSet;
+    ///
+    /// let mut set = OrderStatisticSet::new();
+    /// set.insert(1);
+    /// set.insert(2);
+    /// set.insert(3);
+    /// set.insert(4);
+    ///
+    /// let high = set.split_off(&3);
+    /// assert_eq!(set.len(), 2);
+    /// assert_eq!(high.len(), 2);
+    /// assert!(set.contains(&1));
+    /// assert!(high.contains(&3));
+    /// ```
+    pub fn split_off<Q: Ord + ?Sized>(&mut self, value: &Q) -> Self
+    where
+        T: Borrow<Q>,
+    {
+        Self {
+            map: self.map.split_off(value),
+        }
+    }
 }
 
 /// Creates an empty set. Equivalent to [`OrderStatisticSet::new`].
@@ -682,5 +748,68 @@ mod tests {
 
         let collected: Vec<_> = set.iter().collect();
         assert_eq!(collected.len(), 2);
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn test_split_off_concat_roundtrip() {
+        let mut rng = StdRng::seed_from_u64(42);
+
+        for _ in 0..200 {
+            let n = rng.gen_range(1..=200);
+            let q = rng.gen_range(0..=200);
+
+            let mut set: OrderStatisticSet<i32> = OrderStatisticSet::new();
+            let mut vec: Vec<i32> = Vec::new();
+
+            for _ in 0..q {
+                let value = rng.gen_range(0..n);
+                set.insert(value);
+                if !vec.contains(&value) {
+                    let idx = vec.iter().position(|&v| v > value).unwrap_or(vec.len());
+                    vec.insert(idx, value);
+                }
+            }
+
+            let split_value = rng.gen_range(0..=(n + 1));
+            let hi_set = set.split_off(&split_value);
+
+            let lo_collected: Vec<_> = set.iter().collect();
+            let hi_collected: Vec<_> = hi_set.iter().collect();
+
+            let split_pos = vec
+                .iter()
+                .position(|&v| v >= split_value)
+                .unwrap_or(vec.len());
+            let lo_expected: Vec<_> = vec[..split_pos].iter().collect();
+            let hi_expected: Vec<_> = vec[split_pos..].iter().collect();
+
+            assert_eq!(lo_collected, lo_expected, "split_off lo mismatch");
+            assert_eq!(hi_collected, hi_expected, "split_off hi mismatch");
+
+            let mut set = set;
+            let mut hi_set = hi_set;
+            set.concat(&mut hi_set);
+
+            let final_collected: Vec<_> = set.iter().collect();
+            let final_expected: Vec<_> = vec.iter().collect();
+
+            assert_eq!(final_collected, final_expected, "concat roundtrip mismatch");
+            assert!(hi_set.is_empty(), "hi_set should be empty after concat");
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "strictly less")]
+    fn test_concat_panic_on_overlap() {
+        let mut set1 = OrderStatisticSet::new();
+        set1.insert(1);
+        set1.insert(2);
+
+        let mut set2 = OrderStatisticSet::new();
+        set2.insert(2);
+        set2.insert(3);
+
+        set1.concat(&mut set2);
     }
 }
