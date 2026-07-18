@@ -1,4 +1,4 @@
-//! v1では未対応: entry, range/range_mut, append, split_off, retain, values_mut, into_iter
+//! v1では未対応: entry, range/range_mut, retain, values_mut, into_iter
 
 use std::borrow::Borrow;
 use std::cell::Cell;
@@ -568,6 +568,113 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         K: Borrow<Q>,
     {
         locate_and_splay(self, key, true).0
+    }
+
+    /// Concatenates `other` into `self`, requiring all keys in `self` to be strictly less than
+    /// all keys in `other`.
+    ///
+    /// After this operation, `other` becomes empty and `self` contains all key-value pairs
+    /// from both maps, sorted by key. This operation takes O(log n) amortized time.
+    ///
+    /// # Panics
+    ///
+    /// Panics if both maps are non-empty and the maximum key in `self` is not strictly less than
+    /// the minimum key in `other`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map1 = OrderStatisticMap::new();
+    /// map1.insert(1, "a");
+    /// map1.insert(2, "b");
+    ///
+    /// let mut map2 = OrderStatisticMap::new();
+    /// map2.insert(3, "c");
+    /// map2.insert(4, "d");
+    ///
+    /// map1.concat(&mut map2);
+    /// assert_eq!(map1.len(), 4);
+    /// assert!(map2.is_empty());
+    /// ```
+    pub fn concat(&mut self, other: &mut Self) {
+        match (self.root.get(), other.root.get()) {
+            (_, None) => {}
+            (None, Some(_)) => {
+                self.root.set(other.root.get());
+                other.root.set(None);
+            }
+            (Some(_), Some(_)) => {
+                let self_max = rightmost_and_splay(self).unwrap();
+                let other_min = leftmost_and_splay(other).unwrap();
+                unsafe {
+                    assert!(
+                        (*self_max.as_ptr()).key < (*other_min.as_ptr()).key,
+                        "OrderStatisticMap::concat requires all keys in self to be strictly less than all keys in other"
+                    );
+                    (*self_max.as_ptr()).right = Some(other_min);
+                    (*other_min.as_ptr()).parent = Some(self_max);
+                    (*self_max.as_ptr()).update();
+                }
+                self.root.set(Some(self_max));
+                other.root.set(None);
+            }
+        }
+    }
+
+    /// Splits the map into two at the given split key, returning a new map containing all
+    /// key-value pairs with keys greater than or equal to the split key.
+    ///
+    /// This operation takes O(log n) amortized time. The original map retains all key-value
+    /// pairs with keys strictly less than the split key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    /// map.insert(3, "c");
+    /// map.insert(4, "d");
+    ///
+    /// let high = map.split_off(&3);
+    /// assert_eq!(map.len(), 2);
+    /// assert_eq!(high.len(), 2);
+    /// assert_eq!(map.get(&1), Some(&"a"));
+    /// assert_eq!(high.get(&3), Some(&"c"));
+    /// ```
+    pub fn split_off<Q: Ord + ?Sized>(&mut self, key: &Q) -> Self
+    where
+        K: Borrow<Q>,
+    {
+        let idx = self.lower_bound(key);
+        let len = self.len();
+        if idx == len {
+            return Self::new();
+        }
+        if idx == 0 {
+            let new_map = Self {
+                root: Cell::new(self.root.get()),
+            };
+            self.root.set(None);
+            return new_map;
+        }
+        let node = nth_and_splay(self, idx);
+        unsafe {
+            let left = (*node.as_ptr()).left.take();
+            if let Some(l) = left {
+                (*l.as_ptr()).parent = None;
+            }
+            (*node.as_ptr()).parent = None;
+            (*node.as_ptr()).update();
+            self.root.set(left);
+        }
+        Self {
+            root: Cell::new(Some(node)),
+        }
     }
 }
 
@@ -1265,5 +1372,78 @@ mod tests {
         // Check iteration
         let collected: Vec<_> = map.iter().collect();
         assert_eq!(collected.len(), 2);
+    }
+
+    #[test]
+    #[allow(clippy::too_many_lines)]
+    fn test_split_off_concat_roundtrip() {
+        const VALUE_LIM: i32 = 200;
+        let mut rng = StdRng::seed_from_u64(42);
+
+        for _ in 0..200 {
+            let n = rng.gen_range(1..=200);
+            let q = rng.gen_range(0..=200);
+
+            let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+            let mut vec: Vec<(i32, i32)> = Vec::new();
+
+            for _ in 0..q {
+                let key = rng.gen_range(0..n);
+                let value = rng.gen_range(0..VALUE_LIM);
+                map.insert(key, value);
+                if let Some(pos) = vec.iter().position(|(k, _)| k == &key) {
+                    vec[pos] = (key, value);
+                } else {
+                    let idx = vec.iter().position(|(k, _)| k > &key).unwrap_or(vec.len());
+                    vec.insert(idx, (key, value));
+                }
+            }
+
+            let split_key = rng.gen_range(0..=(n + 1));
+            let hi_map = map.split_off(&split_key);
+
+            let lo_collected: Vec<_> = map.iter().collect();
+            let hi_collected: Vec<_> = hi_map.iter().collect();
+
+            let split_pos = vec
+                .iter()
+                .position(|(k, _)| *k >= split_key)
+                .unwrap_or(vec.len());
+            let lo_expected: Vec<_> = vec[..split_pos]
+                .iter()
+                .map(|(k, v)| (k, v))
+                .collect();
+            let hi_expected: Vec<_> = vec[split_pos..]
+                .iter()
+                .map(|(k, v)| (k, v))
+                .collect();
+
+            assert_eq!(lo_collected, lo_expected, "split_off lo mismatch");
+            assert_eq!(hi_collected, hi_expected, "split_off hi mismatch");
+
+            let mut map = map;
+            let mut hi_map = hi_map;
+            map.concat(&mut hi_map);
+
+            let final_collected: Vec<_> = map.iter().collect();
+            let final_expected: Vec<_> = vec.iter().map(|(k, v)| (k, v)).collect();
+
+            assert_eq!(final_collected, final_expected, "concat roundtrip mismatch");
+            assert!(hi_map.is_empty(), "hi_map should be empty after concat");
+        }
+    }
+
+    #[test]
+    #[should_panic(expected = "strictly less")]
+    fn test_concat_panic_on_overlap() {
+        let mut map1 = OrderStatisticMap::new();
+        map1.insert(1, "a");
+        map1.insert(2, "b");
+
+        let mut map2 = OrderStatisticMap::new();
+        map2.insert(2, "c");
+        map2.insert(3, "d");
+
+        map1.concat(&mut map2);
     }
 }
