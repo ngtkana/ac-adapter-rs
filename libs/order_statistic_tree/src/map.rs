@@ -5,31 +5,111 @@ use std::cell::Cell;
 use std::fmt;
 use std::ptr::NonNull;
 
+/// An order-statistic map backed by a splay tree.
+///
+/// This data structure maintains key-value pairs in sorted order and supports
+/// order-statistic operations like `nth` and `binary_search`, all in amortized O(log n).
+///
+/// # Examples
+///
+/// ```
+/// use order_statistic_tree::OrderStatisticMap;
+///
+/// let mut map = OrderStatisticMap::new();
+/// map.insert(3, "c");
+/// map.insert(1, "a");
+/// map.insert(2, "b");
+///
+/// assert_eq!(map.nth(0), (&1, &"a"));
+/// assert_eq!(map.get(&2), Some(&"b"));
+/// ```
 pub struct OrderStatisticMap<K, V> {
     root: Cell<Option<NonNull<Node<K, V>>>>,
 }
 
 impl<K: Ord, V> OrderStatisticMap<K, V> {
     // Group A: Core API
+    /// Creates a new empty map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let map = OrderStatisticMap::<i32, &str>::new();
+    /// assert!(map.is_empty());
+    /// ```
     pub fn new() -> Self {
         Self {
             root: Cell::new(None),
         }
     }
 
+    /// Returns the number of elements in the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// assert_eq!(map.len(), 0);
+    /// map.insert(1, "a");
+    /// assert_eq!(map.len(), 1);
+    /// ```
     pub fn len(&self) -> usize {
         self.root.get().map_or(0, |r| unsafe { (*r.as_ptr()).len })
     }
 
+    /// Returns `true` if the map contains no elements.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// assert!(map.is_empty());
+    /// map.insert(1, "a");
+    /// assert!(!map.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.root.get().is_none()
     }
 
+    /// Clears the map, removing all key-value pairs.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.clear();
+    /// assert!(map.is_empty());
+    /// ```
     pub fn clear(&mut self) {
         free_subtree(self.root.get());
         self.root.set(None);
     }
 
+    /// Inserts a key-value pair into the map.
+    ///
+    /// If the map did not have this key present, `None` is returned.
+    ///
+    /// If the map did have this key present, the value is updated, and the old
+    /// value is returned. The key is not updated, though.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// assert_eq!(map.insert(1, "a"), None);
+    /// assert_eq!(map.insert(1, "b"), Some("a"));
+    /// ```
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         match self.root.get() {
             None => {
@@ -99,6 +179,18 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         }
     }
 
+    /// Removes a key from the map, returning its associated value if it was present.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// assert_eq!(map.remove(&1), Some("a"));
+    /// assert_eq!(map.remove(&1), None);
+    /// ```
     pub fn remove<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<V>
     where
         K: Borrow<Q>,
@@ -106,6 +198,18 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         find_and_splay(self, key).map(|_| detach_root(self).1)
     }
 
+    /// Returns a reference to the value associated with the given key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// assert_eq!(map.get(&1), Some(&"a"));
+    /// assert_eq!(map.get(&2), None);
+    /// ```
     pub fn get<Q: Ord + ?Sized>(&self, key: &Q) -> Option<&V>
     where
         K: Borrow<Q>,
@@ -113,6 +217,18 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         find_and_splay(self, key).map(|node| unsafe { &(*node.as_ptr()).value })
     }
 
+    /// Returns `true` if the map contains a value for the specified key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// assert!(map.contains_key(&1));
+    /// assert!(!map.contains_key(&2));
+    /// ```
     pub fn contains_key<Q: Ord + ?Sized>(&self, key: &Q) -> bool
     where
         K: Borrow<Q>,
@@ -120,6 +236,21 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         find_and_splay(self, key).is_some()
     }
 
+    /// Returns an iterator over the map in sorted order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    ///
+    /// let entries: Vec<_> = map.iter().collect();
+    /// assert_eq!(entries, vec![(&1, &"a"), (&2, &"b"), (&3, &"c")]);
+    /// ```
     pub fn iter(&self) -> Iter<'_, K, V> {
         let mut stack = Vec::new();
         if let Some(root) = self.root.get() {
@@ -136,6 +267,20 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
     }
 
     // Group B: Frequently used
+    /// Returns a mutable reference to the value associated with the given key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// if let Some(value) = map.get_mut(&1) {
+    ///     *value = 20;
+    /// }
+    /// assert_eq!(map.get(&1), Some(&20));
+    /// ```
     pub fn get_mut<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<&mut V>
     where
         K: Borrow<Q>,
@@ -143,6 +288,17 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         find_and_splay(self, key).map(|node| unsafe { &mut (*node.as_ptr()).value })
     }
 
+    /// Returns a reference to both the key and value associated with the given key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// assert_eq!(map.get_key_value(&1), Some((&1, &"a")));
+    /// ```
     pub fn get_key_value<Q: Ord + ?Sized>(&self, key: &Q) -> Option<(&K, &V)>
     where
         K: Borrow<Q>,
@@ -151,6 +307,18 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
             .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
+    /// Removes a key from the map, returning the stored key and value if it was present.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// assert_eq!(map.remove_entry(&1), Some((1, "a")));
+    /// assert_eq!(map.remove_entry(&1), None);
+    /// ```
     pub fn remove_entry<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<(K, V)>
     where
         K: Borrow<Q>,
@@ -158,30 +326,112 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         find_and_splay(self, key).map(|_| detach_root(self))
     }
 
+    /// Returns a reference to the first (minimum) key-value pair in the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// assert_eq!(map.first_key_value(), None);
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    /// assert_eq!(map.first_key_value(), Some((&1, &"a")));
+    /// ```
     pub fn first_key_value(&self) -> Option<(&K, &V)> {
         leftmost_and_splay(self)
             .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
+    /// Returns a reference to the last (maximum) key-value pair in the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// assert_eq!(map.last_key_value(), None);
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    /// assert_eq!(map.last_key_value(), Some((&3, &"c")));
+    /// ```
     pub fn last_key_value(&self) -> Option<(&K, &V)> {
         rightmost_and_splay(self)
             .map(|node| unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) })
     }
 
+    /// Removes and returns the first (minimum) key-value pair from the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// assert_eq!(map.pop_first(), Some((1, "a")));
+    /// ```
     pub fn pop_first(&mut self) -> Option<(K, V)> {
         leftmost_and_splay(self).map(|_| detach_root(self))
     }
 
+    /// Removes and returns the last (maximum) key-value pair from the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(2, "b");
+    /// map.insert(1, "a");
+    /// assert_eq!(map.pop_last(), Some((2, "b")));
+    /// ```
     pub fn pop_last(&mut self) -> Option<(K, V)> {
         rightmost_and_splay(self).map(|_| detach_root(self))
     }
 
+    /// Returns an iterator over the keys of the map in sorted order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    ///
+    /// let keys: Vec<_> = map.keys().collect();
+    /// assert_eq!(keys, vec![&1, &2, &3]);
+    /// ```
     pub fn keys(&self) -> Keys<'_, K, V> {
         Keys {
             inner: self.iter(),
         }
     }
 
+    /// Returns an iterator over the values of the map in key order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    ///
+    /// let values: Vec<_> = map.values().collect();
+    /// assert_eq!(values, vec![&"a", &"b", &"c"]);
+    /// ```
     pub fn values(&self) -> Values<'_, K, V> {
         Values {
             inner: self.iter(),
@@ -189,16 +439,78 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
     }
 
     // Group C: Order statistic
+    /// Returns a reference to the key-value pair at the given index.
+    ///
+    /// The keys are indexed in sorted order, starting from 0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n >= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    ///
+    /// assert_eq!(map.nth(0), (&1, &"a"));
+    /// assert_eq!(map.nth(1), (&2, &"b"));
+    /// assert_eq!(map.nth(2), (&3, &"c"));
+    /// ```
     pub fn nth(&self, n: usize) -> (&K, &V) {
         let node = nth_and_splay(self, n);
         unsafe { (&(*node.as_ptr()).key, &(*node.as_ptr()).value) }
     }
 
+    /// Removes and returns the key-value pair at the given index.
+    ///
+    /// The keys are indexed in sorted order, starting from 0.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `n >= self.len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(3, "c");
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    ///
+    /// assert_eq!(map.remove_nth(1), (2, "b"));
+    /// assert_eq!(map.len(), 2);
+    /// ```
     pub fn remove_nth(&mut self, n: usize) -> (K, V) {
         nth_and_splay(self, n);
         detach_root(self)
     }
 
+    /// Searches for a key and returns its index if found, or the insertion position if not.
+    ///
+    /// Returns `Ok(rank)` if the key is found, where `rank` is its index in sorted order.
+    /// Returns `Err(rank)` if the key is not found, where `rank` is the index where the key
+    /// would be inserted to maintain sorted order.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    ///
+    /// assert_eq!(map.binary_search(&1), Ok(0));
+    /// assert_eq!(map.binary_search(&2), Err(1));
+    /// assert_eq!(map.binary_search(&3), Ok(1));
+    /// ```
     pub fn binary_search<Q: Ord + ?Sized>(&self, key: &Q) -> Result<usize, usize>
     where
         K: Borrow<Q>,
@@ -210,6 +522,23 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         }
     }
 
+    /// Returns the index of the first key that is not less than the given key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    /// map.insert(5, "e");
+    ///
+    /// assert_eq!(map.lower_bound(&1), 0);
+    /// assert_eq!(map.lower_bound(&2), 1);
+    /// assert_eq!(map.lower_bound(&3), 1);
+    /// assert_eq!(map.lower_bound(&6), 3);
+    /// ```
     pub fn lower_bound<Q: Ord + ?Sized>(&self, key: &Q) -> usize
     where
         K: Borrow<Q>,
@@ -217,6 +546,23 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
         locate_and_splay(self, key, false).0
     }
 
+    /// Returns the index of the first key that is strictly greater than the given key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(3, "c");
+    /// map.insert(5, "e");
+    ///
+    /// assert_eq!(map.upper_bound(&1), 1);
+    /// assert_eq!(map.upper_bound(&2), 1);
+    /// assert_eq!(map.upper_bound(&3), 2);
+    /// assert_eq!(map.upper_bound(&6), 3);
+    /// ```
     pub fn upper_bound<Q: Ord + ?Sized>(&self, key: &Q) -> usize
     where
         K: Borrow<Q>,
@@ -225,6 +571,7 @@ impl<K: Ord, V> OrderStatisticMap<K, V> {
     }
 }
 
+/// Creates an empty map. Equivalent to [`OrderStatisticMap::new`].
 impl<K: Ord, V> Default for OrderStatisticMap<K, V> {
     fn default() -> Self {
         Self::new()
@@ -237,6 +584,7 @@ impl<K: Ord + fmt::Debug, V: fmt::Debug> fmt::Debug for OrderStatisticMap<K, V> 
     }
 }
 
+/// Creates an iterator over the map. Equivalent to [`OrderStatisticMap::iter`].
 impl<'a, K: Ord, V> IntoIterator for &'a OrderStatisticMap<K, V> {
     type Item = (&'a K, &'a V);
     type IntoIter = Iter<'a, K, V>;
@@ -246,6 +594,7 @@ impl<'a, K: Ord, V> IntoIterator for &'a OrderStatisticMap<K, V> {
     }
 }
 
+/// Constructs a map from an iterator of key-value pairs.
 impl<K: Ord, V> FromIterator<(K, V)> for OrderStatisticMap<K, V> {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut map = Self::new();
@@ -254,6 +603,7 @@ impl<K: Ord, V> FromIterator<(K, V)> for OrderStatisticMap<K, V> {
     }
 }
 
+/// Extends the map with the contents of an iterator of key-value pairs.
 impl<K: Ord, V> Extend<(K, V)> for OrderStatisticMap<K, V> {
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         for (k, v) in iter {
@@ -268,6 +618,23 @@ impl<K, V> Drop for OrderStatisticMap<K, V> {
     }
 }
 
+/// An iterator over the entries of an [`OrderStatisticMap`], yielding key-value pairs in sorted order.
+///
+/// This iterator is returned by the [`OrderStatisticMap::iter`] method.
+///
+/// # Examples
+///
+/// ```
+/// use order_statistic_tree::OrderStatisticMap;
+///
+/// let mut map = OrderStatisticMap::new();
+/// map.insert(1, "a");
+/// map.insert(2, "b");
+///
+/// for (key, value) in map.iter() {
+///     println!("{}: {}", key, value);
+/// }
+/// ```
 pub struct Iter<'a, K, V> {
     stack: Vec<NonNull<Node<K, V>>>,
     _phantom: std::marker::PhantomData<&'a Node<K, V>>,
@@ -291,6 +658,21 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
     }
 }
 
+/// An iterator over the keys of an [`OrderStatisticMap`], yielding them in sorted order.
+///
+/// This iterator is returned by the [`OrderStatisticMap::keys`] method.
+///
+/// # Examples
+///
+/// ```
+/// use order_statistic_tree::OrderStatisticMap;
+///
+/// let mut map = OrderStatisticMap::new();
+/// map.insert(1, "a");
+/// map.insert(2, "b");
+///
+/// let keys: Vec<_> = map.keys().collect();
+/// ```
 pub struct Keys<'a, K, V> {
     inner: Iter<'a, K, V>,
 }
@@ -303,6 +685,21 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
     }
 }
 
+/// An iterator over the values of an [`OrderStatisticMap`], yielding them in key order.
+///
+/// This iterator is returned by the [`OrderStatisticMap::values`] method.
+///
+/// # Examples
+///
+/// ```
+/// use order_statistic_tree::OrderStatisticMap;
+///
+/// let mut map = OrderStatisticMap::new();
+/// map.insert(1, "a");
+/// map.insert(2, "b");
+///
+/// let values: Vec<_> = map.values().collect();
+/// ```
 pub struct Values<'a, K, V> {
     inner: Iter<'a, K, V>,
 }
