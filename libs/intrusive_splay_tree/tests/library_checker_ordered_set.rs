@@ -71,7 +71,6 @@ fn query_5_succ(tree: &mut Tree<U>, key: u32) -> Option<u32> {
     result
 }
 
-#[cfg(test)]
 mod random_tests {
     use super::*;
     use rand::rngs::StdRng;
@@ -79,7 +78,7 @@ mod random_tests {
     use std::collections::BTreeSet;
 
     #[test]
-    fn test_ordered_set_random() {
+    fn test_library_checker_ordered_set() {
         let mut rng = StdRng::seed_from_u64(42);
 
         for _ in 0..200 {
@@ -106,10 +105,19 @@ mod random_tests {
                         let expected = model.iter().nth(index).copied();
                         let got = query_2_nth(&mut tree, index);
                         if got != expected {
-                            eprintln!("nth({}) failed: got {:?}, expected {:?}", index, got, expected);
-                            eprintln!("tree.fold_all().map(|v| v.size): {:?}", tree.fold_all().map(|v| v.size));
+                            eprintln!(
+                                "nth({}) failed: got {:?}, expected {:?}",
+                                index, got, expected
+                            );
+                            eprintln!(
+                                "tree.fold_all().map(|v| v.size): {:?}",
+                                tree.fold_all().map(|v| v.size)
+                            );
                             eprintln!("tree.collect().len(): {}", tree.collect().len());
-                            eprintln!("tree contents: {:?}", tree.collect().iter().map(|v| v.key).collect::<Vec<_>>());
+                            eprintln!(
+                                "tree contents: {:?}",
+                                tree.collect().iter().map(|v| v.key).collect::<Vec<_>>()
+                            );
                         }
                         assert_eq!(got, expected);
                     }
