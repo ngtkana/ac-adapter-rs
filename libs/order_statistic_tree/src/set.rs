@@ -541,7 +541,7 @@ impl<T: Ord> Extend<T> for OrderStatisticSet<T> {
 /// }
 /// ```
 pub struct Iter<'a, T> {
-    inner: super::map::Iter<'a, T, ()>,
+    inner: super::map::Iter<'a, T, (), super::map::NoOp<T, ()>>,
 }
 
 impl<'a, T> Iterator for Iter<'a, T> {
