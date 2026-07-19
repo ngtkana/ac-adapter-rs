@@ -389,3 +389,97 @@ pub fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<
     }
 }
 
+pub fn max_right_and_splay<K, V, O, F>(
+    map: &OrderStatisticMap<K, V, O>,
+    l: usize,
+    f: F,
+) -> usize
+where
+    O: Op<Key = K, Value = V>,
+    F: Fn(&O::SegValue) -> bool,
+{
+    let (left, right) = split_at_index(map.root.get(), l);
+    let right = right.unwrap();
+
+    let mut cur = right;
+    let mut sm = O::identity();
+    let mut count = 0usize;
+    unsafe {
+        loop {
+            let left_len = (*cur.as_ptr()).left.map_or(0, |n| (*n.as_ptr()).len);
+            let left_prod = (*cur.as_ptr()).left.map_or_else(O::identity, |n| (*n.as_ptr()).prod.clone());
+            let combined_left = O::mul(&sm, &left_prod);
+            if f(&combined_left) {
+                let node_value = O::to_seg_value(&(*cur.as_ptr()).key, &(*cur.as_ptr()).value);
+                let combined_node = O::mul(&combined_left, &node_value);
+                if f(&combined_node) {
+                    sm = combined_node;
+                    count += left_len + 1;
+                    match (*cur.as_ptr()).right {
+                        Some(next) => cur = next,
+                        None => break,
+                    }
+                } else {
+                    count += left_len;
+                    break;
+                }
+            } else {
+                match (*cur.as_ptr()).left {
+                    Some(next) => cur = next,
+                    None => break,
+                }
+            }
+        }
+    }
+    let new_right_root = splay(cur);
+    map.root.set(merge_trees(left, Some(new_right_root)));
+    l + count
+}
+
+pub fn min_left_and_splay<K, V, O, F>(
+    map: &OrderStatisticMap<K, V, O>,
+    r: usize,
+    f: F,
+) -> usize
+where
+    O: Op<Key = K, Value = V>,
+    F: Fn(&O::SegValue) -> bool,
+{
+    let (left, right) = split_at_index(map.root.get(), r);
+    let left = left.unwrap();
+
+    let mut cur = left;
+    let mut sm = O::identity();
+    let mut count = 0usize;
+    unsafe {
+        loop {
+            let right_len = (*cur.as_ptr()).right.map_or(0, |n| (*n.as_ptr()).len);
+            let right_prod = (*cur.as_ptr()).right.map_or_else(O::identity, |n| (*n.as_ptr()).prod.clone());
+            let combined_right = O::mul(&right_prod, &sm);
+            if f(&combined_right) {
+                let node_value = O::to_seg_value(&(*cur.as_ptr()).key, &(*cur.as_ptr()).value);
+                let combined_node = O::mul(&node_value, &combined_right);
+                if f(&combined_node) {
+                    sm = combined_node;
+                    count += right_len + 1;
+                    match (*cur.as_ptr()).left {
+                        Some(next) => cur = next,
+                        None => break,
+                    }
+                } else {
+                    count += right_len;
+                    break;
+                }
+            } else {
+                match (*cur.as_ptr()).right {
+                    Some(next) => cur = next,
+                    None => break,
+                }
+            }
+        }
+    }
+    let new_left_root = splay(cur);
+    map.root.set(merge_trees(Some(new_left_root), right));
+    r - count
+}
+

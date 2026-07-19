@@ -582,6 +582,104 @@ mod aggregation_consistency {
     }
 }
 
+mod max_right_min_left {
+    use super::*;
+
+    #[test]
+    fn test_max_right_basic() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..10 {
+            map.insert(i, 1);
+        }
+
+        assert_eq!(map.max_right(0, |&s| s <= 3), 2);
+        assert_eq!(map.max_right(0, |&s| s <= 15), 5);
+        assert_eq!(map.max_right(0, |&s| s <= 55), 10);
+    }
+
+    #[test]
+    fn test_min_left_basic() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..10 {
+            map.insert(i, 1);
+        }
+
+        assert_eq!(map.min_left(2, |&s| s <= 3), 0);
+        assert_eq!(map.min_left(5, |&s| s <= 15), 0);
+        assert_eq!(map.min_left(10, |&s| s <= 55), 0);
+    }
+
+    #[test]
+    fn test_max_right_edge_cases() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..10 {
+            map.insert(i, 1);
+        }
+
+        assert_eq!(map.max_right(10, |&s| s <= 100), 10);
+        assert_eq!(map.max_right(0, |&_| true), 10);
+        assert_eq!(map.max_right(0, |&s| s <= 0), 0);
+    }
+
+    #[test]
+    fn test_min_left_edge_cases() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..10 {
+            map.insert(i, 1);
+        }
+
+        assert_eq!(map.min_left(0, |&_| true), 0);
+        assert_eq!(map.min_left(10, |&_| true), 0);
+        assert_eq!(map.min_left(10, |&s| s <= 0), 10);
+    }
+
+    #[test]
+    fn test_max_right_random() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        let mut rng = StdRng::seed_from_u64(12345);
+
+        for _ in 0..100 {
+            let key = rng.gen_range(0..1000i32);
+            map.insert(key, 1);
+        }
+
+        for l in 0..map.len() {
+            let threshold = rng.gen_range(0..100i64);
+            let result = map.max_right(l, |&s| s <= threshold);
+
+            for r in l..result {
+                assert!(map.fold_by_index(l..r) <= threshold);
+            }
+            if result < map.len() {
+                assert!(map.fold_by_index(l..=result) > threshold);
+            }
+        }
+    }
+
+    #[test]
+    fn test_min_left_random() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        let mut rng = StdRng::seed_from_u64(54321);
+
+        for _ in 0..100 {
+            let key = rng.gen_range(0..1000i32);
+            map.insert(key, 1);
+        }
+
+        for r in 1..=map.len() {
+            let threshold = rng.gen_range(0..100) as i64;
+            let result = map.min_left(r, |&s| s <= threshold);
+
+            for l in result..r {
+                assert!(map.fold_by_index(l..r) <= threshold);
+            }
+            if result > 0 {
+                assert!(map.fold_by_index(result - 1..r) > threshold);
+            }
+        }
+    }
+}
+
 mod entry {
     use super::*;
 
@@ -732,15 +830,14 @@ mod amortized_complexity {
             let start_idx = q % MAP_SIZE;
             let end_idx = (start_idx + 100) % MAP_SIZE;
             if start_idx < end_idx {
-                sum = sum.wrapping_add(map.fold_by_index(start_idx..end_idx) as i64);
+                sum = sum.wrapping_add(map.fold_by_index(start_idx..end_idx));
             }
         }
         let elapsed = start.elapsed().as_millis();
 
         assert!(
             elapsed < TIME_LIMIT_MS,
-            "fold_by_index regression: {} ms exceeds limit of {} ms (sum={} to prevent optimization)",
-            elapsed, TIME_LIMIT_MS, sum
+            "fold_by_index regression: {elapsed} ms exceeds limit of {TIME_LIMIT_MS} ms (sum={sum} to prevent optimization)",
         );
     }
 
@@ -763,14 +860,71 @@ mod amortized_complexity {
         for q in 0..NUM_QUERIES {
             let start_key = (q as i32) % (MAP_SIZE as i32);
             let end_key = start_key + 100;
-            sum = sum.wrapping_add(map.fold_by_key(start_key..end_key) as i64);
+            sum = sum.wrapping_add(map.fold_by_key(start_key..end_key));
         }
         let elapsed = start.elapsed().as_millis();
 
         assert!(
             elapsed < TIME_LIMIT_MS,
-            "fold_by_key regression: {} ms exceeds limit of {} ms (sum={} to prevent optimization)",
-            elapsed, TIME_LIMIT_MS, sum
+            "fold_by_key regression: {elapsed} ms exceeds limit of {TIME_LIMIT_MS} ms (sum={sum} to prevent optimization)",
+        );
+    }
+
+    #[test]
+    fn test_max_right_amortized_complexity() {
+        // Regression test: max_right should maintain O(log n) amortized complexity.
+
+        const MAP_SIZE: usize = 50_000;
+        const NUM_QUERIES: usize = 10_000;
+        const TIME_LIMIT_MS: u128 = 2000;
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..MAP_SIZE as i32 {
+            map.insert(i, 1);
+        }
+
+        let start = Instant::now();
+        let mut sum = 0usize;
+        for q in 0..NUM_QUERIES {
+            let l = q % MAP_SIZE;
+            let threshold = 50i64;
+            let r = map.max_right(l, |&s| s <= threshold);
+            sum = sum.wrapping_add(r);
+        }
+        let elapsed = start.elapsed().as_millis();
+
+        assert!(
+            elapsed < TIME_LIMIT_MS,
+            "max_right regression: {elapsed} ms exceeds limit of {TIME_LIMIT_MS} ms (sum={sum} to prevent optimization)",
+        );
+    }
+
+    #[test]
+    fn test_min_left_amortized_complexity() {
+        // Regression test: min_left should maintain O(log n) amortized complexity.
+
+        const MAP_SIZE: usize = 50_000;
+        const NUM_QUERIES: usize = 10_000;
+        const TIME_LIMIT_MS: u128 = 2000;
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..MAP_SIZE as i32 {
+            map.insert(i, 1);
+        }
+
+        let start = Instant::now();
+        let mut sum = 0usize;
+        for q in 0..NUM_QUERIES {
+            let r = (q % MAP_SIZE) + 1;
+            let threshold = 50i64;
+            let l = map.min_left(r, |&s| s <= threshold);
+            sum = sum.wrapping_add(l);
+        }
+        let elapsed = start.elapsed().as_millis();
+
+        assert!(
+            elapsed < TIME_LIMIT_MS,
+            "min_left regression: {elapsed} ms exceeds limit of {TIME_LIMIT_MS} ms (sum={sum} to prevent optimization)",
         );
     }
 }
