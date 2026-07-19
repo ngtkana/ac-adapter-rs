@@ -703,35 +703,10 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         }
     }
 
-    /// Splits the map into two at the given split key, returning a new map containing all
-    /// key-value pairs with keys greater than or equal to the split key.
-    ///
-    /// This operation takes O(log n) amortized time. The original map retains all key-value
-    /// pairs with keys strictly less than the split key.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use order_statistic_tree::OrderStatisticMap;
-    ///
-    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
-    /// map.insert(1, "a");
-    /// map.insert(2, "b");
-    /// map.insert(3, "c");
-    /// map.insert(4, "d");
-    ///
-    /// let high = map.split_off(&3);
-    /// assert_eq!(map.len(), 2);
-    /// assert_eq!(high.len(), 2);
-    /// assert_eq!(map.get(&1), Some(&"a"));
-    /// assert_eq!(high.get(&3), Some(&"c"));
-    /// ```
-    pub fn split_off<Q: Ord + ?Sized>(&mut self, key: &Q) -> Self
-    where
-        K: Borrow<Q>,
-    {
-        let idx = self.lower_bound(key);
+    /// Internal helper for splitting at a given index.
+    fn split_off_at(&mut self, idx: usize) -> Self {
         let len = self.len();
+        assert!(idx <= len, "index out of bounds: idx={idx} len={len}");
         if idx == len {
             return Self::new();
         }
@@ -755,6 +730,77 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         Self {
             root: Cell::new(Some(node)),
         }
+    }
+
+    /// Splits the map into two at the given split key, returning a new map containing all
+    /// key-value pairs with keys greater than or equal to the split key.
+    ///
+    /// This operation takes O(log n) amortized time. The original map retains all key-value
+    /// pairs with keys strictly less than the split key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    /// map.insert(3, "c");
+    /// map.insert(4, "d");
+    ///
+    /// let high = map.split_off_by_key(&3);
+    /// assert_eq!(map.len(), 2);
+    /// assert_eq!(high.len(), 2);
+    /// assert_eq!(map.get(&1), Some(&"a"));
+    /// assert_eq!(high.get(&3), Some(&"c"));
+    /// ```
+    pub fn split_off_by_key<Q: Ord + ?Sized>(&mut self, key: &Q) -> Self
+    where
+        K: Borrow<Q>,
+    {
+        let idx = self.lower_bound(key);
+        self.split_off_at(idx)
+    }
+
+    /// Splits the map into two at the given index, returning a new map containing all
+    /// key-value pairs at indices >= the given index.
+    ///
+    /// This operation takes O(log n) amortized time. The original map retains all key-value
+    /// pairs at indices < the given index.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `index > len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    ///
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
+    /// map.insert(1, "a");
+    /// map.insert(2, "b");
+    /// map.insert(3, "c");
+    /// map.insert(4, "d");
+    ///
+    /// let high = map.split_off_by_index(2);
+    /// assert_eq!(map.len(), 2);
+    /// assert_eq!(high.len(), 2);
+    /// assert_eq!(map.get(&1), Some(&"a"));
+    /// assert_eq!(high.get(&3), Some(&"c"));
+    /// ```
+    pub fn split_off_by_index(&mut self, index: usize) -> Self {
+        self.split_off_at(index)
+    }
+
+    /// Deprecated: use `split_off_by_key` instead.
+    #[deprecated(since = "0.1.0", note = "use `split_off_by_key` instead")]
+    pub fn split_off<Q: Ord + ?Sized>(&mut self, key: &Q) -> Self
+    where
+        K: Borrow<Q>,
+    {
+        self.split_off_by_key(key)
     }
 
     /// Computes the aggregate value of the entire map using the configured Op.

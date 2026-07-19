@@ -143,7 +143,7 @@ mod split_concat {
             }
 
             let split_key = rng.gen_range(0..=(n + 1));
-            let hi_map = map.split_off(&split_key);
+            let hi_map = map.split_off_by_key(&split_key);
 
             let lo_collected: Vec<_> = map.iter().collect();
             let hi_collected: Vec<_> = hi_map.iter().collect();

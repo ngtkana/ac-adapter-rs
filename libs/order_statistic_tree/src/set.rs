@@ -466,19 +466,56 @@ impl<T: Ord> OrderStatisticSet<T> {
     /// set.insert(3);
     /// set.insert(4);
     ///
-    /// let high = set.split_off(&3);
+    /// let high = set.split_off_by_key(&3);
     /// assert_eq!(set.len(), 2);
     /// assert_eq!(high.len(), 2);
     /// assert!(set.contains(&1));
     /// assert!(high.contains(&3));
     /// ```
-    pub fn split_off<Q: Ord + ?Sized>(&mut self, value: &Q) -> Self
+    pub fn split_off_by_key<Q: Ord + ?Sized>(&mut self, value: &Q) -> Self
     where
         T: Borrow<Q>,
     {
         Self {
-            map: self.map.split_off(value),
+            map: self.map.split_off_by_key(value),
         }
+    }
+
+    /// Splits the set into two at the given index, returning a new set containing all
+    /// values at indices >= the given index.
+    ///
+    /// This operation takes O(log n) amortized time.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticSet;
+    ///
+    /// let mut set = OrderStatisticSet::new();
+    /// set.insert(1);
+    /// set.insert(2);
+    /// set.insert(3);
+    /// set.insert(4);
+    ///
+    /// let high = set.split_off_by_index(2);
+    /// assert_eq!(set.len(), 2);
+    /// assert_eq!(high.len(), 2);
+    /// assert!(set.contains(&1));
+    /// assert!(high.contains(&3));
+    /// ```
+    pub fn split_off_by_index(&mut self, index: usize) -> Self {
+        Self {
+            map: self.map.split_off_by_index(index),
+        }
+    }
+
+    /// Deprecated: use `split_off_by_key` instead.
+    #[deprecated(since = "0.1.0", note = "use `split_off_by_key` instead")]
+    pub fn split_off<Q: Ord + ?Sized>(&mut self, value: &Q) -> Self
+    where
+        T: Borrow<Q>,
+    {
+        self.split_off_by_key(value)
     }
 }
 
