@@ -162,6 +162,19 @@ impl<T, U: Update<Value = T>> Tree<U> {
         Self { root: right }
     }
 
+    pub fn split_off_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Self {
+        self.split_off(|_center, left, _right| {
+            let lsize = left.map_or(0, &mut size);
+            match index.cmp(&lsize) {
+                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
+                Ordering::Greater => {
+                    index -= lsize + 1;
+                    Navi2::GoDownRight
+                }
+            }
+        })
+    }
+
     pub fn split_off_lower_bound_by_key<K, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
@@ -237,6 +250,24 @@ impl<T, U: Update<Value = T>> Tree<U> {
         self.root = Some(merge3(left, center, right));
     }
 
+    pub fn insert_at(
+        &mut self,
+        node_value: T,
+        mut index: usize,
+        mut size: impl FnMut(&T) -> usize,
+    ) {
+        self.insert(node_value, |_center, left, _right| {
+            let lsize = left.map_or(0, &mut size);
+            match index.cmp(&lsize) {
+                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
+                Ordering::Greater => {
+                    index -= lsize + 1;
+                    Navi2::GoDownRight
+                }
+            }
+        })
+    }
+
     /// Inserts a new node by extracting a key from the value and using standard comparison.
     ///
     /// This is a convenience wrapper around [`insert`](Self::insert) that compares the extracted key with the current node's key using `Ord`.
@@ -253,17 +284,27 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_by_key(5, |v| *v);
-    /// tree.insert_by_key(3, |v| *v);
-    /// tree.insert_by_key(7, |v| *v);
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    /// tree.insert_lower_bound_by_key(7, |v| *v);
     /// assert_eq!(tree.collect().len(), 3);
     /// ```
-    pub fn insert_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
+    pub fn insert_lower_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
         let probe = f(&node_value);
         self.insert(node_value, |center, _left, _right| {
             match probe.cmp(&f(&center)) {
                 Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
                 Ordering::Greater => Navi2::GoDownRight,
+            }
+        });
+    }
+
+    pub fn insert_upper_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
+        let probe = f(&node_value);
+        self.insert(node_value, |center, _left, _right| {
+            match probe.cmp(&f(&center)) {
+                Ordering::Less => Navi2::GoDownLeft,
+                Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
             }
         });
     }
@@ -286,8 +327,8 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_by_key(5, |v| *v);
-    /// tree.insert_by_key(3, |v| *v);
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
     /// let removed = tree.remove(|center, _, _| {
     ///     if 3 < *center { Navi3::GoDownLeft }
@@ -313,6 +354,20 @@ impl<T, U: Update<Value = T>> Tree<U> {
         }
     }
 
+    pub fn remove_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<T> {
+        self.remove(|_center, left, _right| {
+            let lsize = left.map_or(0, &mut size);
+            match index.cmp(&lsize) {
+                Ordering::Less => Navi3::GoDownLeft,
+                Ordering::Equal => Navi3::Found,
+                Ordering::Greater => {
+                    index -= lsize + 1;
+                    Navi3::GoDownRight
+                }
+            }
+        })
+    }
+
     /// Removes a node by extracting a key from each node and comparing with a probe.
     ///
     /// This is a convenience wrapper around [`remove`](Self::remove) that extracts a key from each node's value
@@ -331,8 +386,8 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_by_key(5, |v| *v);
-    /// tree.insert_by_key(3, |v| *v);
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
     /// let removed = tree.remove_by_key(&3, |v| *v);
     /// assert_eq!(removed, Some(3));
@@ -354,7 +409,6 @@ impl<T, U: Update<Value = T>> Tree<U> {
         )
     }
 
-    // TODO: change to &self, using Cell
     pub fn get(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3) -> Option<&T> {
         unsafe {
             match split3(self.root.take(), f) {
@@ -368,6 +422,20 @@ impl<T, U: Update<Value = T>> Tree<U> {
                 }
             }
         }
+    }
+
+    pub fn get_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<&T> {
+        self.get(|_center, left, _right| {
+            let lsize = left.map_or(0, &mut size);
+            match index.cmp(&lsize) {
+                Ordering::Less => Navi3::GoDownLeft,
+                Ordering::Equal => Navi3::Found,
+                Ordering::Greater => {
+                    index -= lsize + 1;
+                    Navi3::GoDownRight
+                }
+            }
+        })
     }
 
     pub fn get_by_key<K: Ord, Q: ?Sized + Ord>(
@@ -401,9 +469,9 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_by_key(3, |v| *v);
-    /// tree.insert_by_key(1, |v| *v);
-    /// tree.insert_by_key(2, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    /// tree.insert_lower_bound_by_key(1, |v| *v);
+    /// tree.insert_lower_bound_by_key(2, |v| *v);
     ///
     /// let values: Vec<_> = tree.collect().into_iter().copied().collect();
     /// assert_eq!(values, vec![1, 2, 3]);
