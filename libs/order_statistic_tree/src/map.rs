@@ -1,4 +1,4 @@
-//! v1では未対応: entry, range/range_mut, retain, values_mut, into_iter
+//! v1では未対応: range/range_mut, retain, values_mut, into_iter
 
 use std::borrow::Borrow;
 use std::cell::Cell;
