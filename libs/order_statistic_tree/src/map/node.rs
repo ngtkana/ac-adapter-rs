@@ -410,7 +410,7 @@ pub fn fold_by_index<K, V, O: Op<Key = K, Value = V>>(
             if end <= left_len {
                 // Entire range is in left subtree
                 fold_by_index((*n.as_ptr()).left, start, end)
-            } else if start >= left_len + 1 {
+            } else if start > left_len {
                 // Entire range is in right subtree
                 fold_by_index((*n.as_ptr()).right, start - left_len - 1, end - left_len - 1)
             } else {

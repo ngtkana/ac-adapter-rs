@@ -327,7 +327,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     ///
     /// let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
     /// map.insert(1, 10);
-    /// if let Some(value) = map.get_mut(&1) {
+    /// if let Some(mut value) = map.get_mut(&1) {
     ///     *value = 20;
     /// }
     /// assert_eq!(map.get(&1), Some(&20));
