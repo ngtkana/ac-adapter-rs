@@ -108,7 +108,7 @@ mod split_concat {
             }
 
             let split_value = rng.gen_range(0..=(n + 1));
-            let hi_set = set.split_off(&split_value);
+            let hi_set = set.split_off_by_key(&split_value);
 
             let lo_collected: Vec<_> = set.iter().collect();
             let hi_collected: Vec<_> = hi_set.iter().collect();
