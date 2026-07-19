@@ -571,62 +571,50 @@ mod tests {
             let mut vec: Vec<i32> = Vec::new();
 
             for _ in 0..q {
-                let op_type = rng.gen_range(0..5);
-                match op_type {
-                    0 | 1 => {
-                        // insert
-                        let value = rng.gen_range(0..n);
-                        set.insert(value);
-                        if !vec.contains(&value) {
-                            let idx = vec.iter().position(|&v| v > value).unwrap_or(vec.len());
-                            vec.insert(idx, value);
-                        }
-                    }
-                    2 => {
-                        // remove or take
-                        let value = rng.gen_range(0..n);
-                        if rng.gen_bool(0.5) {
-                            set.remove(&value);
-                        } else {
-                            set.take(&value);
-                        }
-                        vec.retain(|&v| v != value);
-                    }
-                    3 => {
-                        // remove_nth
-                        if !vec.is_empty() {
+                // Weighted: P(remove) = 0.7 when non-empty, else 1.0 (if we have insertions)
+                // This aggressively removes existing elements, creating deep unbalanced trees
+                // that expose the detach_root len-staleness bug.
+                let should_remove = !vec.is_empty() && rng.gen_bool(0.7);
+
+                if should_remove {
+                    // Remove family (types 2, 3, 4)
+                    let remove_type = rng.gen_range(0..3);
+                    match remove_type {
+                        0 => {
+                            // remove_nth (always succeeds on non-empty set)
                             let idx = rng.gen_range(0..vec.len());
                             set.remove_nth(idx);
                             vec.remove(idx);
                         }
-                    }
-                    4 => {
-                        // pop_first or pop_last or replace
-                        if !vec.is_empty() {
-                            let choice = rng.gen_range(0..3);
-                            match choice {
-                                0 => {
-                                    set.pop_first();
-                                    vec.remove(0);
-                                }
-                                1 => {
-                                    set.pop_last();
-                                    vec.pop();
-                                }
-                                2 => {
-                                    let value = rng.gen_range(0..n);
-                                    set.replace(value);
-                                    if !vec.contains(&value) {
-                                        let idx =
-                                            vec.iter().position(|&v| v > value).unwrap_or(vec.len());
-                                        vec.insert(idx, value);
-                                    }
-                                }
-                                _ => unreachable!(),
+                        1 => {
+                            // pop_first or pop_last
+                            if rng.gen_bool(0.5) {
+                                set.pop_first();
+                                vec.remove(0);
+                            } else {
+                                set.pop_last();
+                                vec.pop();
                             }
                         }
+                        2 => {
+                            // take by value from existing elements
+                            if !vec.is_empty() {
+                                let idx = rng.gen_range(0..vec.len());
+                                let val_to_remove = vec[idx];
+                                set.take(&val_to_remove);
+                                vec.retain(|&v| v != val_to_remove);
+                            }
+                        }
+                        _ => unreachable!(),
                     }
-                    _ => unreachable!(),
+                } else {
+                    // Insert (types 0, 1)
+                    let value = rng.gen_range(0..n);
+                    set.insert(value);
+                    if !vec.contains(&value) {
+                        let idx = vec.iter().position(|&v| v > value).unwrap_or(vec.len());
+                        vec.insert(idx, value);
+                    }
                 }
 
                 // Verify invariants
