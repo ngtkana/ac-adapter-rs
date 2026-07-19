@@ -22,6 +22,26 @@ impl Navi2 {
             }
         }
     }
+    fn lower_bound_by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
+        probe: &Q,
+        center: &T,
+        f: &mut impl FnMut(&T) -> K,
+    ) -> Self {
+        match probe.cmp(f(center).borrow()) {
+            Ordering::Less | Ordering::Equal => Self::GoDownLeft,
+            Ordering::Greater => Self::GoDownRight,
+        }
+    }
+    fn upper_bound_by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
+        probe: &Q,
+        center: &T,
+        f: &mut impl FnMut(&T) -> K,
+    ) -> Self {
+        match probe.cmp(f(center).borrow()) {
+            Ordering::Less => Self::GoDownLeft,
+            Ordering::Equal | Ordering::Greater => Self::GoDownRight,
+        }
+    }
 }
 
 /// An enum indicating whether to proceed left or right during a binary search that might terminate early. This is used in [`remove`](Tree::remove).
@@ -30,6 +50,30 @@ pub enum Navi3 {
     GoDownLeft,
     Found,
     GoDownRight,
+}
+impl Navi3 {
+    fn at<T>(index: &mut usize, size: &mut impl FnMut(&T) -> usize, left: Option<&T>) -> Self {
+        let lsize = left.map_or(0, size);
+        match (*index).cmp(&lsize) {
+            Ordering::Less => Self::GoDownLeft,
+            Ordering::Equal => Self::Found,
+            Ordering::Greater => {
+                *index -= lsize + 1;
+                Self::GoDownRight
+            }
+        }
+    }
+    fn by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
+        probe: &Q,
+        center: &T,
+        f: &mut impl FnMut(&T) -> K,
+    ) -> Self {
+        match probe.cmp(f(center).borrow()) {
+            Ordering::Less => Self::GoDownLeft,
+            Ordering::Equal => Self::Found,
+            Ordering::Greater => Self::GoDownRight,
+        }
+    }
 }
 
 /// A splay tree.
@@ -241,12 +285,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     where
         K: Borrow<Q>,
     {
-        self.split_off(
-            |center, _left, _right| match probe.cmp(f(center).borrow()) {
-                Ordering::Greater => Navi2::GoDownRight,
-                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
-            },
-        )
+        self.split_off(|center, _left, _right| Navi2::lower_bound_by_key(probe, center, &mut f))
     }
 
     /// Splits the tree at the upper bound of a key, returning elements > the key.
@@ -282,12 +321,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     where
         K: Borrow<Q>,
     {
-        self.split_off(
-            |center, _left, _right| match probe.cmp(f(center).borrow()) {
-                Ordering::Less => Navi2::GoDownLeft,
-                Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
-            },
-        )
+        self.split_off(|center, _left, _right| Navi2::upper_bound_by_key(probe, center, &mut f))
     }
 
     /// Concatenates another tree to this one, consuming the other tree.
@@ -388,14 +422,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
         mut size: impl FnMut(&T) -> usize,
     ) {
         self.insert(node_value, |_center, left, _right| {
-            let lsize = left.map_or(0, &mut size);
-            match index.cmp(&lsize) {
-                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
-                Ordering::Greater => {
-                    index -= lsize + 1;
-                    Navi2::GoDownRight
-                }
-            }
+            Navi2::at(&mut index, &mut size, left)
         })
     }
 
@@ -423,10 +450,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     pub fn insert_lower_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
         let probe = f(&node_value);
         self.insert(node_value, |center, _left, _right| {
-            match probe.cmp(&f(&center)) {
-                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
-                Ordering::Greater => Navi2::GoDownRight,
-            }
+            Navi2::lower_bound_by_key(&probe, center, &mut f)
         });
     }
 
@@ -454,10 +478,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     pub fn insert_upper_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
         let probe = f(&node_value);
         self.insert(node_value, |center, _left, _right| {
-            match probe.cmp(&f(&center)) {
-                Ordering::Less => Navi2::GoDownLeft,
-                Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
-            }
+            Navi2::upper_bound_by_key(&probe, center, &mut f)
         });
     }
 
@@ -535,17 +556,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// assert_eq!(removed.map(|v| v.val), Some(1));
     /// ```
     pub fn remove_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<T> {
-        self.remove(|_center, left, _right| {
-            let lsize = left.map_or(0, &mut size);
-            match index.cmp(&lsize) {
-                Ordering::Less => Navi3::GoDownLeft,
-                Ordering::Equal => Navi3::Found,
-                Ordering::Greater => {
-                    index -= lsize + 1;
-                    Navi3::GoDownRight
-                }
-            }
-        })
+        self.remove(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
     }
 
     /// Removes a node by extracting a key from each node and comparing with a probe.
@@ -580,13 +591,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     where
         K: Borrow<Q>,
     {
-        self.remove(
-            |center, _left, _right| match probe.cmp(f(&center).borrow()) {
-                Ordering::Less => Navi3::GoDownLeft,
-                Ordering::Equal => Navi3::Found,
-                Ordering::Greater => Navi3::GoDownRight,
-            },
-        )
+        self.remove(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
     /// Retrieves a reference to a node's value via a closure-guided traversal.
@@ -660,17 +665,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// assert_eq!(found.map(|v| v.val), Some(2));
     /// ```
     pub fn get_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<&T> {
-        self.get(|_center, left, _right| {
-            let lsize = left.map_or(0, &mut size);
-            match index.cmp(&lsize) {
-                Ordering::Less => Navi3::GoDownLeft,
-                Ordering::Equal => Navi3::Found,
-                Ordering::Greater => {
-                    index -= lsize + 1;
-                    Navi3::GoDownRight
-                }
-            }
-        })
+        self.get(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
     }
 
     /// Retrieves a reference to a node's value by extracting a key and comparing.
@@ -704,13 +699,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     where
         K: Borrow<Q>,
     {
-        self.get(
-            |center, _left, _right| match probe.cmp(f(&center).borrow()) {
-                Ordering::Less => Navi3::GoDownLeft,
-                Ordering::Equal => Navi3::Found,
-                Ordering::Greater => Navi3::GoDownRight,
-            },
-        )
+        self.get(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
     /// Returns a vector of references to all node values in the tree, in sorted order (in-order traversal).
