@@ -1,9 +1,0 @@
-[package]
-name = "order_statistic_tree"
-version = "0.1.0"
-edition = "2024"
-
-[dependencies]
-
-[dev-dependencies]
-rand = { workspace = true }
