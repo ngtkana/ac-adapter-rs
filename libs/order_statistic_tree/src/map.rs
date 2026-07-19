@@ -130,7 +130,7 @@ mod op_tests {
     #[test]
     fn test_noop_backward_compat() {
         // Type annotation omits O parameter, defaults to NoOp
-        let mut map = OrderStatisticMap::new();
+        let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
         map.insert(3, "c");
         map.insert(1, "a");
         map.insert(2, "b");
@@ -159,7 +159,7 @@ mod op_tests {
 /// assert_eq!(map.nth(0), (&1, &"a"));
 /// assert_eq!(map.get(&2), Some(&"b"));
 /// ```
-pub struct OrderStatisticMap<K, V, O = NoOp<K, V>> {
+pub struct OrderStatisticMap<K, V, O: Op<Key = K, Value = V> = NoOp<K, V>> {
     root: Cell<Option<NonNull<Node<K, V, O>>>>,
 }
 
@@ -249,6 +249,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         match self.root.get() {
             None => {
+                let prod = O::to_seg_value(&key, &value);
                 let node = Box::into_raw(Box::new(Node {
                     key,
                     value,
@@ -256,6 +257,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                     left: None,
                     right: None,
                     len: 1,
+                    prod,
                 }));
                 self.root.set(Some(NonNull::new(node).unwrap()));
                 None
@@ -269,6 +271,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                             if let Some(left) = (*current.as_ptr()).left {
                                 current = left;
                             } else {
+                                let prod = O::to_seg_value(&key, &value);
                                 let new_node = Box::into_raw(Box::new(Node {
                                     key,
                                     value,
@@ -276,6 +279,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                                     left: None,
                                     right: None,
                                     len: 1,
+                                    prod,
                                 }));
                                 (*current.as_ptr()).left = Some(NonNull::new(new_node).unwrap());
                                 current = NonNull::new(new_node).unwrap();
@@ -286,6 +290,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                             if let Some(right) = (*current.as_ptr()).right {
                                 current = right;
                             } else {
+                                let prod = O::to_seg_value(&key, &value);
                                 let new_node = Box::into_raw(Box::new(Node {
                                     key,
                                     value,
@@ -293,6 +298,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                                     left: None,
                                     right: None,
                                     len: 1,
+                                    prod,
                                 }));
                                 (*current.as_ptr()).right = Some(NonNull::new(new_node).unwrap());
                                 current = NonNull::new(new_node).unwrap();
@@ -302,6 +308,8 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                         std::cmp::Ordering::Equal => {
                             let old_value =
                                 std::mem::replace(&mut (*current.as_ptr()).value, value);
+                            (*current.as_ptr()).prod =
+                                O::to_seg_value(&(*current.as_ptr()).key, &(*current.as_ptr()).value);
                             current = splay(current);
                             self.root.set(Some(current));
                             return Some(old_value);
@@ -387,7 +395,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// let entries: Vec<_> = map.iter().collect();
     /// assert_eq!(entries, vec![(&1, &"a"), (&2, &"b"), (&3, &"c")]);
     /// ```
-    pub fn iter(&self) -> Iter<'_, K, V> {
+    pub fn iter(&self) -> Iter<'_, K, V, O> {
         let mut stack = Vec::new();
         if let Some(root) = self.root.get() {
             let mut current = Some(root);
@@ -547,7 +555,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// let keys: Vec<_> = map.keys().collect();
     /// assert_eq!(keys, vec![&1, &2, &3]);
     /// ```
-    pub fn keys(&self) -> Keys<'_, K, V> {
+    pub fn keys(&self) -> Keys<'_, K, V, O> {
         Keys {
             inner: self.iter(),
         }
@@ -568,7 +576,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// let values: Vec<_> = map.values().collect();
     /// assert_eq!(values, vec![&"a", &"b", &"c"]);
     /// ```
-    pub fn values(&self) -> Values<'_, K, V> {
+    pub fn values(&self) -> Values<'_, K, V, O> {
         Values {
             inner: self.iter(),
         }
@@ -812,25 +820,117 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
             root: Cell::new(Some(node)),
         }
     }
+
+    /// Computes the aggregate value of the entire map using the configured Op.
+    ///
+    /// Returns the monoid product of all (key, value) pairs in the map.
+    /// For an empty map, returns `O::identity()`.
+    ///
+    /// This operation takes O(1) time by accessing the cached product at the root node.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use order_statistic_tree::{OrderStatisticMap, Op};
+    /// # struct SumOp;
+    /// # impl Op for SumOp {
+    /// #     type Key = i32;
+    /// #     type Value = i32;
+    /// #     type SegValue = i64;
+    /// #     fn identity() -> i64 { 0 }
+    /// #     fn to_seg_value(key: &i32, value: &i32) -> i64 { (*key as i64) + (*value as i64) }
+    /// #     fn mul(lhs: &i64, rhs: &i64) -> i64 { lhs + rhs }
+    /// # }
+    /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// map.insert(2, 20);
+    /// assert_eq!(map.fold(), (1 + 10) + (2 + 20)); // 33
+    /// ```
+    pub fn fold(&self) -> O::SegValue {
+        self.root.get().map_or_else(O::identity, |r| unsafe { (*r.as_ptr()).prod.clone() })
+    }
+
+    /// Computes the aggregate value over a key range `[start, end)`.
+    ///
+    /// Returns the monoid product of all (key, value) pairs where `start <= key < end`.
+    /// For an empty range, returns `O::identity()`.
+    ///
+    /// This operation takes O(log n) amortized time via a top-down descent pattern.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use order_statistic_tree::{OrderStatisticMap, Op};
+    /// # struct SumOp;
+    /// # impl Op for SumOp {
+    /// #     type Key = i32;
+    /// #     type Value = i32;
+    /// #     type SegValue = i64;
+    /// #     fn identity() -> i64 { 0 }
+    /// #     fn to_seg_value(key: &i32, value: &i32) -> i64 { (*key as i64) + (*value as i64) }
+    /// #     fn mul(lhs: &i64, rhs: &i64) -> i64 { lhs + rhs }
+    /// # }
+    /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// map.insert(2, 20);
+    /// map.insert(3, 30);
+    /// assert_eq!(map.fold_range(&1, &3), (1 + 10) + (2 + 20)); // 33
+    /// ```
+    pub fn fold_range<Q: Ord + ?Sized>(&self, start: &Q, end: &Q) -> O::SegValue
+    where
+        K: Borrow<Q>,
+    {
+        fn fold_range_impl<K: Ord + Borrow<Q>, V, Q: Ord + ?Sized, O: Op<Key = K, Value = V>>(
+            node: Option<NonNull<Node<K, V, O>>>,
+            start: &Q,
+            end: &Q,
+        ) -> O::SegValue {
+            match node {
+                None => O::identity(),
+                Some(n) => unsafe {
+                    let key_ref = (*n.as_ptr()).key.borrow();
+                    match (key_ref.cmp(start), key_ref.cmp(end)) {
+                        // Node is to the left of range
+                        (std::cmp::Ordering::Less, _) => {
+                            fold_range_impl((*n.as_ptr()).right, start, end)
+                        }
+                        // Node is to the right of range
+                        (_, std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
+                            fold_range_impl((*n.as_ptr()).left, start, end)
+                        }
+                        // Node is within range [start, end)
+                        (_, std::cmp::Ordering::Less) => {
+                            let left_prod = fold_range_impl((*n.as_ptr()).left, start, end);
+                            let self_prod = O::to_seg_value(&(*n.as_ptr()).key, &(*n.as_ptr()).value);
+                            let right_prod = fold_range_impl((*n.as_ptr()).right, start, end);
+                            O::mul(&O::mul(&left_prod, &self_prod), &right_prod)
+                        }
+                    }
+                },
+            }
+        }
+
+        fold_range_impl(self.root.get(), start, end)
+    }
 }
 
 /// Creates an empty map. Equivalent to [`OrderStatisticMap::new`].
-impl<K: Ord, V> Default for OrderStatisticMap<K, V> {
+impl<K: Ord, V, O: Op<Key = K, Value = V>> Default for OrderStatisticMap<K, V, O> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<K: Ord + fmt::Debug, V: fmt::Debug> fmt::Debug for OrderStatisticMap<K, V> {
+impl<K: Ord + fmt::Debug, V: fmt::Debug, O: Op<Key = K, Value = V>> fmt::Debug for OrderStatisticMap<K, V, O> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_map().entries(self.iter()).finish()
     }
 }
 
 /// Creates an iterator over the map. Equivalent to [`OrderStatisticMap::iter`].
-impl<'a, K: Ord, V> IntoIterator for &'a OrderStatisticMap<K, V> {
+impl<'a, K: Ord, V, O: Op<Key = K, Value = V>> IntoIterator for &'a OrderStatisticMap<K, V, O> {
     type Item = (&'a K, &'a V);
-    type IntoIter = Iter<'a, K, V>;
+    type IntoIter = Iter<'a, K, V, O>;
 
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
@@ -838,7 +938,7 @@ impl<'a, K: Ord, V> IntoIterator for &'a OrderStatisticMap<K, V> {
 }
 
 /// Constructs a map from an iterator of key-value pairs.
-impl<K: Ord, V> FromIterator<(K, V)> for OrderStatisticMap<K, V> {
+impl<K: Ord, V, O: Op<Key = K, Value = V>> FromIterator<(K, V)> for OrderStatisticMap<K, V, O> {
     fn from_iter<T: IntoIterator<Item = (K, V)>>(iter: T) -> Self {
         let mut map = Self::new();
         map.extend(iter);
@@ -847,7 +947,7 @@ impl<K: Ord, V> FromIterator<(K, V)> for OrderStatisticMap<K, V> {
 }
 
 /// Extends the map with the contents of an iterator of key-value pairs.
-impl<K: Ord, V> Extend<(K, V)> for OrderStatisticMap<K, V> {
+impl<K: Ord, V, O: Op<Key = K, Value = V>> Extend<(K, V)> for OrderStatisticMap<K, V, O> {
     fn extend<T: IntoIterator<Item = (K, V)>>(&mut self, iter: T) {
         for (k, v) in iter {
             self.insert(k, v);
@@ -855,7 +955,7 @@ impl<K: Ord, V> Extend<(K, V)> for OrderStatisticMap<K, V> {
     }
 }
 
-impl<K, V> Drop for OrderStatisticMap<K, V> {
+impl<K, V, O: Op<Key = K, Value = V>> Drop for OrderStatisticMap<K, V, O> {
     fn drop(&mut self) {
         free_subtree(self.root.get());
     }
@@ -878,12 +978,12 @@ impl<K, V> Drop for OrderStatisticMap<K, V> {
 ///     println!("{}: {}", key, value);
 /// }
 /// ```
-pub struct Iter<'a, K, V> {
-    stack: Vec<NonNull<Node<K, V>>>,
-    _phantom: std::marker::PhantomData<&'a Node<K, V>>,
+pub struct Iter<'a, K, V, O: Op<Key = K, Value = V>> {
+    stack: Vec<NonNull<Node<K, V, O>>>,
+    _phantom: std::marker::PhantomData<&'a Node<K, V, O>>,
 }
 
-impl<'a, K, V> Iterator for Iter<'a, K, V> {
+impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Iter<'a, K, V, O> {
     type Item = (&'a K, &'a V);
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -916,11 +1016,11 @@ impl<'a, K, V> Iterator for Iter<'a, K, V> {
 ///
 /// let keys: Vec<_> = map.keys().collect();
 /// ```
-pub struct Keys<'a, K, V> {
-    inner: Iter<'a, K, V>,
+pub struct Keys<'a, K, V, O: Op<Key = K, Value = V>> {
+    inner: Iter<'a, K, V, O>,
 }
 
-impl<'a, K, V> Iterator for Keys<'a, K, V> {
+impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Keys<'a, K, V, O> {
     type Item = &'a K;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -943,11 +1043,11 @@ impl<'a, K, V> Iterator for Keys<'a, K, V> {
 ///
 /// let values: Vec<_> = map.values().collect();
 /// ```
-pub struct Values<'a, K, V> {
-    inner: Iter<'a, K, V>,
+pub struct Values<'a, K, V, O: Op<Key = K, Value = V>> {
+    inner: Iter<'a, K, V, O>,
 }
 
-impl<'a, K, V> Iterator for Values<'a, K, V> {
+impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Values<'a, K, V, O> {
     type Item = &'a V;
 
     fn next(&mut self) -> Option<Self::Item> {
@@ -984,7 +1084,7 @@ impl<K, V, O: Op<Key = K, Value = V>> Node<K, V, O> {
     }
 }
 
-fn splay<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
+fn splay<K, V, O: Op<Key = K, Value = V>>(x: NonNull<Node<K, V, O>>) -> NonNull<Node<K, V, O>> {
     unsafe {
         while let Some(p) = (*x.as_ptr()).parent {
             if let Some(q) = (*p.as_ptr()).parent {
@@ -1024,7 +1124,7 @@ fn splay<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     }
 }
 
-fn rotate_left<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
+fn rotate_left<K, V, O: Op<Key = K, Value = V>>(x: NonNull<Node<K, V, O>>) -> NonNull<Node<K, V, O>> {
     unsafe {
         let y = (*x.as_ptr()).right.unwrap();
         let c = (*y.as_ptr()).left;
@@ -1054,7 +1154,7 @@ fn rotate_left<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     }
 }
 
-fn rotate_right<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
+fn rotate_right<K, V, O: Op<Key = K, Value = V>>(x: NonNull<Node<K, V, O>>) -> NonNull<Node<K, V, O>> {
     unsafe {
         let y = (*x.as_ptr()).left.unwrap();
         let c = (*y.as_ptr()).right;
@@ -1084,7 +1184,7 @@ fn rotate_right<K, V>(x: NonNull<Node<K, V>>) -> NonNull<Node<K, V>> {
     }
 }
 
-fn free_subtree<K, V>(root: Option<NonNull<Node<K, V>>>) {
+fn free_subtree<K, V, O: Op<Key = K, Value = V>>(root: Option<NonNull<Node<K, V, O>>>) {
     let mut stack = Vec::new();
     if let Some(r) = root {
         stack.push(r);
@@ -1102,10 +1202,10 @@ fn free_subtree<K, V>(root: Option<NonNull<Node<K, V>>>) {
     }
 }
 
-fn find_and_splay<K, Q: Ord + ?Sized, V>(
-    map: &OrderStatisticMap<K, V>,
+fn find_and_splay<K, Q: Ord + ?Sized, V, O: Op<Key = K, Value = V>>(
+    map: &OrderStatisticMap<K, V, O>,
     key: &Q,
-) -> Option<NonNull<Node<K, V>>>
+) -> Option<NonNull<Node<K, V, O>>>
 where
     K: Ord + Borrow<Q>,
 {
@@ -1144,7 +1244,7 @@ where
     }
 }
 
-fn nth_and_splay<K, V>(map: &OrderStatisticMap<K, V>, mut n: usize) -> NonNull<Node<K, V>> {
+fn nth_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatisticMap<K, V, O>, mut n: usize) -> NonNull<Node<K, V, O>> {
     let root = map.root.get().unwrap();
     unsafe {
         let mut current = root;
@@ -1169,11 +1269,12 @@ fn nth_and_splay<K, V>(map: &OrderStatisticMap<K, V>, mut n: usize) -> NonNull<N
     }
 }
 
-fn locate_and_splay<K, Q: Ord + ?Sized, V>(
-    map: &OrderStatisticMap<K, V>,
+#[allow(clippy::type_complexity)]
+fn locate_and_splay<K, Q: Ord + ?Sized, V, O: Op<Key = K, Value = V>>(
+    map: &OrderStatisticMap<K, V, O>,
     key: &Q,
     include_equal: bool,
-) -> (usize, Option<NonNull<Node<K, V>>>)
+) -> (usize, Option<NonNull<Node<K, V, O>>>)
 where
     K: Ord + Borrow<Q>,
 {
@@ -1226,7 +1327,7 @@ where
     }
 }
 
-fn leftmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<Node<K, V>>> {
+fn leftmost_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatisticMap<K, V, O>) -> Option<NonNull<Node<K, V, O>>> {
     match map.root.get() {
         None => None,
         Some(root) => unsafe {
@@ -1241,7 +1342,7 @@ fn leftmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<Nod
     }
 }
 
-fn rightmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<Node<K, V>>> {
+fn rightmost_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatisticMap<K, V, O>) -> Option<NonNull<Node<K, V, O>>> {
     match map.root.get() {
         None => None,
         Some(root) => unsafe {
@@ -1256,7 +1357,7 @@ fn rightmost_and_splay<K, V>(map: &OrderStatisticMap<K, V>) -> Option<NonNull<No
     }
 }
 
-fn detach_root<K, V>(map: &mut OrderStatisticMap<K, V>) -> (K, V) {
+fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<K, V, O>) -> (K, V) {
     let root = map.root.get().unwrap();
     unsafe {
         let (key, value) = (
@@ -1588,11 +1689,11 @@ mod tests {
     #[test]
     #[should_panic(expected = "strictly less")]
     fn test_concat_panic_on_overlap() {
-        let mut map1 = OrderStatisticMap::new();
+        let mut map1: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
         map1.insert(1, "a");
         map1.insert(2, "b");
 
-        let mut map2 = OrderStatisticMap::new();
+        let mut map2: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
         map2.insert(2, "c");
         map2.insert(3, "d");
 
