@@ -1,0 +1,461 @@
+//! Intrusive spaly tree
+
+use std::{cmp::Ordering, ptr::NonNull};
+
+type NN<U> = NonNull<Node<U>>;
+type ONN<U> = Option<NonNull<Node<U>>>;
+
+/// An enum used in a binary search that never stops, indicating whether to move left or right. This is used in [`insert`](Tree::insert).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Navi2 {
+    GoDownLeft,
+    GoDownRight,
+}
+
+impl Navi2 {
+    pub fn lower_bound_from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi2 {
+        match probe.cmp(&current) {
+            Ordering::Less => Navi2::GoDownLeft,
+            Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
+        }
+    }
+}
+
+/// An enum indicating whether to proceed left or right during a binary search that might terminate early. This is used in [`remove`](Tree::remove).
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Navi3 {
+    GoDownLeft,
+    Found,
+    GoDownRight,
+}
+impl Navi3 {
+    pub fn from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi3 {
+        match probe.cmp(&current) {
+            Ordering::Less => Navi3::GoDownLeft,
+            Ordering::Greater => Navi3::GoDownRight,
+            Ordering::Equal => Navi3::Found,
+        }
+    }
+}
+
+/// A splay tree.
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Node, Update, Tree, Navi2, Navi3};
+/// use std::cmp::Ordering;
+///
+/// // Boilerplates.
+/// struct Value {
+///     value: u32,
+///     sum: u32,
+/// }
+///
+/// enum U {}
+/// impl Update for U {
+///     type Value = Value;
+///
+///     fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>) {
+///         root.sum = root.value;
+///         if let Some(left) = left {
+///             root.sum = left.sum + root.sum;
+///         }
+///         if let Some(right) = right {
+///             root.sum = root.sum + right.sum;
+///         }
+///     }
+/// }
+///
+///
+/// let mut tree = Tree::<U>::new();
+///
+/// // Insertions. When inserting, you must specify the full value of the node and the binary search method.
+/// for value in 10..=13 {
+///     tree.insert(Value { value, sum: value }, |center, _left, _right| {
+///         match value.cmp(&center.value) {
+///             Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
+///             Ordering::Greater => Navi2::GoDownRight,
+///         }
+///     });
+/// }
+///
+/// // Removals. You must also specify this when removing.
+/// tree.remove(|center, _left, _right| {
+///     match center.value.cmp(&12) {
+///         Ordering::Less => Navi3::GoDownRight,
+///         Ordering::Equal => Navi3::Found,
+///         Ordering::Greater => Navi3::GoDownLeft,
+///    }
+/// });
+///
+/// // Debugging.
+/// assert_eq!(
+///     tree.collect().into_iter().map(|value| value.value).collect::<Vec<_>>().as_slice(),
+///     &[
+///         10,
+///         11,
+///         13,
+///     ],
+/// );
+///
+/// // Folding. Only overall aggregation (`fold_all()`) is available.
+/// assert_eq!(tree.fold_all().unwrap().sum, 34);
+/// ```
+pub struct Tree<U: Update> {
+    root: ONN<U>,
+}
+
+impl<U: Update> Default for Tree<U> {
+    fn default() -> Self {
+        Self { root: None }
+    }
+}
+
+impl<U: Update> Drop for Tree<U> {
+    fn drop(&mut self) {
+        free_subtree(self.root);
+    }
+}
+
+impl<T, U: Update<Value = T>> Tree<U> {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn fold_all(&self) -> Option<&T> {
+        unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
+    }
+
+    pub fn insert(
+        &mut self,
+        node_value: U::Value,
+        f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
+    ) {
+        let (left, right) = split2(self.root.take(), f);
+        let center = unsafe {
+            NonNull::new_unchecked(Box::into_raw(Box::new(Node {
+                node_value,
+                left: None,
+                right: None,
+                parent: None,
+            })))
+        };
+        self.root = Some(merge3(left, center, right));
+    }
+
+    pub fn insert_by_key<K: Ord>(
+        &mut self,
+        node_value: U::Value,
+        mut f: impl FnMut(&U::Value) -> K,
+    ) {
+        let probe = f(&node_value);
+        self.insert(node_value, |center, _left, _right| {
+            match probe.cmp(&f(&center)) {
+                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
+                Ordering::Greater => Navi2::GoDownRight,
+            }
+        });
+    }
+
+    pub fn remove(
+        &mut self,
+        f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
+    ) -> Option<U::Value> {
+        unsafe {
+            match split3(self.root.take(), f) {
+                Split3Result::Success(left, center, right) => {
+                    let node_value = Box::from_raw(center.as_ptr()).node_value;
+                    self.root = merge2(left, right);
+                    Some(node_value)
+                }
+                Split3Result::Failure(root) => {
+                    self.root = root;
+                    None
+                }
+            }
+        }
+    }
+
+    pub fn remove_by_key<K: Ord>(
+        &mut self,
+        probe: &K,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Option<U::Value> {
+        self.remove(|center, _left, _right| match probe.cmp(&f(&center)) {
+            Ordering::Less => Navi3::GoDownLeft,
+            Ordering::Equal => Navi3::Found,
+            Ordering::Greater => Navi3::GoDownRight,
+        })
+    }
+
+    pub fn collect(&self) -> Vec<&U::Value> {
+        pub fn collect<'a, U: Update>(root: ONN<U>, out: &'a mut Vec<&U::Value>) {
+            let Some(root) = root else {
+                return;
+            };
+            unsafe {
+                collect((*root.as_ptr()).left, out);
+                out.push(&(*root.as_ptr()).node_value);
+                collect((*root.as_ptr()).right, out);
+            }
+        }
+        let mut out = vec![];
+        collect::<U>(self.root, &mut out);
+        out
+    }
+}
+
+/// An adapter trait for specifying what to do (ex. [`update`](Update::update)) during a structural change.
+pub trait Update: Sized {
+    type Value;
+    fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>);
+}
+
+/// A node of [`Tree`]. We made this public for the time being, expecting the need for the size of the left subtree when performing binary searches during [`insert`](Tree::insert) or [`remove`](Tree::remove) operations.
+pub struct Node<U: Update> {
+    node_value: U::Value,
+    left: ONN<U>,
+    right: ONN<U>,
+    parent: ONN<U>,
+}
+impl<U: Update> Node<U> {
+    fn update(&mut self) {
+        unsafe {
+            U::update(
+                &mut self.node_value,
+                self.left.map(|left| &(*left.as_ptr()).node_value),
+                self.right.map(|right| &(*right.as_ptr()).node_value),
+            )
+        }
+    }
+}
+
+fn merge2<U: Update>(left: ONN<U>, right: ONN<U>) -> ONN<U> {
+    match (left, right) {
+        (left, None) => left,
+        (None, right) => right,
+        (Some(mut left), Some(right)) => unsafe {
+            (left, _) = find_and_splay(left, |_root, _left, _right| Navi3::GoDownRight);
+            (*left.as_ptr()).right = Some(right);
+            (*right.as_ptr()).parent = Some(left);
+            left.update();
+            Some(left)
+        },
+    }
+}
+
+fn merge3<U: Update>(left: ONN<U>, center: NN<U>, right: ONN<U>) -> NN<U> {
+    unsafe {
+        if let Some(left) = left {
+            (*left.as_ptr()).parent = Some(center);
+        }
+        if let Some(right) = right {
+            (*right.as_ptr()).parent = Some(center);
+        }
+        (*center.as_ptr()).left = left;
+        (*center.as_ptr()).right = right;
+        (*center.as_ptr()).update();
+        center
+    }
+}
+
+fn split2<T, U: Update<Value = T>>(
+    root: ONN<U>,
+    mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
+) -> (ONN<U>, ONN<U>) {
+    let Some(root) = root else { return (None, None) };
+    let (root, navi) = find_and_splay(root, |node, left, right| match f(node, left, right) {
+        Navi2::GoDownRight => Navi3::GoDownRight,
+        Navi2::GoDownLeft => Navi3::GoDownLeft,
+    });
+    unsafe {
+        match navi {
+            Navi3::GoDownRight => {
+                let right = (*root.as_ptr()).right.take();
+                if let Some(right) = right {
+                    (*right.as_ptr()).parent = None;
+                }
+                (*root.as_ptr()).update();
+                (Some(root), right)
+            }
+            Navi3::GoDownLeft => {
+                let left = (*root.as_ptr()).left.take();
+                if let Some(left) = left {
+                    (*left.as_ptr()).parent = None;
+                }
+                (*root.as_ptr()).update();
+                (left, Some(root))
+            }
+            Navi3::Found => unreachable!(),
+        }
+    }
+}
+
+enum Split3Result<U: Update> {
+    Success(ONN<U>, NN<U>, ONN<U>),
+    Failure(ONN<U>),
+}
+
+fn split3<T, U: Update<Value = T>>(
+    root: ONN<U>,
+    f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
+) -> Split3Result<U> {
+    let Some(root) = root else { return Split3Result::Failure(None) };
+    let (root, navi3) = find_and_splay(root, f);
+    if navi3 != Navi3::Found {
+        return Split3Result::Failure(Some(root));
+    }
+    unsafe {
+        let left = (*root.as_ptr()).left.take();
+        if let Some(left) = left {
+            (*left.as_ptr()).parent = None;
+        }
+        let right = (*root.as_ptr()).right.take();
+        if let Some(right) = right {
+            (*right.as_ptr()).parent = None;
+        }
+        (*root.as_ptr()).update();
+        Split3Result::Success(left, root, right)
+    }
+}
+
+fn splay<U: Update>(x: NN<U>) -> NN<U> {
+    unsafe {
+        while let Some(p) = (*x.as_ptr()).parent {
+            if let Some(q) = (*p.as_ptr()).parent {
+                if (*q.as_ptr()).left == Some(p) && (*p.as_ptr()).left == Some(x) {
+                    // zig-zig: left-left
+                    rotate_right(q);
+                    rotate_right(p);
+                } else if (*q.as_ptr()).right == Some(p) && (*p.as_ptr()).right == Some(x) {
+                    // zig-zig: right-right
+                    rotate_left(q);
+                    rotate_left(p);
+                } else {
+                    // zig-zag
+                    if (*p.as_ptr()).left == Some(x) {
+                        rotate_right(p);
+                    } else {
+                        rotate_left(p);
+                    }
+                    if (*q.as_ptr()).left == Some(x) {
+                        rotate_right(q);
+                    } else {
+                        rotate_left(q);
+                    }
+                }
+            } else {
+                // zig: parent is root
+                if (*p.as_ptr()).left == Some(x) {
+                    rotate_right(p);
+                } else {
+                    rotate_left(p);
+                }
+            }
+        }
+        x
+    }
+}
+fn rotate_left<U: Update>(x: NN<U>) -> NN<U> {
+    unsafe {
+        let y = (*x.as_ptr()).right.unwrap();
+        let c = (*y.as_ptr()).left;
+        (*x.as_ptr()).right = c;
+        if let Some(c) = c {
+            (*c.as_ptr()).parent = Some(x);
+        }
+        (*y.as_ptr()).left = Some(x);
+        if let Some(q) = (*x.as_ptr()).parent {
+            if (*q.as_ptr()).left == Some(x) {
+                (*q.as_ptr()).left = Some(y);
+            } else {
+                (*q.as_ptr()).right = Some(y);
+            }
+            (*y.as_ptr()).parent = Some(q);
+        } else {
+            (*y.as_ptr()).parent = None;
+        }
+        (*x.as_ptr()).parent = Some(y);
+        (*x.as_ptr()).update();
+        (*y.as_ptr()).update();
+        y
+    }
+}
+fn rotate_right<U: Update>(x: NN<U>) -> NN<U> {
+    unsafe {
+        let y = (*x.as_ptr()).left.unwrap();
+        let c = (*y.as_ptr()).right;
+        (*x.as_ptr()).left = c;
+        if let Some(c) = c {
+            (*c.as_ptr()).parent = Some(x);
+        }
+        (*y.as_ptr()).right = Some(x);
+        if let Some(q) = (*x.as_ptr()).parent {
+            if (*q.as_ptr()).left == Some(x) {
+                (*q.as_ptr()).left = Some(y);
+            } else {
+                (*q.as_ptr()).right = Some(y);
+            }
+            (*y.as_ptr()).parent = Some(q);
+        } else {
+            (*y.as_ptr()).parent = None;
+        }
+        (*x.as_ptr()).parent = Some(y);
+        (*x.as_ptr()).update();
+        (*y.as_ptr()).update();
+        y
+    }
+}
+fn free_subtree<U: Update>(root: ONN<U>) {
+    let mut stack = Vec::new();
+    if let Some(r) = root {
+        stack.push(r);
+    }
+    while let Some(node) = stack.pop() {
+        unsafe {
+            if let Some(left) = (*node.as_ptr()).left {
+                stack.push(left);
+            }
+            if let Some(right) = (*node.as_ptr()).right {
+                stack.push(right);
+            }
+            drop(Box::from_raw(node.as_ptr()));
+        }
+    }
+}
+fn find_and_splay<T, U: Update<Value = T>>(
+    root: NN<U>,
+    mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
+) -> (NN<U>, Navi3) {
+    unsafe {
+        let mut node = root;
+        let navi = loop {
+            let node_ref = &(*node.as_ptr());
+            match f(
+                &node_ref.node_value,
+                node_ref.left.map(|left| &(*left.as_ptr()).node_value),
+                node_ref.right.map(|right| &(*right.as_ptr()).node_value),
+            ) {
+                Navi3::GoDownLeft => {
+                    if let Some(left) = node_ref.left {
+                        node = left;
+                    } else {
+                        break Navi3::GoDownLeft;
+                    }
+                }
+                Navi3::GoDownRight => {
+                    if let Some(right) = node_ref.right {
+                        node = right;
+                    } else {
+                        break Navi3::GoDownRight;
+                    }
+                }
+                Navi3::Found => {
+                    break Navi3::Found;
+                }
+            }
+        };
+        (splay(node), navi)
+    }
+}
