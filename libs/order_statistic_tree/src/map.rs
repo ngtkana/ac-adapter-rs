@@ -42,11 +42,14 @@ impl<K, V> Op for NoOp<K, V> {
     fn mul((): &(), (): &()) -> Self::SegValue {}
 }
 
-mod node;
 mod entry;
+mod node;
 
-use node::{Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay, max_right_and_splay, min_left_and_splay, nth_and_splay, rightmost_and_splay, splay};
 pub use entry::{Entry, OccupiedEntry, VacantEntry, ValueMut};
+use node::{
+    Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay,
+    max_right_and_splay, min_left_and_splay, nth_and_splay, rightmost_and_splay, splay,
+};
 
 /// An order-statistic map backed by a splay tree.
 ///
@@ -137,10 +140,20 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         self.root.set(None);
     }
 
-    fn new_node(key: K, value: V, parent: Option<NonNull<Node<K, V, O>>>) -> NonNull<Node<K, V, O>> {
+    fn new_node(
+        key: K,
+        value: V,
+        parent: Option<NonNull<Node<K, V, O>>>,
+    ) -> NonNull<Node<K, V, O>> {
         let prod = O::to_seg_value(&key, &value);
         let node = Box::into_raw(Box::new(Node {
-            key, value, parent, left: None, right: None, len: 1, prod,
+            key,
+            value,
+            parent,
+            left: None,
+            right: None,
+            len: 1,
+            prod,
         }));
         NonNull::new(node).unwrap()
     }
@@ -195,8 +208,10 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                         std::cmp::Ordering::Equal => {
                             let old_value =
                                 std::mem::replace(&mut (*current.as_ptr()).value, value);
-                            (*current.as_ptr()).prod =
-                                O::to_seg_value(&(*current.as_ptr()).key, &(*current.as_ptr()).value);
+                            (*current.as_ptr()).prod = O::to_seg_value(
+                                &(*current.as_ptr()).key,
+                                &(*current.as_ptr()).value,
+                            );
                             current = splay(current);
                             self.root.set(Some(current));
                             return Some(old_value);
@@ -341,10 +356,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     pub fn entry(&mut self, key: K) -> Entry<'_, K, V, O> {
         match find_and_splay(self, &key) {
             Some(node) => Entry::Occupied(OccupiedEntry::new(node)),
-            None => Entry::Vacant(VacantEntry {
-                map: self,
-                key,
-            }),
+            None => Entry::Vacant(VacantEntry { map: self, key }),
         }
     }
 
@@ -472,9 +484,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// assert_eq!(keys, vec![&1, &2, &3]);
     /// ```
     pub fn keys(&self) -> Keys<'_, K, V, O> {
-        Keys {
-            inner: self.iter(),
-        }
+        Keys { inner: self.iter() }
     }
 
     /// Returns an iterator over the values of the map in key order.
@@ -493,9 +503,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// assert_eq!(values, vec![&"a", &"b", &"c"]);
     /// ```
     pub fn values(&self) -> Values<'_, K, V, O> {
-        Values {
-            inner: self.iter(),
-        }
+        Values { inner: self.iter() }
     }
 
     // Group C: Order statistic
@@ -809,7 +817,9 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// assert_eq!(map.fold_all(), (1 + 10) + (2 + 20)); // 33
     /// ```
     pub fn fold_all(&self) -> O::SegValue {
-        self.root.get().map_or_else(O::identity, |r| unsafe { (*r.as_ptr()).prod.clone() })
+        self.root
+            .get()
+            .map_or_else(O::identity, |r| unsafe { (*r.as_ptr()).prod.clone() })
     }
 
     /// Computes the aggregate value over a key range.
@@ -892,7 +902,10 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     pub fn fold_by_index(&self, range: impl RangeBounds<usize>) -> O::SegValue {
         let len = self.len();
         let (start, end) = to_half_open_range(range, len);
-        assert!(start <= end && end <= len, "range out of bounds: {start}..{end}, len={len}");
+        assert!(
+            start <= end && end <= len,
+            "range out of bounds: {start}..{end}, len={len}"
+        );
 
         if start == end {
             return O::identity();
@@ -904,7 +917,8 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         let (left, rest) = node::split_at_index(self.root.get(), start);
         let (mid, right) = node::split_at_index(rest, end - start);
         let result = mid.map_or_else(O::identity, |m| unsafe { (*m.as_ptr()).prod.clone() });
-        self.root.set(node::merge_trees(node::merge_trees(left, mid), right));
+        self.root
+            .set(node::merge_trees(node::merge_trees(left, mid), right));
         result
     }
 
@@ -986,7 +1000,11 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     where
         F: Fn(&O::SegValue) -> bool,
     {
-        assert!(r <= self.len(), "index out of bounds: r={r} len={}", self.len());
+        assert!(
+            r <= self.len(),
+            "index out of bounds: r={r} len={}",
+            self.len()
+        );
         if r == 0 {
             return 0;
         }
@@ -1001,7 +1019,9 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> Default for OrderStatisticMap<K, V, O
     }
 }
 
-impl<K: Ord + fmt::Debug, V: fmt::Debug, O: Op<Key = K, Value = V>> fmt::Debug for OrderStatisticMap<K, V, O> {
+impl<K: Ord + fmt::Debug, V: fmt::Debug, O: Op<Key = K, Value = V>> fmt::Debug
+    for OrderStatisticMap<K, V, O>
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_map().entries(self.iter()).finish()
     }
