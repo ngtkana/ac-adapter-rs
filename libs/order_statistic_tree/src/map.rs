@@ -165,9 +165,12 @@ mod op_tests {
     #[test]
     fn test_fold_remove_nth_random() {
         use std::collections::BTreeMap;
+        use rand::Rng;
+        use rand::SeedableRng;
 
         let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
         let mut reference: BTreeMap<i32, i32> = BTreeMap::new();
+        let mut rng = rand::rngs::StdRng::seed_from_u64(42);
 
         // First, build a stable map with known content
         for i in 1..=10 {
@@ -188,7 +191,7 @@ mod op_tests {
                 break;
             }
 
-            let remove_nth = step % map.len();
+            let remove_nth = rng.gen_range(0..map.len());
             let (k, _) = map.nth(remove_nth);
             let k = *k;
 
