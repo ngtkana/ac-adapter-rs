@@ -172,8 +172,8 @@ impl<T, U: Update<Value = T>> Tree<U> {
     {
         self.split_off(
             |center, _left, _right| match probe.cmp(f(center).borrow()) {
-                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
                 Ordering::Greater => Navi2::GoDownRight,
+                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
             },
         )
     }
