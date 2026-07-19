@@ -1,4 +1,5 @@
 use order_statistic_tree::{Op, OrderStatisticMap};
+use order_statistic_tree::map::Entry;
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
 use std::collections::BTreeMap;
@@ -578,6 +579,131 @@ mod aggregation_consistency {
         // ただし全体のフォールドは変わる
         let fold_all = map.fold_all();
         assert_eq!(fold_all, 1 + 10 + 2 + 20 + 3 + 30 + 4 + 99);
+    }
+}
+
+mod entry {
+    use super::*;
+
+    #[test]
+    fn test_entry_vacant() {
+        let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
+
+        match map.entry(1) {
+            Entry::Vacant(ve) => {
+                ve.insert("a");
+            }
+            Entry::Occupied(_) => panic!("Expected vacant entry"),
+        }
+
+        assert_eq!(map.get(&1), Some(&"a"));
+    }
+
+    #[test]
+    fn test_entry_occupied() {
+        let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
+        map.insert(1, "a");
+
+        match map.entry(1) {
+            Entry::Occupied(oe) => {
+                assert_eq!(oe.get(), &"a");
+            }
+            Entry::Vacant(_) => panic!("Expected occupied entry"),
+        }
+
+        assert_eq!(map.get(&1), Some(&"a"));
+    }
+
+    #[test]
+    fn test_entry_or_insert_vacant() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        {
+            let value = map.entry(1).or_insert(10);
+            assert_eq!(*value, 10);
+        }
+        assert_eq!(map.get(&1), Some(&10));
+    }
+
+    #[test]
+    fn test_entry_or_insert_occupied() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        map.insert(1, 10);
+        {
+            let value = map.entry(1).or_insert(20);
+            assert_eq!(*value, 10);
+        }
+        assert_eq!(map.get(&1), Some(&10));
+    }
+
+    #[test]
+    fn test_entry_or_insert_with() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        {
+            let value = map.entry(1).or_insert_with(|| 10);
+            assert_eq!(*value, 10);
+        }
+        assert_eq!(map.get(&1), Some(&10));
+    }
+
+    #[test]
+    fn test_entry_or_default() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        {
+            let value = map.entry(1).or_default();
+            assert_eq!(*value, 0);
+        }
+        assert_eq!(map.get(&1), Some(&0));
+    }
+
+    #[test]
+    fn test_entry_and_modify_occupied() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+        map.insert(1, 10);
+
+        let entry = map.entry(1).and_modify(|v| *v += 5);
+        {
+            let value = entry.or_insert(0);
+            assert_eq!(*value, 15);
+        }
+        assert_eq!(map.get(&1), Some(&15));
+    }
+
+    #[test]
+    fn test_entry_and_modify_vacant() {
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+
+        let entry = map.entry(1).and_modify(|v| *v += 5);
+        {
+            let value = entry.or_insert(10);
+            assert_eq!(*value, 10);
+        }
+        assert_eq!(map.get(&1), Some(&10));
+    }
+
+    #[test]
+    fn test_entry_key() {
+        let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
+
+        let entry = map.entry(1);
+        assert_eq!(entry.key(), &1);
+    }
+
+    #[test]
+    fn test_entry_aggregation_consistency() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(1, 10);
+        map.insert(2, 20);
+
+        let initial_fold = map.fold_all();
+        assert_eq!(initial_fold, (1 + 10) + (2 + 20));
+
+        {
+            let value = map.entry(1).and_modify(|v| *v = 30).or_insert(0);
+            assert_eq!(*value, 30);
+        }
+
+        let after_fold = map.fold_all();
+        assert_eq!(after_fold, (1 + 30) + (2 + 20));
     }
 }
 
