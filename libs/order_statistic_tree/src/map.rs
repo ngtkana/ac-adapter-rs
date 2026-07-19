@@ -45,7 +45,7 @@ impl<K, V> Op for NoOp<K, V> {
 mod node;
 mod entry;
 
-use node::{Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay, nth_and_splay, rightmost_and_splay, splay};
+use node::{Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay, max_right_and_splay, min_left_and_splay, nth_and_splay, rightmost_and_splay, splay};
 pub use entry::{Entry, OccupiedEntry, VacantEntry, ValueMut};
 
 /// An order-statistic map backed by a splay tree.
@@ -906,6 +906,91 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         let result = mid.map_or_else(O::identity, |m| unsafe { (*m.as_ptr()).prod.clone() });
         self.root.set(node::merge_trees(node::merge_trees(left, mid), right));
         result
+    }
+
+    /// Returns the maximum index `r` in `[l, len()]` such that `f(fold_by_index(l..r))` returns `true`.
+    ///
+    /// The function `f` must be monotonic: once it returns `false` for some `r`,
+    /// it must return `false` for all larger `r`. Additionally, `f(O::identity())` must be `true`.
+    ///
+    /// This operation takes O(log n) amortized time.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `l > len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use order_statistic_tree::{OrderStatisticMap, Op};
+    /// # struct SumOp;
+    /// # impl Op for SumOp {
+    /// #     type Key = i32;
+    /// #     type Value = i32;
+    /// #     type SegValue = i64;
+    /// #     fn identity() -> i64 { 0 }
+    /// #     fn to_seg_value(key: &i32, value: &i32) -> i64 { (*key as i64) + (*value as i64) }
+    /// #     fn mul(lhs: &i64, rhs: &i64) -> i64 { lhs + rhs }
+    /// # }
+    /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// map.insert(2, 20);
+    /// map.insert(3, 30);
+    /// assert_eq!(map.max_right(0, |&s| s <= 30), 1);
+    /// assert_eq!(map.max_right(0, |&s| s <= 60), 2);
+    /// ```
+    pub fn max_right<F>(&self, l: usize, f: F) -> usize
+    where
+        F: Fn(&O::SegValue) -> bool,
+    {
+        let len = self.len();
+        assert!(l <= len, "index out of bounds: l={l} len={len}");
+        if l == len {
+            return len;
+        }
+        max_right_and_splay(self, l, f)
+    }
+
+    /// Returns the minimum index `l` in `[0, r]` such that `f(fold_by_index(l..r))` returns `true`.
+    ///
+    /// The function `f` must be monotonic: once it returns `false` for some `l`,
+    /// it must return `false` for all smaller `l`. Additionally, `f(O::identity())` must be `true`.
+    ///
+    /// This operation takes O(log n) amortized time.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `r > len()`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use order_statistic_tree::{OrderStatisticMap, Op};
+    /// # struct SumOp;
+    /// # impl Op for SumOp {
+    /// #     type Key = i32;
+    /// #     type Value = i32;
+    /// #     type SegValue = i64;
+    /// #     fn identity() -> i64 { 0 }
+    /// #     fn to_seg_value(key: &i32, value: &i32) -> i64 { (*key as i64) + (*value as i64) }
+    /// #     fn mul(lhs: &i64, rhs: &i64) -> i64 { lhs + rhs }
+    /// # }
+    /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// map.insert(2, 20);
+    /// map.insert(3, 30);
+    /// assert_eq!(map.min_left(3, |&s| s <= 30), 3);
+    /// assert_eq!(map.min_left(3, |&s| s <= 60), 1);
+    /// ```
+    pub fn min_left<F>(&self, r: usize, f: F) -> usize
+    where
+        F: Fn(&O::SegValue) -> bool,
+    {
+        assert!(r <= self.len(), "index out of bounds: r={r} len={}", self.len());
+        if r == 0 {
+            return 0;
+        }
+        min_left_and_splay(self, r, f)
     }
 }
 
