@@ -11,6 +11,18 @@ pub enum Navi2 {
     GoDownLeft,
     GoDownRight,
 }
+impl Navi2 {
+    fn at<T>(index: &mut usize, size: &mut impl FnMut(&T) -> usize, left: Option<&T>) -> Self {
+        let lsize = left.map_or(0, size);
+        match (*index).cmp(&lsize) {
+            Ordering::Less | Ordering::Equal => Self::GoDownLeft,
+            Ordering::Greater => {
+                *index -= lsize + 1;
+                Self::GoDownRight
+            }
+        }
+    }
+}
 
 /// An enum indicating whether to proceed left or right during a binary search that might terminate early. This is used in [`remove`](Tree::remove).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -162,19 +174,65 @@ impl<T, U: Update<Value = T>> Tree<U> {
         Self { root: right }
     }
 
+    /// Splits the tree at a given index, returning the elements at or after that index.
+    ///
+    /// Uses a size function to compute subtree sizes and guide the split operation.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// struct Value { val: i32, size: usize }
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { val: 3, size: 1 }, |v| v.val);
+    ///
+    /// let mut rest = tree.split_off_at(1, |v| v.size);
+    /// assert_eq!(tree.collect().len(), 1);
+    /// assert_eq!(rest.collect().len(), 2);
+    /// ```
     pub fn split_off_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Self {
-        self.split_off(|_center, left, _right| {
-            let lsize = left.map_or(0, &mut size);
-            match index.cmp(&lsize) {
-                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
-                Ordering::Greater => {
-                    index -= lsize + 1;
-                    Navi2::GoDownRight
-                }
-            }
-        })
+        self.split_off(|_center, left, _right| Navi2::at(&mut index, &mut size, left))
     }
 
+    /// Splits the tree at the lower bound of a key, returning elements >= the key.
+    ///
+    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Tree;
+    ///
+    /// struct Value { key: u32 }
+    /// #[derive(Debug, PartialEq)]
+    /// enum U {}
+    /// impl intrusive_splay_tree::Update for U {
+    ///     type Value = Value;
+    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { key: 1 }, |v| v.key);
+    /// tree.insert_lower_bound_by_key(Value { key: 2 }, |v| v.key);
+    /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
+    ///
+    /// let mut ge = tree.split_off_lower_bound_by_key(&2, |v| v.key);
+    /// assert_eq!(tree.collect().len(), 1);
+    /// assert_eq!(ge.collect().len(), 2);
+    /// ```
     pub fn split_off_lower_bound_by_key<K, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
@@ -191,6 +249,31 @@ impl<T, U: Update<Value = T>> Tree<U> {
         )
     }
 
+    /// Splits the tree at the upper bound of a key, returning elements > the key.
+    ///
+    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Tree;
+    ///
+    /// struct Value { key: u32 }
+    /// enum U {}
+    /// impl intrusive_splay_tree::Update for U {
+    ///     type Value = Value;
+    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { key: 1 }, |v| v.key);
+    /// tree.insert_lower_bound_by_key(Value { key: 2 }, |v| v.key);
+    /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
+    ///
+    /// let mut gt = tree.split_off_upper_bound_by_key(&2, |v| v.key);
+    /// assert_eq!(tree.collect().len(), 2);
+    /// assert_eq!(gt.collect().len(), 1);
+    /// ```
     pub fn split_off_upper_bound_by_key<K, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
@@ -207,6 +290,29 @@ impl<T, U: Update<Value = T>> Tree<U> {
         )
     }
 
+    /// Concatenates another tree to this one, consuming the other tree.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Tree;
+    ///
+    /// enum U {}
+    /// impl intrusive_splay_tree::Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree1 = Tree::<U>::new();
+    /// tree1.insert_lower_bound_by_key(1, |v| *v);
+    /// tree1.insert_lower_bound_by_key(3, |v| *v);
+    ///
+    /// let mut tree2 = Tree::<U>::new();
+    /// tree2.insert_lower_bound_by_key(2, |v| *v);
+    ///
+    /// tree1.append(&mut tree2);
+    /// assert_eq!(tree1.collect().len(), 3);
+    /// ```
     pub fn append(&mut self, other: &mut Self) {
         self.root = merge2(self.root.take(), other.root.take());
     }
@@ -250,6 +356,31 @@ impl<T, U: Update<Value = T>> Tree<U> {
         self.root = Some(merge3(left, center, right));
     }
 
+    /// Inserts a new node at a specific index position.
+    ///
+    /// Uses a size function to compute subtree sizes and guide the insertion.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// struct Value { val: i32, size: usize }
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_at(Value { val: 1, size: 1 }, 0, |v| v.size);
+    /// tree.insert_at(Value { val: 3, size: 1 }, 1, |v| v.size);
+    /// assert_eq!(tree.collect().len(), 2);
+    /// ```
     pub fn insert_at(
         &mut self,
         node_value: T,
@@ -268,9 +399,9 @@ impl<T, U: Update<Value = T>> Tree<U> {
         })
     }
 
-    /// Inserts a new node by extracting a key from the value and using standard comparison.
+    /// Inserts a new node by extracting a key and using lower_bound semantics.
     ///
-    /// This is a convenience wrapper around [`insert`](Self::insert) that compares the extracted key with the current node's key using `Ord`.
+    /// Duplicates are inserted to the left (allowing multiple equal keys).
     ///
     /// # Examples
     ///
@@ -299,6 +430,27 @@ impl<T, U: Update<Value = T>> Tree<U> {
         });
     }
 
+    /// Inserts a new node by extracting a key and using upper_bound semantics.
+    ///
+    /// Duplicates are inserted to the right (allowing multiple equal keys).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_upper_bound_by_key(5, |v| *v);
+    /// tree.insert_upper_bound_by_key(3, |v| *v);
+    /// tree.insert_upper_bound_by_key(5, |v| *v);
+    /// assert_eq!(tree.collect().len(), 3);
+    /// ```
     pub fn insert_upper_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
         let probe = f(&node_value);
         self.insert(node_value, |center, _left, _right| {
@@ -354,6 +506,34 @@ impl<T, U: Update<Value = T>> Tree<U> {
         }
     }
 
+    /// Removes a node at a specific index, returning its value.
+    ///
+    /// Uses a size function to compute subtree sizes and guide the removal.
+    /// Returns `None` if the index is out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// struct Value { val: i32, size: usize }
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
+    ///
+    /// let removed = tree.remove_at(0, |v| v.size);
+    /// assert_eq!(removed.map(|v| v.val), Some(1));
+    /// ```
     pub fn remove_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<T> {
         self.remove(|_center, left, _right| {
             let lsize = left.map_or(0, &mut size);
@@ -409,6 +589,33 @@ impl<T, U: Update<Value = T>> Tree<U> {
         )
     }
 
+    /// Retrieves a reference to a node's value via a closure-guided traversal.
+    ///
+    /// The closure is called at each node to determine whether to descend left, right, or if found.
+    /// The tree is rebalanced via splaying but the node is not removed.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update, Navi3};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    ///
+    /// let found = tree.get(|center, _, _| {
+    ///     if 3 < *center { Navi3::GoDownLeft }
+    ///     else if 3 > *center { Navi3::GoDownRight }
+    ///     else { Navi3::Found }
+    /// });
+    /// assert_eq!(found, Some(&3));
+    /// ```
     pub fn get(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3) -> Option<&T> {
         unsafe {
             match split3(self.root.take(), f) {
@@ -424,6 +631,34 @@ impl<T, U: Update<Value = T>> Tree<U> {
         }
     }
 
+    /// Retrieves a reference to a node's value at a specific index.
+    ///
+    /// Uses a size function to compute subtree sizes and guide the search.
+    /// Returns `None` if the index is out of bounds.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// struct Value { val: i32, size: usize }
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
+    ///
+    /// let found = tree.get_at(1, |v| v.size);
+    /// assert_eq!(found.map(|v| v.val), Some(2));
+    /// ```
     pub fn get_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<&T> {
         self.get(|_center, left, _right| {
             let lsize = left.map_or(0, &mut size);
@@ -438,6 +673,29 @@ impl<T, U: Update<Value = T>> Tree<U> {
         })
     }
 
+    /// Retrieves a reference to a node's value by extracting a key and comparing.
+    ///
+    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Tree;
+    ///
+    /// struct Value { key: u32 }
+    /// enum U {}
+    /// impl intrusive_splay_tree::Update for U {
+    ///     type Value = Value;
+    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(Value { key: 5 }, |v| v.key);
+    /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
+    ///
+    /// let found = tree.get_by_key(&3, |v| v.key);
+    /// assert_eq!(found.map(|v| v.key), Some(3));
+    /// ```
     pub fn get_by_key<K: Ord, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
