@@ -1,6 +1,6 @@
 //! Intrusive spaly tree
 
-use std::{cmp::Ordering, ptr::NonNull};
+use std::{borrow::Borrow, cmp::Ordering, ptr::NonNull};
 
 type NN<U> = NonNull<Node<U>>;
 type ONN<U> = Option<NonNull<Node<U>>>;
@@ -156,6 +156,48 @@ impl<T, U: Update<Value = T>> Tree<U> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
     }
 
+    pub fn split_off(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2) -> Self {
+        let (left, right) = split2(self.root.take(), f);
+        self.root = left;
+        Self { root: right }
+    }
+
+    pub fn split_off_lower_bound_by_key<K, Q: ?Sized + Ord>(
+        &mut self,
+        probe: &Q,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Self
+    where
+        K: Borrow<Q>,
+    {
+        self.split_off(
+            |center, _left, _right| match probe.cmp(f(center).borrow()) {
+                Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
+                Ordering::Greater => Navi2::GoDownRight,
+            },
+        )
+    }
+
+    pub fn split_off_upper_bound_by_key<K, Q: ?Sized + Ord>(
+        &mut self,
+        probe: &Q,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Self
+    where
+        K: Borrow<Q>,
+    {
+        self.split_off(
+            |center, _left, _right| match probe.cmp(f(center).borrow()) {
+                Ordering::Less => Navi2::GoDownLeft,
+                Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
+            },
+        )
+    }
+
+    pub fn append(&mut self, other: &mut Self) {
+        self.root = merge2(self.root.take(), other.root.take());
+    }
+
     /// Inserts a new node by using a closure to guide traversal.
     ///
     /// The closure is called at each node to determine whether to descend left or right.
@@ -301,7 +343,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
         mut f: impl FnMut(&T) -> K,
     ) -> Option<T>
     where
-        K: std::borrow::Borrow<Q>,
+        K: Borrow<Q>,
     {
         self.remove(
             |center, _left, _right| match probe.cmp(f(&center).borrow()) {
@@ -383,7 +425,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
 /// ```
 pub trait Update: Sized {
     type Value;
-    fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>);
+    fn update(center: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>);
 }
 
 /// A node of [`Tree`]. We made this public for the time being, expecting the need for the size of the left subtree when performing binary searches during [`insert`](Tree::insert) or [`remove`](Tree::remove) operations.
