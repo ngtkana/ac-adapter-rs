@@ -46,7 +46,7 @@ mod node;
 mod entry;
 
 use node::{Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay, nth_and_splay, rightmost_and_splay, splay};
-pub use entry::ValueMut;
+pub use entry::{Entry, OccupiedEntry, VacantEntry, ValueMut};
 
 /// An order-statistic map backed by a splay tree.
 ///
@@ -337,6 +337,35 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         K: Borrow<Q>,
     {
         find_and_splay(self, key).map(|node| ValueMut::new(node))
+    }
+
+    /// Gets the entry in the map for inserting or retrieving the value associated with a key.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use order_statistic_tree::OrderStatisticMap;
+    /// use order_statistic_tree::map::Entry;
+    ///
+    /// let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+    /// match map.entry(1) {
+    ///     Entry::Vacant(ve) => {
+    ///         ve.insert(10);
+    ///     }
+    ///     Entry::Occupied(mut oe) => {
+    ///         *oe.get_mut() += 1;
+    ///     }
+    /// }
+    /// assert_eq!(map.get(&1), Some(&10));
+    /// ```
+    pub fn entry(&mut self, key: K) -> Entry<'_, K, V, O> {
+        match find_and_splay(self, &key) {
+            Some(node) => Entry::Occupied(OccupiedEntry::new(node)),
+            None => Entry::Vacant(VacantEntry {
+                map: self,
+                key,
+            }),
+        }
     }
 
     /// Returns a reference to both the key and value associated with the given key.
