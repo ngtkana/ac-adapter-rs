@@ -13,6 +13,19 @@ pub enum Navi2 {
 }
 
 impl Navi2 {
+    /// Determines the direction for a binary search that never stops by comparing the probe with the current node value.
+    ///
+    /// Returns `GoDownLeft` if `probe < current`, otherwise `GoDownRight`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Navi2;
+    ///
+    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(1, 5), Navi2::GoDownLeft);
+    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(5, 5), Navi2::GoDownRight);
+    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(10, 5), Navi2::GoDownRight);
+    /// ```
     pub fn lower_bound_from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi2 {
         match probe.cmp(&current) {
             Ordering::Less => Navi2::GoDownLeft,
@@ -29,6 +42,19 @@ pub enum Navi3 {
     GoDownRight,
 }
 impl Navi3 {
+    /// Determines the direction for a binary search that might terminate early by comparing the probe with the current node value.
+    ///
+    /// Returns `GoDownLeft` if `probe < current`, `GoDownRight` if `probe > current`, or `Found` if `probe == current`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::Navi3;
+    ///
+    /// assert_eq!(Navi3::from_probe_and_current(1, 5), Navi3::GoDownLeft);
+    /// assert_eq!(Navi3::from_probe_and_current(5, 5), Navi3::Found);
+    /// assert_eq!(Navi3::from_probe_and_current(10, 5), Navi3::GoDownRight);
+    /// ```
     pub fn from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi3 {
         match probe.cmp(&current) {
             Ordering::Less => Navi3::GoDownLeft,
@@ -119,14 +145,87 @@ impl<U: Update> Drop for Tree<U> {
 }
 
 impl<T, U: Update<Value = T>> Tree<U> {
+    /// Creates a new empty tree.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let tree = Tree::<U>::new();
+    /// assert!(tree.collect().is_empty());
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
+    /// Returns a reference to the aggregated value of the entire tree, computed via [`Update::update`], if the tree is non-empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update, Navi2};
+    ///
+    /// struct Value {
+    ///     val: i32,
+    ///     sum: i32,
+    /// }
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = Value;
+    ///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         root.sum = root.val;
+    ///         if let Some(left) = left {
+    ///             root.sum += left.sum;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             root.sum += right.sum;
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
+    /// tree.insert(Value { val: 20, sum: 20 }, |_, _, _| Navi2::GoDownRight);
+    /// assert_eq!(tree.fold_all().unwrap().sum, 30);
+    /// ```
     pub fn fold_all(&self) -> Option<&T> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
     }
 
+    /// Inserts a new node by using a closure to guide traversal.
+    ///
+    /// The closure is called at each node to determine whether to descend left or right.
+    /// A new node is inserted when encountering a boundary (no child in the chosen direction).
+    /// The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update, Navi2};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert(5, |center, _, _| {
+    ///     if 5 < *center { Navi2::GoDownLeft } else { Navi2::GoDownRight }
+    /// });
+    /// tree.insert(3, |center, _, _| {
+    ///     if 3 < *center { Navi2::GoDownLeft } else { Navi2::GoDownRight }
+    /// });
+    /// assert_eq!(tree.collect().len(), 2);
+    /// ```
     pub fn insert(
         &mut self,
         node_value: U::Value,
@@ -144,6 +243,27 @@ impl<T, U: Update<Value = T>> Tree<U> {
         self.root = Some(merge3(left, center, right));
     }
 
+    /// Inserts a new node by extracting a key from the value and using standard comparison.
+    ///
+    /// This is a convenience wrapper around [`insert`](Self::insert) that compares the extracted key with the current node's key using `Ord`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_by_key(5, |v| *v);
+    /// tree.insert_by_key(3, |v| *v);
+    /// tree.insert_by_key(7, |v| *v);
+    /// assert_eq!(tree.collect().len(), 3);
+    /// ```
     pub fn insert_by_key<K: Ord>(
         &mut self,
         node_value: U::Value,
@@ -158,6 +278,35 @@ impl<T, U: Update<Value = T>> Tree<U> {
         });
     }
 
+    /// Removes a node by using a closure to guide traversal and identify the target.
+    ///
+    /// The closure is called at each node to determine whether to descend left, right, or if the node is found.
+    /// If found, the node is removed and its value is returned; otherwise `None` is returned.
+    /// The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update, Navi3};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_by_key(5, |v| *v);
+    /// tree.insert_by_key(3, |v| *v);
+    ///
+    /// let removed = tree.remove(|center, _, _| {
+    ///     if 3 < *center { Navi3::GoDownLeft }
+    ///     else if 3 > *center { Navi3::GoDownRight }
+    ///     else { Navi3::Found }
+    /// });
+    /// assert_eq!(removed, Some(3));
+    /// assert_eq!(tree.collect().len(), 1);
+    /// ```
     pub fn remove(
         &mut self,
         f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
@@ -177,6 +326,29 @@ impl<T, U: Update<Value = T>> Tree<U> {
         }
     }
 
+    /// Removes a node by extracting a key from each node and comparing with a probe.
+    ///
+    /// This is a convenience wrapper around [`remove`](Self::remove) that extracts a key from each node's value
+    /// and compares it with the probe using `Ord`.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_by_key(5, |v| *v);
+    /// tree.insert_by_key(3, |v| *v);
+    ///
+    /// let removed = tree.remove_by_key(&3, |v| *v);
+    /// assert_eq!(removed, Some(3));
+    /// ```
     pub fn remove_by_key<K: Ord>(
         &mut self,
         probe: &K,
@@ -189,6 +361,27 @@ impl<T, U: Update<Value = T>> Tree<U> {
         })
     }
 
+    /// Returns a vector of references to all node values in the tree, in sorted order (in-order traversal).
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_by_key(3, |v| *v);
+    /// tree.insert_by_key(1, |v| *v);
+    /// tree.insert_by_key(2, |v| *v);
+    ///
+    /// let values: Vec<_> = tree.collect().into_iter().copied().collect();
+    /// assert_eq!(values, vec![1, 2, 3]);
+    /// ```
     pub fn collect(&self) -> Vec<&U::Value> {
         pub fn collect<'a, U: Update>(root: ONN<U>, out: &'a mut Vec<&U::Value>) {
             let Some(root) = root else {
@@ -206,7 +399,37 @@ impl<T, U: Update<Value = T>> Tree<U> {
     }
 }
 
-/// An adapter trait for specifying what to do (ex. [`update`](Update::update)) during a structural change.
+/// An adapter trait for specifying what to do during a structural change.
+///
+/// The [`update`](Update::update) method is called whenever a node is inserted, deleted, or rotated.
+/// It receives the node's value and optional references to the left and right children's aggregated values,
+/// allowing you to maintain tree-wide aggregates (e.g., sum, min, max) in O(log n) time.
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Tree, Update, Navi2};
+///
+/// struct Value {
+///     val: i32,
+///     sum: i32,
+/// }
+///
+/// enum MyUpdate {}
+/// impl Update for MyUpdate {
+///     type Value = Value;
+///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+///         root.sum = root.val;
+///         if let Some(l) = left { root.sum += l.sum; }
+///         if let Some(r) = right { root.sum += r.sum; }
+///     }
+/// }
+///
+/// let mut tree = Tree::<MyUpdate>::new();
+/// tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
+/// tree.insert(Value { val: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
+/// assert_eq!(tree.fold_all().unwrap().sum, 8);
+/// ```
 pub trait Update: Sized {
     type Value;
     fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>);
@@ -239,7 +462,7 @@ fn merge2<U: Update>(left: ONN<U>, right: ONN<U>) -> ONN<U> {
             (left, _) = find_and_splay(left, |_root, _left, _right| Navi3::GoDownRight);
             (*left.as_ptr()).right = Some(right);
             (*right.as_ptr()).parent = Some(left);
-            left.update();
+            (*left.as_ptr()).update();
             Some(left)
         },
     }
