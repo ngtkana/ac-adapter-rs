@@ -151,7 +151,7 @@ mod op_tests {
 /// ```
 /// use order_statistic_tree::OrderStatisticMap;
 ///
-/// let mut map = OrderStatisticMap::new();
+/// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
 /// map.insert(3, "c");
 /// map.insert(1, "a");
 /// map.insert(2, "b");
@@ -188,7 +188,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// assert_eq!(map.len(), 0);
     /// map.insert(1, "a");
     /// assert_eq!(map.len(), 1);
@@ -204,7 +204,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// assert!(map.is_empty());
     /// map.insert(1, "a");
     /// assert!(!map.is_empty());
@@ -220,7 +220,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// map.clear();
     /// assert!(map.is_empty());
@@ -242,7 +242,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// assert_eq!(map.insert(1, "a"), None);
     /// assert_eq!(map.insert(1, "b"), Some("a"));
     /// ```
@@ -330,7 +330,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// assert_eq!(map.remove(&1), Some("a"));
     /// assert_eq!(map.remove(&1), None);
@@ -349,7 +349,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// assert_eq!(map.get(&1), Some(&"a"));
     /// assert_eq!(map.get(&2), None);
@@ -368,7 +368,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// assert!(map.contains_key(&1));
     /// assert!(!map.contains_key(&2));
@@ -387,7 +387,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(3, "c");
     /// map.insert(1, "a");
     /// map.insert(2, "b");
@@ -418,7 +418,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
     /// map.insert(1, 10);
     /// if let Some(value) = map.get_mut(&1) {
     ///     *value = 20;
@@ -439,7 +439,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// assert_eq!(map.get_key_value(&1), Some((&1, &"a")));
     /// ```
@@ -458,7 +458,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// assert_eq!(map.remove_entry(&1), Some((1, "a")));
     /// assert_eq!(map.remove_entry(&1), None);
@@ -477,7 +477,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// assert_eq!(map.first_key_value(), None);
     /// map.insert(3, "c");
     /// map.insert(1, "a");
@@ -496,7 +496,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// assert_eq!(map.last_key_value(), None);
     /// map.insert(3, "c");
     /// map.insert(1, "a");
@@ -515,7 +515,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(2, "b");
     /// map.insert(1, "a");
     /// assert_eq!(map.pop_first(), Some((1, "a")));
@@ -531,7 +531,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(2, "b");
     /// map.insert(1, "a");
     /// assert_eq!(map.pop_last(), Some((2, "b")));
@@ -547,7 +547,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(3, "c");
     /// map.insert(1, "a");
     /// map.insert(2, "b");
@@ -568,7 +568,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(3, "c");
     /// map.insert(1, "a");
     /// map.insert(2, "b");
@@ -596,7 +596,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(3, "c");
     /// map.insert(1, "a");
     /// map.insert(2, "b");
@@ -623,7 +623,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(3, "c");
     /// map.insert(1, "a");
     /// map.insert(2, "b");
@@ -647,7 +647,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// map.insert(3, "c");
     ///
@@ -673,7 +673,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// map.insert(3, "c");
     /// map.insert(5, "e");
@@ -697,7 +697,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// map.insert(3, "c");
     /// map.insert(5, "e");
@@ -730,11 +730,11 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map1 = OrderStatisticMap::new();
+    /// let mut map1: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map1.insert(1, "a");
     /// map1.insert(2, "b");
     ///
-    /// let mut map2 = OrderStatisticMap::new();
+    /// let mut map2: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map2.insert(3, "c");
     /// map2.insert(4, "d");
     ///
@@ -778,7 +778,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// ```
     /// use order_statistic_tree::OrderStatisticMap;
     ///
-    /// let mut map = OrderStatisticMap::new();
+    /// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
     /// map.insert(1, "a");
     /// map.insert(2, "b");
     /// map.insert(3, "c");
@@ -970,7 +970,7 @@ impl<K, V, O: Op<Key = K, Value = V>> Drop for OrderStatisticMap<K, V, O> {
 /// ```
 /// use order_statistic_tree::OrderStatisticMap;
 ///
-/// let mut map = OrderStatisticMap::new();
+/// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
 /// map.insert(1, "a");
 /// map.insert(2, "b");
 ///
@@ -1010,7 +1010,7 @@ impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Iter<'a, K, V, O> {
 /// ```
 /// use order_statistic_tree::OrderStatisticMap;
 ///
-/// let mut map = OrderStatisticMap::new();
+/// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
 /// map.insert(1, "a");
 /// map.insert(2, "b");
 ///
@@ -1037,7 +1037,7 @@ impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Keys<'a, K, V, O> {
 /// ```
 /// use order_statistic_tree::OrderStatisticMap;
 ///
-/// let mut map = OrderStatisticMap::new();
+/// let mut map: OrderStatisticMap<i32, &str> = OrderStatisticMap::new();
 /// map.insert(1, "a");
 /// map.insert(2, "b");
 ///
