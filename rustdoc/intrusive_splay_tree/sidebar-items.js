@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"enum":["Navi2","Navi3"],"struct":["Node","Tree"],"trait":["Update"]};
