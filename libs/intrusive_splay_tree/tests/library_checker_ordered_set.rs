@@ -1,5 +1,3 @@
-use std::cmp::Ordering;
-
 use intrusive_splay_tree::{Navi3, Tree, Update};
 
 struct Value {
@@ -24,26 +22,16 @@ impl Update for U {
 
 fn query_0_insert(tree: &mut Tree<U>, key: u32) {
     tree.remove_by_key(&key, |value| value.key);
-    tree.insert_by_key(Value { key, size: 1 }, |value| value.key)
+    tree.insert_lower_bound_by_key(Value { key, size: 1 }, |value| value.key)
 }
 
 fn query_1_remove(tree: &mut Tree<U>, key: u32) {
     tree.remove_by_key(&key, |value| value.key);
 }
 
-fn query_2_nth(tree: &mut Tree<U>, mut index: usize) -> Option<u32> {
-    tree.get(|_center, left, _right| {
-        let lsize = left.map_or(0, |left| left.size);
-        match index.cmp(&lsize) {
-            Ordering::Less => Navi3::GoDownLeft,
-            Ordering::Equal => Navi3::Found,
-            Ordering::Greater => {
-                index -= lsize + 1;
-                Navi3::GoDownRight
-            }
-        }
-    })
-    .map(|value| value.key)
+fn query_2_nth(tree: &mut Tree<U>, index: usize) -> Option<u32> {
+    tree.get_at(index, |value| value.size)
+        .map(|value| value.key)
 }
 
 fn query_3_count_le(tree: &mut Tree<U>, key: u32) -> usize {
