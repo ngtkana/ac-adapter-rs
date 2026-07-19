@@ -159,11 +159,11 @@ mod op_tests {
 /// assert_eq!(map.nth(0), (&1, &"a"));
 /// assert_eq!(map.get(&2), Some(&"b"));
 /// ```
-pub struct OrderStatisticMap<K, V> {
-    root: Cell<Option<NonNull<Node<K, V>>>>,
+pub struct OrderStatisticMap<K, V, O = NoOp<K, V>> {
+    root: Cell<Option<NonNull<Node<K, V, O>>>>,
 }
 
-impl<K: Ord, V> OrderStatisticMap<K, V> {
+impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     // Group A: Core API
     /// Creates a new empty map.
     ///
@@ -955,21 +955,31 @@ impl<'a, K, V> Iterator for Values<'a, K, V> {
     }
 }
 
-struct Node<K, V> {
+struct Node<K, V, O: Op<Key = K, Value = V>> {
     key: K,
     value: V,
     parent: Option<NonNull<Self>>,
     left: Option<NonNull<Self>>,
     right: Option<NonNull<Self>>,
     len: usize,
+    prod: O::SegValue,
 }
 
-impl<K, V> Node<K, V> {
+impl<K, V, O: Op<Key = K, Value = V>> Node<K, V, O> {
     fn update(&mut self) {
         unsafe {
             self.len = self.left.map_or(0, |left| (*left.as_ptr()).len)
                 + 1
                 + self.right.map_or(0, |rigth| (*rigth.as_ptr()).len);
+
+            let left_prod =
+                self.left.map_or_else(O::identity, |l| (*l.as_ptr()).prod.clone());
+            let right_prod =
+                self.right.map_or_else(O::identity, |r| (*r.as_ptr()).prod.clone());
+            self.prod = O::mul(
+                &O::mul(&left_prod, &O::to_seg_value(&self.key, &self.value)),
+                &right_prod,
+            );
         }
     }
 }
