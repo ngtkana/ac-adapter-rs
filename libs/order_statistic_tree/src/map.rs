@@ -41,6 +41,106 @@ impl<K, V> Op for NoOp<K, V> {
     fn mul((): &(), (): &()) -> Self::SegValue {}
 }
 
+#[cfg(test)]
+mod op_tests {
+    use super::*;
+
+    /// Simple sum operation for testing augmented API.
+    struct SumOp;
+
+    impl Op for SumOp {
+        type Key = i32;
+        type Value = i32;
+        type SegValue = i64;
+
+        fn identity() -> Self::SegValue {
+            0
+        }
+
+        fn to_seg_value(key: &Self::Key, value: &Self::Value) -> Self::SegValue {
+            (*key as i64) + (*value as i64)
+        }
+
+        fn mul(lhs: &Self::SegValue, rhs: &Self::SegValue) -> Self::SegValue {
+            lhs + rhs
+        }
+    }
+
+    #[test]
+    fn test_fold_empty_map() {
+        // Empty map should return identity
+        let map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        assert_eq!(map.fold(), SumOp::identity());
+    }
+
+    #[test]
+    fn test_fold_whole_map() {
+        // Single element
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(5, 10);
+        assert_eq!(map.fold(), 5 + 10);
+
+        // Multiple elements
+        map.insert(3, 20);
+        map.insert(7, 15);
+        let expected = (5 + 10) + (3 + 20) + (7 + 15);
+        assert_eq!(map.fold(), expected);
+    }
+
+    #[test]
+    fn test_fold_range_basic() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 1..=5 {
+            map.insert(i, i * 10);
+        }
+
+        // Whole range
+        let whole = (1 + 10) + (2 + 20) + (3 + 30) + (4 + 40) + (5 + 50);
+        assert_eq!(map.fold_range(&1, &6), whole);
+
+        // Partial range [2, 4)
+        let partial = (2 + 20) + (3 + 30);
+        assert_eq!(map.fold_range(&2, &4), partial);
+
+        // Single element [3, 4)
+        assert_eq!(map.fold_range(&3, &4), 3 + 30);
+    }
+
+    #[test]
+    fn test_fold_range_empty() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(5, 50);
+
+        // Empty range
+        assert_eq!(map.fold_range(&1, &1), SumOp::identity());
+        assert_eq!(map.fold_range(&10, &20), SumOp::identity());
+    }
+
+    #[test]
+    fn test_fold_after_overwrite() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(5, 10);
+        assert_eq!(map.fold(), 5 + 10);
+
+        // Overwrite value
+        map.insert(5, 20);
+        assert_eq!(map.fold(), 5 + 20, "fold should reflect updated value");
+    }
+
+    #[test]
+    fn test_noop_backward_compat() {
+        // Type annotation omits O parameter, defaults to NoOp
+        let mut map = OrderStatisticMap::new();
+        map.insert(3, "c");
+        map.insert(1, "a");
+        map.insert(2, "b");
+
+        assert_eq!(map.nth(0), (&1, &"a"));
+        assert_eq!(map.get(&2), Some(&"b"));
+        assert_eq!(map.len(), 3);
+    }
+}
+
 /// An order-statistic map backed by a splay tree.
 ///
 /// This data structure maintains key-value pairs in sorted order and supports
