@@ -354,6 +354,39 @@ impl<T, U: Update<Value = T>> Tree<U> {
         )
     }
 
+    // TODO: change to &self, using Cell
+    pub fn get(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3) -> Option<&T> {
+        unsafe {
+            match split3(self.root.take(), f) {
+                Split3Result::Success(left, center, right) => {
+                    self.root = Some(merge3(left, center, right));
+                    Some(&(*center.as_ptr()).node_value)
+                }
+                Split3Result::Failure(root) => {
+                    self.root = root;
+                    None
+                }
+            }
+        }
+    }
+
+    pub fn get_by_key<K: Ord, Q: ?Sized + Ord>(
+        &mut self,
+        probe: &Q,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Option<&T>
+    where
+        K: Borrow<Q>,
+    {
+        self.get(
+            |center, _left, _right| match probe.cmp(f(&center).borrow()) {
+                Ordering::Less => Navi3::GoDownLeft,
+                Ordering::Equal => Navi3::Found,
+                Ordering::Greater => Navi3::GoDownRight,
+            },
+        )
+    }
+
     /// Returns a vector of references to all node values in the tree, in sorted order (in-order traversal).
     ///
     /// # Examples
