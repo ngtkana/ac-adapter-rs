@@ -7,5 +7,5 @@
 pub mod map;
 pub mod set;
 
-pub use map::OrderStatisticMap;
+pub use map::{NoOp, Op, OrderStatisticMap};
 pub use set::OrderStatisticSet;
