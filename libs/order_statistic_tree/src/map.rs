@@ -38,7 +38,7 @@ impl<K, V> Op for NoOp<K, V> {
 
     fn identity() -> Self::SegValue {}
     fn to_seg_value(_: &K, _: &V) -> Self::SegValue {}
-    fn mul(_: &(), _: &()) -> Self::SegValue {}
+    fn mul((): &(), (): &()) -> Self::SegValue {}
 }
 
 /// An order-statistic map backed by a splay tree.
@@ -1531,16 +1531,14 @@ mod detach_root_tests {
         let after_len = map.len();
         assert_eq!(
             after_len, 4,
-            "After removing 1 element, len should be 4, got {}",
-            after_len
+            "After removing 1 element, len should be 4, got {after_len}"
         );
 
         // Verify tree integrity via iter
         let iter_count = map.iter().count();
         assert_eq!(
             iter_count, after_len,
-            "iter().count()={} should match len()={}",
-            iter_count, after_len
+            "iter().count()={iter_count} should match len()={after_len}"
         );
     }
 }
