@@ -226,11 +226,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// });
     /// assert_eq!(tree.collect().len(), 2);
     /// ```
-    pub fn insert(
-        &mut self,
-        node_value: U::Value,
-        f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
-    ) {
+    pub fn insert(&mut self, node_value: T, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2) {
         let (left, right) = split2(self.root.take(), f);
         let center = unsafe {
             NonNull::new_unchecked(Box::into_raw(Box::new(Node {
@@ -264,11 +260,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// tree.insert_by_key(7, |v| *v);
     /// assert_eq!(tree.collect().len(), 3);
     /// ```
-    pub fn insert_by_key<K: Ord>(
-        &mut self,
-        node_value: U::Value,
-        mut f: impl FnMut(&U::Value) -> K,
-    ) {
+    pub fn insert_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
         let probe = f(&node_value);
         self.insert(node_value, |center, _left, _right| {
             match probe.cmp(&f(&center)) {
@@ -307,10 +299,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// assert_eq!(removed, Some(3));
     /// assert_eq!(tree.collect().len(), 1);
     /// ```
-    pub fn remove(
-        &mut self,
-        f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
-    ) -> Option<U::Value> {
+    pub fn remove(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3) -> Option<T> {
         unsafe {
             match split3(self.root.take(), f) {
                 Split3Result::Success(left, center, right) => {
@@ -329,7 +318,8 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// Removes a node by extracting a key from each node and comparing with a probe.
     ///
     /// This is a convenience wrapper around [`remove`](Self::remove) that extracts a key from each node's value
-    /// and compares it with the probe using `Ord`.
+    /// and compares it with the probe using `Ord`. The probe type `Q` need not match the key type `K` exactly,
+    /// as long as `K` implements `Borrow<Q>` (enabling `String` nodes to be searched by `&str`, for example).
     ///
     /// # Examples
     ///
@@ -349,12 +339,11 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// let removed = tree.remove_by_key(&3, |v| *v);
     /// assert_eq!(removed, Some(3));
     /// ```
-    pub fn remove_by_key<K: Ord>(
-        &mut self,
-        probe: &K,
-        mut f: impl FnMut(&T) -> K,
-    ) -> Option<U::Value> {
-        self.remove(|center, _left, _right| match probe.cmp(&f(&center)) {
+    pub fn remove_by_key<K: Ord, Q: ?Sized + Ord>(&mut self, probe: &Q, mut f: impl FnMut(&T) -> K) -> Option<T>
+    where
+        K: std::borrow::Borrow<Q>,
+    {
+        self.remove(|center, _left, _right| match probe.cmp(f(&center).borrow()) {
             Ordering::Less => Navi3::GoDownLeft,
             Ordering::Equal => Navi3::Found,
             Ordering::Greater => Navi3::GoDownRight,
@@ -382,7 +371,7 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// let values: Vec<_> = tree.collect().into_iter().copied().collect();
     /// assert_eq!(values, vec![1, 2, 3]);
     /// ```
-    pub fn collect(&self) -> Vec<&U::Value> {
+    pub fn collect(&self) -> Vec<&T> {
         pub fn collect<'a, U: Update>(root: ONN<U>, out: &'a mut Vec<&U::Value>) {
             let Some(root) = root else {
                 return;
