@@ -139,6 +139,74 @@ mod op_tests {
         assert_eq!(map.get(&2), Some(&"b"));
         assert_eq!(map.len(), 3);
     }
+
+    #[test]
+    fn test_fold_after_remove() {
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 1..=5 {
+            map.insert(i, i * 10);
+        }
+
+        // Verify fold is correct before removal
+        let expected_all = (1..=5).map(|i| (i as i64) + (i as i64 * 10)).sum::<i64>();
+        assert_eq!(map.fold(), expected_all);
+
+        // Remove an element and verify fold reflects the change
+        let removed = map.remove(&3);
+        assert_eq!(removed, Some(30));
+
+        let expected_after = (1..=5)
+            .filter(|i| *i != 3)
+            .map(|i| (i as i64) + (i as i64 * 10))
+            .sum::<i64>();
+        assert_eq!(map.fold(), expected_after);
+    }
+
+    #[test]
+    fn test_fold_remove_nth_random() {
+        use std::collections::BTreeMap;
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        let mut reference: BTreeMap<i32, i32> = BTreeMap::new();
+
+        // First, build a stable map with known content
+        for i in 1..=10 {
+            map.insert(i, i * 10);
+            reference.insert(i, i * 10);
+        }
+
+        // Verify initial fold
+        let expected: i64 = reference
+            .iter()
+            .map(|(&k, &v)| (k as i64) + (v as i64))
+            .sum();
+        assert_eq!(map.fold(), expected, "initial fold mismatch");
+
+        // Remove elements one by one
+        for step in 0..5 {
+            if map.is_empty() {
+                break;
+            }
+
+            let remove_nth = step % map.len();
+            let (k, _) = map.nth(remove_nth);
+            let k = *k;
+
+            map.remove(&k);
+            reference.remove(&k);
+
+            // Verify fold matches brute-force sum after each removal
+            let expected: i64 = reference
+                .iter()
+                .map(|(&k, &v)| (k as i64) + (v as i64))
+                .sum();
+            assert_eq!(
+                map.fold(),
+                expected,
+                "fold mismatch at step {step} after removing key {k}"
+            );
+        }
+    }
 }
 
 /// An order-statistic map backed by a splay tree.
