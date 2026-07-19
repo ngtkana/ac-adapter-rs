@@ -1177,42 +1177,23 @@ mod tests {
             let mut vec: Vec<(i32, i32)> = Vec::new();
 
             for _ in 0..q {
-                let op_type = rng.gen_range(0..5);
-                match op_type {
-                    0 | 1 => {
-                        // insert
-                        let key = rng.gen_range(0..n);
-                        let value = rng.gen_range(0..VALUE_LIM);
-                        map.insert(key, value);
-                        if let Some(pos) = vec.iter().position(|(k, _)| k == &key) {
-                            vec[pos] = (key, value);
-                        } else {
-                            let idx = vec.iter().position(|(k, _)| k > &key).unwrap_or(vec.len());
-                            vec.insert(idx, (key, value));
-                        }
-                    }
-                    2 => {
-                        // remove or remove_entry
-                        let key = rng.gen_range(0..n);
-                        if rng.gen_bool(0.5) {
-                            map.remove(&key);
-                            vec.retain(|(k, _)| k != &key);
-                        } else {
-                            map.remove_entry(&key);
-                            vec.retain(|(k, _)| k != &key);
-                        }
-                    }
-                    3 => {
-                        // remove_nth
-                        if !vec.is_empty() {
+                // Weighted: P(remove) = 0.7 when non-empty, else 1.0 (if we have insertions)
+                // This aggressively removes existing elements, creating deep unbalanced trees
+                // that expose the detach_root len-staleness bug.
+                let should_remove = !vec.is_empty() && rng.gen_bool(0.7);
+
+                if should_remove {
+                    // Remove family (types 2, 3, 4)
+                    let remove_type = rng.gen_range(0..3);
+                    match remove_type {
+                        0 => {
+                            // remove_nth (always succeeds on non-empty set)
                             let idx = rng.gen_range(0..vec.len());
                             map.remove_nth(idx);
                             vec.remove(idx);
                         }
-                    }
-                    4 => {
-                        // pop_first or pop_last
-                        if !vec.is_empty() {
+                        1 => {
+                            // pop_first or pop_last
                             if rng.gen_bool(0.5) {
                                 map.pop_first();
                                 vec.remove(0);
@@ -1221,8 +1202,28 @@ mod tests {
                                 vec.pop();
                             }
                         }
+                        2 => {
+                            // remove by key from existing elements
+                            if !vec.is_empty() {
+                                let idx = rng.gen_range(0..vec.len());
+                                let key_to_remove = vec[idx].0;
+                                map.remove(&key_to_remove);
+                                vec.retain(|(k, _)| k != &key_to_remove);
+                            }
+                        }
+                        _ => unreachable!(),
                     }
-                    _ => unreachable!(),
+                } else {
+                    // Insert (types 0, 1)
+                    let key = rng.gen_range(0..n);
+                    let value = rng.gen_range(0..VALUE_LIM);
+                    map.insert(key, value);
+                    if let Some(pos) = vec.iter().position(|(k, _)| k == &key) {
+                        vec[pos] = (key, value);
+                    } else {
+                        let idx = vec.iter().position(|(k, _)| k > &key).unwrap_or(vec.len());
+                        vec.insert(idx, (key, value));
+                    }
                 }
 
                 // Verify invariants
@@ -1445,5 +1446,51 @@ mod tests {
         map2.insert(3, "d");
 
         map1.concat(&mut map2);
+    }
+}
+
+#[cfg(test)]
+mod bug_test {
+    use super::*;
+
+    #[test]
+    fn test_detach_root_bug_deep_tree() {
+        // Build a deeper, right-skewed tree to expose len staleness
+        let mut map: OrderStatisticMap<i32, i32> = OrderStatisticMap::new();
+
+        // Insert in a way that creates a right-skewed left subtree:
+        // Insert: 50, 10, 20, 30, 40, 60
+        // Expected structure (approximately, splay might rearrange):
+        //        50
+        //       / \
+        //      40  60
+        //     /
+        //    10
+        //      \
+        //      20
+        //        \
+        //        30
+
+        for i in [50, 10, 20, 30, 40, 60] {
+            map.insert(i, i * 10);
+        }
+
+        let before_len = map.len();
+        assert_eq!(before_len, 6);
+
+        // Remove root (50) - this calls detach_root with both left and right
+        map.remove(&50);
+
+        let after_len = map.len();
+        assert_eq!(after_len, 5, "After removing 1 element, len should be 5, got {}", after_len);
+
+        // Immediately check iter count without triggering nth (which could fix staleness)
+        let iter_count = map.iter().count();
+        assert_eq!(iter_count, after_len, "iter().count()={} doesn't match len()={}", iter_count, after_len);
+
+        // Now check all elements are still accessible
+        for i in 0..after_len {
+            let _ = map.nth(i);
+        }
     }
 }
