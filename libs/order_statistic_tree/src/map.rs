@@ -4,6 +4,7 @@ use std::borrow::Borrow;
 use std::cell::Cell;
 use std::fmt;
 use std::marker::PhantomData;
+use std::ops::{Bound, RangeBounds};
 use std::ptr::NonNull;
 
 /// A trait for segment-tree style augmentation.
@@ -42,7 +43,10 @@ impl<K, V> Op for NoOp<K, V> {
 }
 
 mod node;
+mod entry;
+
 use node::{Node, detach_root, find_and_splay, free_subtree, leftmost_and_splay, locate_and_splay, nth_and_splay, rightmost_and_splay, splay};
+pub use entry::ValueMut;
 
 /// An order-statistic map backed by a splay tree.
 ///
@@ -328,11 +332,11 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// }
     /// assert_eq!(map.get(&1), Some(&20));
     /// ```
-    pub fn get_mut<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<&mut V>
+    pub fn get_mut<Q: Ord + ?Sized>(&mut self, key: &Q) -> Option<ValueMut<'_, K, V, O>>
     where
         K: Borrow<Q>,
     {
-        find_and_splay(self, key).map(|node| unsafe { &mut (*node.as_ptr()).value })
+        find_and_splay(self, key).map(|node| ValueMut::new(node))
     }
 
     /// Returns a reference to both the key and value associated with the given key.
@@ -747,15 +751,16 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
     /// map.insert(1, 10);
     /// map.insert(2, 20);
-    /// assert_eq!(map.fold(), (1 + 10) + (2 + 20)); // 33
+    /// assert_eq!(map.fold_all(), (1 + 10) + (2 + 20)); // 33
     /// ```
-    pub fn fold(&self) -> O::SegValue {
+    pub fn fold_all(&self) -> O::SegValue {
         self.root.get().map_or_else(O::identity, |r| unsafe { (*r.as_ptr()).prod.clone() })
     }
 
-    /// Computes the aggregate value over a key range `[start, end)`.
+    /// Computes the aggregate value over a key range.
     ///
-    /// Returns the monoid product of all (key, value) pairs where `start <= key < end`.
+    /// Returns the monoid product of all (key, value) pairs within the specified key range.
+    /// The range can be specified using any `RangeBounds<K>` (e.g., `1..3`, `1..=3`, `..5`).
     /// For an empty range, returns `O::identity()`.
     ///
     /// This operation takes O(log n) amortized time via a top-down descent pattern.
@@ -777,13 +782,50 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// map.insert(1, 10);
     /// map.insert(2, 20);
     /// map.insert(3, 30);
-    /// assert_eq!(map.fold_range(&1, &3), (1 + 10) + (2 + 20)); // 33
+    /// assert_eq!(map.fold_by_key(1..3), (1 + 10) + (2 + 20)); // 33
     /// ```
-    pub fn fold_range<Q: Ord + ?Sized>(&self, start: &Q, end: &Q) -> O::SegValue
+    pub fn fold_by_key<Q: Ord + ?Sized>(&self, range: impl RangeBounds<Q>) -> O::SegValue
     where
         K: Borrow<Q>,
     {
-        node::fold_range(self.root.get(), start, end)
+        node::fold_by_key(self.root.get(), range.start_bound(), range.end_bound())
+    }
+
+    /// Computes the aggregate value over an index range.
+    ///
+    /// Returns the monoid product of all (key, value) pairs at indices within the specified range.
+    /// Indices are in sorted order, starting from 0.
+    /// The range can be specified using any `RangeBounds<usize>` (e.g., `0..3`, `0..=2`, `..5`).
+    /// For an empty range, returns `O::identity()`.
+    ///
+    /// # Panics
+    ///
+    /// Panics if the range exceeds the bounds of the map.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// # use order_statistic_tree::{OrderStatisticMap, Op};
+    /// # struct SumOp;
+    /// # impl Op for SumOp {
+    /// #     type Key = i32;
+    /// #     type Value = i32;
+    /// #     type SegValue = i64;
+    /// #     fn identity() -> i64 { 0 }
+    /// #     fn to_seg_value(key: &i32, value: &i32) -> i64 { (*key as i64) + (*value as i64) }
+    /// #     fn mul(lhs: &i64, rhs: &i64) -> i64 { lhs + rhs }
+    /// # }
+    /// let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+    /// map.insert(1, 10);
+    /// map.insert(2, 20);
+    /// map.insert(3, 30);
+    /// assert_eq!(map.fold_by_index(0..2), (1 + 10) + (2 + 20)); // 33
+    /// ```
+    pub fn fold_by_index(&self, range: impl RangeBounds<usize>) -> O::SegValue {
+        let len = self.len();
+        let (start, end) = to_half_open_range(range, len);
+        assert!(start <= end && end <= len, "range out of bounds: {start}..{end}, len={len}");
+        node::fold_by_index(self.root.get(), start, end)
     }
 }
 
@@ -928,3 +970,16 @@ impl<'a, K, V, O: Op<Key = K, Value = V>> Iterator for Values<'a, K, V, O> {
     }
 }
 
+fn to_half_open_range<R: RangeBounds<usize>>(range: R, len: usize) -> (usize, usize) {
+    let start = match range.start_bound() {
+        Bound::Included(&s) => s,
+        Bound::Excluded(&s) => s + 1,
+        Bound::Unbounded => 0,
+    };
+    let end = match range.end_bound() {
+        Bound::Included(&e) => e + 1,
+        Bound::Excluded(&e) => e,
+        Bound::Unbounded => len,
+    };
+    (start, end)
+}

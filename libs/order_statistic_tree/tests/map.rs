@@ -76,7 +76,7 @@ mod basic {
         map.insert(1, 10);
         map.insert(2, 20);
 
-        if let Some(v) = map.get_mut(&1) {
+        if let Some(mut v) = map.get_mut(&1) {
             *v = 100;
         }
 
@@ -328,7 +328,7 @@ mod fold {
     fn test_fold_empty_map() {
         // Empty map should return identity
         let map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
-        assert_eq!(map.fold(), SumOp::identity());
+        assert_eq!(map.fold_all(), SumOp::identity());
     }
 
     #[test]
@@ -336,13 +336,13 @@ mod fold {
         // Single element
         let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
         map.insert(5, 10);
-        assert_eq!(map.fold(), 5 + 10);
+        assert_eq!(map.fold_all(), 5 + 10);
 
         // Multiple elements
         map.insert(3, 20);
         map.insert(7, 15);
         let expected = (5 + 10) + (3 + 20) + (7 + 15);
-        assert_eq!(map.fold(), expected);
+        assert_eq!(map.fold_all(), expected);
     }
 
     #[test]
@@ -354,14 +354,14 @@ mod fold {
 
         // Whole range
         let whole = (1 + 10) + (2 + 20) + (3 + 30) + (4 + 40) + (5 + 50);
-        assert_eq!(map.fold_range(&1, &6), whole);
+        assert_eq!(map.fold_by_key(1..6), whole);
 
         // Partial range [2, 4)
         let partial = (2 + 20) + (3 + 30);
-        assert_eq!(map.fold_range(&2, &4), partial);
+        assert_eq!(map.fold_by_key(2..4), partial);
 
         // Single element [3, 4)
-        assert_eq!(map.fold_range(&3, &4), 3 + 30);
+        assert_eq!(map.fold_by_key(3..4), 3 + 30);
     }
 
     #[test]
@@ -370,19 +370,19 @@ mod fold {
         map.insert(5, 50);
 
         // Empty range
-        assert_eq!(map.fold_range(&1, &1), SumOp::identity());
-        assert_eq!(map.fold_range(&10, &20), SumOp::identity());
+        assert_eq!(map.fold_by_key(1..1), SumOp::identity());
+        assert_eq!(map.fold_by_key(10..20), SumOp::identity());
     }
 
     #[test]
     fn test_fold_after_overwrite() {
         let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
         map.insert(5, 10);
-        assert_eq!(map.fold(), 5 + 10);
+        assert_eq!(map.fold_all(), 5 + 10);
 
         // Overwrite value
         map.insert(5, 20);
-        assert_eq!(map.fold(), 5 + 20, "fold should reflect updated value");
+        assert_eq!(map.fold_all(), 5 + 20, "fold should reflect updated value");
     }
 
     #[test]
@@ -407,7 +407,7 @@ mod fold {
 
         // Verify fold is correct before removal
         let expected_all = (1..=5).map(|i| (i as i64) + (i as i64 * 10)).sum::<i64>();
-        assert_eq!(map.fold(), expected_all);
+        assert_eq!(map.fold_all(), expected_all);
 
         // Remove an element and verify fold reflects the change
         let removed = map.remove(&3);
@@ -417,7 +417,7 @@ mod fold {
             .filter(|i| *i != 3)
             .map(|i| (i as i64) + (i as i64 * 10))
             .sum::<i64>();
-        assert_eq!(map.fold(), expected_after);
+        assert_eq!(map.fold_all(), expected_after);
     }
 
     #[test]
@@ -437,7 +437,7 @@ mod fold {
             .iter()
             .map(|(&k, &v)| (k as i64) + (v as i64))
             .sum();
-        assert_eq!(map.fold(), expected, "initial fold mismatch");
+        assert_eq!(map.fold_all(), expected, "initial fold mismatch");
 
         // Remove elements one by one
         for step in 0..5 {
@@ -458,7 +458,7 @@ mod fold {
                 .map(|(&k, &v)| (k as i64) + (v as i64))
                 .sum();
             assert_eq!(
-                map.fold(),
+                map.fold_all(),
                 expected,
                 "fold mismatch at step {step} after removing key {k}"
             );
@@ -515,5 +515,68 @@ mod regression {
             iter_count, after_len,
             "iter().count()={iter_count} should match len()={after_len}"
         );
+    }
+}
+
+mod aggregation_consistency {
+    use super::*;
+
+    #[test]
+    fn test_get_mut_preserves_fold_with_sumop() {
+        // TDD Test: get_mut() で値を変更した場合、fold() が正しく更新されるか？
+        // 現状の実装では、get_mut() は生の &mut V を返すため、
+        // 値の変更後に prod（集約値）が再計算されず、fold() の結果が壊れる。
+        //
+        // このテストが PASS = 集約値が自動的に再計算される ガード型が実装されている
+        // このテストが FAIL = 潜在バグが存在する（修正前の状態）
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(1, 10);
+        map.insert(2, 20);
+        map.insert(3, 30);
+
+        let expected_before = 1 + 10 + 2 + 20 + 3 + 30;
+        assert_eq!(map.fold_all(), expected_before, "Initial fold should be correct");
+
+        // get_mut で値を変更
+        if let Some(mut v) = map.get_mut(&2) {
+            *v = 99; // 20 -> 99 に変更
+        }
+
+        // fold() の結果が更新されているか？
+        // 正しくは: 1 + 10 + 2 + 99 + 3 + 30 = 145
+        // バグの場合: (古い) 1 + 10 + 2 + 20 + 3 + 30 = 66 のまま
+        let expected_after = 1 + 10 + 2 + 99 + 3 + 30;
+        assert_eq!(
+            map.fold_all(),
+            expected_after,
+            "fold() should reflect the value changed via get_mut()"
+        );
+    }
+
+    #[test]
+    fn test_fold_range_not_affected_by_get_mut_outside_range() {
+        // fold_range() も同じバグに影響を受ける可能性
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        map.insert(1, 10);
+        map.insert(2, 20);
+        map.insert(3, 30);
+        map.insert(4, 40);
+
+        let range_before = map.fold_by_key(1..3); // [1, 3) = (1, 10) + (2, 20)
+        assert_eq!(range_before, 1 + 10 + 2 + 20);
+
+        // キー 4 の値を変更（範囲外）
+        if let Some(mut v) = map.get_mut(&4) {
+            *v = 99;
+        }
+
+        // [1, 3) のフォールドは変わらないはず
+        let range_after = map.fold_by_key(1..3);
+        assert_eq!(range_after, 1 + 10 + 2 + 20);
+
+        // ただし全体のフォールドは変わる
+        let fold_all = map.fold_all();
+        assert_eq!(fold_all, 1 + 10 + 2 + 20 + 3 + 30 + 4 + 99);
     }
 }

@@ -357,31 +357,79 @@ pub fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<
     }
 }
 
-pub fn fold_range<K: Ord + Borrow<Q>, V, Q: Ord + ?Sized, O: Op<Key = K, Value = V>>(
+use std::ops::Bound;
+
+pub fn fold_by_key<K: Ord + Borrow<Q>, V, Q: Ord + ?Sized, O: Op<Key = K, Value = V>>(
     node: Option<NonNull<Node<K, V, O>>>,
-    start: &Q,
-    end: &Q,
+    start: Bound<&Q>,
+    end: Bound<&Q>,
 ) -> O::SegValue {
     match node {
         None => O::identity(),
         Some(n) => unsafe {
             let key_ref = (*n.as_ptr()).key.borrow();
-            match (key_ref.cmp(start), key_ref.cmp(end)) {
+
+            let before_start = match start {
+                Bound::Included(s) => key_ref < s,
+                Bound::Excluded(s) => key_ref <= s,
+                Bound::Unbounded => false,
+            };
+            let at_or_after_end = match end {
+                Bound::Included(e) => key_ref > e,
+                Bound::Excluded(e) => key_ref >= e,
+                Bound::Unbounded => false,
+            };
+
+            match (before_start, at_or_after_end) {
                 // Node is to the left of range
-                (std::cmp::Ordering::Less, _) => {
-                    fold_range((*n.as_ptr()).right, start, end)
-                }
+                (true, _) => fold_by_key((*n.as_ptr()).right, start, end),
                 // Node is to the right of range
-                (_, std::cmp::Ordering::Greater | std::cmp::Ordering::Equal) => {
-                    fold_range((*n.as_ptr()).left, start, end)
-                }
-                // Node is within range [start, end)
-                (_, std::cmp::Ordering::Less) => {
-                    let left_prod = fold_range((*n.as_ptr()).left, start, end);
+                (_, true) => fold_by_key((*n.as_ptr()).left, start, end),
+                // Node is within range
+                (false, false) => {
+                    let left_prod = fold_by_key((*n.as_ptr()).left, start, end);
                     let self_prod = O::to_seg_value(&(*n.as_ptr()).key, &(*n.as_ptr()).value);
-                    let right_prod = fold_range((*n.as_ptr()).right, start, end);
+                    let right_prod = fold_by_key((*n.as_ptr()).right, start, end);
                     O::mul(&O::mul(&left_prod, &self_prod), &right_prod)
                 }
+            }
+        },
+    }
+}
+
+pub fn fold_by_index<K, V, O: Op<Key = K, Value = V>>(
+    node: Option<NonNull<Node<K, V, O>>>,
+    start: usize,
+    end: usize,
+) -> O::SegValue {
+    match node {
+        None => O::identity(),
+        Some(n) => unsafe {
+            let left_len = (*n.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len);
+
+            if end <= left_len {
+                // Entire range is in left subtree
+                fold_by_index((*n.as_ptr()).left, start, end)
+            } else if start >= left_len + 1 {
+                // Entire range is in right subtree
+                fold_by_index((*n.as_ptr()).right, start - left_len - 1, end - left_len - 1)
+            } else {
+                // Range spans left, self, and/or right
+                let left_prod = if start < left_len {
+                    fold_by_index((*n.as_ptr()).left, start, left_len)
+                } else {
+                    O::identity()
+                };
+
+                let self_prod = O::to_seg_value(&(*n.as_ptr()).key, &(*n.as_ptr()).value);
+
+                let right_prod = if end > left_len + 1 {
+                    fold_by_index((*n.as_ptr()).right, 0, end - left_len - 1)
+                } else {
+                    O::identity()
+                };
+
+                O::mul(&O::mul(&left_prod, &self_prod), &right_prod)
             }
         },
     }
