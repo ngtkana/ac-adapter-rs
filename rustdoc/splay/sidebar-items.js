@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"struct":["RevLazySegtree","RevList","RevSegtree"],"trait":["RevLazySegtreeOp","RevSegtreeOp"]};
