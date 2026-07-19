@@ -12,56 +12,12 @@ pub enum Navi2 {
     GoDownRight,
 }
 
-impl Navi2 {
-    /// Determines the direction for a binary search that never stops by comparing the probe with the current node value.
-    ///
-    /// Returns `GoDownLeft` if `probe < current`, otherwise `GoDownRight`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::Navi2;
-    ///
-    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(1, 5), Navi2::GoDownLeft);
-    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(5, 5), Navi2::GoDownRight);
-    /// assert_eq!(Navi2::lower_bound_from_probe_and_current(10, 5), Navi2::GoDownRight);
-    /// ```
-    pub fn lower_bound_from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi2 {
-        match probe.cmp(&current) {
-            Ordering::Less => Navi2::GoDownLeft,
-            Ordering::Equal | Ordering::Greater => Navi2::GoDownRight,
-        }
-    }
-}
-
 /// An enum indicating whether to proceed left or right during a binary search that might terminate early. This is used in [`remove`](Tree::remove).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Navi3 {
     GoDownLeft,
     Found,
     GoDownRight,
-}
-impl Navi3 {
-    /// Determines the direction for a binary search that might terminate early by comparing the probe with the current node value.
-    ///
-    /// Returns `GoDownLeft` if `probe < current`, `GoDownRight` if `probe > current`, or `Found` if `probe == current`.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::Navi3;
-    ///
-    /// assert_eq!(Navi3::from_probe_and_current(1, 5), Navi3::GoDownLeft);
-    /// assert_eq!(Navi3::from_probe_and_current(5, 5), Navi3::Found);
-    /// assert_eq!(Navi3::from_probe_and_current(10, 5), Navi3::GoDownRight);
-    /// ```
-    pub fn from_probe_and_current<K: Ord>(probe: K, current: K) -> Navi3 {
-        match probe.cmp(&current) {
-            Ordering::Less => Navi3::GoDownLeft,
-            Ordering::Greater => Navi3::GoDownRight,
-            Ordering::Equal => Navi3::Found,
-        }
-    }
 }
 
 /// A splay tree.
@@ -339,15 +295,21 @@ impl<T, U: Update<Value = T>> Tree<U> {
     /// let removed = tree.remove_by_key(&3, |v| *v);
     /// assert_eq!(removed, Some(3));
     /// ```
-    pub fn remove_by_key<K: Ord, Q: ?Sized + Ord>(&mut self, probe: &Q, mut f: impl FnMut(&T) -> K) -> Option<T>
+    pub fn remove_by_key<K: Ord, Q: ?Sized + Ord>(
+        &mut self,
+        probe: &Q,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Option<T>
     where
         K: std::borrow::Borrow<Q>,
     {
-        self.remove(|center, _left, _right| match probe.cmp(f(&center).borrow()) {
-            Ordering::Less => Navi3::GoDownLeft,
-            Ordering::Equal => Navi3::Found,
-            Ordering::Greater => Navi3::GoDownRight,
-        })
+        self.remove(
+            |center, _left, _right| match probe.cmp(f(&center).borrow()) {
+                Ordering::Less => Navi3::GoDownLeft,
+                Ordering::Equal => Navi3::Found,
+                Ordering::Greater => Navi3::GoDownRight,
+            },
+        )
     }
 
     /// Returns a vector of references to all node values in the tree, in sorted order (in-order traversal).
