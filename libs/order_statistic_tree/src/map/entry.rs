@@ -65,10 +65,7 @@ impl<'a, K: Ord, V, O: Op<Key = K, Value = V>> Entry<'a, K, V, O> {
     where
         K: Clone,
     {
-        match self {
-            Entry::Occupied(oe) => oe.into_mut(),
-            Entry::Vacant(ve) => ve.insert(default),
-        }
+        self.or_insert_with(move || default)
     }
 
     /// Ensures a value is in the entry by inserting the result of the default function

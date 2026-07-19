@@ -137,6 +137,14 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         self.root.set(None);
     }
 
+    fn new_node(key: K, value: V, parent: Option<NonNull<Node<K, V, O>>>) -> NonNull<Node<K, V, O>> {
+        let prod = O::to_seg_value(&key, &value);
+        let node = Box::into_raw(Box::new(Node {
+            key, value, parent, left: None, right: None, len: 1, prod,
+        }));
+        NonNull::new(node).unwrap()
+    }
+
     /// Inserts a key-value pair into the map.
     ///
     /// If the map did not have this key present, `None` is returned.
@@ -156,17 +164,7 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     pub fn insert(&mut self, key: K, value: V) -> Option<V> {
         match self.root.get() {
             None => {
-                let prod = O::to_seg_value(&key, &value);
-                let node = Box::into_raw(Box::new(Node {
-                    key,
-                    value,
-                    parent: None,
-                    left: None,
-                    right: None,
-                    len: 1,
-                    prod,
-                }));
-                self.root.set(Some(NonNull::new(node).unwrap()));
+                self.root.set(Some(Self::new_node(key, value, None)));
                 None
             }
             Some(root) => unsafe {
@@ -178,18 +176,9 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                             if let Some(left) = (*current.as_ptr()).left {
                                 current = left;
                             } else {
-                                let prod = O::to_seg_value(&key, &value);
-                                let new_node = Box::into_raw(Box::new(Node {
-                                    key,
-                                    value,
-                                    parent: Some(current),
-                                    left: None,
-                                    right: None,
-                                    len: 1,
-                                    prod,
-                                }));
-                                (*current.as_ptr()).left = Some(NonNull::new(new_node).unwrap());
-                                current = NonNull::new(new_node).unwrap();
+                                let new_node = Self::new_node(key, value, Some(current));
+                                (*current.as_ptr()).left = Some(new_node);
+                                current = new_node;
                                 break;
                             }
                         }
@@ -197,18 +186,9 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                             if let Some(right) = (*current.as_ptr()).right {
                                 current = right;
                             } else {
-                                let prod = O::to_seg_value(&key, &value);
-                                let new_node = Box::into_raw(Box::new(Node {
-                                    key,
-                                    value,
-                                    parent: Some(current),
-                                    left: None,
-                                    right: None,
-                                    len: 1,
-                                    prod,
-                                }));
-                                (*current.as_ptr()).right = Some(NonNull::new(new_node).unwrap());
-                                current = NonNull::new(new_node).unwrap();
+                                let new_node = Self::new_node(key, value, Some(current));
+                                (*current.as_ptr()).right = Some(new_node);
+                                current = new_node;
                                 break;
                             }
                         }

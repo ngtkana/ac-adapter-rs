@@ -192,29 +192,11 @@ where
     }
 }
 
-pub fn nth_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatisticMap<K, V, O>, mut n: usize) -> NonNull<Node<K, V, O>> {
+pub fn nth_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatisticMap<K, V, O>, n: usize) -> NonNull<Node<K, V, O>> {
     let root = map.root.get().unwrap();
-    unsafe {
-        let mut current = root;
-        loop {
-            let left_len = (*current.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len);
-            match n.cmp(&left_len) {
-                std::cmp::Ordering::Less => {
-                    current = (*current.as_ptr()).left.unwrap();
-                }
-                std::cmp::Ordering::Greater => {
-                    n -= left_len + 1;
-                    current = (*current.as_ptr()).right.unwrap();
-                }
-                std::cmp::Ordering::Equal => {
-                    break;
-                }
-            }
-        }
-        current = splay(current);
-        map.root.set(Some(current));
-        current
-    }
+    let current = splay(nth_from_node(root, n));
+    map.root.set(Some(current));
+    current
 }
 
 #[allow(clippy::type_complexity)]
@@ -367,28 +349,21 @@ pub fn merge_trees<K, V, O: Op<Key = K, Value = V>>(
 ) -> Option<NonNull<Node<K, V, O>>> {
     match (left, right) {
         (None, None) => None,
-        (Some(l), None) => {
-            unsafe { (*l.as_ptr()).parent = None; }
-            Some(l)
-        }
-        (None, Some(r)) => {
-            unsafe { (*r.as_ptr()).parent = None; }
-            Some(r)
+        (Some(x), None) | (None, Some(x)) => {
+            unsafe { (*x.as_ptr()).parent = None; }
+            Some(x)
         }
         (Some(l), Some(r)) => {
             unsafe {
                 (*l.as_ptr()).parent = None;
-
                 let mut curr = l;
                 while let Some(next) = (*curr.as_ptr()).right {
                     curr = next;
                 }
                 let new_left_root = splay(curr);
-
                 (*new_left_root.as_ptr()).right = Some(r);
                 (*r.as_ptr()).parent = Some(new_left_root);
                 (*new_left_root.as_ptr()).update();
-
                 Some(new_left_root)
             }
         }
