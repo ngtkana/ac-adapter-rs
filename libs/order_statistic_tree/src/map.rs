@@ -3,7 +3,43 @@
 use std::borrow::Borrow;
 use std::cell::Cell;
 use std::fmt;
+use std::marker::PhantomData;
 use std::ptr::NonNull;
+
+/// A trait for segment-tree style augmentation.
+///
+/// Defines a monoid structure over aggregated values computed from key-value pairs.
+pub trait Op {
+    /// The key type associated with this operation.
+    type Key;
+    /// The value type associated with this operation.
+    type Value;
+    /// The type of the aggregated/segment value.
+    type SegValue: Clone;
+
+    /// Returns the monoid identity element.
+    fn identity() -> Self::SegValue;
+
+    /// Lifts a key-value pair to a segment value.
+    fn to_seg_value(key: &Self::Key, value: &Self::Value) -> Self::SegValue;
+
+    /// Monoid multiplication (associative).
+    fn mul(lhs: &Self::SegValue, rhs: &Self::SegValue) -> Self::SegValue;
+}
+
+/// A no-op augmentation trait for non-augmented maps.
+/// SegValue is (), providing zero-cost abstraction.
+pub struct NoOp<K, V>(PhantomData<(K, V)>);
+
+impl<K, V> Op for NoOp<K, V> {
+    type Key = K;
+    type Value = V;
+    type SegValue = ();
+
+    fn identity() -> Self::SegValue {}
+    fn to_seg_value(_: &K, _: &V) -> Self::SegValue {}
+    fn mul(_: &(), _: &()) -> Self::SegValue {}
+}
 
 /// An order-statistic map backed by a splay tree.
 ///
