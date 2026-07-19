@@ -650,10 +650,12 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     /// assert!(map2.is_empty());
     /// ```
     pub fn concat(&mut self, other: &mut Self) {
-        match (self.root.get(), other.root.get()) {
+        let self_root = self.root.get();
+        let other_root = other.root.get();
+        match (self_root, other_root) {
             (_, None) => {}
             (None, Some(_)) => {
-                self.root.set(other.root.get());
+                self.root.set(other_root);
                 other.root.set(None);
             }
             (Some(_), Some(_)) => {
@@ -664,11 +666,9 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
                         (*self_max.as_ptr()).key < (*other_min.as_ptr()).key,
                         "OrderStatisticMap::concat requires all keys in self to be strictly less than all keys in other"
                     );
-                    (*self_max.as_ptr()).right = Some(other_min);
-                    (*other_min.as_ptr()).parent = Some(self_max);
-                    (*self_max.as_ptr()).update();
                 }
-                self.root.set(Some(self_max));
+                let merged = node::merge_trees(Some(self_max), Some(other_min));
+                self.root.set(merged);
                 other.root.set(None);
             }
         }
@@ -788,7 +788,20 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
     where
         K: Borrow<Q>,
     {
-        node::fold_by_key(self.root.get(), range.start_bound(), range.end_bound())
+        let start = match range.start_bound() {
+            Bound::Included(k) => self.lower_bound(k),
+            Bound::Excluded(k) => self.upper_bound(k),
+            Bound::Unbounded => 0,
+        };
+        let end = match range.end_bound() {
+            Bound::Included(k) => self.upper_bound(k),
+            Bound::Excluded(k) => self.lower_bound(k),
+            Bound::Unbounded => self.len(),
+        };
+        if end <= start {
+            return O::identity();
+        }
+        self.fold_by_index(start..end)
     }
 
     /// Computes the aggregate value over an index range.
@@ -825,7 +838,19 @@ impl<K: Ord, V, O: Op<Key = K, Value = V>> OrderStatisticMap<K, V, O> {
         let len = self.len();
         let (start, end) = to_half_open_range(range, len);
         assert!(start <= end && end <= len, "range out of bounds: {start}..{end}, len={len}");
-        node::fold_by_index(self.root.get(), start, end)
+
+        if start == end {
+            return O::identity();
+        }
+        if start == 0 && end == len {
+            return self.fold_all();
+        }
+
+        let (left, rest) = node::split_at_index(self.root.get(), start);
+        let (mid, right) = node::split_at_index(rest, end - start);
+        let result = mid.map_or_else(O::identity, |m| unsafe { (*m.as_ptr()).prod.clone() });
+        self.root.set(node::merge_trees(node::merge_trees(left, mid), right));
+        result
     }
 }
 

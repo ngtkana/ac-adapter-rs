@@ -305,6 +305,96 @@ pub fn rightmost_and_splay<K, V, O: Op<Key = K, Value = V>>(map: &OrderStatistic
     }
 }
 
+type SplitResult<K, V, O> = (Option<NonNull<Node<K, V, O>>>, Option<NonNull<Node<K, V, O>>>);
+
+pub fn split_at_index<K, V, O: Op<Key = K, Value = V>>(
+    root: Option<NonNull<Node<K, V, O>>>,
+    idx: usize,
+) -> SplitResult<K, V, O> {
+    match root {
+        None => (None, None),
+        Some(r) => {
+            let len = unsafe { (*r.as_ptr()).len };
+            if idx == 0 {
+                return (None, Some(r));
+            }
+            if idx >= len {
+                return (Some(r), None);
+            }
+            unsafe {
+                let pivot = nth_from_node(r, idx);
+                let pivot_splayed = splay(pivot);
+
+                let left = (*pivot_splayed.as_ptr()).left.take();
+                if let Some(l) = left {
+                    (*l.as_ptr()).parent = None;
+                }
+
+                (*pivot_splayed.as_ptr()).update();
+
+                (left, Some(pivot_splayed))
+            }
+        }
+    }
+}
+
+fn nth_from_node<K, V, O: Op<Key = K, Value = V>>(
+    node: NonNull<Node<K, V, O>>,
+    mut n: usize,
+) -> NonNull<Node<K, V, O>> {
+    let mut current = node;
+    loop {
+        let left_len = unsafe { (*current.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len) };
+        match n.cmp(&left_len) {
+            std::cmp::Ordering::Less => {
+                current = unsafe { (*current.as_ptr()).left.unwrap() };
+            }
+            std::cmp::Ordering::Greater => {
+                n -= left_len + 1;
+                current = unsafe { (*current.as_ptr()).right.unwrap() };
+            }
+            std::cmp::Ordering::Equal => {
+                break;
+            }
+        }
+    }
+    current
+}
+
+pub fn merge_trees<K, V, O: Op<Key = K, Value = V>>(
+    left: Option<NonNull<Node<K, V, O>>>,
+    right: Option<NonNull<Node<K, V, O>>>,
+) -> Option<NonNull<Node<K, V, O>>> {
+    match (left, right) {
+        (None, None) => None,
+        (Some(l), None) => {
+            unsafe { (*l.as_ptr()).parent = None; }
+            Some(l)
+        }
+        (None, Some(r)) => {
+            unsafe { (*r.as_ptr()).parent = None; }
+            Some(r)
+        }
+        (Some(l), Some(r)) => {
+            unsafe {
+                (*l.as_ptr()).parent = None;
+
+                let mut curr = l;
+                while let Some(next) = (*curr.as_ptr()).right {
+                    curr = next;
+                }
+                let new_left_root = splay(curr);
+
+                (*new_left_root.as_ptr()).right = Some(r);
+                (*r.as_ptr()).parent = Some(new_left_root);
+                (*new_left_root.as_ptr()).update();
+
+                Some(new_left_root)
+            }
+        }
+    }
+}
+
 pub fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<K, V, O>) -> (K, V) {
     let root = map.root.get().unwrap();
     unsafe {
@@ -316,40 +406,7 @@ pub fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<
         let left = (*root.as_ptr()).left;
         let right = (*root.as_ptr()).right;
 
-        // Merge left and right subtrees
-        let new_root = match (left, right) {
-            (None, None) => None,
-            (Some(l), None) => {
-                (*l.as_ptr()).parent = None;
-                Some(l)
-            }
-            (None, Some(r)) => {
-                (*r.as_ptr()).parent = None;
-                Some(r)
-            }
-            (Some(l), Some(r)) => {
-                // Find the maximum of left subtree and splay it to be the root of l,
-                // ensuring all ancestors on the search path are updated via rotate() calls.
-                (*l.as_ptr()).parent = None;  // Detach l from the deleted root first
-
-                let mut curr = l;
-                while let Some(next) = (*curr.as_ptr()).right {
-                    curr = next;
-                }
-                // curr is the maximum of the left subtree
-                let new_left_root = splay(curr);  // Splay curr to the root of l's subtree
-                                                   // Each rotate_left/rotate_right call during splay
-                                                   // automatically calls update() on both nodes,
-                                                   // ensuring all ancestors have their len recomputed
-
-                // Now attach the right subtree to new_left_root
-                (*new_left_root.as_ptr()).right = Some(r);
-                (*r.as_ptr()).parent = Some(new_left_root);
-                (*new_left_root.as_ptr()).update();
-
-                Some(new_left_root)
-            }
-        };
+        let new_root = merge_trees(left, right);
 
         drop(Box::from_raw(root.as_ptr()));
         map.root.set(new_root);
@@ -357,80 +414,3 @@ pub fn detach_root<K, V, O: Op<Key = K, Value = V>>(map: &mut OrderStatisticMap<
     }
 }
 
-use std::ops::Bound;
-
-pub fn fold_by_key<K: Ord + Borrow<Q>, V, Q: Ord + ?Sized, O: Op<Key = K, Value = V>>(
-    node: Option<NonNull<Node<K, V, O>>>,
-    start: Bound<&Q>,
-    end: Bound<&Q>,
-) -> O::SegValue {
-    match node {
-        None => O::identity(),
-        Some(n) => unsafe {
-            let key_ref = (*n.as_ptr()).key.borrow();
-
-            let before_start = match start {
-                Bound::Included(s) => key_ref < s,
-                Bound::Excluded(s) => key_ref <= s,
-                Bound::Unbounded => false,
-            };
-            let at_or_after_end = match end {
-                Bound::Included(e) => key_ref > e,
-                Bound::Excluded(e) => key_ref >= e,
-                Bound::Unbounded => false,
-            };
-
-            match (before_start, at_or_after_end) {
-                // Node is to the left of range
-                (true, _) => fold_by_key((*n.as_ptr()).right, start, end),
-                // Node is to the right of range
-                (_, true) => fold_by_key((*n.as_ptr()).left, start, end),
-                // Node is within range
-                (false, false) => {
-                    let left_prod = fold_by_key((*n.as_ptr()).left, start, end);
-                    let self_prod = O::to_seg_value(&(*n.as_ptr()).key, &(*n.as_ptr()).value);
-                    let right_prod = fold_by_key((*n.as_ptr()).right, start, end);
-                    O::mul(&O::mul(&left_prod, &self_prod), &right_prod)
-                }
-            }
-        },
-    }
-}
-
-pub fn fold_by_index<K, V, O: Op<Key = K, Value = V>>(
-    node: Option<NonNull<Node<K, V, O>>>,
-    start: usize,
-    end: usize,
-) -> O::SegValue {
-    match node {
-        None => O::identity(),
-        Some(n) => unsafe {
-            let left_len = (*n.as_ptr()).left.map_or(0, |l| (*l.as_ptr()).len);
-
-            if end <= left_len {
-                // Entire range is in left subtree
-                fold_by_index((*n.as_ptr()).left, start, end)
-            } else if start > left_len {
-                // Entire range is in right subtree
-                fold_by_index((*n.as_ptr()).right, start - left_len - 1, end - left_len - 1)
-            } else {
-                // Range spans left, self, and/or right
-                let left_prod = if start < left_len {
-                    fold_by_index((*n.as_ptr()).left, start, left_len)
-                } else {
-                    O::identity()
-                };
-
-                let self_prod = O::to_seg_value(&(*n.as_ptr()).key, &(*n.as_ptr()).value);
-
-                let right_prod = if end > left_len + 1 {
-                    fold_by_index((*n.as_ptr()).right, 0, end - left_len - 1)
-                } else {
-                    O::identity()
-                };
-
-                O::mul(&O::mul(&left_prod, &self_prod), &right_prod)
-            }
-        },
-    }
-}

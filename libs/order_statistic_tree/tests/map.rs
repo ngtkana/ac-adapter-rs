@@ -580,3 +580,71 @@ mod aggregation_consistency {
         assert_eq!(fold_all, 1 + 10 + 2 + 20 + 3 + 30 + 4 + 99);
     }
 }
+
+mod amortized_complexity {
+    use super::*;
+    use std::time::Instant;
+
+    #[test]
+    fn test_fold_by_index_amortized_complexity() {
+        // Regression test: fold_by_index should maintain O(log n) amortized complexity
+        // via split/merge-based implementation. This test verifies that repeated
+        // fold_by_index calls over a large map don't degrade to O(n) per call.
+
+        const MAP_SIZE: usize = 50_000;
+        const NUM_QUERIES: usize = 10_000;
+        const TIME_LIMIT_MS: u128 = 2000;
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..MAP_SIZE as i32 {
+            map.insert(i, 1);
+        }
+
+        let start = Instant::now();
+        let mut sum = 0i64;
+        for q in 0..NUM_QUERIES {
+            let start_idx = q % MAP_SIZE;
+            let end_idx = (start_idx + 100) % MAP_SIZE;
+            if start_idx < end_idx {
+                sum = sum.wrapping_add(map.fold_by_index(start_idx..end_idx) as i64);
+            }
+        }
+        let elapsed = start.elapsed().as_millis();
+
+        assert!(
+            elapsed < TIME_LIMIT_MS,
+            "fold_by_index regression: {} ms exceeds limit of {} ms (sum={} to prevent optimization)",
+            elapsed, TIME_LIMIT_MS, sum
+        );
+    }
+
+    #[test]
+    fn test_fold_by_key_amortized_complexity() {
+        // Regression test: fold_by_key should maintain O(log n) amortized complexity
+        // via lower_bound/upper_bound + fold_by_index delegation.
+
+        const MAP_SIZE: usize = 50_000;
+        const NUM_QUERIES: usize = 10_000;
+        const TIME_LIMIT_MS: u128 = 2000;
+
+        let mut map: OrderStatisticMap<i32, i32, SumOp> = OrderStatisticMap::new();
+        for i in 0..MAP_SIZE as i32 {
+            map.insert(i, 1);
+        }
+
+        let start = Instant::now();
+        let mut sum = 0i64;
+        for q in 0..NUM_QUERIES {
+            let start_key = (q as i32) % (MAP_SIZE as i32);
+            let end_key = start_key + 100;
+            sum = sum.wrapping_add(map.fold_by_key(start_key..end_key) as i64);
+        }
+        let elapsed = start.elapsed().as_millis();
+
+        assert!(
+            elapsed < TIME_LIMIT_MS,
+            "fold_by_key regression: {} ms exceeds limit of {} ms (sum={} to prevent optimization)",
+            elapsed, TIME_LIMIT_MS, sum
+        );
+    }
+}
