@@ -52,7 +52,6 @@
 //! - [`Op`]: Trait for defining aggregation logic
 //! - [`Navi2`]: Navigation enum for insert/split operations (never-terminating search)
 //! - [`Navi3`]: Navigation enum for remove/get operations (can terminate early)
-//! - [`Node<O>`]: A tree node (exposed for accessing subtree metadata during searches)
 //!
 //! # Complexity
 //!
