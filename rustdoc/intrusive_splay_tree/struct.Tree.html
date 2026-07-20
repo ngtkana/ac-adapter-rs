@@ -132,8 +132,8 @@ restored when the <code>FoldEntry</code> is dropped (RAII pattern).</p>
 }
 
 <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;U&gt;::new();
-tree.insert(Value { val: <span class="number">5</span>, sum: <span class="number">5 </span>}, |<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| Navi2::GoDownLeft);
-tree.insert(Value { val: <span class="number">10</span>, sum: <span class="number">10 </span>}, |<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| Navi2::GoDownRight);
+tree.insert_lower_bound_by_key(Value { val: <span class="number">5</span>, sum: <span class="number">5 </span>}, |v| v.val);
+tree.insert_lower_bound_by_key(Value { val: <span class="number">10</span>, sum: <span class="number">10 </span>}, |v| v.val);
 
 <span class="comment">// Note: fold operates on ranges defined by custom navigation closures
 // It temporarily splits and returns the middle portion

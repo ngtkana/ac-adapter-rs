@@ -51,7 +51,7 @@ This is particularly efficient when accessing the same or nearby nodes repeatedl
 <p>You define aggregation (e.g., sum of values) by implementing the <a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> trait,
 which is called whenever the tree structure changes.</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>intrusive_splay_tree::{Tree, Op, Navi2};
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>intrusive_splay_tree::{Tree, Op};
 
 <span class="kw">struct </span>Value { val: i32, sum: i32 }
 
@@ -66,8 +66,8 @@ which is called whenever the tree structure changes.</p>
 }
 
 <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;U&gt;::new();
-tree.insert(Value { val: <span class="number">10</span>, sum: <span class="number">10 </span>}, |<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| Navi2::GoDownRight);
-tree.insert(Value { val: <span class="number">5</span>, sum: <span class="number">5 </span>}, |<span class="kw">_</span>, <span class="kw">_</span>, <span class="kw">_</span>| Navi2::GoDownLeft);
+tree.insert_lower_bound_by_key(Value { val: <span class="number">10</span>, sum: <span class="number">10 </span>}, |v| v.val);
+tree.insert_lower_bound_by_key(Value { val: <span class="number">5</span>, sum: <span class="number">5 </span>}, |v| v.val);
 
 <span class="comment">// Query the entire tree's aggregate
 </span><span class="macro">assert_eq!</span>(tree.fold_all().unwrap().sum, <span class="number">15</span>);</code></pre></div>
