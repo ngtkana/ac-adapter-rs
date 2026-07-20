@@ -1,6 +1,5 @@
 use super::{Navi2, Navi3, Nn, Onn, Op};
 
-/// A node of [`Tree`]. Internal use only. The size of child subtrees is accessed via user-provided `size` closure parameters in index-based search operations.
 pub(super) struct Node<O: Op> {
     pub(super) value: O::Value,
     pub(super) left: Onn<O>,
