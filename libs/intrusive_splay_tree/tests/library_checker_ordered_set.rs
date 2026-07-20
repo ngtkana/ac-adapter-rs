@@ -30,7 +30,7 @@ impl Op for O {
 
 fn query_0_insert(tree: &mut Tree<O>, key: u32) {
     tree.remove_by_key(&key, Store::key);
-    tree.insert_lower_bound_by_key(Store { key, size: 1 }, Store::key)
+    tree.insert_lower_bound_by_key(Store { key, size: 1 }, Store::key);
 }
 
 fn query_1_remove(tree: &mut Tree<O>, key: u32) {
@@ -89,10 +89,7 @@ mod random_tests {
                         let expected = model.iter().nth(index).copied();
                         let got = query_2_nth(&mut tree, index);
                         if got != expected {
-                            eprintln!(
-                                "nth({}) failed: got {:?}, expected {:?}",
-                                index, got, expected
-                            );
+                            eprintln!("nth({index}) failed: got {got:?}, expected {expected:?}",);
                             eprintln!(
                                 "tree.fold().map(Store::size): {:?}",
                                 tree.fold().map(Store::size)
@@ -108,8 +105,7 @@ mod random_tests {
                         let got = query_3_count_le(&mut tree, key);
                         assert_eq!(
                             got, expected,
-                            "count_le({}) failed: got {}, expected {}",
-                            key, got, expected
+                            "count_le({key}) failed: got {got}, expected {expected}",
                         );
                     }
                     6 => {
@@ -118,8 +114,7 @@ mod random_tests {
                         let got = query_4_pred(&mut tree, key);
                         assert_eq!(
                             got, expected,
-                            "pred({}) failed: got {:?}, expected {:?}",
-                            key, got, expected
+                            "pred({key}) failed: got {got:?}, expected {expected:?}",
                         );
                     }
                     7 => {
@@ -127,10 +122,7 @@ mod random_tests {
                         let expected = model.range(key..).next().copied();
                         let got = query_5_succ(&mut tree, key);
                         if got != expected {
-                            eprintln!(
-                                "succ({}) failed: got {:?}, expected {:?}",
-                                key, got, expected
-                            );
+                            eprintln!("succ({key}) failed: got {got:?}, expected {expected:?}",);
                             eprintln!("tree contents: {:?}", tree.collect(Store::key));
                             eprintln!(
                                 "model contents: {:?}",
@@ -139,8 +131,7 @@ mod random_tests {
                         }
                         assert_eq!(
                             got, expected,
-                            "succ({}) failed: got {:?}, expected {:?}",
-                            key, got, expected
+                            "succ({key}) failed: got {got:?}, expected {expected:?}",
                         );
                     }
                     _ => unreachable!(),
