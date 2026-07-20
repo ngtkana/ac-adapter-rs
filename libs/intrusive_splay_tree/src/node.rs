@@ -1,20 +1,41 @@
-use super::{Navi2, Navi3, Nn, Onn, Op};
+use super::{Navi2, Navi3, Op};
+use std::ptr::NonNull;
+
+type Nn<O> = NonNull<Node<O>>;
+pub(super) type Onn<O> = Option<NonNull<Node<O>>>;
 
 pub(super) struct Node<O: Op> {
-    pub(super) value: O::Value,
-    pub(super) left: Onn<O>,
-    pub(super) right: Onn<O>,
-    pub(super) parent: Onn<O>,
+    pub(super) store: O::Store,
+    left: Onn<O>,
+    right: Onn<O>,
+    parent: Onn<O>,
 }
 impl<O: Op> Node<O> {
+    pub(super) fn new(store: O::Store) -> Self {
+        Self {
+            store,
+            left: None,
+            right: None,
+            parent: None,
+        }
+    }
     fn update(&mut self) {
         unsafe {
             O::update(
-                &mut self.value,
-                self.left.map(|left| &(*left.as_ptr()).value),
-                self.right.map(|right| &(*right.as_ptr()).value),
+                &mut self.store,
+                self.left.map(|left| &(*left.as_ptr()).store),
+                self.right.map(|right| &(*right.as_ptr()).store),
             );
         }
+    }
+}
+
+pub(super) fn visit<T, O: Op<Store = T>>(root: Onn<O>, f: &mut impl FnMut(&T)) {
+    let Some(root) = root else { return };
+    unsafe {
+        visit((*root.as_ptr()).left, f);
+        f(&(*root.as_ptr()).store);
+        visit((*root.as_ptr()).right, f);
     }
 }
 
@@ -47,7 +68,7 @@ pub(super) fn merge3<O: Op>(left: Onn<O>, center: Nn<O>, right: Onn<O>) -> Nn<O>
     }
 }
 
-pub(super) fn split2<T, O: Op<Value = T>>(
+pub(super) fn split2<T, O: Op<Store = T>>(
     root: Onn<O>,
     mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
 ) -> (Onn<O>, Onn<O>) {
@@ -84,7 +105,7 @@ pub(super) enum Split3Result<O: Op> {
     Failure(Onn<O>),
 }
 
-pub(super) fn split3<T, O: Op<Value = T>>(
+pub(super) fn split3<T, O: Op<Store = T>>(
     root: Onn<O>,
     f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
 ) -> Split3Result<O> {
@@ -107,33 +128,29 @@ pub(super) fn split3<T, O: Op<Value = T>>(
     }
 }
 
-pub(super) fn splay<O: Op>(x: Nn<O>) -> Nn<O> {
+fn splay<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
         while let Some(p) = (*x.as_ptr()).parent {
             if let Some(q) = (*p.as_ptr()).parent {
-                if (*q.as_ptr()).left == Some(p) && (*p.as_ptr()).left == Some(x) {
-                    // zig-zig: left-left
-                    rotate_right(q);
-                    rotate_right(p);
-                } else if (*q.as_ptr()).right == Some(p) && (*p.as_ptr()).right == Some(x) {
-                    // zig-zig: right-right
-                    rotate_left(q);
-                    rotate_left(p);
-                } else {
-                    // zig-zag
-                    if (*p.as_ptr()).left == Some(x) {
+                match ((*q.as_ptr()).left == Some(p), (*p.as_ptr()).left == Some(x)) {
+                    (true, true) => {
+                        rotate_right(q);
                         rotate_right(p);
-                    } else {
+                    }
+                    (false, false) => {
+                        rotate_left(q);
                         rotate_left(p);
                     }
-                    if (*q.as_ptr()).left == Some(x) {
+                    (true, false) => {
+                        rotate_left(p);
                         rotate_right(q);
-                    } else {
+                    }
+                    (false, true) => {
+                        rotate_right(p);
                         rotate_left(q);
                     }
                 }
             } else {
-                // zig: parent is root
                 if (*p.as_ptr()).left == Some(x) {
                     rotate_right(p);
                 } else {
@@ -145,8 +162,9 @@ pub(super) fn splay<O: Op>(x: Nn<O>) -> Nn<O> {
     }
 }
 
-pub(super) fn rotate_left<O: Op>(x: Nn<O>) -> Nn<O> {
+fn rotate_left<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
+        let p = (*x.as_ptr()).parent;
         let y = (*x.as_ptr()).right.unwrap();
         let c = (*y.as_ptr()).left;
         (*x.as_ptr()).right = c;
@@ -154,25 +172,24 @@ pub(super) fn rotate_left<O: Op>(x: Nn<O>) -> Nn<O> {
             (*c.as_ptr()).parent = Some(x);
         }
         (*y.as_ptr()).left = Some(x);
-        if let Some(q) = (*x.as_ptr()).parent {
-            if (*q.as_ptr()).left == Some(x) {
-                (*q.as_ptr()).left = Some(y);
-            } else {
-                (*q.as_ptr()).right = Some(y);
-            }
-            (*y.as_ptr()).parent = Some(q);
-        } else {
-            (*y.as_ptr()).parent = None;
-        }
         (*x.as_ptr()).parent = Some(y);
+        if let Some(p) = p {
+            if (*p.as_ptr()).left == Some(x) {
+                (*p.as_ptr()).left = Some(y);
+            } else {
+                (*p.as_ptr()).right = Some(y);
+            }
+        }
+        (*y.as_ptr()).parent = p;
         (*x.as_ptr()).update();
         (*y.as_ptr()).update();
         y
     }
 }
 
-pub(super) fn rotate_right<O: Op>(x: Nn<O>) -> Nn<O> {
+fn rotate_right<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
+        let p = (*x.as_ptr()).parent;
         let y = (*x.as_ptr()).left.unwrap();
         let c = (*y.as_ptr()).right;
         (*x.as_ptr()).left = c;
@@ -180,17 +197,15 @@ pub(super) fn rotate_right<O: Op>(x: Nn<O>) -> Nn<O> {
             (*c.as_ptr()).parent = Some(x);
         }
         (*y.as_ptr()).right = Some(x);
-        if let Some(q) = (*x.as_ptr()).parent {
-            if (*q.as_ptr()).left == Some(x) {
-                (*q.as_ptr()).left = Some(y);
-            } else {
-                (*q.as_ptr()).right = Some(y);
-            }
-            (*y.as_ptr()).parent = Some(q);
-        } else {
-            (*y.as_ptr()).parent = None;
-        }
         (*x.as_ptr()).parent = Some(y);
+        if let Some(p) = p {
+            if (*p.as_ptr()).left == Some(x) {
+                (*p.as_ptr()).left = Some(y);
+            } else {
+                (*p.as_ptr()).right = Some(y);
+            }
+        }
+        (*y.as_ptr()).parent = p;
         (*x.as_ptr()).update();
         (*y.as_ptr()).update();
         y
@@ -198,10 +213,8 @@ pub(super) fn rotate_right<O: Op>(x: Nn<O>) -> Nn<O> {
 }
 
 pub(super) fn free_subtree<O: Op>(root: Onn<O>) {
-    let mut stack = Vec::new();
-    if let Some(r) = root {
-        stack.push(r);
-    }
+    let Some(root) = root else { return };
+    let mut stack = vec![root];
     while let Some(node) = stack.pop() {
         unsafe {
             if let Some(left) = (*node.as_ptr()).left {
@@ -215,38 +228,34 @@ pub(super) fn free_subtree<O: Op>(root: Onn<O>) {
     }
 }
 
-fn find_and_splay<T, O: Op<Value = T>>(
+fn find_and_splay<T, O: Op<Store = T>>(
     root: Nn<O>,
     mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
 ) -> (Nn<O>, Navi3) {
     unsafe {
         let mut node = root;
-        let navi = loop {
-            let node_ref = &(*node.as_ptr());
-            match f(
-                &node_ref.value,
-                node_ref.left.map(|left| &(*left.as_ptr()).value),
-                node_ref.right.map(|right| &(*right.as_ptr()).value),
-            ) {
+        loop {
+            let navi = f(
+                &(*node.as_ptr()).store,
+                (*node.as_ptr()).left.map(|left| &(*left.as_ptr()).store),
+                (*node.as_ptr()).right.map(|right| &(*right.as_ptr()).store),
+            );
+            match navi {
                 Navi3::GoDownLeft => {
-                    if let Some(left) = node_ref.left {
+                    if let Some(left) = (*node.as_ptr()).left {
                         node = left;
-                    } else {
-                        break Navi3::GoDownLeft;
+                        continue;
                     }
                 }
                 Navi3::GoDownRight => {
-                    if let Some(right) = node_ref.right {
+                    if let Some(right) = (*node.as_ptr()).right {
                         node = right;
-                    } else {
-                        break Navi3::GoDownRight;
+                        continue;
                     }
                 }
-                Navi3::Found => {
-                    break Navi3::Found;
-                }
+                Navi3::Found => {}
             }
-        };
-        (splay(node), navi)
+            return (splay(node), navi);
+        }
     }
 }
