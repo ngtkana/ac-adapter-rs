@@ -1141,6 +1141,29 @@ impl<T, U: Op<Value = T>> Tree<U> {
         self.get(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
+    /// Returns a reference to the minimum element in the tree (leftmost node).
+    ///
+    /// This method navigates to the leftmost node in the tree, which contains
+    /// the minimum value. Returns `None` if the tree is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum U {}
+    /// impl Op for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(2, |v| *v);
+    /// tree.insert_lower_bound_by_key(7, |v| *v);
+    ///
+    /// assert_eq!(tree.front(), Some(&2));
+    /// ```
     pub fn front(&mut self) -> Option<&T> {
         self.get(
             |_, left, _| {
@@ -1149,6 +1172,29 @@ impl<T, U: Op<Value = T>> Tree<U> {
         )
     }
 
+    /// Returns a reference to the maximum element in the tree (rightmost node).
+    ///
+    /// This method navigates to the rightmost node in the tree, which contains
+    /// the maximum value. Returns `None` if the tree is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum U {}
+    /// impl Op for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(2, |v| *v);
+    /// tree.insert_lower_bound_by_key(7, |v| *v);
+    ///
+    /// assert_eq!(tree.back(), Some(&7));
+    /// ```
     pub fn back(&mut self) -> Option<&T> {
         self.get(
             |_, _, right| {
