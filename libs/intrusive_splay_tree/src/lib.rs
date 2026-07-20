@@ -26,15 +26,15 @@
 //! ```
 //! use intrusive_splay_tree::{Tree, Op};
 //!
-//! struct Value { value: i32, sum: i32 }
-//! impl Value {
+//! struct Store { value: i32, sum: i32 }
+//! impl Store {
 //!     fn value(&self) -> i32 { self.value }
 //! }
 //!
 //! enum O {}
 //! impl Op for O {
-//!     type Value = Value;
-//!     fn update(node: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+//!     type Store = Store;
+//!     fn update(node: &mut Store, left: Option<&Store>, right: Option<&Store>) {
 //!         node.sum = node.value;
 //!         if let Some(l) = left { node.sum += l.sum; }
 //!         if let Some(r) = right { node.sum += r.sum; }
@@ -42,8 +42,8 @@
 //! }
 //!
 //! let mut tree = Tree::<O>::new();
-//! tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, Value::value);
-//! tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, Value::value);
+//! tree.insert_lower_bound_by_key(Store { value: 10, sum: 10 }, Store::value);
+//! tree.insert_lower_bound_by_key(Store { value: 5, sum: 5 }, Store::value);
 //!
 //! // Query the entire tree's aggregate
 //! assert_eq!(tree.fold().unwrap().sum, 15);
@@ -69,10 +69,9 @@ use std::{
 };
 
 mod node;
-use node::{Node, Split3Result, free_subtree, merge2, merge3, split2, split3};
+use node::{Node, Onn, Split3Result, free_subtree, merge2, merge3, split2, split3};
 
-type Nn<O> = NonNull<Node<O>>;
-type Onn<O> = Option<NonNull<Node<O>>>;
+use crate::node::visit;
 
 /// A navigation direction for binary searches that always progress (never terminate early).
 ///
@@ -87,7 +86,7 @@ type Onn<O> = Option<NonNull<Node<O>>>;
 ///
 /// enum O {}
 /// impl Op for O {
-///     type Value = i32;
+///     type Store = i32;
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -151,7 +150,7 @@ impl Navi2 {
 ///
 /// enum O {}
 /// impl Op for O {
-///     type Value = i32;
+///     type Store = i32;
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -210,16 +209,16 @@ impl Navi3 {
 /// use std::cmp::Ordering;
 ///
 /// // Boilerplates.
-/// struct Value {
+/// struct Store {
 ///     value: u32,
 ///     sum: u32,
 /// }
 ///
 /// enum O {}
 /// impl Op for O {
-///     type Value = Value;
+///     type Store = Store;
 ///
-///     fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>) {
+///     fn update(root: &mut Self::Store, left: Option<&Self::Store>, right: Option<&Self::Store>) {
 ///         root.sum = root.value;
 ///         if let Some(left) = left {
 ///             root.sum = left.sum + root.sum;
@@ -235,7 +234,7 @@ impl Navi3 {
 ///
 /// // Insertions. When inserting, you must specify the full value of the node and the binary search method.
 /// for value in 10..=13 {
-///     tree.insert(Value { value, sum: value }, |center, _left, _right| {
+///     tree.insert(Store { value, sum: value }, |center, _left, _right| {
 ///         match value.cmp(&center.value) {
 ///             Ordering::Less | Ordering::Equal => Navi2::GoDownLeft,
 ///             Ordering::Greater => Navi2::GoDownRight,
@@ -301,7 +300,7 @@ impl<O: Op> Drop for Tree<O> {
 ///
 /// enum O {}
 /// impl Op for O {
-///     type Value = i32;
+///     type Store = i32;
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -348,7 +347,7 @@ impl<O: Op> Drop for RangeEntry<'_, O> {
     }
 }
 
-impl<T, O: Op<Value = T>> Tree<O> {
+impl<T, O: Op<Store = T>> Tree<O> {
     /// Creates a new empty tree.
     ///
     /// # Examples
@@ -358,7 +357,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -378,7 +377,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -405,13 +404,13 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { size: usize }
-    /// impl Value { fn size(&self) -> usize { self.size } }
+    /// struct Store { size: usize }
+    /// impl Store { fn size(&self) -> usize { self.size } }
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -419,14 +418,14 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { size: 1 }, |_| 0);
-    /// tree.insert_lower_bound_by_key(Value { size: 1 }, |_| 0);
+    /// tree.insert_lower_bound_by_key(Store { size: 1 }, |_| 0);
+    /// tree.insert_lower_bound_by_key(Store { size: 1 }, |_| 0);
     ///
-    /// assert_eq!(tree.len(Value::size), 2);
+    /// assert_eq!(tree.len(Store::size), 2);
     /// ```
     pub fn len(&self, size: impl Fn(&T) -> usize) -> usize {
         self.root
-            .map_or(0, |root| unsafe { size(&(*root.as_ptr()).value) })
+            .map_or(0, |root| unsafe { size(&(*root.as_ptr()).store) })
     }
 
     /// Extracts a range of elements by key bounds, returning a mutable reference to the range.
@@ -447,7 +446,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -503,13 +502,13 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, size: usize }
-    /// impl Value { fn size(&self) -> usize { self.size } }
+    /// struct Store { value: i32, size: usize }
+    /// impl Store { fn size(&self) -> usize { self.size } }
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -517,12 +516,12 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 10, size: 1 }, |v| v.value);
-    /// tree.insert_lower_bound_by_key(Value { value: 20, size: 1 }, |v| v.value);
-    /// tree.insert_lower_bound_by_key(Value { value: 30, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Store { value: 10, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Store { value: 20, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Store { value: 30, size: 1 }, |v| v.value);
     ///
     /// // Get elements at indices [0, 2)
-    /// let range = tree.range_by_index(0..2, Value::size);
+    /// let range = tree.range_by_index(0..2, Store::size);
     /// let collected = range.collect(|v| v.value);
     /// ```
     pub fn range_by_index(
@@ -571,12 +570,12 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, sum: i32 }
+    /// struct Store { value: i32, sum: i32 }
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.sum = center.value;
     ///         if let Some(l) = left { center.sum += l.sum; }
     ///         if let Some(r) = right { center.sum += r.sum; }
@@ -584,13 +583,13 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
-    /// tree.insert_lower_bound_by_key(Value { value: 3, sum: 3 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Store { value: 5, sum: 5 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Store { value: 3, sum: 3 }, |v| v.value);
     ///
     /// assert_eq!(tree.fold().map(|v| v.sum), Some(8));
     /// ```
     pub fn fold(&self) -> Option<&T> {
-        unsafe { self.root.map(|root| &(*root.as_ptr()).value) }
+        unsafe { self.root.map(|root| &(*root.as_ptr()).store) }
     }
 
     /// Splits the tree using a custom closure to guide the split operation.
@@ -606,7 +605,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -636,15 +635,15 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, size: usize }
-    /// impl Value {
+    /// struct Store { value: i32, size: usize }
+    /// impl Store {
     ///     fn value(&self) -> i32 { self.value }
     ///     fn size(&self) -> usize { self.size }
     /// }
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -652,13 +651,13 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, Value::value);
-    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, Value::value);
-    /// tree.insert_lower_bound_by_key(Value { value: 3, size: 1 }, Value::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 1, size: 1 }, Store::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 2, size: 1 }, Store::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 3, size: 1 }, Store::value);
     ///
-    /// let mut rest = tree.split_off_by_index(1, Value::size);
-    /// assert_eq!(tree.len(Value::size), 1);
-    /// assert_eq!(rest.len(Value::size), 2);
+    /// let mut rest = tree.split_off_by_index(1, Store::size);
+    /// assert_eq!(tree.len(Store::size), 1);
+    /// assert_eq!(rest.len(Store::size), 2);
     /// ```
     pub fn split_off_by_index(
         &mut self,
@@ -677,24 +676,24 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Value { key: u32 }
-    /// impl Value {
+    /// struct Store { key: u32 }
+    /// impl Store {
     ///     fn key(&self) -> u32 { self.key }
     /// }
     ///
     /// #[derive(Debug, PartialEq)]
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
-    ///     type Value = Value;
-    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    ///     type Store = Store;
+    ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { key: 1 }, Value::key);
-    /// tree.insert_lower_bound_by_key(Value { key: 2 }, Value::key);
-    /// tree.insert_lower_bound_by_key(Value { key: 3 }, Value::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 1 }, Store::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 2 }, Store::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 3 }, Store::key);
     ///
-    /// let mut ge = tree.split_off_lower_bound_by_key(&2, Value::key);
+    /// let mut ge = tree.split_off_lower_bound_by_key(&2, Store::key);
     /// assert_eq!(tree.collect(|_| ()).len(), 1);
     /// assert_eq!(ge.collect(|_| ()).len(), 2);
     /// ```
@@ -718,22 +717,22 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Value { key: u32 }
-    /// impl Value {
+    /// struct Store { key: u32 }
+    /// impl Store {
     ///    fn key(&self) -> u32 { self.key }
     /// }
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
-    ///     type Value = Value;
-    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    ///     type Store = Store;
+    ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { key: 1 }, Value::key);
-    /// tree.insert_lower_bound_by_key(Value { key: 2 }, Value::key);
-    /// tree.insert_lower_bound_by_key(Value { key: 3 }, Value::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 1 }, Store::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 2 }, Store::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 3 }, Store::key);
     ///
-    /// let mut gt = tree.split_off_upper_bound_by_key(&2, Value::key);
+    /// let mut gt = tree.split_off_upper_bound_by_key(&2, Store::key);
     /// assert_eq!(tree.collect(|_| ()).len(), 2);
     /// assert_eq!(gt.collect(|_| ()).len(), 1);
     /// ```
@@ -757,7 +756,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -788,7 +787,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -801,16 +800,9 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// });
     /// assert_eq!(tree.collect(|_| ()).len(), 2);
     /// ```
-    pub fn insert(&mut self, node_value: T, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2) {
+    pub fn insert(&mut self, store: T, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2) {
         let (left, right) = split2(self.root.take(), f);
-        let center = unsafe {
-            NonNull::new_unchecked(Box::into_raw(Box::new(Node {
-                value: node_value,
-                left: None,
-                right: None,
-                parent: None,
-            })))
-        };
+        let center = unsafe { NonNull::new_unchecked(Box::into_raw(Box::new(Node::new(store)))) };
         self.root = Some(merge3(left, center, right));
     }
 
@@ -823,14 +815,14 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, size: usize }
-    /// impl Value {
+    /// struct Store { value: i32, size: usize }
+    /// impl Store {
     ///     fn size(&self) -> usize { self.size }
     /// }
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -838,17 +830,17 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_by_index(Value { value: 1, size: 1 }, 0, Value::size);
-    /// tree.insert_by_index(Value { value: 3, size: 1 }, 1, Value::size);
-    /// assert_eq!(tree.len(Value::size), 2);
+    /// tree.insert_by_index(Store { value: 1, size: 1 }, 0, Store::size);
+    /// tree.insert_by_index(Store { value: 3, size: 1 }, 1, Store::size);
+    /// assert_eq!(tree.len(Store::size), 2);
     /// ```
     pub fn insert_by_index(
         &mut self,
-        node_value: T,
+        store: T,
         mut index: usize,
         mut size: impl FnMut(&T) -> usize,
     ) {
-        self.insert(node_value, |_center, left, _right| {
+        self.insert(store, |_center, left, _right| {
             Navi2::by_index(&mut index, &mut size, left)
         });
     }
@@ -864,7 +856,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -874,9 +866,9 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(7, |v| *v);
     /// assert_eq!(tree.collect(|_| ()).len(), 3);
     /// ```
-    pub fn insert_lower_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
-        let probe = f(&node_value);
-        self.insert(node_value, |center, _left, _right| {
+    pub fn insert_lower_bound_by_key<K: Ord>(&mut self, store: T, mut f: impl FnMut(&T) -> K) {
+        let probe = f(&store);
+        self.insert(store, |center, _left, _right| {
             Navi2::lower_bound_by_key(&probe, center, &mut f)
         });
     }
@@ -892,7 +884,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -902,9 +894,9 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// tree.insert_upper_bound_by_key(5, |v| *v);
     /// assert_eq!(tree.collect(|_| ()).len(), 3);
     /// ```
-    pub fn insert_upper_bound_by_key<K: Ord>(&mut self, node_value: T, mut f: impl FnMut(&T) -> K) {
-        let probe = f(&node_value);
-        self.insert(node_value, |center, _left, _right| {
+    pub fn insert_upper_bound_by_key<K: Ord>(&mut self, store: T, mut f: impl FnMut(&T) -> K) {
+        let probe = f(&store);
+        self.insert(store, |center, _left, _right| {
             Navi2::upper_bound_by_key(&probe, center, &mut f)
         });
     }
@@ -921,7 +913,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -931,8 +923,8 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// assert_eq!(tree.front(), Some(&2));
     /// ```
-    pub fn push_front(&mut self, node_value: T) {
-        self.insert(node_value, |_, _, _| Navi2::GoDownLeft);
+    pub fn push_front(&mut self, store: T) {
+        self.insert(store, |_, _, _| Navi2::GoDownLeft);
     }
 
     /// Inserts a new node at the back (right-most position) of the tree.
@@ -947,7 +939,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -957,8 +949,8 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// assert_eq!(tree.back(), Some(&7));
     /// ```
-    pub fn push_back(&mut self, node_value: T) {
-        self.insert(node_value, |_, _, _| Navi2::GoDownRight);
+    pub fn push_back(&mut self, store: T) {
+        self.insert(store, |_, _, _| Navi2::GoDownRight);
     }
 
     /// Removes a node by using a closure to guide traversal and identify the target.
@@ -974,7 +966,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -994,9 +986,9 @@ impl<T, O: Op<Value = T>> Tree<O> {
         unsafe {
             match split3(self.root.take(), f) {
                 Split3Result::Success(left, center, right) => {
-                    let node_value = Box::from_raw(center.as_ptr()).value;
+                    let store = Box::from_raw(center.as_ptr()).store;
                     self.root = merge2(left, right);
-                    Some(node_value)
+                    Some(store)
                 }
                 Split3Result::Failure(root) => {
                     self.root = root;
@@ -1016,14 +1008,14 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, size: usize }
-    /// impl Value {
+    /// struct Store { value: i32, size: usize }
+    /// impl Store {
     ///     fn value(&self) -> i32 { self.value }
     /// }
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -1031,11 +1023,11 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, Value::value);
-    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, Value::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 1, size: 1 }, Store::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 2, size: 1 }, Store::value);
     ///
     /// let removed = tree.remove_by_index(0, |v| v.size);
-    /// assert_eq!(removed.as_ref().map(Value::value), Some(1));
+    /// assert_eq!(removed.as_ref().map(Store::value), Some(1));
     /// ```
     pub fn remove_by_index(
         &mut self,
@@ -1058,7 +1050,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1089,7 +1081,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1121,7 +1113,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1153,7 +1145,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1173,7 +1165,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
             match split3(self.root.take(), f) {
                 Split3Result::Success(left, center, right) => {
                     self.root = Some(merge3(left, center, right));
-                    Some(&(*center.as_ptr()).value)
+                    Some(&(*center.as_ptr()).store)
                 }
                 Split3Result::Failure(root) => {
                     self.root = root;
@@ -1193,15 +1185,15 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { value: i32, size: usize }
-    /// impl Value {
+    /// struct Store { value: i32, size: usize }
+    /// impl Store {
     ///     fn value(&self) -> i32 { self.value }
     ///     fn size(&self) -> usize { self.size }
     /// }
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///     type Store = Store;
+    ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
     ///         if let Some(left) = left { center.size += left.size; }
     ///         if let Some(right) = right { center.size += right.size; }
@@ -1209,11 +1201,11 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, Value::value);
-    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, Value::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 1, size: 1 }, Store::value);
+    /// tree.insert_lower_bound_by_key(Store { value: 2, size: 1 }, Store::value);
     ///
-    /// let found = tree.get_by_index(1, Value::size);
-    /// assert_eq!(found.map(Value::value), Some(2));
+    /// let found = tree.get_by_index(1, Store::size);
+    /// assert_eq!(found.map(Store::value), Some(2));
     /// ```
     pub fn get_by_index(
         &mut self,
@@ -1232,22 +1224,22 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Value { key: u32 }
-    /// impl Value {
+    /// struct Store { key: u32 }
+    /// impl Store {
     ///     fn key(&self) -> u32 { self.key }
     /// }
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
-    ///     type Value = Value;
-    ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
+    ///     type Store = Store;
+    ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { key: 5 }, Value::key);
-    /// tree.insert_lower_bound_by_key(Value { key: 3 }, Value::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 5 }, Store::key);
+    /// tree.insert_lower_bound_by_key(Store { key: 3 }, Store::key);
     ///
-    /// let found = tree.get_by_key(&3, Value::key);
-    /// assert_eq!(found.map(Value::key), Some(3));
+    /// let found = tree.get_by_key(&3, Store::key);
+    /// assert_eq!(found.map(Store::key), Some(3));
     /// ```
     pub fn get_by_key<K: Ord + Borrow<Q>, Q: ?Sized + Ord>(
         &mut self,
@@ -1269,7 +1261,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1300,7 +1292,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1336,7 +1328,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
     ///
     /// enum O {}
     /// impl Op for O {
-    ///     type Value = i32;
+    ///     type Store = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1349,22 +1341,8 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// assert_eq!(values, vec![1, 2, 3]);
     /// ```
     pub fn collect<U>(&self, f: impl Fn(&T) -> U) -> Vec<U> {
-        pub fn collect<T, U, O: Op<Value = T>>(
-            root: Onn<O>,
-            f: &impl Fn(&T) -> U,
-            out: &mut Vec<U>,
-        ) {
-            let Some(root) = root else {
-                return;
-            };
-            unsafe {
-                collect((*root.as_ptr()).left, f, out);
-                out.push(f(&(*root.as_ptr()).value));
-                collect((*root.as_ptr()).right, f, out);
-            }
-        }
         let mut out = vec![];
-        collect::<T, U, O>(self.root, &f, &mut out);
+        visit::<T, O>(self.root, &mut |store| out.push(f(store)));
         out
     }
 }
@@ -1385,15 +1363,15 @@ impl<T, O: Op<Value = T>> Tree<O> {
 /// ```
 /// use intrusive_splay_tree::{Tree, Op, Navi2};
 ///
-/// struct Value {
+/// struct Store {
 ///     value: i32,
 ///     sum: i32,
 /// }
 ///
 /// enum MyOp {}
 /// impl Op for MyOp {
-///     type Value = Value;
-///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+///     type Store = Store;
+///     fn update(root: &mut Store, left: Option<&Store>, right: Option<&Store>) {
 ///         root.sum = root.value;
 ///         if let Some(l) = left { root.sum += l.sum; }
 ///         if let Some(r) = right { root.sum += r.sum; }
@@ -1401,11 +1379,11 @@ impl<T, O: Op<Value = T>> Tree<O> {
 /// }
 ///
 /// let mut tree = Tree::<MyOp>::new();
-/// tree.insert(Value { value: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
-/// tree.insert(Value { value: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
+/// tree.insert(Store { value: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
+/// tree.insert(Store { value: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
 /// assert_eq!(tree.fold().unwrap().sum, 8);
 /// ```
 pub trait Op: Sized {
-    type Value;
-    fn update(center: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>);
+    type Store;
+    fn update(center: &mut Self::Store, left: Option<&Self::Store>, right: Option<&Self::Store>);
 }
