@@ -121,7 +121,11 @@ impl Navi2 {
         let lsize = left.map_or(0, size);
         match (*index).cmp(&lsize) {
             Ordering::Less => Self::GoDownLeft,
-            Ordering::Equal | Ordering::Greater => {
+            Ordering::Equal => {
+                *index -= lsize;
+                Self::GoDownRight
+            }
+            Ordering::Greater => {
                 *index -= lsize + 1;
                 Self::GoDownRight
             }
@@ -902,10 +906,54 @@ impl<T, O: Op<Value = T>> Tree<O> {
         });
     }
 
+    /// Inserts a new node at the front (left-most position) of the tree.
+    ///
+    /// This method always navigates left until reaching a leaf, inserting
+    /// the new node as the left-most element. The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.push_front(5);
+    /// tree.push_front(2);
+    ///
+    /// assert_eq!(tree.front(), Some(&2));
+    /// ```
     pub fn push_front(&mut self, node_value: T) {
         self.insert(node_value, |_, _, _| Navi2::GoDownLeft);
     }
 
+    /// Inserts a new node at the back (right-most position) of the tree.
+    ///
+    /// This method always navigates right until reaching a leaf, inserting
+    /// the new node as the right-most element. The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.push_back(5);
+    /// tree.push_back(7);
+    ///
+    /// assert_eq!(tree.back(), Some(&7));
+    /// ```
     pub fn push_back(&mut self, node_value: T) {
         self.insert(node_value, |_, _, _| Navi2::GoDownRight);
     }
@@ -1023,6 +1071,30 @@ impl<T, O: Op<Value = T>> Tree<O> {
         self.remove(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
+    /// Removes and returns the minimum element in the tree (leftmost node).
+    ///
+    /// This method navigates to the leftmost node, removes it, and returns its value.
+    /// Returns `None` if the tree is empty. The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.push_back(5);
+    /// tree.push_back(2);
+    /// tree.push_back(7);
+    ///
+    /// assert_eq!(tree.pop_front(), Some(5));
+    /// assert_eq!(tree.pop_front(), Some(2));
+    /// ```
     pub fn pop_front(&mut self) -> Option<T> {
         self.remove(
             |_, left, _| {
@@ -1031,6 +1103,30 @@ impl<T, O: Op<Value = T>> Tree<O> {
         )
     }
 
+    /// Removes and returns the maximum element in the tree (rightmost node).
+    ///
+    /// This method navigates to the rightmost node, removes it, and returns its value.
+    /// Returns `None` if the tree is empty. The tree is rebalanced via splaying.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.push_back(5);
+    /// tree.push_back(2);
+    /// tree.push_back(7);
+    ///
+    /// assert_eq!(tree.pop_back(), Some(7));
+    /// assert_eq!(tree.pop_back(), Some(2));
+    /// ```
     pub fn pop_back(&mut self) -> Option<T> {
         self.remove(
             |_, _, right| {
@@ -1253,6 +1349,11 @@ impl<T, O: Op<Value = T>> Tree<O> {
 /// The [`update`](Op::update) method is called whenever a node is inserted, deleted, or rotated.
 /// It receives the node's value and optional references to the left and right children's aggregated values,
 /// allowing you to maintain tree-wide aggregates (e.g., sum, min, max) in O(log n) time.
+///
+/// # Invariants
+///
+/// The `update` method must be associative and must not depend on tree structure or traversal order.
+/// Implementations that violate this invariant will produce incorrect aggregation results.
 ///
 /// # Examples
 ///
