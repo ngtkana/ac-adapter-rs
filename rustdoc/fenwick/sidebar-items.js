@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"struct":["Fenwick"],"trait":["Op","OpSub"]};

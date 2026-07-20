@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A trait for defining associative operations on values."><title>Op in fenwick - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fenwick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
+  crossorigin="anonymous"
+/>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
+  crossorigin="anonymous"
+></script>
+<script
+  defer
+  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
+  crossorigin="anonymous"
+></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
+  crossorigin="anonymous"
+></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    renderMathInElement(document.body, {
+      delimiters: [
+        { left: "$$", right: "$$", display: true },
+        { left: "$", right: "$", display: false },
+      ],
+    });
+  });
+</script>
+
+</head><body class="rustdoc trait"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fenwick/index.html">fenwick</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">Op</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#safety-and-correctness" title="Safety and Correctness">Safety and Correctness</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#required-associated-types">Required Associated Types</a></h3><ul class="block"><li><a href="#associatedtype.Value" title="Value">Value</a></li></ul><h3><a href="#required-methods">Required Methods</a></h3><ul class="block"><li><a href="#tymethod.add" title="add">add</a></li><li><a href="#tymethod.identity" title="identity">identity</a></li></ul><h3><a href="#dyn-compatibility">Dyn Compatibility</a></h3><h3><a href="#implementors">Implementors</a></h3></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate fenwick</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">fenwick</a></div><h1>Trait <span class="trait">Op</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fenwick/lib.rs.html#91-103">Source</a> </span></div><pre class="rust item-decl"><code>pub trait Op {
+    type <a href="#associatedtype.Value" class="associatedtype">Value</a>;
+
+    // Required methods
+    fn <a href="#tymethod.identity" class="fn">identity</a>() -&gt; Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>;
+<span class="item-spacer"></span>    fn <a href="#tymethod.add" class="fn">add</a>(a: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>, b: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>) -&gt; Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>;
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A trait for defining associative operations on values.</p>
+<p>This trait encapsulates the core operations needed for a Fenwick tree
+to perform efficient range queries and updates. Implementations must
+provide an identity element and an associative binary operation.</p>
+<h2 id="safety-and-correctness"><a class="doc-anchor" href="#safety-and-correctness">§</a>Safety and Correctness</h2>
+<p>For the Fenwick tree to work correctly, <code>add</code> must be associative:
+for all values <code>a</code>, <code>b</code>, <code>c</code>, the operation must satisfy associativity.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">struct </span>AddOp;
+<span class="kw">impl </span>Op <span class="kw">for </span>AddOp {
+    <span class="kw">type </span>Value = i64;
+    <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Value { <span class="number">0 </span>}
+    <span class="kw">fn </span>add(a: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, b: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+        a + b
+    }
+}</code></pre></div>
+</div></details><h2 id="required-associated-types" class="section-header">Required Associated Types<a href="#required-associated-types" class="anchor">§</a></h2><div class="methods"><details class="toggle" open><summary><section id="associatedtype.Value" class="method"><a class="src rightside" href="../src/fenwick/lib.rs.html#93">Source</a><h4 class="code-header">type <a href="#associatedtype.Value" class="associatedtype">Value</a></h4></section></summary><div class="docblock"><p>The type of values this operation works with.</p>
+</div></details></div><h2 id="required-methods" class="section-header">Required Methods<a href="#required-methods" class="anchor">§</a></h2><div class="methods"><details class="toggle method-toggle" open><summary><section id="tymethod.identity" class="method"><a class="src rightside" href="../src/fenwick/lib.rs.html#99">Source</a><h4 class="code-header">fn <a href="#tymethod.identity" class="fn">identity</a>() -&gt; Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a></h4></section></summary><div class="docblock"><p>Returns the identity element for this operation.</p>
+<p>This is the element that, when combined with any value <code>v</code> via
+<code>add</code>, leaves <code>v</code> unchanged.</p>
+</div></details><details class="toggle method-toggle" open><summary><section id="tymethod.add" class="method"><a class="src rightside" href="../src/fenwick/lib.rs.html#102">Source</a><h4 class="code-header">fn <a href="#tymethod.add" class="fn">add</a>(a: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>, b: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>) -&gt; Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a></h4></section></summary><div class="docblock"><p>Computes the result of the associative operation: <code>a ⊕ b</code>.</p>
+</div></details></div><h2 id="dyn-compatibility" class="section-header">Dyn Compatibility<a href="#dyn-compatibility" class="anchor">§</a></h2><div class="dyn-compatibility-info"><p>This trait is <b>not</b> <a href="https://doc.rust-lang.org/1.89.0/reference/items/traits.html#dyn-compatibility">dyn compatible</a>.</p><p><i>In older versions of Rust, dyn compatibility was called "object safety", so this trait is not object safe.</i></p></div><h2 id="implementors" class="section-header">Implementors<a href="#implementors" class="anchor">§</a></h2><div id="implementors-list"></div><script src="../trait.impl/fenwick/trait.Op.js" async></script></section></div></main></body></html>
