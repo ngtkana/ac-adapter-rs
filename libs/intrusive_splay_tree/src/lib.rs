@@ -644,11 +644,15 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
     /// tree.insert_lower_bound_by_key(Value { val: 3, size: 1 }, |v| v.val);
     ///
-    /// let mut rest = tree.split_off_at(1, |v| v.size);
+    /// let mut rest = tree.split_off_by_index(1, |v| v.size);
     /// assert_eq!(tree.collect().len(), 1);
     /// assert_eq!(rest.collect().len(), 2);
     /// ```
-    pub fn split_off_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Self {
+    pub fn split_off_by_index(
+        &mut self,
+        mut index: usize,
+        mut size: impl FnMut(&T) -> usize,
+    ) -> Self {
         self.split_off(|_center, left, _right| {
             Navi2::lower_bound_by_index(&mut index, &mut size, left)
         })
@@ -814,11 +818,11 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_at(Value { val: 1, size: 1 }, 0, |v| v.size);
-    /// tree.insert_at(Value { val: 3, size: 1 }, 1, |v| v.size);
+    /// tree.insert_by_index(Value { val: 1, size: 1 }, 0, |v| v.size);
+    /// tree.insert_by_index(Value { val: 3, size: 1 }, 1, |v| v.size);
     /// assert_eq!(tree.collect().len(), 2);
     /// ```
-    pub fn insert_at(
+    pub fn insert_by_index(
         &mut self,
         node_value: T,
         mut index: usize,
@@ -883,6 +887,14 @@ impl<T, U: Op<Value = T>> Tree<U> {
         self.insert(node_value, |center, _left, _right| {
             Navi2::upper_bound_by_key(&probe, center, &mut f)
         });
+    }
+
+    pub fn push_front(&mut self, node_value: T) {
+        self.insert(node_value, |_, _, _| Navi2::GoDownLeft);
+    }
+
+    pub fn push_back(&mut self, node_value: T) {
+        self.insert(node_value, |_, _, _| Navi2::GoDownRight);
     }
 
     /// Removes a node by using a closure to guide traversal and identify the target.
@@ -955,10 +967,14 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
     /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
     ///
-    /// let removed = tree.remove_at(0, |v| v.size);
+    /// let removed = tree.remove_by_index(0, |v| v.size);
     /// assert_eq!(removed.map(|v| v.val), Some(1));
     /// ```
-    pub fn remove_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<T> {
+    pub fn remove_by_index(
+        &mut self,
+        mut index: usize,
+        mut size: impl FnMut(&T) -> usize,
+    ) -> Option<T> {
         self.remove(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
     }
 
@@ -995,6 +1011,22 @@ impl<T, U: Op<Value = T>> Tree<U> {
         K: Borrow<Q>,
     {
         self.remove(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
+    }
+
+    pub fn pop_front(&mut self) -> Option<T> {
+        self.remove(
+            |_, left, _| {
+                if left.is_some() { Navi3::GoDownLeft } else { Navi3::Found }
+            },
+        )
+    }
+
+    pub fn pop_back(&mut self) -> Option<T> {
+        self.remove(
+            |_, _, right| {
+                if right.is_some() { Navi3::GoDownRight } else { Navi3::Found }
+            },
+        )
     }
 
     /// Retrieves a reference to a node's value via a closure-guided traversal.
@@ -1064,10 +1096,14 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
     /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
     ///
-    /// let found = tree.get_at(1, |v| v.size);
+    /// let found = tree.get_by_index(1, |v| v.size);
     /// assert_eq!(found.map(|v| v.val), Some(2));
     /// ```
-    pub fn get_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Option<&T> {
+    pub fn get_by_index(
+        &mut self,
+        mut index: usize,
+        mut size: impl FnMut(&T) -> usize,
+    ) -> Option<&T> {
         self.get(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
     }
 
@@ -1103,6 +1139,22 @@ impl<T, U: Op<Value = T>> Tree<U> {
         K: Borrow<Q>,
     {
         self.get(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
+    }
+
+    pub fn front(&mut self) -> Option<&T> {
+        self.get(
+            |_, left, _| {
+                if left.is_some() { Navi3::GoDownLeft } else { Navi3::Found }
+            },
+        )
+    }
+
+    pub fn back(&mut self) -> Option<&T> {
+        self.get(
+            |_, _, right| {
+                if right.is_some() { Navi3::GoDownRight } else { Navi3::Found }
+            },
+        )
     }
 
     /// Returns a vector of references to all node values in the tree, in sorted order (in-order traversal).
