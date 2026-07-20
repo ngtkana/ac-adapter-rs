@@ -91,7 +91,9 @@ pub fn interpolate<const P: u64>(evals: &[[Fp<P>; 2]]) -> Vec<Fp<P>> {
                 .chain(right.iter())
                 .fold(vec![yi], |mut acc, &[xj, _]| {
                     let scalar = (xi - xj).inv();
-                    for y in &mut acc { *y *= scalar; }
+                    for y in &mut acc {
+                        *y *= scalar;
+                    }
                     acc.insert(0, Fp::new(0));
                     for i in 0..acc.len() - 1 {
                         let sub = acc[i + 1] * xj;
@@ -155,7 +157,9 @@ pub fn interpolate_first_n<const P: u64>(evals: &[Fp<P>]) -> Vec<Fp<P>> {
         .map(|(xi, &yi)| {
             (0..n).filter(|&xj| xj != xi).fold(vec![yi], |mut acc, xj| {
                 let scalar = if xi > xj { inv[xi - xj] } else { -inv[xj - xi] };
-                for y in &mut acc { *y *= scalar; }
+                for y in &mut acc {
+                    *y *= scalar;
+                }
                 acc.insert(0, Fp::new(0));
                 for i in 0..acc.len() - 1 {
                     let sub = acc[i + 1] * Fp::from(xj);

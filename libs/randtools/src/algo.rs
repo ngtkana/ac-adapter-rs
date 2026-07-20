@@ -12,7 +12,9 @@ pub fn prufer2tree(prufer: &[usize]) -> Vec<Vec<usize>> {
         .chain(iter::once(n - 1))
         .collect::<Vec<_>>();
     let mut m = vec![0; n];
-    for &y in &prufer_y { m[y] += 1; }
+    for &y in &prufer_y {
+        m[y] += 1;
+    }
 
     let mut heap = m
         .iter()
