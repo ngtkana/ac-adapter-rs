@@ -28,8 +28,8 @@
 //!
 //! struct Value { value: i32, sum: i32 }
 //!
-//! enum U {}
-//! impl Op for U {
+//! enum O {}
+//! impl Op for O {
 //!     type Value = Value;
 //!     fn update(node: &mut Value, left: Option<&Value>, right: Option<&Value>) {
 //!         node.sum = node.value;
@@ -38,7 +38,7 @@
 //!     }
 //! }
 //!
-//! let mut tree = Tree::<U>::new();
+//! let mut tree = Tree::<O>::new();
 //! tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, |v| v.value);
 //! tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
 //!
@@ -48,11 +48,11 @@
 //!
 //! # Core Items
 //!
-//! - [`Tree<U>`]: The main splay tree structure
+//! - [`Tree<O>`]: The main splay tree structure
 //! - [`Op`]: Trait for defining aggregation logic
 //! - [`Navi2`]: Navigation enum for insert/split operations (never-terminating search)
 //! - [`Navi3`]: Navigation enum for remove/get operations (can terminate early)
-//! - [`Node<U>`]: A tree node (exposed for accessing subtree metadata during searches)
+//! - [`Node<O>`]: A tree node (exposed for accessing subtree metadata during searches)
 //!
 //! # Complexity
 //!
@@ -66,8 +66,8 @@ use std::{
     ptr::NonNull,
 };
 
-type NN<U> = NonNull<Node<U>>;
-type ONN<U> = Option<NonNull<Node<U>>>;
+type Nn<O> = NonNull<Node<O>>;
+type Onn<O> = Option<NonNull<Node<O>>>;
 
 /// A navigation direction for binary searches that always progress (never terminate early).
 ///
@@ -80,13 +80,13 @@ type ONN<U> = Option<NonNull<Node<U>>>;
 /// ```
 /// use intrusive_splay_tree::{Tree, Op, Navi2};
 ///
-/// enum U {}
-/// impl Op for U {
+/// enum O {}
+/// impl Op for O {
 ///     type Value = i32;
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
-/// let mut tree = Tree::<U>::new();
+/// let mut tree = Tree::<O>::new();
 /// tree.insert(5, |center, _, _| {
 ///     if 5 < *center { Navi2::GoDownLeft } else { Navi2::GoDownRight }
 /// });
@@ -158,13 +158,13 @@ impl Navi2 {
 /// ```
 /// use intrusive_splay_tree::{Tree, Op, Navi3};
 ///
-/// enum U {}
-/// impl Op for U {
+/// enum O {}
+/// impl Op for O {
 ///     type Value = i32;
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
-/// let mut tree = Tree::<U>::new();
+/// let mut tree = Tree::<O>::new();
 /// tree.insert_lower_bound_by_key(5, |v| *v);
 /// tree.insert_lower_bound_by_key(3, |v| *v);
 ///
@@ -220,8 +220,8 @@ impl Navi3 {
 ///     sum: u32,
 /// }
 ///
-/// enum U {}
-/// impl Op for U {
+/// enum O {}
+/// impl Op for O {
 ///     type Value = Value;
 ///
 ///     fn update(root: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>) {
@@ -236,7 +236,7 @@ impl Navi3 {
 /// }
 ///
 ///
-/// let mut tree = Tree::<U>::new();
+/// let mut tree = Tree::<O>::new();
 ///
 /// // Insertions. When inserting, you must specify the full value of the node and the binary search method.
 /// for value in 10..=13 {
@@ -270,17 +270,17 @@ impl Navi3 {
 /// // Folding. Only overall aggregation (`fold_all()`) is available.
 /// assert_eq!(tree.fold_all().unwrap().sum, 34);
 /// ```
-pub struct Tree<U: Op> {
-    root: ONN<U>,
+pub struct Tree<O: Op> {
+    root: Onn<O>,
 }
 
-impl<U: Op> Default for Tree<U> {
+impl<O: Op> Default for Tree<O> {
     fn default() -> Self {
         Self { root: None }
     }
 }
 
-impl<U: Op> Drop for Tree<U> {
+impl<O: Op> Drop for Tree<O> {
     fn drop(&mut self) {
         free_subtree(self.root);
     }
@@ -291,7 +291,7 @@ impl<U: Op> Drop for Tree<U> {
 /// computed over a range of nodes. When dropped, it automatically restores the tree
 /// to its original state by merging the split parts back together.
 ///
-/// Access the aggregated value via `Deref` coercion (deref to `U::Value`).
+/// Access the aggregated value via `Deref` coercion (deref to `O::Value`).
 ///
 /// # Examples
 ///
@@ -299,8 +299,8 @@ impl<U: Op> Drop for Tree<U> {
 /// use intrusive_splay_tree::{Tree, Op};
 ///
 /// struct Value { value: i32, sum: i32 }
-/// enum U {}
-/// impl Op for U {
+/// enum O {}
+/// impl Op for O {
 ///     type Value = Value;
 ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
 ///         n.sum = n.value;
@@ -309,7 +309,7 @@ impl<U: Op> Drop for Tree<U> {
 ///     }
 /// }
 ///
-/// let mut tree = Tree::<U>::new();
+/// let mut tree = Tree::<O>::new();
 /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
 ///
 /// // FoldEntry automatically restores the tree when dropped
@@ -318,18 +318,18 @@ impl<U: Op> Drop for Tree<U> {
 ///     // Tree is restored here when `entry` is dropped
 /// }
 /// ```
-pub struct FoldEntry<'a, U: Op> {
-    tree: &'a mut Tree<U>,
-    left: ONN<U>,
-    center: NN<U>,
-    right: ONN<U>,
+pub struct FoldEntry<'a, O: Op> {
+    tree: &'a mut Tree<O>,
+    left: Onn<O>,
+    center: Nn<O>,
+    right: Onn<O>,
 }
-impl<'a, U: Op> FoldEntry<'a, U> {
+impl<'a, O: Op> FoldEntry<'a, O> {
     fn maybe_new(
-        tree: &'a mut Tree<U>,
-        left: ONN<U>,
-        center: ONN<U>,
-        right: ONN<U>,
+        tree: &'a mut Tree<O>,
+        left: Onn<O>,
+        center: Onn<O>,
+        right: Onn<O>,
     ) -> Option<Self> {
         match center {
             None => {
@@ -345,20 +345,20 @@ impl<'a, U: Op> FoldEntry<'a, U> {
         }
     }
 }
-impl<U: Op> Deref for FoldEntry<'_, U> {
-    type Target = U::Value;
+impl<O: Op> Deref for FoldEntry<'_, O> {
+    type Target = O::Value;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { &(*self.center.as_ptr()).node_value }
+        unsafe { &(*self.center.as_ptr()).value }
     }
 }
-impl<U: Op> Drop for FoldEntry<'_, U> {
+impl<O: Op> Drop for FoldEntry<'_, O> {
     fn drop(&mut self) {
         self.tree.root = merge2(merge2(self.left, Some(self.center)), self.right);
     }
 }
 
-impl<T, U: Op<Value = T>> Tree<U> {
+impl<T, O: Op<Value = T>> Tree<O> {
     /// Creates a new empty tree.
     ///
     /// # Examples
@@ -366,13 +366,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let tree = Tree::<U>::new();
+    /// let tree = Tree::<O>::new();
     /// assert!(tree.collect().is_empty());
     /// ```
     pub fn new() -> Self {
@@ -396,8 +396,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
     /// struct Value { value: i32, sum: i32 }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
     ///         n.sum = n.value;
@@ -406,7 +406,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, |v| v.value);
     ///
@@ -419,7 +419,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         &mut self,
         start: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
         end: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
-    ) -> Option<FoldEntry<'_, U>> {
+    ) -> Option<FoldEntry<'_, O>> {
         let (mut lc, right) = split2(self.root.take(), end);
         let (left, center) = split2(lc.take(), start);
         FoldEntry::maybe_new(self, left, center, right)
@@ -442,8 +442,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op};
     ///
     /// struct Value { key: i32, sum: i32 }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
     ///         n.sum = n.key;
@@ -452,7 +452,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// for key in 10..18 {
     ///   tree.insert_lower_bound_by_key(Value { key, sum: key }, |v| v.key);
     /// }
@@ -464,7 +464,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         &mut self,
         range: impl RangeBounds<Q>,
         mut f: impl FnMut(&T) -> K,
-    ) -> Option<FoldEntry<'_, U>>
+    ) -> Option<FoldEntry<'_, O>>
     where
         K: Borrow<Q>,
     {
@@ -498,8 +498,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
     /// struct Value { value: i32, size: usize, sum: i32 }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
     ///         n.size = 1;
@@ -515,7 +515,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// let values = [8, 1, 6, 3, 5, 3, 7];
     /// for &value in &values {
     ///     tree.push_back(Value { value, size: 1, sum: value });
@@ -528,7 +528,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         &mut self,
         range: impl RangeBounds<usize>,
         mut size: impl FnMut(&T) -> usize,
-    ) -> Option<FoldEntry<'_, U>> {
+    ) -> Option<FoldEntry<'_, O>> {
         let (mut lc, right) = split2(self.root.take(), |_, left, _| match range.end_bound() {
             Bound::Unbounded => Navi2::GoDownRight,
             Bound::Included(&(mut index)) => {
@@ -562,8 +562,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     sum: i32,
     /// }
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
     ///         root.sum = root.value;
@@ -576,14 +576,14 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// for &value in &[10, 20, 30] {
     ///     tree.push_back(Value { value, sum: value });
     /// }
     /// assert_eq!(tree.fold_all().unwrap().sum, 60);
     /// ```
     pub fn fold_all(&self) -> Option<&T> {
-        unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
+        unsafe { self.root.map(|root| &(*root.as_ptr()).value) }
     }
 
     /// Splits the tree using a custom closure to guide the split operation.
@@ -597,13 +597,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(1, |v| *v);
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
@@ -630,8 +630,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op};
     ///
     /// struct Value { value: i32, size: usize }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
     ///         center.size = 1;
@@ -640,7 +640,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Value { value: 3, size: 1 }, |v| v.value);
@@ -670,13 +670,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///
     /// struct Value { key: u32 }
     /// #[derive(Debug, PartialEq)]
-    /// enum U {}
-    /// impl intrusive_splay_tree::Op for U {
+    /// enum O {}
+    /// impl intrusive_splay_tree::Op for O {
     ///     type Value = Value;
     ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { key: 1 }, |v| v.key);
     /// tree.insert_lower_bound_by_key(Value { key: 2 }, |v| v.key);
     /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
@@ -706,13 +706,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::Tree;
     ///
     /// struct Value { key: u32 }
-    /// enum U {}
-    /// impl intrusive_splay_tree::Op for U {
+    /// enum O {}
+    /// impl intrusive_splay_tree::Op for O {
     ///     type Value = Value;
     ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { key: 1 }, |v| v.key);
     /// tree.insert_lower_bound_by_key(Value { key: 2 }, |v| v.key);
     /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
@@ -739,17 +739,17 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// enum U {}
-    /// impl intrusive_splay_tree::Op for U {
+    /// enum O {}
+    /// impl intrusive_splay_tree::Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree1 = Tree::<U>::new();
+    /// let mut tree1 = Tree::<O>::new();
     /// tree1.insert_lower_bound_by_key(1, |v| *v);
     /// tree1.insert_lower_bound_by_key(3, |v| *v);
     ///
-    /// let mut tree2 = Tree::<U>::new();
+    /// let mut tree2 = Tree::<O>::new();
     /// tree2.insert_lower_bound_by_key(2, |v| *v);
     ///
     /// tree1.append(&mut tree2);
@@ -770,13 +770,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert(5, |center, _, _| {
     ///     if 5 < *center { Navi2::GoDownLeft } else { Navi2::GoDownRight }
     /// });
@@ -789,7 +789,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         let (left, right) = split2(self.root.take(), f);
         let center = unsafe {
             NonNull::new_unchecked(Box::into_raw(Box::new(Node {
-                node_value,
+                value: node_value,
                 left: None,
                 right: None,
                 parent: None,
@@ -808,8 +808,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op};
     ///
     /// struct Value { value: i32, size: usize }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
     ///         center.size = 1;
@@ -818,7 +818,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_by_index(Value { value: 1, size: 1 }, 0, |v| v.size);
     /// tree.insert_by_index(Value { value: 3, size: 1 }, 1, |v| v.size);
     /// assert_eq!(tree.collect().len(), 2);
@@ -831,7 +831,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ) {
         self.insert(node_value, |_center, left, _right| {
             Navi2::lower_bound_by_index(&mut index, &mut size, left)
-        })
+        });
     }
 
     /// Inserts a new node by extracting a key and using lower_bound semantics.
@@ -843,13 +843,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     /// tree.insert_lower_bound_by_key(7, |v| *v);
@@ -871,13 +871,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_upper_bound_by_key(5, |v| *v);
     /// tree.insert_upper_bound_by_key(3, |v| *v);
     /// tree.insert_upper_bound_by_key(5, |v| *v);
@@ -909,13 +909,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op, Navi3};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
@@ -931,7 +931,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         unsafe {
             match split3(self.root.take(), f) {
                 Split3Result::Success(left, center, right) => {
-                    let node_value = Box::from_raw(center.as_ptr()).node_value;
+                    let node_value = Box::from_raw(center.as_ptr()).value;
                     self.root = merge2(left, right);
                     Some(node_value)
                 }
@@ -954,8 +954,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op};
     ///
     /// struct Value { value: i32, size: usize }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
     ///         center.size = 1;
@@ -964,7 +964,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
     ///
@@ -990,27 +990,24 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
     /// let removed = tree.remove_by_key(&3, |v| *v);
     /// assert_eq!(removed, Some(3));
     /// ```
-    pub fn remove_by_key<K: Ord, Q: ?Sized + Ord>(
+    pub fn remove_by_key<K: Ord + Borrow<Q>, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
         mut f: impl FnMut(&T) -> K,
-    ) -> Option<T>
-    where
-        K: Borrow<Q>,
-    {
+    ) -> Option<T> {
         self.remove(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
@@ -1040,13 +1037,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op, Navi3};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
@@ -1062,7 +1059,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
             match split3(self.root.take(), f) {
                 Split3Result::Success(left, center, right) => {
                     self.root = Some(merge3(left, center, right));
-                    Some(&(*center.as_ptr()).node_value)
+                    Some(&(*center.as_ptr()).value)
                 }
                 Split3Result::Failure(root) => {
                     self.root = root;
@@ -1083,8 +1080,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op};
     ///
     /// struct Value { value: i32, size: usize }
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = Value;
     ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
     ///         center.size = 1;
@@ -1093,7 +1090,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     ///     }
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
     ///
@@ -1118,27 +1115,24 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::Tree;
     ///
     /// struct Value { key: u32 }
-    /// enum U {}
-    /// impl intrusive_splay_tree::Op for U {
+    /// enum O {}
+    /// impl intrusive_splay_tree::Op for O {
     ///     type Value = Value;
     ///     fn update(_: &mut Value, _: Option<&Value>, _: Option<&Value>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(Value { key: 5 }, |v| v.key);
     /// tree.insert_lower_bound_by_key(Value { key: 3 }, |v| v.key);
     ///
     /// let found = tree.get_by_key(&3, |v| v.key);
     /// assert_eq!(found.map(|v| v.key), Some(3));
     /// ```
-    pub fn get_by_key<K: Ord, Q: ?Sized + Ord>(
+    pub fn get_by_key<K: Ord + Borrow<Q>, Q: ?Sized + Ord>(
         &mut self,
         probe: &Q,
         mut f: impl FnMut(&T) -> K,
-    ) -> Option<&T>
-    where
-        K: Borrow<Q>,
-    {
+    ) -> Option<&T> {
         self.get(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
@@ -1152,13 +1146,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(2, |v| *v);
     /// tree.insert_lower_bound_by_key(7, |v| *v);
@@ -1183,13 +1177,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(2, |v| *v);
     /// tree.insert_lower_bound_by_key(7, |v| *v);
@@ -1211,13 +1205,13 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// enum U {}
-    /// impl Op for U {
+    /// enum O {}
+    /// impl Op for O {
     ///     type Value = i32;
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
-    /// let mut tree = Tree::<U>::new();
+    /// let mut tree = Tree::<O>::new();
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     /// tree.insert_lower_bound_by_key(1, |v| *v);
     /// tree.insert_lower_bound_by_key(2, |v| *v);
@@ -1226,18 +1220,18 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// assert_eq!(values, vec![1, 2, 3]);
     /// ```
     pub fn collect(&self) -> Vec<&T> {
-        pub fn collect<'a, U: Op>(root: ONN<U>, out: &'a mut Vec<&U::Value>) {
+        pub fn collect<O: Op>(root: Onn<O>, out: &mut Vec<&O::Value>) {
             let Some(root) = root else {
                 return;
             };
             unsafe {
                 collect((*root.as_ptr()).left, out);
-                out.push(&(*root.as_ptr()).node_value);
+                out.push(&(*root.as_ptr()).value);
                 collect((*root.as_ptr()).right, out);
             }
         }
         let mut out = vec![];
-        collect::<U>(self.root, &mut out);
+        collect::<O>(self.root, &mut out);
         out
     }
 }
@@ -1279,25 +1273,25 @@ pub trait Op: Sized {
 }
 
 /// A node of [`Tree`]. We made this public for the time being, expecting the need for the size of the left subtree when performing binary searches during [`insert`](Tree::insert) or [`remove`](Tree::remove) operations.
-pub struct Node<U: Op> {
-    node_value: U::Value,
-    left: ONN<U>,
-    right: ONN<U>,
-    parent: ONN<U>,
+pub struct Node<O: Op> {
+    value: O::Value,
+    left: Onn<O>,
+    right: Onn<O>,
+    parent: Onn<O>,
 }
-impl<U: Op> Node<U> {
+impl<O: Op> Node<O> {
     fn update(&mut self) {
         unsafe {
-            U::update(
-                &mut self.node_value,
-                self.left.map(|left| &(*left.as_ptr()).node_value),
-                self.right.map(|right| &(*right.as_ptr()).node_value),
-            )
+            O::update(
+                &mut self.value,
+                self.left.map(|left| &(*left.as_ptr()).value),
+                self.right.map(|right| &(*right.as_ptr()).value),
+            );
         }
     }
 }
 
-fn merge2<U: Op>(left: ONN<U>, right: ONN<U>) -> ONN<U> {
+fn merge2<O: Op>(left: Onn<O>, right: Onn<O>) -> Onn<O> {
     match (left, right) {
         (left, None) => left,
         (None, right) => right,
@@ -1311,7 +1305,7 @@ fn merge2<U: Op>(left: ONN<U>, right: ONN<U>) -> ONN<U> {
     }
 }
 
-fn merge3<U: Op>(left: ONN<U>, center: NN<U>, right: ONN<U>) -> NN<U> {
+fn merge3<O: Op>(left: Onn<O>, center: Nn<O>, right: Onn<O>) -> Nn<O> {
     unsafe {
         if let Some(left) = left {
             (*left.as_ptr()).parent = Some(center);
@@ -1326,10 +1320,10 @@ fn merge3<U: Op>(left: ONN<U>, center: NN<U>, right: ONN<U>) -> NN<U> {
     }
 }
 
-fn split2<T, U: Op<Value = T>>(
-    root: ONN<U>,
+fn split2<T, O: Op<Value = T>>(
+    root: Onn<O>,
     mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
-) -> (ONN<U>, ONN<U>) {
+) -> (Onn<O>, Onn<O>) {
     let Some(root) = root else { return (None, None) };
     let (root, navi) = find_and_splay(root, |node, left, right| match f(node, left, right) {
         Navi2::GoDownRight => Navi3::GoDownRight,
@@ -1358,15 +1352,15 @@ fn split2<T, U: Op<Value = T>>(
     }
 }
 
-enum Split3Result<U: Op> {
-    Success(ONN<U>, NN<U>, ONN<U>),
-    Failure(ONN<U>),
+enum Split3Result<O: Op> {
+    Success(Onn<O>, Nn<O>, Onn<O>),
+    Failure(Onn<O>),
 }
 
-fn split3<T, U: Op<Value = T>>(
-    root: ONN<U>,
+fn split3<T, O: Op<Value = T>>(
+    root: Onn<O>,
     f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
-) -> Split3Result<U> {
+) -> Split3Result<O> {
     let Some(root) = root else { return Split3Result::Failure(None) };
     let (root, navi3) = find_and_splay(root, f);
     if navi3 != Navi3::Found {
@@ -1386,7 +1380,7 @@ fn split3<T, U: Op<Value = T>>(
     }
 }
 
-fn splay<U: Op>(x: NN<U>) -> NN<U> {
+fn splay<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
         while let Some(p) = (*x.as_ptr()).parent {
             if let Some(q) = (*p.as_ptr()).parent {
@@ -1423,7 +1417,7 @@ fn splay<U: Op>(x: NN<U>) -> NN<U> {
         x
     }
 }
-fn rotate_left<U: Op>(x: NN<U>) -> NN<U> {
+fn rotate_left<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
         let y = (*x.as_ptr()).right.unwrap();
         let c = (*y.as_ptr()).left;
@@ -1448,7 +1442,7 @@ fn rotate_left<U: Op>(x: NN<U>) -> NN<U> {
         y
     }
 }
-fn rotate_right<U: Op>(x: NN<U>) -> NN<U> {
+fn rotate_right<O: Op>(x: Nn<O>) -> Nn<O> {
     unsafe {
         let y = (*x.as_ptr()).left.unwrap();
         let c = (*y.as_ptr()).right;
@@ -1473,7 +1467,7 @@ fn rotate_right<U: Op>(x: NN<U>) -> NN<U> {
         y
     }
 }
-fn free_subtree<U: Op>(root: ONN<U>) {
+fn free_subtree<O: Op>(root: Onn<O>) {
     let mut stack = Vec::new();
     if let Some(r) = root {
         stack.push(r);
@@ -1490,18 +1484,18 @@ fn free_subtree<U: Op>(root: ONN<U>) {
         }
     }
 }
-fn find_and_splay<T, U: Op<Value = T>>(
-    root: NN<U>,
+fn find_and_splay<T, O: Op<Value = T>>(
+    root: Nn<O>,
     mut f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi3,
-) -> (NN<U>, Navi3) {
+) -> (Nn<O>, Navi3) {
     unsafe {
         let mut node = root;
         let navi = loop {
             let node_ref = &(*node.as_ptr());
             match f(
-                &node_ref.node_value,
-                node_ref.left.map(|left| &(*left.as_ptr()).node_value),
-                node_ref.right.map(|right| &(*right.as_ptr()).node_value),
+                &node_ref.value,
+                node_ref.left.map(|left| &(*left.as_ptr()).value),
+                node_ref.right.map(|right| &(*right.as_ptr()).value),
             ) {
                 Navi3::GoDownLeft => {
                     if let Some(left) = node_ref.left {

@@ -5,8 +5,8 @@ struct Value {
     size: usize,
 }
 
-enum U {}
-impl Op for U {
+enum O {}
+impl Op for O {
     type Value = Value;
 
     fn update(center: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>) {
@@ -20,28 +20,28 @@ impl Op for U {
     }
 }
 
-fn query_0_insert(tree: &mut Tree<U>, key: u32) {
+fn query_0_insert(tree: &mut Tree<O>, key: u32) {
     tree.remove_by_key(&key, |value| value.key);
     tree.insert_lower_bound_by_key(Value { key, size: 1 }, |value| value.key)
 }
 
-fn query_1_remove(tree: &mut Tree<U>, key: u32) {
+fn query_1_remove(tree: &mut Tree<O>, key: u32) {
     tree.remove_by_key(&key, |value| value.key);
 }
 
-fn query_2_nth(tree: &mut Tree<U>, index: usize) -> Option<u32> {
+fn query_2_nth(tree: &mut Tree<O>, index: usize) -> Option<u32> {
     tree.get_by_index(index, |value| value.size)
         .map(|value| value.key)
 }
 
-fn query_3_count_le(tree: &mut Tree<U>, key: u32) -> usize {
+fn query_3_count_le(tree: &mut Tree<O>, key: u32) -> usize {
     let mut tail = tree.split_off_upper_bound_by_key(&key, |value| value.key);
     let result = tree.fold_all().map_or(0, |root| root.size);
     tree.append(&mut tail);
     result
 }
 
-fn query_4_pred(tree: &mut Tree<U>, key: u32) -> Option<u32> {
+fn query_4_pred(tree: &mut Tree<O>, key: u32) -> Option<u32> {
     let mut tail = tree.split_off_upper_bound_by_key(&key, |value| value.key);
     let result = tree
         .get(|_, _, right| if right.is_some() { Navi3::GoDownRight } else { Navi3::Found })
@@ -50,7 +50,7 @@ fn query_4_pred(tree: &mut Tree<U>, key: u32) -> Option<u32> {
     result
 }
 
-fn query_5_succ(tree: &mut Tree<U>, key: u32) -> Option<u32> {
+fn query_5_succ(tree: &mut Tree<O>, key: u32) -> Option<u32> {
     let mut tail = tree.split_off_lower_bound_by_key(&key, |value| value.key);
     let result = tail
         .get(|_, left, _| if left.is_some() { Navi3::GoDownLeft } else { Navi3::Found })
@@ -73,7 +73,7 @@ mod random_tests {
             let q = rng.gen_range(1..=200);
             let lim = (q / 2).max(1) as u32;
 
-            let mut tree = Tree::<U>::new();
+            let mut tree = Tree::<O>::new();
             let mut model: BTreeSet<u32> = BTreeSet::new();
 
             for _ in 0..q {
