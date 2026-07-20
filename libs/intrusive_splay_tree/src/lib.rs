@@ -277,6 +277,39 @@ impl<O: Op> Drop for Tree<O> {
     }
 }
 
+/// A mutable reference to a range of elements within a tree.
+///
+/// This type is returned by [`range_by_key`](Tree::range_by_key) and [`range_by_index`](Tree::range_by_index).
+/// It provides temporary mutable access to a contiguous range of the tree while maintaining the overall tree structure.
+/// When the entry is dropped, the range is automatically reintegrated into the tree.
+///
+/// # Invariants
+///
+/// The `RangeEntry` maintains the tree structure invariants:
+/// - The tree is split into three parts: left (untouched), center (the range), and right (untouched)
+/// - Modifying the center does not affect the left or right subtrees
+/// - When dropped, all three parts are automatically merged back together
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Tree, Op};
+///
+/// enum O {}
+/// impl Op for O {
+///     type Value = i32;
+///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+/// }
+///
+/// let mut tree = Tree::<O>::new();
+/// tree.insert_lower_bound_by_key(1, |v| *v);
+/// tree.insert_lower_bound_by_key(2, |v| *v);
+/// tree.insert_lower_bound_by_key(3, |v| *v);
+///
+/// // Extract range [1, 3] and modify it
+/// let mut range = tree.range_by_key(1..=3, |v| *v);
+/// // Modifications to range stay within the range
+/// ```
 pub struct RangeEntry<'a, O: Op> {
     tree: &'a mut Tree<O>,
     left: Onn<O>,
@@ -332,15 +365,97 @@ impl<T, O: Op<Value = T>> Tree<O> {
         Self::default()
     }
 
+    /// Returns `true` if the tree is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let tree = Tree::<O>::new();
+    /// assert!(tree.is_empty());
+    /// ```
     pub fn is_empty(&self) -> bool {
         self.root.is_none()
     }
 
+    /// Returns the total size of the tree using the provided size function.
+    ///
+    /// The size function is typically used to compute aggregate size information
+    /// (e.g., the sum of element counts if each element can span multiple indices).
+    /// If the tree maintains size information via the [`Op`] trait, you can extract
+    /// it from the root node's aggregate value.
+    ///
+    /// # Arguments
+    ///
+    /// * `size` - A closure that computes the size component of the aggregate value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// struct Value { size: usize }
+    /// impl Value { fn size(&self) -> usize { self.size } }
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.insert_lower_bound_by_key(Value { size: 1 }, |_| 0);
+    /// tree.insert_lower_bound_by_key(Value { size: 1 }, |_| 0);
+    ///
+    /// assert_eq!(tree.len(Value::size), 2);
+    /// ```
     pub fn len(&self, size: impl Fn(&T) -> usize) -> usize {
         self.root
             .map_or(0, |root| unsafe { size(&(*root.as_ptr()).value) })
     }
 
+    /// Extracts a range of elements by key bounds, returning a mutable reference to the range.
+    ///
+    /// This method splits the tree to isolate elements within the specified key range,
+    /// giving you a [`RangeEntry`] that implements [`Deref`] and [`DerefMut`] to [`Tree<O>`].
+    /// When the entry is dropped, the range is automatically reintegrated into the original tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The range bounds (using standard Rust [`RangeBounds`] syntax: `..`, `1..`, `..3`, `1..3`, `1..=3`, etc.)
+    /// * `f` - A closure that extracts a sortable key from each element
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.insert_lower_bound_by_key(1, |v| *v);
+    /// tree.insert_lower_bound_by_key(2, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    ///
+    /// // Get elements in range [2, 3]
+    /// let range = tree.range_by_key(2..=3, |v| *v);
+    /// let collected = range.collect(|v| *v);
+    /// ```
     pub fn range_by_key<K: Borrow<Q>, Q: ?Sized + Ord>(
         &mut self,
         range: impl RangeBounds<Q>,
@@ -368,6 +483,44 @@ impl<T, O: Op<Value = T>> Tree<O> {
         RangeEntry::new(self, left, center, right)
     }
 
+    /// Extracts a range of elements by index bounds, returning a mutable reference to the range.
+    ///
+    /// This method splits the tree to isolate elements at indices within the specified range,
+    /// giving you a [`RangeEntry`] that implements [`Deref`] and [`DerefMut`] to [`Tree<O>`].
+    /// When the entry is dropped, the range is automatically reintegrated into the original tree.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The index bounds (using standard Rust [`RangeBounds`] syntax)
+    /// * `size` - A closure that computes the logical size of each element (often 1 for single-element nodes)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// struct Value { value: i32, size: usize }
+    /// impl Value { fn size(&self) -> usize { self.size } }
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.size = 1;
+    ///         if let Some(left) = left { center.size += left.size; }
+    ///         if let Some(right) = right { center.size += right.size; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.insert_lower_bound_by_key(Value { value: 10, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 20, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 30, size: 1 }, |v| v.value);
+    ///
+    /// // Get elements at indices [0, 2)
+    /// let range = tree.range_by_index(0..2, Value::size);
+    /// let collected = range.collect(|v| v.value);
+    /// ```
     pub fn range_by_index(
         &mut self,
         range: impl RangeBounds<usize>,
@@ -401,6 +554,37 @@ impl<T, O: Op<Value = T>> Tree<O> {
         RangeEntry::new(self, left, center, right)
     }
 
+    /// Computes and returns the aggregate value of the entire tree.
+    ///
+    /// This method returns a reference to the aggregated value maintained at the tree's root.
+    /// The aggregation is computed by the [`Op`] trait's [`update`](Op::update) method whenever
+    /// the tree structure changes. This is O(1) since the aggregate is always kept up-to-date.
+    ///
+    /// Returns `None` if the tree is empty.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// struct Value { value: i32, sum: i32 }
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = Value;
+    ///     fn update(center: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+    ///         center.sum = center.value;
+    ///         if let Some(l) = left { center.sum += l.sum; }
+    ///         if let Some(r) = right { center.sum += r.sum; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 3, sum: 3 }, |v| v.value);
+    ///
+    /// assert_eq!(tree.fold().map(|v| v.sum), Some(8));
+    /// ```
     pub fn fold(&self) -> Option<&T> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).value) }
     }
@@ -1131,6 +1315,35 @@ impl<T, O: Op<Value = T>> Tree<O> {
         )
     }
 
+    /// Collects all elements from the tree into a vector, applying a transformation.
+    ///
+    /// This method performs an in-order traversal of the tree, collecting each element
+    /// after applying the provided transformation function. The result is sorted in the
+    /// tree's natural order (left-to-right in-order traversal).
+    ///
+    /// # Arguments
+    ///
+    /// * `f` - A closure that transforms each element value into the output type
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// enum O {}
+    /// impl Op for O {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<O>::new();
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    /// tree.insert_lower_bound_by_key(1, |v| *v);
+    /// tree.insert_lower_bound_by_key(2, |v| *v);
+    ///
+    /// let values = tree.collect(|v| *v);
+    /// assert_eq!(values, vec![1, 2, 3]);
+    /// ```
     pub fn collect<U>(&self, f: impl Fn(&T) -> U) -> Vec<U> {
         pub fn collect<T, U, O: Op<Value = T>>(
             root: Onn<O>,
