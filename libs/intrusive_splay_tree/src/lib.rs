@@ -59,7 +59,12 @@
 //! All operations (insert, remove, get, split, merge) are **O(log n) amortized**.
 //! Splaying ensures that frequently accessed elements are brought near the root.
 
-use std::{borrow::Borrow, cmp::Ordering, ptr::NonNull};
+use std::{
+    borrow::Borrow,
+    cmp::Ordering,
+    ops::{Bound, Deref, RangeBounds},
+    ptr::NonNull,
+};
 
 type NN<U> = NonNull<Node<U>>;
 type ONN<U> = Option<NonNull<Node<U>>>;
@@ -92,11 +97,29 @@ pub enum Navi2 {
     GoDownRight,
 }
 impl Navi2 {
-    fn at<T>(index: &mut usize, size: &mut impl FnMut(&T) -> usize, left: Option<&T>) -> Self {
+    fn lower_bound_by_index<T>(
+        index: &mut usize,
+        size: &mut impl FnMut(&T) -> usize,
+        left: Option<&T>,
+    ) -> Self {
         let lsize = left.map_or(0, size);
         match (*index).cmp(&lsize) {
             Ordering::Less | Ordering::Equal => Self::GoDownLeft,
             Ordering::Greater => {
+                *index -= lsize + 1;
+                Self::GoDownRight
+            }
+        }
+    }
+    fn upper_bound_by_index<T>(
+        index: &mut usize,
+        size: &mut impl FnMut(&T) -> usize,
+        left: Option<&T>,
+    ) -> Self {
+        let lsize = left.map_or(0, size);
+        match (*index).cmp(&lsize) {
+            Ordering::Less => Self::GoDownLeft,
+            Ordering::Equal | Ordering::Greater => {
                 *index -= lsize + 1;
                 Self::GoDownRight
             }
@@ -262,6 +285,78 @@ impl<U: Op> Drop for Tree<U> {
         free_subtree(self.root);
     }
 }
+/// A guard that temporarily exposes an aggregated value over a tree range.
+///
+/// `FoldEntry` uses the RAII pattern: it holds a reference to the aggregated value
+/// computed over a range of nodes. When dropped, it automatically restores the tree
+/// to its original state by merging the split parts back together.
+///
+/// Access the aggregated value via `Deref` coercion (deref to `U::Value`).
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Tree, Op};
+///
+/// struct Value { val: i32, sum: i32 }
+/// enum U {}
+/// impl Op for U {
+///     type Value = Value;
+///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
+///         n.sum = n.val;
+///         if let Some(l) = l { n.sum += l.sum; }
+///         if let Some(r) = r { n.sum += r.sum; }
+///     }
+/// }
+///
+/// let mut tree = Tree::<U>::new();
+/// tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
+///
+/// // FoldEntry automatically restores the tree when dropped
+/// if let Some(entry) = tree.fold_by_key(1..10, |v| v.val) {
+///     println!("Sum: {}", entry.sum);
+///     // Tree is restored here when `entry` is dropped
+/// }
+/// ```
+pub struct FoldEntry<'a, U: Op> {
+    tree: &'a mut Tree<U>,
+    left: ONN<U>,
+    center: NN<U>,
+    right: ONN<U>,
+}
+impl<'a, U: Op> FoldEntry<'a, U> {
+    fn maybe_new(
+        tree: &'a mut Tree<U>,
+        left: ONN<U>,
+        center: ONN<U>,
+        right: ONN<U>,
+    ) -> Option<Self> {
+        match center {
+            None => {
+                tree.root = merge2(left, right);
+                None
+            }
+            Some(center) => Some(Self {
+                tree,
+                left,
+                center,
+                right,
+            }),
+        }
+    }
+}
+impl<U: Op> Deref for FoldEntry<'_, U> {
+    type Target = U::Value;
+
+    fn deref(&self) -> &Self::Target {
+        unsafe { &(*self.center.as_ptr()).node_value }
+    }
+}
+impl<U: Op> Drop for FoldEntry<'_, U> {
+    fn drop(&mut self) {
+        self.tree.root = merge2(merge2(self.left, Some(self.center)), self.right);
+    }
+}
 
 impl<T, U: Op<Value = T>> Tree<U> {
     /// Creates a new empty tree.
@@ -284,8 +379,179 @@ impl<T, U: Op<Value = T>> Tree<U> {
         Self::default()
     }
 
-    /// Returns a reference to the aggregated value of the entire tree, computed via [`Op::update`], if the tree is non-empty.
+    /// Computes the aggregated value over a range using custom closures to define the boundaries.
     ///
+    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value.
+    /// The tree is temporarily modified (split) during the operation but is automatically
+    /// restored when the `FoldEntry` is dropped (RAII pattern).
+    ///
+    /// # Arguments
+    ///
+    /// * `start` - Closure guiding traversal to find the left boundary (inclusive)
+    /// * `end` - Closure guiding traversal to find the right boundary (exclusive)
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op, Navi2};
+    ///
+    /// struct Value { val: i32, sum: i32 }
+    /// enum U {}
+    /// impl Op for U {
+    ///     type Value = Value;
+    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
+    ///         n.sum = n.val;
+    ///         if let Some(l) = l { n.sum += l.sum; }
+    ///         if let Some(r) = r { n.sum += r.sum; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownLeft);
+    /// tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
+    ///
+    /// // Note: fold operates on ranges defined by custom navigation closures
+    /// // It temporarily splits and returns the middle portion
+    /// let result = tree.fold_all();
+    /// assert_eq!(result.map(|e| e.sum), Some(15));
+    /// ```
+    pub fn fold(
+        &mut self,
+        start: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
+        end: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
+    ) -> Option<FoldEntry<'_, U>> {
+        let (mut lc, right) = split2(self.root.take(), end);
+        let (left, center) = split2(lc.take(), start);
+        FoldEntry::maybe_new(self, left, center, right)
+    }
+
+    /// Computes the aggregated value over a key range.
+    ///
+    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value
+    /// for the specified key range. The tree is temporarily modified but is automatically
+    /// restored when the `FoldEntry` is dropped.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The range bounds (using standard Rust `RangeBounds`)
+    /// * `f` - Function extracting the key from each node's value
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op};
+    ///
+    /// struct Value { key: i32, sum: i32 }
+    /// enum U {}
+    /// impl Op for U {
+    ///     type Value = Value;
+    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
+    ///         n.sum = n.key;
+    ///         if let Some(l) = l { n.sum += l.sum; }
+    ///         if let Some(r) = r { n.sum += r.sum; }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// for key in 10..18 {
+    ///   tree.insert_lower_bound_by_key(Value { key, sum: key }, |v| v.key);
+    /// }
+    ///
+    /// let result = tree.fold_by_key(13..16, |v| v.key);
+    /// assert_eq!(result.map(|e| e.sum), Some(13 + 14 + 15));
+    /// ```
+    pub fn fold_by_key<K, Q: ?Sized + Ord>(
+        &mut self,
+        range: impl RangeBounds<Q>,
+        mut f: impl FnMut(&T) -> K,
+    ) -> Option<FoldEntry<'_, U>>
+    where
+        K: Borrow<Q>,
+    {
+        let (mut lc, right) = split2(self.root.take(), |center, _, _| match range.end_bound() {
+            Bound::Unbounded => Navi2::GoDownRight,
+            Bound::Included(key) => Navi2::upper_bound_by_key(key, center, &mut f),
+            Bound::Excluded(key) => Navi2::lower_bound_by_key(key, center, &mut f),
+        });
+        let (left, center) = split2(lc.take(), |center, _, _| match range.start_bound() {
+            Bound::Unbounded => Navi2::GoDownLeft,
+            Bound::Included(key) => Navi2::lower_bound_by_key(key, center, &mut f),
+            Bound::Excluded(key) => Navi2::upper_bound_by_key(key, center, &mut f),
+        });
+        FoldEntry::maybe_new(self, left, center, right)
+    }
+
+    /// Computes the aggregated value over an index range.
+    ///
+    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value
+    /// for elements at the specified index positions. The tree is temporarily modified
+    /// but is automatically restored when the `FoldEntry` is dropped.
+    ///
+    /// # Arguments
+    ///
+    /// * `range` - The range bounds for indices (0-based)
+    /// * `size` - Function computing the subtree size for each node
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Op, Navi2};
+    ///
+    /// struct Value { value: i32, size: usize, sum: i32 }
+    /// enum U {}
+    /// impl Op for U {
+    ///     type Value = Value;
+    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
+    ///         n.size = 1;
+    ///         n.sum = n.value;
+    ///         if let Some(l) = l {
+    ///             n.size += l.size;
+    ///             n.sum += l.sum;
+    ///         }
+    ///         if let Some(r) = r {
+    ///             n.size += r.size;
+    ///             n.sum += r.sum;
+    ///         }
+    ///     }
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// let values = [8, 1, 6, 3, 5, 3, 7];
+    /// for &value in &values {
+    ///     tree.insert(Value { value, size: 1, sum: value }, |_, _, _| Navi2::GoDownRight);
+    /// }
+    ///
+    /// let result = tree.fold_by_index(3..6, |v| v.size);
+    /// assert_eq!(result.map(|e| e.sum), Some(3 + 5 + 3));
+    /// ```
+    pub fn fold_by_index(
+        &mut self,
+        range: impl RangeBounds<usize>,
+        mut size: impl FnMut(&T) -> usize,
+    ) -> Option<FoldEntry<'_, U>> {
+        let (mut lc, right) = split2(self.root.take(), |_, left, _| match range.end_bound() {
+            Bound::Unbounded => Navi2::GoDownRight,
+            Bound::Included(&(mut index)) => {
+                Navi2::upper_bound_by_index(&mut index, &mut size, left)
+            }
+            Bound::Excluded(&(mut index)) => {
+                Navi2::lower_bound_by_index(&mut index, &mut size, left)
+            }
+        });
+        let (left, center) = split2(lc.take(), |_, left, _| match range.start_bound() {
+            Bound::Unbounded => Navi2::GoDownLeft,
+            Bound::Included(&(mut index)) => {
+                Navi2::lower_bound_by_index(&mut index, &mut size, left)
+            }
+            Bound::Excluded(&(mut index)) => {
+                Navi2::upper_bound_by_index(&mut index, &mut size, left)
+            }
+        });
+        FoldEntry::maybe_new(self, left, center, right)
+    }
+
+    /// Returns a reference to the aggregated value of the entire tree, computed via [`Op::update`], if the tree is non-empty.
+    //
     /// # Examples
     ///
     /// ```
@@ -383,7 +649,9 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// assert_eq!(rest.collect().len(), 2);
     /// ```
     pub fn split_off_at(&mut self, mut index: usize, mut size: impl FnMut(&T) -> usize) -> Self {
-        self.split_off(|_center, left, _right| Navi2::at(&mut index, &mut size, left))
+        self.split_off(|_center, left, _right| {
+            Navi2::lower_bound_by_index(&mut index, &mut size, left)
+        })
     }
 
     /// Splits the tree at the lower bound of a key, returning elements >= the key.
@@ -557,7 +825,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
         mut size: impl FnMut(&T) -> usize,
     ) {
         self.insert(node_value, |_center, left, _right| {
-            Navi2::at(&mut index, &mut size, left)
+            Navi2::lower_bound_by_index(&mut index, &mut size, left)
         })
     }
 
@@ -877,7 +1145,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
 
 /// An adapter trait for specifying what to do during a structural change.
 ///
-/// The [`update`](Update::update) method is called whenever a node is inserted, deleted, or rotated.
+/// The [`update`](Op::update) method is called whenever a node is inserted, deleted, or rotated.
 /// It receives the node's value and optional references to the left and right children's aggregated values,
 /// allowing you to maintain tree-wide aggregates (e.g., sum, min, max) in O(log n) time.
 ///
