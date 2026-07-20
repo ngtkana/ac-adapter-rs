@@ -24,7 +24,7 @@
 //! # Examples
 //!
 //! ```
-//! use intrusive_splay_tree::{Tree, Op, Navi2};
+//! use intrusive_splay_tree::{Tree, Op};
 //!
 //! struct Value { val: i32, sum: i32 }
 //!
@@ -39,8 +39,8 @@
 //! }
 //!
 //! let mut tree = Tree::<U>::new();
-//! tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
-//! tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownLeft);
+//! tree.insert_lower_bound_by_key(Value { val: 10, sum: 10 }, |v| v.val);
+//! tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
 //!
 //! // Query the entire tree's aggregate
 //! assert_eq!(tree.fold_all().unwrap().sum, 15);
@@ -407,8 +407,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownLeft);
-    /// tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
+    /// tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { val: 10, sum: 10 }, |v| v.val);
     ///
     /// // Note: fold operates on ranges defined by custom navigation closures
     /// // It temporarily splits and returns the middle portion
