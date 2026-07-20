@@ -150,12 +150,10 @@ fn splay<O: Op>(x: Nn<O>) -> Nn<O> {
                         rotate_left(q);
                     }
                 }
+            } else if (*p.as_ptr()).left == Some(x) {
+                rotate_right(p);
             } else {
-                if (*p.as_ptr()).left == Some(x) {
-                    rotate_right(p);
-                } else {
-                    rotate_left(p);
-                }
+                rotate_left(p);
             }
         }
         x

@@ -33,7 +33,7 @@ fn test_point_change_prefix_sum() {
     for _ in 0..200 {
         let n = rng.gen_range(1..=10);
         let q = rng.gen_range(1..=10);
-        let value_lim = ((n + q) / 2).max(1);
+        let value_lim = usize::midpoint(n, q).max(1);
 
         let mut a = (0..n)
             .map(|_| rng.gen_range(0..value_lim))

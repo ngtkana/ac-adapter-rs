@@ -73,20 +73,16 @@ fn test_range_by_index() {
     // RangeToInclusive<usize>
     for end in 0..keys.len() {
         let range = ..=end;
-        let result = tree
-            .range_by_index(range.clone(), Store::size)
-            .collect(Store::key);
-        let expected = &keys[range.clone()];
+        let result = tree.range_by_index(range, Store::size).collect(Store::key);
+        let expected = &keys[range];
         assert_eq!(result, expected, "range = {range:?}");
     }
 
     // RangeFull
     {
         let range = ..;
-        let result = tree
-            .range_by_index(range.clone(), Store::size)
-            .collect(Store::key);
-        let expected = &keys[range.clone()];
+        let result = tree.range_by_index(range, Store::size).collect(Store::key);
+        let expected = &keys[range];
         assert_eq!(result, expected, "range = {range:?}");
     }
 }
@@ -151,9 +147,7 @@ fn test_range_by_key() {
     // RangeToInclusive<u32>
     for end in min..=max {
         let range = ..=end;
-        let result = tree
-            .range_by_key(range.clone(), Store::key)
-            .collect(Store::key);
+        let result = tree.range_by_key(range, Store::key).collect(Store::key);
         let expected = keys
             .iter()
             .copied()
@@ -165,10 +159,8 @@ fn test_range_by_key() {
     // RangeFull<u32>
     {
         let range = ..;
-        let result = tree
-            .range_by_key(range.clone(), Store::key)
-            .collect(Store::key);
-        let expected = keys.clone();
+        let result = tree.range_by_key(range, Store::key).collect(Store::key);
+        let expected = keys;
         assert_eq!(result, expected, "range = {range:?}");
     }
 }
