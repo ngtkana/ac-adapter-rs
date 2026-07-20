@@ -1,4 +1,4 @@
-use intrusive_splay_tree::{Navi3, Tree, Op};
+use intrusive_splay_tree::{Navi3, Op, Tree};
 
 struct Value {
     key: u32,
@@ -30,7 +30,7 @@ fn query_1_remove(tree: &mut Tree<U>, key: u32) {
 }
 
 fn query_2_nth(tree: &mut Tree<U>, index: usize) -> Option<u32> {
-    tree.get_at(index, |value| value.size)
+    tree.get_by_index(index, |value| value.size)
         .map(|value| value.key)
 }
 
