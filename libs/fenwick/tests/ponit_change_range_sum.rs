@@ -9,13 +9,13 @@ impl Op for O {
         0
     }
 
-    fn add_assign(this: &mut Self::Value, other: &Self::Value) {
-        *this += other;
+    fn add(a: &Self::Value, b: &Self::Value) -> Self::Value {
+        a + b
     }
 }
 impl OpSub for O {
-    fn sub_assign(this: &mut Self::Value, other: &Self::Value) {
-        *this -= other;
+    fn sub(a: &Self::Value, b: &Self::Value) -> Self::Value {
+        a - b
     }
 }
 

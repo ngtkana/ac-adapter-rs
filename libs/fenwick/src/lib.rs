@@ -1,3 +1,63 @@
+//! A Fenwick tree (Binary Indexed Tree) for efficient range queries.
+//!
+//! This crate provides a generic implementation of Fenwick trees,
+//! which support point updates and prefix/range queries in O(log n) time.
+//!
+//! # When to use
+//!
+//! A Fenwick tree is useful when you need to:
+//! - Quickly update individual elements
+//! - Query aggregate values over ranges (sum, XOR, min, etc.)
+//! - Process online queries where the dataset changes dynamically
+//!
+//! It's particularly common in competitive programming for range sum queries.
+//!
+//! # Examples
+//!
+//! ```
+//! use fenwick::{Fenwick, Op, OpSub};
+//!
+//! struct Sum;
+//! impl Op for Sum {
+//!     type Value = i64;
+//!     fn identity() -> i64 { 0 }
+//!     fn add(a: &i64, b: &i64) -> i64 { a + b }
+//! }
+//! impl OpSub for Sum {
+//!     fn sub(a: &i64, b: &i64) -> i64 { a - b }
+//! }
+//!
+//! let mut tree = Fenwick::<Sum>::new(5);
+//! tree.add(1, &10);
+//! tree.add(3, &20);
+//!
+//! // Sum of elements in [1, 4)
+//! assert_eq!(tree.fold(1..4), 30);
+//! ```
+//!
+//! # How it works
+//!
+//! This crate uses a generic [`Op`] trait to define the aggregation operation.
+//! Your type must implement:
+//! - An identity element (via [`Op::identity`])
+//! - An associative binary operation (via [`Op::add`])
+//!
+//! For range queries over arbitrary intervals, additionally implement [`OpSub`]
+//! to support subtraction. This enables the formula:
+//! `range_sum(start..end) = prefix_sum(end) - prefix_sum(start)`.
+//!
+//! # Core Items
+//!
+//! - [`Fenwick<O>`]: The main data structure for efficient range queries
+//! - [`Op`]: Trait defining associative operations (identity + add)
+//! - [`OpSub`]: Extension of [`Op`] that also supports subtraction
+//!
+//! # Complexity
+//!
+//! - `new(n)`: O(n)
+//! - `add()`, `sub()`: O(log n)
+//! - `fold_to()`, `fold()`: O(log n)
+
 use std::{
     fmt::Debug,
     marker::PhantomData,
@@ -12,9 +72,8 @@ use std::{
 ///
 /// # Safety and Correctness
 ///
-/// For the Fenwick tree to work correctly, `add_assign` must be associative:
-/// for all values `a`, `b`, `c`, the result of `add_assign` must satisfy
-/// associativity properties.
+/// For the Fenwick tree to work correctly, `add` must be associative:
+/// for all values `a`, `b`, `c`, the operation must satisfy associativity.
 ///
 /// # Examples
 ///
@@ -24,8 +83,8 @@ use std::{
 /// impl Op for AddOp {
 ///     type Value = i64;
 ///     fn identity() -> Self::Value { 0 }
-///     fn add_assign(this: &mut Self::Value, other: &Self::Value) {
-///         *this += other;
+///     fn add(a: &Self::Value, b: &Self::Value) -> Self::Value {
+///         a + b
 ///     }
 /// }
 /// ```
@@ -36,11 +95,11 @@ pub trait Op {
     /// Returns the identity element for this operation.
     ///
     /// This is the element that, when combined with any value `v` via
-    /// `add_assign`, leaves `v` unchanged.
+    /// `add`, leaves `v` unchanged.
     fn identity() -> Self::Value;
 
-    /// Performs the associative operation: `this = this ⊕ other`.
-    fn add_assign(this: &mut Self::Value, other: &Self::Value);
+    /// Computes the result of the associative operation: `a ⊕ b`.
+    fn add(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
 /// An extension of [`Op`] that also supports subtraction.
@@ -56,21 +115,19 @@ pub trait Op {
 /// # use fenwick::OpSub;
 /// struct AddOp;
 /// impl OpSub for AddOp {
-///     fn sub_assign(this: &mut Self::Value, other: &Self::Value) {
-///         *this -= other;
+///     fn sub(a: &i64, b: &i64) -> i64 {
+///         a - b
 ///     }
 /// }
 /// # impl fenwick::Op for AddOp {
 /// #     type Value = i64;
-/// #     fn identity() -> Self::Value { 0 }
-/// #     fn add_assign(this: &mut Self::Value, other: &Self::Value) {
-/// #         *this += other;
-/// #     }
+/// #     fn identity() -> i64 { 0 }
+/// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
 /// # }
 /// ```
 pub trait OpSub: Op {
-    /// Performs the inverse operation: `this = this ⊖ other`.
-    fn sub_assign(this: &mut Self::Value, other: &Self::Value);
+    /// Computes the result of the inverse operation: `a ⊖ b`.
+    fn sub(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
 /// A Fenwick tree (also known as a Binary Indexed Tree).
@@ -96,7 +153,7 @@ pub trait OpSub: Op {
 /// impl Op for AddOp {
 ///     type Value = i64;
 ///     fn identity() -> i64 { 0 }
-///     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+///     fn add(a: &i64, b: &i64) -> i64 { a + b }
 /// }
 ///
 /// let mut tree = Fenwick::<AddOp>::new(5);
@@ -130,7 +187,7 @@ impl<O: Op> Default for Fenwick<O> {
     /// # impl fenwick::Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let tree: Fenwick<AddOp> = Default::default();
     /// ```
@@ -158,7 +215,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let tree = Fenwick::<AddOp>::new(10);
     /// ```
@@ -187,7 +244,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(2, &10);
@@ -195,7 +252,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     pub fn add(&mut self, mut index: usize, value: &T) {
         index += 1;
         while index < self.items.len() {
-            O::add_assign(&mut self.items[index], value);
+            self.items[index] = O::add(&self.items[index], value);
             index += index & index.wrapping_neg();
         }
     }
@@ -214,7 +271,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(0, &1);
@@ -226,7 +283,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
         let mut end = range.end;
         let mut result = O::identity();
         while end != 0 {
-            O::add_assign(&mut result, &self.items[end]);
+            result = O::add(&result, &self.items[end]);
             end -= end & end.wrapping_neg();
         }
         result
@@ -251,10 +308,10 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// # impl OpSub for AddOp {
-    /// #     fn sub_assign(a: &mut i64, b: &i64) { *a -= b; }
+    /// #     fn sub(a: &i64, b: &i64) -> i64 { a - b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(2, &10);
@@ -263,7 +320,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     pub fn sub(&mut self, mut index: usize, value: &T) {
         index += 1;
         while index < self.items.len() {
-            O::sub_assign(&mut self.items[index], value);
+            self.items[index] = O::sub(&self.items[index], value);
             index += index & index.wrapping_neg();
         }
     }
@@ -284,10 +341,10 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add_assign(a: &mut i64, b: &i64) { *a += b; }
+    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// # impl OpSub for AddOp {
-    /// #     fn sub_assign(a: &mut i64, b: &i64) { *a -= b; }
+    /// #     fn sub(a: &i64, b: &i64) -> i64 { a - b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(0, &1);
@@ -298,7 +355,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// ```
     pub fn fold(&self, range: Range<usize>) -> T {
         let mut result = self.fold_to(..range.end);
-        O::sub_assign(&mut result, &self.fold_to(..range.start));
+        result = O::sub(&result, &self.fold_to(..range.start));
         result
     }
 }
