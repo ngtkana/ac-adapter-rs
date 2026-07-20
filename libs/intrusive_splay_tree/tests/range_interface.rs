@@ -79,6 +79,16 @@ fn test_range_by_index() {
         let expected = &keys[range.clone()];
         assert_eq!(result, expected, "range = {range:?}");
     }
+
+    // RangeFull
+    {
+        let range = ..;
+        let result = tree
+            .range_by_index(range.clone(), Value::size)
+            .collect(Value::key);
+        let expected = &keys[range.clone()];
+        assert_eq!(result, expected, "range = {range:?}");
+    }
 }
 
 #[test]
@@ -92,7 +102,7 @@ fn test_range_by_key() {
     let min = 3;
     let max = 9;
 
-    // Range<usize>
+    // Range<u32>
     for start in min..=max {
         for end in start..=max {
             let range = start..end;
@@ -108,7 +118,7 @@ fn test_range_by_key() {
         }
     }
 
-    // RangeFrom<usize>
+    // RangeFrom<u32>
     for start in min..=max {
         let range = start..;
         let result = tree
@@ -122,7 +132,7 @@ fn test_range_by_key() {
         assert_eq!(result, expected, "range = {range:?}");
     }
 
-    // RangeInclusive<usize>
+    // RangeInclusive<u32>
     for start in min..=max {
         for end in min..=max {
             let range = start..=end;
@@ -138,7 +148,7 @@ fn test_range_by_key() {
         }
     }
 
-    // RangeToInclusive<usize>
+    // RangeToInclusive<u32>
     for end in min..=max {
         let range = ..=end;
         let result = tree
@@ -149,6 +159,16 @@ fn test_range_by_key() {
             .copied()
             .filter(|&key| range.contains(&key))
             .collect::<Vec<_>>();
+        assert_eq!(result, expected, "range = {range:?}");
+    }
+
+    // RangeFull<u32>
+    {
+        let range = ..;
+        let result = tree
+            .range_by_key(range.clone(), Value::key)
+            .collect(Value::key);
+        let expected = keys.clone();
         assert_eq!(result, expected, "range = {range:?}");
     }
 }
