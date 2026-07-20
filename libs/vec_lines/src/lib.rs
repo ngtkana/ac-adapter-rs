@@ -181,9 +181,7 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
     /// ```
     pub fn push(&mut self, line: [T; 2]) {
         assert!(
-            self.lines
-                .last()
-                .is_none_or(|prv| C::ok(*prv, Line(line))),
+            self.lines.last().is_none_or(|prv| C::ok(*prv, Line(line))),
             "傾きの単調性に違反しています。"
         );
         if let Some(&Line(prv)) = self.lines.last() {

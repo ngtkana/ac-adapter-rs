@@ -46,7 +46,9 @@ pub fn column_reduce(a: &mut [Vec<bool>]) -> usize {
         .find(|&[i, j]| a[i][j])
     {
         i = i_swp;
-        for a in a.iter_mut() { a.swap(j, j_swp); }
+        for a in a.iter_mut() {
+            a.swap(j, j_swp);
+        }
         for j1 in (0..w).filter(|&j1| j1 != j) {
             if a[i][j1] {
                 a.iter_mut()
