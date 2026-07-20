@@ -102,7 +102,7 @@ pub enum Navi2 {
     GoDownRight,
 }
 impl Navi2 {
-    fn lower_bound_by_index<T>(
+    fn by_index<T>(
         index: &mut usize,
         size: &mut impl FnMut(&T) -> usize,
         left: Option<&T>,
@@ -110,24 +110,6 @@ impl Navi2 {
         let lsize = left.map_or(0, size);
         match (*index).cmp(&lsize) {
             Ordering::Less | Ordering::Equal => Self::GoDownLeft,
-            Ordering::Greater => {
-                *index -= lsize + 1;
-                Self::GoDownRight
-            }
-        }
-    }
-    fn upper_bound_by_index<T>(
-        index: &mut usize,
-        size: &mut impl FnMut(&T) -> usize,
-        left: Option<&T>,
-    ) -> Self {
-        let lsize = left.map_or(0, size);
-        match (*index).cmp(&lsize) {
-            Ordering::Less => Self::GoDownLeft,
-            Ordering::Equal => {
-                *index -= lsize;
-                Self::GoDownRight
-            }
             Ordering::Greater => {
                 *index -= lsize + 1;
                 Self::GoDownRight
@@ -394,21 +376,27 @@ impl<T, O: Op<Value = T>> Tree<O> {
         let root = self.root.take();
         let (root, right) = match range.end_bound() {
             Bound::Unbounded => (root, None),
-            Bound::Included(&(mut index)) => split2(root, |_, left, _| {
-                Navi2::upper_bound_by_index(&mut index, &mut size, left)
-            }),
+            Bound::Included(&(mut index)) => {
+                index += 1;
+                split2(root, |_, left, _| {
+                    Navi2::by_index(&mut index, &mut size, left)
+                })
+            }
             Bound::Excluded(&(mut index)) => split2(root, |_, left, _| {
-                Navi2::lower_bound_by_index(&mut index, &mut size, left)
+                Navi2::by_index(&mut index, &mut size, left)
             }),
         };
         let (left, center) = match range.start_bound() {
             Bound::Unbounded => (None, root),
             Bound::Included(&(mut index)) => split2(root, |_, left, _| {
-                Navi2::lower_bound_by_index(&mut index, &mut size, left)
+                Navi2::by_index(&mut index, &mut size, left)
             }),
-            Bound::Excluded(&(mut index)) => split2(root, |_, left, _| {
-                Navi2::upper_bound_by_index(&mut index, &mut size, left)
-            }),
+            Bound::Excluded(&(mut index)) => {
+                index += 1;
+                split2(root, |_, left, _| {
+                    Navi2::by_index(&mut index, &mut size, left)
+                })
+            }
         };
         RangeEntry::new(self, left, center, right)
     }
@@ -489,9 +477,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
         mut index: usize,
         mut size: impl FnMut(&T) -> usize,
     ) -> Self {
-        self.split_off(|_center, left, _right| {
-            Navi2::lower_bound_by_index(&mut index, &mut size, left)
-        })
+        self.split_off(|_center, left, _right| Navi2::by_index(&mut index, &mut size, left))
     }
 
     /// Splits the tree at the lower bound of a key, returning elements >= the key.
@@ -675,7 +661,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
         mut size: impl FnMut(&T) -> usize,
     ) {
         self.insert(node_value, |_center, left, _right| {
-            Navi2::lower_bound_by_index(&mut index, &mut size, left)
+            Navi2::by_index(&mut index, &mut size, left)
         });
     }
 
