@@ -26,21 +26,21 @@
 //! ```
 //! use intrusive_splay_tree::{Tree, Op};
 //!
-//! struct Value { val: i32, sum: i32 }
+//! struct Value { value: i32, sum: i32 }
 //!
 //! enum U {}
 //! impl Op for U {
 //!     type Value = Value;
 //!     fn update(node: &mut Value, left: Option<&Value>, right: Option<&Value>) {
-//!         node.sum = node.val;
+//!         node.sum = node.value;
 //!         if let Some(l) = left { node.sum += l.sum; }
 //!         if let Some(r) = right { node.sum += r.sum; }
 //!     }
 //! }
 //!
 //! let mut tree = Tree::<U>::new();
-//! tree.insert_lower_bound_by_key(Value { val: 10, sum: 10 }, |v| v.val);
-//! tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
+//! tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, |v| v.value);
+//! tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
 //!
 //! // Query the entire tree's aggregate
 //! assert_eq!(tree.fold_all().unwrap().sum, 15);
@@ -298,22 +298,22 @@ impl<U: Op> Drop for Tree<U> {
 /// ```
 /// use intrusive_splay_tree::{Tree, Op};
 ///
-/// struct Value { val: i32, sum: i32 }
+/// struct Value { value: i32, sum: i32 }
 /// enum U {}
 /// impl Op for U {
 ///     type Value = Value;
 ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-///         n.sum = n.val;
+///         n.sum = n.value;
 ///         if let Some(l) = l { n.sum += l.sum; }
 ///         if let Some(r) = r { n.sum += r.sum; }
 ///     }
 /// }
 ///
 /// let mut tree = Tree::<U>::new();
-/// tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
+/// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
 ///
 /// // FoldEntry automatically restores the tree when dropped
-/// if let Some(entry) = tree.fold_by_key(1..10, |v| v.val) {
+/// if let Some(entry) = tree.fold_by_key(1..10, |v| v.value) {
 ///     println!("Sum: {}", entry.sum);
 ///     // Tree is restored here when `entry` is dropped
 /// }
@@ -395,20 +395,20 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
-    /// struct Value { val: i32, sum: i32 }
+    /// struct Value { value: i32, sum: i32 }
     /// enum U {}
     /// impl Op for U {
     ///     type Value = Value;
     ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-    ///         n.sum = n.val;
+    ///         n.sum = n.value;
     ///         if let Some(l) = l { n.sum += l.sum; }
     ///         if let Some(r) = r { n.sum += r.sum; }
     ///     }
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_lower_bound_by_key(Value { val: 5, sum: 5 }, |v| v.val);
-    /// tree.insert_lower_bound_by_key(Value { val: 10, sum: 10 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, |v| v.value);
     ///
     /// // Note: fold operates on ranges defined by custom navigation closures
     /// // It temporarily splits and returns the middle portion
@@ -518,7 +518,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// let mut tree = Tree::<U>::new();
     /// let values = [8, 1, 6, 3, 5, 3, 7];
     /// for &value in &values {
-    ///     tree.insert(Value { value, size: 1, sum: value }, |_, _, _| Navi2::GoDownRight);
+    ///     tree.push_back(Value { value, size: 1, sum: value });
     /// }
     ///
     /// let result = tree.fold_by_index(3..6, |v| v.size);
@@ -558,7 +558,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// use intrusive_splay_tree::{Tree, Op, Navi2};
     ///
     /// struct Value {
-    ///     val: i32,
+    ///     value: i32,
     ///     sum: i32,
     /// }
     ///
@@ -566,7 +566,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// impl Op for U {
     ///     type Value = Value;
     ///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
-    ///         root.sum = root.val;
+    ///         root.sum = root.value;
     ///         if let Some(left) = left {
     ///             root.sum += left.sum;
     ///         }
@@ -577,9 +577,10 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
-    /// tree.insert(Value { val: 20, sum: 20 }, |_, _, _| Navi2::GoDownRight);
-    /// assert_eq!(tree.fold_all().unwrap().sum, 30);
+    /// for &value in &[10, 20, 30] {
+    ///     tree.push_back(Value { value, sum: value });
+    /// }
+    /// assert_eq!(tree.fold_all().unwrap().sum, 60);
     /// ```
     pub fn fold_all(&self) -> Option<&T> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
@@ -628,7 +629,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { val: i32, size: usize }
+    /// struct Value { value: i32, size: usize }
     /// enum U {}
     /// impl Op for U {
     ///     type Value = Value;
@@ -640,9 +641,9 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
-    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
-    /// tree.insert_lower_bound_by_key(Value { val: 3, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 3, size: 1 }, |v| v.value);
     ///
     /// let mut rest = tree.split_off_by_index(1, |v| v.size);
     /// assert_eq!(tree.collect().len(), 1);
@@ -806,7 +807,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { val: i32, size: usize }
+    /// struct Value { value: i32, size: usize }
     /// enum U {}
     /// impl Op for U {
     ///     type Value = Value;
@@ -818,8 +819,8 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_by_index(Value { val: 1, size: 1 }, 0, |v| v.size);
-    /// tree.insert_by_index(Value { val: 3, size: 1 }, 1, |v| v.size);
+    /// tree.insert_by_index(Value { value: 1, size: 1 }, 0, |v| v.size);
+    /// tree.insert_by_index(Value { value: 3, size: 1 }, 1, |v| v.size);
     /// assert_eq!(tree.collect().len(), 2);
     /// ```
     pub fn insert_by_index(
@@ -952,7 +953,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { val: i32, size: usize }
+    /// struct Value { value: i32, size: usize }
     /// enum U {}
     /// impl Op for U {
     ///     type Value = Value;
@@ -964,11 +965,11 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
-    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
     ///
     /// let removed = tree.remove_by_index(0, |v| v.size);
-    /// assert_eq!(removed.map(|v| v.val), Some(1));
+    /// assert_eq!(removed.map(|v| v.value), Some(1));
     /// ```
     pub fn remove_by_index(
         &mut self,
@@ -1081,7 +1082,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// ```
     /// use intrusive_splay_tree::{Tree, Op};
     ///
-    /// struct Value { val: i32, size: usize }
+    /// struct Value { value: i32, size: usize }
     /// enum U {}
     /// impl Op for U {
     ///     type Value = Value;
@@ -1093,11 +1094,11 @@ impl<T, U: Op<Value = T>> Tree<U> {
     /// }
     ///
     /// let mut tree = Tree::<U>::new();
-    /// tree.insert_lower_bound_by_key(Value { val: 1, size: 1 }, |v| v.val);
-    /// tree.insert_lower_bound_by_key(Value { val: 2, size: 1 }, |v| v.val);
+    /// tree.insert_lower_bound_by_key(Value { value: 1, size: 1 }, |v| v.value);
+    /// tree.insert_lower_bound_by_key(Value { value: 2, size: 1 }, |v| v.value);
     ///
     /// let found = tree.get_by_index(1, |v| v.size);
-    /// assert_eq!(found.map(|v| v.val), Some(2));
+    /// assert_eq!(found.map(|v| v.value), Some(2));
     /// ```
     pub fn get_by_index(
         &mut self,
@@ -1253,7 +1254,7 @@ impl<T, U: Op<Value = T>> Tree<U> {
 /// use intrusive_splay_tree::{Tree, Op, Navi2};
 ///
 /// struct Value {
-///     val: i32,
+///     value: i32,
 ///     sum: i32,
 /// }
 ///
@@ -1261,15 +1262,15 @@ impl<T, U: Op<Value = T>> Tree<U> {
 /// impl Op for MyOp {
 ///     type Value = Value;
 ///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
-///         root.sum = root.val;
+///         root.sum = root.value;
 ///         if let Some(l) = left { root.sum += l.sum; }
 ///         if let Some(r) = right { root.sum += r.sum; }
 ///     }
 /// }
 ///
 /// let mut tree = Tree::<MyOp>::new();
-/// tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
-/// tree.insert(Value { val: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
+/// tree.insert(Value { value: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
+/// tree.insert(Value { value: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
 /// assert_eq!(tree.fold_all().unwrap().sum, 8);
 /// ```
 pub trait Op: Sized {
