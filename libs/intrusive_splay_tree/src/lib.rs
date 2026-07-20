@@ -43,7 +43,7 @@
 //! tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
 //!
 //! // Query the entire tree's aggregate
-//! assert_eq!(tree.fold_all().unwrap().sum, 15);
+//! assert_eq!(tree.fold().unwrap().sum, 15);
 //! ```
 //!
 //! # Core Items
@@ -61,7 +61,7 @@
 use std::{
     borrow::Borrow,
     cmp::Ordering,
-    ops::{Bound, Deref, RangeBounds},
+    ops::{Bound, Deref, DerefMut, RangeBounds},
     ptr::NonNull,
 };
 
@@ -273,8 +273,8 @@ impl Navi3 {
 ///     ],
 /// );
 ///
-/// // Folding. Only overall aggregation (`fold_all()`) is available.
-/// assert_eq!(tree.fold_all().unwrap().sum, 34);
+/// // Folding. Only overall aggregation (`fold()`) is available.
+/// assert_eq!(tree.fold().unwrap().sum, 34);
 /// ```
 pub struct Tree<O: Op> {
     root: Onn<O>,
@@ -291,76 +291,38 @@ impl<O: Op> Drop for Tree<O> {
         free_subtree(self.root);
     }
 }
-/// A guard that temporarily exposes an aggregated value over a tree range.
-///
-/// `FoldEntry` uses the RAII pattern: it holds a reference to the aggregated value
-/// computed over a range of nodes. When dropped, it automatically restores the tree
-/// to its original state by merging the split parts back together.
-///
-/// Access the aggregated value via `Deref` coercion (deref to `O::Value`).
-///
-/// # Examples
-///
-/// ```
-/// use intrusive_splay_tree::{Tree, Op};
-///
-/// struct Value { value: i32, sum: i32 }
-/// enum O {}
-/// impl Op for O {
-///     type Value = Value;
-///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-///         n.sum = n.value;
-///         if let Some(l) = l { n.sum += l.sum; }
-///         if let Some(r) = r { n.sum += r.sum; }
-///     }
-/// }
-///
-/// let mut tree = Tree::<O>::new();
-/// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
-///
-/// // FoldEntry automatically restores the tree when dropped
-/// if let Some(entry) = tree.fold_by_key(1..10, |v| v.value) {
-///     println!("Sum: {}", entry.sum);
-///     // Tree is restored here when `entry` is dropped
-/// }
-/// ```
-pub struct FoldEntry<'a, O: Op> {
+
+pub struct RangeEntry<'a, O: Op> {
     tree: &'a mut Tree<O>,
     left: Onn<O>,
-    center: Nn<O>,
+    center: Tree<O>,
     right: Onn<O>,
 }
-impl<'a, O: Op> FoldEntry<'a, O> {
-    fn maybe_new(
-        tree: &'a mut Tree<O>,
-        left: Onn<O>,
-        center: Onn<O>,
-        right: Onn<O>,
-    ) -> Option<Self> {
-        match center {
-            None => {
-                tree.root = merge2(left, right);
-                None
-            }
-            Some(center) => Some(Self {
-                tree,
-                left,
-                center,
-                right,
-            }),
+impl<'a, O: Op> RangeEntry<'a, O> {
+    fn new(tree: &'a mut Tree<O>, left: Onn<O>, center: Onn<O>, right: Onn<O>) -> Self {
+        Self {
+            tree,
+            left,
+            center: Tree { root: center },
+            right,
         }
     }
 }
-impl<O: Op> Deref for FoldEntry<'_, O> {
-    type Target = O::Value;
+impl<O: Op> Deref for RangeEntry<'_, O> {
+    type Target = Tree<O>;
 
     fn deref(&self) -> &Self::Target {
-        unsafe { &(*self.center.as_ptr()).value }
+        &self.center
     }
 }
-impl<O: Op> Drop for FoldEntry<'_, O> {
+impl<O: Op> DerefMut for RangeEntry<'_, O> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.center
+    }
+}
+impl<O: Op> Drop for RangeEntry<'_, O> {
     fn drop(&mut self) {
-        self.tree.root = merge2(merge2(self.left, Some(self.center)), self.right);
+        self.tree.root = merge2(merge2(self.left, self.center.root.take()), self.right);
     }
 }
 
@@ -385,95 +347,11 @@ impl<T, O: Op<Value = T>> Tree<O> {
         Self::default()
     }
 
-    /// Computes the aggregated value over a range using custom closures to define the boundaries.
-    ///
-    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value.
-    /// The tree is temporarily modified (split) during the operation but is automatically
-    /// restored when the `FoldEntry` is dropped (RAII pattern).
-    ///
-    /// # Arguments
-    ///
-    /// * `start` - Closure guiding traversal to find the left boundary (inclusive)
-    /// * `end` - Closure guiding traversal to find the right boundary (exclusive)
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi2};
-    ///
-    /// struct Value { value: i32, sum: i32 }
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-    ///         n.sum = n.value;
-    ///         if let Some(l) = l { n.sum += l.sum; }
-    ///         if let Some(r) = r { n.sum += r.sum; }
-    ///     }
-    /// }
-    ///
-    /// let mut tree = Tree::<O>::new();
-    /// tree.insert_lower_bound_by_key(Value { value: 5, sum: 5 }, |v| v.value);
-    /// tree.insert_lower_bound_by_key(Value { value: 10, sum: 10 }, |v| v.value);
-    ///
-    /// // Note: fold operates on ranges defined by custom navigation closures
-    /// // It temporarily splits and returns the middle portion
-    /// let result = tree.fold_all();
-    /// assert_eq!(result.map(|e| e.sum), Some(15));
-    /// ```
-    pub fn fold(
-        &mut self,
-        start: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
-        end: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2,
-    ) -> Option<FoldEntry<'_, O>> {
-        let (mut lc, right) = split2(self.root.take(), end);
-        let (left, center) = split2(lc.take(), start);
-        FoldEntry::maybe_new(self, left, center, right)
-    }
-
-    /// Computes the aggregated value over a key range.
-    ///
-    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value
-    /// for the specified key range. The tree is temporarily modified but is automatically
-    /// restored when the `FoldEntry` is dropped.
-    ///
-    /// # Arguments
-    ///
-    /// * `range` - The range bounds (using standard Rust `RangeBounds`)
-    /// * `f` - Function extracting the key from each node's value
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
-    ///
-    /// struct Value { key: i32, sum: i32 }
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-    ///         n.sum = n.key;
-    ///         if let Some(l) = l { n.sum += l.sum; }
-    ///         if let Some(r) = r { n.sum += r.sum; }
-    ///     }
-    /// }
-    ///
-    /// let mut tree = Tree::<O>::new();
-    /// for key in 10..18 {
-    ///   tree.insert_lower_bound_by_key(Value { key, sum: key }, |v| v.key);
-    /// }
-    ///
-    /// let result = tree.fold_by_key(13..16, |v| v.key);
-    /// assert_eq!(result.map(|e| e.sum), Some(13 + 14 + 15));
-    /// ```
-    pub fn fold_by_key<K, Q: ?Sized + Ord>(
+    pub fn range_by_key<K: Borrow<Q>, Q: ?Sized + Ord>(
         &mut self,
         range: impl RangeBounds<Q>,
         mut f: impl FnMut(&T) -> K,
-    ) -> Option<FoldEntry<'_, O>>
-    where
-        K: Borrow<Q>,
-    {
+    ) -> RangeEntry<'_, O> {
         let root = self.root.take();
         let (lc, right) = match range.end_bound() {
             Bound::Unbounded => (root, None),
@@ -485,7 +363,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
             }),
         };
         let (left, center) = match range.start_bound() {
-            Bound::Unbounded => (None, root),
+            Bound::Unbounded => (None, lc),
             Bound::Included(key) => split2(lc, |center, _, _| {
                 Navi2::lower_bound_by_key(key, center, &mut f)
             }),
@@ -493,57 +371,14 @@ impl<T, O: Op<Value = T>> Tree<O> {
                 Navi2::upper_bound_by_key(key, center, &mut f)
             }),
         };
-        FoldEntry::maybe_new(self, left, center, right)
+        RangeEntry::new(self, left, center, right)
     }
 
-    /// Computes the aggregated value over an index range.
-    ///
-    /// Returns a [`FoldEntry`] that provides a reference to the aggregated value
-    /// for elements at the specified index positions. The tree is temporarily modified
-    /// but is automatically restored when the `FoldEntry` is dropped.
-    ///
-    /// # Arguments
-    ///
-    /// * `range` - The range bounds for indices (0-based)
-    /// * `size` - Function computing the subtree size for each node
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi2};
-    ///
-    /// struct Value { value: i32, size: usize, sum: i32 }
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(n: &mut Value, l: Option<&Value>, r: Option<&Value>) {
-    ///         n.size = 1;
-    ///         n.sum = n.value;
-    ///         if let Some(l) = l {
-    ///             n.size += l.size;
-    ///             n.sum += l.sum;
-    ///         }
-    ///         if let Some(r) = r {
-    ///             n.size += r.size;
-    ///             n.sum += r.sum;
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// let mut tree = Tree::<O>::new();
-    /// let values = [8, 1, 6, 3, 5, 4, 7];
-    /// for &value in &values {
-    ///     tree.push_back(Value { value, size: 1, sum: value });
-    /// }
-    ///
-    /// let result = tree.fold_by_index(3..6, |v| v.size);
-    /// assert_eq!(result.map(|e| e.sum), Some(3 + 5 + 4));
-    /// ```
-    pub fn fold_by_index(
+    pub fn range_by_index(
         &mut self,
         range: impl RangeBounds<usize>,
         mut size: impl FnMut(&T) -> usize,
-    ) -> Option<FoldEntry<'_, O>> {
+    ) -> RangeEntry<'_, O> {
         let root = self.root.take();
         let (root, right) = match range.end_bound() {
             Bound::Unbounded => (root, None),
@@ -563,42 +398,10 @@ impl<T, O: Op<Value = T>> Tree<O> {
                 Navi2::upper_bound_by_index(&mut index, &mut size, left)
             }),
         };
-        FoldEntry::maybe_new(self, left, center, right)
+        RangeEntry::new(self, left, center, right)
     }
 
-    /// Returns a reference to the aggregated value of the entire tree, computed via [`Op::update`], if the tree is non-empty.
-    //
-    /// # Examples
-    ///
-    /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi2};
-    ///
-    /// struct Value {
-    ///     value: i32,
-    ///     sum: i32,
-    /// }
-    ///
-    /// enum O {}
-    /// impl Op for O {
-    ///     type Value = Value;
-    ///     fn update(root: &mut Value, left: Option<&Value>, right: Option<&Value>) {
-    ///         root.sum = root.value;
-    ///         if let Some(left) = left {
-    ///             root.sum += left.sum;
-    ///         }
-    ///         if let Some(right) = right {
-    ///             root.sum += right.sum;
-    ///         }
-    ///     }
-    /// }
-    ///
-    /// let mut tree = Tree::<O>::new();
-    /// for &value in &[10, 20, 30] {
-    ///     tree.push_back(Value { value, sum: value });
-    /// }
-    /// assert_eq!(tree.fold_all().unwrap().sum, 60);
-    /// ```
-    pub fn fold_all(&self) -> Option<&T> {
+    pub fn fold(&self) -> Option<&T> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).value) }
     }
 
@@ -1378,7 +1181,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
 /// let mut tree = Tree::<MyOp>::new();
 /// tree.insert(Value { value: 5, sum: 5 }, |_, _, _| Navi2::GoDownRight);
 /// tree.insert(Value { value: 3, sum: 3 }, |_, _, _| Navi2::GoDownRight);
-/// assert_eq!(tree.fold_all().unwrap().sum, 8);
+/// assert_eq!(tree.fold().unwrap().sum, 8);
 /// ```
 pub trait Op: Sized {
     type Value;

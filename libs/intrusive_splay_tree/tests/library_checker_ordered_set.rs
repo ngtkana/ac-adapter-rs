@@ -1,4 +1,4 @@
-use intrusive_splay_tree::{Navi3, Op, Tree};
+use intrusive_splay_tree::{Op, Tree};
 
 struct Value {
     key: u32,
@@ -35,28 +35,17 @@ fn query_2_nth(tree: &mut Tree<O>, index: usize) -> Option<u32> {
 }
 
 fn query_3_count_le(tree: &mut Tree<O>, key: u32) -> usize {
-    let mut tail = tree.split_off_upper_bound_by_key(&key, |value| value.key);
-    let result = tree.fold_all().map_or(0, |root| root.size);
-    tree.append(&mut tail);
-    result
+    tree.range_by_key(..=key, |n| n.key)
+        .fold()
+        .map_or(0, |e| e.size)
 }
 
 fn query_4_pred(tree: &mut Tree<O>, key: u32) -> Option<u32> {
-    let mut tail = tree.split_off_upper_bound_by_key(&key, |value| value.key);
-    let result = tree
-        .get(|_, _, right| if right.is_some() { Navi3::GoDownRight } else { Navi3::Found })
-        .map(|value| value.key);
-    tree.append(&mut tail);
-    result
+    tree.range_by_key(..=key, |n| n.key).back().map(|e| e.key)
 }
 
 fn query_5_succ(tree: &mut Tree<O>, key: u32) -> Option<u32> {
-    let mut tail = tree.split_off_lower_bound_by_key(&key, |value| value.key);
-    let result = tail
-        .get(|_, left, _| if left.is_some() { Navi3::GoDownLeft } else { Navi3::Found })
-        .map(|value| value.key);
-    tree.append(&mut tail);
-    result
+    tree.range_by_key(key.., |n| n.key).front().map(|e| e.key)
 }
 
 mod random_tests {
@@ -98,8 +87,8 @@ mod random_tests {
                                 index, got, expected
                             );
                             eprintln!(
-                                "tree.fold_all().map(|v| v.size): {:?}",
-                                tree.fold_all().map(|v| v.size)
+                                "tree.fold().map(|v| v.size): {:?}",
+                                tree.fold().map(|v| v.size)
                             );
                             eprintln!("tree.collect().len(): {}", tree.collect().len());
                             eprintln!(
@@ -157,7 +146,7 @@ mod random_tests {
                 }
 
                 // 集約値 (size) の整合性
-                match tree.fold_all() {
+                match tree.fold() {
                     Some(root) => assert_eq!(root.size, model.len()),
                     None => assert!(model.is_empty()),
                 }
