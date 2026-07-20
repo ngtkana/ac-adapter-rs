@@ -1,4 +1,4 @@
-use intrusive_splay_tree::{Navi3, Tree, Update};
+use intrusive_splay_tree::{Navi3, Tree, Op};
 
 struct Value {
     key: u32,
@@ -6,7 +6,7 @@ struct Value {
 }
 
 enum U {}
-impl Update for U {
+impl Op for U {
     type Value = Value;
 
     fn update(center: &mut Self::Value, left: Option<&Self::Value>, right: Option<&Self::Value>) {
