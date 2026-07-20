@@ -15,9 +15,53 @@ Your task is to generate high-quality doc comments for a Rust library following 
 
 The user will specify:
 - **Library path**: e.g., `libs/fenwick/src/lib.rs` or `src/lib.rs`
-- **Optional notes**: Any specific documentation patterns or context
+- **Optional notes**: Any specific documentation patterns, style preferences, or context
+
+Note: Crate-level documentation (`//!`) is **always** included; the user does not need to request it.
 
 ## Process
+
+### 1. Crate-level Documentation (always included)
+
+Add or update a `//!` module comment at the top of lib.rs with this structure:
+
+```rust
+//! One-line summary of what this crate does.
+//!
+//! Longer explanation of:
+//! - Primary use cases (When would you use this?)
+//! - What problems it solves
+//! - Key features or capabilities
+//!
+//! # Examples
+//!
+//! ```
+//! [Realistic example showing typical usage]
+//! ```
+//!
+//! # Module / Item Overview
+//!
+//! - [`NamedItem`]: Brief description of what this trait/struct is for
+//! - [`AnotherItem`]: ...
+//!
+//! # Complexity
+//!
+//! (Optional but useful for algorithm libraries)
+//! - Operation A: O(log n)
+//! - Operation B: O(1)
+```
+
+**Guidelines for crate-level docs:**
+- Keep it 100–200 lines (high-level overview, not detailed)
+- Focus on "When & Why" not "How" (leave "How" to item-level docs)
+- Include one concrete, runnable example
+- List key items and what they're for
+- For algorithm/data structure libraries, include complexity info
+- Avoid overwhelming detail — readers should quickly grasp purpose and scope
+
+**If crate-level docs already exist:** Improve and refine them to meet these standards rather than replacing. Keep the existing structure if it's sound; polish clarity, add missing sections (Examples, Complexity if appropriate), and ensure tone is consistent with Std library style.
+
+### 2. Item-level Documentation
 
 1. **Read the library file(s)** — understand the public API structure
 2. **Identify all pub items**:
@@ -142,13 +186,29 @@ Good: Full struct creation + method call with clear intent
 
 ## Output
 
-Return the **full source file** with all doc comments added. Use the standard Rust doc comment syntax `///` for item documentation and `//!` for module-level documentation (if needed).
+Return the **full source file** with:
+1. **Crate-level documentation** (`//!` at the top) — newly written or refined
+2. **Item-level documentation** (`///` on each pub item) — newly written or refined
 
-If the file already has some doc comments, **improve and expand them** to meet these standards.
+Use standard Rust doc comment syntax throughout.
+
+**If documentation already exists:** Do not replace it wholesale. Instead, treat the existing docs as a foundation and:
+- Refine unclear explanations
+- Expand to meet the standards (add missing Examples, parameters, edge cases)
+- Improve tone and clarity to match Std library style
+- Remove redundant or outdated information
 
 ## Quality Checklist
 
-Before returning the result:
+### Crate-level (if applicable)
+- [ ] One-line summary at the top
+- [ ] "When & Why" section explaining use cases
+- [ ] At least one runnable example
+- [ ] Brief overview of main items
+- [ ] (Optional) Complexity info for algorithm libraries
+- [ ] Total length: 100–200 lines
+
+### Item-level
 - [ ] Every pub trait has a doc comment with Examples
 - [ ] Every pub struct has a doc comment with Examples
 - [ ] Every pub enum has a doc comment with Examples (variants excluded unless special)
