@@ -4,6 +4,14 @@ struct Value {
     key: u32,
     size: usize,
 }
+impl Value {
+    fn key(&self) -> u32 {
+        self.key
+    }
+    fn size(&self) -> usize {
+        self.size
+    }
+}
 
 enum O {}
 impl Op for O {
@@ -21,31 +29,30 @@ impl Op for O {
 }
 
 fn query_0_insert(tree: &mut Tree<O>, key: u32) {
-    tree.remove_by_key(&key, |value| value.key);
-    tree.insert_lower_bound_by_key(Value { key, size: 1 }, |value| value.key)
+    tree.remove_by_key(&key, Value::key);
+    tree.insert_lower_bound_by_key(Value { key, size: 1 }, Value::key)
 }
 
 fn query_1_remove(tree: &mut Tree<O>, key: u32) {
-    tree.remove_by_key(&key, |value| value.key);
+    tree.remove_by_key(&key, Value::key);
 }
 
 fn query_2_nth(tree: &mut Tree<O>, index: usize) -> Option<u32> {
-    tree.get_by_index(index, |value| value.size)
-        .map(|value| value.key)
+    tree.get_by_index(index, Value::size).map(Value::key)
 }
 
 fn query_3_count_le(tree: &mut Tree<O>, key: u32) -> usize {
-    tree.range_by_key(..=key, |n| n.key)
+    tree.range_by_key(..=key, Value::key)
         .fold()
-        .map_or(0, |e| e.size)
+        .map_or(0, Value::size)
 }
 
 fn query_4_pred(tree: &mut Tree<O>, key: u32) -> Option<u32> {
-    tree.range_by_key(..=key, |n| n.key).back().map(|e| e.key)
+    tree.range_by_key(..=key, Value::key).back().map(Value::key)
 }
 
 fn query_5_succ(tree: &mut Tree<O>, key: u32) -> Option<u32> {
-    tree.range_by_key(key.., |n| n.key).front().map(|e| e.key)
+    tree.range_by_key(key.., Value::key).front().map(Value::key)
 }
 
 mod random_tests {
@@ -87,14 +94,11 @@ mod random_tests {
                                 index, got, expected
                             );
                             eprintln!(
-                                "tree.fold().map(|v| v.size): {:?}",
-                                tree.fold().map(|v| v.size)
+                                "tree.fold().map(Value::size): {:?}",
+                                tree.fold().map(Value::size)
                             );
-                            eprintln!("tree.collect().len(): {}", tree.collect().len());
-                            eprintln!(
-                                "tree contents: {:?}",
-                                tree.collect().iter().map(|v| v.key).collect::<Vec<_>>()
-                            );
+                            eprintln!("tree.len(Value::size): {}", tree.len(Value::size));
+                            eprintln!("tree contents: {:?}", tree.collect(Value::key));
                         }
                         assert_eq!(got, expected);
                     }
@@ -127,10 +131,7 @@ mod random_tests {
                                 "succ({}) failed: got {:?}, expected {:?}",
                                 key, got, expected
                             );
-                            eprintln!(
-                                "tree contents: {:?}",
-                                tree.collect().iter().map(|v| v.key).collect::<Vec<_>>()
-                            );
+                            eprintln!("tree contents: {:?}", tree.collect(Value::key));
                             eprintln!(
                                 "model contents: {:?}",
                                 model.iter().copied().collect::<Vec<_>>()
@@ -152,7 +153,7 @@ mod random_tests {
                 }
 
                 // 全件一致
-                let collected: Vec<u32> = tree.collect().iter().map(|v| v.key).collect();
+                let collected: Vec<u32> = tree.collect(Value::key);
                 let expected: Vec<u32> = model.iter().copied().collect();
                 assert_eq!(collected, expected);
             }
