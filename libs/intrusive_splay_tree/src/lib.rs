@@ -470,16 +470,25 @@ impl<T, O: Op<Value = T>> Tree<O> {
     where
         K: Borrow<Q>,
     {
-        let (mut lc, right) = split2(self.root.take(), |center, _, _| match range.end_bound() {
-            Bound::Unbounded => Navi2::GoDownRight,
-            Bound::Included(key) => Navi2::upper_bound_by_key(key, center, &mut f),
-            Bound::Excluded(key) => Navi2::lower_bound_by_key(key, center, &mut f),
-        });
-        let (left, center) = split2(lc.take(), |center, _, _| match range.start_bound() {
-            Bound::Unbounded => Navi2::GoDownLeft,
-            Bound::Included(key) => Navi2::lower_bound_by_key(key, center, &mut f),
-            Bound::Excluded(key) => Navi2::upper_bound_by_key(key, center, &mut f),
-        });
+        let root = self.root.take();
+        let (lc, right) = match range.end_bound() {
+            Bound::Unbounded => (root, None),
+            Bound::Included(key) => split2(root, |center, _, _| {
+                Navi2::upper_bound_by_key(key, center, &mut f)
+            }),
+            Bound::Excluded(key) => split2(root, |center, _, _| {
+                Navi2::lower_bound_by_key(key, center, &mut f)
+            }),
+        };
+        let (left, center) = match range.start_bound() {
+            Bound::Unbounded => (None, root),
+            Bound::Included(key) => split2(lc, |center, _, _| {
+                Navi2::lower_bound_by_key(key, center, &mut f)
+            }),
+            Bound::Excluded(key) => split2(lc, |center, _, _| {
+                Navi2::upper_bound_by_key(key, center, &mut f)
+            }),
+        };
         FoldEntry::maybe_new(self, left, center, right)
     }
 
@@ -518,37 +527,38 @@ impl<T, O: Op<Value = T>> Tree<O> {
     /// }
     ///
     /// let mut tree = Tree::<O>::new();
-    /// let values = [8, 1, 6, 3, 5, 3, 7];
+    /// let values = [8, 1, 6, 3, 5, 4, 7];
     /// for &value in &values {
     ///     tree.push_back(Value { value, size: 1, sum: value });
     /// }
     ///
     /// let result = tree.fold_by_index(3..6, |v| v.size);
-    /// assert_eq!(result.map(|e| e.sum), Some(3 + 5 + 3));
+    /// assert_eq!(result.map(|e| e.sum), Some(3 + 5 + 4));
     /// ```
     pub fn fold_by_index(
         &mut self,
         range: impl RangeBounds<usize>,
         mut size: impl FnMut(&T) -> usize,
     ) -> Option<FoldEntry<'_, O>> {
-        let (mut lc, right) = split2(self.root.take(), |_, left, _| match range.end_bound() {
-            Bound::Unbounded => Navi2::GoDownRight,
-            Bound::Included(&(mut index)) => {
+        let root = self.root.take();
+        let (root, right) = match range.end_bound() {
+            Bound::Unbounded => (root, None),
+            Bound::Included(&(mut index)) => split2(root, |_, left, _| {
                 Navi2::upper_bound_by_index(&mut index, &mut size, left)
-            }
-            Bound::Excluded(&(mut index)) => {
+            }),
+            Bound::Excluded(&(mut index)) => split2(root, |_, left, _| {
                 Navi2::lower_bound_by_index(&mut index, &mut size, left)
-            }
-        });
-        let (left, center) = split2(lc.take(), |_, left, _| match range.start_bound() {
-            Bound::Unbounded => Navi2::GoDownLeft,
-            Bound::Included(&(mut index)) => {
+            }),
+        };
+        let (left, center) = match range.start_bound() {
+            Bound::Unbounded => (None, root),
+            Bound::Included(&(mut index)) => split2(root, |_, left, _| {
                 Navi2::lower_bound_by_index(&mut index, &mut size, left)
-            }
-            Bound::Excluded(&(mut index)) => {
+            }),
+            Bound::Excluded(&(mut index)) => split2(root, |_, left, _| {
                 Navi2::upper_bound_by_index(&mut index, &mut size, left)
-            }
-        });
+            }),
+        };
         FoldEntry::maybe_new(self, left, center, right)
     }
 
