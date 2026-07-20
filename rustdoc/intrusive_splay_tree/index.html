@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to use">When to use</a></li><li><a href="#how-it-works" title="How it works">How it works</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#core-items" title="Core Items">Core Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1411">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation.</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to use">When to use</a></li><li><a href="#how-it-works" title="How it works">How it works</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#core-items" title="Core Items">Core Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1389">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation.</p>
 <p>This crate provides a splay tree where you define the node structure and the aggregation logic
 via the <a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> trait. This allows efficient tree operations while computing arbitrary
 aggregate values (sum, min, max, etc.) on subtrees.</p>
@@ -53,15 +53,15 @@ which is called whenever the tree structure changes.</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>intrusive_splay_tree::{Tree, Op};
 
-<span class="kw">struct </span>Value { value: i32, sum: i32 }
-<span class="kw">impl </span>Value {
+<span class="kw">struct </span>Store { value: i32, sum: i32 }
+<span class="kw">impl </span>Store {
     <span class="kw">fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i32 { <span class="self">self</span>.value }
 }
 
 <span class="kw">enum </span>O {}
 <span class="kw">impl </span>Op <span class="kw">for </span>O {
-    <span class="kw">type </span>Value = Value;
-    <span class="kw">fn </span>update(node: <span class="kw-2">&amp;mut </span>Value, left: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Value&gt;, right: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Value&gt;) {
+    <span class="kw">type </span>Store = Store;
+    <span class="kw">fn </span>update(node: <span class="kw-2">&amp;mut </span>Store, left: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Store&gt;, right: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Store&gt;) {
         node.sum = node.value;
         <span class="kw">if let </span><span class="prelude-val">Some</span>(l) = left { node.sum += l.sum; }
         <span class="kw">if let </span><span class="prelude-val">Some</span>(r) = right { node.sum += r.sum; }
@@ -69,8 +69,8 @@ which is called whenever the tree structure changes.</p>
 }
 
 <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;O&gt;::new();
-tree.insert_lower_bound_by_key(Value { value: <span class="number">10</span>, sum: <span class="number">10 </span>}, Value::value);
-tree.insert_lower_bound_by_key(Value { value: <span class="number">5</span>, sum: <span class="number">5 </span>}, Value::value);
+tree.insert_lower_bound_by_key(Store { value: <span class="number">10</span>, sum: <span class="number">10 </span>}, Store::value);
+tree.insert_lower_bound_by_key(Store { value: <span class="number">5</span>, sum: <span class="number">5 </span>}, Store::value);
 
 <span class="comment">// Query the entire tree's aggregate
 </span><span class="macro">assert_eq!</span>(tree.fold().unwrap().sum, <span class="number">15</span>);</code></pre></div>
