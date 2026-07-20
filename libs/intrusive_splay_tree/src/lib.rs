@@ -1,11 +1,91 @@
-//! Intrusive spaly tree
+//! An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation.
+//!
+//! This crate provides a splay tree where you define the node structure and the aggregation logic
+//! via the [`Update`] trait. This allows efficient tree operations while computing arbitrary
+//! aggregate values (sum, min, max, etc.) on subtrees.
+//!
+//! # When to use
+//!
+//! Use this crate when you need:
+//! - A self-balancing binary search tree with O(log n) amortized operations
+//! - Flexible control over node values and tree aggregates
+//! - Frequent insertions, deletions, and queries on the same dataset
+//! - Ordered access to elements (e.g., sorted ranges or k-th element queries)
+//!
+//! # How it works
+//!
+//! Insert and remove operations guide traversal via a closure that compares at each node.
+//! The tree rebalances via **splaying**: moving the accessed node to the root.
+//! This is particularly efficient when accessing the same or nearby nodes repeatedly.
+//!
+//! You define aggregation (e.g., sum of values) by implementing the [`Update`] trait,
+//! which is called whenever the tree structure changes.
+//!
+//! # Examples
+//!
+//! ```
+//! use intrusive_splay_tree::{Tree, Update, Navi2};
+//!
+//! struct Value { val: i32, sum: i32 }
+//!
+//! enum U {}
+//! impl Update for U {
+//!     type Value = Value;
+//!     fn update(node: &mut Value, left: Option<&Value>, right: Option<&Value>) {
+//!         node.sum = node.val;
+//!         if let Some(l) = left { node.sum += l.sum; }
+//!         if let Some(r) = right { node.sum += r.sum; }
+//!     }
+//! }
+//!
+//! let mut tree = Tree::<U>::new();
+//! tree.insert(Value { val: 10, sum: 10 }, |_, _, _| Navi2::GoDownRight);
+//! tree.insert(Value { val: 5, sum: 5 }, |_, _, _| Navi2::GoDownLeft);
+//!
+//! // Query the entire tree's aggregate
+//! assert_eq!(tree.fold_all().unwrap().sum, 15);
+//! ```
+//!
+//! # Core Items
+//!
+//! - [`Tree<U>`]: The main splay tree structure
+//! - [`Update`]: Trait for defining aggregation logic
+//! - [`Navi2`]: Navigation enum for insert/split operations (never-terminating search)
+//! - [`Navi3`]: Navigation enum for remove/get operations (can terminate early)
+//! - [`Node<U>`]: A tree node (exposed for accessing subtree metadata during searches)
+//!
+//! # Complexity
+//!
+//! All operations (insert, remove, get, split, merge) are **O(log n) amortized**.
+//! Splaying ensures that frequently accessed elements are brought near the root.
 
 use std::{borrow::Borrow, cmp::Ordering, ptr::NonNull};
 
 type NN<U> = NonNull<Node<U>>;
 type ONN<U> = Option<NonNull<Node<U>>>;
 
-/// An enum used in a binary search that never stops, indicating whether to move left or right. This is used in [`insert`](Tree::insert).
+/// A navigation direction for binary searches that always progress (never terminate early).
+///
+/// This enum is used by [`insert`](Tree::insert), [`split_off`](Tree::split_off),
+/// and related operations. Since the search continues until hitting a leaf,
+/// you always end up inserting or splitting at a specific location.
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Tree, Update, Navi2};
+///
+/// enum U {}
+/// impl Update for U {
+///     type Value = i32;
+///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+/// }
+///
+/// let mut tree = Tree::<U>::new();
+/// tree.insert(5, |center, _, _| {
+///     if 5 < *center { Navi2::GoDownLeft } else { Navi2::GoDownRight }
+/// });
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Navi2 {
     GoDownLeft,
@@ -44,7 +124,34 @@ impl Navi2 {
     }
 }
 
-/// An enum indicating whether to proceed left or right during a binary search that might terminate early. This is used in [`remove`](Tree::remove).
+/// A navigation direction for binary searches that can terminate early upon finding a target.
+///
+/// This enum is used by [`remove`](Tree::remove), [`get`](Tree::get),
+/// and related operations. It allows you to communicate whether the current node is the target
+/// or whether to continue searching left or right.
+///
+/// # Examples
+///
+/// ```
+/// use intrusive_splay_tree::{Tree, Update, Navi3};
+///
+/// enum U {}
+/// impl Update for U {
+///     type Value = i32;
+///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+/// }
+///
+/// let mut tree = Tree::<U>::new();
+/// tree.insert_lower_bound_by_key(5, |v| *v);
+/// tree.insert_lower_bound_by_key(3, |v| *v);
+///
+/// let removed = tree.remove(|center, _, _| {
+///     if 3 < *center { Navi3::GoDownLeft }
+///     else if 3 > *center { Navi3::GoDownRight }
+///     else { Navi3::Found }
+/// });
+/// assert_eq!(removed, Some(3));
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum Navi3 {
     GoDownLeft,
@@ -212,6 +319,34 @@ impl<T, U: Update<Value = T>> Tree<U> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).node_value) }
     }
 
+    /// Splits the tree using a custom closure to guide the split operation.
+    ///
+    /// The closure is called at each node to determine whether to descend left or right.
+    /// The tree is split so that this tree retains the left subtree and the returned tree
+    /// gets the right subtree at the split point.
+    ///
+    /// # Examples
+    ///
+    /// ```
+    /// use intrusive_splay_tree::{Tree, Update, Navi2};
+    ///
+    /// enum U {}
+    /// impl Update for U {
+    ///     type Value = i32;
+    ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
+    /// }
+    ///
+    /// let mut tree = Tree::<U>::new();
+    /// tree.insert_lower_bound_by_key(1, |v| *v);
+    /// tree.insert_lower_bound_by_key(5, |v| *v);
+    /// tree.insert_lower_bound_by_key(3, |v| *v);
+    ///
+    /// let mut right = tree.split_off(|center, _, _| {
+    ///     if *center < 3 { Navi2::GoDownRight } else { Navi2::GoDownLeft }
+    /// });
+    /// assert_eq!(tree.collect().len(), 1);
+    /// assert_eq!(right.collect().len(), 2);
+    /// ```
     pub fn split_off(&mut self, f: impl FnMut(&T, Option<&T>, Option<&T>) -> Navi2) -> Self {
         let (left, right) = split2(self.root.take(), f);
         self.root = left;
