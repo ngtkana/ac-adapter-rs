@@ -173,7 +173,11 @@ pub enum Navi3 {
     GoDownRight,
 }
 impl Navi3 {
-    fn at<T>(index: &mut usize, size: &mut impl FnMut(&T) -> usize, left: Option<&T>) -> Self {
+    fn by_index<T>(
+        index: &mut usize,
+        size: &mut impl FnMut(&T) -> usize,
+        left: Option<&T>,
+    ) -> Self {
         let lsize = left.map_or(0, size);
         match (*index).cmp(&lsize) {
             Ordering::Less => Self::GoDownLeft,
@@ -1038,7 +1042,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
         mut index: usize,
         mut size: impl FnMut(&T) -> usize,
     ) -> Option<T> {
-        self.remove(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
+        self.remove(|_center, left, _right| Navi3::by_index(&mut index, &mut size, left))
     }
 
     /// Removes a node by extracting a key from each node and comparing with a probe.
@@ -1216,7 +1220,7 @@ impl<T, O: Op<Value = T>> Tree<O> {
         mut index: usize,
         mut size: impl FnMut(&T) -> usize,
     ) -> Option<&T> {
-        self.get(|_center, left, _right| Navi3::at(&mut index, &mut size, left))
+        self.get(|_center, left, _right| Navi3::by_index(&mut index, &mut size, left))
     }
 
     /// Retrieves a reference to a node's value by extracting a key and comparing.
