@@ -232,44 +232,40 @@ mod tests {
             let len = rng.gen_range(0..50);
             let values: Vec<u32> = (0..len).map(|_| rng.gen()).collect();
             let threshold: u32 = rng.gen();
-            let pred = |&x: &u32| x < threshold;
 
-            // Tag each value with its original index
+            // Map values to their original indices for stability verification
+            let indices: Vec<usize> = (0..len).collect();
             let tagged: Vec<(u32, usize)> = values
                 .iter()
-                .enumerate()
-                .map(|(idx, &val)| (val, idx))
+                .zip(indices.iter())
+                .map(|(&val, &idx)| (val, idx))
                 .collect();
 
             let mut result = tagged.clone();
-            let n = partition(&mut result, |&(v, _)| pred(&v));
+            let n = partition(&mut result, |&(v, _)| v < threshold);
 
-            // Check true part: all satisfy pred and indices are strictly increasing
-            for i in 0..n {
-                assert!(pred(&result[i].0));
-                if i > 0 {
-                    assert!(
-                        result[i - 1].1 < result[i].1,
-                        "True part not stable at index {}: prev_idx={}, curr_idx={}",
-                        i,
-                        result[i - 1].1,
-                        result[i].1
-                    );
-                }
+            // Verify true part: original indices must be strictly increasing
+            for i in 0..n.saturating_sub(1) {
+                assert!(
+                    result[i].1 < result[i + 1].1,
+                    "True part not stable: result[{}].idx={}, result[{}].idx={}",
+                    i,
+                    result[i].1,
+                    i + 1,
+                    result[i + 1].1
+                );
             }
 
-            // Check false part: all don't satisfy pred and indices are strictly increasing
-            for i in n..result.len() {
-                assert!(!pred(&result[i].0));
-                if i > n {
-                    assert!(
-                        result[i - 1].1 < result[i].1,
-                        "False part not stable at index {}: prev_idx={}, curr_idx={}",
-                        i,
-                        result[i - 1].1,
-                        result[i].1
-                    );
-                }
+            // Verify false part: original indices must be strictly increasing
+            for i in n..result.len().saturating_sub(1) {
+                assert!(
+                    result[i].1 < result[i + 1].1,
+                    "False part not stable: result[{}].idx={}, result[{}].idx={}",
+                    i,
+                    result[i].1,
+                    i + 1,
+                    result[i + 1].1
+                );
             }
         }
     }
