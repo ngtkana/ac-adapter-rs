@@ -14,6 +14,7 @@ Based on the implementation patterns from _Test Driven Development_ (Kent Beck),
    - The test defines *what* the code should do
    - Expected values come from the specification, not from running the code
    - Failure confirms the test is meaningful
+   - **Doc comments and doctests count as tests.** For new `pub` items, write the doc comment (usage, complexity, invariants) and its `# Examples` doctest(s) *before* the implementation body. Doctests are compiled and executed by `cargo test`, so they are bound by the same rule: expected values come from the specification, not from running the code. Confirm the doctest fails first (compile error, or a runtime panic via `todo!()`) before writing the implementation.
 
 2. **Green Phase**: Write minimal code to make the test pass
    - No more, no less
