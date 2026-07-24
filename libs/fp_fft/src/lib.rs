@@ -238,6 +238,64 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     }
 }
 
+/// Applies inverse FFT to the entire array, then forward FFT independently to each half.
+///
+/// For an input frequency-domain array $(X_0, X_1, \ldots, X_{n-1})$, computes:
+/// - First: $(y_0, y_1, \ldots, y_{n-1}) = \text{IFFT}(X)$ (inverse transform of entire array)
+/// - Then: Split into two halves and apply FFT to each:
+///   - $z_{\text{lower}} = \text{FFT}(y_0, \ldots, y_{n/2-1})$
+///   - $z_{\text{upper}} = \text{FFT}(y_{n/2}, \ldots, y_{n-1})$
+/// - Output: $(z_{\text{lower}}, z_{\text{upper}})$
+///
+/// This operation is useful for certain divide-and-conquer FFT algorithms and polynomial computations.
+///
+/// # Preconditions
+///
+/// - Array length must be a power of two
+/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
+///
+/// # Time Complexity
+///
+/// $\mathcal{F}_n$ where $n = $ `items.len()`. Specifically: one length-$n$ IFFT and two length-$n/2$ FFTs.
+///
+/// # Examples
+///
+/// ```
+/// use fp::{Fp, fp};
+/// use fp_fft::{fft, split_fft};
+///
+/// const P: u64 = 998_244_353;
+///
+/// let mut data: [Fp<P>; 8] = [fp(1), fp(2), fp(3), fp(4), fp(5), fp(6), fp(7), fp(8)];
+/// let mut a = data[..4].to_vec();
+/// let mut b = data[4..].to_vec();
+///
+/// fft(&mut data);
+/// fft(&mut a);
+/// fft(&mut b);
+///
+/// split_fft(&mut data);
+///
+/// assert_eq!(&data[..4], &*a);
+/// assert_eq!(&data[4..], &*b);
+/// ```
+pub fn split_fft<const P: u64>(items: &mut [Fp<P>]) {
+    let len = items.len();
+    let (a, b) = items.split_at_mut(len / 2);
+    ifft(b);
+    let w = Diroot::BACKWARD[len.trailing_zeros() as usize];
+    let mut coeff = fp(1);
+    for b in &mut *b {
+        *b *= coeff;
+        coeff *= w;
+    }
+    fft(b);
+    let inv2 = fp(2).inv();
+    for (a, b) in a.iter_mut().zip(b) {
+        [*a, *b] = [(*a + *b) * inv2, (*a - *b) * inv2];
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
