@@ -129,6 +129,17 @@ impl<const P: u64> Fp<P> {
         Self { value: value % P }
     }
 
+    pub const fn add_assign(&mut self, rhs: Self) {
+        self.value += rhs.value;
+        if P <= self.value {
+            self.value -= P;
+        }
+    }
+
+    pub const fn value(self) -> u64 {
+        self.value
+    }
+
     /// Multiplies two elements: (self × rhs) mod P.
     ///
     /// Time complexity: O(1)
@@ -312,10 +323,7 @@ impl<const P: u64> std::ops::Add for Fp<P> {
 }
 impl<const P: u64> std::ops::AddAssign for Fp<P> {
     fn add_assign(&mut self, rhs: Self) {
-        self.value += rhs.value;
-        if P <= self.value {
-            self.value -= P;
-        }
+        self.add_assign(rhs);
     }
 }
 impl<const P: u64> std::ops::Sub for Fp<P> {

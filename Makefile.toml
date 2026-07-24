@@ -46,3 +46,11 @@ script = '''
 cd docs && python3 -m http.server 8000
 '''
 description = "Serve documentation locally at http://localhost:8000"
+
+[tasks.hooks-install]
+script = '''
+chmod +x .githooks/pre-commit
+git config core.hooksPath .githooks
+echo "Pre-commit hooks installed (core.hooksPath = .githooks)"
+'''
+description = "Install local pre-commit git hooks"

@@ -1,0 +1,21 @@
+#!/bin/bash
+set -e
+
+echo "Running pre-commit checks..."
+
+echo "-> cargo fmt --check"
+cargo fmt --all -- --check || { echo "Format check failed. Run: cargo fmt --all"; exit 1; }
+
+echo "-> clippy"
+cargo make clippy || { echo "Clippy failed."; exit 1; }
+
+echo "-> doctest"
+cargo make test-doc || { echo "Doctests failed."; exit 1; }
+
+echo "-> test"
+cargo make test || { echo "Tests failed."; exit 1; }
+
+echo "-> doc"
+cargo make doc || { echo "Doc generation failed."; exit 1; }
+
+echo "All pre-commit checks passed."
