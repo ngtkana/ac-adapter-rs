@@ -171,7 +171,7 @@ impl<const P: u64> Fp<P> {
     /// let result = a.pow(10);  // 2^10 ≡ 1024 ≡ 15 (mod 1009)
     /// assert_eq!(result, fp::<P>(15));
     /// ```
-    pub const fn pow(mut self: Self, mut exp: u64) -> Self {
+    pub const fn pow(mut self, mut exp: u64) -> Self {
         if exp == 0 {
             return Self::new(1);
         }
@@ -344,6 +344,7 @@ impl<const P: u64> std::ops::MulAssign for Fp<P> {
         *self = *self * rhs;
     }
 }
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl<const P: u64> std::ops::Div for Fp<P> {
     type Output = Self;
     fn div(self, rhs: Self) -> Self::Output {
@@ -352,7 +353,7 @@ impl<const P: u64> std::ops::Div for Fp<P> {
 }
 impl<const P: u64> std::ops::DivAssign for Fp<P> {
     fn div_assign(&mut self, rhs: Self) {
-        *self = (*self) / rhs
+        *self = (*self) / rhs;
     }
 }
 
