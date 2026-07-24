@@ -1,0 +1,1 @@
+searchState.loadedDescShard("partition", 0, "Stable partition algorithm\nPartitions a mutable slice in-place, stably.")

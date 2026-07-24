@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["mod_inv"],"macro":["fp"],"struct":["Fp"]};
+window.SIDEBAR_ITEMS = {"fn":["fp","fpu"],"struct":["Fp"]};

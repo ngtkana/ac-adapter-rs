@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A library for modular arithmetic."><title>fp - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Prime field arithmetic for $𝔽_P$ modular computations."><title>fp - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,15 +32,47 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp/index.html">fp</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#macros">Crate Items</a></h3><ul class="block"><li><a href="#macros" title="Macros">Macros</a></li><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp/lib.rs.html#1-460">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A library for modular arithmetic.</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp/index.html">fp</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#features" title="Features">Features</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#safety" title="Safety">Safety</a></li><li><a href="#complexity-summary" title="Complexity Summary">Complexity Summary</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp/lib.rs.html#1-396">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Prime field arithmetic for $𝔽_P$ modular computations.</p>
+<p>This crate provides a fixed-size finite field implementation parameterized by a prime
+modulus <code>P</code>. It supports all standard arithmetic operations (addition, subtraction,
+multiplication, division, and negation) along with exponentiation and modular inverse
+computation. The implementation uses compile-time constants for the prime, making it
+efficient for competitive programming and mathematical algorithms.</p>
+<h2 id="features"><a class="doc-anchor" href="#features">§</a>Features</h2>
+<ul>
+<li>Basic arithmetic: addition, subtraction, multiplication, division, negation</li>
+<li>Fast exponentiation: binary exponentiation in $O(\log n)$ time</li>
+<li>Modular inverse: via extended Euclidean algorithm in $O(\log P)$ time</li>
+<li>Const-friendly: most operations can run at compile time</li>
+<li>Iterator support: <code>Sum</code> and <code>Product</code> traits for iterators</li>
+<li>Debug formatting: displays elements as rational approximations (simplified fractions)</li>
+</ul>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
-<span class="kw">type </span>Fp = fp::Fp&lt;<span class="number">998244353</span>&gt;;
-<span class="kw">let </span>a = Fp::new(<span class="number">3</span>);
-<span class="kw">let </span>b = Fp::new(<span class="number">4</span>);
-<span class="macro">assert_eq!</span>(a + b, Fp::new(<span class="number">7</span>));
-<span class="macro">assert_eq!</span>(a - b, Fp::new(<span class="number">998244352</span>));
-<span class="macro">assert_eq!</span>(a * b, Fp::new(<span class="number">12</span>));
-<span class="macro">assert_eq!</span>(a / b * b, Fp::new(<span class="number">3</span>));
-<span class="macro">assert_eq!</span>(a.pow(<span class="number">3</span>), Fp::new(<span class="number">27</span>));</code></pre></div>
-</div></details><h2 id="macros" class="section-header">Macros<a href="#macros" class="anchor">§</a></h2><dl class="item-table"><dt><a class="macro" href="macro.fp.html" title="macro fp::fp">fp</a></dt><dd>Constructs a new instance of <a href="struct.Fp.html" title="struct fp::Fp"><code>Fp</code></a></dd></dl><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fp.html" title="struct fp::Fp">Fp</a></dt><dd>$𝔽_p$.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.mod_inv.html" title="fn fp::mod_inv">mod_inv</a></dt><dd>Return the multiplicative inverse of <code>x</code> modulo <code>P</code>.</dd></dl></section></div></main></body></html>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::{fp, Fp};
+
+<span class="comment">// Operations in $𝔽_{1009}$
+</span><span class="kw">const </span>P: u64 = <span class="number">1009</span>;
+
+<span class="kw">let </span>a = fp::&lt;P&gt;(<span class="number">123</span>);
+<span class="kw">let </span>b = fp::&lt;P&gt;(<span class="number">456</span>);
+
+<span class="comment">// Arithmetic operations
+</span><span class="kw">let </span>sum = a + b;
+<span class="kw">let </span>product = a * b;
+<span class="kw">let </span>quotient = a / b;      <span class="comment">// $a \cdot b^{-1} \bmod P$
+
+// Exponentiation
+</span><span class="kw">let </span>power = a.pow(<span class="number">100</span>);    <span class="comment">// $a^{100} \bmod P$</span></code></pre></div>
+<h2 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h2>
+<p>This library assumes <code>P</code> is a prime number. If <code>P</code> is composite, modular inverse
+computation produces undefined results. Always verify that your constant parameter
+is prime.</p>
+<h2 id="complexity-summary"><a class="doc-anchor" href="#complexity-summary">§</a>Complexity Summary</h2>
+<ul>
+<li>Constructor: $O(1)$</li>
+<li>Addition/Subtraction: $O(1)$</li>
+<li>Multiplication/Division: $O(1)$</li>
+<li>Exponentiation: $O(\log n)$</li>
+<li>Modular inverse: $O(\log P)$</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fp.html" title="struct fp::Fp">Fp</a></dt><dd>An element of the prime field 𝔽_P = {0, 1, 2, …, P-1}.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.fp.html" title="fn fp::fp">fp</a></dt><dd>Constructs an element of $𝔽_P$ from a <code>u64</code> value.</dd><dt><a class="fn" href="fn.fpu.html" title="fn fp::fpu">fpu</a></dt><dd>Constructs an element of $𝔽_P$ from a <code>usize</code> value.</dd></dl></section></div></main></body></html>

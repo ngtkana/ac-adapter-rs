@@ -1,1 +1,0 @@
-searchState.loadedDescShard("fp_fft", 0, "A primitive root of unity.\nA primitive root of unity.\nMultiplies two polynomials.\nFast Fourier transform.\nInverse fast Fourier transform.\nMultiplies two polynomials.")
