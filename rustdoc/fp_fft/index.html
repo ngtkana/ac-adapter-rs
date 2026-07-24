@@ -32,7 +32,7 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to Use">When to Use</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#main-items" title="Main Items">Main Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#functions">Crate Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp_fft</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#1-244">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Fast Fourier Transform over finite fields $𝔽_P$.</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to Use">When to Use</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#main-items" title="Main Items">Main Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#functions">Crate Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp_fft</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#1-256">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Fast Fourier Transform over finite fields $𝔽_P$.</p>
 <p>This crate implements the Cooley-Tukey FFT and its inverse (IFFT) algorithm for
 polynomial multiplication and other convolution-based computations in modular arithmetic.
 Both transforms operate in-place on arrays of field elements and require the array length
@@ -43,8 +43,9 @@ over a prime field. The FFT reduces polynomial multiplication from $O(n^2)$ time
 $O(n \log n)$, making it essential for large-degree polynomials in competitive programming
 and cryptographic applications.</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp_fft::{fft, ifft};
-<span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<span class="kw">use </span>fp_fft::fft;
+<span class="kw">use </span>fp_fft::ifft;
 
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
@@ -62,9 +63,9 @@ fft(<span class="kw-2">&amp;mut </span>b);
 
 ifft(<span class="kw-2">&amp;mut </span>a);
 
-<span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">3</span>));  <span class="comment">// constant term: 1 * 3
+<span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">3</span>)); <span class="comment">// constant term: 1 * 3
 </span><span class="macro">assert_eq!</span>(a[<span class="number">1</span>], fp::&lt;P&gt;(<span class="number">10</span>)); <span class="comment">// x term: 1*4 + 2*3
-</span><span class="macro">assert_eq!</span>(a[<span class="number">2</span>], fp::&lt;P&gt;(<span class="number">8</span>));  <span class="comment">// x² term: 2 * 4</span></code></pre></div>
+</span><span class="macro">assert_eq!</span>(a[<span class="number">2</span>], fp::&lt;P&gt;(<span class="number">8</span>)); <span class="comment">// x² term: 2 * 4</span></code></pre></div>
 <h2 id="main-items"><a class="doc-anchor" href="#main-items">§</a>Main Items</h2>
 <ul>
 <li><a href="fn.fft.html" title="fn fp_fft::fft"><code>fft</code></a>: Forward FFT (in-place)</li>

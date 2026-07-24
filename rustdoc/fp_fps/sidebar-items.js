@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["fps_inv","multipoint_evaluation","poly_div_rem","poly_mul"]};
