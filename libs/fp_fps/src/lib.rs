@@ -1,6 +1,24 @@
+//! 形式べき級数（FPS）演算。多項式乗算・逆元・除算・評価を FFT で高速化。
+
 use fp::{Fp, fp};
 use fp_fft::{fft, ifft};
 
+/// $f$ の逆元を precision で計算。$f^{-1} \bmod x^m$ の係数を返す。
+///
+/// 入力 $f$ に対して $g$ を計算し、$f \cdot g \equiv 1 \pmod{x^m}$ を満たす最初の $m$ 項を返す。
+/// 計算量は $O(m \log m)$。
+///
+/// # 例
+///
+/// ```
+/// use fp::fp;
+/// use fp_fps::fps_inv;
+/// const P: u64 = 998_244_353;
+/// let f = [fp::<P>(1), fp::<P>(2)];
+/// let g = fps_inv(&f, 2);
+/// assert_eq!(g[0], fp::<P>(1));           // (1+2x)^{-1} の 0 次項 = 1
+/// assert_eq!(g[1], fp::<P>(998244351));   // (1+2x)^{-1} の 1 次項 = -2
+/// ```
 pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
     let fft_len_max = precision.next_power_of_two();
     let mut g = vec![fp(0); precision];
@@ -35,6 +53,23 @@ pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
     g
 }
 
+/// 多項式 $a$ と $b$ を乗算。長さ $|a| + |b| - 1$ の結果を返す。
+///
+/// FFT ベース、計算量 $O(n \log n)$。
+///
+/// # 例
+///
+/// ```
+/// use fp::fp;
+/// use fp_fps::poly_mul;
+/// const P: u64 = 998_244_353;
+/// let a = [fp::<P>(1), fp::<P>(2)];  // 1 + 2x
+/// let b = [fp::<P>(3), fp::<P>(4)];  // 3 + 4x
+/// let c = poly_mul(a.to_vec(), b.to_vec());
+/// assert_eq!(c[0], fp::<P>(3));      // 1*3
+/// assert_eq!(c[1], fp::<P>(10));     // 1*4 + 2*3
+/// assert_eq!(c[2], fp::<P>(8));      // 2*4
+/// ```
 pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>> {
     let result_len = a.len() + b.len() - 1;
     let fft_len = result_len.next_power_of_two() * 2;
@@ -50,6 +85,21 @@ pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>
     a
 }
 
+/// 多項式除算。$a = bq + r$ を満たす $(q, r)$ を返す（$\deg(r) < \deg(b)$）。
+///
+/// 計算量 $O(n \log n)$。
+///
+/// # 例
+///
+/// ```
+/// use fp::fp;
+/// use fp_fps::poly_div_rem;
+/// const P: u64 = 998_244_353;
+/// let a = [fp::<P>(1), fp::<P>(0), fp::<P>(1)];  // 1 + x^2
+/// let b = [fp::<P>(1), fp::<P>(1)];              // 1 + x
+/// let (q, r) = poly_div_rem(a.to_vec(), b.to_vec());
+/// assert_eq!(q.len(), 2);  // 商の次数は 2-1 = 1
+/// ```
 pub fn poly_div_rem<const P: u64>(
     mut a: Vec<Fp<P>>,
     mut b: Vec<Fp<P>>,
@@ -78,6 +128,22 @@ pub fn poly_div_rem<const P: u64>(
     (q, a)
 }
 
+/// 多項式 $f$ を複数点 $x_1, \ldots, x_n$ で評価。$[f(x_1), \ldots, f(x_n)]$ を返す。
+///
+/// 分割統治 + FFT、計算量 $O(n \log^2 n)$。
+///
+/// # 例
+///
+/// ```
+/// use fp::fp;
+/// use fp_fps::multipoint_evaluation;
+/// const P: u64 = 998_244_353;
+/// let f = [fp::<P>(1), fp::<P>(2)];  // 1 + 2x
+/// let points = [fp::<P>(0), fp::<P>(1)];
+/// let result = multipoint_evaluation(f.to_vec(), &points);
+/// assert_eq!(result[0], fp::<P>(1));  // f(0) = 1
+/// assert_eq!(result[1], fp::<P>(3));  // f(1) = 3
+/// ```
 pub fn multipoint_evaluation<const P: u64>(f: Vec<Fp<P>>, points: &[Fp<P>]) -> Vec<Fp<P>> {
     let n = points.len();
     let mut prod = vec![vec![]; n * 2];

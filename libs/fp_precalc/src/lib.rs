@@ -1,88 +1,37 @@
-//! Precomputed factorial and modular inverse tables for $𝔽_P$.
+//! 有限体 $𝔽_P$ の階乗・逆階乗・逆元テーブルの事前計算。
 //!
-//! This crate provides a compile-time configurable struct to precompute and cache
-//! factorials, inverse factorials, and modular inverses in $𝔽_P$ (a prime field).
-//! Use this when you need to compute many binomial coefficients or factorial-based
-//! values without recalculating them repeatedly.
+//! $\binom{n}{k}$ を $O(1)$ で計算したい場合に使用。
 //!
-//! # When to Use
-//!
-//! - Computing multiple binomial coefficients $\binom{n}{k}$ efficiently
-//! - Permutation and combination calculations in modular arithmetic
-//! - Algorithms where factorial values appear frequently (e.g., combinatorics)
-//!
-//! # Build Pattern
-//!
-//! Use method chaining to build only the tables you need:
+//! # 使用例
 //!
 //! ```
 //! use fp_precalc::Precalc;
 //! use fp::fp;
-//!
 //! const P: u64 = 1009;
-//! let precalc = Precalc::<P>::new(100)
+//! let pc = Precalc::<P>::new(100)
 //!     .build_fact()
 //!     .build_finv_using_fact();
-//!
-//! let binom_5_2 = precalc.binom(5, 2);
-//! assert_eq!(binom_5_2, fp::<P>(10));  // C(5,2) = 10
+//! assert_eq!(pc.binom(5, 2), fp::<P>(10)); // C(5,2) = 10
 //! ```
 //!
-//! # Main Items
+//! # API
 //!
-//! - [`Precalc`]: The main struct for storing precomputed tables
-//! - [`Switch`], [`On`], [`Off`]: Type-level booleans for compile-time configuration
-//!
-//! # Complexity
-//!
-//! - `build_fact`: $O(n)$ time, $O(n)$ space
-//! - `build_inv`: $O(n)$ time, $O(n)$ space
-//! - `build_finv_using_fact`: $O(n)$ time, $O(n)$ space
-//! - `build_finv_using_inv`: $O(n)$ time, $O(n)$ space
-//! - `binom`: $O(1)$ time (after precomputation)
+//! - [`Precalc::build_fact()`]: 階乗 $n!$、計算量 $O(n)$
+//! - [`Precalc::build_inv()`]: 逆元 $n^{-1}$、計算量 $O(n)$
+//! - [`Precalc::build_finv_using_fact()`]: 逆階乗 $(n!)^{-1}$、計算量 $O(n)$
+//! - [`Precalc::binom()`]: 二項係数 $\binom{n}{k}$、計算量 $O(1)$
 
 use fp::{Fp, fpu};
 
-/// Type-level boolean trait for configuring which tables are present.
-///
-/// Implementations (`On` and `Off`) use `type Option<T>` to represent
-/// whether a table is stored (`T` when On, `()` when Off), enabling
-/// compile-time selection of which precomputed tables to include.
-///
-/// # Examples
-///
-/// ```text
-/// Switch is used internally via On/Off enums
-/// to control whether fields are present in Precalc
-/// ```
+/// テーブルの有無を型で表現するトレイト。型レベル真偽値。
 pub trait Switch {
     type Option<T>;
 }
 
-/// Marks a table as present in `Precalc`.
-///
-/// When used as a type parameter, indicates the corresponding table
-/// is stored and accessible via query methods.
-///
-/// # Examples
-///
-/// ```text
-/// Used as: Precalc<P, On, Off, Off>
-/// meaning: fact table is present, finv and inv are not
-/// ```
+/// テーブルが有る場合の型。
 pub enum On {}
 
-/// Marks a table as absent in `Precalc`.
-///
-/// When used as a type parameter, indicates the corresponding table
-/// is not stored (represented internally as `()`).
-///
-/// # Examples
-///
-/// ```text
-/// Used as: Precalc<P, Off, Off, Off>
-/// meaning: no tables are present (initial state)
-/// ```
+/// テーブルが無い場合の型。
 pub enum Off {}
 
 impl Switch for On {
@@ -92,32 +41,9 @@ impl Switch for Off {
     type Option<T> = ();
 }
 
-/// Precomputed tables of factorials, inverse factorials, and modular inverses for $𝔽_P$.
+/// 階乗・逆階乗・逆元のテーブル。型で有無を追跡。
 ///
-/// This struct uses type-level booleans to track which tables are available.
-/// Build tables selectively using the builder methods, then query them in $O(1)$ time.
-///
-/// The three optional tables are:
-/// - `fact`: Factorials $n!$ for $n \in [0, \text{len})$
-/// - `finv`: Inverse factorials $(n!)^{-1}$ for $n \in [0, \text{len})$
-/// - `inv`: Modular inverses $i^{-1}$ for $i \in [0, \text{len})$
-///
-/// # Generic Parameters
-///
-/// - `P`: Prime modulus (const generic)
-/// - `Fact`: `On` if fact table is present, `Off` otherwise (defaults to `Off`)
-/// - `Finv`: `On` if finv table is present, `Off` otherwise (defaults to `Off`)
-/// - `Inv`: `On` if inv table is present, `Off` otherwise (defaults to `Off`)
-///
-/// # Examples
-///
-/// ```
-/// use fp_precalc::Precalc;
-///
-/// const P: u64 = 1009;
-/// let precalc = Precalc::<P>::new(10);
-/// assert_eq!(precalc.len(), 10);
-/// ```
+/// ビルダーパターンで選択的に構築。クエリは $O(1)$。
 pub struct Precalc<const P: u64, Fact: Switch = Off, Finv: Switch = Off, Inv: Switch = Off> {
     len: usize,
     fact: Fact::Option<Vec<Fp<P>>>,
@@ -126,20 +52,7 @@ pub struct Precalc<const P: u64, Fact: Switch = Off, Finv: Switch = Off, Inv: Sw
 }
 
 impl<const P: u64> Precalc<P, Off, Off, Off> {
-    /// Creates an empty precomputation context with capacity for `len` elements.
-    ///
-    /// No tables are built yet; call builder methods to populate them.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use fp_precalc::Precalc;
-    ///
-    /// const P: u64 = 1009;
-    /// let precalc = Precalc::<P>::new(100);
-    /// assert_eq!(precalc.len(), 100);
-    /// assert!(!precalc.is_empty());
-    /// ```
+    /// 容量 len で初期化。テーブル未構築。
     pub fn new(len: usize) -> Self {
         Precalc {
             len,
@@ -149,34 +62,12 @@ impl<const P: u64> Precalc<P, Off, Off, Off> {
         }
     }
 
-    /// Returns the capacity (maximum $n$ for which tables can be queried).
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use fp_precalc::Precalc;
-    ///
-    /// const P: u64 = 1009;
-    /// let precalc = Precalc::<P>::new(50);
-    /// assert_eq!(precalc.len(), 50);
-    /// ```
+    /// 容量を返す。
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /// Returns true if the precomputation capacity is zero.
-    ///
-    /// # Examples
-    ///
-    /// ```
-    /// use fp_precalc::Precalc;
-    ///
-    /// const P: u64 = 1009;
-    /// let empty = Precalc::<P>::new(0);
-    /// let non_empty = Precalc::<P>::new(10);
-    /// assert!(empty.is_empty());
-    /// assert!(!non_empty.is_empty());
-    /// ```
+    /// 容量が 0 なら true。
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
@@ -186,11 +77,11 @@ impl<const P: u64> Precalc<P, Off, Off, Off> {
 // Build
 // ==========================================
 
-/// Builds the factorial table.
+    /// 階乗テーブルを構築。
 impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
-    /// Precomputes factorials: $\text{fact}\[i\] = i! \bmod P$ for $i \in \[0, \text{len})$.
+    /// 階乗 $n!$、計算量 $O(n)$。
     ///
-    /// Time: $O(n)$, Space: $O(n)$
+    /// 例:
     ///
     /// # Examples
     ///
@@ -220,13 +111,12 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
     }
 }
 
-/// Builds the modular inverse table.
+    /// 逆元テーブルを構築。
 impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
-    /// Precomputes modular inverses: $\text{inv}\[i\] = i^{-1} \bmod P$ for $i \in \[1, \text{len})$.
+    /// 逆元 $i^{-1}$、拡張ユークリッド、$O(n)$。
     ///
-    /// Uses the formula: $i^{-1} \equiv -\lfloor P/i \rfloor \cdot (P \bmod i)^{-1} \pmod{P}$
     ///
-    /// Time: $O(n)$, Space: $O(n)$
+    /// 例:
     ///
     /// # Examples
     ///
@@ -260,14 +150,12 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
     }
 }
 
-/// Builds inverse factorials using the inverse table.
+    /// 逆元テーブルを使用して逆階乗を構築。
 impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
-    /// Precomputes inverse factorials using precomputed inverses.
+    /// 逆元テーブルから逆階乗を構築。
     ///
-    /// Requires `inv` table to be built. Computes:
-    /// $\text{finv}\[i\] = \text{finv}\[i-1\] \cdot i^{-1}$ for $i \in \[2, \text{len})$
     ///
-    /// Time: $O(n)$, Space: $O(n)$
+    /// 例:
     ///
     /// # Panics
     ///
@@ -305,15 +193,12 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     }
 }
 
-/// Builds inverse factorials using the factorial table.
+    /// 階乗テーブルを使用して逆階乗を構築。
 impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
-    /// Precomputes inverse factorials using precomputed factorials.
+    /// 階乗テーブルから逆階乗を構築。
     ///
-    /// Requires `fact` table to be built. Uses:
-    /// $\text{finv}\[\text{len}-1\] = (\text{fact}\[\text{len}-1\])^{-1}$
-    /// $\text{finv}\[i\] = \text{finv}\[i+1\] \cdot (i+1)$ for $i \in \[2, \text{len}-2\]$ (reversed)
     ///
-    /// Time: $O(n)$, Space: $O(n)$
+    /// 例:
     ///
     /// # Panics
     ///
@@ -357,9 +242,9 @@ impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
 // Query
 // ==========================================
 
-/// Query factorial table.
+/// 階乗テーブルをクエリ。
 impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, On, Finv, Inv> {
-    /// Returns $n! \bmod P$.
+    /// $n!$ を返す。
     ///
     /// # Panics
     ///
@@ -379,9 +264,9 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, On, Finv, Inv> {
     }
 }
 
-/// Query inverse factorial table.
+/// 逆階乗テーブルをクエリ。
 impl<const P: u64, Fact: Switch, Inv: Switch> Precalc<P, Fact, On, Inv> {
-    /// Returns $(n!)^{-1} \bmod P$.
+    /// $(n!)^{-1}$ を返す。
     ///
     /// # Panics
     ///
@@ -404,9 +289,9 @@ impl<const P: u64, Fact: Switch, Inv: Switch> Precalc<P, Fact, On, Inv> {
     }
 }
 
-/// Query modular inverse table.
+/// 逆元テーブルをクエリ。
 impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, On> {
-    /// Returns $n^{-1} \bmod P$.
+    /// $n^{-1}$ を返す。
     ///
     /// # Panics
     ///
@@ -427,11 +312,11 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, On> {
     }
 }
 
-/// Query binomial coefficient.
+/// 二項係数をクエリ。
 impl<const P: u64, Inv: Switch> Precalc<P, On, On, Inv> {
-    /// Computes $\binom{n}{k} = \frac{n!}{k!(n-k)!} \bmod P$.
+    /// 二項係数 $binom{n}{k}$、計算量 $O(1)$。
     ///
-    /// Requires both `fact` and `finv` tables to be built.
+    /// fact と finv テーブルが必要。
     ///
     /// # Panics
     ///
