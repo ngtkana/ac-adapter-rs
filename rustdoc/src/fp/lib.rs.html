@@ -163,269 +163,277 @@
 <a href=#129 id=129 data-nosnippet>129</a>        <span class="self">Self </span>{ value: value % P }
 <a href=#130 id=130 data-nosnippet>130</a>    }
 <a href=#131 id=131 data-nosnippet>131</a>
-<a href=#132 id=132 data-nosnippet>132</a>    <span class="doccomment">/// Multiplies two elements: (self × rhs) mod P.
-<a href=#133 id=133 data-nosnippet>133</a>    ///
-<a href=#134 id=134 data-nosnippet>134</a>    /// Time complexity: O(1)
-<a href=#135 id=135 data-nosnippet>135</a>    ///
-<a href=#136 id=136 data-nosnippet>136</a>    /// This is a const function and may be evaluated at compile time.
-<a href=#137 id=137 data-nosnippet>137</a>    ///
-<a href=#138 id=138 data-nosnippet>138</a>    /// # Examples
-<a href=#139 id=139 data-nosnippet>139</a>    ///
-<a href=#140 id=140 data-nosnippet>140</a>    /// ```
-<a href=#141 id=141 data-nosnippet>141</a>    /// use fp::fp;
-<a href=#142 id=142 data-nosnippet>142</a>    ///
-<a href=#143 id=143 data-nosnippet>143</a>    /// const P: u64 = 1009;
-<a href=#144 id=144 data-nosnippet>144</a>    /// let a = fp::&lt;P&gt;(123);
-<a href=#145 id=145 data-nosnippet>145</a>    /// let b = fp::&lt;P&gt;(456);
-<a href=#146 id=146 data-nosnippet>146</a>    /// let c = a.mul(b);
-<a href=#147 id=147 data-nosnippet>147</a>    /// assert_eq!(c, a * b);  // Equivalent to using the `*` operator
-<a href=#148 id=148 data-nosnippet>148</a>    /// ```
-<a href=#149 id=149 data-nosnippet>149</a>    </span><span class="kw">pub const fn </span>mul(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="self">Self </span>{
-<a href=#151 id=151 data-nosnippet>151</a>            value: <span class="self">self</span>.value * rhs.value % P,
-<a href=#152 id=152 data-nosnippet>152</a>        }
-<a href=#153 id=153 data-nosnippet>153</a>    }
-<a href=#154 id=154 data-nosnippet>154</a>
-<a href=#155 id=155 data-nosnippet>155</a>    <span class="doccomment">/// Computes self^exp mod P using binary exponentiation.
-<a href=#156 id=156 data-nosnippet>156</a>    ///
-<a href=#157 id=157 data-nosnippet>157</a>    /// Returns 1 if exp = 0. Uses the binary exponentiation algorithm for
-<a href=#158 id=158 data-nosnippet>158</a>    /// fast computation of large powers.
-<a href=#159 id=159 data-nosnippet>159</a>    ///
-<a href=#160 id=160 data-nosnippet>160</a>    /// Time complexity: O(log exp)
-<a href=#161 id=161 data-nosnippet>161</a>    ///
-<a href=#162 id=162 data-nosnippet>162</a>    /// This is a const function and may be evaluated at compile time.
-<a href=#163 id=163 data-nosnippet>163</a>    ///
-<a href=#164 id=164 data-nosnippet>164</a>    /// # Examples
-<a href=#165 id=165 data-nosnippet>165</a>    ///
-<a href=#166 id=166 data-nosnippet>166</a>    /// ```
-<a href=#167 id=167 data-nosnippet>167</a>    /// use fp::fp;
-<a href=#168 id=168 data-nosnippet>168</a>    ///
-<a href=#169 id=169 data-nosnippet>169</a>    /// const P: u64 = 1009;
-<a href=#170 id=170 data-nosnippet>170</a>    /// let a = fp::&lt;P&gt;(2);
-<a href=#171 id=171 data-nosnippet>171</a>    /// let result = a.pow(10);  // 2^10 ≡ 1024 ≡ 15 (mod 1009)
-<a href=#172 id=172 data-nosnippet>172</a>    /// assert_eq!(result, fp::&lt;P&gt;(15));
-<a href=#173 id=173 data-nosnippet>173</a>    /// ```
-<a href=#174 id=174 data-nosnippet>174</a>    </span><span class="kw">pub const fn </span>pow(<span class="kw-2">mut </span><span class="self">self</span>, <span class="kw-2">mut </span>exp: u64) -&gt; <span class="self">Self </span>{
-<a href=#175 id=175 data-nosnippet>175</a>        <span class="kw">if </span>exp == <span class="number">0 </span>{
-<a href=#176 id=176 data-nosnippet>176</a>            <span class="kw">return </span><span class="self">Self</span>::new(<span class="number">1</span>);
-<a href=#177 id=177 data-nosnippet>177</a>        }
-<a href=#178 id=178 data-nosnippet>178</a>        <span class="kw">let </span><span class="kw-2">mut </span>ans = <span class="self">Self</span>::new(<span class="number">1</span>);
-<a href=#179 id=179 data-nosnippet>179</a>        <span class="kw">while </span>exp != <span class="number">1 </span>{
-<a href=#180 id=180 data-nosnippet>180</a>            <span class="kw">if </span>exp &amp; <span class="number">1 </span>== <span class="number">1 </span>{
-<a href=#181 id=181 data-nosnippet>181</a>                ans = ans.mul(<span class="self">self</span>);
-<a href=#182 id=182 data-nosnippet>182</a>            }
-<a href=#183 id=183 data-nosnippet>183</a>            <span class="self">self </span>= <span class="self">self</span>.mul(<span class="self">self</span>);
-<a href=#184 id=184 data-nosnippet>184</a>            exp &gt;&gt;= <span class="number">1</span>;
-<a href=#185 id=185 data-nosnippet>185</a>        }
-<a href=#186 id=186 data-nosnippet>186</a>        ans.mul(<span class="self">self</span>)
-<a href=#187 id=187 data-nosnippet>187</a>    }
-<a href=#188 id=188 data-nosnippet>188</a>
-<a href=#189 id=189 data-nosnippet>189</a>    <span class="doccomment">/// Computes the modular inverse self^{-1} mod P.
-<a href=#190 id=190 data-nosnippet>190</a>    ///
-<a href=#191 id=191 data-nosnippet>191</a>    /// If P is prime and self ≠ 0, returns the unique element `inv` such that
-<a href=#192 id=192 data-nosnippet>192</a>    /// self × inv ≡ 1 (mod P). Uses the extended Euclidean algorithm internally.
-<a href=#193 id=193 data-nosnippet>193</a>    ///
-<a href=#194 id=194 data-nosnippet>194</a>    /// Time complexity: O(log P)
-<a href=#195 id=195 data-nosnippet>195</a>    ///
-<a href=#196 id=196 data-nosnippet>196</a>    /// # Panics or Undefined Behavior
-<a href=#197 id=197 data-nosnippet>197</a>    ///
-<a href=#198 id=198 data-nosnippet>198</a>    /// If `self.value == 0` or if `P` is not prime, behavior is undefined.
-<a href=#199 id=199 data-nosnippet>199</a>    /// Always ensure `P` is prime before using this method.
-<a href=#200 id=200 data-nosnippet>200</a>    ///
-<a href=#201 id=201 data-nosnippet>201</a>    /// # Examples
-<a href=#202 id=202 data-nosnippet>202</a>    ///
-<a href=#203 id=203 data-nosnippet>203</a>    /// ```
-<a href=#204 id=204 data-nosnippet>204</a>    /// use fp::fp;
-<a href=#205 id=205 data-nosnippet>205</a>    ///
-<a href=#206 id=206 data-nosnippet>206</a>    /// const P: u64 = 1009;
-<a href=#207 id=207 data-nosnippet>207</a>    /// let a = fp::&lt;P&gt;(123);
-<a href=#208 id=208 data-nosnippet>208</a>    /// let inv_a = a.inv();
-<a href=#209 id=209 data-nosnippet>209</a>    /// assert_eq!(a * inv_a, fp::&lt;P&gt;(1));  // 123 × 123^{-1} ≡ 1 (mod 1009)
-<a href=#210 id=210 data-nosnippet>210</a>    /// ```
-<a href=#211 id=211 data-nosnippet>211</a>    </span><span class="kw">pub const fn </span>inv(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-<a href=#212 id=212 data-nosnippet>212</a>        <span class="kw">const fn </span>euclid(a: i64, m: i64) -&gt; i64 {
-<a href=#213 id=213 data-nosnippet>213</a>            <span class="kw">if </span>a == <span class="number">1 </span>{
-<a href=#214 id=214 data-nosnippet>214</a>                <span class="number">1
-<a href=#215 id=215 data-nosnippet>215</a>            </span>} <span class="kw">else </span>{
-<a href=#216 id=216 data-nosnippet>216</a>                m + (<span class="number">1 </span>- m * euclid(m % a, a)) / a
-<a href=#217 id=217 data-nosnippet>217</a>            }
-<a href=#218 id=218 data-nosnippet>218</a>        }
-<a href=#219 id=219 data-nosnippet>219</a>        <span class="self">Self </span>{
-<a href=#220 id=220 data-nosnippet>220</a>            value: euclid(<span class="self">self</span>.value <span class="kw">as </span>i64, P <span class="kw">as </span>i64) <span class="kw">as </span>u64,
-<a href=#221 id=221 data-nosnippet>221</a>        }
-<a href=#222 id=222 data-nosnippet>222</a>    }
-<a href=#223 id=223 data-nosnippet>223</a>}
-<a href=#224 id=224 data-nosnippet>224</a>
-<a href=#225 id=225 data-nosnippet>225</a><span class="doccomment">/// Debug formatting displays the element as a rational approximation.
-<a href=#226 id=226 data-nosnippet>226</a>///
-<a href=#227 id=227 data-nosnippet>227</a>/// When `Debug` is printed, the value is represented as a simplified fraction num/den
-<a href=#228 id=228 data-nosnippet>228</a>/// or integer, computed via Berlekamp–Massey algorithm to find the smallest numerator
-<a href=#229 id=229 data-nosnippet>229</a>/// and denominator. For zero, it prints "0". This representation can be useful for
-<a href=#230 id=230 data-nosnippet>230</a>/// understanding the structure of field elements when they correspond to rational numbers.
-<a href=#231 id=231 data-nosnippet>231</a>///
-<a href=#232 id=232 data-nosnippet>232</a>/// # Examples
-<a href=#233 id=233 data-nosnippet>233</a>///
-<a href=#234 id=234 data-nosnippet>234</a>/// ```
-<a href=#235 id=235 data-nosnippet>235</a>/// use fp::fp;
-<a href=#236 id=236 data-nosnippet>236</a>///
-<a href=#237 id=237 data-nosnippet>237</a>/// const P: u64 = 1009;
-<a href=#238 id=238 data-nosnippet>238</a>/// let a = fp::&lt;P&gt;(2);
-<a href=#239 id=239 data-nosnippet>239</a>/// let inv_a = a.inv();
-<a href=#240 id=240 data-nosnippet>240</a>/// // 2^{-1} mod 1009 displayed as rational approximation "1/2"
-<a href=#241 id=241 data-nosnippet>241</a>/// assert_eq!(format!("{:?}", inv_a), "1/2");
-<a href=#242 id=242 data-nosnippet>242</a>/// // Negation of the inverse: -(1/2) = -1/2
-<a href=#243 id=243 data-nosnippet>243</a>/// assert_eq!(format!("{:?}", -inv_a), "-1/2");
-<a href=#244 id=244 data-nosnippet>244</a>/// ```
-<a href=#245 id=245 data-nosnippet>245</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::fmt::Debug <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#246 id=246 data-nosnippet>246</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-<a href=#247 id=247 data-nosnippet>247</a>        <span class="kw">pub const fn </span>berlekamp_massey(a: i64, p: i64) -&gt; [i64; <span class="number">2</span>] {
-<a href=#248 id=248 data-nosnippet>248</a>            <span class="kw">let </span><span class="kw-2">mut </span>u0 = <span class="number">0</span>;
-<a href=#249 id=249 data-nosnippet>249</a>            <span class="kw">let </span><span class="kw-2">mut </span>v0 = <span class="number">1_i64</span>;
-<a href=#250 id=250 data-nosnippet>250</a>            <span class="kw">let </span><span class="kw-2">mut </span>w0 = a * u0 + p * v0;
-<a href=#251 id=251 data-nosnippet>251</a>            <span class="kw">let </span><span class="kw-2">mut </span>u1 = <span class="number">1</span>;
-<a href=#252 id=252 data-nosnippet>252</a>            <span class="kw">let </span><span class="kw-2">mut </span>v1 = <span class="number">0</span>;
-<a href=#253 id=253 data-nosnippet>253</a>            <span class="kw">let </span><span class="kw-2">mut </span>w1 = a * u1 + p * v1;
-<a href=#254 id=254 data-nosnippet>254</a>            <span class="kw">while </span>p &lt;= w0 * w0 {
-<a href=#255 id=255 data-nosnippet>255</a>                <span class="kw">let </span>q = w0 / w1;
-<a href=#256 id=256 data-nosnippet>256</a>                u0 -= q * u1;
-<a href=#257 id=257 data-nosnippet>257</a>                v0 -= q * v1;
-<a href=#258 id=258 data-nosnippet>258</a>                w0 -= q * w1;
-<a href=#259 id=259 data-nosnippet>259</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>u0, <span class="kw-2">&amp;mut </span>u1);
-<a href=#260 id=260 data-nosnippet>260</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>v0, <span class="kw-2">&amp;mut </span>v1);
-<a href=#261 id=261 data-nosnippet>261</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>w0, <span class="kw-2">&amp;mut </span>w1);
-<a href=#262 id=262 data-nosnippet>262</a>            }
-<a href=#263 id=263 data-nosnippet>263</a>            [w0, u0]
-<a href=#264 id=264 data-nosnippet>264</a>        }
-<a href=#265 id=265 data-nosnippet>265</a>        <span class="kw">if </span><span class="self">self</span>.value == <span class="number">0 </span>{
-<a href=#266 id=266 data-nosnippet>266</a>            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"0"</span>);
-<a href=#267 id=267 data-nosnippet>267</a>        }
-<a href=#268 id=268 data-nosnippet>268</a>        <span class="kw">let </span>[<span class="kw-2">mut </span>num, <span class="kw-2">mut </span>den] = berlekamp_massey(<span class="self">self</span>.value <span class="kw">as </span>i64, P <span class="kw">as </span>i64);
-<a href=#269 id=269 data-nosnippet>269</a>        <span class="kw">if </span>den &lt; <span class="number">0 </span>{
-<a href=#270 id=270 data-nosnippet>270</a>            num = -num;
-<a href=#271 id=271 data-nosnippet>271</a>            den = -den;
-<a href=#272 id=272 data-nosnippet>272</a>        }
-<a href=#273 id=273 data-nosnippet>273</a>        <span class="kw">if </span>den == <span class="number">1 </span>{
-<a href=#274 id=274 data-nosnippet>274</a>            <span class="macro">write!</span>(f, <span class="string">"{num}"</span>)
-<a href=#275 id=275 data-nosnippet>275</a>        } <span class="kw">else </span>{
-<a href=#276 id=276 data-nosnippet>276</a>            <span class="macro">write!</span>(f, <span class="string">"{num}/{den}"</span>)
-<a href=#277 id=277 data-nosnippet>277</a>        }
-<a href=#278 id=278 data-nosnippet>278</a>    }
-<a href=#279 id=279 data-nosnippet>279</a>}
-<a href=#280 id=280 data-nosnippet>280</a>
-<a href=#281 id=281 data-nosnippet>281</a><span class="doccomment">/// Display formatting shows the raw modular value in [0, P).
-<a href=#282 id=282 data-nosnippet>282</a>///
-<a href=#283 id=283 data-nosnippet>283</a>/// This is useful for compact display of the field element as a plain integer.
-<a href=#284 id=284 data-nosnippet>284</a>/// Use this when you want to see the actual residue value.
-<a href=#285 id=285 data-nosnippet>285</a>///
-<a href=#286 id=286 data-nosnippet>286</a>/// # Examples
-<a href=#287 id=287 data-nosnippet>287</a>///
-<a href=#288 id=288 data-nosnippet>288</a>/// ```
-<a href=#289 id=289 data-nosnippet>289</a>/// use fp::fp;
-<a href=#290 id=290 data-nosnippet>290</a>///
-<a href=#291 id=291 data-nosnippet>291</a>/// const P: u64 = 1009;
-<a href=#292 id=292 data-nosnippet>292</a>/// let a = fp::&lt;P&gt;(123);
-<a href=#293 id=293 data-nosnippet>293</a>/// assert_eq!(a.to_string(), "123");
-<a href=#294 id=294 data-nosnippet>294</a>/// let b = fp::&lt;P&gt;(2000);  // 2000 mod 1009 = 991
-<a href=#295 id=295 data-nosnippet>295</a>/// assert_eq!(b.to_string(), "991");
-<a href=#296 id=296 data-nosnippet>296</a>/// ```
-<a href=#297 id=297 data-nosnippet>297</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::fmt::Display <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#298 id=298 data-nosnippet>298</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
-<a href=#299 id=299 data-nosnippet>299</a>        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.value)
-<a href=#300 id=300 data-nosnippet>300</a>    }
-<a href=#301 id=301 data-nosnippet>301</a>}
-<a href=#302 id=302 data-nosnippet>302</a>
-<a href=#303 id=303 data-nosnippet>303</a><span class="comment">// ==========================================
-<a href=#304 id=304 data-nosnippet>304</a>// Arithmetic
-<a href=#305 id=305 data-nosnippet>305</a>// ==========================================
-<a href=#306 id=306 data-nosnippet>306</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Add <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#307 id=307 data-nosnippet>307</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
-<a href=#308 id=308 data-nosnippet>308</a>    <span class="kw">fn </span>add(<span class="kw-2">mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#309 id=309 data-nosnippet>309</a>        <span class="self">self </span>+= rhs;
-<a href=#310 id=310 data-nosnippet>310</a>        <span class="self">self
-<a href=#311 id=311 data-nosnippet>311</a>    </span>}
+<a href=#132 id=132 data-nosnippet>132</a>    <span class="kw">pub const fn </span>add_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
+<a href=#133 id=133 data-nosnippet>133</a>        <span class="self">self</span>.value += rhs.value;
+<a href=#134 id=134 data-nosnippet>134</a>        <span class="kw">if </span>P &lt;= <span class="self">self</span>.value {
+<a href=#135 id=135 data-nosnippet>135</a>            <span class="self">self</span>.value -= P;
+<a href=#136 id=136 data-nosnippet>136</a>        }
+<a href=#137 id=137 data-nosnippet>137</a>    }
+<a href=#138 id=138 data-nosnippet>138</a>
+<a href=#139 id=139 data-nosnippet>139</a>    <span class="kw">pub const fn </span>value(<span class="self">self</span>) -&gt; u64 {
+<a href=#140 id=140 data-nosnippet>140</a>        <span class="self">self</span>.value
+<a href=#141 id=141 data-nosnippet>141</a>    }
+<a href=#142 id=142 data-nosnippet>142</a>
+<a href=#143 id=143 data-nosnippet>143</a>    <span class="doccomment">/// Multiplies two elements: (self × rhs) mod P.
+<a href=#144 id=144 data-nosnippet>144</a>    ///
+<a href=#145 id=145 data-nosnippet>145</a>    /// Time complexity: O(1)
+<a href=#146 id=146 data-nosnippet>146</a>    ///
+<a href=#147 id=147 data-nosnippet>147</a>    /// This is a const function and may be evaluated at compile time.
+<a href=#148 id=148 data-nosnippet>148</a>    ///
+<a href=#149 id=149 data-nosnippet>149</a>    /// # Examples
+<a href=#150 id=150 data-nosnippet>150</a>    ///
+<a href=#151 id=151 data-nosnippet>151</a>    /// ```
+<a href=#152 id=152 data-nosnippet>152</a>    /// use fp::fp;
+<a href=#153 id=153 data-nosnippet>153</a>    ///
+<a href=#154 id=154 data-nosnippet>154</a>    /// const P: u64 = 1009;
+<a href=#155 id=155 data-nosnippet>155</a>    /// let a = fp::&lt;P&gt;(123);
+<a href=#156 id=156 data-nosnippet>156</a>    /// let b = fp::&lt;P&gt;(456);
+<a href=#157 id=157 data-nosnippet>157</a>    /// let c = a.mul(b);
+<a href=#158 id=158 data-nosnippet>158</a>    /// assert_eq!(c, a * b);  // Equivalent to using the `*` operator
+<a href=#159 id=159 data-nosnippet>159</a>    /// ```
+<a href=#160 id=160 data-nosnippet>160</a>    </span><span class="kw">pub const fn </span>mul(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+<a href=#161 id=161 data-nosnippet>161</a>        <span class="self">Self </span>{
+<a href=#162 id=162 data-nosnippet>162</a>            value: <span class="self">self</span>.value * rhs.value % P,
+<a href=#163 id=163 data-nosnippet>163</a>        }
+<a href=#164 id=164 data-nosnippet>164</a>    }
+<a href=#165 id=165 data-nosnippet>165</a>
+<a href=#166 id=166 data-nosnippet>166</a>    <span class="doccomment">/// Computes self^exp mod P using binary exponentiation.
+<a href=#167 id=167 data-nosnippet>167</a>    ///
+<a href=#168 id=168 data-nosnippet>168</a>    /// Returns 1 if exp = 0. Uses the binary exponentiation algorithm for
+<a href=#169 id=169 data-nosnippet>169</a>    /// fast computation of large powers.
+<a href=#170 id=170 data-nosnippet>170</a>    ///
+<a href=#171 id=171 data-nosnippet>171</a>    /// Time complexity: O(log exp)
+<a href=#172 id=172 data-nosnippet>172</a>    ///
+<a href=#173 id=173 data-nosnippet>173</a>    /// This is a const function and may be evaluated at compile time.
+<a href=#174 id=174 data-nosnippet>174</a>    ///
+<a href=#175 id=175 data-nosnippet>175</a>    /// # Examples
+<a href=#176 id=176 data-nosnippet>176</a>    ///
+<a href=#177 id=177 data-nosnippet>177</a>    /// ```
+<a href=#178 id=178 data-nosnippet>178</a>    /// use fp::fp;
+<a href=#179 id=179 data-nosnippet>179</a>    ///
+<a href=#180 id=180 data-nosnippet>180</a>    /// const P: u64 = 1009;
+<a href=#181 id=181 data-nosnippet>181</a>    /// let a = fp::&lt;P&gt;(2);
+<a href=#182 id=182 data-nosnippet>182</a>    /// let result = a.pow(10);  // 2^10 ≡ 1024 ≡ 15 (mod 1009)
+<a href=#183 id=183 data-nosnippet>183</a>    /// assert_eq!(result, fp::&lt;P&gt;(15));
+<a href=#184 id=184 data-nosnippet>184</a>    /// ```
+<a href=#185 id=185 data-nosnippet>185</a>    </span><span class="kw">pub const fn </span>pow(<span class="kw-2">mut </span><span class="self">self</span>, <span class="kw-2">mut </span>exp: u64) -&gt; <span class="self">Self </span>{
+<a href=#186 id=186 data-nosnippet>186</a>        <span class="kw">if </span>exp == <span class="number">0 </span>{
+<a href=#187 id=187 data-nosnippet>187</a>            <span class="kw">return </span><span class="self">Self</span>::new(<span class="number">1</span>);
+<a href=#188 id=188 data-nosnippet>188</a>        }
+<a href=#189 id=189 data-nosnippet>189</a>        <span class="kw">let </span><span class="kw-2">mut </span>ans = <span class="self">Self</span>::new(<span class="number">1</span>);
+<a href=#190 id=190 data-nosnippet>190</a>        <span class="kw">while </span>exp != <span class="number">1 </span>{
+<a href=#191 id=191 data-nosnippet>191</a>            <span class="kw">if </span>exp &amp; <span class="number">1 </span>== <span class="number">1 </span>{
+<a href=#192 id=192 data-nosnippet>192</a>                ans = ans.mul(<span class="self">self</span>);
+<a href=#193 id=193 data-nosnippet>193</a>            }
+<a href=#194 id=194 data-nosnippet>194</a>            <span class="self">self </span>= <span class="self">self</span>.mul(<span class="self">self</span>);
+<a href=#195 id=195 data-nosnippet>195</a>            exp &gt;&gt;= <span class="number">1</span>;
+<a href=#196 id=196 data-nosnippet>196</a>        }
+<a href=#197 id=197 data-nosnippet>197</a>        ans.mul(<span class="self">self</span>)
+<a href=#198 id=198 data-nosnippet>198</a>    }
+<a href=#199 id=199 data-nosnippet>199</a>
+<a href=#200 id=200 data-nosnippet>200</a>    <span class="doccomment">/// Computes the modular inverse self^{-1} mod P.
+<a href=#201 id=201 data-nosnippet>201</a>    ///
+<a href=#202 id=202 data-nosnippet>202</a>    /// If P is prime and self ≠ 0, returns the unique element `inv` such that
+<a href=#203 id=203 data-nosnippet>203</a>    /// self × inv ≡ 1 (mod P). Uses the extended Euclidean algorithm internally.
+<a href=#204 id=204 data-nosnippet>204</a>    ///
+<a href=#205 id=205 data-nosnippet>205</a>    /// Time complexity: O(log P)
+<a href=#206 id=206 data-nosnippet>206</a>    ///
+<a href=#207 id=207 data-nosnippet>207</a>    /// # Panics or Undefined Behavior
+<a href=#208 id=208 data-nosnippet>208</a>    ///
+<a href=#209 id=209 data-nosnippet>209</a>    /// If `self.value == 0` or if `P` is not prime, behavior is undefined.
+<a href=#210 id=210 data-nosnippet>210</a>    /// Always ensure `P` is prime before using this method.
+<a href=#211 id=211 data-nosnippet>211</a>    ///
+<a href=#212 id=212 data-nosnippet>212</a>    /// # Examples
+<a href=#213 id=213 data-nosnippet>213</a>    ///
+<a href=#214 id=214 data-nosnippet>214</a>    /// ```
+<a href=#215 id=215 data-nosnippet>215</a>    /// use fp::fp;
+<a href=#216 id=216 data-nosnippet>216</a>    ///
+<a href=#217 id=217 data-nosnippet>217</a>    /// const P: u64 = 1009;
+<a href=#218 id=218 data-nosnippet>218</a>    /// let a = fp::&lt;P&gt;(123);
+<a href=#219 id=219 data-nosnippet>219</a>    /// let inv_a = a.inv();
+<a href=#220 id=220 data-nosnippet>220</a>    /// assert_eq!(a * inv_a, fp::&lt;P&gt;(1));  // 123 × 123^{-1} ≡ 1 (mod 1009)
+<a href=#221 id=221 data-nosnippet>221</a>    /// ```
+<a href=#222 id=222 data-nosnippet>222</a>    </span><span class="kw">pub const fn </span>inv(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#223 id=223 data-nosnippet>223</a>        <span class="kw">const fn </span>euclid(a: i64, m: i64) -&gt; i64 {
+<a href=#224 id=224 data-nosnippet>224</a>            <span class="kw">if </span>a == <span class="number">1 </span>{
+<a href=#225 id=225 data-nosnippet>225</a>                <span class="number">1
+<a href=#226 id=226 data-nosnippet>226</a>            </span>} <span class="kw">else </span>{
+<a href=#227 id=227 data-nosnippet>227</a>                m + (<span class="number">1 </span>- m * euclid(m % a, a)) / a
+<a href=#228 id=228 data-nosnippet>228</a>            }
+<a href=#229 id=229 data-nosnippet>229</a>        }
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="self">Self </span>{
+<a href=#231 id=231 data-nosnippet>231</a>            value: euclid(<span class="self">self</span>.value <span class="kw">as </span>i64, P <span class="kw">as </span>i64) <span class="kw">as </span>u64,
+<a href=#232 id=232 data-nosnippet>232</a>        }
+<a href=#233 id=233 data-nosnippet>233</a>    }
+<a href=#234 id=234 data-nosnippet>234</a>}
+<a href=#235 id=235 data-nosnippet>235</a>
+<a href=#236 id=236 data-nosnippet>236</a><span class="doccomment">/// Debug formatting displays the element as a rational approximation.
+<a href=#237 id=237 data-nosnippet>237</a>///
+<a href=#238 id=238 data-nosnippet>238</a>/// When `Debug` is printed, the value is represented as a simplified fraction num/den
+<a href=#239 id=239 data-nosnippet>239</a>/// or integer, computed via Berlekamp–Massey algorithm to find the smallest numerator
+<a href=#240 id=240 data-nosnippet>240</a>/// and denominator. For zero, it prints "0". This representation can be useful for
+<a href=#241 id=241 data-nosnippet>241</a>/// understanding the structure of field elements when they correspond to rational numbers.
+<a href=#242 id=242 data-nosnippet>242</a>///
+<a href=#243 id=243 data-nosnippet>243</a>/// # Examples
+<a href=#244 id=244 data-nosnippet>244</a>///
+<a href=#245 id=245 data-nosnippet>245</a>/// ```
+<a href=#246 id=246 data-nosnippet>246</a>/// use fp::fp;
+<a href=#247 id=247 data-nosnippet>247</a>///
+<a href=#248 id=248 data-nosnippet>248</a>/// const P: u64 = 1009;
+<a href=#249 id=249 data-nosnippet>249</a>/// let a = fp::&lt;P&gt;(2);
+<a href=#250 id=250 data-nosnippet>250</a>/// let inv_a = a.inv();
+<a href=#251 id=251 data-nosnippet>251</a>/// // 2^{-1} mod 1009 displayed as rational approximation "1/2"
+<a href=#252 id=252 data-nosnippet>252</a>/// assert_eq!(format!("{:?}", inv_a), "1/2");
+<a href=#253 id=253 data-nosnippet>253</a>/// // Negation of the inverse: -(1/2) = -1/2
+<a href=#254 id=254 data-nosnippet>254</a>/// assert_eq!(format!("{:?}", -inv_a), "-1/2");
+<a href=#255 id=255 data-nosnippet>255</a>/// ```
+<a href=#256 id=256 data-nosnippet>256</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::fmt::Debug <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#257 id=257 data-nosnippet>257</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#258 id=258 data-nosnippet>258</a>        <span class="kw">pub const fn </span>berlekamp_massey(a: i64, p: i64) -&gt; [i64; <span class="number">2</span>] {
+<a href=#259 id=259 data-nosnippet>259</a>            <span class="kw">let </span><span class="kw-2">mut </span>u0 = <span class="number">0</span>;
+<a href=#260 id=260 data-nosnippet>260</a>            <span class="kw">let </span><span class="kw-2">mut </span>v0 = <span class="number">1_i64</span>;
+<a href=#261 id=261 data-nosnippet>261</a>            <span class="kw">let </span><span class="kw-2">mut </span>w0 = a * u0 + p * v0;
+<a href=#262 id=262 data-nosnippet>262</a>            <span class="kw">let </span><span class="kw-2">mut </span>u1 = <span class="number">1</span>;
+<a href=#263 id=263 data-nosnippet>263</a>            <span class="kw">let </span><span class="kw-2">mut </span>v1 = <span class="number">0</span>;
+<a href=#264 id=264 data-nosnippet>264</a>            <span class="kw">let </span><span class="kw-2">mut </span>w1 = a * u1 + p * v1;
+<a href=#265 id=265 data-nosnippet>265</a>            <span class="kw">while </span>p &lt;= w0 * w0 {
+<a href=#266 id=266 data-nosnippet>266</a>                <span class="kw">let </span>q = w0 / w1;
+<a href=#267 id=267 data-nosnippet>267</a>                u0 -= q * u1;
+<a href=#268 id=268 data-nosnippet>268</a>                v0 -= q * v1;
+<a href=#269 id=269 data-nosnippet>269</a>                w0 -= q * w1;
+<a href=#270 id=270 data-nosnippet>270</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>u0, <span class="kw-2">&amp;mut </span>u1);
+<a href=#271 id=271 data-nosnippet>271</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>v0, <span class="kw-2">&amp;mut </span>v1);
+<a href=#272 id=272 data-nosnippet>272</a>                std::mem::swap(<span class="kw-2">&amp;mut </span>w0, <span class="kw-2">&amp;mut </span>w1);
+<a href=#273 id=273 data-nosnippet>273</a>            }
+<a href=#274 id=274 data-nosnippet>274</a>            [w0, u0]
+<a href=#275 id=275 data-nosnippet>275</a>        }
+<a href=#276 id=276 data-nosnippet>276</a>        <span class="kw">if </span><span class="self">self</span>.value == <span class="number">0 </span>{
+<a href=#277 id=277 data-nosnippet>277</a>            <span class="kw">return </span><span class="macro">write!</span>(f, <span class="string">"0"</span>);
+<a href=#278 id=278 data-nosnippet>278</a>        }
+<a href=#279 id=279 data-nosnippet>279</a>        <span class="kw">let </span>[<span class="kw-2">mut </span>num, <span class="kw-2">mut </span>den] = berlekamp_massey(<span class="self">self</span>.value <span class="kw">as </span>i64, P <span class="kw">as </span>i64);
+<a href=#280 id=280 data-nosnippet>280</a>        <span class="kw">if </span>den &lt; <span class="number">0 </span>{
+<a href=#281 id=281 data-nosnippet>281</a>            num = -num;
+<a href=#282 id=282 data-nosnippet>282</a>            den = -den;
+<a href=#283 id=283 data-nosnippet>283</a>        }
+<a href=#284 id=284 data-nosnippet>284</a>        <span class="kw">if </span>den == <span class="number">1 </span>{
+<a href=#285 id=285 data-nosnippet>285</a>            <span class="macro">write!</span>(f, <span class="string">"{num}"</span>)
+<a href=#286 id=286 data-nosnippet>286</a>        } <span class="kw">else </span>{
+<a href=#287 id=287 data-nosnippet>287</a>            <span class="macro">write!</span>(f, <span class="string">"{num}/{den}"</span>)
+<a href=#288 id=288 data-nosnippet>288</a>        }
+<a href=#289 id=289 data-nosnippet>289</a>    }
+<a href=#290 id=290 data-nosnippet>290</a>}
+<a href=#291 id=291 data-nosnippet>291</a>
+<a href=#292 id=292 data-nosnippet>292</a><span class="doccomment">/// Display formatting shows the raw modular value in [0, P).
+<a href=#293 id=293 data-nosnippet>293</a>///
+<a href=#294 id=294 data-nosnippet>294</a>/// This is useful for compact display of the field element as a plain integer.
+<a href=#295 id=295 data-nosnippet>295</a>/// Use this when you want to see the actual residue value.
+<a href=#296 id=296 data-nosnippet>296</a>///
+<a href=#297 id=297 data-nosnippet>297</a>/// # Examples
+<a href=#298 id=298 data-nosnippet>298</a>///
+<a href=#299 id=299 data-nosnippet>299</a>/// ```
+<a href=#300 id=300 data-nosnippet>300</a>/// use fp::fp;
+<a href=#301 id=301 data-nosnippet>301</a>///
+<a href=#302 id=302 data-nosnippet>302</a>/// const P: u64 = 1009;
+<a href=#303 id=303 data-nosnippet>303</a>/// let a = fp::&lt;P&gt;(123);
+<a href=#304 id=304 data-nosnippet>304</a>/// assert_eq!(a.to_string(), "123");
+<a href=#305 id=305 data-nosnippet>305</a>/// let b = fp::&lt;P&gt;(2000);  // 2000 mod 1009 = 991
+<a href=#306 id=306 data-nosnippet>306</a>/// assert_eq!(b.to_string(), "991");
+<a href=#307 id=307 data-nosnippet>307</a>/// ```
+<a href=#308 id=308 data-nosnippet>308</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::fmt::Display <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#309 id=309 data-nosnippet>309</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
+<a href=#310 id=310 data-nosnippet>310</a>        <span class="macro">write!</span>(f, <span class="string">"{}"</span>, <span class="self">self</span>.value)
+<a href=#311 id=311 data-nosnippet>311</a>    }
 <a href=#312 id=312 data-nosnippet>312</a>}
-<a href=#313 id=313 data-nosnippet>313</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::AddAssign <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#314 id=314 data-nosnippet>314</a>    <span class="kw">fn </span>add_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
-<a href=#315 id=315 data-nosnippet>315</a>        <span class="self">self</span>.value += rhs.value;
-<a href=#316 id=316 data-nosnippet>316</a>        <span class="kw">if </span>P &lt;= <span class="self">self</span>.value {
-<a href=#317 id=317 data-nosnippet>317</a>            <span class="self">self</span>.value -= P;
-<a href=#318 id=318 data-nosnippet>318</a>        }
-<a href=#319 id=319 data-nosnippet>319</a>    }
-<a href=#320 id=320 data-nosnippet>320</a>}
-<a href=#321 id=321 data-nosnippet>321</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Sub <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#322 id=322 data-nosnippet>322</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
-<a href=#323 id=323 data-nosnippet>323</a>    <span class="kw">fn </span>sub(<span class="kw-2">mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#324 id=324 data-nosnippet>324</a>        <span class="self">self </span>-= rhs;
-<a href=#325 id=325 data-nosnippet>325</a>        <span class="self">self
-<a href=#326 id=326 data-nosnippet>326</a>    </span>}
-<a href=#327 id=327 data-nosnippet>327</a>}
-<a href=#328 id=328 data-nosnippet>328</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::SubAssign <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#329 id=329 data-nosnippet>329</a>    <span class="kw">fn </span>sub_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
-<a href=#330 id=330 data-nosnippet>330</a>        <span class="kw">if </span><span class="self">self</span>.value &lt; rhs.value {
-<a href=#331 id=331 data-nosnippet>331</a>            <span class="self">self</span>.value += P;
-<a href=#332 id=332 data-nosnippet>332</a>        }
-<a href=#333 id=333 data-nosnippet>333</a>        <span class="self">self</span>.value -= rhs.value;
-<a href=#334 id=334 data-nosnippet>334</a>    }
+<a href=#313 id=313 data-nosnippet>313</a>
+<a href=#314 id=314 data-nosnippet>314</a><span class="comment">// ==========================================
+<a href=#315 id=315 data-nosnippet>315</a>// Arithmetic
+<a href=#316 id=316 data-nosnippet>316</a>// ==========================================
+<a href=#317 id=317 data-nosnippet>317</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Add <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
+<a href=#319 id=319 data-nosnippet>319</a>    <span class="kw">fn </span>add(<span class="kw-2">mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
+<a href=#320 id=320 data-nosnippet>320</a>        <span class="self">self </span>+= rhs;
+<a href=#321 id=321 data-nosnippet>321</a>        <span class="self">self
+<a href=#322 id=322 data-nosnippet>322</a>    </span>}
+<a href=#323 id=323 data-nosnippet>323</a>}
+<a href=#324 id=324 data-nosnippet>324</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::AddAssign <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#325 id=325 data-nosnippet>325</a>    <span class="kw">fn </span>add_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
+<a href=#326 id=326 data-nosnippet>326</a>        <span class="self">self</span>.add_assign(rhs);
+<a href=#327 id=327 data-nosnippet>327</a>    }
+<a href=#328 id=328 data-nosnippet>328</a>}
+<a href=#329 id=329 data-nosnippet>329</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Sub <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#330 id=330 data-nosnippet>330</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
+<a href=#331 id=331 data-nosnippet>331</a>    <span class="kw">fn </span>sub(<span class="kw-2">mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
+<a href=#332 id=332 data-nosnippet>332</a>        <span class="self">self </span>-= rhs;
+<a href=#333 id=333 data-nosnippet>333</a>        <span class="self">self
+<a href=#334 id=334 data-nosnippet>334</a>    </span>}
 <a href=#335 id=335 data-nosnippet>335</a>}
-<a href=#336 id=336 data-nosnippet>336</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Mul <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#337 id=337 data-nosnippet>337</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
-<a href=#338 id=338 data-nosnippet>338</a>    <span class="kw">fn </span>mul(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#339 id=339 data-nosnippet>339</a>        <span class="self">self</span>.mul(rhs)
-<a href=#340 id=340 data-nosnippet>340</a>    }
-<a href=#341 id=341 data-nosnippet>341</a>}
-<a href=#342 id=342 data-nosnippet>342</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::MulAssign <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#343 id=343 data-nosnippet>343</a>    <span class="kw">fn </span>mul_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
-<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw-2">*</span><span class="self">self </span>= <span class="kw-2">*</span><span class="self">self </span>* rhs;
-<a href=#345 id=345 data-nosnippet>345</a>    }
-<a href=#346 id=346 data-nosnippet>346</a>}
-<a href=#347 id=347 data-nosnippet>347</a><span class="attr">#[allow(clippy::suspicious_arithmetic_impl)]
-<a href=#348 id=348 data-nosnippet>348</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Div <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#349 id=349 data-nosnippet>349</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
-<a href=#350 id=350 data-nosnippet>350</a>    <span class="kw">fn </span>div(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#351 id=351 data-nosnippet>351</a>        <span class="self">self </span>* rhs.inv()
-<a href=#352 id=352 data-nosnippet>352</a>    }
-<a href=#353 id=353 data-nosnippet>353</a>}
-<a href=#354 id=354 data-nosnippet>354</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::DivAssign <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#355 id=355 data-nosnippet>355</a>    <span class="kw">fn </span>div_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
-<a href=#356 id=356 data-nosnippet>356</a>        <span class="kw-2">*</span><span class="self">self </span>= (<span class="kw-2">*</span><span class="self">self</span>) / rhs;
-<a href=#357 id=357 data-nosnippet>357</a>    }
-<a href=#358 id=358 data-nosnippet>358</a>}
-<a href=#359 id=359 data-nosnippet>359</a>
-<a href=#360 id=360 data-nosnippet>360</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Neg <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
-<a href=#362 id=362 data-nosnippet>362</a>
-<a href=#363 id=363 data-nosnippet>363</a>    <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw">if </span><span class="self">self</span>.value == <span class="number">0 </span>{
-<a href=#365 id=365 data-nosnippet>365</a>            <span class="self">self
-<a href=#366 id=366 data-nosnippet>366</a>        </span>} <span class="kw">else </span>{
-<a href=#367 id=367 data-nosnippet>367</a>            <span class="self">Self </span>{
-<a href=#368 id=368 data-nosnippet>368</a>                value: P - <span class="self">self</span>.value,
-<a href=#369 id=369 data-nosnippet>369</a>            }
-<a href=#370 id=370 data-nosnippet>370</a>        }
-<a href=#371 id=371 data-nosnippet>371</a>    }
-<a href=#372 id=372 data-nosnippet>372</a>}
-<a href=#373 id=373 data-nosnippet>373</a>
-<a href=#374 id=374 data-nosnippet>374</a><span class="comment">// ==========================================
-<a href=#375 id=375 data-nosnippet>375</a>// Iterators
-<a href=#376 id=376 data-nosnippet>376</a>// ==========================================
-<a href=#377 id=377 data-nosnippet>377</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::iter::Sum <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#378 id=378 data-nosnippet>378</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#379 id=379 data-nosnippet>379</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">0</span>), |acc, item| acc + item)
-<a href=#380 id=380 data-nosnippet>380</a>    }
-<a href=#381 id=381 data-nosnippet>381</a>}
-<a href=#382 id=382 data-nosnippet>382</a>
-<a href=#383 id=383 data-nosnippet>383</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>P: u64&gt; std::iter::Sum&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt; <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#384 id=384 data-nosnippet>384</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#385 id=385 data-nosnippet>385</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">0</span>), |acc, <span class="kw-2">&amp;</span>item| acc + item)
-<a href=#386 id=386 data-nosnippet>386</a>    }
-<a href=#387 id=387 data-nosnippet>387</a>}
-<a href=#388 id=388 data-nosnippet>388</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::iter::Product <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#389 id=389 data-nosnippet>389</a>    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#390 id=390 data-nosnippet>390</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">1</span>), |acc, x| acc * x)
-<a href=#391 id=391 data-nosnippet>391</a>    }
-<a href=#392 id=392 data-nosnippet>392</a>}
-<a href=#393 id=393 data-nosnippet>393</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>P: u64&gt; std::iter::Product&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt; <span class="kw">for </span>Fp&lt;P&gt; {
-<a href=#394 id=394 data-nosnippet>394</a>    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#395 id=395 data-nosnippet>395</a>        iter.copied().product()
-<a href=#396 id=396 data-nosnippet>396</a>    }
-<a href=#397 id=397 data-nosnippet>397</a>}</code></pre></div></section></main></body></html>
+<a href=#336 id=336 data-nosnippet>336</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::SubAssign <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#337 id=337 data-nosnippet>337</a>    <span class="kw">fn </span>sub_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
+<a href=#338 id=338 data-nosnippet>338</a>        <span class="kw">if </span><span class="self">self</span>.value &lt; rhs.value {
+<a href=#339 id=339 data-nosnippet>339</a>            <span class="self">self</span>.value += P;
+<a href=#340 id=340 data-nosnippet>340</a>        }
+<a href=#341 id=341 data-nosnippet>341</a>        <span class="self">self</span>.value -= rhs.value;
+<a href=#342 id=342 data-nosnippet>342</a>    }
+<a href=#343 id=343 data-nosnippet>343</a>}
+<a href=#344 id=344 data-nosnippet>344</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Mul <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#345 id=345 data-nosnippet>345</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
+<a href=#346 id=346 data-nosnippet>346</a>    <span class="kw">fn </span>mul(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="self">self</span>.mul(rhs)
+<a href=#348 id=348 data-nosnippet>348</a>    }
+<a href=#349 id=349 data-nosnippet>349</a>}
+<a href=#350 id=350 data-nosnippet>350</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::MulAssign <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#351 id=351 data-nosnippet>351</a>    <span class="kw">fn </span>mul_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
+<a href=#352 id=352 data-nosnippet>352</a>        <span class="kw-2">*</span><span class="self">self </span>= <span class="kw-2">*</span><span class="self">self </span>* rhs;
+<a href=#353 id=353 data-nosnippet>353</a>    }
+<a href=#354 id=354 data-nosnippet>354</a>}
+<a href=#355 id=355 data-nosnippet>355</a><span class="attr">#[allow(clippy::suspicious_arithmetic_impl)]
+<a href=#356 id=356 data-nosnippet>356</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Div <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#357 id=357 data-nosnippet>357</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
+<a href=#358 id=358 data-nosnippet>358</a>    <span class="kw">fn </span>div(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self</span>::Output {
+<a href=#359 id=359 data-nosnippet>359</a>        <span class="self">self </span>* rhs.inv()
+<a href=#360 id=360 data-nosnippet>360</a>    }
+<a href=#361 id=361 data-nosnippet>361</a>}
+<a href=#362 id=362 data-nosnippet>362</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::DivAssign <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#363 id=363 data-nosnippet>363</a>    <span class="kw">fn </span>div_assign(<span class="kw-2">&amp;mut </span><span class="self">self</span>, rhs: <span class="self">Self</span>) {
+<a href=#364 id=364 data-nosnippet>364</a>        <span class="kw-2">*</span><span class="self">self </span>= (<span class="kw-2">*</span><span class="self">self</span>) / rhs;
+<a href=#365 id=365 data-nosnippet>365</a>    }
+<a href=#366 id=366 data-nosnippet>366</a>}
+<a href=#367 id=367 data-nosnippet>367</a>
+<a href=#368 id=368 data-nosnippet>368</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::ops::Neg <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#369 id=369 data-nosnippet>369</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
+<a href=#370 id=370 data-nosnippet>370</a>
+<a href=#371 id=371 data-nosnippet>371</a>    <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output {
+<a href=#372 id=372 data-nosnippet>372</a>        <span class="kw">if </span><span class="self">self</span>.value == <span class="number">0 </span>{
+<a href=#373 id=373 data-nosnippet>373</a>            <span class="self">self
+<a href=#374 id=374 data-nosnippet>374</a>        </span>} <span class="kw">else </span>{
+<a href=#375 id=375 data-nosnippet>375</a>            <span class="self">Self </span>{
+<a href=#376 id=376 data-nosnippet>376</a>                value: P - <span class="self">self</span>.value,
+<a href=#377 id=377 data-nosnippet>377</a>            }
+<a href=#378 id=378 data-nosnippet>378</a>        }
+<a href=#379 id=379 data-nosnippet>379</a>    }
+<a href=#380 id=380 data-nosnippet>380</a>}
+<a href=#381 id=381 data-nosnippet>381</a>
+<a href=#382 id=382 data-nosnippet>382</a><span class="comment">// ==========================================
+<a href=#383 id=383 data-nosnippet>383</a>// Iterators
+<a href=#384 id=384 data-nosnippet>384</a>// ==========================================
+<a href=#385 id=385 data-nosnippet>385</a></span><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::iter::Sum <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#386 id=386 data-nosnippet>386</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+<a href=#387 id=387 data-nosnippet>387</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">0</span>), |acc, item| acc + item)
+<a href=#388 id=388 data-nosnippet>388</a>    }
+<a href=#389 id=389 data-nosnippet>389</a>}
+<a href=#390 id=390 data-nosnippet>390</a>
+<a href=#391 id=391 data-nosnippet>391</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>P: u64&gt; std::iter::Sum&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt; <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#392 id=392 data-nosnippet>392</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+<a href=#393 id=393 data-nosnippet>393</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">0</span>), |acc, <span class="kw-2">&amp;</span>item| acc + item)
+<a href=#394 id=394 data-nosnippet>394</a>    }
+<a href=#395 id=395 data-nosnippet>395</a>}
+<a href=#396 id=396 data-nosnippet>396</a><span class="kw">impl</span>&lt;<span class="kw">const </span>P: u64&gt; std::iter::Product <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#397 id=397 data-nosnippet>397</a>    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+<a href=#398 id=398 data-nosnippet>398</a>        iter.fold(<span class="self">Self</span>::new(<span class="number">1</span>), |acc, x| acc * x)
+<a href=#399 id=399 data-nosnippet>399</a>    }
+<a href=#400 id=400 data-nosnippet>400</a>}
+<a href=#401 id=401 data-nosnippet>401</a><span class="kw">impl</span>&lt;<span class="lifetime">'a</span>, <span class="kw">const </span>P: u64&gt; std::iter::Product&lt;<span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt; <span class="kw">for </span>Fp&lt;P&gt; {
+<a href=#402 id=402 data-nosnippet>402</a>    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="kw-2">&amp;</span><span class="lifetime">'a </span><span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
+<a href=#403 id=403 data-nosnippet>403</a>        iter.copied().product()
+<a href=#404 id=404 data-nosnippet>404</a>    }
+<a href=#405 id=405 data-nosnippet>405</a>}</code></pre></div></section></main></body></html>
