@@ -122,27 +122,9 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
         for chunk in items.chunks_mut(n) {
             let (a, b) = chunk.split_at_mut(n / 2);
             let mut coeff = fp(1);
-
-            let mut i = 0;
-            while i + 3 < a.len() {
-                let w0 = coeff;
-                let w1 = coeff * w;
-                let w2 = w1 * w;
-                let w3 = w2 * w;
-
-                (a[i], b[i]) = (a[i] + b[i], (a[i] - b[i]) * w0);
-                (a[i + 1], b[i + 1]) = (a[i + 1] + b[i + 1], (a[i + 1] - b[i + 1]) * w1);
-                (a[i + 2], b[i + 2]) = (a[i + 2] + b[i + 2], (a[i + 2] - b[i + 2]) * w2);
-                (a[i + 3], b[i + 3]) = (a[i + 3] + b[i + 3], (a[i + 3] - b[i + 3]) * w3);
-
-                coeff = w3 * w;
-                i += 4;
-            }
-
-            while i < a.len() {
-                (a[i], b[i]) = (a[i] + b[i], (a[i] - b[i]) * coeff);
+            for (a, b) in a.iter_mut().zip(b) {
+                (*a, *b) = (*a + *b, (*a - *b) * coeff);
                 coeff *= w;
-                i += 1;
             }
         }
         n /= 2;
@@ -196,32 +178,10 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
         for chunk in items.chunks_mut(n) {
             let (a, b) = chunk.split_at_mut(n / 2);
             let mut coeff = fp(1);
-
-            let mut i = 0;
-            while i + 3 < a.len() {
-                let w0 = coeff;
-                let w1 = coeff * w;
-                let w2 = w1 * w;
-                let w3 = w2 * w;
-
-                b[i] *= w0;
-                (a[i], b[i]) = (a[i] + b[i], a[i] - b[i]);
-                b[i + 1] *= w1;
-                (a[i + 1], b[i + 1]) = (a[i + 1] + b[i + 1], a[i + 1] - b[i + 1]);
-                b[i + 2] *= w2;
-                (a[i + 2], b[i + 2]) = (a[i + 2] + b[i + 2], a[i + 2] - b[i + 2]);
-                b[i + 3] *= w3;
-                (a[i + 3], b[i + 3]) = (a[i + 3] + b[i + 3], a[i + 3] - b[i + 3]);
-
-                coeff = w3 * w;
-                i += 4;
-            }
-
-            while i < a.len() {
-                b[i] *= coeff;
-                (a[i], b[i]) = (a[i] + b[i], a[i] - b[i]);
+            for (a, b) in a.iter_mut().zip(b) {
+                *b *= coeff;
+                (*a, *b) = (*a + *b, *a - *b);
                 coeff *= w;
-                i += 1;
             }
         }
         n *= 2;
