@@ -1,10 +1,11 @@
 [package]
-name = "fp_precalc"
+name = "fp_fps"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 fp = { path = "../fp" }
+fp_fft = { path = "../fp_fft" }
 
 [dev-dependencies]
 rand = { workspace = true }

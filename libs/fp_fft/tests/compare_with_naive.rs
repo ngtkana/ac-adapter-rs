@@ -1,8 +1,15 @@
 use fp::{Fp, fp, fpu};
 use fp_fft::{fft, ifft};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{Rng, SeedableRng, prelude::Distribution, rngs::StdRng};
 
 const P: u64 = 998_244_353; // 2^23 * 7 * 17 + 1
+
+struct FpHomogeneous;
+impl Distribution<Fp<P>> for FpHomogeneous {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Fp<P> {
+        fp(rng.gen_range(0..P))
+    }
+}
 
 #[allow(clippy::unreadable_literal)]
 const DYADIC_ROOTS: [Fp<P>; 24] = [
@@ -72,7 +79,7 @@ fn intt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
 fn test_fft_len_1() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = fp::<P>(rng.gen_range(0..P));
+        let x = (&mut rng).sample(FpHomogeneous);
         let mut f = [x];
         fft(&mut f);
         assert_eq!(f.as_slice(), &[x]);
@@ -83,7 +90,7 @@ fn test_fft_len_1() {
 fn test_ifft_len_1() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = fp::<P>(rng.gen_range(0..P));
+        let x = (&mut rng).sample(FpHomogeneous);
         let mut f = [x];
         ifft(&mut f);
         assert_eq!(f.as_slice(), &[x]);
@@ -94,8 +101,8 @@ fn test_ifft_len_1() {
 fn test_fft_len_2() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = fp::<P>(rng.gen_range(0..P));
-        let y = fp(rng.gen_range(0..P));
+        let x = (&mut rng).sample(FpHomogeneous);
+        let y = (&mut rng).sample(FpHomogeneous);
         let mut f = [x, y];
         fft(&mut f);
         assert_eq!(f.as_slice(), &[x + y, x - y]);
@@ -106,8 +113,8 @@ fn test_fft_len_2() {
 fn test_ifft_len_2() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = fp::<P>(rng.gen_range(0..P));
-        let y = fp(rng.gen_range(0..P));
+        let x = (&mut rng).sample(FpHomogeneous);
+        let y = (&mut rng).sample(FpHomogeneous);
         let mut f = [x, y];
         ifft(&mut f);
         assert_eq!(f.as_slice(), &[(x + y) / fp(2), (x - y) / fp(2)]);
@@ -120,7 +127,10 @@ fn test_fft_compare_with_naive() {
     for _ in 0..200 {
         let lg = rng.gen_range(0..=6);
         let n = 1 << lg;
-        let f = (0..n).map(|_| fp(rng.gen_range(0..P))).collect::<Vec<_>>();
+        let f = (&mut rng)
+            .sample_iter(FpHomogeneous)
+            .take(n)
+            .collect::<Vec<_>>();
 
         let mut result = f.clone();
         fft(&mut result);
@@ -142,7 +152,10 @@ fn test_ifft_compare_with_naive() {
     for _ in 0..200 {
         let lg = rng.gen_range(0..=6);
         let n = 1 << lg;
-        let f = (0..n).map(|_| fp(rng.gen_range(0..P))).collect::<Vec<_>>();
+        let f = (&mut rng)
+            .sample_iter(FpHomogeneous)
+            .take(n)
+            .collect::<Vec<_>>();
 
         let mut result = f.clone();
         ifft(&mut result);
