@@ -1,5 +1,5 @@
 use fp::{Fp, fp};
-use fp_fps::{poly_mul, fps_inv};
+use fp_fps::{fps_inv, poly_mul};
 use rand::{Rng, SeedableRng, prelude::Distribution, rngs::StdRng};
 
 const P: u64 = 998_244_353;
@@ -40,7 +40,6 @@ fn naive_poly_mul(f: &[Fp<P>], g: &[Fp<P>]) -> Vec<Fp<P>> {
     h
 }
 
-#[allow(dead_code)]
 fn naive_poly_div_rem(mut a: Vec<Fp<P>>, b: &[Fp<P>]) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
     assert_ne!(*b.last().unwrap(), fp(0));
     if a.len() < b.len() {
@@ -59,7 +58,6 @@ fn naive_poly_div_rem(mut a: Vec<Fp<P>>, b: &[Fp<P>]) -> (Vec<Fp<P>>, Vec<Fp<P>>
     (q, a)
 }
 
-#[allow(dead_code)]
 fn naive_multipoint_evaluation<const P: u64>(f: &[Fp<P>], points: &[Fp<P>]) -> Vec<Fp<P>> {
     points
         .iter()
@@ -81,14 +79,8 @@ fn test_poly_mul_compare_with_naive() {
     for _ in 0..200 {
         let a_len = rng.gen_range(1..=10);
         let b_len = rng.gen_range(1..=10);
-        let a: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(a_len)
-            .collect();
-        let b: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(b_len)
-            .collect();
+        let a: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(a_len).collect();
+        let b: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(b_len).collect();
 
         let result = poly_mul(a.clone(), b.clone());
         let expected = naive_poly_mul(&a, &b);
@@ -122,10 +114,7 @@ fn test_fps_inv_compare_with_naive() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..200 {
         let f_len = 1 << rng.gen_range(0..=6);
-        let mut f: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(f_len)
-            .collect();
+        let mut f: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(f_len).collect();
 
         f[0] = fp(rng.gen_range(1..P));
         let precision = rng.gen_range(1..=32);
@@ -141,10 +130,7 @@ fn test_fps_inv_inverse_property() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..100 {
         let f_len = 1 << rng.gen_range(0..=5);
-        let mut f: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(f_len)
-            .collect();
+        let mut f: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(f_len).collect();
         f[0] = fp(rng.gen_range(1..P));
 
         let precision = 1 << rng.gen_range(0..=5);
@@ -170,14 +156,8 @@ fn test_poly_div_rem_compare_with_naive() {
     for _ in 0..100 {
         let a_len = rng.gen_range(1..=8);
         let b_len = rng.gen_range(1..=a_len);
-        let a: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(a_len)
-            .collect();
-        let mut b: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(b_len)
-            .collect();
+        let a: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(a_len).collect();
+        let mut b: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(b_len).collect();
 
         let idx = b.len() - 1;
         b[idx] = fp(rng.gen_range(1..P));
@@ -197,10 +177,7 @@ fn test_multipoint_evaluation_compare_with_naive() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..50 {
         let f_len = rng.gen_range(1..=6);
-        let f: Vec<_> = (&mut rng)
-            .sample_iter(FpHomogeneous)
-            .take(f_len)
-            .collect();
+        let f: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(f_len).collect();
 
         let n_points = rng.gen_range(1..=6);
         let points: Vec<_> = (&mut rng)
