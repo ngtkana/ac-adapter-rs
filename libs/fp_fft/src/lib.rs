@@ -81,14 +81,15 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
 ///
 /// Applies the Cooley-Tukey FFT algorithm to compute the Discrete Fourier Transform.
 ///
-/// For an input array $x\[0\], x\[1\], \ldots, x\[N-1\]$, computes outputs equivalent to:
-/// $$X\[k\] = \sum_{n=0}^{N-1} x\[n\] \cdot \omega_N^{kn}$$
-/// where $\omega_N$ is a primitive $N$-th root of unity over $\mathbb{F}_P$.
+/// For an input array $(x_0, x_1, \ldots, x_{N-1})$, computes:
+/// $$X_i = \sum_{j=0}^{N-1} x_j \cdot \omega_N^{i_{\text{rev}} \cdot j}$$
+/// where $i_{\text{rev}} = \text{bitreverse}(i)$ and $\omega_N$ is a primitive $N$-th root
+/// of unity over $\mathbb{F}_P$.
 ///
-/// The implementation uses the bit-reversal permutation variant of Cooley-Tukey for
-/// efficient in-place computation. The transform is performed in-place, modifying the
-/// input array directly. This is typically followed by pointwise operations and an
-/// inverse FFT to compute the result in the coefficient domain.
+/// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
+/// The transform is performed in-place, modifying the input array directly. This is typically
+/// followed by pointwise operations and an inverse FFT to compute the result in the
+/// coefficient domain.
 ///
 /// # Preconditions
 ///
@@ -137,13 +138,14 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 /// Transforms an array from the frequency domain back to the coefficient domain,
 /// inverting the effect of `fft`.
 ///
-/// For a transformed array $X\[0\], X\[1\], \ldots, X\[N-1\]$, computes outputs equivalent to:
-/// $$x\[n\] = \frac{1}{N} \sum_{k=0}^{N-1} X\[k\] \cdot \omega_N^{-kn}$$
-/// where $\omega_N$ is a primitive $N$-th root of unity over $\mathbb{F}_P$.
+/// For a transformed array $(X_0, X_1, \ldots, X_{N-1})$, computes:
+/// $$x_i = \frac{1}{N} \sum_{j=0}^{N-1} X_{j_{\text{rev}}} \cdot \omega_N^{-i \cdot j}$$
+/// where $j_{\text{rev}} = \text{bitreverse}(j)$ and $\omega_N$ is a primitive $N$-th root
+/// of unity over $\mathbb{F}_P$.
 ///
-/// The implementation uses the bit-reversal permutation variant of Cooley-Tukey for
-/// efficient in-place computation. The result is scaled by $1/N$ following the standard
-/// IFFT convention to ensure FFT and IFFT are exact inverses.
+/// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
+/// The result is scaled by $1/N$ following the standard IFFT convention to ensure FFT and
+/// IFFT are exact inverses.
 ///
 /// # Preconditions
 ///
