@@ -182,9 +182,18 @@ Each example should:
 2. Show the typical use case
 3. For methods on generic types, include a concrete instantiation
 4. Keep it short — usually 3-10 lines
+5. **Include `assert_eq!` or similar assertions to verify the method's contract** — verify that the result matches the specification, not just that the code compiles
 
-Bad: `"let x = my_method()"` with no context
-Good: Full struct creation + method call with clear intent
+**Assertion Guidelines:**
+- Every example's output/result should be validated with `assert_eq!`, `assert!`, or similar
+- The assertion should verify the method's **specification** (the documented contract), not just that the code runs
+- For constructors/builders: verify the state is correct
+- For computations: verify the result matches expected values per the spec
+- For queries: verify the returned value is as documented
+- Example: `assert_eq!(binom(5, 2), fp(10))` validates that $\binom{5}{2} = 10$
+
+**Bad:** `let x = my_method();` (no verification)
+**Good:** `let x = my_method(); assert_eq!(x, expected_value);` (specification verified)
 
 ## Output
 
@@ -218,3 +227,21 @@ Use standard Rust doc comment syntax throughout. Math and algorithmic notation s
 - [ ] Examples are realistic and functional
 - [ ] Language is clear and concise
 - [ ] Style follows Rust std library conventions
+
+## Verification
+
+After generating doc comments, **always** run these verification commands from the repository root:
+
+```bash
+makers doc
+makers test-doc
+```
+
+**Expected results:**
+- `makers doc`: Builds documentation successfully (warnings about TeX escaping or link resolution are acceptable if they don't block the build)
+- `makers test-doc`: All doctests pass (use TDD: examples should be runnable and verify expected behavior)
+
+**If issues arise:**
+- TeX notation: Escape brackets in math mode (`\[` and `\]` for square brackets within `$...$`)
+- Link resolution: Method/type names in backticks may need full paths if not in the same scope
+- Doctest failures: Fix the code or the example to make them pass (per TDD discipline)
