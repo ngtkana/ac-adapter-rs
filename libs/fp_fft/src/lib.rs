@@ -15,8 +15,9 @@
 //! # Examples
 //!
 //! ```
-//! use fp_fft::{fft, ifft};
 //! use fp::fp;
+//! use fp_fft::fft;
+//! use fp_fft::ifft;
 //!
 //! const P: u64 = 998_244_353;
 //!
@@ -34,9 +35,9 @@
 //!
 //! ifft(&mut a);
 //!
-//! assert_eq!(a[0], fp::<P>(3));  // constant term: 1 * 3
+//! assert_eq!(a[0], fp::<P>(3)); // constant term: 1 * 3
 //! assert_eq!(a[1], fp::<P>(10)); // x term: 1*4 + 2*3
-//! assert_eq!(a[2], fp::<P>(8));  // x² term: 2 * 4
+//! assert_eq!(a[2], fp::<P>(8)); // x² term: 2 * 4
 //! ```
 //!
 //! # Main Items
@@ -50,7 +51,8 @@
 //! - Input length must be a power of two
 //! - Time domain operations on the transformed data remain $O(n)$
 
-use fp::{Fp, fp};
+use fp::Fp;
+use fp::fp;
 
 const DIADIC_ROOTS_BUFFER_LEN: usize = 64;
 
@@ -75,6 +77,17 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
         i -= 1;
     }
     result
+}
+
+trait DirootTrait<const P: u64> {
+    const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN];
+    const BACKWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN];
+}
+enum Diroot<const P: u64> {}
+impl<const P: u64> DirootTrait<P> for Diroot<P> {
+    const BACKWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] =
+        build_diadic_roots(find_primitive_root().inv());
+    const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
 }
 
 /// Computes the Fast Fourier Transform of a field element array (in-place).
@@ -102,24 +115,23 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
 /// # Examples
 ///
 /// ```
-/// use fp_fft::fft;
 /// use fp::fp;
+/// use fp_fft::fft;
 ///
 /// const P: u64 = 998_244_353;
 /// let mut data = [fp::<P>(3), fp::<P>(5)];
 /// fft(&mut data);
 /// // FFT of [x, y] is [x + y, x - y]
-/// assert_eq!(data[0], fp::<P>(8));         // 3 + 5
+/// assert_eq!(data[0], fp::<P>(8)); // 3 + 5
 /// assert_eq!(data[1], fp::<P>(998244351)); // 3 - 5 ≡ -2 (mod P)
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let w = const { build_diadic_roots(find_primitive_root()) };
-    let forth = w[2];
+    let forth = Diroot::FORWARD[2];
     let mut n = items.len();
     while n >= 4 {
-        let w = w[n.trailing_zeros() as usize];
+        let w = Diroot::FORWARD[n.trailing_zeros() as usize];
         for chunk in items.chunks_mut(n) {
             let mut wk = fp(1);
             for i in 0..n / 4 {
@@ -173,8 +185,9 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 /// # Examples
 ///
 /// ```
-/// use fp_fft::{fft, ifft};
 /// use fp::fp;
+/// use fp_fft::fft;
+/// use fp_fft::ifft;
 ///
 /// const P: u64 = 998_244_353;
 /// let original = [fp::<P>(1), fp::<P>(2), fp::<P>(3), fp::<P>(4)];
@@ -188,7 +201,6 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let w = const { build_diadic_roots(find_primitive_root().inv()) };
     let mut n = 4;
     if items.len().trailing_zeros() % 2 == 1 {
         for chunk in items.chunks_mut(2) {
@@ -197,9 +209,9 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
         }
         n *= 2;
     }
-    let forth = w[2];
+    let forth = Diroot::BACKWARD[2];
     while n <= items.len() {
-        let w = w[n.trailing_zeros() as usize];
+        let w = Diroot::BACKWARD[n.trailing_zeros() as usize];
         for chunk in items.chunks_mut(n) {
             let mut wk = fp(1);
             for i in 0..n / 4 {
