@@ -212,8 +212,7 @@ mod tests {
             // Check the result matches the brute-force
             assert_eq!(
                 partition_result, brute_result,
-                "Random test failed at iteration: threshold={}, values={:?}",
-                threshold, values
+                "Random test failed at iteration: threshold={threshold}, values={values:?}",
             );
 
             // Check that count of true elements is correct
