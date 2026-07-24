@@ -3,9 +3,13 @@ name = "benches"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+fp = { path = "../libs/fp" }
+fp_fft = { path = "../libs/fp_fft" }
+
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [[bench]]
-name = "sieve"
+name = "fft_benchmark"
 harness = false
