@@ -13,6 +13,7 @@ rustflags = [
     "-Aclippy::missing-panics-doc",
     "-Aclippy::module-name-repetitions",
     "-Aclippy::must-use-candidate",
+    "-Aclippy::needless_range_loop",
     "-Aclippy::return-self-not-must-use",
     "-Aclippy::similar-names",
 ]
