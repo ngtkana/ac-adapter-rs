@@ -79,7 +79,7 @@ fn intt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
 fn test_fft_len_1() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = (&mut rng).sample(FpHomogeneous);
+        let x = rng.sample(FpHomogeneous);
         let mut f = [x];
         fft(&mut f);
         assert_eq!(f.as_slice(), &[x]);
@@ -90,7 +90,7 @@ fn test_fft_len_1() {
 fn test_ifft_len_1() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = (&mut rng).sample(FpHomogeneous);
+        let x = rng.sample(FpHomogeneous);
         let mut f = [x];
         ifft(&mut f);
         assert_eq!(f.as_slice(), &[x]);
@@ -101,8 +101,8 @@ fn test_ifft_len_1() {
 fn test_fft_len_2() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = (&mut rng).sample(FpHomogeneous);
-        let y = (&mut rng).sample(FpHomogeneous);
+        let x = rng.sample(FpHomogeneous);
+        let y = rng.sample(FpHomogeneous);
         let mut f = [x, y];
         fft(&mut f);
         assert_eq!(f.as_slice(), &[x + y, x - y]);
@@ -113,8 +113,8 @@ fn test_fft_len_2() {
 fn test_ifft_len_2() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..20 {
-        let x = (&mut rng).sample(FpHomogeneous);
-        let y = (&mut rng).sample(FpHomogeneous);
+        let x = rng.sample(FpHomogeneous);
+        let y = rng.sample(FpHomogeneous);
         let mut f = [x, y];
         ifft(&mut f);
         assert_eq!(f.as_slice(), &[(x + y) / fp(2), (x - y) / fp(2)]);
