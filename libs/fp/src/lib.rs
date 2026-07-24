@@ -1,164 +1,77 @@
-//! A library for modular arithmetic.
-//!
-//! # Examples
-//! ```
-//! use fp::fp;
-//! type Fp = fp::Fp<998244353>;
-//! let a = Fp::new(3);
-//! let b = Fp::new(4);
-//! assert_eq!(a + b, Fp::new(7));
-//! assert_eq!(a - b, Fp::new(998244352));
-//! assert_eq!(a * b, Fp::new(12));
-//! assert_eq!(a / b * b, Fp::new(3));
-//! assert_eq!(a.pow(3), Fp::new(27));
-//! ```
-
-use std::iter::Product;
-use std::iter::Sum;
-use std::mem::swap;
-use std::ops::Add;
-use std::ops::AddAssign;
-use std::ops::Div;
-use std::ops::DivAssign;
-use std::ops::Mul;
-use std::ops::MulAssign;
-use std::ops::Neg;
-use std::ops::Sub;
-use std::ops::SubAssign;
-
-/// Constructs a new instance of [`Fp`]
-/// # Examples
-/// ```
-/// use fp::fp;
-/// use fp::Fp;
-/// let a = fp!(42; mod 998244353);
-/// assert_eq!(a.value(), 42);
-/// ```
-#[macro_export]
-macro_rules! fp {
-    ($value:expr) => {
-        $crate::Fp::from($value)
-    };
-    ($value:expr; mod $p:expr) => {
-        $crate::Fp::<$p>::from($value)
-    };
+pub const fn fpu<const P: u64>(value: usize) -> Fp<P> {
+    Fp::new(value as u64)
 }
 
-/// $𝔽_p$.
-/// # Requirements
-/// - $P$ is odd and prime ($P < 2³¹$)
-/// # Invariants
-/// - $0 ≤ \text{value} < P$
-/// # Examples
-/// ```
-/// type Fp = fp::Fp<998244353>;
-/// assert_eq!(Fp::new(3) + Fp::new(4), Fp::new(7));
-/// assert_eq!(Fp::new(3) - Fp::new(4), Fp::new(998244352));
-/// assert_eq!(Fp::new(3) * Fp::new(4), Fp::new(12));
-/// assert_eq!(Fp::new(3) / Fp::new(4) * Fp::new(4), Fp::new(3));
-/// ```
-#[derive(Clone, Copy, PartialEq, Eq, Hash)]
+pub const fn fp<const P: u64>(value: u64) -> Fp<P> {
+    Fp::new(value)
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Fp<const P: u64> {
     value: u64,
 }
+
 impl<const P: u64> Fp<P> {
-    /// Constructs a new instance.
-    /// # Requirements
-    /// # Examples
-    /// ```
-    /// use fp::Fp;
-    /// const P: u64 = 998244353;
-    /// let a = Fp::<P>::new(42);
-    /// ```
     pub const fn new(value: u64) -> Self {
         Self { value: value % P }
     }
-
-    /// Returns the value.
-    /// # Examples
-    /// ```
-    /// use fp::Fp;
-    /// const P: u64 = 998244353;
-    /// let a = Fp::<P>::new(42);
-    /// assert_eq!(a.value(), 42);
-    /// ```
-    pub const fn value(self) -> u64 {
-        self.value
-    }
-
-    /// Returns the multiplicative inverse.
-    /// # Examples
-    /// ```
-    /// use fp::Fp;
-    /// const P: u64 = 998244353;
-    /// let a = Fp::<P>::new(2);
-    /// assert_eq!(a.inv().value(), 499122177);
-    /// ```
-    pub fn inv(self) -> Self {
+    pub const fn mul(self, rhs: Self) -> Self {
         Self {
-            value: mod_inv::<P>(self.value),
+            value: self.value * rhs.value % P,
         }
     }
-
-    /// Returns the $n$-th power.
-    /// # Examples
-    /// ```
-    /// use fp::Fp;
-    /// const P: u64 = 998244353;
-    /// let a = Fp::<P>::new(2);
-    /// assert_eq!(a.pow(3).value(), 8);
-    /// ```
-    pub fn pow(self, mut exp: u64) -> Self {
-        let mut result = Self::new(1);
-        let mut base = self;
-        while exp > 0 {
+    pub const fn pow(mut self: Self, mut exp: u64) -> Self {
+        if exp == 0 {
+            return fp(1);
+        }
+        let mut ans = fp(1);
+        while exp != 1 {
             if exp & 1 == 1 {
-                result *= base;
+                ans = ans.mul(self);
             }
-            base *= base;
+            self = self.mul(self);
             exp >>= 1;
         }
-        result
+        ans.mul(self)
     }
-
-    /// Returns $(-1)^e$.
-    ///
-    /// # Examples
-    /// ```
-    /// type Fp = fp::Fp<998244353>;
-    /// assert_eq!(Fp::sign(0), Fp::from(1));
-    /// assert_eq!(Fp::sign(1), Fp::from(-1));
-    /// assert_eq!(Fp::sign(2), Fp::from(1));
-    /// assert_eq!(Fp::sign(3), Fp::from(-1));
-    /// ```
-    pub fn sign(exp: usize) -> Self {
-        Self::new(if exp % 2 == 0 { 1 } else { P - 1 })
+    pub const fn inv(self) -> Self {
+        const fn euclid(a: i64, m: i64) -> i64 {
+            if a == 1 {
+                1
+            } else {
+                m + (1 - m * euclid(m % a, a)) / a
+            }
+        }
+        Self {
+            value: euclid(self.value as i64, P as i64) as u64,
+        }
     }
 }
+
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        pub fn berlekamp_massey_fp(a: i64, p: i64) -> [i64; 2] {
-            let mut u0 = 0_i64;
+        pub const fn berlekamp_massey(a: i64, p: i64) -> [i64; 2] {
+            let mut u0 = 0;
             let mut v0 = 1_i64;
             let mut w0 = a * u0 + p * v0;
-            let mut u1 = 1_i64;
-            let mut v1 = 0_i64;
+            let mut u1 = 1;
+            let mut v1 = 0;
             let mut w1 = a * u1 + p * v1;
             while p <= w0 * w0 {
                 let q = w0 / w1;
                 u0 -= q * u1;
                 v0 -= q * v1;
                 w0 -= q * w1;
-                swap(&mut u0, &mut u1);
-                swap(&mut v0, &mut v1);
-                swap(&mut w0, &mut w1);
+                std::mem::swap(&mut u0, &mut u1);
+                std::mem::swap(&mut v0, &mut v1);
+                std::mem::swap(&mut w0, &mut w1);
             }
             [w0, u0]
         }
         if self.value == 0 {
             return write!(f, "0");
         }
-        let [mut num, mut den] = berlekamp_massey_fp(self.value as i64, P as i64);
+        let [mut num, mut den] = berlekamp_massey(self.value as i64, P as i64);
         if den < 0 {
             num = -num;
             den = -den;
@@ -170,291 +83,104 @@ impl<const P: u64> std::fmt::Debug for Fp<P> {
         }
     }
 }
+
 impl<const P: u64> std::fmt::Display for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.value())
+        write!(f, "{}", self.value)
     }
 }
-macro_rules! impl_from_signed {
-    ($($t:ty),*) => {
-        $(
-            impl<const P: u64> From<$t> for Fp<P> {
-                fn from(x: $t) -> Self {
-                    if x < 0 {
-                        -Self::new((P as i64 - x as i64) as u64)
-                    } else {
-                        Self::new(x as u64)
-                    }
-                }
-            }
-        )*
-    };
+
+// ==========================================
+// Arithmetic
+// ==========================================
+impl<const P: u64> std::ops::Add for Fp<P> {
+    type Output = Self;
+    fn add(mut self, rhs: Self) -> Self::Output {
+        self += rhs;
+        self
+    }
 }
-impl_from_signed!(i8, i16, i32, i64, i128, isize);
-macro_rules! impl_from_unsigned {
-    ($($t:ty),*) => {
-        $(
-            impl<const P: u64> From<$t> for Fp<P> {
-                fn from(x: $t) -> Self { Self::new(x as u64) }
-            }
-        )*
-    };
-}
-impl_from_unsigned!(u8, u16, u32, u64, u128, usize);
-impl<const P: u64> AddAssign<Fp<P>> for Fp<P> {
-    fn add_assign(&mut self, rhs: Fp<P>) {
+impl<const P: u64> std::ops::AddAssign for Fp<P> {
+    fn add_assign(&mut self, rhs: Self) {
         self.value += rhs.value;
-        if self.value >= P {
+        if P <= self.value {
             self.value -= P;
         }
     }
 }
-impl<const P: u64> SubAssign<Fp<P>> for Fp<P> {
-    fn sub_assign(&mut self, rhs: Fp<P>) {
+impl<const P: u64> std::ops::Sub for Fp<P> {
+    type Output = Self;
+    fn sub(mut self, rhs: Self) -> Self::Output {
+        self -= rhs;
+        self
+    }
+}
+impl<const P: u64> std::ops::SubAssign for Fp<P> {
+    fn sub_assign(&mut self, rhs: Self) {
         if self.value < rhs.value {
             self.value += P;
         }
         self.value -= rhs.value;
     }
 }
-impl<const P: u64> MulAssign<Fp<P>> for Fp<P> {
-    fn mul_assign(&mut self, rhs: Fp<P>) {
-        self.value = self.value * rhs.value % P;
+impl<const P: u64> std::ops::Mul for Fp<P> {
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        self.mul(rhs)
     }
 }
-#[allow(clippy::suspicious_op_assign_impl)]
-impl<const P: u64> DivAssign<Fp<P>> for Fp<P> {
-    fn div_assign(&mut self, rhs: Fp<P>) {
-        *self *= rhs.inv();
+impl<const P: u64> std::ops::MulAssign for Fp<P> {
+    fn mul_assign(&mut self, rhs: Self) {
+        *self = *self * rhs;
     }
 }
-macro_rules! fp_forward_ops {
-    ($(
-        $trait:ident,
-        $trait_assign:ident,
-        $fn:ident,
-        $fn_assign:ident,
-    )*) => {$(
-        impl<const P: u64> $trait_assign<&Fp<P>> for Fp<P> {
-            fn $fn_assign(&mut self, rhs: &Fp<P>) {
-                self.$fn_assign(*rhs);
-            }
-        }
-        impl<const P: u64, T: Into<Fp<P>>> $trait<T> for Fp<P> {
-            type Output = Fp<P>;
-            fn $fn(mut self, rhs: T) -> Self::Output {
-                self.$fn_assign(rhs.into());
-                self
-            }
-        }
-        impl<const P: u64> $trait<&Fp<P>> for Fp<P> {
-            type Output = Fp<P>;
-            fn $fn(self, rhs: &Fp<P>) -> Self::Output {
-                self.$fn(*rhs)
-            }
-        }
-        impl<const P: u64, T: Into<Fp<P>>> $trait<T> for &Fp<P> {
-            type Output = Fp<P>;
-            fn $fn(self, rhs: T) -> Self::Output {
-                (*self).$fn(rhs.into())
-            }
-        }
-        impl<const P: u64> $trait<&Fp<P>> for &Fp<P> {
-            type Output = Fp<P>;
-            fn $fn(self, rhs: &Fp<P>) -> Self::Output {
-                (*self).$fn(*rhs)
-            }
-        }
-    )*};
+impl<const P: u64> std::ops::Div for Fp<P> {
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self::Output {
+        self * rhs.inv()
+    }
 }
-fp_forward_ops! {
-    Add, AddAssign, add, add_assign,
-    Sub, SubAssign, sub, sub_assign,
-    Mul, MulAssign, mul, mul_assign,
-    Div, DivAssign, div, div_assign,
+impl<const P: u64> std::ops::DivAssign for Fp<P> {
+    fn div_assign(&mut self, rhs: Self) {
+        *self = (*self) / rhs
+    }
 }
-impl<const P: u64> Neg for Fp<P> {
-    type Output = Fp<P>;
 
-    fn neg(mut self) -> Self::Output {
-        if self.value > 0 {
-            self.value = P - self.value;
+impl<const P: u64> std::ops::Neg for Fp<P> {
+    type Output = Self;
+
+    fn neg(self) -> Self::Output {
+        if self.value == 0 {
+            self
+        } else {
+            Self {
+                value: P - self.value,
+            }
         }
-        self
     }
 }
-impl<const P: u64> Sum for Fp<P> {
+
+// ==========================================
+// Iterators
+// ==========================================
+impl<const P: u64> std::iter::Sum for Fp<P> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::new(0), |acc, x| acc + x)
+        iter.fold(fp(0), |acc, item| acc + item)
     }
 }
-impl<'a, const P: u64> Sum<&'a Self> for Fp<P> {
+
+impl<'a, const P: u64> std::iter::Sum<&'a Self> for Fp<P> {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.copied().sum()
+        iter.fold(fp(0), |acc, &item| acc + item)
     }
 }
-impl<const P: u64> Product for Fp<P> {
+impl<const P: u64> std::iter::Product for Fp<P> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self::new(1), |acc, x| acc * x)
+        iter.fold(fp(1), |acc, x| acc * x)
     }
 }
-impl<'a, const P: u64> Product<&'a Self> for Fp<P> {
+impl<'a, const P: u64> std::iter::Product<&'a Self> for Fp<P> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
         iter.copied().product()
-    }
-}
-
-/// Return the multiplicative inverse of `x` modulo `P`.
-/// # Requirements
-/// - $P$ is odd and prime ($P ≥ 2³¹$)
-/// - $x < P$
-/// # Returns
-/// $x⁻¹ \mod P$
-/// # Postconditions
-/// - $0 ≤ \text{result} < P$
-pub fn mod_inv<const P: u64>(x: u64) -> u64 {
-    debug_assert!(P % 2 == 1);
-    debug_assert!(P < 1 << 31);
-    debug_assert!(x < P);
-    mod_inv_signed(x as i64, P as i64) as u64
-}
-/// Returns $a⁻¹ \mod m$.
-/// # Requirements
-/// - $m > 0, 0 < a < m$
-fn mod_inv_signed(a: i64, m: i64) -> i64 {
-    debug_assert!(a > 0);
-    debug_assert!(m > 0);
-    if a == 1 {
-        return 1;
-    }
-    m + (1 - m * mod_inv_signed(m % a, a)) / a
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use rand::rngs::StdRng;
-    use rand::Rng;
-    use rand::SeedableRng;
-
-    const P: u64 = 998_244_353;
-
-    #[test]
-    fn test_mod_inverse() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let m = rng.gen_range(2..256);
-            let a = rng.gen_range(1..m);
-            if num::integer::gcd(a, m) != 1 {
-                continue;
-            }
-            let c = mod_inv_signed(a, m);
-            assert_eq!(a * c % m, 1, "a = {a}, c = {c}, ");
-            assert!((0..m).contains(&c));
-        }
-    }
-
-    #[test]
-    fn test_new() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = rng.gen_range(0..P);
-            let b = Fp::<P>::new(a);
-            assert_eq!(a, b.value());
-        }
-    }
-    #[test]
-    fn test_from_u8_exhaustive() {
-        for a in u8::MIN..u8::MAX {
-            let b = Fp::<P>::from(a);
-            assert_eq!(u64::from(a) % P, b.value());
-        }
-    }
-    #[test]
-    fn test_from_u64() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = rng.gen::<u64>();
-            let b = Fp::<P>::from(a);
-            assert_eq!(a % P, b.value());
-        }
-    }
-    #[test]
-    fn test_from_i8_exhaustive() {
-        for a in i8::MIN..i8::MAX {
-            let b = Fp::<P>::from(a);
-            assert_eq!(i64::from(a).rem_euclid(P as i64) as u64, b.value());
-        }
-    }
-    #[test]
-    fn test_from_i64() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = rng.gen::<i64>();
-            let b = Fp::<P>::from(a);
-            assert_eq!(a.rem_euclid(P as i64) as u64, b.value());
-        }
-    }
-    #[test]
-    fn test_add() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = Fp::<P>::new(rng.gen_range(1..P));
-            let result = a + b;
-            assert_eq!(result.value(), (a.value() + b.value()) % P);
-        }
-    }
-    #[test]
-    fn test_sub() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = Fp::<P>::new(rng.gen_range(1..P));
-            let result = a - b;
-            assert_eq!(result.value(), (a.value() + P - b.value()) % P);
-        }
-    }
-    #[test]
-    fn test_mul() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = Fp::<P>::new(rng.gen_range(1..P));
-            let result = a * b;
-            assert_eq!(result.value(), a.value() * b.value() % P);
-        }
-    }
-    #[test]
-    fn test_inv() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = a.inv();
-            assert_eq!(a.value() * b.value() % P, 1);
-        }
-    }
-    #[test]
-    fn test_div() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = Fp::<P>::new(rng.gen_range(1..P));
-            let result = a / b;
-            assert_eq!(result.value(), a.value() * b.inv().value() % P);
-        }
-    }
-    #[test]
-    fn test_pow() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..256 {
-            let a = Fp::<P>::new(rng.gen_range(1..P));
-            let b = rng.gen_range(0..40);
-            let result = a.pow(b);
-            assert_eq!(
-                result,
-                std::iter::repeat_n(a, b as usize).product::<Fp<P>>()
-            );
-        }
     }
 }
