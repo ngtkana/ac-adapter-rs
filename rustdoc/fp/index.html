@@ -1,78 +1,43 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Prime field arithmetic for $𝔽_P$ modular computations."><title>fp - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
-  rel="stylesheet"
-  href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
-  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
-  crossorigin="anonymous"
-/>
-<script
-  defer
-  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
-  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4"
-  crossorigin="anonymous"
-></script>
-<script
-  defer
-  src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
-  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa"
-  crossorigin="anonymous"
-></script>
-<script
-  src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
-  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A"
-  crossorigin="anonymous"
-></script>
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="素体 $𝔽_P$ の演算。四則演算・べき乗・逆元を $O(1)$ または $O(\log n)$ で計算。"><title>fp - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+
+<!-- KaTeX for mathematical expressions -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
+  integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X" crossorigin="anonymous" />
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.js"
+  integrity="sha384-g7c+Jr9ZivxKLnZTDUhnkOnsh30B4H0rpLUpJ4jAIKs4fnJI+sEnkvrMWph2EDg4" crossorigin="anonymous"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/contrib/auto-render.min.js"
+  integrity="sha384-mll67QQFJfxn0IYznZYonOWZ644AWYC+Pt2cHqMaRhXVrursRwvLnLaebdGIlYNa" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/copy-tex.min.js"
+  integrity="sha384-ww/583aHhxWkz5DEVn6OKtNiIaLi2iBRNZXfJRiY1Ai7tnJ9UXpEsyvOITVpTl4A" crossorigin="anonymous"></script>
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     renderMathInElement(document.body, {
       delimiters: [
-        { left: "$$", right: "$$", display: true },
-        { left: "$", right: "$", display: false },
+        {left: "$$", right: "$$", display: true},
+        {left: "$", right: "$", display: false},
       ],
     });
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp/index.html">fp</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#features" title="Features">Features</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#safety" title="Safety">Safety</a></li><li><a href="#complexity-summary" title="Complexity Summary">Complexity Summary</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp/lib.rs.html#1-405">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Prime field arithmetic for $𝔽_P$ modular computations.</p>
-<p>This crate provides a fixed-size finite field implementation parameterized by a prime
-modulus <code>P</code>. It supports all standard arithmetic operations (addition, subtraction,
-multiplication, division, and negation) along with exponentiation and modular inverse
-computation. The implementation uses compile-time constants for the prime, making it
-efficient for competitive programming and mathematical algorithms.</p>
-<h2 id="features"><a class="doc-anchor" href="#features">§</a>Features</h2>
-<ul>
-<li>Basic arithmetic: addition, subtraction, multiplication, division, negation</li>
-<li>Fast exponentiation: binary exponentiation in $O(\log n)$ time</li>
-<li>Modular inverse: via extended Euclidean algorithm in $O(\log P)$ time</li>
-<li>Const-friendly: most operations can run at compile time</li>
-<li>Iterator support: <code>Sum</code> and <code>Product</code> traits for iterators</li>
-<li>Debug formatting: displays elements as rational approximations (simplified fractions)</li>
-</ul>
-<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::{fp, Fp};
-
-<span class="comment">// Operations in $𝔽_{1009}$
-</span><span class="kw">const </span>P: u64 = <span class="number">1009</span>;
-
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp/index.html">fp</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#api" title="API">API</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp/lib.rs.html#1-315">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>素体 $𝔽_P$ の演算。四則演算・べき乗・逆元を $O(1)$ または $O(\log n)$ で計算。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p>型パラメータ <code>const P: u64</code> に素数を固定し、$(0, 1, \ldots, P-1)$ 上の演算を提供。
+ほぼすべての操作は <code>const fn</code> 対応。</p>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<span class="kw">const </span>P: u64 = <span class="number">1009</span>;
 <span class="kw">let </span>a = fp::&lt;P&gt;(<span class="number">123</span>);
-<span class="kw">let </span>b = fp::&lt;P&gt;(<span class="number">456</span>);
-
-<span class="comment">// Arithmetic operations
-</span><span class="kw">let </span>sum = a + b;
-<span class="kw">let </span>product = a * b;
-<span class="kw">let </span>quotient = a / b;      <span class="comment">// $a \cdot b^{-1} \bmod P$
-
-// Exponentiation
-</span><span class="kw">let </span>power = a.pow(<span class="number">100</span>);    <span class="comment">// $a^{100} \bmod P$</span></code></pre></div>
-<h2 id="safety"><a class="doc-anchor" href="#safety">§</a>Safety</h2>
-<p>This library assumes <code>P</code> is a prime number. If <code>P</code> is composite, modular inverse
-computation produces undefined results. Always verify that your constant parameter
-is prime.</p>
-<h2 id="complexity-summary"><a class="doc-anchor" href="#complexity-summary">§</a>Complexity Summary</h2>
+<span class="kw">let </span>b = a.pow(<span class="number">100</span>);      <span class="comment">// $a^{100} \bmod P$, $O(\log n)$
+</span><span class="kw">let </span>c = a / fp::&lt;P&gt;(<span class="number">456</span>); <span class="comment">// $a \cdot 456^{-1}$, 逆元は $O(\log P)$
+</span><span class="macro">assert_eq!</span>(a * a.inv(), fp::&lt;P&gt;(<span class="number">1</span>));</code></pre></div>
+<h2 id="api"><a class="doc-anchor" href="#api">§</a>API</h2>
 <ul>
-<li>Constructor: $O(1)$</li>
-<li>Addition/Subtraction: $O(1)$</li>
-<li>Multiplication/Division: $O(1)$</li>
-<li>Exponentiation: $O(\log n)$</li>
-<li>Modular inverse: $O(\log P)$</li>
+<li><code>fp()</code>, <code>fpu()</code>: 要素の生成（$O(1)$）</li>
+<li><code>+, -, *, /</code>: 四則演算（$O(1)$）</li>
+<li><code>pow()</code>: べき乗（$O(\log n)$）</li>
+<li><code>inv()</code>: 逆元（$O(\log P)$）</li>
 </ul>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fp.html" title="struct fp::Fp">Fp</a></dt><dd>An element of the prime field 𝔽_P = {0, 1, 2, …, P-1}.</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.fp.html" title="fn fp::fp">fp</a></dt><dd>Constructs an element of $𝔽_P$ from a <code>u64</code> value.</dd><dt><a class="fn" href="fn.fpu.html" title="fn fp::fpu">fpu</a></dt><dd>Constructs an element of $𝔽_P$ from a <code>usize</code> value.</dd></dl></section></div></main></body></html>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fp.html" title="struct fp::Fp">Fp</a></dt><dd>素体 $𝔽_P$ の要素。$(0, 1, \ldots, P-1)$ 上の値を表現。</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.fp.html" title="fn fp::fp">fp</a></dt><dd>$𝔽_P$ の要素を <code>u64</code> から生成。自動的に mod P に削減。</dd><dt><a class="fn" href="fn.fpu.html" title="fn fp::fpu">fpu</a></dt><dd>$𝔽_P$ の要素を <code>usize</code> から生成。自動的に mod P に削減。</dd></dl></section></div></main></body></html>

@@ -1,1 +1,1 @@
-searchState.loadedDescShard("fp_fft", 0, "Fast Fourier Transform over finite fields $𝔽_P$.\nComputes the Fast Fourier Transform of a field element …\nComputes the Inverse Fast Fourier Transform of a field …")
+searchState.loadedDescShard("fp_fft", 0, "有限体 $𝔽_P$ …\n前方フーリエ変換。入力 $(x_0, \\ldots, x_{n-1})$ …\n逆フーリエ変換。<code>fft</code> の逆。出力は $1/n$ …\nIFFT後、各半分に FFT を適用。入力 $X$ …")

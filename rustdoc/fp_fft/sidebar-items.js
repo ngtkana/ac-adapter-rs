@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["fft","ifft"]};
+window.SIDEBAR_ITEMS = {"fn":["fft","ifft","split_fft"]};
