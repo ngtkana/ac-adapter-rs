@@ -6,10 +6,15 @@ edition = "2021"
 [dependencies]
 fp = { path = "../libs/fp" }
 fp_fft = { path = "../libs/fp_fft" }
+fp_fps = { path = "../libs/fp_fps" }
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
 
 [[bench]]
 name = "fft_benchmark"
+harness = false
+
+[[bench]]
+name = "fps_inv_benchmark"
 harness = false
