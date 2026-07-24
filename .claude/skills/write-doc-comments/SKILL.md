@@ -47,8 +47,8 @@ Add or update a `//!` module comment at the top of lib.rs with this structure:
 //! # Complexity
 //!
 //! (Optional but useful for algorithm libraries)
-//! - Operation A: O(log n)
-//! - Operation B: O(1)
+//! - Operation A: $O(\log n)$
+//! - Operation B: $O(1)$
 ```
 
 **Guidelines for crate-level docs:**
@@ -56,7 +56,8 @@ Add or update a `//!` module comment at the top of lib.rs with this structure:
 - Focus on "When & Why" not "How" (leave "How" to item-level docs)
 - Include one concrete, runnable example
 - List key items and what they're for
-- For algorithm/data structure libraries, include complexity info
+- For algorithm/data structure libraries, include complexity info (use `$...$` for math notation like `$O(\log n)$`)
+- Use TeX notation for mathematical concepts (e.g., `$𝔽_P$`, `$a^{-1} \bmod P$`)
 - Avoid overwhelming detail — readers should quickly grasp purpose and scope
 
 **If crate-level docs already exist:** Improve and refine them to meet these standards rather than replacing. Keep the existing structure if it's sound; polish clarity, add missing sections (Examples, Complexity if appropriate), and ensure tone is consistent with Std library style.
@@ -170,6 +171,7 @@ pub fn complex_method(&mut self, param1: T, param2: usize) -> Result<U> {
 - **Examples should be realistic** — show actual use cases, not trivial toy examples
 - **Use backticks** for code identifiers and types (e.g., \`Vec<T>\`, \`add_assign\`)
 - **Reference related items** using backticks (e.g., "See \`other_method\`" links in Rust docs)
+- **Math notation**: Use `$...$` for inline math and TeX notation (e.g., `$O(\log n)$`, `$𝔽_P$`, `$a \cdot b$`)
 - **For simple methods**, 2-3 sentences + example is often sufficient
 - **Follow std library tone** — informative but not overly verbose
 
@@ -190,7 +192,7 @@ Return the **full source file** with:
 1. **Crate-level documentation** (`//!` at the top) — newly written or refined
 2. **Item-level documentation** (`///` on each pub item) — newly written or refined
 
-Use standard Rust doc comment syntax throughout.
+Use standard Rust doc comment syntax throughout. Math and algorithmic notation should use `$...$` for TeX rendering (e.g., `$O(\log n)$`, `$a \times b \bmod p$`).
 
 **If documentation already exists:** Do not replace it wholesale. Instead, treat the existing docs as a foundation and:
 - Refine unclear explanations
