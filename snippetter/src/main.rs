@@ -79,14 +79,11 @@ fn main() {
                             (Vec::new(), None)
                         };
 
-                        Some((
-                            crate_name,
-                            CrateMetadata {
-                                dependencies,
-                                tags,
-                                description,
-                            },
-                        ))
+                        Some((crate_name, CrateMetadata {
+                            dependencies,
+                            tags,
+                            description,
+                        }))
                     } else {
                         None
                     }

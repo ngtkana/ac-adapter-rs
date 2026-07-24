@@ -1,5 +1,6 @@
 //! Sparse Segment Tree
-use std::ops::{Range, RangeBounds};
+use std::ops::Range;
+use std::ops::RangeBounds;
 
 /// Trait for operations on the segment tree.
 pub trait Op {
@@ -13,18 +14,21 @@ pub trait Op {
 /// # Example
 ///
 /// ```rust
-/// use sparse_segtree::{SparseSegtree, Op};
+/// use sparse_segtree::Op;
+/// use sparse_segtree::SparseSegtree;
 ///
 /// #[derive(Clone, Debug)]
 /// enum SumOp {}
 /// impl Op for SumOp {
-///    type Value = i64;
-///    fn identity() -> Self::Value {
-///        0
-///    }
-///    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
-///        lhs + rhs
-///    }
+///     type Value = i64;
+///
+///     fn identity() -> Self::Value {
+///         0
+///     }
+///
+///     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+///         lhs + rhs
+///     }
 /// }
 ///
 /// let mut seg = SparseSegtree::<SumOp>::from_range(0..10);
@@ -44,6 +48,7 @@ impl<O: Op> SparseSegtree<O> {
         let root = (!range.is_empty()).then(|| Box::new(Node::new_leaf(range)));
         SparseSegtree { root }
     }
+
     /// Mutate $x_i$ by $f(x_i)$.
     pub fn update(&mut self, i: usize, f: impl FnMut(&mut O::Value)) {
         let Some(root) = self.root.as_mut() else {
@@ -55,6 +60,7 @@ impl<O: Op> SparseSegtree<O> {
         );
         root.update(i, f);
     }
+
     /// Return $x_l \cdot x_{l+1} \cdots x_{r-1}$.
     pub fn fold(&self, range: Range<usize>) -> O::Value {
         let mut result = O::identity();
@@ -63,6 +69,7 @@ impl<O: Op> SparseSegtree<O> {
         });
         result
     }
+
     /// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
     ///
     /// # Notes
@@ -72,7 +79,8 @@ impl<O: Op> SparseSegtree<O> {
     /// # Example
     ///
     /// ```rust
-    /// use sparse_segtree::{SparseSegtree, Op};
+    /// use sparse_segtree::Op;
+    /// use sparse_segtree::SparseSegtree;
     /// /* define `enum SumOp` and implement `Op` trait */
     /// # #[derive(Clone, Debug)]
     /// # enum SumOp {}
@@ -180,6 +188,7 @@ impl<O: Op> Node<O> {
             right: None,
         }
     }
+
     fn update(&mut self, i: usize, mut f: impl FnMut(&mut O::Value)) {
         if self.start + 1 == self.end {
             f(&mut self.value);
@@ -197,6 +206,7 @@ impl<O: Op> Node<O> {
         }
         self.recalculate_value();
     }
+
     fn visit_items(&self, range: Range<usize>, f: &mut impl FnMut(usize, &O::Value)) {
         if self.start + 1 == self.end {
             f(self.start, &self.value);
@@ -214,6 +224,7 @@ impl<O: Op> Node<O> {
             }
         }
     }
+
     fn visit_ranges(&self, range: Range<usize>, f: &mut impl FnMut(Range<usize>, &O::Value)) {
         let Range { start, end } = range;
         if (start, end) == (self.start, self.end) {
@@ -238,6 +249,7 @@ impl<O: Op> Node<O> {
             }
         }
     }
+
     fn recalculate_value(&mut self) {
         self.value = O::identity();
         if let Some(left) = &self.left {
@@ -279,10 +291,12 @@ fn open(a: impl RangeBounds<usize>, b: Range<usize>) -> Range<usize> {
 
 #[cfg(test)]
 mod tests {
-    use std::{collections::BTreeMap, mem};
-
     use super::*;
-    use rand::{rngs::StdRng, Rng, SeedableRng};
+    use rand::rngs::StdRng;
+    use rand::Rng;
+    use rand::SeedableRng;
+    use std::collections::BTreeMap;
+    use std::mem;
 
     const P: u32 = 19;
     #[derive(Clone, Debug, Copy, PartialEq, Eq)]
@@ -295,9 +309,11 @@ mod tests {
     enum O {}
     impl Op for O {
         type Value = Value;
+
         fn identity() -> Self::Value {
             Value { a: 1, b: 0 }
         }
+
         fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
             Value {
                 a: (lhs.a * rhs.a) % P,
@@ -316,10 +332,12 @@ mod tests {
                 map: BTreeMap::new(),
             }
         }
+
         fn update(&mut self, i: usize, f: impl FnOnce(&mut O::Value)) {
             let value = self.map.entry(i).or_insert_with(O::identity);
             f(value);
         }
+
         fn fold(&self, range: Range<usize>) -> O::Value {
             let mut result = O::identity();
             for i in range {
@@ -390,7 +408,8 @@ mod tests {
                             let result = (i, v);
                             assert_eq!(
                                 result, expected,
-                                "Segment tree visit mismatch: expected {result:?}, got {expected:?}"
+                                "Segment tree visit mismatch: expected {result:?}, got \
+                                 {expected:?}"
                             );
                         });
                         assert!(

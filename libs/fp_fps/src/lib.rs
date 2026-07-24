@@ -1,7 +1,9 @@
 //! 形式べき級数（FPS）演算。多項式乗算・逆元・除算・評価を FFT で高速化。
 
-use fp::{Fp, fp};
-use fp_fft::{fft, ifft};
+use fp::Fp;
+use fp::fp;
+use fp_fft::fft;
+use fp_fft::ifft;
 
 /// $f$ の逆元を precision で計算。$f^{-1} \bmod x^m$ の係数を返す。
 ///
@@ -16,8 +18,8 @@ use fp_fft::{fft, ifft};
 /// const P: u64 = 998_244_353;
 /// let f = [fp::<P>(1), fp::<P>(2)];
 /// let g = fps_inv(&f, 2);
-/// assert_eq!(g[0], fp::<P>(1));           // (1+2x)^{-1} の 0 次項 = 1
-/// assert_eq!(g[1], fp::<P>(998244351));   // (1+2x)^{-1} の 1 次項 = -2
+/// assert_eq!(g[0], fp::<P>(1)); // (1+2x)^{-1} の 0 次項 = 1
+/// assert_eq!(g[1], fp::<P>(998244351)); // (1+2x)^{-1} の 1 次項 = -2
 /// ```
 pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
     let fft_len_max = precision.next_power_of_two();
@@ -63,12 +65,12 @@ pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
 /// use fp::fp;
 /// use fp_fps::poly_mul;
 /// const P: u64 = 998_244_353;
-/// let a = [fp::<P>(1), fp::<P>(2)];  // 1 + 2x
-/// let b = [fp::<P>(3), fp::<P>(4)];  // 3 + 4x
+/// let a = [fp::<P>(1), fp::<P>(2)]; // 1 + 2x
+/// let b = [fp::<P>(3), fp::<P>(4)]; // 3 + 4x
 /// let c = poly_mul(a.to_vec(), b.to_vec());
-/// assert_eq!(c[0], fp::<P>(3));      // 1*3
-/// assert_eq!(c[1], fp::<P>(10));     // 1*4 + 2*3
-/// assert_eq!(c[2], fp::<P>(8));      // 2*4
+/// assert_eq!(c[0], fp::<P>(3)); // 1*3
+/// assert_eq!(c[1], fp::<P>(10)); // 1*4 + 2*3
+/// assert_eq!(c[2], fp::<P>(8)); // 2*4
 /// ```
 pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>> {
     let result_len = a.len() + b.len() - 1;
@@ -95,10 +97,10 @@ pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>
 /// use fp::fp;
 /// use fp_fps::poly_div_rem;
 /// const P: u64 = 998_244_353;
-/// let a = [fp::<P>(1), fp::<P>(0), fp::<P>(1)];  // 1 + x^2
-/// let b = [fp::<P>(1), fp::<P>(1)];              // 1 + x
+/// let a = [fp::<P>(1), fp::<P>(0), fp::<P>(1)]; // 1 + x^2
+/// let b = [fp::<P>(1), fp::<P>(1)]; // 1 + x
 /// let (q, r) = poly_div_rem(a.to_vec(), b.to_vec());
-/// assert_eq!(q.len(), 2);  // 商の次数は 2-1 = 1
+/// assert_eq!(q.len(), 2); // 商の次数は 2-1 = 1
 /// ```
 pub fn poly_div_rem<const P: u64>(
     mut a: Vec<Fp<P>>,
@@ -138,11 +140,11 @@ pub fn poly_div_rem<const P: u64>(
 /// use fp::fp;
 /// use fp_fps::multipoint_evaluation;
 /// const P: u64 = 998_244_353;
-/// let f = [fp::<P>(1), fp::<P>(2)];  // 1 + 2x
+/// let f = [fp::<P>(1), fp::<P>(2)]; // 1 + 2x
 /// let points = [fp::<P>(0), fp::<P>(1)];
 /// let result = multipoint_evaluation(f.to_vec(), &points);
-/// assert_eq!(result[0], fp::<P>(1));  // f(0) = 1
-/// assert_eq!(result[1], fp::<P>(3));  // f(1) = 3
+/// assert_eq!(result[0], fp::<P>(1)); // f(0) = 1
+/// assert_eq!(result[1], fp::<P>(3)); // f(1) = 3
 /// ```
 pub fn multipoint_evaluation<const P: u64>(f: Vec<Fp<P>>, points: &[Fp<P>]) -> Vec<Fp<P>> {
     let n = points.len();

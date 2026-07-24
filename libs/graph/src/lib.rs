@@ -9,7 +9,7 @@
 //! ```
 //! use graph::kosaraju;
 //! let n = 6;
-//! let edges = [ (1, 4), (5, 2), (3, 0), (5, 5), (4, 1), (0, 3), (4, 2)];
+//! let edges = [(1, 4), (5, 2), (3, 0), (5, 5), (4, 1), (0, 3), (4, 2)];
 //! let scc = kosaraju(n, &edges);
 //! assert_eq!(scc.len(), 4);
 //! assert_eq!(scc[0], [5]);
@@ -29,7 +29,7 @@ pub use csr::LastMut;
 /// ```
 /// use graph::kosaraju;
 /// let n = 6;
-/// let edges = [ (1, 4), (5, 2), (3, 0), (5, 5), (4, 1), (0, 3), (4, 2)];
+/// let edges = [(1, 4), (5, 2), (3, 0), (5, 5), (4, 1), (0, 3), (4, 2)];
 /// let scc = kosaraju(n, &edges);
 /// assert_eq!(scc.len(), 4);
 /// assert_eq!(scc[0], [5]);

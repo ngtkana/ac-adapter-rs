@@ -1,4 +1,5 @@
-use intrusive_splay_tree::{Op, Tree};
+use intrusive_splay_tree::Op;
+use intrusive_splay_tree::Tree;
 
 struct Store {
     key: u32,
@@ -8,6 +9,7 @@ impl Store {
     fn key(&self) -> u32 {
         self.key
     }
+
     fn size(&self) -> usize {
         self.size
     }
@@ -57,8 +59,9 @@ fn query_5_succ(tree: &mut Tree<O>, key: u32) -> Option<u32> {
 
 mod random_tests {
     use super::*;
+    use rand::Rng;
+    use rand::SeedableRng;
     use rand::rngs::StdRng;
-    use rand::{Rng, SeedableRng};
     use std::collections::BTreeSet;
 
     #[test]

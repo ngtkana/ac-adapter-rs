@@ -11,7 +11,7 @@
 //! use fp::fp;
 //! const P: u64 = 1009;
 //! let a = fp::<P>(123);
-//! let b = a.pow(100);      // $a^{100} \bmod P$, $O(\log n)$
+//! let b = a.pow(100); // $a^{100} \bmod P$, $O(\log n)$
 //! let c = a / fp::<P>(456); // $a \cdot 456^{-1}$, 逆元は $O(\log P)$
 //! assert_eq!(a * a.inv(), fp::<P>(1));
 //! ```
@@ -28,7 +28,8 @@
 /// # 例
 ///
 /// ```
-/// use fp::{fpu, fp};
+/// use fp::fp;
+/// use fp::fpu;
 /// const P: u64 = 1009;
 /// assert_eq!(fpu::<P>(2000), fp::<P>(991)); // 2000 mod 1009
 /// ```
@@ -73,7 +74,8 @@ impl<const P: u64> Fp<P> {
     /// # 例
     ///
     /// ```
-    /// use fp::{Fp, fp};
+    /// use fp::fp;
+    /// use fp::Fp;
     /// const P: u64 = 1009;
     /// assert_eq!(Fp::<P>::new(2000), fp::<P>(991));
     /// ```
@@ -226,6 +228,7 @@ impl<const P: u64> std::fmt::Display for Fp<P> {
 // ==========================================
 impl<const P: u64> std::ops::Add for Fp<P> {
     type Output = Self;
+
     fn add(mut self, rhs: Self) -> Self::Output {
         self += rhs;
         self
@@ -238,6 +241,7 @@ impl<const P: u64> std::ops::AddAssign for Fp<P> {
 }
 impl<const P: u64> std::ops::Sub for Fp<P> {
     type Output = Self;
+
     fn sub(mut self, rhs: Self) -> Self::Output {
         self -= rhs;
         self
@@ -253,6 +257,7 @@ impl<const P: u64> std::ops::SubAssign for Fp<P> {
 }
 impl<const P: u64> std::ops::Mul for Fp<P> {
     type Output = Self;
+
     fn mul(self, rhs: Self) -> Self::Output {
         self.mul(rhs)
     }
@@ -265,6 +270,7 @@ impl<const P: u64> std::ops::MulAssign for Fp<P> {
 #[allow(clippy::suspicious_arithmetic_impl)]
 impl<const P: u64> std::ops::Div for Fp<P> {
     type Output = Self;
+
     fn div(self, rhs: Self) -> Self::Output {
         self * rhs.inv()
     }

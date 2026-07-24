@@ -5,12 +5,10 @@
 //! # 使用例
 //!
 //! ```
-//! use fp_precalc::Precalc;
 //! use fp::fp;
+//! use fp_precalc::Precalc;
 //! const P: u64 = 1009;
-//! let pc = Precalc::<P>::new(100)
-//!     .build_fact()
-//!     .build_finv_using_fact();
+//! let pc = Precalc::<P>::new(100).build_fact().build_finv_using_fact();
 //! assert_eq!(pc.binom(5, 2), fp::<P>(10)); // C(5,2) = 10
 //! ```
 //!
@@ -21,7 +19,8 @@
 //! - [`Precalc::build_finv_using_fact()`]: 逆階乗 $(n!)^{-1}$、計算量 $O(n)$
 //! - [`Precalc::binom()`]: 二項係数 $\binom{n}{k}$、計算量 $O(1)$
 
-use fp::{Fp, fpu};
+use fp::Fp;
+use fp::fpu;
 
 /// テーブルの有無を型で表現するトレイト。型レベル真偽値。
 pub trait Switch {
@@ -77,7 +76,7 @@ impl<const P: u64> Precalc<P, Off, Off, Off> {
 // Build
 // ==========================================
 
-    /// 階乗テーブルを構築。
+/// 階乗テーブルを構築。
 impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
     /// 階乗 $n!$、計算量 $O(n)$。
     ///
@@ -86,13 +85,13 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
     /// # Examples
     ///
     /// ```
-    /// use fp_precalc::Precalc;
     /// use fp::fp;
+    /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(6).build_fact();
-    /// assert_eq!(precalc.fact(0), fp::<P>(1));  // 0! = 1
-    /// assert_eq!(precalc.fact(5), fp::<P>(120));  // 5! = 120
+    /// assert_eq!(precalc.fact(0), fp::<P>(1)); // 0! = 1
+    /// assert_eq!(precalc.fact(5), fp::<P>(120)); // 5! = 120
     /// ```
     pub fn build_fact(self) -> Precalc<P, On, Finv, Inv> {
         let Precalc { len, finv, inv, .. } = self;
@@ -111,7 +110,7 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
     }
 }
 
-    /// 逆元テーブルを構築。
+/// 逆元テーブルを構築。
 impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
     /// 逆元 $i^{-1}$、拡張ユークリッド、$O(n)$。
     ///
@@ -121,13 +120,13 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
     /// # Examples
     ///
     /// ```
-    /// use fp_precalc::Precalc;
     /// use fp::fp;
+    /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(10).build_inv();
     /// let inv_2 = precalc.inv(2);
-    /// assert_eq!(inv_2 * fp::<P>(2), fp::<P>(1));  // 2^{-1} * 2 = 1 mod P
+    /// assert_eq!(inv_2 * fp::<P>(2), fp::<P>(1)); // 2^{-1} * 2 = 1 mod P
     /// ```
     pub fn build_inv(self) -> Precalc<P, Fact, Finv, On> {
         let Precalc {
@@ -150,7 +149,7 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
     }
 }
 
-    /// 逆元テーブルを使用して逆階乗を構築。
+/// 逆元テーブルを使用して逆階乗を構築。
 impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     /// 逆元テーブルから逆階乗を構築。
     ///
@@ -164,8 +163,8 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     /// # Examples
     ///
     /// ```
-    /// use fp_precalc::Precalc;
     /// use fp::fp;
+    /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(6)
@@ -174,7 +173,7 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     ///     .build_finv_using_inv();
     /// let fact_5 = precalc.fact(5);
     /// let finv_5 = precalc.finv(5);
-    /// assert_eq!(fact_5 * finv_5, fp::<P>(1));  // fact[5] * finv[5] = 1
+    /// assert_eq!(fact_5 * finv_5, fp::<P>(1)); // fact[5] * finv[5] = 1
     /// ```
     pub fn build_finv_using_inv(self) -> Precalc<P, Fact, On, On> {
         let Precalc { len, fact, inv, .. } = self;
@@ -193,7 +192,7 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     }
 }
 
-    /// 階乗テーブルを使用して逆階乗を構築。
+/// 階乗テーブルを使用して逆階乗を構築。
 impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
     /// 階乗テーブルから逆階乗を構築。
     ///
@@ -207,16 +206,14 @@ impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
     /// # Examples
     ///
     /// ```
-    /// use fp_precalc::Precalc;
     /// use fp::fp;
+    /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
-    /// let precalc = Precalc::<P>::new(6)
-    ///     .build_fact()
-    ///     .build_finv_using_fact();
+    /// let precalc = Precalc::<P>::new(6).build_fact().build_finv_using_fact();
     /// let fact_5 = precalc.fact(5);
     /// let finv_5 = precalc.finv(5);
-    /// assert_eq!(fact_5 * finv_5, fp::<P>(1));  // fact[5] * finv[5] = 1
+    /// assert_eq!(fact_5 * finv_5, fp::<P>(1)); // fact[5] * finv[5] = 1
     /// ```
     pub fn build_finv_using_fact(self) -> Precalc<P, On, On, Inv> {
         let Precalc { len, fact, inv, .. } = self;
@@ -278,9 +275,7 @@ impl<const P: u64, Fact: Switch, Inv: Switch> Precalc<P, Fact, On, Inv> {
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
-    /// let precalc = Precalc::<P>::new(6)
-    ///     .build_fact()
-    ///     .build_finv_using_fact();
+    /// let precalc = Precalc::<P>::new(6).build_fact().build_finv_using_fact();
     /// let inv_5_fact = precalc.finv(5);
     /// // inv_5_fact * precalc.fact(5) ≡ 1 (mod P)
     /// ```
@@ -331,10 +326,8 @@ impl<const P: u64, Inv: Switch> Precalc<P, On, On, Inv> {
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
-    /// let precalc = Precalc::<P>::new(6)
-    ///     .build_fact()
-    ///     .build_finv_using_fact();
-    /// assert_eq!(precalc.binom(5, 2).to_string(), "10");  // C(5,2) = 10
+    /// let precalc = Precalc::<P>::new(6).build_fact().build_finv_using_fact();
+    /// assert_eq!(precalc.binom(5, 2).to_string(), "10"); // C(5,2) = 10
     /// ```
     pub fn binom(&self, n: usize, k: usize) -> Fp<P> {
         assert!(n < self.len, "n={n} out of bounds for len={}", self.len);

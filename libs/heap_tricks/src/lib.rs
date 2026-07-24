@@ -7,7 +7,6 @@
 //! [`RemovableHeap`] は、ヒープに入っていない要素を削除すると
 //! **たとえその要素をすぐに挿入し直したとしても、
 //! その後の挙動がすべて未定義になります。**
-//!
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -94,13 +93,10 @@ where
 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("DoubleHeap")
-            .field(
-                "elm",
-                &[
-                    self.collect_left_sorted_vec(),
-                    self.collect_right_sorted_vec(),
-                ],
-            )
+            .field("elm", &[
+                self.collect_left_sorted_vec(),
+                self.collect_right_sorted_vec(),
+            ])
             .field("handler", &self.handler)
             .finish()
     }
