@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="API documentation for the Rust `fp_fft` crate."><title>fp_fft - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp_fft" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Fast Fourier Transform over finite fields $𝔽_P$."><title>fp_fft - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fp_fft" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><link
   rel="stylesheet"
   href="https://cdn.jsdelivr.net/npm/katex@0.12.0/dist/katex.min.css"
   integrity="sha384-AfEj0r4/OFrOo5t7NnNe46zW/tFgW6x/bCJG8FqQCEo3+Aro6EYUG4+cU+KJWu/X"
@@ -32,4 +32,48 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#functions">Crate Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp_fft</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#1-85">Source</a> </span></div><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.fft.html" title="fn fp_fft::fft">fft</a></dt><dt><a class="fn" href="fn.ifft.html" title="fn fp_fft::ifft">ifft</a></dt></dl></section></div></main></body></html>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to Use">When to Use</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#main-items" title="Main Items">Main Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#functions">Crate Items</a></h3><ul class="block"><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fp_fft</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#1-244">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Fast Fourier Transform over finite fields $𝔽_P$.</p>
+<p>This crate implements the Cooley-Tukey FFT and its inverse (IFFT) algorithm for
+polynomial multiplication and other convolution-based computations in modular arithmetic.
+Both transforms operate in-place on arrays of field elements and require the array length
+to be a power of two.</p>
+<h2 id="when-to-use"><a class="doc-anchor" href="#when-to-use">§</a>When to Use</h2>
+<p>Use this crate when you need to efficiently multiply polynomials or compute convolutions
+over a prime field. The FFT reduces polynomial multiplication from $O(n^2)$ time to
+$O(n \log n)$, making it essential for large-degree polynomials in competitive programming
+and cryptographic applications.</p>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp_fft::{fft, ifft};
+<span class="kw">use </span>fp::fp;
+
+<span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
+
+<span class="comment">// Multiply polynomials a(x) = 1 + 2x and b(x) = 3 + 4x using FFT
+// (product: 3 + 10x + 8x²)
+</span><span class="kw">let </span><span class="kw-2">mut </span>a = <span class="macro">vec!</span>[fp::&lt;P&gt;(<span class="number">1</span>), fp::&lt;P&gt;(<span class="number">2</span>), fp::&lt;P&gt;(<span class="number">0</span>), fp::&lt;P&gt;(<span class="number">0</span>)];
+<span class="kw">let </span><span class="kw-2">mut </span>b = <span class="macro">vec!</span>[fp::&lt;P&gt;(<span class="number">3</span>), fp::&lt;P&gt;(<span class="number">4</span>), fp::&lt;P&gt;(<span class="number">0</span>), fp::&lt;P&gt;(<span class="number">0</span>)];
+
+fft(<span class="kw-2">&amp;mut </span>a);
+fft(<span class="kw-2">&amp;mut </span>b);
+
+<span class="kw">for </span>(av, bv) <span class="kw">in </span>a.iter_mut().zip(<span class="kw-2">&amp;</span>b) {
+    <span class="kw-2">*</span>av <span class="kw-2">*</span>= <span class="kw-2">*</span>bv;
+}
+
+ifft(<span class="kw-2">&amp;mut </span>a);
+
+<span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">3</span>));  <span class="comment">// constant term: 1 * 3
+</span><span class="macro">assert_eq!</span>(a[<span class="number">1</span>], fp::&lt;P&gt;(<span class="number">10</span>)); <span class="comment">// x term: 1*4 + 2*3
+</span><span class="macro">assert_eq!</span>(a[<span class="number">2</span>], fp::&lt;P&gt;(<span class="number">8</span>));  <span class="comment">// x² term: 2 * 4</span></code></pre></div>
+<h2 id="main-items"><a class="doc-anchor" href="#main-items">§</a>Main Items</h2>
+<ul>
+<li><a href="fn.fft.html" title="fn fp_fft::fft"><code>fft</code></a>: Forward FFT (in-place)</li>
+<li><a href="fn.ifft.html" title="fn fp_fft::ifft"><code>ifft</code></a>: Inverse FFT (in-place)</li>
+</ul>
+<h2 id="complexity"><a class="doc-anchor" href="#complexity">§</a>Complexity</h2>
+<ul>
+<li>Forward and inverse FFT: $O(n \log n)$ where $n$ is the array length</li>
+<li>Input length must be a power of two</li>
+<li>Time domain operations on the transformed data remain $O(n)$</li>
+</ul>
+</div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.fft.html" title="fn fp_fft::fft">fft</a></dt><dd>Computes the Fast Fourier Transform of a field element array (in-place).</dd><dt><a class="fn" href="fn.ifft.html" title="fn fp_fft::ifft">ifft</a></dt><dd>Computes the Inverse Fast Fourier Transform of a field element array (in-place).</dd></dl></section></div></main></body></html>
