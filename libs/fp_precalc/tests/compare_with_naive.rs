@@ -21,7 +21,7 @@ fn binom_naive(n: usize, k: usize) -> Fp<P> {
 
 #[test]
 fn test_fact_compare_with_naive() {
-    let size = 100;
+    let size = 500;
     let precalc = Precalc::<P>::new(size).build_fact();
 
     for n in 0..size {
@@ -33,7 +33,7 @@ fn test_fact_compare_with_naive() {
 
 #[test]
 fn test_finv_compare_with_naive() {
-    let size = 100;
+    let size = 500;
     let precalc = Precalc::<P>::new(size)
         .build_fact()
         .build_finv_using_fact();
@@ -64,7 +64,7 @@ fn test_binom_compare_with_naive() {
 #[test]
 fn test_binom_random_samples() {
     let mut rng = StdRng::seed_from_u64(42);
-    let size = 100;
+    let size = 500;
     let precalc = Precalc::<P>::new(size)
         .build_fact()
         .build_finv_using_fact();
@@ -81,7 +81,7 @@ fn test_binom_random_samples() {
 
 #[test]
 fn test_inv_compare_with_naive() {
-    let size = 100;
+    let size = 500;
     let precalc = Precalc::<P>::new(size).build_inv();
 
     for n in 1..size {
@@ -93,7 +93,7 @@ fn test_inv_compare_with_naive() {
 
 #[test]
 fn test_finv_using_inv() {
-    let size = 100;
+    let size = 500;
     let precalc_fact = Precalc::<P>::new(size)
         .build_fact()
         .build_inv()
