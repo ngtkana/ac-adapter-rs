@@ -1,6 +1,9 @@
-use fp::{Fp, fp};
+use fp::Fp;
+use fp::fp;
 use fp_precalc::Precalc;
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::Rng;
+use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 const P: u64 = 998_244_353;
 
@@ -34,9 +37,7 @@ fn test_fact_compare_with_naive() {
 #[test]
 fn test_finv_compare_with_naive() {
     let size = 500;
-    let precalc = Precalc::<P>::new(size)
-        .build_fact()
-        .build_finv_using_fact();
+    let precalc = Precalc::<P>::new(size).build_fact().build_finv_using_fact();
 
     for n in 0..size {
         let result = precalc.finv(n);
@@ -48,9 +49,7 @@ fn test_finv_compare_with_naive() {
 #[test]
 fn test_binom_compare_with_naive() {
     let size = 20;
-    let precalc = Precalc::<P>::new(size)
-        .build_fact()
-        .build_finv_using_fact();
+    let precalc = Precalc::<P>::new(size).build_fact().build_finv_using_fact();
 
     for n in 0..size {
         for k in 0..=n {
@@ -65,9 +64,7 @@ fn test_binom_compare_with_naive() {
 fn test_binom_random_samples() {
     let mut rng = StdRng::seed_from_u64(42);
     let size = 500;
-    let precalc = Precalc::<P>::new(size)
-        .build_fact()
-        .build_finv_using_fact();
+    let precalc = Precalc::<P>::new(size).build_fact().build_finv_using_fact();
 
     for _ in 0..200 {
         let n = rng.gen_range(0..size);

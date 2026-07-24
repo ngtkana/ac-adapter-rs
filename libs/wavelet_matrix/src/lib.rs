@@ -1,8 +1,6 @@
 //! ウェーブレット行列
 //!
 //! 本体は [`WaveletMatrix`] です。
-//!
-//!
 #![allow(clippy::len_zero)]
 
 use std::fmt::Debug;

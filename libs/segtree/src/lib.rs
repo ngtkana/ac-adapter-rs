@@ -206,8 +206,8 @@ impl<O: Op> Segtree<O> {
 }
 
 impl<'a, O: Op> IntoIterator for &'a Segtree<O> {
-    type Item = &'a O::Value;
     type IntoIter = std::slice::Iter<'a, O::Value>;
+    type Item = &'a O::Value;
 
     fn into_iter(self) -> Self::IntoIter {
         self.values[self.offset..self.offset + self.len].iter()

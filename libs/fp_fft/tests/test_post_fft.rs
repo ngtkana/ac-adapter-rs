@@ -1,6 +1,12 @@
-use fp::{Fp, fp};
-use fp_fft::{fft, ifft, split_fft};
-use rand::{Rng, SeedableRng, prelude::Distribution, rngs::StdRng};
+use fp::Fp;
+use fp::fp;
+use fp_fft::fft;
+use fp_fft::ifft;
+use fp_fft::split_fft;
+use rand::Rng;
+use rand::SeedableRng;
+use rand::prelude::Distribution;
+use rand::rngs::StdRng;
 
 const P: u64 = 998_244_353;
 

@@ -1,5 +1,9 @@
-use fenwick::{Fenwick, Op, OpSub};
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use fenwick::Fenwick;
+use fenwick::Op;
+use fenwick::OpSub;
+use rand::Rng;
+use rand::SeedableRng;
+use rand::rngs::StdRng;
 
 enum O {}
 impl Op for O {

@@ -1,6 +1,12 @@
-use fp::{Fp, fp, fpu};
-use fp_fft::{fft, ifft};
-use rand::{Rng, SeedableRng, prelude::Distribution, rngs::StdRng};
+use fp::Fp;
+use fp::fp;
+use fp::fpu;
+use fp_fft::fft;
+use fp_fft::ifft;
+use rand::Rng;
+use rand::SeedableRng;
+use rand::prelude::Distribution;
+use rand::rngs::StdRng;
 
 const P: u64 = 998_244_353; // 2^23 * 7 * 17 + 1
 

@@ -15,16 +15,26 @@
 //! # Examples
 //!
 //! ```
-//! use fenwick::{Fenwick, Op, OpSub};
+//! use fenwick::Fenwick;
+//! use fenwick::Op;
+//! use fenwick::OpSub;
 //!
 //! struct Sum;
 //! impl Op for Sum {
 //!     type Value = i64;
-//!     fn identity() -> i64 { 0 }
-//!     fn add(a: &i64, b: &i64) -> i64 { a + b }
+//!
+//!     fn identity() -> i64 {
+//!         0
+//!     }
+//!
+//!     fn add(a: &i64, b: &i64) -> i64 {
+//!         a + b
+//!     }
 //! }
 //! impl OpSub for Sum {
-//!     fn sub(a: &i64, b: &i64) -> i64 { a - b }
+//!     fn sub(a: &i64, b: &i64) -> i64 {
+//!         a - b
+//!     }
 //! }
 //!
 //! let mut tree = Fenwick::<Sum>::new(5);
@@ -58,11 +68,10 @@
 //! - `add()`, `sub()`: O(log n)
 //! - `fold_to()`, `fold()`: O(log n)
 
-use std::{
-    fmt::Debug,
-    marker::PhantomData,
-    ops::{Range, RangeTo},
-};
+use std::fmt::Debug;
+use std::marker::PhantomData;
+use std::ops::Range;
+use std::ops::RangeTo;
 
 /// A trait for defining associative operations on values.
 ///
@@ -82,7 +91,11 @@ use std::{
 /// struct AddOp;
 /// impl Op for AddOp {
 ///     type Value = i64;
-///     fn identity() -> Self::Value { 0 }
+///
+///     fn identity() -> Self::Value {
+///         0
+///     }
+///
 ///     fn add(a: &Self::Value, b: &Self::Value) -> Self::Value {
 ///         a + b
 ///     }
@@ -152,14 +165,20 @@ pub trait OpSub: Op {
 /// struct AddOp;
 /// impl Op for AddOp {
 ///     type Value = i64;
-///     fn identity() -> i64 { 0 }
-///     fn add(a: &i64, b: &i64) -> i64 { a + b }
+///
+///     fn identity() -> i64 {
+///         0
+///     }
+///
+///     fn add(a: &i64, b: &i64) -> i64 {
+///         a + b
+///     }
 /// }
 ///
 /// let mut tree = Fenwick::<AddOp>::new(5);
-/// tree.add(2, &10);  // Add 10 at index 2
-/// tree.add(4, &5);   // Add 5 at index 4
-/// let sum = tree.fold_to(..5);  // Sum of [0, 5)
+/// tree.add(2, &10); // Add 10 at index 2
+/// tree.add(4, &5); // Add 5 at index 4
+/// let sum = tree.fold_to(..5); // Sum of [0, 5)
 /// assert_eq!(sum, 15);
 /// ```
 pub struct Fenwick<O: Op> {
@@ -351,7 +370,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// tree.add(1, &2);
     /// tree.add(2, &3);
     /// tree.add(3, &4);
-    /// assert_eq!(tree.fold(1..3), 5);  // 2 + 3
+    /// assert_eq!(tree.fold(1..3), 5); // 2 + 3
     /// ```
     pub fn fold(&self, range: Range<usize>) -> T {
         let mut result = self.fold_to(..range.end);

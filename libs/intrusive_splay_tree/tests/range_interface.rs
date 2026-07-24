@@ -1,4 +1,5 @@
-use intrusive_splay_tree::{Op, Tree};
+use intrusive_splay_tree::Op;
+use intrusive_splay_tree::Tree;
 
 struct Store {
     size: usize,
@@ -8,6 +9,7 @@ impl Store {
     fn size(&self) -> usize {
         self.size
     }
+
     fn key(&self) -> u32 {
         self.key
     }

@@ -108,10 +108,12 @@ impl PathSegment {
     pub fn higher_serial_id(&self, hld: &Hld) -> usize {
         hld.index[self.higher]
     }
+
     /// Returns the serial id on the leaf side
     pub fn deeper_serial_id(&self, hld: &Hld) -> usize {
         hld.index[self.deeper]
     }
+
     /// Returns the number of vertices in the path segment.
     pub fn vertex_count(&self, hld: &Hld) -> usize {
         hld.index[self.deeper] - hld.index[self.higher] + 1

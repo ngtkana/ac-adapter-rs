@@ -18,7 +18,7 @@
 //! const P: u64 = 998_244_353;
 //! let mut data = [fp::<P>(1), fp::<P>(2)];
 //! fft(&mut data);
-//! assert_eq!(data[0], fp::<P>(3));      // 1 + 2
+//! assert_eq!(data[0], fp::<P>(3)); // 1 + 2
 //! assert_eq!(data[1], fp::<P>(998244352)); // 1 - 2 ≡ -1 (mod P)
 //! ```
 //!
@@ -79,7 +79,7 @@ impl<const P: u64> DirootTrait<P> for Diroot<P> {
 /// const P: u64 = 998_244_353;
 /// let mut a = [fp::<P>(3), fp::<P>(5)];
 /// fft(&mut a);
-/// assert_eq!(a[0], fp::<P>(8));       // 3 + 5
+/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
@@ -125,7 +125,8 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::{fft, ifft};
+/// use fp_fft::fft;
+/// use fp_fft::ifft;
 /// const P: u64 = 998_244_353;
 /// let orig = [fp::<P>(1), fp::<P>(2)];
 /// let mut a = orig;
@@ -189,6 +190,23 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
 /// assert_eq!(a[1], fp::<P>(998244352) * fp::<P>(2).inv()); // IFFT: (1 - 2) / 2 = -1/2
 /// ```
 pub fn split_fft<const P: u64>(items: &mut [Fp<P>]) {
+    let len = items.len();
+    let (a, b) = items.split_at_mut(len / 2);
+    ifft(b);
+    let w = Diroot::BACKWARD[len.trailing_zeros() as usize];
+    let mut coeff = fp(1);
+    for b in &mut *b {
+        *b *= coeff;
+        coeff *= w;
+    }
+    fft(b);
+    let inv2 = fp(2).inv();
+    for (a, b) in a.iter_mut().zip(b) {
+        [*a, *b] = [(*a + *b) * inv2, (*a - *b) * inv2];
+    }
+}
+
+pub fn mask_lower_part<const P: u64>(items: &mut [Fp<P>]) {
     let len = items.len();
     let (a, b) = items.split_at_mut(len / 2);
     ifft(b);

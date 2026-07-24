@@ -1,4 +1,6 @@
-use super::{Navi2, Navi3, Op};
+use super::Navi2;
+use super::Navi3;
+use super::Op;
 use std::ptr::NonNull;
 
 type Nn<O> = NonNull<Node<O>>;
@@ -19,6 +21,7 @@ impl<O: Op> Node<O> {
             parent: None,
         }
     }
+
     fn update(&mut self) {
         unsafe {
             O::update(

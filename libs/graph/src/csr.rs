@@ -22,7 +22,6 @@ use std::ops::IndexMut;
 /// $$
 /// A_{i, j} = X[s_i + j]
 /// $$
-///
 pub struct Csr<T> {
     /// $X = [x_0, x_1, \dots, x_{n-1}]$
     pub data: Vec<T>,
@@ -46,6 +45,7 @@ impl<T> Csr<T> {
             boundary: vec![0],
         }
     }
+
     /// Create a CSR corrsponding to $A = [\ ]$ with preallocated memory.
     ///
     /// # Example
@@ -60,6 +60,7 @@ impl<T> Csr<T> {
         boundary.push(0);
         Csr { data, boundary }
     }
+
     /// Create a CSR from a list of sections.
     ///
     /// # Example
@@ -80,6 +81,7 @@ impl<T> Csr<T> {
         }
         csr
     }
+
     /// Get the $i$-th section $A_i$. Alias for `&self[i]`.
     ///
     /// # Example
@@ -91,6 +93,7 @@ impl<T> Csr<T> {
     pub fn section(&self, i: usize) -> &[T] {
         &self.data[self.boundary[i]..self.boundary[i + 1]]
     }
+
     /// Get the mutable $i$-th section $A_i$. Alias for `&mut self[i]`.
     ///
     /// # Example
@@ -103,6 +106,7 @@ impl<T> Csr<T> {
     pub fn section_mut(&mut self, i: usize) -> &mut [T] {
         &mut self.data[self.boundary[i]..self.boundary[i + 1]]
     }
+
     /// Check if the CSR is empty. (i.e. $A = [\ ]$)
     ///
     /// # Example
@@ -114,6 +118,7 @@ impl<T> Csr<T> {
     pub fn is_empty(&self) -> bool {
         self.boundary.len() == 1
     }
+
     /// Get the number of sections $m = |A|$.
     ///
     /// # Example
@@ -125,6 +130,7 @@ impl<T> Csr<T> {
     pub fn len(&self) -> usize {
         self.boundary.len() - 1
     }
+
     /// Get the total number of elements in $A$. (i.e. $\sum_{i=0}^{m-1} |A_i|$)
     ///
     /// # Example
@@ -136,6 +142,7 @@ impl<T> Csr<T> {
     pub fn flat_len(&self) -> usize {
         self.data.len()
     }
+
     /// Get the mutable and extendable reference to the last section.
     ///
     /// # Example
@@ -148,6 +155,7 @@ impl<T> Csr<T> {
     pub fn last_mut(&mut self) -> LastMut<'_, T> {
         LastMut { csr: self }
     }
+
     /// Push an empty section $A_m = [\ ]$.
     ///
     /// # Example
@@ -160,6 +168,7 @@ impl<T> Csr<T> {
     pub fn push_empty(&mut self) {
         self.boundary.push(self.data.len());
     }
+
     /// Clone and push a section.
     ///
     /// # Example
@@ -176,14 +185,15 @@ impl<T> Csr<T> {
         self.data.extend_from_slice(section);
         self.boundary.push(self.data.len());
     }
+
     /// Return an iterator over the sections.
-    ///
     pub fn iter(&self) -> Iter<'_, T> {
         Iter {
             data: &self.data,
             boundary: &self.boundary,
         }
     }
+
     /// Copies `self` into a new `Vec<Vec<T>>`.
     ///
     /// # Example
@@ -218,6 +228,7 @@ impl<T> LastMut<'_, T> {
         self.csr.data.push(x);
         *self.csr.boundary.last_mut().unwrap() = self.csr.data.len();
     }
+
     /// Extend the last section with an iterator.
     ///
     /// # Example
@@ -250,6 +261,7 @@ impl<T> LastMut<'_, T> {
 }
 impl<T> Deref for LastMut<'_, T> {
     type Target = [T];
+
     fn deref(&self) -> &Self::Target {
         &self.csr.data[self.csr.boundary[self.csr.boundary.len() - 2]..]
     }
@@ -302,6 +314,7 @@ impl Csr<usize> {
         }
         csr
     }
+
     /// Create CSRs of $G$ and $G^{\mathrm{op}}$ from a list of edges.
     ///
     /// # Example
@@ -360,6 +373,7 @@ pub struct Iter<'a, T> {
 }
 impl<'a, T> Iterator for Iter<'a, T> {
     type Item = &'a [T];
+
     fn next(&mut self) -> Option<Self::Item> {
         if self.boundary.len() <= 1 {
             return None;
@@ -385,8 +399,9 @@ impl<T> ExactSizeIterator for Iter<'_, T> {
     }
 }
 impl<'a, T> IntoIterator for &'a Csr<T> {
-    type Item = &'a [T];
     type IntoIter = Iter<'a, T>;
+    type Item = &'a [T];
+
     fn into_iter(self) -> Self::IntoIter {
         self.iter()
     }
@@ -394,6 +409,7 @@ impl<'a, T> IntoIterator for &'a Csr<T> {
 
 impl<T> Index<usize> for Csr<T> {
     type Output = [T];
+
     fn index(&self, i: usize) -> &[T] {
         self.section(i)
     }

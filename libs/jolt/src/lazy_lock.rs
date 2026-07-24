@@ -24,6 +24,7 @@ impl<T, F: FnOnce() -> T> LazyLock<T, F> {
             }),
         }
     }
+
     #[inline]
     pub fn get(this: &LazyLock<T, F>) -> Option<&T> {
         if this.once.is_completed() {
@@ -32,6 +33,7 @@ impl<T, F: FnOnce() -> T> LazyLock<T, F> {
             None
         }
     }
+
     #[inline]
     pub fn force(this: &LazyLock<T, F>) -> &T {
         this.once.call_once(|| {

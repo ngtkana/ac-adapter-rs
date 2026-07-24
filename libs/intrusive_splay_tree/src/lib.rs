@@ -24,20 +24,31 @@
 //! # Examples
 //!
 //! ```
-//! use intrusive_splay_tree::{Tree, Op};
+//! use intrusive_splay_tree::Op;
+//! use intrusive_splay_tree::Tree;
 //!
-//! struct Store { value: i32, sum: i32 }
+//! struct Store {
+//!     value: i32,
+//!     sum: i32,
+//! }
 //! impl Store {
-//!     fn value(&self) -> i32 { self.value }
+//!     fn value(&self) -> i32 {
+//!         self.value
+//!     }
 //! }
 //!
 //! enum O {}
 //! impl Op for O {
 //!     type Store = Store;
+//!
 //!     fn update(node: &mut Store, left: Option<&Store>, right: Option<&Store>) {
 //!         node.sum = node.value;
-//!         if let Some(l) = left { node.sum += l.sum; }
-//!         if let Some(r) = right { node.sum += r.sum; }
+//!         if let Some(l) = left {
+//!             node.sum += l.sum;
+//!         }
+//!         if let Some(r) = right {
+//!             node.sum += r.sum;
+//!         }
 //!     }
 //! }
 //!
@@ -61,17 +72,24 @@
 //! All operations (insert, remove, get, split, merge) are **O(log n) amortized**.
 //! Splaying ensures that frequently accessed elements are brought near the root.
 
-use std::{
-    borrow::Borrow,
-    cmp::Ordering,
-    ops::{Bound, Deref, DerefMut, RangeBounds},
-    ptr::NonNull,
-};
+use std::borrow::Borrow;
+use std::cmp::Ordering;
+use std::ops::Bound;
+use std::ops::Deref;
+use std::ops::DerefMut;
+use std::ops::RangeBounds;
+use std::ptr::NonNull;
 
 mod node;
-use node::{Node, Onn, Split3Result, free_subtree, merge2, merge3, split2, split3};
-
 use crate::node::visit;
+use node::Node;
+use node::Onn;
+use node::Split3Result;
+use node::free_subtree;
+use node::merge2;
+use node::merge3;
+use node::split2;
+use node::split3;
 
 /// A navigation direction for binary searches that always progress (never terminate early).
 ///
@@ -82,11 +100,14 @@ use crate::node::visit;
 /// # Examples
 ///
 /// ```
-/// use intrusive_splay_tree::{Tree, Op, Navi2};
+/// use intrusive_splay_tree::Navi2;
+/// use intrusive_splay_tree::Op;
+/// use intrusive_splay_tree::Tree;
 ///
 /// enum O {}
 /// impl Op for O {
 ///     type Store = i32;
+///
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -115,6 +136,7 @@ impl Navi2 {
             }
         }
     }
+
     fn lower_bound_by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
         probe: &Q,
         center: &T,
@@ -125,6 +147,7 @@ impl Navi2 {
             Ordering::Greater => Self::GoDownRight,
         }
     }
+
     fn upper_bound_by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
         probe: &Q,
         center: &T,
@@ -146,11 +169,14 @@ impl Navi2 {
 /// # Examples
 ///
 /// ```
-/// use intrusive_splay_tree::{Tree, Op, Navi3};
+/// use intrusive_splay_tree::Navi3;
+/// use intrusive_splay_tree::Op;
+/// use intrusive_splay_tree::Tree;
 ///
 /// enum O {}
 /// impl Op for O {
 ///     type Store = i32;
+///
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -159,9 +185,13 @@ impl Navi2 {
 /// tree.insert_lower_bound_by_key(3, |v| *v);
 ///
 /// let removed = tree.remove(|center, _, _| {
-///     if 3 < *center { Navi3::GoDownLeft }
-///     else if 3 > *center { Navi3::GoDownRight }
-///     else { Navi3::Found }
+///     if 3 < *center {
+///         Navi3::GoDownLeft
+///     } else if 3 > *center {
+///         Navi3::GoDownRight
+///     } else {
+///         Navi3::Found
+///     }
 /// });
 /// assert_eq!(removed, Some(3));
 /// ```
@@ -187,6 +217,7 @@ impl Navi3 {
             }
         }
     }
+
     fn by_key<T, K: Borrow<Q>, Q: ?Sized + Ord>(
         probe: &Q,
         center: &T,
@@ -296,11 +327,13 @@ impl<O: Op> Drop for Tree<O> {
 /// # Examples
 ///
 /// ```
-/// use intrusive_splay_tree::{Tree, Op};
+/// use intrusive_splay_tree::Op;
+/// use intrusive_splay_tree::Tree;
 ///
 /// enum O {}
 /// impl Op for O {
 ///     type Store = i32;
+///
 ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
 /// }
 ///
@@ -353,11 +386,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -373,11 +408,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -402,18 +439,30 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { size: usize }
-    /// impl Store { fn size(&self) -> usize { self.size } }
+    /// struct Store {
+    ///     size: usize,
+    /// }
+    /// impl Store {
+    ///     fn size(&self) -> usize {
+    ///         self.size
+    ///     }
+    /// }
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -442,11 +491,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -500,18 +551,31 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, size: usize }
-    /// impl Store { fn size(&self) -> usize { self.size } }
+    /// struct Store {
+    ///     value: i32,
+    ///     size: usize,
+    /// }
+    /// impl Store {
+    ///     fn size(&self) -> usize {
+    ///         self.size
+    ///     }
+    /// }
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -568,17 +632,26 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, sum: i32 }
+    /// struct Store {
+    ///     value: i32,
+    ///     sum: i32,
+    /// }
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.sum = center.value;
-    ///         if let Some(l) = left { center.sum += l.sum; }
-    ///         if let Some(r) = right { center.sum += r.sum; }
+    ///         if let Some(l) = left {
+    ///             center.sum += l.sum;
+    ///         }
+    ///         if let Some(r) = right {
+    ///             center.sum += r.sum;
+    ///         }
     ///     }
     /// }
     ///
@@ -601,11 +674,14 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi2};
+    /// use intrusive_splay_tree::Navi2;
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -614,9 +690,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(5, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
-    /// let mut right = tree.split_off(|center, _, _| {
-    ///     if *center < 3 { Navi2::GoDownRight } else { Navi2::GoDownLeft }
-    /// });
+    /// let mut right =
+    ///     tree.split_off(
+    ///         |center, _, _| {
+    ///             if *center < 3 { Navi2::GoDownRight } else { Navi2::GoDownLeft }
+    ///         },
+    ///     );
     /// assert_eq!(tree.collect(|_| ()).len(), 1);
     /// assert_eq!(right.collect(|_| ()).len(), 2);
     /// ```
@@ -633,20 +712,34 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, size: usize }
+    /// struct Store {
+    ///     value: i32,
+    ///     size: usize,
+    /// }
     /// impl Store {
-    ///     fn value(&self) -> i32 { self.value }
-    ///     fn size(&self) -> usize { self.size }
+    ///     fn value(&self) -> i32 {
+    ///         self.value
+    ///     }
+    ///
+    ///     fn size(&self) -> usize {
+    ///         self.size
+    ///     }
     /// }
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -676,15 +769,20 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { key: u32 }
+    /// struct Store {
+    ///     key: u32,
+    /// }
     /// impl Store {
-    ///     fn key(&self) -> u32 { self.key }
+    ///     fn key(&self) -> u32 {
+    ///         self.key
+    ///     }
     /// }
     ///
     /// #[derive(Debug, PartialEq)]
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
@@ -717,13 +815,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { key: u32 }
+    /// struct Store {
+    ///     key: u32,
+    /// }
     /// impl Store {
-    ///    fn key(&self) -> u32 { self.key }
+    ///     fn key(&self) -> u32 {
+    ///         self.key
+    ///     }
     /// }
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
@@ -757,6 +860,7 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -783,11 +887,14 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi2};
+    /// use intrusive_splay_tree::Navi2;
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -813,19 +920,30 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, size: usize }
+    /// struct Store {
+    ///     value: i32,
+    ///     size: usize,
+    /// }
     /// impl Store {
-    ///     fn size(&self) -> usize { self.size }
+    ///     fn size(&self) -> usize {
+    ///         self.size
+    ///     }
     /// }
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -852,11 +970,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -880,11 +1000,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -909,11 +1031,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -935,11 +1059,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -962,11 +1088,14 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi3};
+    /// use intrusive_splay_tree::Navi3;
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -975,9 +1104,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
     /// let removed = tree.remove(|center, _, _| {
-    ///     if 3 < *center { Navi3::GoDownLeft }
-    ///     else if 3 > *center { Navi3::GoDownRight }
-    ///     else { Navi3::Found }
+    ///     if 3 < *center {
+    ///         Navi3::GoDownLeft
+    ///     } else if 3 > *center {
+    ///         Navi3::GoDownRight
+    ///     } else {
+    ///         Navi3::Found
+    ///     }
     /// });
     /// assert_eq!(removed, Some(3));
     /// assert_eq!(tree.collect(|_| ()).len(), 1);
@@ -1006,19 +1139,30 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, size: usize }
+    /// struct Store {
+    ///     value: i32,
+    ///     size: usize,
+    /// }
     /// impl Store {
-    ///     fn value(&self) -> i32 { self.value }
+    ///     fn value(&self) -> i32 {
+    ///         self.value
+    ///     }
     /// }
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -1046,11 +1190,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1077,11 +1223,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1109,11 +1257,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1141,11 +1291,14 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op, Navi3};
+    /// use intrusive_splay_tree::Navi3;
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1154,9 +1307,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
     /// let found = tree.get(|center, _, _| {
-    ///     if 3 < *center { Navi3::GoDownLeft }
-    ///     else if 3 > *center { Navi3::GoDownRight }
-    ///     else { Navi3::Found }
+    ///     if 3 < *center {
+    ///         Navi3::GoDownLeft
+    ///     } else if 3 > *center {
+    ///         Navi3::GoDownRight
+    ///     } else {
+    ///         Navi3::Found
+    ///     }
     /// });
     /// assert_eq!(found, Some(&3));
     /// ```
@@ -1183,20 +1340,34 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { value: i32, size: usize }
+    /// struct Store {
+    ///     value: i32,
+    ///     size: usize,
+    /// }
     /// impl Store {
-    ///     fn value(&self) -> i32 { self.value }
-    ///     fn size(&self) -> usize { self.size }
+    ///     fn value(&self) -> i32 {
+    ///         self.value
+    ///     }
+    ///
+    ///     fn size(&self) -> usize {
+    ///         self.size
+    ///     }
     /// }
     /// enum O {}
     /// impl Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(center: &mut Store, left: Option<&Store>, right: Option<&Store>) {
     ///         center.size = 1;
-    ///         if let Some(left) = left { center.size += left.size; }
-    ///         if let Some(right) = right { center.size += right.size; }
+    ///         if let Some(left) = left {
+    ///             center.size += left.size;
+    ///         }
+    ///         if let Some(right) = right {
+    ///             center.size += right.size;
+    ///         }
     ///     }
     /// }
     ///
@@ -1224,13 +1395,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// ```
     /// use intrusive_splay_tree::Tree;
     ///
-    /// struct Store { key: u32 }
+    /// struct Store {
+    ///     key: u32,
+    /// }
     /// impl Store {
-    ///     fn key(&self) -> u32 { self.key }
+    ///     fn key(&self) -> u32 {
+    ///         self.key
+    ///     }
     /// }
     /// enum O {}
     /// impl intrusive_splay_tree::Op for O {
     ///     type Store = Store;
+    ///
     ///     fn update(_: &mut Store, _: Option<&Store>, _: Option<&Store>) {}
     /// }
     ///
@@ -1257,11 +1433,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1288,11 +1466,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1324,11 +1504,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// # Examples
     ///
     /// ```
-    /// use intrusive_splay_tree::{Tree, Op};
+    /// use intrusive_splay_tree::Op;
+    /// use intrusive_splay_tree::Tree;
     ///
     /// enum O {}
     /// impl Op for O {
     ///     type Store = i32;
+    ///
     ///     fn update(_: &mut i32, _: Option<&i32>, _: Option<&i32>) {}
     /// }
     ///
@@ -1361,7 +1543,9 @@ impl<T, O: Op<Store = T>> Tree<O> {
 /// # Examples
 ///
 /// ```
-/// use intrusive_splay_tree::{Tree, Op, Navi2};
+/// use intrusive_splay_tree::Navi2;
+/// use intrusive_splay_tree::Op;
+/// use intrusive_splay_tree::Tree;
 ///
 /// struct Store {
 ///     value: i32,
@@ -1371,10 +1555,15 @@ impl<T, O: Op<Store = T>> Tree<O> {
 /// enum MyOp {}
 /// impl Op for MyOp {
 ///     type Store = Store;
+///
 ///     fn update(root: &mut Store, left: Option<&Store>, right: Option<&Store>) {
 ///         root.sum = root.value;
-///         if let Some(l) = left { root.sum += l.sum; }
-///         if let Some(r) = right { root.sum += r.sum; }
+///         if let Some(l) = left {
+///             root.sum += l.sum;
+///         }
+///         if let Some(r) = right {
+///             root.sum += r.sum;
+///         }
 ///     }
 /// }
 ///
