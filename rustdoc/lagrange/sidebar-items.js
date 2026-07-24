@@ -1,1 +1,0 @@
-window.SIDEBAR_ITEMS = {"fn":["evaluate","interpolate","interpolate_first_n","interpolate_one_point_first_n"]};
