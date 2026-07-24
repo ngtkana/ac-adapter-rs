@@ -1,247 +1,141 @@
 ---
 name: write-doc-comments
-description: Generate comprehensive doc comments for Rust library crates. Use this whenever a user needs to write or improve documentation for a library's public API. Given a library path, generates doc comments for all pub items (traits, structs, enums, functions, methods) following Rust std library conventions. Always include Examples sections for every pub item.
+description: Rust ライブラリの公開 API 用 doc コメント生成。日本語・簡潔・数式重視で、仕様理解に必要な最小限の記述。
 compatibility:
   - Read
   - Edit
   - Write
 ---
 
-# Write Doc Comments for Rust Libraries
+# Rust ライブラリ用 Doc コメント生成
 
-Your task is to generate high-quality doc comments for a Rust library following the Rust standard library documentation style.
+ライブラリの全公開 API（関数・型・メソッド）に日本語 doc コメントを生成します。
 
-## Input
+## 原則
 
-The user will specify:
-- **Library path**: e.g., `libs/fenwick/src/lib.rs` or `src/lib.rs`
-- **Optional notes**: Any specific documentation patterns, style preferences, or context
+1. **簡潔性重視**: 仕様が理解できる最小の長さ。無駄な詳細は削除
+2. **数式必須**: 可能な限り $...$ で数学表記（例：$O(n \log n)$、$𝔽_P$）
+3. **日本語統一**: すべてのドキュメントを日本語で記述
+4. **例は仕様検証**: `assert_eq!` で期待値を検証。期待値は仕様から導出
 
-Note: Crate-level documentation (`//!`) is **always** included; the user does not need to request it.
+## 入力
 
-## Process
+- **ライブラリパス**: 例 `libs/fp_fft/src/lib.rs`
+- **オプション**: 特定の指示やスタイル指定
 
-### 1. Crate-level Documentation (always included)
+## プロセス
 
-Add or update a `//!` module comment at the top of lib.rs with this structure:
+### 1. クレートレベルドキュメント
 
+モジュールコメント (`//!`) を lib.rs 上部に配置。
+
+**構成（簡潔版）**:
 ```rust
-//! One-line summary of what this crate does.
+//! 一行説明（何をするか、何に使うか）
 //!
-//! Longer explanation of:
-//! - Primary use cases (When would you use this?)
-//! - What problems it solves
-//! - Key features or capabilities
+//! # 仕様
 //!
-//! # Examples
+//! [数式・条件を含めた簡潔な説明]
+//!
+//! # 例
 //!
 //! ```
-//! [Realistic example showing typical usage]
+//! [手計算可能で仕様を検証する例]
 //! ```
 //!
-//! # Module / Item Overview
+//! # 計算量
 //!
-//! - [`NamedItem`]: Brief description of what this trait/struct is for
-//! - [`AnotherItem`]: ...
-//!
-//! # Complexity
-//!
-//! (Optional but useful for algorithm libraries)
-//! - Operation A: $O(\log n)$
-//! - Operation B: $O(1)$
+//! - 関数A: $O(\log n)$
+//! - 関数B: $O(n)$
 ```
 
-**Guidelines for crate-level docs:**
-- Keep it 100–200 lines (high-level overview, not detailed)
-- Focus on "When & Why" not "How" (leave "How" to item-level docs)
-- Include one concrete, runnable example
-- List key items and what they're for
-- For algorithm/data structure libraries, include complexity info (use `$...$` for math notation like `$O(\log n)$`)
-- Use TeX notation for mathematical concepts (e.g., `$𝔽_P$`, `$a^{-1} \bmod P$`)
-- Avoid overwhelming detail — readers should quickly grasp purpose and scope
+**ガイドライン**:
+- 説明は 30-50 行程度（本当に必要なことだけ）
+- 「何をするのか」を数式で表現
+- 1 つの具体例で使用法を示す
+- 各公開項目を一行で列挙
 
-**If crate-level docs already exist:** Improve and refine them to meet these standards rather than replacing. Keep the existing structure if it's sound; polish clarity, add missing sections (Examples, Complexity if appropriate), and ensure tone is consistent with Std library style.
-
-### 2. Item-level Documentation
-
-1. **Read the library file(s)** — understand the public API structure
-2. **Identify all pub items**:
-   - Traits (trait keyword, pub visibility)
-   - Structs (struct keyword, pub visibility)
-   - Enums (enum keyword, pub visibility) — document the enum itself, but NOT enum variants (unless they have special meaning beyond simple data carrying)
-   - Functions (fn keyword, pub visibility)
-   - Methods (impl blocks with pub functions)
-3. **Generate doc comments** for each item following these patterns:
-
-### Documentation Patterns
-
-#### Traits
+### 2. 関数・メソッド
 
 ```rust
-/// Brief one-line description of what the trait represents.
+/// 一行説明（何をするのか + 数式あれば含める）
 ///
-/// Longer explanation of when and how to implement or use this trait.
-/// Explain the invariants or contract that implementations must uphold.
+/// # 入力・出力
+/// 必要に応じて数式で: 入力 $x$、出力 $f(x) = ...$
 ///
-/// # Examples
-///
+/// # 例
 /// ```
-/// [Concrete example showing implementation or usage]
+/// let result = my_func(3);
+/// assert_eq!(result, 9);  // 仕様: f(3) = 9
 /// ```
-pub trait MyTrait {
+pub fn my_func(x: i32) -> i32 {
 ```
 
-#### Structs
+**シンプルな関数**:
+- 一行説明 + 例のみ（3-5行）
+
+**複雑な関数**:
+- 一行説明
+- 入力条件・出力結果を数式で表現
+- 計算量（あれば）
+- 具体例
+
+### 3. 構造体・型
 
 ```rust
-/// Brief one-line description.
+/// 一行説明（何を表すのか）
 ///
-/// Longer explanation including:
-/// - What this struct represents
-/// - When you would use it
-/// - Any important invariants
+/// 数式または簡潔な説明。
 ///
-/// # Examples
-///
+/// # 例
 /// ```
-/// [Example: creating and using the struct]
+/// let x = MyType::new();
 /// ```
-pub struct MyStruct {
+pub struct MyType {
 ```
 
-#### Enums
+### 4. 例の品質
 
+各例は以下を満たす：
+- **短い**: 3-10 行
+- **実行可能**: 型推論が必要な場合は型を明示
+- **検証可能**: `assert_eq!` で期待値を確認
+- **期待値は仕様から**: 実装ではなく仕様をテスト
+
+**悪い例**:
 ```rust
-/// Brief one-line description.
-///
-/// Longer explanation of the different variants and when to use each.
-///
-/// # Examples
-///
-/// ```
-/// [Example showing enum usage and pattern matching]
-/// ```
-pub enum MyEnum {
+let x = my_func(5);  // 何の検証もない
 ```
 
-Do NOT document individual enum variants unless they carry special meaning beyond simple data carrying (use your judgment; when in doubt, ask the user).
-
-#### Functions and Methods
-
-For straightforward, self-explanatory functions/methods:
-
+**良い例**:
 ```rust
-/// One-line description.
-///
-/// # Examples
-///
-/// ```
-/// [Simple example]
-/// ```
-pub fn simple_method(&self) {
+let x = my_func(5);
+assert_eq!(x, 25);  // 仕様: f(5) = 25
 ```
 
-For more complex functions/methods with parameters or important behavior:
+## 出力
 
-```rust
-/// Brief one-line description.
-///
-/// Longer explanation of behavior, including:
-/// - What this does
-/// - Any important side effects or guarantees
-/// - Panic conditions (if any)
-///
-/// # Arguments
-///
-/// * `param1` - Description of param1
-/// * `param2` - Description of param2
-///
-/// # Examples
-///
-/// ```
-/// [Realistic example showing typical usage]
-/// ```
-pub fn complex_method(&mut self, param1: T, param2: usize) -> Result<U> {
-```
+修正されたソースファイル全体。
 
-### Style Guidelines
+**既存ドキュメント対応**:
+- 完全削除ではなく改善（明確化、数式追加、簡潔化）
+- 既存構造が良ければ保持
 
-- **Keep explanations concise and clear** — use simple English
-- **Examples section is mandatory** for every pub item
-- **Examples should be realistic** — show actual use cases, not trivial toy examples
-- **Use backticks** for code identifiers and types (e.g., \`Vec<T>\`, \`add_assign\`)
-- **Reference related items** using backticks (e.g., "See \`other_method\`" links in Rust docs)
-- **Math notation**: Use `$...$` for inline math and TeX notation (e.g., `$O(\log n)$`, `$𝔽_P$`, `$a \cdot b$`)
-- **For simple methods**, 2-3 sentences + example is often sufficient
-- **Follow std library tone** — informative but not overly verbose
+## チェックリスト
 
-### Examples Philosophy
+- [ ] すべてのドキュメント日本語化
+- [ ] 説明は最小限の長さ
+- [ ] 数式を入れた（可能な限り）
+- [ ] 例は短く、assert で検証
+- [ ] 例の期待値は仕様から導出
+- [ ] 計算量を記載（あれば）
 
-Each example should:
-1. Be runnable (or clearly a logical example)
-2. Show the typical use case
-3. For methods on generic types, include a concrete instantiation
-4. Keep it short — usually 3-10 lines
-5. **Include `assert_eq!` or similar assertions to verify the method's contract** — verify that the result matches the specification, not just that the code compiles
-
-**Assertion Guidelines:**
-- Every example's output/result should be validated with `assert_eq!`, `assert!`, or similar
-- The assertion should verify the method's **specification** (the documented contract), not just that the code runs
-- For constructors/builders: verify the state is correct
-- For computations: verify the result matches expected values per the spec
-- For queries: verify the returned value is as documented
-- Example: `assert_eq!(binom(5, 2), fp(10))` validates that $\binom{5}{2} = 10$
-
-**Bad:** `let x = my_method();` (no verification)
-**Good:** `let x = my_method(); assert_eq!(x, expected_value);` (specification verified)
-
-## Output
-
-Return the **full source file** with:
-1. **Crate-level documentation** (`//!` at the top) — newly written or refined
-2. **Item-level documentation** (`///` on each pub item) — newly written or refined
-
-Use standard Rust doc comment syntax throughout. Math and algorithmic notation should use `$...$` for TeX rendering (e.g., `$O(\log n)$`, `$a \times b \bmod p$`).
-
-**If documentation already exists:** Do not replace it wholesale. Instead, treat the existing docs as a foundation and:
-- Refine unclear explanations
-- Expand to meet the standards (add missing Examples, parameters, edge cases)
-- Improve tone and clarity to match Std library style
-- Remove redundant or outdated information
-
-## Quality Checklist
-
-### Crate-level (if applicable)
-- [ ] One-line summary at the top
-- [ ] "When & Why" section explaining use cases
-- [ ] At least one runnable example
-- [ ] Brief overview of main items
-- [ ] (Optional) Complexity info for algorithm libraries
-- [ ] Total length: 100–200 lines
-
-### Item-level
-- [ ] Every pub trait has a doc comment with Examples
-- [ ] Every pub struct has a doc comment with Examples
-- [ ] Every pub enum has a doc comment with Examples (variants excluded unless special)
-- [ ] Every pub fn and pub method has a doc comment with Examples
-- [ ] Examples are realistic and functional
-- [ ] Language is clear and concise
-- [ ] Style follows Rust std library conventions
-
-## Verification
-
-After generating doc comments, **always** run these verification commands from the repository root:
+## 検証
 
 ```bash
-makers doc
-makers test-doc
+cargo test --lib  # ユニットテスト
+cargo test --doc  # doctest
+cargo doc         # ドキュメント生成確認
 ```
 
-**Expected results:**
-- `makers doc`: Builds documentation successfully (warnings about TeX escaping or link resolution are acceptable if they don't block the build)
-- `makers test-doc`: All doctests pass (use TDD: examples should be runnable and verify expected behavior)
-
-**If issues arise:**
-- TeX notation: Escape brackets in math mode (`\[` and `\]` for square brackets within `$...$`)
-- Link resolution: Method/type names in backticks may need full paths if not in the same scope
-- Doctest failures: Fix the code or the example to make them pass (per TDD discipline)
+期待：doctest すべて PASS、doc ビルド成功

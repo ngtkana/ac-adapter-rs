@@ -1,55 +1,32 @@
-//! Fast Fourier Transform over finite fields $𝔽_P$.
+//! 有限体 $𝔽_P$ 上の高速フーリエ変換（FFT）。
 //!
-//! This crate implements the Cooley-Tukey FFT and its inverse (IFFT) algorithm for
-//! polynomial multiplication and other convolution-based computations in modular arithmetic.
-//! Both transforms operate in-place on arrays of field elements and require the array length
-//! to be a power of two.
+//! Cooley-Tukey アルゴリズムで、多項式乗算を $O(n^2)$ から $O(n \log n)$ に削減。
 //!
-//! # When to Use
+//! # 仕様
 //!
-//! Use this crate when you need to efficiently multiply polynomials or compute convolutions
-//! over a prime field. The FFT reduces polynomial multiplication from $O(n^2)$ time to
-//! $O(n \log n)$, making it essential for large-degree polynomials in competitive programming
-//! and cryptographic applications.
+//! 配列 $(x_0, \ldots, x_{n-1})$ に対して：
+//! - `fft`: $X_i = \sum_{j=0}^{n-1} x_j \cdot w^{ij}$（$w$ は $n$ 次原始単位根）
+//! - `ifft`: `fft` の逆変換（$1/n$ でスケール）
+//! - `split_fft`: IFFT後、各半分に FFT を適用
 //!
-//! # Examples
+//! # 例
 //!
 //! ```
 //! use fp::fp;
 //! use fp_fft::fft;
-//! use fp_fft::ifft;
 //!
 //! const P: u64 = 998_244_353;
-//!
-//! // Multiply polynomials a(x) = 1 + 2x and b(x) = 3 + 4x using FFT
-//! // (product: 3 + 10x + 8x²)
-//! let mut a = vec![fp::<P>(1), fp::<P>(2), fp::<P>(0), fp::<P>(0)];
-//! let mut b = vec![fp::<P>(3), fp::<P>(4), fp::<P>(0), fp::<P>(0)];
-//!
-//! fft(&mut a);
-//! fft(&mut b);
-//!
-//! for (av, bv) in a.iter_mut().zip(&b) {
-//!     *av *= *bv;
-//! }
-//!
-//! ifft(&mut a);
-//!
-//! assert_eq!(a[0], fp::<P>(3)); // constant term: 1 * 3
-//! assert_eq!(a[1], fp::<P>(10)); // x term: 1*4 + 2*3
-//! assert_eq!(a[2], fp::<P>(8)); // x² term: 2 * 4
+//! let mut data = [fp::<P>(1), fp::<P>(2)];
+//! fft(&mut data);
+//! assert_eq!(data[0], fp::<P>(3));      // 1 + 2
+//! assert_eq!(data[1], fp::<P>(998244352)); // 1 - 2 ≡ -1 (mod P)
 //! ```
 //!
-//! # Main Items
+//! # 公開 API
 //!
-//! - [`fft`]: Forward FFT (in-place)
-//! - [`ifft`]: Inverse FFT (in-place)
-//!
-//! # Complexity
-//!
-//! - Forward and inverse FFT: $O(n \log n)$ where $n$ is the array length
-//! - Input length must be a power of two
-//! - Time domain operations on the transformed data remain $O(n)$
+//! - [`fft`]: 前方フーリエ変換、$O(n \log n)$
+//! - [`ifft`]: 逆フーリエ変換、$O(n \log n)$
+//! - [`split_fft`]: IFFT → 各半分に FFT
 
 use fp::Fp;
 use fp::fp;
@@ -90,40 +67,20 @@ impl<const P: u64> DirootTrait<P> for Diroot<P> {
     const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
 }
 
-/// Computes the Fast Fourier Transform of a field element array (in-place).
+/// 前方フーリエ変換。入力 $(x_0, \ldots, x_{n-1})$ に対して $X_i = \sum_j x_j w^{ij}$。
 ///
-/// Applies the Cooley-Tukey FFT algorithm to compute the Discrete Fourier Transform.
+/// インプレース変換。$n$ は 2 の累乗。
 ///
-/// For an input array $(x_0, x_1, \ldots, x_{n-1})$, computes:
-/// $$X_{\mathrm{rev}(i)} = \sum_{j=0}^{n-1} x_j \cdot w_n^{i \cdot j}$$
-/// where $w_n$ is a primitive $n$-th root of unity over $\mathbb{F}_P$.
-///
-/// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
-/// The transform is performed in-place, modifying the input array directly. This is typically
-/// followed by pointwise operations and an inverse FFT to compute the result in the
-/// coefficient domain.
-///
-/// # Preconditions
-///
-/// - Array length must be a power of two
-/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
-///
-/// # Time Complexity
-///
-/// $O(n \log n)$ where $n = $ `items.len()`
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use fp::fp;
 /// use fp_fft::fft;
-///
 /// const P: u64 = 998_244_353;
-/// let mut data = [fp::<P>(3), fp::<P>(5)];
-/// fft(&mut data);
-/// // FFT of [x, y] is [x + y, x - y]
-/// assert_eq!(data[0], fp::<P>(8)); // 3 + 5
-/// assert_eq!(data[1], fp::<P>(998244351)); // 3 - 5 ≡ -2 (mod P)
+/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// fft(&mut a);
+/// assert_eq!(a[0], fp::<P>(8));       // 3 + 5
+/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
@@ -160,43 +117,21 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     }
 }
 
-/// Computes the Inverse Fast Fourier Transform of a field element array (in-place).
+/// 逆フーリエ変換。`fft` の逆。出力は $1/n$ でスケール。
 ///
-/// Transforms an array from the frequency domain back to the coefficient domain,
-/// inverting the effect of `fft`.
+/// インプレース変換。$n$ は 2 の累乗。
 ///
-/// For a transformed array $(X_0, X_1, \ldots, X_{n-1})$, computes:
-/// $$x_i = \frac{1}{n} \sum_{j=0}^{n-1} X_{\mathrm{rev}(j)} \cdot w^{-i \cdot j}$$
-/// where $w_n$ is a primitive $n$-th root of unity over $\mathbb{F}_P$.
-///
-/// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
-/// The result is scaled by $1/n$ following the standard IFFT convention to ensure FFT and
-/// IFFT are exact inverses.
-///
-/// # Preconditions
-///
-/// - Array length must be a power of two
-/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
-///
-/// # Time Complexity
-///
-/// $O(n \log n)$ where $n = $ `items.len()`
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::fft;
-/// use fp_fft::ifft;
-///
+/// use fp_fft::{fft, ifft};
 /// const P: u64 = 998_244_353;
-/// let original = [fp::<P>(1), fp::<P>(2), fp::<P>(3), fp::<P>(4)];
-/// let mut data = original.clone();
-///
-/// fft(&mut data);
-/// ifft(&mut data);
-/// // IFFT inverts FFT: after round-trip, data equals the original
-/// assert_eq!(data, original);
+/// let orig = [fp::<P>(1), fp::<P>(2)];
+/// let mut a = orig;
+/// fft(&mut a);
+/// ifft(&mut a);
+/// assert_eq!(a, orig);
 /// ```
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
@@ -238,46 +173,20 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     }
 }
 
-/// Applies inverse FFT to the entire array, then forward FFT independently to each half.
+/// IFFT後、各半分に FFT を適用。入力 $X$ に対して $y = \text{IFFT}(X)$ とし、$\text{FFT}(y[0..n/2])$ と $\text{FFT}(y[n/2..n])$ を出力。
 ///
-/// For an input frequency-domain array $(X_0, X_1, \ldots, X_{n-1})$, computes:
-/// - First: $(y_0, y_1, \ldots, y_{n-1}) = \text{IFFT}(X)$ (inverse transform of entire array)
-/// - Then: Split into two halves and apply FFT to each:
-///   - $z_{\text{lower}} = \text{FFT}(y_0, \ldots, y_{n/2-1})$
-///   - $z_{\text{upper}} = \text{FFT}(y_{n/2}, \ldots, y_{n-1})$
-/// - Output: $(z_{\text{lower}}, z_{\text{upper}})$
+/// 計算量は $n \log n$。
 ///
-/// This operation is useful for certain divide-and-conquer FFT algorithms and polynomial computations.
-///
-/// # Preconditions
-///
-/// - Array length must be a power of two
-/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
-///
-/// # Time Complexity
-///
-/// $\mathcal{F}_n$ where $n = $ `items.len()`. Specifically: one length-$n$ IFFT and two length-$n/2$ FFTs.
-///
-/// # Examples
+/// # 例
 ///
 /// ```
-/// use fp::{Fp, fp};
-/// use fp_fft::{fft, split_fft};
-///
+/// use fp::fp;
+/// use fp_fft::split_fft;
 /// const P: u64 = 998_244_353;
-///
-/// let mut data: [Fp<P>; 8] = [fp(1), fp(2), fp(3), fp(4), fp(5), fp(6), fp(7), fp(8)];
-/// let mut a = data[..4].to_vec();
-/// let mut b = data[4..].to_vec();
-///
-/// fft(&mut data);
-/// fft(&mut a);
-/// fft(&mut b);
-///
-/// split_fft(&mut data);
-///
-/// assert_eq!(&data[..4], &*a);
-/// assert_eq!(&data[4..], &*b);
+/// let mut a = [fp::<P>(1), fp::<P>(2)];
+/// split_fft(&mut a);
+/// assert_eq!(a[0], fp::<P>(3) * fp::<P>(2).inv()); // IFFT: (1 + 2) / 2 = 3/2
+/// assert_eq!(a[1], fp::<P>(998244352) * fp::<P>(2).inv()); // IFFT: (1 - 2) / 2 = -1/2
 /// ```
 pub fn split_fft<const P: u64>(items: &mut [Fp<P>]) {
     let len = items.len();
