@@ -126,6 +126,13 @@ fn test_fft_compare_with_naive() {
         fft(&mut result);
         let expected = ntt_naive(&f);
         assert_eq!(&result, &expected, "f = {f:?}");
+
+        let sum = f.iter().sum::<Fp<_>>();
+        assert_eq!(result[0], sum);
+        if 2 <= n {
+            let alternative_sum = (0..n).map(|i| if i % 2 == 0 { f[i] } else { -f[i] }).sum();
+            assert_eq!(result[1], alternative_sum);
+        }
     }
 }
 
@@ -143,5 +150,13 @@ fn test_ifft_compare_with_naive() {
         ifft(&mut result);
         let expected = intt_naive(&f);
         assert_eq!(&result, &expected, "f = {f:?}");
+
+        let sum = f.iter().sum::<Fp<_>>() / fpu(n);
+        assert_eq!(result[0], sum);
+        if 2 <= n {
+            let (former, latter) = f.split_at(n / 2);
+            let alternative_sum = former.iter().sum::<Fp<_>>() - latter.iter().sum::<Fp<_>>();
+            assert_eq!(result[n / 2], alternative_sum / fpu(n));
+        }
     }
 }
