@@ -1,7 +1,0 @@
-[package]
-name = "fp-precalc"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-fp = { version = "0.1.0", path = "../fp" }
