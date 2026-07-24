@@ -1,3 +1,55 @@
+//! Fast Fourier Transform over finite fields $𝔽_P$.
+//!
+//! This crate implements the Cooley-Tukey FFT and its inverse (IFFT) algorithm for
+//! polynomial multiplication and other convolution-based computations in modular arithmetic.
+//! Both transforms operate in-place on arrays of field elements and require the array length
+//! to be a power of two.
+//!
+//! # When to Use
+//!
+//! Use this crate when you need to efficiently multiply polynomials or compute convolutions
+//! over a prime field. The FFT reduces polynomial multiplication from $O(n^2)$ time to
+//! $O(n \log n)$, making it essential for large-degree polynomials in competitive programming
+//! and cryptographic applications.
+//!
+//! # Examples
+//!
+//! ```
+//! use fp_fft::{fft, ifft};
+//! use fp::fp;
+//!
+//! const P: u64 = 998_244_353;
+//!
+//! // Multiply polynomials a(x) = 1 + 2x and b(x) = 3 + 4x using FFT
+//! // (product: 3 + 10x + 8x²)
+//! let mut a = vec![fp::<P>(1), fp::<P>(2), fp::<P>(0), fp::<P>(0)];
+//! let mut b = vec![fp::<P>(3), fp::<P>(4), fp::<P>(0), fp::<P>(0)];
+//!
+//! fft(&mut a);
+//! fft(&mut b);
+//!
+//! for (av, bv) in a.iter_mut().zip(&b) {
+//!     *av *= *bv;
+//! }
+//!
+//! ifft(&mut a);
+//!
+//! assert_eq!(a[0], fp::<P>(3));  // constant term: 1 * 3
+//! assert_eq!(a[1], fp::<P>(10)); // x term: 1*4 + 2*3
+//! assert_eq!(a[2], fp::<P>(8));  // x² term: 2 * 4
+//! ```
+//!
+//! # Main Items
+//!
+//! - [`fft`]: Forward FFT (in-place)
+//! - [`ifft`]: Inverse FFT (in-place)
+//!
+//! # Complexity
+//!
+//! - Forward and inverse FFT: $O(n \log n)$ where $n$ is the array length
+//! - Input length must be a power of two
+//! - Time domain operations on the transformed data remain $O(n)$
+
 use fp::{Fp, fp};
 
 const DIADIC_ROOTS_BUFFER_LEN: usize = 64;
@@ -25,6 +77,42 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
     result
 }
 
+/// Computes the Fast Fourier Transform of a field element array (in-place).
+///
+/// Applies the Cooley-Tukey FFT algorithm to compute the Discrete Fourier Transform.
+///
+/// For an input array $x\[0\], x\[1\], \ldots, x\[N-1\]$, computes outputs equivalent to:
+/// $$X\[k\] = \sum_{n=0}^{N-1} x\[n\] \cdot \omega_N^{kn}$$
+/// where $\omega_N$ is a primitive $N$-th root of unity over $\mathbb{F}_P$.
+///
+/// The implementation uses the bit-reversal permutation variant of Cooley-Tukey for
+/// efficient in-place computation. The transform is performed in-place, modifying the
+/// input array directly. This is typically followed by pointwise operations and an
+/// inverse FFT to compute the result in the coefficient domain.
+///
+/// # Preconditions
+///
+/// - Array length must be a power of two
+/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
+///   (checked via `items.len().trailing_zeros() <= (P - 1).trailing_zeros()`)
+///
+/// # Time Complexity
+///
+/// $O(n \log n)$ where $n = $ `items.len()`
+///
+/// # Examples
+///
+/// ```
+/// use fp_fft::fft;
+/// use fp::fp;
+///
+/// const P: u64 = 998_244_353;
+/// let mut data = [fp::<P>(3), fp::<P>(5)];
+/// fft(&mut data);
+/// // FFT of [x, y] is [x + y, x - y]
+/// assert_eq!(data[0], fp::<P>(8));         // 3 + 5
+/// assert_eq!(data[1], fp::<P>(998244351)); // 3 - 5 ≡ -2 (mod P)
+/// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
@@ -44,6 +132,44 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     }
 }
 
+/// Computes the Inverse Fast Fourier Transform of a field element array (in-place).
+///
+/// Transforms an array from the frequency domain back to the coefficient domain,
+/// inverting the effect of `fft`.
+///
+/// For a transformed array $X\[0\], X\[1\], \ldots, X\[N-1\]$, computes outputs equivalent to:
+/// $$x\[n\] = \frac{1}{N} \sum_{k=0}^{N-1} X\[k\] \cdot \omega_N^{-kn}$$
+/// where $\omega_N$ is a primitive $N$-th root of unity over $\mathbb{F}_P$.
+///
+/// The implementation uses the bit-reversal permutation variant of Cooley-Tukey for
+/// efficient in-place computation. The result is scaled by $1/N$ following the standard
+/// IFFT convention to ensure FFT and IFFT are exact inverses.
+///
+/// # Preconditions
+///
+/// - Array length must be a power of two
+/// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
+///   (checked via `items.len().trailing_zeros() <= (P - 1).trailing_zeros()`)
+///
+/// # Time Complexity
+///
+/// $O(n \log n)$ where $n = $ `items.len()`
+///
+/// # Examples
+///
+/// ```
+/// use fp_fft::{fft, ifft};
+/// use fp::fp;
+///
+/// const P: u64 = 998_244_353;
+/// let original = [fp::<P>(1), fp::<P>(2), fp::<P>(3), fp::<P>(4)];
+/// let mut data = original.clone();
+///
+/// fft(&mut data);
+/// ifft(&mut data);
+/// // IFFT inverts FFT: after round-trip, data equals the original
+/// assert_eq!(data, original);
+/// ```
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
