@@ -116,18 +116,35 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
     let w = const { build_diadic_roots(find_primitive_root()) };
+    let forth = w[2];
     let mut n = items.len();
-    while n != 1 {
+    while n >= 4 {
         let w = w[n.trailing_zeros() as usize];
         for chunk in items.chunks_mut(n) {
-            let (a, b) = chunk.split_at_mut(n / 2);
-            let mut coeff = fp(1);
-            for (a, b) in a.iter_mut().zip(b) {
-                (*a, *b) = (*a + *b, (*a - *b) * coeff);
-                coeff *= w;
+            let mut wk = fp(1);
+            for i in 0..n / 4 {
+                let [a, b, c, d] = unsafe {
+                    chunk.get_disjoint_unchecked_mut([i, i + n / 4, i + n / 2, i + 3 * n / 4])
+                };
+                [*a, *c] = [*a + *c, *a - *c];
+                [*b, *d] = [*b + *d, *b - *d];
+                *d *= forth;
+                [*a, *b] = [*a + *b, *a - *b];
+                [*c, *d] = [*c + *d, *c - *d];
+                let wk2 = wk * wk;
+                *b *= wk2;
+                *c *= wk;
+                *d *= wk * wk2;
+                wk *= w;
             }
         }
-        n /= 2;
+        n /= 4;
+    }
+    if n == 2 {
+        for chunk in items.chunks_mut(2) {
+            let [a, b] = chunk else { unreachable!() };
+            (*a, *b) = (*a + *b, *a - *b);
+        }
     }
 }
 
@@ -172,19 +189,36 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
     let w = const { build_diadic_roots(find_primitive_root().inv()) };
-    let mut n = 2;
+    let mut n = 4;
+    if items.len().trailing_zeros() % 2 == 1 {
+        for chunk in items.chunks_mut(2) {
+            let [a, b] = chunk else { unreachable!() };
+            (*a, *b) = (*a + *b, *a - *b);
+        }
+        n *= 2;
+    }
+    let forth = w[2];
     while n <= items.len() {
         let w = w[n.trailing_zeros() as usize];
         for chunk in items.chunks_mut(n) {
-            let (a, b) = chunk.split_at_mut(n / 2);
-            let mut coeff = fp(1);
-            for (a, b) in a.iter_mut().zip(b) {
-                *b *= coeff;
-                (*a, *b) = (*a + *b, *a - *b);
-                coeff *= w;
+            let mut wk = fp(1);
+            for i in 0..n / 4 {
+                let [a, b, c, d] = unsafe {
+                    chunk.get_disjoint_unchecked_mut([i, i + n / 4, i + n / 2, i + 3 * n / 4])
+                };
+                let wk2 = wk * wk;
+                *b *= wk2;
+                *c *= wk;
+                *d *= wk * wk2;
+                [*a, *b] = [*a + *b, *a - *b];
+                [*c, *d] = [*c + *d, *c - *d];
+                *d *= forth;
+                [*a, *c] = [*a + *c, *a - *c];
+                [*b, *d] = [*b + *d, *b - *d];
+                wk *= w;
             }
         }
-        n *= 2;
+        n *= 4;
     }
     let len_inv = fp(items.len() as u64).inv();
     for item in items {
