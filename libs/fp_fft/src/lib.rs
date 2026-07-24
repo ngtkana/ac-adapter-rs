@@ -81,10 +81,9 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
 ///
 /// Applies the Cooley-Tukey FFT algorithm to compute the Discrete Fourier Transform.
 ///
-/// For an input array $(x_0, x_1, \ldots, x_{N-1})$, computes:
-/// $$X_i = \sum_{j=0}^{N-1} x_j \cdot \omega_N^{i_{\text{rev}} \cdot j}$$
-/// where $i_{\text{rev}} = \text{bitreverse}(i)$ and $\omega_N$ is a primitive $N$-th root
-/// of unity over $\mathbb{F}_P$.
+/// For an input array $(x_0, x_1, \ldots, x_{n-1})$, computes:
+/// $$X_{\mathrm{rev}(i)} = \sum_{j=0}^{n-1} x_j \cdot w_n^{i \cdot j}$$
+/// where $w_n$ is a primitive $n$-th root of unity over $\mathbb{F}_P$.
 ///
 /// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
 /// The transform is performed in-place, modifying the input array directly. This is typically
@@ -95,7 +94,6 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
 ///
 /// - Array length must be a power of two
 /// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
-///   (checked via `items.len().trailing_zeros() <= (P - 1).trailing_zeros()`)
 ///
 /// # Time Complexity
 ///
@@ -138,20 +136,18 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 /// Transforms an array from the frequency domain back to the coefficient domain,
 /// inverting the effect of `fft`.
 ///
-/// For a transformed array $(X_0, X_1, \ldots, X_{N-1})$, computes:
-/// $$x_i = \frac{1}{N} \sum_{j=0}^{N-1} X_{j_{\text{rev}}} \cdot \omega_N^{-i \cdot j}$$
-/// where $j_{\text{rev}} = \text{bitreverse}(j)$ and $\omega_N$ is a primitive $N$-th root
-/// of unity over $\mathbb{F}_P$.
+/// For a transformed array $(X_0, X_1, \ldots, X_{n-1})$, computes:
+/// $$x_i = \frac{1}{n} \sum_{j=0}^{n-1} X_{\mathrm{rev}(j)} \cdot w^{-i \cdot j}$$
+/// where $w_n$ is a primitive $n$-th root of unity over $\mathbb{F}_P$.
 ///
 /// The implementation uses the in-place Cooley-Tukey algorithm with bit-reversal permutation.
-/// The result is scaled by $1/N$ following the standard IFFT convention to ensure FFT and
+/// The result is scaled by $1/n$ following the standard IFFT convention to ensure FFT and
 /// IFFT are exact inverses.
 ///
 /// # Preconditions
 ///
 /// - Array length must be a power of two
 /// - Array length must not exceed $2^k$ where $k$ is the largest power of 2 dividing $P - 1$
-///   (checked via `items.len().trailing_zeros() <= (P - 1).trailing_zeros()`)
 ///
 /// # Time Complexity
 ///
