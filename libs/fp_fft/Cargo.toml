@@ -5,3 +5,6 @@ edition = "2024"
 
 [dependencies]
 fp = { path = "../fp" }
+
+[dev-dependencies]
+rand = { workspace = true }
