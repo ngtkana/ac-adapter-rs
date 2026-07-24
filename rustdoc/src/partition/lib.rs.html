@@ -246,61 +246,60 @@
 <a href=#212 id=212 data-nosnippet>212</a>            <span class="comment">// Check the result matches the brute-force
 <a href=#213 id=213 data-nosnippet>213</a>            </span><span class="macro">assert_eq!</span>(
 <a href=#214 id=214 data-nosnippet>214</a>                partition_result, brute_result,
-<a href=#215 id=215 data-nosnippet>215</a>                <span class="string">"Random test failed at iteration: threshold={}, values={:?}"</span>,
-<a href=#216 id=216 data-nosnippet>216</a>                threshold, values
-<a href=#217 id=217 data-nosnippet>217</a>            );
-<a href=#218 id=218 data-nosnippet>218</a>
-<a href=#219 id=219 data-nosnippet>219</a>            <span class="comment">// Check that count of true elements is correct
-<a href=#220 id=220 data-nosnippet>220</a>            </span><span class="macro">assert_eq!</span>(n, brute_result.iter().take(n).count());
-<a href=#221 id=221 data-nosnippet>221</a>        }
-<a href=#222 id=222 data-nosnippet>222</a>    }
-<a href=#223 id=223 data-nosnippet>223</a>
-<a href=#224 id=224 data-nosnippet>224</a>    <span class="attr">#[test]
-<a href=#225 id=225 data-nosnippet>225</a>    </span><span class="kw">fn </span>test_stability_dedicated() {
-<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">use </span>rand::prelude::StdRng;
-<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">use </span>rand::Rng;
-<a href=#228 id=228 data-nosnippet>228</a>        <span class="kw">use </span>rand::SeedableRng;
-<a href=#229 id=229 data-nosnippet>229</a>
-<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-<a href=#231 id=231 data-nosnippet>231</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">150 </span>{
-<a href=#232 id=232 data-nosnippet>232</a>            <span class="kw">let </span>len = rng.gen_range(<span class="number">0</span>..<span class="number">50</span>);
-<a href=#233 id=233 data-nosnippet>233</a>            <span class="kw">let </span>values: Vec&lt;u32&gt; = (<span class="number">0</span>..len).map(|<span class="kw">_</span>| rng.gen()).collect();
-<a href=#234 id=234 data-nosnippet>234</a>            <span class="kw">let </span>threshold: u32 = rng.gen();
-<a href=#235 id=235 data-nosnippet>235</a>
-<a href=#236 id=236 data-nosnippet>236</a>            <span class="comment">// Map values to their original indices for stability verification
-<a href=#237 id=237 data-nosnippet>237</a>            </span><span class="kw">let </span>indices: Vec&lt;usize&gt; = (<span class="number">0</span>..len).collect();
-<a href=#238 id=238 data-nosnippet>238</a>            <span class="kw">let </span>tagged: Vec&lt;(u32, usize)&gt; = values
-<a href=#239 id=239 data-nosnippet>239</a>                .iter()
-<a href=#240 id=240 data-nosnippet>240</a>                .zip(indices.iter())
-<a href=#241 id=241 data-nosnippet>241</a>                .map(|(<span class="kw-2">&amp;</span>val, <span class="kw-2">&amp;</span>idx)| (val, idx))
-<a href=#242 id=242 data-nosnippet>242</a>                .collect();
-<a href=#243 id=243 data-nosnippet>243</a>
-<a href=#244 id=244 data-nosnippet>244</a>            <span class="kw">let </span><span class="kw-2">mut </span>result = tagged.clone();
-<a href=#245 id=245 data-nosnippet>245</a>            <span class="kw">let </span>n = partition(<span class="kw-2">&amp;mut </span>result, |<span class="kw-2">&amp;</span>(v, <span class="kw">_</span>)| v &lt; threshold);
-<a href=#246 id=246 data-nosnippet>246</a>
-<a href=#247 id=247 data-nosnippet>247</a>            <span class="comment">// Verify true part: original indices must be strictly increasing
-<a href=#248 id=248 data-nosnippet>248</a>            </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..n.saturating_sub(<span class="number">1</span>) {
-<a href=#249 id=249 data-nosnippet>249</a>                <span class="macro">assert!</span>(
-<a href=#250 id=250 data-nosnippet>250</a>                    result[i].<span class="number">1 </span>&lt; result[i + <span class="number">1</span>].<span class="number">1</span>,
-<a href=#251 id=251 data-nosnippet>251</a>                    <span class="string">"True part not stable: result[{}].idx={}, result[{}].idx={}"</span>,
-<a href=#252 id=252 data-nosnippet>252</a>                    i,
-<a href=#253 id=253 data-nosnippet>253</a>                    result[i].<span class="number">1</span>,
-<a href=#254 id=254 data-nosnippet>254</a>                    i + <span class="number">1</span>,
-<a href=#255 id=255 data-nosnippet>255</a>                    result[i + <span class="number">1</span>].<span class="number">1
-<a href=#256 id=256 data-nosnippet>256</a>                </span>);
-<a href=#257 id=257 data-nosnippet>257</a>            }
-<a href=#258 id=258 data-nosnippet>258</a>
-<a href=#259 id=259 data-nosnippet>259</a>            <span class="comment">// Verify false part: original indices must be strictly increasing
-<a href=#260 id=260 data-nosnippet>260</a>            </span><span class="kw">for </span>i <span class="kw">in </span>n..result.len().saturating_sub(<span class="number">1</span>) {
-<a href=#261 id=261 data-nosnippet>261</a>                <span class="macro">assert!</span>(
-<a href=#262 id=262 data-nosnippet>262</a>                    result[i].<span class="number">1 </span>&lt; result[i + <span class="number">1</span>].<span class="number">1</span>,
-<a href=#263 id=263 data-nosnippet>263</a>                    <span class="string">"False part not stable: result[{}].idx={}, result[{}].idx={}"</span>,
-<a href=#264 id=264 data-nosnippet>264</a>                    i,
-<a href=#265 id=265 data-nosnippet>265</a>                    result[i].<span class="number">1</span>,
-<a href=#266 id=266 data-nosnippet>266</a>                    i + <span class="number">1</span>,
-<a href=#267 id=267 data-nosnippet>267</a>                    result[i + <span class="number">1</span>].<span class="number">1
-<a href=#268 id=268 data-nosnippet>268</a>                </span>);
-<a href=#269 id=269 data-nosnippet>269</a>            }
-<a href=#270 id=270 data-nosnippet>270</a>        }
-<a href=#271 id=271 data-nosnippet>271</a>    }
-<a href=#272 id=272 data-nosnippet>272</a>}</code></pre></div></section></main></body></html>
+<a href=#215 id=215 data-nosnippet>215</a>                <span class="string">"Random test failed at iteration: threshold={threshold}, values={values:?}"</span>,
+<a href=#216 id=216 data-nosnippet>216</a>            );
+<a href=#217 id=217 data-nosnippet>217</a>
+<a href=#218 id=218 data-nosnippet>218</a>            <span class="comment">// Check that count of true elements is correct
+<a href=#219 id=219 data-nosnippet>219</a>            </span><span class="macro">assert_eq!</span>(n, brute_result.iter().take(n).count());
+<a href=#220 id=220 data-nosnippet>220</a>        }
+<a href=#221 id=221 data-nosnippet>221</a>    }
+<a href=#222 id=222 data-nosnippet>222</a>
+<a href=#223 id=223 data-nosnippet>223</a>    <span class="attr">#[test]
+<a href=#224 id=224 data-nosnippet>224</a>    </span><span class="kw">fn </span>test_stability_dedicated() {
+<a href=#225 id=225 data-nosnippet>225</a>        <span class="kw">use </span>rand::prelude::StdRng;
+<a href=#226 id=226 data-nosnippet>226</a>        <span class="kw">use </span>rand::Rng;
+<a href=#227 id=227 data-nosnippet>227</a>        <span class="kw">use </span>rand::SeedableRng;
+<a href=#228 id=228 data-nosnippet>228</a>
+<a href=#229 id=229 data-nosnippet>229</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
+<a href=#230 id=230 data-nosnippet>230</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">150 </span>{
+<a href=#231 id=231 data-nosnippet>231</a>            <span class="kw">let </span>len = rng.gen_range(<span class="number">0</span>..<span class="number">50</span>);
+<a href=#232 id=232 data-nosnippet>232</a>            <span class="kw">let </span>values: Vec&lt;u32&gt; = (<span class="number">0</span>..len).map(|<span class="kw">_</span>| rng.gen()).collect();
+<a href=#233 id=233 data-nosnippet>233</a>            <span class="kw">let </span>threshold: u32 = rng.gen();
+<a href=#234 id=234 data-nosnippet>234</a>
+<a href=#235 id=235 data-nosnippet>235</a>            <span class="comment">// Map values to their original indices for stability verification
+<a href=#236 id=236 data-nosnippet>236</a>            </span><span class="kw">let </span>indices: Vec&lt;usize&gt; = (<span class="number">0</span>..len).collect();
+<a href=#237 id=237 data-nosnippet>237</a>            <span class="kw">let </span>tagged: Vec&lt;(u32, usize)&gt; = values
+<a href=#238 id=238 data-nosnippet>238</a>                .iter()
+<a href=#239 id=239 data-nosnippet>239</a>                .zip(indices.iter())
+<a href=#240 id=240 data-nosnippet>240</a>                .map(|(<span class="kw-2">&amp;</span>val, <span class="kw-2">&amp;</span>idx)| (val, idx))
+<a href=#241 id=241 data-nosnippet>241</a>                .collect();
+<a href=#242 id=242 data-nosnippet>242</a>
+<a href=#243 id=243 data-nosnippet>243</a>            <span class="kw">let </span><span class="kw-2">mut </span>result = tagged.clone();
+<a href=#244 id=244 data-nosnippet>244</a>            <span class="kw">let </span>n = partition(<span class="kw-2">&amp;mut </span>result, |<span class="kw-2">&amp;</span>(v, <span class="kw">_</span>)| v &lt; threshold);
+<a href=#245 id=245 data-nosnippet>245</a>
+<a href=#246 id=246 data-nosnippet>246</a>            <span class="comment">// Verify true part: original indices must be strictly increasing
+<a href=#247 id=247 data-nosnippet>247</a>            </span><span class="kw">for </span>i <span class="kw">in </span><span class="number">0</span>..n.saturating_sub(<span class="number">1</span>) {
+<a href=#248 id=248 data-nosnippet>248</a>                <span class="macro">assert!</span>(
+<a href=#249 id=249 data-nosnippet>249</a>                    result[i].<span class="number">1 </span>&lt; result[i + <span class="number">1</span>].<span class="number">1</span>,
+<a href=#250 id=250 data-nosnippet>250</a>                    <span class="string">"True part not stable: result[{}].idx={}, result[{}].idx={}"</span>,
+<a href=#251 id=251 data-nosnippet>251</a>                    i,
+<a href=#252 id=252 data-nosnippet>252</a>                    result[i].<span class="number">1</span>,
+<a href=#253 id=253 data-nosnippet>253</a>                    i + <span class="number">1</span>,
+<a href=#254 id=254 data-nosnippet>254</a>                    result[i + <span class="number">1</span>].<span class="number">1
+<a href=#255 id=255 data-nosnippet>255</a>                </span>);
+<a href=#256 id=256 data-nosnippet>256</a>            }
+<a href=#257 id=257 data-nosnippet>257</a>
+<a href=#258 id=258 data-nosnippet>258</a>            <span class="comment">// Verify false part: original indices must be strictly increasing
+<a href=#259 id=259 data-nosnippet>259</a>            </span><span class="kw">for </span>i <span class="kw">in </span>n..result.len().saturating_sub(<span class="number">1</span>) {
+<a href=#260 id=260 data-nosnippet>260</a>                <span class="macro">assert!</span>(
+<a href=#261 id=261 data-nosnippet>261</a>                    result[i].<span class="number">1 </span>&lt; result[i + <span class="number">1</span>].<span class="number">1</span>,
+<a href=#262 id=262 data-nosnippet>262</a>                    <span class="string">"False part not stable: result[{}].idx={}, result[{}].idx={}"</span>,
+<a href=#263 id=263 data-nosnippet>263</a>                    i,
+<a href=#264 id=264 data-nosnippet>264</a>                    result[i].<span class="number">1</span>,
+<a href=#265 id=265 data-nosnippet>265</a>                    i + <span class="number">1</span>,
+<a href=#266 id=266 data-nosnippet>266</a>                    result[i + <span class="number">1</span>].<span class="number">1
+<a href=#267 id=267 data-nosnippet>267</a>                </span>);
+<a href=#268 id=268 data-nosnippet>268</a>            }
+<a href=#269 id=269 data-nosnippet>269</a>        }
+<a href=#270 id=270 data-nosnippet>270</a>    }
+<a href=#271 id=271 data-nosnippet>271</a>}</code></pre></div></section></main></body></html>
