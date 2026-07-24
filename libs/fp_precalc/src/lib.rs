@@ -38,7 +38,7 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
         let mut fact = vec![fpu(1); len];
         if 2 < len {
             for i in 2..len {
-                fact[i] *= fpu(i);
+                fact[i] = fact[i - 1] * fpu(i);
             }
         }
         Precalc {
@@ -89,10 +89,12 @@ impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
     pub fn build_finv_using_fact(self) -> Precalc<P, On, On, Inv> {
         let len = self.len;
         let mut finv = vec![fpu(1); len];
-        finv[len - 1] = self.fact[len - 1].inv();
-        if 3 < len {
-            for i in (2..len - 1).rev() {
-                finv[i] = finv[i + 1] * fpu(i + 1);
+        if len > 0 {
+            finv[len - 1] = self.fact[len - 1].inv();
+            if 3 < len {
+                for i in (2..len - 1).rev() {
+                    finv[i] = finv[i + 1] * fpu(i + 1);
+                }
             }
         }
         Precalc {
@@ -124,6 +126,9 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, On> {
 }
 impl<const P: u64, Inv: Switch> Precalc<P, On, On, Inv> {
     pub fn binom(&self, n: usize, k: usize) -> Fp<P> {
-        self.fact[n] * self.finv[k] * self.finv[k]
+        assert!(n < self.len, "n={} out of bounds for len={}", n, self.len);
+        assert!(k < self.len, "k={} out of bounds for len={}", k, self.len);
+        assert!(k <= n, "k={} must be <= n={}", k, n);
+        self.fact[n] * self.finv[k] * self.finv[n - k]
     }
 }
