@@ -142,9 +142,7 @@ fn test_ifft_compare_with_naive() {
     for _ in 0..200 {
         let lg = rng.gen_range(0..=6);
         let n = 1 << lg;
-        let f = (0..n)
-            .map(|_| fp(rng.gen_range(0..4) * 16))
-            .collect::<Vec<_>>();
+        let f = (0..n).map(|_| fp(rng.gen_range(0..P))).collect::<Vec<_>>();
 
         let mut result = f.clone();
         ifft(&mut result);
