@@ -20,9 +20,9 @@
 //! # 例
 //!
 //! ```
-//! # use hopcroft_karp::hopcroft_karp;
+//! # use bipartite_matching::bipartite_matching;
 //! let g = vec![vec![2], vec![2], vec![]];  // $L = \\{0, 1\\}$, $R = \\{2\\}$
-//! let f = hopcroft_karp(&g);
+//! let f = bipartite_matching(&g);
 //! // 最大マッチング: $0 \to 2$ （$f(2) = 0$）
 //! assert_eq!(f[2], 0);
 //! ```
@@ -47,15 +47,15 @@ use std::{collections::VecDeque, mem::replace};
 ///
 /// # 例
 /// ```
-/// # use hopcroft_karp::hopcroft_karp;
+/// # use bipartite_matching::bipartite_matching;
 /// // 二部グラフ: $L = \\{0, 1\\}$, $R = \\{2\\}$
 /// // エッジ: $0 \to 2$, $1 \to 2$
 /// let g = vec![vec![2], vec![2], vec![]];
-/// let f = hopcroft_karp(&g);
+/// let f = bipartite_matching(&g);
 /// // マッチング: $0 \to 2$ （$f(2) = 0$）
 /// assert_eq!(f[2], 0);
 /// ```
-pub fn hopcroft_karp(g: &[Vec<usize>]) -> Vec<usize> {
+pub fn bipartite_matching(g: &[Vec<usize>]) -> Vec<usize> {
     let n = g.len();
     let mut queue = VecDeque::new();
     let mut f = vec![usize::MAX; n];

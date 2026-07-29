@@ -1,13 +1,13 @@
+use bipartite_matching::bipartite_matching;
 use criterion::black_box;
 use criterion::criterion_group;
 use criterion::criterion_main;
 use criterion::Criterion;
-use hopcroft_karp::hopcroft_karp;
 use rand::seq::SliceRandom;
-use rand::{Rng, SeedableRng, rngs::StdRng};
+use rand::{rngs::StdRng, Rng, SeedableRng};
 
-fn hopcroft_karp_bench_1m(c: &mut Criterion) {
-    c.bench_function("hopcroft_karp_V1M_E1M", |b| {
+fn bipartite_matching_bench_1m(c: &mut Criterion) {
+    c.bench_function("bipartite_matching_V1M_E1M", |b| {
         let mut rng = StdRng::seed_from_u64(42);
 
         // Bipartite graph: 500k left nodes, 500k right nodes (total n=1M)
@@ -34,9 +34,9 @@ fn hopcroft_karp_bench_1m(c: &mut Criterion) {
             }
         }
 
-        b.iter(|| hopcroft_karp(black_box(&g)));
+        b.iter(|| bipartite_matching(black_box(&g)));
     });
 }
 
-criterion_group!(benches, hopcroft_karp_bench_1m);
+criterion_group!(benches, bipartite_matching_bench_1m);
 criterion_main!(benches);
