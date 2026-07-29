@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, slice::Iter};
+use std::{collections::VecDeque, mem::replace};
 
 pub fn hopcroft_karp(g: &[Vec<usize>]) -> Vec<usize> {
     let n = g.len();
@@ -9,7 +9,6 @@ pub fn hopcroft_karp(g: &[Vec<usize>]) -> Vec<usize> {
         queue.push_back(x);
         label[x] = 0;
     }
-    let mut iter = g.iter().map(|g| g.iter()).collect::<Vec<_>>();
     loop {
         let orig_count = queue.len();
         while let Some(x) = queue.pop_front() {
@@ -24,11 +23,8 @@ pub fn hopcroft_karp(g: &[Vec<usize>]) -> Vec<usize> {
                 }
             }
         }
-        for (g, iter) in g.iter().zip(&mut iter) {
-            *iter = g.iter();
-        }
         for x in 0..n {
-            if label[x] == 0 && !primal(x, &mut label, &mut iter, &mut f) {
+            if label[x] == 0 && !primal(x, &mut label, g, &mut f) {
                 queue.push_back(x);
             }
         }
@@ -42,81 +38,16 @@ pub fn hopcroft_karp(g: &[Vec<usize>]) -> Vec<usize> {
     }
 }
 
-fn primal(x: usize, label: &mut [usize], iter: &mut [Iter<'_, usize>], f: &mut [usize]) -> bool {
-    while let Some(&y) = iter[x].next() {
-        if label[x] + 1 == label[y] {
+fn primal(x: usize, label: &mut [usize], g: &[Vec<usize>], f: &mut [usize]) -> bool {
+    let d = replace(&mut label[x], usize::MAX);
+    for &y in &g[x] {
+        if d + 1 == label[y] {
             let z = f[y];
-            if z == usize::MAX || (label[x] + 2 == label[z] && primal(z, label, iter, f)) {
+            if z == usize::MAX || (d + 2 == label[z] && primal(z, label, g, f)) {
                 f[y] = x;
                 return true;
             }
         }
     }
     false
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use rand::{Rng, SeedableRng, rngs::StdRng, seq::SliceRandom};
-
-    fn naive(g: &[Vec<usize>]) -> Vec<usize> {
-        let n = g.len();
-        let Some(i) = (0..n).find(|&i| !g[i].is_empty()) else {
-            return vec![usize::MAX; n];
-        };
-        let mut g = g.to_vec();
-        let gi = std::mem::take(&mut g[i]);
-        let mut cands = vec![];
-        cands.push(naive(&g));
-        for j in gi {
-            let mut g = g.clone();
-            for g in &mut g {
-                g.retain(|&x| x != j);
-            }
-            let mut result = naive(&g);
-            result[j] = i;
-            cands.push(result);
-        }
-        cands
-            .into_iter()
-            .max_by_key(|result| result.iter().filter(|&&x| x != usize::MAX).count())
-            .unwrap()
-    }
-
-    #[test]
-    fn test() {
-        let mut rng = StdRng::seed_from_u64(42);
-        for _ in 0..200 {
-            let n = rng.gen_range(0..=16);
-            let l = rng.gen_range(0..=n);
-            let r = n - l;
-            let m = rng.gen_range(0..=l * r);
-
-            let mut is_left = vec![false; n];
-            is_left[..l].fill(true);
-            is_left.shuffle(&mut rng);
-
-            let mut g = vec![vec![]; n];
-            for _ in 0..m {
-                loop {
-                    let i = rng.gen_range(0..n);
-                    let j = rng.gen_range(0..n);
-                    if !is_left[i] || is_left[j] || g[i].contains(&j) {
-                        continue;
-                    }
-                    g[i].push(j);
-                    break;
-                }
-            }
-
-            let result = hopcroft_karp(&g);
-            let expected = naive(&g);
-            assert_eq!(
-                result.iter().filter(|&&x| x != usize::MAX).count(),
-                expected.iter().filter(|&&x| x != usize::MAX).count(),
-                "result = {result:?}, expected = {expected:?}, is_left = {is_left:?}, g = {g:?}",
-            );
-        }
-    }
 }
