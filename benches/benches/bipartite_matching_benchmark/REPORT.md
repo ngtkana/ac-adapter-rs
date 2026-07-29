@@ -1,52 +1,50 @@
-# Hopcroft-Karp Benchmark Results
+# 二部グラフマッチング ベンチマーク結果
 
-## Baseline (Initial Implementation)
+## ベースライン（初期実装）
 
-- **Test case**: Bipartite graph with 1M total nodes (500K left, 500K right), 1M edges
-- **Target iteration time**: ~200ms range (100ms–500ms)
-- **Date**: 2026-07-29
+- **テストケース**: 二部グラフ（ノード総数 100 万、左側 50 万、右側 50 万）、エッジ 100 万本
+- **ターゲット反復時間**: ~200ms 範囲（100ms–500ms）
+- **日付**: 2026-07-29
 
-### Criterion Output
+### Criterion 出力
 ```
 test bipartite_matching_V1M_E1M ... bench:   271171005 ns/iter (+/- 5675346)
 ```
 
-**Observation**: Baseline runs at ~271 ms per iteration. ✅ **Within target range**. Good statistical stability (±5.7 ms). Ready for optimization iteration.
-
 ---
 
-## Optimized v1: Remove current-edge iterator structure, use label marking
+## 最適化 v1: 現在エッジイテレータ構造を削除し、ラベルマーキングを使用
 
-- **Changes**: 
-  - Removed `iter` array (current-edge tracking structure)
-  - Changed `primal()` to accept `g: &[Vec<usize>]` instead of `iter: &mut [Iter<'_, usize>]`
-  - Direct edge iteration: `for &y in &g[x]` instead of `iter[x].next()`
-  - Label caching: Save `label[x]` to `d`, then set `label[x] = usize::MAX` to prevent revisiting node
-  - Removed tests (moved to separate crate)
-- **Date**: 2026-07-30
+- **変更**:
+  - `iter` 配列（現在エッジ追跡構造）を削除
+  - `primal()` を `iter: &mut [Iter<'_, usize>]` の代わりに `g: &[Vec<usize>]` を受け入れるに変更
+  - 直接エッジイテレーション：`iter[x].next()` の代わりに `for &y in &g[x]` を使用
+  - ラベルキャッシング：`label[x]` を `d` に保存し、その後 `label[x] = usize::MAX` を設定してノード再訪を防止
+  - テストを削除（別のクレートに移動）
+- **日付**: 2026-07-30
 
-### Criterion Output
+### Criterion 出力
 ```
 test bipartite_matching_V1M_E1M ... bench:   219242364 ns/iter (+/- 5050334)
 ```
 
-### Improvement
-- **Speedup**: 19.2% faster than baseline
-- **Analysis**: Eliminating the iterator array reduces memory overhead and improves cache locality. Label-marking technique prevents redundant node revisits during DFS, achieving the same correctness as current-edge tracking with simpler code.
+### 改善
+- **スピードアップ**: ベースラインより 19.2% 高速
+- **分析**: イテレータ配列を削除することにより、メモリオーバーヘッドが削減され、キャッシュ局所性が向上しました。ラベルマーキング技法は、DFS 中のノード再訪を防止し、現在エッジ追跡と同じ正確性をより簡潔なコードで実現しました。
 
 ---
 
-## Summary Table
+## サマリーテーブル
 
-| Version | Time (ms) | vs Baseline | Date |
+| バージョン | 時間 (ms) | ベースラインとの比較 | 日付 |
 |---------|-----------|------------|------|
-| Baseline | 271.2 | — | 2026-07-29 |
+| ベースライン | 271.2 | — | 2026-07-29 |
 | v1 | 219.2 | -19.2% | 2026-07-30 |
 
 ---
 
-## Notes & Learnings
+## メモと学習
 
-- [Key findings about what optimizes this function]
-- [Performance characteristics by size/parameter]
-- [Compiler/architecture observations]
+- イテレータ構造の削除がメモリアクセスパターンを簡素化し、CPU キャッシュ効率を向上させました
+- ラベルマーキングによる訪問済みノード追跡は、状態管理のコスト削減に有効です
+- このアルゴリズムの最適化では、メモリレイアウトとアクセスパターンの改善が重要です
