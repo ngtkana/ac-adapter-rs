@@ -1,5 +1,5 @@
-use hopcroft_karp::hopcroft_karp;
-use rand::{Rng, SeedableRng, rngs::StdRng, seq::SliceRandom};
+use bipartite_matching::bipartite_matching;
+use rand::{rngs::StdRng, seq::SliceRandom, Rng, SeedableRng};
 
 fn naive(g: &[Vec<usize>]) -> Vec<usize> {
     let n = g.len();
@@ -51,7 +51,7 @@ fn test() {
             }
         }
 
-        let result = hopcroft_karp(&g);
+        let result = bipartite_matching(&g);
         let expected = naive(&g);
         assert_eq!(
             result.iter().filter(|&&x| x != usize::MAX).count(),

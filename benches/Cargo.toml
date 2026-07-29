@@ -7,7 +7,7 @@ edition = "2021"
 fp = { path = "../libs/fp" }
 fp_fft = { path = "../libs/fp_fft" }
 fp_fps = { path = "../libs/fp_fps" }
-hopcroft_karp = { path = "../libs/hopcroft_karp" }
+bipartite_matching = { path = "../libs/bipartite_matching" }
 rand = "0.8"
 
 [dev-dependencies]
@@ -22,5 +22,5 @@ name = "fps_inv_benchmark"
 harness = false
 
 [[bench]]
-name = "hopcroft_karp_benchmark"
+name = "bipartite_matching_benchmark"
 harness = false

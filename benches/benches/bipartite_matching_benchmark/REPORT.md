@@ -8,7 +8,7 @@
 
 ### Criterion Output
 ```
-test hopcroft_karp_V1M_E1M ... bench:   271171005 ns/iter (+/- 5675346)
+test bipartite_matching_V1M_E1M ... bench:   271171005 ns/iter (+/- 5675346)
 ```
 
 **Observation**: Baseline runs at ~271 ms per iteration. ✅ **Within target range**. Good statistical stability (±5.7 ms). Ready for optimization iteration.
@@ -27,7 +27,7 @@ test hopcroft_karp_V1M_E1M ... bench:   271171005 ns/iter (+/- 5675346)
 
 ### Criterion Output
 ```
-test hopcroft_karp_V1M_E1M ... bench:   219242364 ns/iter (+/- 5050334)
+test bipartite_matching_V1M_E1M ... bench:   219242364 ns/iter (+/- 5050334)
 ```
 
 ### Improvement
