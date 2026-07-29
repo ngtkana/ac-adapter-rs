@@ -154,6 +154,24 @@ cargo bench --bench {function_name}_benchmark -- --output-format bencher
 
 Copy the full criterion output to `REPORT.md` under "Baseline → Criterion Output".
 
+#### 2.3 Check & Adjust Iteration Time
+
+**Target range:** 100ms–500ms per iteration (for statistical accuracy)
+
+**If measurement is outside range:**
+- **Too fast** (<100ms): Increase input size
+  - Add more elements, scale up problem size, increase density
+  - Example: Change `n=512` to `n=2048`, or `precision=2^20` to `2^22`
+- **Too slow** (>500ms): Decrease input size
+  - Reduce elements, scale down, lower density
+  - Example: Change `n=2048` to `n=512`, or `precision=2^20` to `2^18`
+
+**Action:**
+1. Adjust `main.rs` benchmark input size
+2. Re-run measurement
+3. Repeat until iteration time falls in 100ms–500ms range
+4. Update `REPORT.md` with final test case parameters
+
 ### Phase 3: Iterate on Optimizations
 
 For each optimization attempt:
@@ -182,7 +200,21 @@ After each measurement cycle:
 - ✅ `benches/benches/{function_name}_benchmark/REPORT.md` created with template
 - ✅ `benches/Cargo.toml` updated with deps + benchmark target
 - ✅ Baseline measurement executed and recorded
+- ✅ Iteration time validated (100ms–500ms range; adjusted if needed)
 - ✅ Ready for optimization iteration
+
+## Ready for Optimization: Next Command
+
+```bash
+cargo bench --bench {function_name}_benchmark -- --output-format bencher
+```
+
+**How to use:**
+1. Modify the function in `libs/{crate_name}/src/lib.rs`
+2. Run the command above to measure improvement
+3. Record results in `benches/benches/{function_name}_benchmark/REPORT.md`
+4. Update the Summary Table with new measurements
+5. Repeat for each optimization attempt
 
 ## Typical Workflow
 
