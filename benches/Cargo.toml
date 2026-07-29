@@ -7,6 +7,8 @@ edition = "2021"
 fp = { path = "../libs/fp" }
 fp_fft = { path = "../libs/fp_fft" }
 fp_fps = { path = "../libs/fp_fps" }
+hopcroft_karp = { path = "../libs/hopcroft_karp" }
+rand = "0.8"
 
 [dev-dependencies]
 criterion = { version = "0.5", features = ["html_reports"] }
@@ -17,4 +19,8 @@ harness = false
 
 [[bench]]
 name = "fps_inv_benchmark"
+harness = false
+
+[[bench]]
+name = "hopcroft_karp_benchmark"
 harness = false
