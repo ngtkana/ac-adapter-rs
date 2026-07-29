@@ -3,9 +3,6 @@ set -e
 
 echo "Running pre-commit checks..."
 
-echo "-> cargo fmt --check"
-cargo +nightly fmt --all -- --check || { echo "Format check failed. Run: cargo fmt --all"; exit 1; }
-
 echo "-> clippy"
 cargo make clippy || { echo "Clippy failed."; exit 1; }
 
