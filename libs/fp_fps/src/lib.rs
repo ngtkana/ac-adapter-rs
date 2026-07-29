@@ -5,10 +5,11 @@ use fp::fp;
 use fp_fft::fft;
 use fp_fft::ifft;
 
-/// $f$ の逆元を precision で計算。$f^{-1} \bmod x^m$ の係数を返す。
+/// $f^{-1} \bmod x^m$ を計算する。
 ///
-/// 入力 $f$ に対して $g$ を計算し、$f \cdot g \equiv 1 \pmod{x^m}$ を満たす最初の $m$ 項を返す。
-/// 計算量は $O(m \log m)$。
+/// # 計算量
+///
+/// $m$ が $2$ べきのとき、 $10 \mathcal{F}_m$
 ///
 /// # 例
 ///
@@ -55,9 +56,12 @@ pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
     g
 }
 
-/// 多項式 $a$ と $b$ を乗算。長さ $|a| + |b| - 1$ の結果を返す。
+/// 多項式 $a$ と $b$ を乗算。
 ///
-/// FFT ベース、計算量 $O(n \log n)$。
+/// * 出力の trailing $0$ は全て削除されれる
+/// * 特に、$0$ 多項式は空が返される
+///
+/// 計算量 $O(n \log n)$。
 ///
 /// # 例
 ///
@@ -65,16 +69,20 @@ pub fn fps_inv<const P: u64>(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
 /// use fp::fp;
 /// use fp_fps::poly_mul;
 /// const P: u64 = 998_244_353;
-/// let a = [fp::<P>(1), fp::<P>(2)]; // 1 + 2x
-/// let b = [fp::<P>(3), fp::<P>(4)]; // 3 + 4x
-/// let c = poly_mul(a.to_vec(), b.to_vec());
-/// assert_eq!(c[0], fp::<P>(3)); // 1*3
-/// assert_eq!(c[1], fp::<P>(10)); // 1*4 + 2*3
-/// assert_eq!(c[2], fp::<P>(8)); // 2*4
+/// let a = [fp(1), fp(2)]; // 1 + 2x
+/// let b = [fp(3), fp(4)]; // 3 + 4x
+/// let c = poly_mul::<P>(a.to_vec(), b.to_vec());
+/// assert_eq!(c.as_slice(), [fp(3), fp(10), fp(8)]);
 /// ```
 pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>> {
-    let result_len = a.len() + b.len() - 1;
-    let fft_len = result_len.next_power_of_two() * 2;
+    if a.is_empty() {
+        return b;
+    }
+    if b.is_empty() {
+        return a;
+    }
+    let len = a.len() + b.len() - 1;
+    let fft_len = len.next_power_of_two() * 2;
     a.resize(fft_len, fp(0));
     b.resize(fft_len, fp(0));
     fft(&mut a);
@@ -83,7 +91,7 @@ pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>
         a[i] *= b[i];
     }
     ifft(&mut a);
-    a.truncate(result_len);
+    a.truncate(len);
     a
 }
 
@@ -97,10 +105,11 @@ pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>
 /// use fp::fp;
 /// use fp_fps::poly_div_rem;
 /// const P: u64 = 998_244_353;
-/// let a = [fp::<P>(1), fp::<P>(0), fp::<P>(1)]; // 1 + x^2
-/// let b = [fp::<P>(1), fp::<P>(1)]; // 1 + x
-/// let (q, r) = poly_div_rem(a.to_vec(), b.to_vec());
-/// assert_eq!(q.len(), 2); // 商の次数は 2-1 = 1
+/// let a = [fp(1), fp(0), fp(1)]; // 1 + x^2
+/// let b = [fp(1), fp(1)]; // 1 + x
+/// let (q, r) = poly_div_rem::<P>(a.to_vec(), b.to_vec());
+/// assert_eq!(q.as_slice(), &[-fp(1), fp(1)]); // -1 + x
+/// assert_eq!(r.as_slice(), &[fp(2)]); // 2
 /// ```
 pub fn poly_div_rem<const P: u64>(
     mut a: Vec<Fp<P>>,
