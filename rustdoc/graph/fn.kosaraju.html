@@ -26,7 +26,7 @@
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>graph::kosaraju;
 <span class="kw">let </span>n = <span class="number">6</span>;
-<span class="kw">let </span>edges = [ (<span class="number">1</span>, <span class="number">4</span>), (<span class="number">5</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">0</span>), (<span class="number">5</span>, <span class="number">5</span>), (<span class="number">4</span>, <span class="number">1</span>), (<span class="number">0</span>, <span class="number">3</span>), (<span class="number">4</span>, <span class="number">2</span>)];
+<span class="kw">let </span>edges = [(<span class="number">1</span>, <span class="number">4</span>), (<span class="number">5</span>, <span class="number">2</span>), (<span class="number">3</span>, <span class="number">0</span>), (<span class="number">5</span>, <span class="number">5</span>), (<span class="number">4</span>, <span class="number">1</span>), (<span class="number">0</span>, <span class="number">3</span>), (<span class="number">4</span>, <span class="number">2</span>)];
 <span class="kw">let </span>scc = kosaraju(n, <span class="kw-2">&amp;</span>edges);
 <span class="macro">assert_eq!</span>(scc.len(), <span class="number">4</span>);
 <span class="macro">assert_eq!</span>(scc[<span class="number">0</span>], [<span class="number">5</span>]);

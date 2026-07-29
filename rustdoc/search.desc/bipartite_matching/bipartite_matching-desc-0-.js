@@ -1,0 +1,1 @@
+searchState.loadedDescShard("bipartite_matching", 0, "Hopcroft-Karp …\n二部グラフの最大マッチングを求める")

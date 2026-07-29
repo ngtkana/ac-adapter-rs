@@ -1,1 +1,1 @@
-searchState.loadedDescShard("fp_fps", 0, "…\n$f$ の逆元を precision で計算。$f^{-1} \\bmod x^m$ …\n多項式 $f$ を複数点 $x_1, \\ldots, x_n$ で評価。$…\n多項式除算。$a = bq + r$ を満たす $(q, r)$ …\n多項式 $a$ と $b$ を乗算。長さ $|a| + |b| - 1$ …")
+searchState.loadedDescShard("fp_fps", 0, "…\n$f^{-1} \\bmod x^m$ を計算する。\n多項式 $f$ を複数点 $x_1, \\ldots, x_n$ で評価。$…\n多項式除算。$a = bq + r$ を満たす $(q, r)$ …\n多項式 $a$ と $b$ を乗算。")
