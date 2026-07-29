@@ -1,16 +1,16 @@
-# Verify User Claims and Corrections
+# ユーザーの主張と修正を検証する
 
-When a user corrects, contradicts, or challenges a prior analysis or finding:
+ユーザーが以前の分析や調査結果を修正、矛盾、または異議を唱えるとき：
 
-1. **Do not silently accept the correction** — verify it independently before acting
-2. **Run concrete checks:**
-   - Execute code/tests to confirm the claim (if applicable)
-   - Search documentation or version logs for facts (e.g., Rust edition availability)
-   - Re-examine the evidence that contradicts your prior statement
-3. **Report your findings:**
-   - Quote the evidence that proves the correction is right (or wrong)
-   - If evidence confirms the user: update findings with outcome annotation
-   - If evidence refutes the user: explain why and ask for clarification
-4. **Never assume the user is correct just because they asserted it** — even experienced users make typos or misremember details
+1. **修正を静かに受け入れない** — 行動する前に独立して検証する
+2. **具体的なチェックを実行:**
+   - コード/テストを実行して主張を確認する（必要に応じて）
+   - ドキュメントまたはバージョンログで事実を検索する（例：Rust エディション可用性）
+   - 前の声明に矛盾する証拠を再検討する
+3. **調査結果を報告:**
+   - 修正が正しい（または間違っている）ことを証明する証拠を引用する
+   - 証拠がユーザーを確認した場合：結果注釈で調査結果を更新する
+   - 証拠がユーザーを反駁した場合：理由を説明し、明確化を求める
+4. **ユーザーが主張しているからという理由だけでユーザーが正しいと仮定しない** — 経験豊富なユーザーでもタイプミスや詳細の誤記がある
 
-**Rationale:** Trust but verify. User corrections often point to real issues, but verification catches mutual mistakes and ensures the final record is accurate.
+**根拠:** 信頼だが検証。ユーザーの修正は多くの場合、実際の問題を指しますが、検証は相互の間違いをキャッチし、最終記録の正確性を保証します。

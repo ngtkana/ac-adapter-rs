@@ -1,6 +1,6 @@
 ---
 name: benchmark-suite
-description: Create criterion benchmarks for any function, measure baseline, and track improvements over optimizations. Generates benchmark code, REPORT.md template, and automates measurement workflow.
+description: 任意の関数の criterion ベンチマークを作成し、ベースライン測定を行い、最適化全体での改善を追跡します。ベンチマークコード、REPORT.md テンプレート、および測定ワークフロー自動化を生成します。
 compatibility:
   - Read
   - Write
@@ -8,36 +8,36 @@ compatibility:
   - Bash
 ---
 
-# Benchmark Suite: Measure & Track Optimizations
+# ベンチマークスイート: 測定と最適化の追跡
 
-Generic skill to create, run, and track benchmarks for any function across optimization iterations.
+任意の関数に対するベンチマークを作成、実行、追跡する汎用スキル。最適化の反復全体にわたります。
 
-## Input
+## 入力
 
-The user provides:
-- **Function name**: e.g., `fps_inv`, `fft`, `poly_mul`
-- **Library/crate**: Where the function is defined (e.g., `fp_fps`, `fp_fft`)
-- **Function signature**: Key parameters and their ranges
-  - Example: `fps_inv(&[Fp<P>], precision)` with `precision = 2^20`
-- **Target iteration time**: Target execution time per benchmark iteration (e.g., "~200ms")
-- **Input setup**: How to construct realistic test data
-  - Example: "polynomial with f[0] = 1, other elements sequential"
+ユーザーが以下を提供：
+- **関数名**: 例 `fps_inv`、`fft`、`poly_mul`
+- **ライブラリ/クレート**: 関数が定義されている場所（例 `fp_fps`、`fp_fft`）
+- **関数シグネチャ**: 主要なパラメータとその範囲
+  - 例：`fps_inv(&[Fp<P>], precision)` ただし `precision = 2^20`
+- **ターゲット反復時間**: ベンチマーク反復あたりのターゲット実行時間（例 "~200ms"）
+- **入力セットアップ**: 現実的なテストデータを構築する方法
+  - 例：「f[0] = 1 で他の要素が連続的な多項式」
 
-## Process
+## プロセス
 
-### Phase 1: Create Benchmark Infrastructure
+### フェーズ 1: ベンチマークインフラストラクチャを作成
 
-#### 1.1 Create Directory & Files
+#### 1.1 ディレクトリとファイルを作成
 
 ```
 benches/benches/{function_name}_benchmark/
-├── main.rs          # Criterion benchmark code
-└── REPORT.md        # Results tracking and improvement log
+├── main.rs          # Criterion ベンチマークコード
+└── REPORT.md        # 結果追跡と改善ログ
 ```
 
-#### 1.2 Write Benchmark Code
+#### 1.2 ベンチマークコードを書く
 
-Template (adapt to function signature):
+テンプレート（関数シグネチャに合わせて調整）:
 
 ```rust
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
@@ -61,184 +61,131 @@ criterion_group!(benches, {function_name}_bench_{size});
 criterion_main!(benches);
 ```
 
-**Key points:**
-- Wrap inputs with `black_box()` to prevent compiler optimizations
-- Use realistic test data (not trivial cases)
-- Function name in benchmark string must match: `"{function_name}_{size}"`
-- Use `const P: u64 = 998_244_353` for finite field crates
+**重要なポイント:**
+- コンパイラの最適化を防ぐため、`black_box()` で入力をラップする
+- 現実的なテストデータを使用する（些細なケースではない）
+- ベンチマーク文字列の関数名は一致する必要があります：`"{function_name}_{size}"`
+- 有限体クレート用に `const P: u64 = 998_244_353` を使用する
 
-#### 1.3 Create REPORT.md Template
+#### 1.3 REPORT.md テンプレートを作成
 
-```markdown
-# {Function Name} Benchmark Results
+テンプレートは `report-template.md` を参照してください。`benches/benches/{function_name}_benchmark/REPORT.md` にコピーしてから、`{関数名}` をプレースホルダーとして使用します。
 
-## Baseline (Initial Implementation)
+### フェーズ 2: ベースラインを登録して実行
 
-- **Test case**: [Describe input size/parameters]
-- **Target iteration time**: [e.g., ~200ms]
-- **Date**: [when measured]
+#### 2.1 `benches/Cargo.toml` を更新
 
-### Criterion Output
-\`\`\`
-[Paste criterion benchmark output here]
-\`\`\`
-
----
-
-## Optimized v1: [Optimization description]
-
-- **Changes**: [What was optimized]
-- **Date**: [measurement date]
-
-### Criterion Output
-\`\`\`
-[Paste criterion output]
-\`\`\`
-
-### Improvement
-- **Speedup**: XX% faster than baseline
-- **Analysis**: [What worked, unexpected results]
-
----
-
-## Optimized v2: [Next optimization]
-
-[Repeat structure]
-
----
-
-## Summary Table
-
-| Version | Time (ms) | vs Baseline | Date |
-|---------|-----------|------------|------|
-| Baseline | XXX | — | YYYY-MM-DD |
-| v1 | XXX | +XX% | YYYY-MM-DD |
-| v2 | XXX | +XX% | YYYY-MM-DD |
-
----
-
-## Notes & Learnings
-
-- [Key findings about what optimizes this function]
-- [Performance characteristics by size/parameter]
-- [Compiler/architecture observations]
-```
-
-### Phase 2: Register & Run Baseline
-
-#### 2.1 Update `benches/Cargo.toml`
-
-Add to `[dependencies]`:
+`[dependencies]` に追加：
 ```toml
 {crate_name} = { path = "../libs/{crate_name}" }
 ```
 
-Add benchmark target:
+ベンチマークターゲットを追加：
 ```toml
 [[bench]]
 name = "{function_name}_benchmark"
 harness = false
 ```
 
-#### 2.2 Run Baseline Measurement
+#### 2.2 ベースライン測定を実行
 
 ```bash
 cd /repo/root
 cargo bench --bench {function_name}_benchmark -- --output-format bencher
 ```
 
-**Expected output:**
+**予想される出力:**
 ```
 {function_name}_{size}          time:   [XXX ms XXX ms XXX ms]
 ```
 
-Copy the full criterion output to `REPORT.md` under "Baseline → Criterion Output".
+完全な criterion 出力を `REPORT.md` の「ベースライン → Criterion 出力」にコピーする。
 
-#### 2.3 Check & Adjust Iteration Time
+#### 2.3 反復時間を確認して調整
 
-**Target range:** 100ms–500ms per iteration (for statistical accuracy)
+**ターゲット範囲:** 反復あたり 100ms–500ms（統計的精度のため）
 
-**If measurement is outside range:**
-- **Too fast** (<100ms): Increase input size
-  - Add more elements, scale up problem size, increase density
-  - Example: Change `n=512` to `n=2048`, or `precision=2^20` to `2^22`
-- **Too slow** (>500ms): Decrease input size
-  - Reduce elements, scale down, lower density
-  - Example: Change `n=2048` to `n=512`, or `precision=2^20` to `2^18`
+**測定がターゲット外の場合:**
+- **高速すぎる** (<100ms): 入力サイズを増やす
+  - 要素を追加、問題サイズをスケールアップ、密度を増加させる
+  - 例：`n=512` を `n=2048` に変更、または `precision=2^20` を `2^22` に変更
+- **遅すぎる** (>500ms): 入力サイズを減らす
+  - 要素を減らし、スケールダウン、密度を低下させる
+  - 例：`n=2048` を `n=512` に変更、または `precision=2^20` を `2^18` に変更
 
-**Action:**
-1. Adjust `main.rs` benchmark input size
-2. Re-run measurement
-3. Repeat until iteration time falls in 100ms–500ms range
-4. Update `REPORT.md` with final test case parameters
+**アクション:**
+1. `main.rs` ベンチマーク入力サイズを調整
+2. 測定を再実行
+3. 反復時間が 100ms–500ms 範囲に収まるまで繰り返す
+4. 最終テストケースパラメータで `REPORT.md` を更新
 
-### Phase 3: Iterate on Optimizations
+### フェーズ 3: 最適化の反復
 
-For each optimization attempt:
+各最適化試行に対して：
 
-1. **Modify the function** in `libs/{crate_name}/src/lib.rs`
-2. **Run measurement**:
+1. **関数を修正** `libs/{crate_name}/src/lib.rs` で
+2. **測定を実行**:
    ```bash
    cargo bench --bench {function_name}_benchmark -- --output-format bencher
    ```
-3. **Record in REPORT.md**:
-   - Add new "Optimized vN" section
-   - Paste criterion output
-   - Calculate % improvement: `((baseline - new) / baseline) * 100`
-4. **Update Summary Table** with new measurement
+3. **REPORT.md に記録**:
+   - 新しい「最適化 vN」セクションを追加
+   - Criterion 出力を貼り付け
+   - % 改善を計算：`((baseline - new) / baseline) * 100`
+4. **新しい測定でサマリーテーブルを更新**
 
-### Phase 4: Analysis & Decision
+### フェーズ 4: 分析と決定
 
-After each measurement cycle:
-- ✅ If improvement > 5%: consider keeping the optimization
-- ❌ If improvement < 2%: trade-off may not justify complexity
-- 🔄 If regression: revert and try different approach
+各測定サイクルの後：
+- ✅ 改善 > 5% の場合：最適化を保持することを検討
+- ❌ 改善 < 2% の場合：トレードオフが複雑さを正当化しないかもしれない
+- 🔄 回帰がある場合：元に戻して別のアプローチを試す
 
-## Output Checklist
+## 出力チェックリスト
 
-- ✅ `benches/benches/{function_name}_benchmark/main.rs` created
-- ✅ `benches/benches/{function_name}_benchmark/REPORT.md` created with template
-- ✅ `benches/Cargo.toml` updated with deps + benchmark target
-- ✅ Baseline measurement executed and recorded
-- ✅ Iteration time validated (100ms–500ms range; adjusted if needed)
-- ✅ Ready for optimization iteration
+- ✅ `benches/benches/{function_name}_benchmark/main.rs` 作成
+- ✅ `benches/benches/{function_name}_benchmark/REPORT.md` テンプレート付きで作成
+- ✅ `benches/Cargo.toml` deps + ベンチマークターゲットで更新
+- ✅ ベースライン測定を実行して記録
+- ✅ 反復時間を検証（100ms–500ms 範囲。必要に応じて調整）
+- ✅ 最適化の反復に準備完了
 
-## Ready for Optimization: Next Command
+## 最適化の準備完了：次のコマンド
 
 ```bash
 cargo bench --bench {function_name}_benchmark -- --output-format bencher
 ```
 
-**How to use:**
-1. Modify the function in `libs/{crate_name}/src/lib.rs`
-2. Run the command above to measure improvement
-3. Record results in `benches/benches/{function_name}_benchmark/REPORT.md`
-4. Update the Summary Table with new measurements
-5. Repeat for each optimization attempt
+**使用方法:**
+1. `libs/{crate_name}/src/lib.rs` の関数を修正
+2. 上記のコマンドを実行して改善を測定
+3. 結果を `benches/benches/{function_name}_benchmark/REPORT.md` に記録
+4. 新しい測定でサマリーテーブルを更新
+5. 各最適化試行に対して繰り返す
 
-## Typical Workflow
+## 典型的なワークフロー
 
 ```
-1. [User] "Create benchmark for fps_inv, precision=2^20"
-2. [Skill] Creates main.rs, REPORT.md, updates Cargo.toml
-3. [Skill] Runs baseline: "time: [156.85 ms 157.21 ms 157.58 ms]"
-4. [User] "Let me optimize fps_inv..."
-5. [User] "Measure again"
-6. [Skill] Runs measurement: "time: [102.43 ms 103.15 ms 104.12 ms]"
-7. [Skill] Calculates: "34.5% speedup! ✅ Keep this."
-8. [User] "Try optimization 2..."
-9. [Repeat until satisfied]
+1. [ユーザー] 「fps_inv、precision=2^20 のベンチマークを作成」
+2. [スキル] main.rs、REPORT.md を作成、Cargo.toml を更新
+3. [スキル] ベースラインを実行：「time: [156.85 ms 157.21 ms 157.58 ms]」
+4. [ユーザー] 「fps_inv を最適化させてください...」
+5. [ユーザー] 「もう一度測定」
+6. [スキル] 測定を実行：「time: [102.43 ms 103.15 ms 104.12 ms]」
+7. [スキル] 計算：「34.5% スピードアップ！✅ これを保持」
+8. [ユーザー] 「最適化 2 を試す...」
+9. [満足まで繰り返す]
 ```
 
-## Tips
+## ヒント
 
-- **Target time matters**: Aim for 100ms–500ms per iteration for accurate criterion statistics
-- **Stable measurements**: Run on quiet machine; close background apps
-- **Size selection**: Start conservative (2^20 or smaller), scale up if needed
-- **Document findings**: REPORT.md is your lab notebook—note unexpected results
+- **ターゲット時間が重要**：正確な criterion 統計のため、反復あたり 100ms–500ms を目指す
+- **安定した測定**：静かなマシンで実行。バックグラウンドアプリを閉じる
+- **サイズ選択**：保守的に開始（2^20 以下）、必要に応じてスケールアップ
+- **結果をドキュメント化**：REPORT.md はラボノート。予期しない結果をメモする
 
-## Limitations
+## 制限事項
 
-- Does not handle benchmarks requiring special setup (e.g., database fixtures)
-- Assumes function is deterministic (same inputs → same time)
-- Does not track performance vs hardware changes
+- 特別なセットアップが必要なベンチマークを処理しない（例：データベースフィクスチャ）
+- 関数が決定論的であることを前提（同じ入力 → 同じ時間）
+- ハードウェア変更に対するパフォーマンス追跡を行わない

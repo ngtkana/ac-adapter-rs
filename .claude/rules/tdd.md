@@ -4,79 +4,79 @@ paths:
   - "tests/**/*.rs"
 ---
 
-# Test Driven Development (TDD) — Testing Standards
+# テスト駆動開発 (TDD) — テスト基準
 
-Based on the implementation patterns from _Test Driven Development_ (Kent Beck), following the approach emphasized by twada.
+_Test Driven Development_ (Kent Beck) の実装パターンに基づき、twada が強調するアプローチに従っています。
 
-## The Three Phases: Red → Green → Refactor
+## 3つのフェーズ: Red → Green → Refactor
 
-1. **Red Phase**: Write a failing test that specifies the desired behavior
-   - The test defines *what* the code should do
-   - Expected values come from the specification, not from running the code
-   - Failure confirms the test is meaningful
-   - **Doc comments and doctests count as tests.** For new `pub` items, write the doc comment (usage, complexity, invariants) and its `# Examples` doctest(s) *before* the implementation body. Doctests are compiled and executed by `cargo test`, so they are bound by the same rule: expected values come from the specification, not from running the code. Confirm the doctest fails first (compile error, or a runtime panic via `todo!()`) before writing the implementation.
+1. **Red フェーズ**: 所望の動作を指定する失敗テストを書く
+   - テストが*何を*コードがすべきかを定義する
+   - 期待値はコードの実行からではなく、仕様から得られる
+   - 失敗はテストが意味のあることを確認する
+   - **ドックコメントとドックテストはテストとしてカウント**。新しい `pub` 項目については、実装本体の*前に*ドックコメント（使用法、計算量、不変性）と `# Examples` ドックテスト(s) を書く。ドックテストは `cargo test` によってコンパイルされ実行されるため、同じルールに従う：期待値はコード実行からではなく仕様から得られる。実装を書く前に、まずドックテストが失敗することを確認する（コンパイルエラー、または `todo!()` を使った実行時パニック）。
 
-2. **Green Phase**: Write minimal code to make the test pass
-   - No more, no less
-   - If multiple tests fail, make them pass one at a time
+2. **Green フェーズ**: テストをパスするための最小限のコードを書く
+   - それ以上でも以下でもない
+   - 複数のテストが失敗する場合は、一度に1つずつパスさせる
 
-3. **Refactor Phase**: Improve the code without changing behavior
-   - Tests stay green throughout
-   - Only the implementation changes, never the test expectations
+3. **Refactor フェーズ**: 動作を変えずにコードを改善する
+   - テストは常にグリーンを保つ
+   - 実装のみが変わり、テスト期待値は変わらない
 
-## Core Rule: Tests Are Specification
+## 中核ルール: テストは仕様である
 
-**Fundamental principle**: A test's expected value must be determined *before* the code is written. The expected value comes from the **specification, not from the code**.
+**基本原則**: テストの期待値は、コードが書かれる*前に*決定する必要があります。期待値は**仕様から、コードからではなく**得られます。
 
-**🚫 Absolutely Prohibited:**
-- Observing code output and using that to set test expected values
-- Modifying test expectations to match what the code currently does
-- Treating "the test passes" as evidence that the test is correct
-- Silently fixing test expectations
+**🚫 完全に禁止:**
+- コード出力を観察して、テスト期待値を設定する
+- テスト期待値をコードが現在行っていることに合わせて変更する
+- 「テストがパスした」をテストが正しいという証拠として扱う
+- テスト期待値を静かに修正する
 
-**✅ The Only Valid Source of Expected Values:**
-- Specification or requirements document
-- Mathematical correctness proof (e.g., algorithm invariant, formula)
-- Domain knowledge or real-world constraint
-- Previously verified, audited behavior from a trusted reference
+**✅ 期待値の唯一の有効なソース:**
+- 仕様または要件ドキュメント
+- 数学的正確性証明（例：アルゴリズム不変式、数式）
+- ドメイン知識または実世界の制約
+- 以前に検証され監査された信頼できる参照からの動作
 
-## When Test Expectations Must Change
+## テスト期待値が変わる必要があるとき
 
-**Allowed only when**:
-1. You have documented evidence the previous expectation was incorrect
-2. You can prove the new expectation is correct
-3. You get explicit approval before making the change
+**以下の場合のみ許可:**
+1. 前の期待値が間違っていたという文書化された証拠がある
+2. 新しい期待値が正しいことを証明できる
+3. 変更する前に明示的な承認を得る
 
-**Valid reasons to change an expectation**:
-- "The spec says X, but the test expected Y" (provide spec reference)
-- "The algorithm invariant requires X; test had Y which violates it" (provide invariant)
-- "The test itself had a bug; the correct expected value is X" (explain the bug)
+**期待値を変更する有効な理由:**
+- 「仕様は X と言っているが、テストは Y を期待していた」（仕様参照を提供）
+- 「アルゴリズム不変式は X を要求する。テストは X に違反する Y を持っていた」（不変式を提供）
+- 「テスト自体にバグがあった。正しい期待値は X」（バグを説明）
 
-**Invalid reasons**:
-- "The code produces Y, so the test should expect Y" ← **This is backwards**
-- "The test failed, so I'll change the expectation" ← **This defeats the purpose**
+**無効な理由:**
+- 「コードが Y を生み出すので、テストは Y を期待するべき」 ← **これは逆向き**
+- 「テストが失敗したので、期待値を変更する」 ← **これは目的を損なう**
 
-## When a Test Fails During Implementation
+## 実装中にテストが失敗するとき
 
-1. **Stop immediately** — do not modify the test
-2. **Analyze**:
-   - Is the code wrong? (The normal case — fix the code)
-   - Is the test wrong? (Rare — but if so, provide evidence before changing)
-   - Is the expectation wrong? (Very rare — but if so, provide evidence before changing)
-3. **Report to the user** if the test or expectation might be wrong
-4. **Never guess** — escalate with evidence, not assumptions
+1. **すぐに停止** — テストを変更しない
+2. **分析:**
+   - コードが間違っているか？ (通常のケース — コードを修正)
+   - テストが間違っているか？ (稀 — ただし、変更する前に証拠を提供)
+   - 期待値が間違っているか？ (非常に稀 — ただし、変更する前に証拠を提供)
+3. **テストまたは期待値が間違っているかもしれない場合はユーザーに報告**
+4. **決して推測しない** — 仮定ではなく、証拠で報告する
 
-## For Code Reviewers (Claude)
+## コードレビュアー (Claude) 向け
 
-- If a test fails unexpectedly, **report it** — do not modify the test to pass
-- Include evidence: spec reference, mathematical proof, domain knowledge
-- All test expectation changes require justification
-- Commit messages must explain *why* an expectation changed, not just *what* changed
+- テストが予期せず失敗した場合、**報告する** — テストをパスさせるために変更しない
+- 証拠を含める：仕様参照、数学的証明、ドメイン知識
+- すべてのテスト期待値の変更には正当性が必要
+- コミットメッセージは期待値が変わった*理由*を説明する必要があります。*何が*変わったのかだけではなく
 
 ---
 
-## Summary
+## サマリー
 
-The core discipline: **Test expectations are locked down by specification, and locked forever by pride.**
+中核の規律: **テスト期待値は仕様によってロックダウンされ、プライドによって永遠にロックダウンされる。**
 
-We write the test first (Red), the code second (Green), and improve the code third (Refactor) — but we never, ever move backward from Green to Red by changing the test.
+テストを最初に (Red)、コードを次に (Green)、コードを3番目に改善する (Refactor) — しかし、テストを変更することで Green から Red に戻ることは決してない。

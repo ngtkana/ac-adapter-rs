@@ -1,6 +1,6 @@
 ---
 name: specify-and-test
-description: Understand function specification from naive reference, generate doc-comments, create comprehensive random tests, and verify implementation against specification (not vice versa).
+description: 単純な参照から関数の仕様を理解し、doc コメントを生成し、包括的なランダムテストを作成し、仕様に対して実装を検証（その逆ではない）します。
 compatibility:
   - Read
   - Write
@@ -8,167 +8,167 @@ compatibility:
   - Bash
 ---
 
-# Specify & Test: Specification-Driven Development
+# 仕様とテスト: 仕様駆動開発
 
-Three-phase skill to understand a function's specification from its naive reference, document it, test it comprehensively, and trust the spec over the code.
+関数の仕様を単純な参照から理解し、ドキュメント化し、包括的にテストし、コードより仕様を信頼する 3 フェーズスキル。
 
-## Input
+## 入力
 
-The user provides:
-- **Function name**: e.g., `mask_lower_part`
-- **Crate**: e.g., `fp_fft`
-- **Main implementation**: File path (e.g., `libs/fp_fft/src/lib.rs`)
-- **Naive reference**: Test file path and function name (e.g., `libs/fp_fft/tests/test_postfft.rs::naive_mask_lower_part`)
+ユーザーが以下を提供：
+- **関数名**: 例 `mask_lower_part`
+- **クレート**: 例 `fp_fft`
+- **主実装**: ファイルパス（例 `libs/fp_fft/src/lib.rs`）
+- **単純な参照**: テストファイルパスと関数名（例 `libs/fp_fft/tests/test_postfft.rs::naive_mask_lower_part`）
 
-## Process
+## プロセス
 
-### Phase 1: Specification Extraction & Understanding
+### フェーズ 1: 仕様の抽出と理解
 
-#### 1.1 Read Naive Implementation
+#### 1.1 単純な実装を読む
 
-- Read the naive function from test file
-- **Document the specification**:
-  - What does it do?
-  - Input preconditions (e.g., "array length must be power of two")
-  - Output postconditions (what changes?)
-  - Invariants
+- テストファイルから単純な関数を読む
+- **仕様をドキュメント化**:
+  - 何をするのか？
+  - 入力事前条件（例「配列の長さは 2 の冪である必要があります」）
+  - 出力事後条件（何が変わるのか？）
+  - 不変性
 
-#### 1.2 Read Optimized Implementation
+#### 1.2 最適化された実装を読む
 
-- Read the main implementation
-- Compare with naive version
-- Identify optimizations
+- 主実装を読む
+- 単純なバージョンと比較
+- 最適化を特定
 
-#### 1.3 Specification Summary
+#### 1.3 仕様サマリー
 
-Create internal notes (for Claude) describing:
-- **Specification (from naive)**: Plain English or pseudo-code
-- **Optimized approach (from main)**: How it achieves the same result faster
-- **Test strategy**: What to verify via random testing
+Claude のための内部ノートを作成：
+- **仕様（単純なものから）**: 平文またはプseudoコード
+- **最適化されたアプローチ（メインから）**: 同じ結果をより速く達成する方法
+- **テスト戦略**: ランダムテスト経由で検証するもの
 
-**Example format**:
+**例の形式**:
 ```
-Specification (from naive_mask_lower_part):
-  1. Inverse FFT the entire array
-  2. Zero out the lower half (indices 0..len/2)
-  3. Forward FFT the entire array
-  Result: A masked frequency-domain array
+仕様（naive_mask_lower_part から）:
+  1. 配列全体に逆 FFT を適用
+  2. 下半分（インデックス 0..len/2）をゼロアウト
+  3. 配列全体に前方 FFT を適用
+  結果：マスクされた周波数領域配列
 
-Optimized approach (from mask_lower_part):
-  - Splits array in half (a, b)
-  - Only IFFT upper half (b)
-  - Apply twiddle factors to upper half
-  - Only FFT upper half (b)
-  - Combine results via averaging
-  Result: Same mathematical effect, faster
+最適化されたアプローチ（mask_lower_part から）:
+  - 配列を半分に分割 (a, b)
+  - 上半分 (b) のみ IFFT
+  - 上半分にツイドル係数を適用
+  - 上半分 (b) のみ FFT
+  - 平均化で結果を結合
+  結果：同じ数学的効果、より速い
 ```
 
-### Phase 2: Documentation Generation
+### フェーズ 2: ドキュメント生成
 
-#### 2.1 Create Doc Comment (Manual or via /write-doc-comments)
+#### 2.1 Doc コメントを作成（/write-doc-comments で手動またはスキルから）
 
-Generate `///` doc comment for the function with:
-- **One-line summary**: What the function does (from naive spec)
-- **Longer explanation**: 
-  - Purpose and use case
-  - Mathematical meaning
-  - Input preconditions
-  - Output postconditions
-- **Examples section**: 
-  - Realistic example using the function
-  - Verify result matches naive specification
-- **Complexity** (if relevant): Time/space complexity
+関数の `///` doc コメントを生成：
+- **1 行の要約**: 関数が何をするのか（単純な仕様から）
+- **より長い説明**:
+  - 目的と使用例
+  - 数学的な意味
+  - 入力事前条件
+  - 出力事後条件
+- **例のセクション**:
+  - 関数を使用した現実的な例
+  - 結果が単純な仕様と一致することを確認
+- **複雑さ**（必要に応じて）: 時間/空間複雑度
 
-**Template**:
+**テンプレート**:
 ```rust
-/// Brief description of what this does.
+/// これが何をするかの簡潔な説明。
 ///
-/// Longer explanation:
-/// - This function [what it does, from naive spec]
-/// - Input [x] must be [precondition]
-/// - Output [y] will be [postcondition]
+/// より長い説明:
+/// - この関数は [何をするのか、単純な仕様から]
+/// - 入力 [x] は [事前条件] である必要があります
+/// - 出力 [y] は [事後条件] になります
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
-/// [Example code verifying against naive expectation]
+/// [単純な期待に対して検証する例コード]
 /// ```
 pub fn function_name(...) {
 ```
 
-#### 2.2 Add Doc Comment to Source
+#### 2.2 ソースに Doc コメントを追加
 
-Edit `libs/{crate}/src/lib.rs` to insert doc comment above function.
+`libs/{crate}/src/lib.rs` を編集して、関数の上に doc コメントを挿入します。
 
-### Phase 3: Random Test Generation
+### フェーズ 3: ランダムテスト生成
 
-#### 3.1 Create Test File (if doesn't exist)
+#### 3.1 テストファイルを作成（存在しない場合）
 
-Path: `libs/{crate}/tests/compare_with_naive.rs`
+パス：`libs/{crate}/tests/compare_with_naive.rs`
 
-#### 3.2 Import Naive Function
+#### 3.2 単純な関数をインポート
 
 ```rust
-// At top of test file, import from source test file or redefine
-use fp_fft::fft; // (or other dependencies)
+// テストファイルの上部で、ソーステストファイルから インポートまたは再定義
+use fp_fft::fft; // （またはその他の依存関係）
 
 fn naive_function_name(...) {
-    // Copy from tests/{original_test_file}.rs
+    // tests/{original_test_file}.rs からコピー
     // ...
 }
 ```
 
-#### 3.3 Create Random Test Suite
+#### 3.3 ランダムテストスイートを作成
 
-**Pattern** (follow fp_fps, fp_precalc conventions):
+**パターン**（fp_fps、fp_precalc の規約に従う）:
 
 ```rust
 #[test]
 fn test_function_name_compare_with_naive() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..200 {
-        // Generate random input within specification bounds
-        let size = 1 << rng.gen_range(0..=6);  // Or appropriate range
+        // 仕様範囲内でランダム入力を生成
+        let size = 1 << rng.gen_range(0..=6);  // または適切な範囲
         let mut input: Vec<_> = (...).collect();
         
-        // Ensure preconditions are met (e.g., f[0] is invertible)
+        // 事前条件が満たされていることを確認（例 f[0] は可逆的）
         // input[0] = fp(rng.gen_range(1..P));
         
-        // Clone for comparison
+        // 比較用にクローン
         let mut expected = input.clone();
         let mut result = input.clone();
         
-        // Run naive version on expected
+        // 期待される値で単純なバージョンを実行
         naive_function_name(&mut expected);
         
-        // Run optimized version on result
+        // 結果で最適化されたバージョンを実行
         function_name(&mut result);
         
-        // Verify they match
+        // 一致することを確認
         assert_eq!(result, expected, "input: {:?}", input);
     }
 }
 ```
 
-**Key points**:
-- **Iteration count**: 200+ cycles (follow fp_fps pattern)
-- **Size variation**: Test multiple sizes via `rng.gen_range()`
-- **Precondition setup**: Ensure input satisfies function requirements
-- **Black box**: If needed, use `black_box()` for criterion-like behavior
-- **Clear error messages**: Include input in assertion for debugging
+**重要なポイント**:
+- **反復数**: 200+ サイクル（fp_fps パターンに従う）
+- **サイズ変動**: `rng.gen_range()` 経由で複数サイズをテスト
+- **事前条件セットアップ**: 入力が関数要件を満たすことを確認
+- **ブラックボックス**: 必要に応じて `black_box()` を使用して criterion のような動作
+- **明確なエラーメッセージ**: デバッグのためアサーションに入力を含める
 
-#### 3.4 Add to Test Targets
+#### 3.4 テストターゲットに追加
 
-Update `Cargo.toml` if needed:
+必要に応じて `Cargo.toml` を更新：
 ```toml
 [[test]]
 name = "compare_with_naive"
 harness = true
 ```
 
-### Phase 4: Verification & Bug Handling
+### フェーズ 4: 検証とバグ処理
 
-#### 4.1 Run Tests
+#### 4.1 テストを実行
 
 ```bash
 cd /repo
@@ -176,61 +176,61 @@ cargo test --lib {crate_name}
 cargo test --test compare_with_naive
 ```
 
-#### 4.2 Test Failures: Trust the Spec, Not the Code
+#### 4.2 テスト失敗：コードではなく仕様を信頼
 
-**If test fails**:
-1. **Do NOT modify the test** — the test encodes the specification
-2. **Assume the implementation has a bug**
-3. **Analyze the failure**:
-   - What precondition is violated?
-   - What postcondition does the output fail?
-   - Which step of the naive algorithm is being skipped in the optimized version?
-4. **Report to user**:
-   - Show failing input
-   - Show expected vs actual
-   - Point to the implementation line that's likely wrong
-   - Suggest fix (do not apply without user approval)
+**テストが失敗する場合**:
+1. **テストを変更しない** — テストは仕様をエンコード
+2. **実装にバグがあると仮定**
+3. **失敗を分析**:
+   - どの事前条件が違反されているのか？
+   - 出力はどの事後条件に失敗するのか？
+   - 最適化されたバージョンで単純なアルゴリズムのどのステップがスキップされるのか？
+4. **ユーザーに報告**:
+   - 失敗入力を表示
+   - 期待値 vs 実際
+   - 誤っている可能性がある実装行を指摘
+   - 修正を提案（ユーザーの承認なしに適用しない）
 
-**Example failure report**:
+**失敗報告の例**:
 ```
-Test: test_mask_lower_part_compare_with_naive
-Input: f = [1, 2, 3, 4]
-Expected (naive): [a, b, c, d]
-Actual (optimized): [x, y, z, w]
+テスト：test_mask_lower_part_compare_with_naive
+入力：f = [1, 2, 3, 4]
+期待値（単純）: [a, b, c, d]
+実際（最適化）: [x, y, z, w]
 
-Difference: Upper half values don't match.
-Likely bug: Line 42 in lib.rs — twiddle factor application may be 
-incorrect for even/odd indices.
+差分：上半分の値が一致しません。
+予想されるバグ：lib.rs の行 42 — ツイドル係数の適用が
+偶数/奇数インデックスで誤っている可能性があります。
 ```
 
-### Phase 5: Iteration (if needed)
+### フェーズ 5: 反復（必要に応じて）
 
-After user fixes the implementation:
-1. Re-run tests
-2. If still failing, repeat Phase 4.2
-3. If passing, doc-string verification is complete ✅
+ユーザーが実装を修正した後：
+1. テストを再実行
+2. まだ失敗している場合、フェーズ 4.2 を繰り返す
+3. パスしている場合、doc 文字列検証が完了 ✅
 
-## Output Checklist
+## 出力チェックリスト
 
-- ✅ Specification understood and documented (internal notes)
-- ✅ Doc comment added to function in `libs/{crate}/src/lib.rs`
-- ✅ Test file created: `libs/{crate}/tests/compare_with_naive.rs`
-- ✅ Random test suite (200+ iterations) implemented
-- ✅ All tests passing
-- ✅ Implementation verified against specification
+- ✅ 仕様が理解され、ドキュメント化（内部ノート）
+- ✅ Doc コメントが `libs/{crate}/src/lib.rs` の関数に追加
+- ✅ テストファイル作成：`libs/{crate}/tests/compare_with_naive.rs`
+- ✅ ランダムテストスイート（200+ 反復）を実装
+- ✅ すべてのテストがパス
+- ✅ 仕様に対して実装を検証
 
-## Key Principle
+## 重要な原則
 
-**The test is the specification. The code is the implementation.**
+**テストは仕様。コードは実装。**
 
-When test and code disagree → the code is wrong, not the test.
-Modify the implementation until it matches the specification,
-never the reverse.
+テストとコードが一致しない場合 → コードが間違っています、テストではなく。
+テストが仕様と一致するまで実装を変更してください。
+逆は決してありません。
 
-## Tips
+## ヒント
 
-- **Naive = Specification**: Treat naive version as golden truth
-- **Optimize freely**: The optimized version can be completely different internally
-- **Same inputs → same outputs**: That's the contract being tested
-- **Document the WHY**: The doc comment should explain what the function does (from naive spec), not how it does it (from optimized code)
-- **Test sizes**: Include power-of-two sizes that exercise all code paths
+- **単純 = 仕様**: 単純なバージョンをゴールドスタンダードとして扱う
+- **自由に最適化**: 最適化されたバージョンは内部的に完全に異なる可能性があります
+- **同じ入力 → 同じ出力**: それがテストされているコントラクト
+- **WHY をドキュメント化**: doc コメントは、関数が（単純な仕様から）何をするのかを説明するべきであり、（最適化されたコードから）どのようにするのかではなく
+- **テストサイズ**: すべてのコードパスを実行する 2 の冪のサイズを含める
