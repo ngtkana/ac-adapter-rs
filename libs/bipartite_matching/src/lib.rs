@@ -1,59 +1,71 @@
-//! Hopcroft-Karp アルゴリズムによる二部グラフの最大マッチング
+//! 二部マッチング (Hopcroft-Karp)
 //!
-//! # 仕様
+//! # 使い方
 //!
-//! 有向グラフ $G = (V, E)$ が与えられたとき、$L = \\{ x \in V \mid \exists y \in V: (x, y) \in E \\}$ とし、
-//! 二部グラフ $(L, R, E)$ （$R = V \setminus L$）における**最大マッチング** $M \subseteq E$ を求める。
-//!
-//! マッチング $M$ は以下を満たす：
-//! - $M$ の各エッジは頂点を共有しない（独立エッジ集合）
-//! - 任意のエッジ $e \in E \setminus M$ に対し、$e$ を $M$ に追加すると独立エッジ集合でなくなる
-//!
-//! # 入出力
-//!
-//! - **入力**: グラフ $g: L \to \mathcal{P}(R)$ （隣接リスト表現）
-//!   - $g(i) = \\{ j : (i, j) \in E \\}$ （$i \in L$）
-//! - **出力**: 関数 $f: R \to L \cup \\{\infty\\}$ （マッチング $M = \\{ (f(j), j) : f(j) \neq \infty \\}$）
-//!   - $f(j) = i$ なら $(i, j) \in M$
-//!   - $f(j) = \infty$ なら $j$ はマッチされていない
-//!
-//! # 例
-//!
-//! ```
-//! # use bipartite_matching::bipartite_matching;
-//! let g = vec![vec![2], vec![2], vec![]];  // $L = \\{0, 1\\}$, $R = \\{2\\}$
-//! let f = bipartite_matching(&g);
-//! // 最大マッチング: $0 \to 2$ （$f(2) = 0$）
-//! assert_eq!(f[2], 0);
-//! ```
-//!
-//! # 計算量
-//!
-//! $O(\sqrt{V} \cdot E)$ （$V$ = ノード数、$E$ = エッジ数）
+//! 関数 [`bipartite_matching`] の doc を読んでください。
 
 use std::{collections::VecDeque, mem::replace};
 
-/// 二部グラフの最大マッチングを求める
-///
-/// Hopcroft-Karp アルゴリズムにより $O(\sqrt{V} \cdot E)$ で計算。
+/// 二部マッチング (Hopcroft-Karp)
 ///
 /// # 入力
-/// - `g`: グラフの隣接リスト。$g(i)$ = 左頂点 $i$ から到達可能な右側頂点集合
+///
+/// 入力は有向二部グラフ $G = (V, E)$ (i.e. $\mathrm{src}(E) \cap \mathrm{tar}(E) = \empty$ な二部グラフ) つまり
+///
+/// * $L = \mathrm{src}(E), \\ R = \mathrm{tar}(E)$ と捉えるとよいです
+/// * 分解 $V = L \sqcup R$ が明示的に与えられていない & 番号空間が共有 (i.e. 番号が被ったらダメ) な入力形式です。
+/// * そう捉えると辺は $L → R$ の向きです。(まあ全部逆と捉えてもいいんですけどね)
+///
+/// このとき、入力の `g` は隣接リスト $g: R → \mathcal{P}(L)$ です。
+///
 ///
 /// # 出力
-/// マッチング関数 $f: R \to L \cup \\{\infty\\}$
-/// - $f(j) = i$ ($i \neq \infty$) ⟹ 左頂点 $i$ が右頂点 $j$ とマッチング
-/// - $f(j) = \infty$ ⟹ 右頂点 $j$ はマッチされていない
+///
+/// 出力の `f` は、(`g` と逆向きの)マッチング関数 $L: R → L$ (ただし存在しない場合は [`usize::MAX`])
+///
 ///
 /// # 例
+///
+/// Wikipedia にあった次のグラフを例にします。（結果は異なります。）
+///
+/// <div style="text-align:center">
+/// <figure>
+/// <img height=300 src="https://upload.wikimedia.org/wikipedia/commons/e/ee/HopcroftKarpExample.png">
+/// </figure>
+/// </div>
+///
 /// ```
 /// # use bipartite_matching::bipartite_matching;
 /// // 二部グラフ: $L = \\{0, 1\\}$, $R = \\{2\\}$
 /// // エッジ: $0 \to 2$, $1 \to 2$
-/// let g = vec![vec![2], vec![2], vec![]];
-/// let f = bipartite_matching(&g);
-/// // マッチング: $0 \to 2$ （$f(2) = 0$）
-/// assert_eq!(f[2], 0);
+/// let g = [
+///     vec![5, 6],
+///     vec![9],
+///     vec![7, 8],
+///     vec![5, 9],
+///     vec![6, 8],
+///     vec![],
+///     vec![],
+///     vec![],
+///     vec![],
+///     vec![],
+/// ];
+///
+/// let result = bipartite_matching(&g);
+/// let expected = [
+///     usize::MAX,
+///     usize::MAX,
+///     usize::MAX,
+///     usize::MAX,
+///     usize::MAX,
+///     3,
+///     0,
+///     2,
+///     4,
+///     1,
+/// ];
+///
+/// assert_eq!(result, expected);
 /// ```
 pub fn bipartite_matching(g: &[Vec<usize>]) -> Vec<usize> {
     let n = g.len();
