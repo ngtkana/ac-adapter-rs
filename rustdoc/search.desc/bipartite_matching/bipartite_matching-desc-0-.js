@@ -1,1 +1,1 @@
-searchState.loadedDescShard("bipartite_matching", 0, "Hopcroft-Karp …\n二部グラフの最大マッチングを求める")
+searchState.loadedDescShard("bipartite_matching", 0, "二部マッチング (Hopcroft-Karp)\n二部マッチング (Hopcroft-Karp)")
