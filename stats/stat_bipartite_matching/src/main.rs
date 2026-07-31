@@ -3,52 +3,46 @@ use stat_bipartite_matching::{Recorder, bipartite_matching};
 use std::fmt::Display;
 
 const ITERATION: usize = 100;
-const EPOCH_LEN: usize = 30;
+const EPOCH_LEN: usize = 20;
+
+const N: usize = 100_000;
+const M: usize = 300_000;
 
 fn main() {
     let mut rng = StdRng::seed_from_u64(42);
-    for (n, m) in [
-        (1_000, 1_000),
-        (1_000, 3_000),
-        (1_000, 10_000),
-        (30_000, 30_000),
-        (30_000, 100_000),
-        (30_000, 300_000),
-    ] {
-        let mut epoch_count = vec![];
-        let mut matching_count = vec![];
-        let mut call_primal_count = vec![];
-        let mut epochwise_call_primal_count = vec![vec![]; EPOCH_LEN];
+    let mut epoch_count = vec![];
+    let mut matching_count = vec![];
+    let mut call_primal_count = vec![];
+    let mut epochwise_call_primal_count = vec![vec![]; EPOCH_LEN];
 
-        for _ in 0..ITERATION {
-            let g = gen_case(&mut rng, n, m);
+    for _ in 0..ITERATION {
+        let g = gen_case(&mut rng, N, M);
 
-            let mut recorder = Recorder::default();
-            let _h = bipartite_matching(&g, &mut recorder);
+        let mut recorder = Recorder::default();
+        let _h = bipartite_matching(&g, &mut recorder);
 
-            epoch_count.push(recorder.aug_path_count.len() as f64);
-            matching_count.push(recorder.aug_path_count.iter().sum::<usize>() as f64);
-            call_primal_count.push(recorder.call_primal_count.iter().sum::<usize>() as f64);
-            for epoch in 0..EPOCH_LEN {
-                epochwise_call_primal_count[epoch].push(
-                    recorder
-                        .call_primal_count
-                        .get(epoch)
-                        .map_or(0., |&x| x as f64),
-                );
-            }
-        }
-
-        println!("Case: n = {n}, m = {m}");
-        println!("Epoch count: {}", Stats(&epoch_count));
-        println!("Matching count: {}", Stats(&matching_count));
-        println!("Call primal count (sum): {}", Stats(&call_primal_count));
+        epoch_count.push(recorder.aug_path_count.len() as f64);
+        matching_count.push(recorder.aug_path_count.iter().sum::<usize>() as f64);
+        call_primal_count.push(recorder.call_primal_count.iter().sum::<usize>() as f64);
         for epoch in 0..EPOCH_LEN {
-            println!(
-                "Call primal count (epoch {epoch}): {}",
-                Stats(&epochwise_call_primal_count[epoch])
+            epochwise_call_primal_count[epoch].push(
+                recorder
+                    .call_primal_count
+                    .get(epoch)
+                    .map_or(0., |&x| x as f64),
             );
         }
+    }
+
+    println!("Condition: N = {N}, M = {M}");
+    println!("Epoch count: {}", Stats(&epoch_count));
+    println!("Matching count: {}", Stats(&matching_count));
+    println!("Call primal count (sum): {}", Stats(&call_primal_count));
+    for epoch in 0..EPOCH_LEN {
+        println!(
+            "Call primal count (epoch {epoch}): {}",
+            Stats(&epochwise_call_primal_count[epoch])
+        );
         println!();
     }
 }
