@@ -1,9 +1,7 @@
 [package]
-name = "max_flow"
+name = "stat_max_flow"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-
-[dev-dependencies]
-rand = "0.8"
+rand = { workspace = true }

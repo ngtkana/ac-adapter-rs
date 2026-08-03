@@ -1,51 +1,21 @@
-//! フローネットワークの最大流を求める
-//!
-//! # Usage
-//!
-//! ## 構築
-//!
-//! * [`MaxFlow::new`]
-//! * [`MaxFlow::add_edge`]
-//!
-//!
-//! ## 実行
-//!
-//! * [`MaxFlow::solve`]
-//!
-//! source, sink は複数指定できます。
-//!
-//!
-//! ## 総流量以外の情報の取得
-//!
-//! [`MaxFlow::edges`] を public にしてあるのでそれでなんとか
-//!
-//! # Examples
-//!
-//! ```
-//! use max_flow::MaxFlow;
-//!
-//! let mut inst = MaxFlow::new();
-//!
-//! inst.add_edge(0, 1, 20);
-//! inst.add_edge(0, 2, 10);
-//! inst.add_edge(1, 2, 10);
-//! inst.add_edge(1, 3, 10);
-//! inst.add_edge(2, 3, 20);
-//!
-//! assert_eq!(inst.solve([0], [3]), 30);
-//! ```
-
 use std::{collections::VecDeque, slice::Iter};
 
-/// フローネットワーク
+#[derive(Debug, Default)]
+pub struct Recorder {
+    pub bfs_count: Vec<usize>,
+    pub call_primal_count: Vec<usize>,
+}
+
 #[derive(Default, Debug)]
 pub struct MaxFlow {
     pub edges: Vec<Edge>,
 }
+
 impl MaxFlow {
     pub fn new() -> Self {
         Self::default()
     }
+
     pub fn add_edge(&mut self, src: usize, tar: usize, cap: u64) {
         self.edges.push(Edge {
             src,
@@ -60,10 +30,12 @@ impl MaxFlow {
             flow: cap,
         });
     }
+
     pub fn solve(
         &mut self,
         sources: impl IntoIterator<Item = usize>,
         sinks: impl IntoIterator<Item = usize>,
+        recorder: &mut Recorder,
     ) -> u64 {
         let Self { edges } = self;
         let sources = sources.into_iter().collect::<Vec<_>>();
@@ -107,9 +79,20 @@ impl MaxFlow {
                 return flow;
             }
 
+            recorder.bfs_count.push(1);
+            recorder.call_primal_count.push(0);
+
             let mut iter = g.iter().map(|g| g.iter()).collect::<Vec<_>>();
             for &x in &sources {
-                let f = primal(u64::MAX, x, edges, &mut iter, &mut label, &is_sink);
+                let f = primal(
+                    u64::MAX,
+                    x,
+                    edges,
+                    &mut iter,
+                    &mut label,
+                    &is_sink,
+                    recorder,
+                );
                 if f == 0 {
                     label[x] = usize::MAX;
                 }
@@ -126,7 +109,9 @@ fn primal(
     iter: &mut [Iter<usize>],
     label: &mut [usize],
     is_sink: &[bool],
+    recorder: &mut Recorder,
 ) -> u64 {
+    *recorder.call_primal_count.last_mut().unwrap() += 1;
     if is_sink[x] {
         return f;
     }
@@ -141,6 +126,7 @@ fn primal(
                 iter,
                 label,
                 is_sink,
+                recorder,
             );
             if g == 0 {
                 label[y] = usize::MAX;
@@ -158,7 +144,6 @@ fn primal(
     result
 }
 
-/// フロー辺
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Edge {
     pub src: usize,

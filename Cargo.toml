@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ['libs/*', 'benches', 'snippetter', 'stats/stat_bipartite_matching']
+members = ['libs/*', 'benches', 'snippetter', 'stats/stat_bipartite_matching', 'stats/stat_max_flow']
 
 [workspace.dependencies]
 ansi_term = "0.12.1"
