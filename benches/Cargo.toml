@@ -8,6 +8,7 @@ fp = { path = "../libs/fp" }
 fp_fft = { path = "../libs/fp_fft" }
 fp_fps = { path = "../libs/fp_fps" }
 bipartite_matching = { path = "../libs/bipartite_matching" }
+max_flow = { path = "../libs/max_flow" }
 rand = "0.8"
 
 [dev-dependencies]
@@ -23,4 +24,8 @@ harness = false
 
 [[bench]]
 name = "bipartite_matching_benchmark"
+harness = false
+
+[[bench]]
+name = "max_flow_benchmark"
 harness = false
