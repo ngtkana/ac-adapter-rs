@@ -1,0 +1,1 @@
+searchState.loadedDescShard("max_flow", 0, "フローネットワークの最大流を求める\nフロー辺\nフローネットワーク\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")
