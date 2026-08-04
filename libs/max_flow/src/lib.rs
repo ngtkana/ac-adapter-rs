@@ -35,7 +35,7 @@
 //! assert_eq!(inst.solve([0], [3]), 30);
 //! ```
 
-use std::{collections::VecDeque, iter::Peekable, slice::Iter};
+use std::collections::BinaryHeap;
 
 /// フローネットワーク
 #[derive(Default, Debug)]
@@ -68,71 +68,74 @@ impl MaxFlow {
         let Self { edges } = self;
         let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
         let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
-        let mut sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
+        let sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
+        let mut kind = vec![NodeKind::Internal; n];
+        for &x in &sources {
+            kind[x] = NodeKind::Source;
+        }
+        for &x in &sinks {
+            kind[x] = NodeKind::Sink;
+        }
+
         let mut g = vec![vec![]; n];
         for (i, &e) in edges.iter().enumerate() {
             g[e.src].push(i);
         }
 
-        let mut flow = 0;
-        loop {
-            let mut label = vec![usize::MAX; n];
-            let mut queue = VecDeque::new();
-            for &x in &sources {
-                label[x] = 0;
-                queue.push_back(x);
+        let mut excess = vec![0; n];
+        let mut height = vec![0; n];
+        let mut heap = BinaryHeap::new(); // TODO: use buckets
+        for &x in &sources {
+            height[x] = n;
+            for &i in &g[x] {
+                let y = edges[i].tar;
+                let f = edges[i].cap - edges[i].flow;
+                if kind[y] == NodeKind::Source || f == 0 {
+                    continue;
+                }
+                if excess[y] == 0 && kind[y] == NodeKind::Internal {
+                    heap.push((0, y));
+                }
+                excess[y] += f;
+                edges[i].flow += f;
+                edges[i ^ 1].flow -= f;
             }
-            while let Some(x) = queue.pop_front() {
-                for &i in &g[x] {
-                    let y = edges[i].tar;
-                    if edges[i].flow < edges[i].cap && label[y] == usize::MAX {
-                        label[y] = label[x] + 1;
-                        queue.push_back(y);
-                    }
+        }
+
+        let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
+        'pop: while let Some((_, x)) = heap.pop() {
+            while let Some(&&i) = iter[x].peek() {
+                let y = edges[i].tar;
+                if edges[i].flow == edges[i].cap || height[x] != height[y] + 1 {
+                    iter[x].next().unwrap();
+                    continue;
+                }
+                let f = excess[x].min(edges[i].cap - edges[i].flow);
+                if excess[y] == 0 && kind[y] == NodeKind::Internal {
+                    heap.push((height[y], y));
+                }
+                edges[i].flow += f;
+                edges[i ^ 1].flow -= f;
+                excess[x] -= f;
+                excess[y] += f;
+                if edges[i ^ 1].flow == 0 {
+                    iter[x].next().unwrap();
+                }
+                if excess[x] == 0 {
+                    continue 'pop;
                 }
             }
-
-            sinks.retain(|&x| label[x] != usize::MAX);
-            if sinks.is_empty() {
-                return flow;
-            }
-
-            let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-            for &x in &sinks {
-                let f = primal(u64::MAX, x, edges, &mut iter, &mut label);
-                flow += f;
-            }
+            assert!(excess[x] > 0);
+            iter[x] = g[x].iter().peekable();
+            height[x] += 1;
+            heap.push((height[x], x));
         }
-    }
-}
 
-fn primal(
-    mut quota: u64,
-    x: usize,
-    edges: &mut Vec<Edge>,
-    iter: &mut [Peekable<Iter<usize>>],
-    label: &mut [usize],
-) -> u64 {
-    if label[x] == 0 {
-        return quota;
+        (0..n)
+            .filter(|&x| kind[x] == NodeKind::Sink)
+            .map(|x| excess[x])
+            .sum()
     }
-    let mut result = 0;
-    while let Some(&&i) = iter[x].peek() {
-        let y = edges[i].tar;
-        if edges[i].flow != 0 && label[x] - 1 == label[y] {
-            let f = primal(quota.min(edges[i].flow), y, edges, iter, label);
-            result += f;
-            quota -= f;
-            edges[i].flow -= f;
-            edges[i ^ 1].flow += f;
-            if quota == 0 {
-                return result;
-            }
-        }
-        iter[x].next().unwrap();
-    }
-    label[x] = usize::MAX;
-    result
 }
 
 /// フロー辺
@@ -142,4 +145,11 @@ pub struct Edge {
     pub tar: usize,
     pub cap: u64,
     pub flow: u64,
+}
+
+#[derive(PartialEq, Clone, Copy)]
+enum NodeKind {
+    Source,
+    Sink,
+    Internal,
 }

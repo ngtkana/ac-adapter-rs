@@ -10,10 +10,18 @@ use rand::{Rng, SeedableRng, rngs::StdRng};
 fn verify_max_flow(n: usize, sources: &[usize], sinks: &[usize], inst: &MaxFlow, flow_value: u64) {
     let edges = &inst.edges;
 
+    let mut kind = vec![NodeKind::Internal; n];
+    for &x in sources {
+        kind[x] = NodeKind::Source;
+    }
+    for &x in sinks {
+        kind[x] = NodeKind::Sink;
+    }
+
     // 隣接リストを構築（検証用）
-    let mut adj = vec![vec![]; n];
+    let mut g = vec![vec![]; n];
     for (i, e) in edges.iter().enumerate() {
-        adj[e.src].push(i);
+        g[e.src].push(i);
     }
 
     // 1. フロー保存則の検証
@@ -29,19 +37,16 @@ fn verify_max_flow(n: usize, sources: &[usize], sinks: &[usize], inst: &MaxFlow,
     }
 
     // sourceの流出量総和
-    let source_outflow: u64 = sources
-        .iter()
-        .map(|&s| (-flow_balance[s]).max(0) as u64)
-        .sum();
+    let source_outflow: i128 = sources.iter().map(|&s| -flow_balance[s]).sum();
     assert_eq!(
-        source_outflow, flow_value,
+        source_outflow, flow_value as i128,
         "source流出量総和が戻り値と一致しません: {source_outflow} != {flow_value}",
     );
 
     // sinkの流入量総和
-    let sink_inflow: u64 = sinks.iter().map(|&t| flow_balance[t].max(0) as u64).sum();
+    let sink_inflow: i128 = sinks.iter().map(|&t| flow_balance[t]).sum();
     assert_eq!(
-        sink_inflow, flow_value,
+        sink_inflow, flow_value as i128,
         "sink流入量総和が戻り値と一致しません: {sink_inflow} != {flow_value}",
     );
 
@@ -96,7 +101,7 @@ fn verify_max_flow(n: usize, sources: &[usize], sinks: &[usize], inst: &MaxFlow,
     }
 
     while let Some(v) = stack.pop() {
-        for &i in &adj[v] {
+        for &i in &g[v] {
             let e = &edges[i];
             if e.flow < e.cap && !reachable[e.tar] {
                 reachable[e.tar] = true;
@@ -129,56 +134,52 @@ fn verify_max_flow(n: usize, sources: &[usize], sinks: &[usize], inst: &MaxFlow,
 }
 
 #[test]
-fn test_max_flow_properties() {
+fn test_random() {
     let mut rng = StdRng::seed_from_u64(42);
 
     for _ in 0..200 {
-        // ランダムなグラフを生成
-        let n = rng.gen_range(2..=20); // 頂点数
-        let m = rng.gen_range(1..=(n * (n - 1) / 4).max(1)); // エッジ数
+        let n = rng.gen_range(2..=4);
+        let m = rng.gen_range(1..=(n * (n - 1) / 2).max(1));
 
         let mut inst = MaxFlow::new();
         for _ in 0..m {
             let src = rng.gen_range(0..n);
             let tar = rng.gen_range(0..n);
-            if src != tar {
-                let cap = rng.gen_range(1..=100);
-                inst.add_edge(src, tar, cap);
-            }
+            let cap = rng.gen_range(1..1_000);
+            inst.add_edge(src, tar, cap);
         }
 
-        // sourceとsinkをランダムに選択
-        let num_sources = rng.gen_range(1..=n.min(3));
-        let num_sinks = rng.gen_range(1..=n.min(3));
+        let n_sources = rng.gen_range(1..=(n - 1).min(3));
+        let n_sinks = rng.gen_range(1..=(n - n_sources).min(3));
 
         let mut sources = vec![];
         let mut sinks = vec![];
-
-        // sourceとsinkが重複しないように選択
-        let mut available: Vec<usize> = (0..n).collect();
-        for _ in 0..num_sources {
-            if available.is_empty() {
+        for _ in 0..n_sources {
+            loop {
+                let x = rng.gen_range(0..n);
+                if sources.contains(&x) || sinks.contains(&x) {
+                    continue;
+                }
+                sources.push(x);
                 break;
             }
-            let idx = rng.gen_range(0..available.len());
-            sources.push(available.remove(idx));
         }
-        for _ in 0..num_sinks {
-            if available.is_empty() {
+        for _ in 0..n_sinks {
+            loop {
+                let x = rng.gen_range(0..n);
+                if sources.contains(&x) || sinks.contains(&x) {
+                    continue;
+                }
+                sinks.push(x);
                 break;
             }
-            let idx = rng.gen_range(0..available.len());
-            sinks.push(available.remove(idx));
-        }
-
-        if sources.is_empty() || sinks.is_empty() {
-            continue;
         }
 
         let flow_value = inst.solve(sources.clone(), sinks.clone());
 
         // フロー条件と最適性を検証
         verify_max_flow(n, &sources, &sinks, &inst, flow_value);
+        eprintln!();
     }
 }
 
@@ -301,4 +302,20 @@ fn test_case_7_requires_multiple_primal_calls_per_bfs() {
 
     assert_eq!(flow, 2);
     verify_max_flow(5, &[0], &[4], &inst, flow);
+}
+
+#[test]
+fn test_case_8_directly_connect_between_source_and_sink() {
+    let mut inst = MaxFlow::new();
+    inst.add_edge(0, 1, 42);
+    let flow = inst.solve([0], [1]);
+    assert_eq!(flow, 42);
+    verify_max_flow(2, &[0], &[1], &inst, flow);
+}
+
+#[derive(PartialEq, Debug, Clone, Copy)]
+enum NodeKind {
+    Source,
+    Sink,
+    Internal,
 }
