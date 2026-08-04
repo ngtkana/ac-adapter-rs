@@ -35,7 +35,7 @@
 //! assert_eq!(inst.solve([0], [3]), 30);
 //! ```
 
-use std::collections::VecDeque;
+use std::collections::BinaryHeap;
 
 /// フローネットワーク
 #[derive(Default, Debug)]
@@ -60,7 +60,6 @@ impl MaxFlow {
             flow: cap,
         });
     }
-    #[allow(clippy::too_many_lines)]
     pub fn solve(
         &mut self,
         sources: impl IntoIterator<Item = usize>,
@@ -68,9 +67,9 @@ impl MaxFlow {
     ) -> u64 {
         let Self { edges } = self;
         let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
+
         let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
         let sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
-
         if sources.is_empty() || sinks.is_empty() {
             return 0;
         }
@@ -102,78 +101,35 @@ impl MaxFlow {
             }
         }
 
-        // init with bfs
         let mut height = vec![0; n];
-        for &x in &sinks {
-            height[x] = 0;
-        }
         for &x in &sources {
             height[x] = n;
         }
-        let mut queue = VecDeque::from(sinks);
-        while let Some(x) = queue.pop_front() {
+        let mut heap = (0..n)
+            .filter(|&x| kind[x] == NodeKind::Internal && excess[x] != 0)
+            .map(|x| (height[x], x))
+            .collect::<BinaryHeap<_>>();
+        'pop: while let Some((_, x)) = heap.pop() {
             for &i in &g[x] {
                 let y = edges[i].tar;
-                if kind[y] == NodeKind::Internal && edges[i].flow != 0 && height[y] == n + 1 {
-                    height[y] = height[x] + 1;
-                    queue.push_back(y);
+                if edges[i].flow == edges[i].cap || height[x] != height[y] + 1 {
+                    continue;
+                }
+                let f = excess[x].min(edges[i].cap - edges[i].flow);
+                if excess[y] == 0 && kind[y] == NodeKind::Internal {
+                    heap.push((height[y], y));
+                }
+                edges[i].flow += f;
+                edges[i ^ 1].flow -= f;
+                excess[x] -= f;
+                excess[y] += f;
+                if excess[x] == 0 {
+                    continue 'pop;
                 }
             }
-        }
-
-        let mut height_count = vec![0; 2 * n];
-        let mut stacks = vec![vec![]; 2 * n];
-        for x in (0..n).filter(|&x| kind[x] == NodeKind::Internal) {
-            height_count[height[x]] += 1;
-            if excess[x] != 0 {
-                stacks[height[x]].push(x);
-            }
-        }
-
-        let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-        if let Some(mut max_height) = stacks.iter().rposition(|s| !s.is_empty()) {
-            'pop: loop {
-                let x = stacks[max_height].pop().unwrap();
-                assert_eq!(height[x], max_height);
-                while let Some(&&i) = iter[x].peek() {
-                    let y = edges[i].tar;
-                    if edges[i].flow == edges[i].cap || height[x] != height[y] + 1 {
-                        iter[x].next().unwrap();
-                        continue;
-                    }
-                    let f = excess[x].min(edges[i].cap - edges[i].flow);
-                    if excess[y] == 0 && kind[y] == NodeKind::Internal {
-                        stacks[height[y]].push(y);
-                    }
-                    edges[i].flow += f;
-                    edges[i ^ 1].flow -= f;
-                    excess[x] -= f;
-                    excess[y] += f;
-                    if edges[i ^ 1].flow == 0 {
-                        iter[x].next().unwrap();
-                    }
-                    if excess[x] == 0 {
-                        while stacks[max_height].is_empty() {
-                            if max_height == 0 {
-                                break 'pop;
-                            }
-                            max_height -= 1;
-                        }
-                        continue 'pop;
-                    }
-                }
-                assert!(excess[x] > 0);
-                height_count[height[x]] -= 1;
-                height[x] = if (1..n - 1).contains(&max_height) && height_count[height[x]] == 0 {
-                    n + 1 // gap heuristic
-                } else {
-                    height[x] + 1
-                };
-                height_count[height[x]] += 1;
-                stacks[height[x]].push(x);
-                iter[x] = g[x].iter().peekable();
-                max_height = height[x];
-            }
+            assert!(excess[x] > 0);
+            height[x] += 1;
+            heap.push((height[x], x));
         }
 
         (0..n)
