@@ -67,7 +67,7 @@ impl MaxFlow {
     ) -> u64 {
         let Self { edges } = self;
         let sources = sources.into_iter().collect::<Vec<_>>();
-        let sinks = sinks.into_iter().collect::<Vec<_>>();
+        let mut sinks = sinks.into_iter().collect::<Vec<_>>();
         let n = edges
             .iter()
             .map(|e| e.src)
@@ -76,10 +76,6 @@ impl MaxFlow {
             .max()
             .unwrap()
             + 1;
-        let mut is_sink = vec![false; n];
-        for &x in &sinks {
-            is_sink[x] = true;
-        }
         let mut g = vec![vec![]; n];
         for (i, &e) in edges.iter().enumerate() {
             g[e.src].push(i);
@@ -103,13 +99,14 @@ impl MaxFlow {
                 }
             }
 
-            if sinks.iter().all(|&x| label[x] == usize::MAX) {
+            sinks.retain(|&x| label[x] != usize::MAX);
+            if sinks.is_empty() {
                 return flow;
             }
 
             let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-            for &x in &sources {
-                let f = primal(u64::MAX, x, edges, &mut iter, &mut label, &is_sink);
+            for &x in &sinks {
+                let f = primal(u64::MAX, x, edges, &mut iter, &mut label);
                 flow += f;
             }
         }
@@ -122,27 +119,19 @@ fn primal(
     edges: &mut Vec<Edge>,
     iter: &mut [Peekable<Iter<usize>>],
     label: &mut [usize],
-    is_sink: &[bool],
 ) -> u64 {
-    if is_sink[x] {
+    if label[x] == 0 {
         return quota;
     }
     let mut result = 0;
     while let Some(&&i) = iter[x].peek() {
         let y = edges[i].tar;
-        if edges[i].flow < edges[i].cap && label[x] + 1 == label[y] {
-            let f = primal(
-                quota.min(edges[i].cap - edges[i].flow),
-                y,
-                edges,
-                iter,
-                label,
-                is_sink,
-            );
+        if edges[i].flow != 0 && label[x] - 1 == label[y] {
+            let f = primal(quota.min(edges[i].flow), y, edges, iter, label);
             result += f;
             quota -= f;
-            edges[i].flow += f;
-            edges[i ^ 1].flow -= f;
+            edges[i].flow -= f;
+            edges[i ^ 1].flow += f;
             if f == 0 {
                 iter[x].next().unwrap();
             }
