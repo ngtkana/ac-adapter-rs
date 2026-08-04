@@ -82,6 +82,7 @@ impl MaxFlow {
 
         let mut excess = vec![0; n];
         let mut height = vec![0; n];
+        let mut height_count = vec![0; 2 * n];
         let mut stacks = vec![vec![]; 2 * n];
         for &x in &sources {
             height[x] = n;
@@ -99,10 +100,13 @@ impl MaxFlow {
                 edges[i ^ 1].flow -= f;
             }
         }
+        for &h in &height {
+            height_count[h] += 1;
+        }
 
         let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-        let mut max_height = 0;
         if !stacks[0].is_empty() {
+            let mut max_height = 0;
             'pop: loop {
                 let x = stacks[max_height].pop().unwrap();
                 assert_eq!(height[x], max_height);
@@ -134,9 +138,14 @@ impl MaxFlow {
                     }
                 }
                 assert!(excess[x] > 0);
+                height_count[height[x]] -= 1;
+                height[x] = if (1..n).contains(&max_height) && height_count[height[x]] == 0 {
+                    n + 1
+                } else {
+                    height[x] + 1
+                };
                 iter[x] = g[x].iter().peekable();
-                height[x] += 1;
-                max_height += 1;
+                max_height = height[x];
                 stacks[max_height].push(x);
             }
         }
