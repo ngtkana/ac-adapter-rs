@@ -1,8 +1,9 @@
 # max_flow ベンチマーク結果
 
-| バージョン | Random | Worst | 日付 |
+| Algorithm | Random | Worst | 日付 |
 |---------|-----------|------------|------|
-| ベースライン | 216.59 ms | 242.45 ms | 2026-08-03 |
+| v0 | 216.59 ms | 242.45 ms | 2026-08-03 |
+| v1 | 111.08 ms | 148.04 ms | 2026-08-03 |
 
 ## Instances
 
@@ -17,10 +18,15 @@
 
 https://deepblue.lib.umich.edu/items/ca084c10-fdcf-451b-a874-f3d367f3c299
 
+## Algorithms
 
-## ベースライン
+## v0: Dinic
 
-- **テストケース**: ランダムグラフ
-- **ターゲット反復時間**: ~100-500ms
-- **日付**: 2026-08-03
+DFS を 1 回で済ませる
 
+$O(V^2E)$ 時間
+
+
+## v1: Dinic with backward DFS
+
+DFS を逆から行うことで、到達不能頂点を調べなくて済むという huristic 高速化
