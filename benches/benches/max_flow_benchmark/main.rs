@@ -34,76 +34,14 @@ fn max_flow_random_graph(c: &mut Criterion) {
     });
 }
 
-/// MiSawaのキラーケースグラフでのベンチマーク
-/// Dinicのcurrent_edge最適化が効かないと指数時間になる
 /// https://gist.github.com/MiSawa/47b1d99c372daffb6891662db1a2b686 参考
-fn max_flow_binary_tree_graph(c: &mut Criterion) {
-    c.bench_function("max_flow_killer_case_depth200_layer200", |bencher| {
-        // Setup: MiSawaのキラーケース構造
-        // source(0) -> a(1), b_node(2) [容量1, 2]
-        // b_node -> a [容量2]
-        // a -> 各層layer_size頂点、depth層の中間層
-        // 各層で各頂点から次層の全頂点へ容量3（layer_size^2本の辺/層）
-        // 最終層 -> c -> sink [容量3]
-        // current_edge最適化のバグがあるとO(layer_size^depth)時間になる
-        let depth = 200;
-        let layer_size = 200; // 各層の頂点数（2にするとバグのない実装では速すぎる）
-
+fn max_flow_misawa(c: &mut Criterion) {
+    c.bench_function("max_flow_misawa", |bencher| {
         let source = 0;
-        let a = 1;
-        let b_node = 2;
-
-        // 中間層の頂点数を計算
-        // source, a, b_node + depth層×layer_size頂点/層 + c + sink
-        let vertex_count = 3 + depth * layer_size + 2;
-        let c_node = vertex_count - 2;
-        let sink = vertex_count - 1;
-
-        let mut edges = vec![];
-
-        // source -> a, b_node
-        edges.push((source, a, 1));
-        edges.push((source, b_node, 2));
-
-        // b_node -> a
-        edges.push((b_node, a, 2));
-
-        // a -> 第1層（layer_size頂点）
-        let mut current_vertex = 3;
-        let first_layer_start = current_vertex;
-        for _ in 0..layer_size {
-            edges.push((a, current_vertex, 3));
-            current_vertex += 1;
-        }
-
-        // 各層間の接続（各層layer_size頂点、各頂点から次層の全頂点へ容量3）
-        let mut layer_start = first_layer_start;
-        for _ in 0..(depth - 1) {
-            let next_layer_start = current_vertex;
-
-            for i in 0..layer_size {
-                let u = layer_start + i;
-                // 各ノードから次層の全ノードへ容量3
-                for j in 0..layer_size {
-                    let v = next_layer_start + j;
-                    edges.push((u, v, 3));
-                }
-            }
-
-            layer_start = next_layer_start;
-            current_vertex += layer_size;
-        }
-
-        // 最終層 -> c
-        for i in 0..layer_size {
-            let u = layer_start + i;
-            edges.push((u, c_node, 3));
-        }
-
-        // c -> sink
-        edges.push((c_node, sink, 3));
-
-        bencher.iter(|| {
+        let sink = 4;
+        #[rustfmt::skip]
+        let edges = [(0, 1, 1), (0, 2, 2), (2, 1, 2), (3, 4, 2), (1, 5, 3), (1, 6, 3), (5, 7, 3), (5, 8, 3), (6, 7, 3), (6, 8, 3), (7, 9, 3), (7, 10, 3), (8, 9, 3), (8, 10, 3), (9, 11, 3), (9, 12, 3), (10, 11, 3), (10, 12, 3), (11, 13, 3), (11, 14, 3), (12, 13, 3), (12, 14, 3), (13, 15, 3), (13, 16, 3), (14, 15, 3), (14, 16, 3), (15, 17, 3), (15, 18, 3), (16, 17, 3), (16, 18, 3), (17, 19, 3), (17, 20, 3), (18, 19, 3), (18, 20, 3), (19, 21, 3), (19, 22, 3), (20, 21, 3), (20, 22, 3), (21, 23, 3), (21, 24, 3), (22, 23, 3), (22, 24, 3), (23, 25, 3), (23, 26, 3), (24, 25, 3), (24, 26, 3), (25, 27, 3), (25, 28, 3), (26, 27, 3), (26, 28, 3), (27, 29, 3), (27, 30, 3), (28, 29, 3), (28, 30, 3), (29, 31, 3), (29, 32, 3), (30, 31, 3), (30, 32, 3), (31, 33, 3), (31, 34, 3), (32, 33, 3), (32, 34, 3), (33, 35, 3), (33, 36, 3), (34, 35, 3), (34, 36, 3), (35, 37, 3), (35, 38, 3), (36, 37, 3), (36, 38, 3), (37, 39, 3), (37, 40, 3), (38, 39, 3), (38, 40, 3), (39, 41, 3), (39, 42, 3), (40, 41, 3), (40, 42, 3), (41, 43, 3), (41, 44, 3), (42, 43, 3), (42, 44, 3), (43, 45, 3), (43, 46, 3), (44, 45, 3), (44, 46, 3), (45, 47, 3), (45, 48, 3), (46, 47, 3), (46, 48, 3), (47, 49, 3), (47, 50, 3), (48, 49, 3), (48, 50, 3), (49, 51, 3), (49, 52, 3), (50, 51, 3), (50, 52, 3), (51, 53, 3), (51, 54, 3), (52, 53, 3), (52, 54, 3), (53, 55, 3), (53, 56, 3), (54, 55, 3), (54, 56, 3), (55, 57, 3), (55, 58, 3), (56, 57, 3), (56, 58, 3), (57, 59, 3), (57, 60, 3), (58, 59, 3), (58, 60, 3), (59, 61, 3), (59, 62, 3), (60, 61, 3), (60, 62, 3), (61, 63, 3), (61, 64, 3), (62, 63, 3), (62, 64, 3), (63, 65, 3), (63, 66, 3), (64, 65, 3), (64, 66, 3), (65, 67, 3), (65, 68, 3), (66, 67, 3), (66, 68, 3), (67, 69, 3), (67, 70, 3), (68, 69, 3), (68, 70, 3), (69, 71, 3), (69, 72, 3), (70, 71, 3), (70, 72, 3), (71, 73, 3), (71, 74, 3), (72, 73, 3), (72, 74, 3), (73, 75, 3), (73, 76, 3), (74, 75, 3), (74, 76, 3), (75, 77, 3), (75, 78, 3), (76, 77, 3), (76, 78, 3), (77, 79, 3), (77, 80, 3), (78, 79, 3), (78, 80, 3), (79, 81, 3), (79, 82, 3), (80, 81, 3), (80, 82, 3), (81, 83, 3), (81, 84, 3), (82, 83, 3), (82, 84, 3), (83, 85, 3), (83, 86, 3), (84, 85, 3), (84, 86, 3), (85, 87, 3), (85, 88, 3), (86, 87, 3), (86, 88, 3), (87, 89, 3), (87, 90, 3), (88, 89, 3), (88, 90, 3), (89, 91, 3), (89, 92, 3), (90, 91, 3), (90, 92, 3), (91, 93, 3), (91, 94, 3), (92, 93, 3), (92, 94, 3), (93, 95, 3), (93, 96, 3), (94, 95, 3), (94, 96, 3), (95, 97, 3), (95, 98, 3), (96, 97, 3), (96, 98, 3), (97, 3, 3), (98, 3, 3)];
+            bencher.iter(|| {
             let mut inst = MaxFlow::new();
             for &(src, tar, cap) in &edges {
                 inst.add_edge(src, tar, cap);
@@ -113,5 +51,5 @@ fn max_flow_binary_tree_graph(c: &mut Criterion) {
     });
 }
 
-criterion_group!(benches, max_flow_random_graph, max_flow_binary_tree_graph);
+criterion_group!(benches, max_flow_random_graph, max_flow_misawa);
 criterion_main!(benches);
