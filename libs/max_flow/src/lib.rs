@@ -132,15 +132,11 @@ fn primal(
             quota -= f;
             edges[i].flow -= f;
             edges[i ^ 1].flow += f;
-            if f == 0 {
-                iter[x].next().unwrap();
-            }
             if quota == 0 {
                 return result;
             }
-        } else {
-            iter[x].next().unwrap();
         }
+        iter[x].next().unwrap();
     }
     label[x] = usize::MAX;
     result
