@@ -1,4 +1,4 @@
-use std::{collections::VecDeque, slice::Iter};
+use std::{collections::VecDeque, iter::Peekable, slice::Iter};
 
 #[derive(Debug, Default)]
 pub struct Recorder {
@@ -10,12 +10,10 @@ pub struct Recorder {
 pub struct MaxFlow {
     pub edges: Vec<Edge>,
 }
-
 impl MaxFlow {
     pub fn new() -> Self {
         Self::default()
     }
-
     pub fn add_edge(&mut self, src: usize, tar: usize, cap: u64) {
         self.edges.push(Edge {
             src,
@@ -30,7 +28,6 @@ impl MaxFlow {
             flow: cap,
         });
     }
-
     pub fn solve(
         &mut self,
         sources: impl IntoIterator<Item = usize>,
@@ -59,6 +56,7 @@ impl MaxFlow {
 
         let mut flow = 0;
         loop {
+            recorder.bfs_count.push(1);
             let mut label = vec![usize::MAX; n];
             let mut queue = VecDeque::new();
             for &x in &sources {
@@ -79,10 +77,8 @@ impl MaxFlow {
                 return flow;
             }
 
-            recorder.bfs_count.push(1);
             recorder.call_primal_count.push(0);
-
-            let mut iter = g.iter().map(|g| g.iter()).collect::<Vec<_>>();
+            let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
             for &x in &sources {
                 let f = primal(
                     u64::MAX,
@@ -93,9 +89,6 @@ impl MaxFlow {
                     &is_sink,
                     recorder,
                 );
-                if f == 0 {
-                    label[x] = usize::MAX;
-                }
                 flow += f;
             }
         }
@@ -103,24 +96,24 @@ impl MaxFlow {
 }
 
 fn primal(
-    f: u64,
+    mut quota: u64,
     x: usize,
     edges: &mut Vec<Edge>,
-    iter: &mut [Iter<usize>],
+    iter: &mut [Peekable<Iter<usize>>],
     label: &mut [usize],
     is_sink: &[bool],
     recorder: &mut Recorder,
 ) -> u64 {
     *recorder.call_primal_count.last_mut().unwrap() += 1;
     if is_sink[x] {
-        return f;
+        return quota;
     }
     let mut result = 0;
-    while let Some(&i) = iter[x].next() {
+    while let Some(&&i) = iter[x].peek() {
         let y = edges[i].tar;
         if edges[i].flow < edges[i].cap && label[x] + 1 == label[y] {
-            let g = primal(
-                (f - result).min(edges[i].cap - edges[i].flow),
+            let f = primal(
+                quota.min(edges[i].cap - edges[i].flow),
                 y,
                 edges,
                 iter,
@@ -128,19 +121,21 @@ fn primal(
                 is_sink,
                 recorder,
             );
-            if g == 0 {
-                label[y] = usize::MAX;
-                continue;
+            result += f;
+            quota -= f;
+            edges[i].flow += f;
+            edges[i ^ 1].flow -= f;
+            if f == 0 {
+                iter[x].next().unwrap();
             }
-            edges[i].flow += g;
-            edges[i ^ 1].flow -= g;
-            result += g;
-            if result == f {
-                break;
+            if quota == 0 {
+                return result;
             }
+        } else {
+            iter[x].next().unwrap();
         }
     }
-    assert!(result <= f);
+    label[x] = usize::MAX;
     result
 }
 
