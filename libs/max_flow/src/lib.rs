@@ -32,7 +32,7 @@
 //! inst.add_edge(1, 3, 10);
 //! inst.add_edge(2, 3, 20);
 //!
-//! assert_eq!(inst.solve([0], [3]), 30);
+//! assert_eq!(inst.solve(4, &[0], &[3]), 30);
 //! ```
 
 use std::collections::{BinaryHeap, VecDeque};
@@ -60,25 +60,17 @@ impl MaxFlow {
             flow: cap,
         });
     }
-    pub fn solve(
-        &mut self,
-        sources: impl IntoIterator<Item = usize>,
-        sinks: impl IntoIterator<Item = usize>,
-    ) -> u64 {
+    pub fn solve(&mut self, n: usize, sources: &[usize], sinks: &[usize]) -> u64 {
         let Self { edges } = self;
-        let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
-
-        let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
-        let sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
         if sources.is_empty() || sinks.is_empty() {
             return 0;
         }
 
         let mut kind = vec![NodeKind::Internal; n];
-        for &x in &sources {
+        for &x in sources {
             kind[x] = NodeKind::Source;
         }
-        for &x in &sinks {
+        for &x in sinks {
             kind[x] = NodeKind::Sink;
         }
 
@@ -88,7 +80,7 @@ impl MaxFlow {
         }
 
         let mut excess = vec![0; n];
-        for &x in &sources {
+        for &x in sources {
             for &i in &g[x] {
                 let y = edges[i].tar;
                 let f = edges[i].cap - edges[i].flow;
@@ -103,16 +95,15 @@ impl MaxFlow {
 
         let mut height = vec![n + 1; n];
         let mut queue = VecDeque::new();
-        for &x in &sources {
+        for &x in sources {
             height[x] = n;
         }
-        for &x in &sinks {
+        for &x in sinks {
             height[x] = 0;
             queue.push_back(x);
         }
         while let Some(x) = queue.pop_front() {
             for &i in &g[x] {
-                let i: usize = i;
                 let y = edges[i].tar;
                 if kind[y] != NodeKind::Sink && height[y] == n + 1 && edges[i].flow != 0 {
                     height[y] = height[x] + 1;
@@ -128,7 +119,7 @@ impl MaxFlow {
         'pop: while let Some((_, x)) = heap.pop() {
             for &i in &g[x] {
                 let y = edges[i].tar;
-                if edges[i].flow == edges[i].cap || height[x] != height[y] + 1 {
+                if edges[i].flow == edges[i].cap || height[x] <= height[y] {
                     continue;
                 }
                 let f = excess[x].min(edges[i].cap - edges[i].flow);
@@ -144,7 +135,13 @@ impl MaxFlow {
                 }
             }
             assert!(excess[x] > 0);
-            height[x] += 1;
+            height[x] = g[x]
+                .iter()
+                .filter(|&&i| edges[i].flow < edges[i].cap)
+                .map(|&i| height[edges[i].tar])
+                .min()
+                .unwrap()
+                + 1;
             heap.push((height[x], x));
         }
 

@@ -28,7 +28,7 @@ fn max_flow_random_graph(c: &mut Criterion) {
             for &(src, tar, cap) in &edges {
                 inst.add_edge(src, tar, cap);
             }
-            black_box(inst.solve([source], [sink]))
+            black_box(inst.solve(n, &[source], &[sink]))
         });
     });
 }
@@ -48,7 +48,7 @@ fn max_flow_misawa(c: &mut Criterion) {
             for &(src, tar, cap) in &edges {
                 inst.add_edge(src, tar, cap);
             }
-            black_box(inst.solve([source], [sink]))
+            black_box(inst.solve(100, &[source], &[sink]))
         });
     });
 }
@@ -72,7 +72,7 @@ fn max_flow_worst_gary(c: &mut Criterion) {
             for &(src, tar, cap) in &edges {
                 inst.add_edge(src, tar, cap);
             }
-            black_box(inst.solve([source], [sink]))
+            black_box(inst.solve(n, &[source], &[sink]))
         });
     });
 }

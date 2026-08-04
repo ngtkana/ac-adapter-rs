@@ -175,7 +175,7 @@ fn test_random() {
             }
         }
 
-        let flow_value = inst.solve(sources.clone(), sinks.clone());
+        let flow_value = inst.solve(n, &sources, &sinks);
 
         // フロー条件と最適性を検証
         verify_max_flow(n, &sources, &sinks, &inst, flow_value);
@@ -188,7 +188,7 @@ fn test_case_1_linear_path() {
     let mut inst = MaxFlow::new();
     inst.add_edge(0, 1, 10);
     inst.add_edge(1, 2, 5);
-    let flow = inst.solve([0], [2]);
+    let flow = inst.solve(3, &[0], &[2]);
     assert_eq!(flow, 5);
     verify_max_flow(3, &[0], &[2], &inst, flow);
 }
@@ -200,7 +200,7 @@ fn test_case_2_parallel_paths() {
     inst.add_edge(0, 2, 10);
     inst.add_edge(1, 3, 10);
     inst.add_edge(2, 3, 10);
-    let flow = inst.solve([0], [3]);
+    let flow = inst.solve(4, &[0], &[3]);
     assert_eq!(flow, 20);
     verify_max_flow(4, &[0], &[3], &inst, flow);
 }
@@ -211,7 +211,7 @@ fn test_case_3_bottleneck() {
     inst.add_edge(0, 1, 100);
     inst.add_edge(1, 2, 10);
     inst.add_edge(2, 3, 100);
-    let flow = inst.solve([0], [3]);
+    let flow = inst.solve(4, &[0], &[3]);
     assert_eq!(flow, 10);
     verify_max_flow(4, &[0], &[3], &inst, flow);
 }
@@ -222,7 +222,7 @@ fn test_case_4_multi_source() {
     inst.add_edge(0, 2, 10);
     inst.add_edge(1, 2, 15);
     inst.add_edge(2, 3, 30);
-    let flow = inst.solve([0, 1], [3]);
+    let flow = inst.solve(4, &[0, 1], &[3]);
 
     // デバッグ出力
     if flow != 25 {
@@ -247,7 +247,7 @@ fn test_case_5_multi_sink() {
     inst.add_edge(0, 2, 15);
     inst.add_edge(1, 3, 20);
     inst.add_edge(2, 4, 20);
-    let flow = inst.solve([0], [3, 4]);
+    let flow = inst.solve(5, &[0], &[3, 4]);
     assert_eq!(flow, 25);
     verify_max_flow(5, &[0], &[3, 4], &inst, flow);
 }
@@ -260,7 +260,7 @@ fn test_case_6_doc_example() {
     inst.add_edge(1, 2, 10);
     inst.add_edge(1, 3, 10);
     inst.add_edge(2, 3, 20);
-    let flow = inst.solve([0], [3]);
+    let flow = inst.solve(4, &[0], &[3]);
     assert_eq!(flow, 30);
     verify_max_flow(4, &[0], &[3], &inst, flow);
 }
@@ -287,7 +287,7 @@ fn test_case_7_requires_multiple_primal_calls_per_bfs() {
     inst.add_edge(1, 2, 1); // v1 -> v2
     inst.add_edge(2, 3, 1); // v2 -> v3
     inst.add_edge(3, 4, 10); // v3 -> t
-    let flow = inst.solve([0], [4]);
+    let flow = inst.solve(5, &[0], &[4]);
 
     // デバッグ出力
     if flow != 2 {
@@ -308,7 +308,7 @@ fn test_case_7_requires_multiple_primal_calls_per_bfs() {
 fn test_case_8_directly_connect_between_source_and_sink() {
     let mut inst = MaxFlow::new();
     inst.add_edge(0, 1, 42);
-    let flow = inst.solve([0], [1]);
+    let flow = inst.solve(2, &[0], &[1]);
     assert_eq!(flow, 42);
     verify_max_flow(2, &[0], &[1], &inst, flow);
 }
