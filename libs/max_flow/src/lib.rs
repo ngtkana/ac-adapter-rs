@@ -67,6 +67,7 @@ impl MaxFlow {
         let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
         let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
         let sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
+
         let mut kind = vec![NodeKind::Internal; n];
         for &x in &sources {
             kind[x] = NodeKind::Source;
@@ -80,9 +81,8 @@ impl MaxFlow {
             g[e.src].push(i);
         }
 
-        let mut excess = vec![0; n];
         let mut height = vec![0; n];
-        let mut height_count = vec![0; 2 * n];
+        let mut excess = vec![0; n];
         let mut stacks = vec![vec![]; 2 * n];
         for &x in &sources {
             height[x] = n;
@@ -100,13 +100,14 @@ impl MaxFlow {
                 edges[i ^ 1].flow -= f;
             }
         }
+
+        let mut height_count = vec![0; 2 * n];
         for &h in &height {
             height_count[h] += 1;
         }
 
         let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-        if !stacks[0].is_empty() {
-            let mut max_height = 0;
+        if let Some(mut max_height) = (0..n).rfind(|&h| !stacks[h].is_empty()) {
             'pop: loop {
                 let x = stacks[max_height].pop().unwrap();
                 assert_eq!(height[x], max_height);
@@ -140,13 +141,14 @@ impl MaxFlow {
                 assert!(excess[x] > 0);
                 height_count[height[x]] -= 1;
                 height[x] = if (1..n).contains(&max_height) && height_count[height[x]] == 0 {
-                    n + 1
+                    n + 1 // gap heuristic
                 } else {
                     height[x] + 1
                 };
+                height_count[height[x]] += 1;
+                stacks[height[x]].push(x);
                 iter[x] = g[x].iter().peekable();
                 max_height = height[x];
-                stacks[max_height].push(x);
             }
         }
 
