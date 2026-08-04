@@ -35,7 +35,7 @@
 //! assert_eq!(inst.solve([0], [3]), 30);
 //! ```
 
-use std::collections::BinaryHeap;
+use std::collections::{BinaryHeap, VecDeque};
 
 /// フローネットワーク
 #[derive(Default, Debug)]
@@ -101,10 +101,26 @@ impl MaxFlow {
             }
         }
 
-        let mut height = vec![0; n];
+        let mut height = vec![n + 1; n];
+        let mut queue = VecDeque::new();
         for &x in &sources {
             height[x] = n;
         }
+        for &x in &sinks {
+            height[x] = 0;
+            queue.push_back(x);
+        }
+        while let Some(x) = queue.pop_front() {
+            for &i in &g[x] {
+                let i: usize = i;
+                let y = edges[i].tar;
+                if kind[y] != NodeKind::Sink && height[y] == n + 1 && edges[i].flow != 0 {
+                    height[y] = height[x] + 1;
+                    queue.push_back(y);
+                }
+            }
+        }
+
         let mut heap = (0..n)
             .filter(|&x| kind[x] == NodeKind::Internal && excess[x] != 0)
             .map(|x| (height[x], x))
