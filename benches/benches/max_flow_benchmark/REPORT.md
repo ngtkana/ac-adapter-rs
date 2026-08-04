@@ -5,6 +5,7 @@
 | v0: Dinic | 216.59 ms | 242.45 ms | 2026-08-03 |
 | v1: Dinic with backward DFS | 111.08 ms | 148.04 ms | 2026-08-04 |
 | v2: Push-Relabel with Heap | 148.79 ms | 132.37 ms | 2026-08-04 |
+| v3: Push-Relabel with BFS Init. | 47.381 ms | 111.36 ms | 2026-08-04 |
 
 ## Instances
 
@@ -36,3 +37,11 @@ DFS を逆から行うことで、到達不能な頂点を訪れることを防�
 ## v2: Push-Relabel by Heap
 
 Excess 頂点を heap で管理する(highest height戦略)
+
+# 03. Push-Relabel by BFS Init.
+
+高さの初期化を次のように変更しました
+
+* 旧: source 以外全て $0$
+* 新: source 以外全て sink からの $G_f$ における距離
+
