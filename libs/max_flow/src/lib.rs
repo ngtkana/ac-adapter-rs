@@ -66,16 +66,9 @@ impl MaxFlow {
         sinks: impl IntoIterator<Item = usize>,
     ) -> u64 {
         let Self { edges } = self;
-        let sources = sources.into_iter().collect::<Vec<_>>();
-        let mut sinks = sinks.into_iter().collect::<Vec<_>>();
-        let n = edges
-            .iter()
-            .map(|e| e.src)
-            .chain(sources.iter().copied())
-            .chain(sinks.iter().copied())
-            .max()
-            .unwrap()
-            + 1;
+        let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
+        let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
+        let mut sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
         let mut g = vec![vec![]; n];
         for (i, &e) in edges.iter().enumerate() {
             g[e.src].push(i);
