@@ -2,8 +2,9 @@
 
 | Algorithm | Random | Worst | 日付 |
 |---------|-----------|------------|------|
-| v0 | 216.59 ms | 242.45 ms | 2026-08-03 |
-| v1 | 111.08 ms | 148.04 ms | 2026-08-04 |
+| v0: Dinic | 216.59 ms | 242.45 ms | 2026-08-03 |
+| v1: Dinic with backward DFS | 111.08 ms | 148.04 ms | 2026-08-04 |
+| v2: Push-Relabel with heap | 159.56 ms | 118.98 ms | 2026-08-04 |
 
 ## Instances
 
