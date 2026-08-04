@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["mint"],"macro":["define_mod"],"struct":["Mint"],"trait":["Mod","Scalar"]};

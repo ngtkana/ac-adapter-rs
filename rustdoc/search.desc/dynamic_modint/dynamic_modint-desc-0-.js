@@ -1,0 +1,1 @@
+searchState.loadedDescShard("dynamic_modint", 0, "実行時(遅延初期化) modint\n実行時 modint 型\n法を指定するためのタグ型\nベースとなる整数型 (primitive unsigned int)\n遅延初期化される MOD を定義する\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n<code>Mint::new</code> と同じ\n整数を受け取って、<code>Mint</code> を構築する\n中身の整数を取り出す")
