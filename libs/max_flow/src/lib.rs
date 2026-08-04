@@ -35,6 +35,8 @@
 //! assert_eq!(inst.solve([0], [3]), 30);
 //! ```
 
+use std::collections::VecDeque;
+
 /// フローネットワーク
 #[derive(Default, Debug)]
 pub struct MaxFlow {
@@ -58,6 +60,7 @@ impl MaxFlow {
             flow: cap,
         });
     }
+    #[allow(clippy::too_many_lines)]
     pub fn solve(
         &mut self,
         sources: impl IntoIterator<Item = usize>,
@@ -67,6 +70,10 @@ impl MaxFlow {
         let n = edges.iter().map(|e| e.src).max().map_or(0, |x| x + 1);
         let sources = sources.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
         let sinks = sinks.into_iter().filter(|&x| x < n).collect::<Vec<_>>();
+
+        if sources.is_empty() || sinks.is_empty() {
+            return 0;
+        }
 
         let mut kind = vec![NodeKind::Internal; n];
         for &x in &sources {
@@ -81,19 +88,13 @@ impl MaxFlow {
             g[e.src].push(i);
         }
 
-        let mut height = vec![0; n];
         let mut excess = vec![0; n];
-        let mut stacks = vec![vec![]; 2 * n];
         for &x in &sources {
-            height[x] = n;
             for &i in &g[x] {
                 let y = edges[i].tar;
                 let f = edges[i].cap - edges[i].flow;
                 if kind[y] == NodeKind::Source || f == 0 {
                     continue;
-                }
-                if excess[y] == 0 && kind[y] == NodeKind::Internal {
-                    stacks[0].push(y);
                 }
                 excess[y] += f;
                 edges[i].flow += f;
@@ -101,13 +102,36 @@ impl MaxFlow {
             }
         }
 
+        // init with bfs
+        let mut height = vec![0; n];
+        for &x in &sinks {
+            height[x] = 0;
+        }
+        for &x in &sources {
+            height[x] = n;
+        }
+        let mut queue = VecDeque::from(sinks);
+        while let Some(x) = queue.pop_front() {
+            for &i in &g[x] {
+                let y = edges[i].tar;
+                if kind[y] == NodeKind::Internal && edges[i].flow != 0 && height[y] == n + 1 {
+                    height[y] = height[x] + 1;
+                    queue.push_back(y);
+                }
+            }
+        }
+
         let mut height_count = vec![0; 2 * n];
-        for &h in &height {
-            height_count[h] += 1;
+        let mut stacks = vec![vec![]; 2 * n];
+        for x in (0..n).filter(|&x| kind[x] == NodeKind::Internal) {
+            height_count[height[x]] += 1;
+            if excess[x] != 0 {
+                stacks[height[x]].push(x);
+            }
         }
 
         let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
-        if let Some(mut max_height) = (0..n).rfind(|&h| !stacks[h].is_empty()) {
+        if let Some(mut max_height) = stacks.iter().rposition(|s| !s.is_empty()) {
             'pop: loop {
                 let x = stacks[max_height].pop().unwrap();
                 assert_eq!(height[x], max_height);
@@ -140,7 +164,7 @@ impl MaxFlow {
                 }
                 assert!(excess[x] > 0);
                 height_count[height[x]] -= 1;
-                height[x] = if (1..n).contains(&max_height) && height_count[height[x]] == 0 {
+                height[x] = if (1..n - 1).contains(&max_height) && height_count[height[x]] == 0 {
                     n + 1 // gap heuristic
                 } else {
                     height[x] + 1
