@@ -35,7 +35,7 @@
 //! assert_eq!(inst.solve([0], [3]), 30);
 //! ```
 
-use std::{collections::VecDeque, slice::Iter};
+use std::{collections::VecDeque, iter::Peekable, slice::Iter};
 
 /// フローネットワーク
 #[derive(Default, Debug)]
@@ -107,12 +107,9 @@ impl MaxFlow {
                 return flow;
             }
 
-            let mut iter = g.iter().map(|g| g.iter()).collect::<Vec<_>>();
+            let mut iter = g.iter().map(|g| g.iter().peekable()).collect::<Vec<_>>();
             for &x in &sources {
                 let f = primal(u64::MAX, x, edges, &mut iter, &mut label, &is_sink);
-                if f == 0 {
-                    label[x] = usize::MAX;
-                }
                 flow += f;
             }
         }
@@ -120,41 +117,43 @@ impl MaxFlow {
 }
 
 fn primal(
-    f: u64,
+    mut quota: u64,
     x: usize,
     edges: &mut Vec<Edge>,
-    iter: &mut [Iter<usize>],
+    iter: &mut [Peekable<Iter<usize>>],
     label: &mut [usize],
     is_sink: &[bool],
 ) -> u64 {
     if is_sink[x] {
-        return f;
+        return quota;
     }
     let mut result = 0;
-    while let Some(&i) = iter[x].next() {
+    while let Some(&&i) = iter[x].peek() {
         let y = edges[i].tar;
         if edges[i].flow < edges[i].cap && label[x] + 1 == label[y] {
-            let g = primal(
-                (f - result).min(edges[i].cap - edges[i].flow),
+            let f = primal(
+                quota.min(edges[i].cap - edges[i].flow),
                 y,
                 edges,
                 iter,
                 label,
                 is_sink,
             );
-            if g == 0 {
-                label[y] = usize::MAX;
-                continue;
+            result += f;
+            quota -= f;
+            edges[i].flow += f;
+            edges[i ^ 1].flow -= f;
+            if f == 0 {
+                iter[x].next().unwrap();
             }
-            edges[i].flow += g;
-            edges[i ^ 1].flow -= g;
-            result += g;
-            if result == f {
-                break;
+            if quota == 0 {
+                return result;
             }
+        } else {
+            iter[x].next().unwrap();
         }
     }
-    assert!(result <= f);
+    label[x] = usize::MAX;
     result
 }
 
