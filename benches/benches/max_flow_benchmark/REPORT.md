@@ -6,7 +6,7 @@
 | v1: Dinic with backward DFS | 111.08 ms | 148.04 ms | 2026-08-04 |
 | v2: Push-Relabel with Heap | 159.56 ms | 118.98 ms | 2026-08-04 |
 | v3: Push-Relabel with Buckets | 148.05 ms | 131.92 ms | 2026-08-04 |
-| v4: Push-Relabel with Gap Heuristic | 152.87 ms | 163.56 ms | 2026-08-04 |
+| v4: Push-Relabel with Gap Heuristic | 156.07 ms | 8.6569 μs | 2026-08-04 |
 
 ## Instances
 
@@ -43,6 +43,6 @@ Excess 頂点を heap で管理する(highest height戦略)
 
 それを buckets に変更
 
-## v4: Push-Relabel by Buckets
+## v4: Push-Relabel by Gap Heuristic
 
 Gap heuristic を導入。そのために各 $h$ に対して高さ $h$ である中間ノードの個数を管理します。

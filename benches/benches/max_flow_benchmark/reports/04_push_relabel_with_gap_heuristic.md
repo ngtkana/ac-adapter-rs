@@ -4,30 +4,26 @@ Gap heuristic を導入。そのために各 $h$ に対して高さ $h$ であ�
 
 ```
 Benchmarking max_flow_random_n100000_m500000: Warming up for 3.0000 s
-Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 15.4s, or reduce sample count to 30.
+Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 15.7s, or reduce sample count to 30.
 max_flow_random_n100000_m500000
-                        time:   [152.36 ms 152.87 ms 153.41 ms]
-                        change: [+2.7511% +3.2541% +3.7789%] (p = 0.00 < 0.05)
+                        time:   [154.78 ms 156.07 ms 157.68 ms]
+                        change: [+1.2197% +2.0981% +3.1435%] (p = 0.00 < 0.05)
                         Performance has regressed.
-Found 1 outliers among 100 measurements (1.00%)
+Found 2 outliers among 100 measurements (2.00%)
   1 (1.00%) high mild
-
-max_flow_misawa         time:   [214.62 µs 214.98 µs 215.36 µs]
-                        change: [+19.625% +20.505% +21.270%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 8 outliers among 100 measurements (8.00%)
-  1 (1.00%) low mild
-  3 (3.00%) high mild
-  4 (4.00%) high severe
-
-Benchmarking max_flow_worst_gary_n3000: Warming up for 3.0000 s
-Warning: Unable to complete 100 samples in 5.0s. You may wish to increase target time to 16.3s, or reduce sample count to 30.
-max_flow_worst_gary_n3000
-                        time:   [163.20 ms 163.56 ms 163.96 ms]
-                        change: [+23.636% +23.987% +24.360%] (p = 0.00 < 0.05)
-                        Performance has regressed.
-Found 3 outliers among 100 measurements (3.00%)
-  2 (2.00%) high mild
   1 (1.00%) high severe
 
+max_flow_misawa         time:   [8.6111 µs 8.6569 µs 8.7131 µs]
+                        change: [-96.012% -95.986% -95.956%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 13 outliers among 100 measurements (13.00%)
+  6 (6.00%) high mild
+  7 (7.00%) high severe
+
+max_flow_worst_gary_n3000
+                        time:   [254.57 µs 256.18 µs 257.92 µs]
+                        change: [-99.844% -99.843% -99.842%] (p = 0.00 < 0.05)
+                        Performance has improved.
+Found 3 outliers among 100 measurements (3.00%)
+  3 (3.00%) high mild
 ```
