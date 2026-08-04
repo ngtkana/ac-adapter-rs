@@ -4,7 +4,8 @@
 |---------|-----------|------------|------|
 | v0: Dinic | 216.59 ms | 242.45 ms | 2026-08-03 |
 | v1: Dinic with backward DFS | 111.08 ms | 148.04 ms | 2026-08-04 |
-| v2: Push-Relabel with heap | 159.56 ms | 118.98 ms | 2026-08-04 |
+| v2: Push-Relabel with Heap | 159.56 ms | 118.98 ms | 2026-08-04 |
+| v3: Push-Relabel with Buckets | 148.05 ms | 131.92 ms | 2026-08-04 |
 
 ## Instances
 
@@ -30,4 +31,13 @@ $O(V^2E)$ 時間
 
 ## v1: Dinic with backward DFS
 
-DFS を逆から行うことで、到達不能頂点を調べなくて済むという heuristic 高速化
+DFS を逆から行うことで、到達不能な頂点を訪れることを防ぐ
+
+
+## v2: Push-Relabel by Heap
+
+Excess 頂点を heap で管理する(highest height戦略)
+
+## v3: Push-Relabel by Buckets
+
+それを buckets に変更
