@@ -32,7 +32,9 @@
 //! inst.add_edge(1, 3, 10);
 //! inst.add_edge(2, 3, 20);
 //!
-//! assert_eq!(inst.solve(4, &[0], &[3]), 30);
+//! let (flow, cut) = inst.solve(4, 0, 3);
+//! assert_eq!(flow, 30);
+//! assert_eq!(cut, [true, false, false, false]);
 //! ```
 
 use std::collections::{BinaryHeap, VecDeque};
@@ -60,19 +62,11 @@ impl MaxFlow {
             flow: cap,
         });
     }
-    pub fn solve(&mut self, n: usize, sources: &[usize], sinks: &[usize]) -> u64 {
+    pub fn original_edges(&self) -> Vec<Edge> {
+        self.edges.iter().step_by(2).copied().collect()
+    }
+    pub fn solve(&mut self, n: usize, source: usize, sink: usize) -> (u64, Vec<bool>) {
         let Self { edges } = self;
-        if sources.is_empty() || sinks.is_empty() {
-            return 0;
-        }
-
-        let mut kind = vec![NodeKind::Internal; n];
-        for &x in sources {
-            kind[x] = NodeKind::Source;
-        }
-        for &x in sinks {
-            kind[x] = NodeKind::Sink;
-        }
 
         let mut g = vec![vec![]; n];
         for (i, &e) in edges.iter().enumerate() {
@@ -80,32 +74,26 @@ impl MaxFlow {
         }
 
         let mut excess = vec![0; n];
-        for &x in sources {
-            for &i in &g[x] {
-                let y = edges[i].tar;
-                let f = edges[i].cap - edges[i].flow;
-                if kind[y] == NodeKind::Source || f == 0 {
-                    continue;
-                }
-                excess[y] += f;
-                edges[i].flow += f;
-                edges[i ^ 1].flow -= f;
+        for &i in &g[source] {
+            let y = edges[i].tar;
+            let f = edges[i].cap - edges[i].flow;
+            if y == source || f == 0 {
+                continue;
             }
+            excess[y] += f;
+            edges[i].flow += f;
+            edges[i ^ 1].flow -= f;
         }
 
         let mut height = vec![n + 1; n];
         let mut queue = VecDeque::new();
-        for &x in sources {
-            height[x] = n;
-        }
-        for &x in sinks {
-            height[x] = 0;
-            queue.push_back(x);
-        }
+        height[source] = n;
+        height[sink] = 0;
+        queue.push_back(sink);
         while let Some(x) = queue.pop_front() {
             for &i in &g[x] {
                 let y = edges[i].tar;
-                if kind[y] != NodeKind::Sink && height[y] == n + 1 && edges[i].flow != 0 {
+                if y != sink && height[y] == n + 1 && edges[i].flow != 0 {
                     height[y] = height[x] + 1;
                     queue.push_back(y);
                 }
@@ -113,7 +101,7 @@ impl MaxFlow {
         }
 
         let mut heap = (0..n)
-            .filter(|&x| kind[x] == NodeKind::Internal && excess[x] != 0)
+            .filter(|&x| x != source && x != sink && excess[x] != 0)
             .map(|x| (height[x], x))
             .collect::<BinaryHeap<_>>();
         'pop: while let Some((_, x)) = heap.pop() {
@@ -123,7 +111,7 @@ impl MaxFlow {
                     continue;
                 }
                 let f = excess[x].min(edges[i].cap - edges[i].flow);
-                if excess[y] == 0 && kind[y] == NodeKind::Internal {
+                if excess[y] == 0 && y != source && y != sink {
                     heap.push((height[y], y));
                 }
                 edges[i].flow += f;
@@ -145,10 +133,9 @@ impl MaxFlow {
             heap.push((height[x], x));
         }
 
-        (0..n)
-            .filter(|&x| kind[x] == NodeKind::Sink)
-            .map(|x| excess[x])
-            .sum()
+        let cut = height.iter().map(|&h| h >= n).collect();
+        let flow = excess[sink];
+        (flow, cut)
     }
 }
 
@@ -159,11 +146,4 @@ pub struct Edge {
     pub tar: usize,
     pub cap: u64,
     pub flow: u64,
-}
-
-#[derive(PartialEq, Clone, Copy)]
-enum NodeKind {
-    Source,
-    Sink,
-    Internal,
 }
