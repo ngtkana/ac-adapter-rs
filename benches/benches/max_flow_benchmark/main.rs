@@ -8,28 +8,27 @@ fn max_flow_random_graph(c: &mut Criterion) {
     let n = 100_000;
     let m = 500_000;
     c.bench_function(&format!("max_flow_random_n{n}_m{m}"), |b| {
-        let mut rng = StdRng::seed_from_u64(42);
-
-        let mut edges = vec![];
-        for _ in 0..m {
-            let src = rng.gen_range(0..n);
-            let tar = rng.gen_range(0..n);
-            if src != tar {
-                let cap = rng.gen_range(1..=100);
-                edges.push((src, tar, cap));
-            }
-        }
-
-        let source = 0;
-        let sink = n - 1;
-
-        b.iter(|| {
-            let mut inst = MaxFlow::new();
-            for &(src, tar, cap) in &edges {
-                inst.add_edge(src, tar, cap);
-            }
-            black_box(inst.solve(n, source, sink))
-        });
+        b.iter_batched(
+            || {
+                let mut rng = StdRng::seed_from_u64(42);
+                let mut edges = vec![];
+                for _ in 0..m {
+                    let src = rng.gen_range(0..n);
+                    let tar = rng.gen_range(0..n);
+                    if src != tar {
+                        let cap = rng.gen_range(1..=100);
+                        edges.push((src, tar, cap));
+                    }
+                }
+                let mut inst = MaxFlow::new();
+                for &(src, tar, cap) in &edges {
+                    inst.add_edge(src, tar, cap);
+                }
+                (inst, 0, n - 1)
+            },
+            |(mut inst, source, sink)| black_box(inst.solve(n, source, sink)),
+            criterion::BatchSize::SmallInput,
+        );
     });
 }
 
