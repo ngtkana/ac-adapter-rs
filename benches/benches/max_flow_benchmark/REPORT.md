@@ -6,6 +6,7 @@
 | 01. Dinic with backward DFS | 111.08 ms | 148.04 ms | 2026-08-04 |
 | 02. Push-Relabel with Heap | 148.79 ms | 132.37 ms | 2026-08-04 |
 | 03. Push-Relabel with BFS Init. | 47.381 ms | 111.36 ms | 2026-08-04 |
+| 04. Update bench | 35.256 ms | 129.26 ms | 2026-08-06 |
 
 ## Instances
 
@@ -44,4 +45,9 @@ Excess 頂点を heap で管理する(highest height戦略)
 
 * 旧: source 以外全て $0$
 * 新: source 以外全て sink からの $G_f$ における距離
+
+
+## 04. Update bench
+
+辺のランダム生成と `add_edge` の時間が含まれてしまっていたので、`b.iter_batched` を使って測定対象から排除
 
