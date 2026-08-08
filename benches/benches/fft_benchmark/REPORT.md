@@ -1,69 +1,88 @@
-# FFT/IFFT 高速化ベンチマーク結果
+# FFT Benchmark Report
 
-## 環境
-- FFT サイズ: 1<<23 (8,388,608 elements)
-- Prime P: 998_244_353
-- Compiler: rustc 1.89.0
-- Build: release (optimized)
 
-## Baseline (2025-07-24)
-**実装**: 既存の radix-2 DIF Cooley-Tukey
+| Version | `fft_1^23` | `fft_with_twiddle_factors` | 
+| - | - | - |
+| 00. Radix-2 decimation in frequency | 255.11 ms | - |
+| 01. Pre-Calculate Twiddle Factors | 172.55 ms | 155.02 ms |
+| 02. Radix-4 decimation in frequency (no pre-calculation) | 159.67 ms | - |
+| 03. Pre-Calculation & Radix-4 | 175.02 ms | 195.43 ms |
 
-```
-fft_1<<23: 256.72 ms - 257.72 ms
-  Mean: 257.21 ms
-  Std Dev: ~0.50 ms
-  Samples: 100
-```
 
----
+## 00. Radix-2 decimation in frequency
 
-## ステップ1: Butterfly Operation 融合（4要素ずつアンロール）
+これを素直にやります。
 
-**実装**: 内側ループを 4 要素ずつ処理、twiddle factor を事前計算
-
-```
-fft_1<<23: 242.71 ms - 244.74 ms
-  Mean: 243.68 ms
-  Std Dev: ~1.03 ms
-  Samples: 100
+```rust
+[*a, *b] = [*a + *b, *a - *b];
+*b *= wk;
+wk *= w;
 ```
 
-**改善結果**:
-- 絶対値: 257.21 - 243.68 = **13.53 ms削減**
-- 改善率: **5.3% 高速化** ✓
-- テスト状態: ✓ ユニットテスト通過（6/6） / ✓ プロパティテスト通過（6/6）
-- 状態: **✓ 確定採用**
+## 01. Radix-2 decimation in frequency
 
----
+`fft` 関数内で Twiddle factor を全て前計算。
+データ表現は、$(\_, e[0], e[0], e[1/4], e[0], e[1/8], e[2/8], e[3/8], e[0], ...)$
 
-## ステップ2: Radix-4 化
+ちなみに、`build_twiddle_factors` 自体の benchmark 結果は 21.789 ms
 
-**実装**: Cooley-Tukey Radix-4 DIF
-- 周波数を 4 グループに分割
-- 段数を半減（log₂(n) → log₄(n)）
-- unsafe で 4 要素を同時取得・処理
-- 奇数段対応: n=2 の fallback 処理
-
-```
-fft_1<<23: 159.96 ms - 161.82 ms
-  Mean: 160.85 ms
-  Std Dev: ~0.93 ms
-  Samples: 100
+```rust
+let mut len = 4;
+while len <= n {
+    for i in 0..len / 4 {
+        twiddle_factors[len / 2 + i * 2] = twiddle_factors[len / 4 + i];
+    }
+    for i in 0..len / 4 {
+        twiddle_factors[len / 2 + i * 2 + 1] =
+            twiddle_factors[len / 2 + i * 2] * Diroot::FORWARD[len.trailing_zeros() as usize];
+    }
+    len *= 2;
+}
 ```
 
-**改善結果**:
-- 絶対値: 257.21 - 160.85 = **96.36 ms削減**
-- 改善率: **37.4% 高速化** ✓✓✓
-- テスト状態: ✓ ユニットテスト通過（2/2） / ✓ プロパティテスト通過（6/6）
-- 状態: **✓ 確定採用**
+## 02. Radix-4 decimation in frequency (no pre-calculation)
 
----
+一旦 pre-calculation を revert して、radix-4 を試します。
 
-## まとめ
+$n, n / 4, n / 16, \dots$ のように行います。
 
-| 最適化 | 平均時間 | 改善率 | 状態 |
-|--------|---------|--------|------|
-| Baseline | 257.21 ms | - | ✓ 確定 |
-| Butterfly融合 | 243.68 ms | 5.3% | 参考 |
-| **Radix-4化** | **160.85 ms** | **37.4%** | ✓ **確定採用** |
+```rust
+[*a, *c] = [*a + *c, *a - *c];
+[*b, *d] = [*b + *d, *b - *d];
+*d *= forth;
+[*a, *b] = [*a + *b, *a - *b];
+[*c, *d] = [*c + *d, *c - *d];
+let wk2 = wk * wk;
+*b *= wk2;
+*c *= wk;
+*d *= wk * wk2;
+wk *= w;
+```
+
+## 03. Pre-Calculation & Radix-4
+
+`wk`, `wk2` を `twiddle_factors` から取ってきます。$n/2 \le 3i$ になりうるので結局 $w ^ {3i}$ は計算しないといけないというね。
+
+逆効果でした。
+
+```rust
+[*a, *c] = [*a + *c, *a - *c];
+[*b, *d] = [*b + *d, *b - *d];
+*d *= forth;
+[*a, *b] = [*a + *b, *a - *b];
+[*c, *d] = [*c + *d, *c - *d];
+let w = twiddle_factors[n / 2 + i];
+let w2 = twiddle_factors[n / 4 + i];
+*b *= w2;
+*c *= w;
+*d *= w2 * w;
+```
+
+## アイデアメモ
+
+`twiddle_factors` は半周分ではなく全周分計算すると良いことがありそう
+
+* `fft` 用と `ifft` 用を兼ねられる
+* そうしたら `Diroot::{FORWARD, BACKWARD}` も片方でよくなる
+* Radix-4 のときの $n / 2 \le 3i$ 問題も解決する
+* でも当然長さは $2$ 倍になる
