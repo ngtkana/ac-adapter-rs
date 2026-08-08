@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["fft","ifft","mask_lower_part","split_fft"]};
+window.SIDEBAR_ITEMS = {"fn":["build_twiddle_factors_backward","build_twiddle_factors_forward","fft","fft_with_twiddle_factors","ifft","ifft_with_twiddle_factors"]};
