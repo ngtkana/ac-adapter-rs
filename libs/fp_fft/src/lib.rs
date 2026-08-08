@@ -7,7 +7,6 @@
 //! 配列 $(x_0, \ldots, x_{n-1})$ に対して：
 //! - `fft`: $X_i = \sum_{j=0}^{n-1} x_j \cdot w^{ij}$（$w$ は $n$ 次原始単位根）
 //! - `ifft`: `fft` の逆変換（$1/n$ でスケール）
-//! - `split_fft`: IFFT後、各半分に FFT を適用
 //!
 //! # 例
 //!
@@ -26,7 +25,6 @@
 //!
 //! - [`fft`]: 前方フーリエ変換、$O(n \log n)$
 //! - [`ifft`]: 逆フーリエ変換、$O(n \log n)$
-//! - [`split_fft`]: IFFT → 各半分に FFT
 
 use fp::Fp;
 use fp::fp;
@@ -67,106 +65,122 @@ impl<const P: u64> DirootTrait<P> for Diroot<P> {
     const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
 }
 
-/// 前方フーリエ変換。入力 $(x_0, \ldots, x_{n-1})$ に対して $X_i = \sum_j x_j w^{ij}$。
+/// FFT をします。周波数間引き(Sande–Tukey)で、出力はbit-reversedです。
 ///
-/// インプレース変換。$n$ は 2 の累乗。
+/// 内部で [`build_twiddle_factors_forward`] と [`fft_with_twiddle_factors`] が呼ばれます。
 ///
-/// # 例
+/// # Examples
 ///
 /// ```
 /// use fp::fp;
 /// use fp_fft::fft;
+///
 /// const P: u64 = 998_244_353;
+///
 /// let mut a = [fp::<P>(3), fp::<P>(5)];
 /// fft(&mut a);
 /// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
-    assert!(items.len().is_power_of_two());
-    assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let forth = Diroot::FORWARD[2];
-    let mut n = items.len();
-    while n >= 4 {
-        let w = Diroot::FORWARD[n.trailing_zeros() as usize];
-        for chunk in items.chunks_mut(n) {
-            let mut wk = fp(1);
-            for i in 0..n / 4 {
-                let [a, b, c, d] = unsafe {
-                    chunk.get_disjoint_unchecked_mut([i, i + n / 4, i + n / 2, i + 3 * n / 4])
-                };
-                [*a, *c] = [*a + *c, *a - *c];
-                [*b, *d] = [*b + *d, *b - *d];
-                *d *= forth;
-                [*a, *b] = [*a + *b, *a - *b];
-                [*c, *d] = [*c + *d, *c - *d];
-                let wk2 = wk * wk;
-                *b *= wk2;
-                *c *= wk;
-                *d *= wk * wk2;
-                wk *= w;
-            }
-        }
-        n /= 4;
-    }
-    if n == 2 {
-        for chunk in items.chunks_mut(2) {
-            let [a, b] = chunk else { unreachable!() };
-            (*a, *b) = (*a + *b, *a - *b);
-        }
-    }
+    let twiddle_factors = build_twiddle_factors_forward(items.len());
+    fft_with_twiddle_factors(items, &twiddle_factors);
 }
 
-/// 逆フーリエ変換。`fft` の逆。出力は $1/n$ でスケール。
+/// Twiddle factor 前計算済みの場合の、[`fft`]。
 ///
-/// インプレース変換。$n$ は 2 の累乗。
-///
-/// # 例
+/// # Examples
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::fft;
-/// use fp_fft::ifft;
+/// use fp_fft::build_twiddle_factors_forward;
+/// use fp_fft::fft_with_twiddle_factors;
+///
 /// const P: u64 = 998_244_353;
-/// let orig = [fp::<P>(1), fp::<P>(2)];
-/// let mut a = orig;
-/// fft(&mut a);
-/// ifft(&mut a);
-/// assert_eq!(a, orig);
+///
+/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// let twiddle_factors = build_twiddle_factors_forward(2);
+/// fft_with_twiddle_factors(&mut a, &twiddle_factors);
+///
+/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
+/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
-pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
+pub fn fft_with_twiddle_factors<const P: u64>(
+    items: &mut [Fp<P>],
+    twiddle_factor_forward: &[Fp<P>],
+) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let mut n = 4;
-    if items.len().trailing_zeros() % 2 == 1 {
-        for chunk in items.chunks_mut(2) {
-            let [a, b] = chunk else { unreachable!() };
-            (*a, *b) = (*a + *b, *a - *b);
-        }
-        n *= 2;
-    }
-    let forth = Diroot::BACKWARD[2];
-    while n <= items.len() {
-        let w = Diroot::BACKWARD[n.trailing_zeros() as usize];
+    let mut n = items.len();
+    while n >= 2 {
         for chunk in items.chunks_mut(n) {
-            let mut wk = fp(1);
-            for i in 0..n / 4 {
-                let [a, b, c, d] = unsafe {
-                    chunk.get_disjoint_unchecked_mut([i, i + n / 4, i + n / 2, i + 3 * n / 4])
-                };
-                let wk2 = wk * wk;
-                *b *= wk2;
-                *c *= wk;
-                *d *= wk * wk2;
+            for i in 0..n / 2 {
+                let [a, b] = unsafe { chunk.get_disjoint_unchecked_mut([i, i + n / 2]) };
                 [*a, *b] = [*a + *b, *a - *b];
-                [*c, *d] = [*c + *d, *c - *d];
-                *d *= forth;
-                [*a, *c] = [*a + *c, *a - *c];
-                [*b, *d] = [*b + *d, *b - *d];
-                wk *= w;
+                *b *= twiddle_factor_forward[n / 2 + i];
             }
         }
-        n *= 4;
+        n /= 2;
+    }
+}
+
+/// IFFT をします。時間間引き(Cooley–Tukey)で、入力はbit-reversed想定です。
+///
+/// 内部で [`build_twiddle_factors_backward`] と [`fft_with_twiddle_factors`] が呼ばれます。
+///
+/// # Examples
+///
+/// ```
+/// use fp::fp;
+/// use fp_fft::ifft;
+///
+/// const P: u64 = 998_244_353;
+///
+/// let mut a = [fp::<P>(12), fp::<P>(4)];
+/// ifft(&mut a);
+///
+/// assert_eq!(a[0], fp::<P>(8));
+/// assert_eq!(a[1], fp::<P>(4));
+/// ```
+pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
+    let twiddle_factors = build_twiddle_factors_backward(items.len());
+    ifft_with_twiddle_factors(items, &twiddle_factors);
+}
+
+/// Twiddle factor 前計算済みの場合の、[`ifft`]。
+///
+/// # Examples
+///
+/// ```
+/// use fp::fp;
+/// use fp_fft::build_twiddle_factors_backward;
+/// use fp_fft::ifft_with_twiddle_factors;
+///
+/// const P: u64 = 998_244_353;
+///
+/// let mut a = [fp::<P>(12), fp::<P>(4)];
+/// let twiddle_factors = build_twiddle_factors_backward(2);
+/// ifft_with_twiddle_factors(&mut a, &twiddle_factors);
+///
+/// assert_eq!(a[0], fp::<P>(8));
+/// assert_eq!(a[1], fp::<P>(4));
+/// ```
+pub fn ifft_with_twiddle_factors<const P: u64>(
+    items: &mut [Fp<P>],
+    twiddle_factor_backward: &[Fp<P>],
+) {
+    assert!(items.len().is_power_of_two());
+    assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
+    let mut n = 2;
+    while n <= items.len() {
+        for chunk in items.chunks_mut(n) {
+            for i in 0..n / 2 {
+                let [a, b] = unsafe { chunk.get_disjoint_unchecked_mut([i, i + n / 2]) };
+                *b *= twiddle_factor_backward[n / 2 + i];
+                [*a, *b] = [*a + *b, *a - *b];
+            }
+        }
+        n *= 2;
     }
     let len_inv = fp(items.len() as u64).inv();
     for item in items {
@@ -174,53 +188,56 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     }
 }
 
-/// IFFT後、各半分に FFT を適用。入力 $X$ に対して $y = \text{IFFT}(X)$ とし、$\text{FFT}(y[0..n/2])$ と $\text{FFT}(y[n/2..n])$ を出力。
+/// Twiddle factors を計算する(FFT用)
 ///
-/// 計算量は $n \log n$。
+/// $$
+/// (1, e(0), e(0), e(1/4), e(0), e(1/8), e(2/8), e(3/8), e(0), e(1/16), \dots)
+/// $$
 ///
-/// # 例
+/// ただし $e(p / q)$ は $1$ の原始 $q$ 乗根の $p$ 乗です。
+///
+/// # Examples
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::split_fft;
+/// use fp_fft::build_twiddle_factors_forward;
+/// use fp_fft::fft_with_twiddle_factors;
+///
 /// const P: u64 = 998_244_353;
-/// let mut a = [fp::<P>(1), fp::<P>(2)];
-/// split_fft(&mut a);
-/// assert_eq!(a[0], fp::<P>(3) * fp::<P>(2).inv()); // IFFT: (1 + 2) / 2 = 3/2
-/// assert_eq!(a[1], fp::<P>(998244352) * fp::<P>(2).inv()); // IFFT: (1 - 2) / 2 = -1/2
+///
+/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// let twiddle_factors = build_twiddle_factors_forward(2);
+/// fft_with_twiddle_factors(&mut a, &twiddle_factors);
+///
+/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
+/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
-pub fn split_fft<const P: u64>(items: &mut [Fp<P>]) {
-    let len = items.len();
-    let (a, b) = items.split_at_mut(len / 2);
-    ifft(b);
-    let w = Diroot::BACKWARD[len.trailing_zeros() as usize];
-    let mut coeff = fp(1);
-    for b in &mut *b {
-        *b *= coeff;
-        coeff *= w;
-    }
-    fft(b);
-    let inv2 = fp(2).inv();
-    for (a, b) in a.iter_mut().zip(b) {
-        [*a, *b] = [(*a + *b) * inv2, (*a - *b) * inv2];
-    }
+pub fn build_twiddle_factors_forward<const P: u64>(n: usize) -> Vec<Fp<P>> {
+    build_twiddle_factors(n, &Diroot::FORWARD)
 }
 
-pub fn mask_lower_part<const P: u64>(items: &mut [Fp<P>]) {
-    let len = items.len();
-    let (a, b) = items.split_at_mut(len / 2);
-    ifft(b);
-    let w = Diroot::BACKWARD[len.trailing_zeros() as usize];
-    let mut coeff = fp(1);
-    for b in &mut *b {
-        *b *= coeff;
-        coeff *= w;
+/// Twiddle factors を計算する(IFFT用)
+pub fn build_twiddle_factors_backward<const P: u64>(n: usize) -> Vec<Fp<P>> {
+    build_twiddle_factors(n, &Diroot::BACKWARD)
+}
+
+fn build_twiddle_factors<const P: u64>(
+    n: usize,
+    diroots: &[Fp<P>; DIADIC_ROOTS_BUFFER_LEN],
+) -> Vec<Fp<P>> {
+    let mut twiddle_factors = vec![fp::<P>(1); n];
+    let mut len = 4;
+    while len <= n {
+        let w = diroots[len.trailing_zeros() as usize];
+        for i in 0..len / 4 {
+            twiddle_factors[len / 2 + i * 2] = twiddle_factors[len / 4 + i];
+        }
+        for i in 0..len / 4 {
+            twiddle_factors[len / 2 + i * 2 + 1] = twiddle_factors[len / 2 + i * 2] * w;
+        }
+        len *= 2;
     }
-    fft(b);
-    let inv2 = fp(2).inv();
-    for (a, b) in a.iter_mut().zip(b) {
-        [*a, *b] = [(*a + *b) * inv2, (*a - *b) * inv2];
-    }
+    twiddle_factors
 }
 
 #[cfg(test)]
