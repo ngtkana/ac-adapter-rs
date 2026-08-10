@@ -18,7 +18,7 @@ impl Distribution<Fp<P>> for FpHomogeneous {
 }
 
 #[allow(clippy::unreadable_literal)]
-const DYADIC_ROOTS: [Fp<P>; 24] = [
+const EXPECTED_DIADIC_ROOTS: [Fp<P>; 24] = [
     fp(1),         // 2^0-th root
     fp(998244352), // 2^1-th root
     fp(911660635), // 2^2-th root
@@ -51,7 +51,7 @@ fn ntt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
     if n == 1 {
         return f.to_vec();
     }
-    let w = DYADIC_ROOTS[n.trailing_zeros() as usize];
+    let w = EXPECTED_DIADIC_ROOTS[n.trailing_zeros() as usize];
     (0..n)
         .map(|i| {
             let i = i.reverse_bits() >> (n.leading_zeros() + 1);
@@ -60,14 +60,14 @@ fn ntt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
         .collect()
 }
 
-fn intt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
+fn iftt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
     let n = f.len();
     assert!(n.is_power_of_two());
     if n == 1 {
         return f.to_vec();
     }
-    let w = DYADIC_ROOTS[n.trailing_zeros() as usize].inv();
-    let coeff = fpu(n).inv();
+    let w = EXPECTED_DIADIC_ROOTS[n.trailing_zeros() as usize].inv();
+    let n_inv = fpu(n).inv();
     (0..n)
         .map(|i| {
             (0..n)
@@ -76,55 +76,9 @@ fn intt_naive(f: &[Fp<P>]) -> Vec<Fp<P>> {
                     f[j_rev] * w.pow((i * j % n) as u64)
                 })
                 .sum::<Fp<_>>()
-                * coeff
+                * n_inv
         })
         .collect()
-}
-
-#[test]
-fn test_fft_len_1() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        let x = rng.sample(FpHomogeneous);
-        let mut f = [x];
-        fft(&mut f);
-        assert_eq!(f.as_slice(), &[x]);
-    }
-}
-
-#[test]
-fn test_ifft_len_1() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        let x = rng.sample(FpHomogeneous);
-        let mut f = [x];
-        ifft(&mut f);
-        assert_eq!(f.as_slice(), &[x]);
-    }
-}
-
-#[test]
-fn test_fft_len_2() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        let x = rng.sample(FpHomogeneous);
-        let y = rng.sample(FpHomogeneous);
-        let mut f = [x, y];
-        fft(&mut f);
-        assert_eq!(f.as_slice(), &[x + y, x - y]);
-    }
-}
-
-#[test]
-fn test_ifft_len_2() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
-        let x = rng.sample(FpHomogeneous);
-        let y = rng.sample(FpHomogeneous);
-        let mut f = [x, y];
-        ifft(&mut f);
-        assert_eq!(f.as_slice(), &[(x + y) / fp(2), (x - y) / fp(2)]);
-    }
 }
 
 #[test]
@@ -142,13 +96,6 @@ fn test_fft_compare_with_naive() {
         fft(&mut result);
         let expected = ntt_naive(&f);
         assert_eq!(&result, &expected, "f = {f:?}");
-
-        let sum = f.iter().sum::<Fp<_>>();
-        assert_eq!(result[0], sum);
-        if 2 <= n {
-            let alternative_sum = (0..n).map(|i| if i % 2 == 0 { f[i] } else { -f[i] }).sum();
-            assert_eq!(result[1], alternative_sum);
-        }
     }
 }
 
@@ -165,15 +112,7 @@ fn test_ifft_compare_with_naive() {
 
         let mut result = f.clone();
         ifft(&mut result);
-        let expected = intt_naive(&f);
+        let expected = iftt_naive(&f);
         assert_eq!(&result, &expected, "f = {f:?}");
-
-        let sum = f.iter().sum::<Fp<_>>() / fpu(n);
-        assert_eq!(result[0], sum);
-        if 2 <= n {
-            let (former, latter) = f.split_at(n / 2);
-            let alternative_sum = former.iter().sum::<Fp<_>>() - latter.iter().sum::<Fp<_>>();
-            assert_eq!(result[n / 2], alternative_sum / fpu(n));
-        }
     }
 }

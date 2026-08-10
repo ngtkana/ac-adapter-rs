@@ -26,6 +26,8 @@
 //! - [`fft`]: 前方フーリエ変換、$O(n \log n)$
 //! - [`ifft`]: 逆フーリエ変換、$O(n \log n)$
 
+use std::iter::successors;
+
 use fp::Fp;
 use fp::fp;
 
@@ -54,20 +56,17 @@ const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_B
     result
 }
 
-trait DirootTrait<const P: u64> {
-    const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN];
-    const BACKWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN];
+trait DiadicRootsTrait<const P: u64> {
+    const VALUE: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN];
 }
-enum Diroot<const P: u64> {}
-impl<const P: u64> DirootTrait<P> for Diroot<P> {
-    const BACKWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] =
-        build_diadic_roots(find_primitive_root().inv());
-    const FORWARD: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
+enum DiadicRoots<const P: u64> {}
+impl<const P: u64> DiadicRootsTrait<P> for DiadicRoots<P> {
+    const VALUE: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
 }
 
 /// FFT をします。周波数間引き(Sande–Tukey)で、出力はbit-reversedです。
 ///
-/// 内部で [`build_twiddle_factors_forward`] と [`fft_with_twiddle_factors`] が呼ばれます。
+/// 内部で [`build_twiddle_factors`] と [`fft_with_twiddle_factors`] が呼ばれます。
 ///
 /// # Examples
 ///
@@ -83,7 +82,7 @@ impl<const P: u64> DirootTrait<P> for Diroot<P> {
 /// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
-    let twiddle_factors = build_twiddle_factors_forward(items.len());
+    let twiddle_factors = build_twiddle_factors(items.len());
     fft_with_twiddle_factors(items, &twiddle_factors);
 }
 
@@ -93,40 +92,35 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::build_twiddle_factors_forward;
+/// use fp_fft::build_twiddle_factors;
 /// use fp_fft::fft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
 /// let mut a = [fp::<P>(3), fp::<P>(5)];
-/// let twiddle_factors = build_twiddle_factors_forward(2);
+/// let twiddle_factors = build_twiddle_factors(2);
 /// fft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
 /// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
-pub fn fft_with_twiddle_factors<const P: u64>(
-    items: &mut [Fp<P>],
-    twiddle_factor_forward: &[Fp<P>],
-) {
+pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let mut n = items.len();
-    while n >= 2 {
+    for n in successors(Some(items.len()), |&n| Some(n / 2)).take_while(|&n| n >= 2) {
         for chunk in items.chunks_mut(n) {
             for i in 0..n / 2 {
                 let [a, b] = unsafe { chunk.get_disjoint_unchecked_mut([i, i + n / 2]) };
                 [*a, *b] = [*a + *b, *a - *b];
-                *b *= twiddle_factor_forward[n / 2 + i];
+                *b *= twiddle_factors[n + i];
             }
         }
-        n /= 2;
     }
 }
 
 /// IFFT をします。時間間引き(Cooley–Tukey)で、入力はbit-reversed想定です。
 ///
-/// 内部で [`build_twiddle_factors_backward`] と [`fft_with_twiddle_factors`] が呼ばれます。
+/// 内部で [`build_twiddle_factors`] と [`fft_with_twiddle_factors`] が呼ばれます。
 ///
 /// # Examples
 ///
@@ -143,7 +137,7 @@ pub fn fft_with_twiddle_factors<const P: u64>(
 /// assert_eq!(a[1], fp::<P>(4));
 /// ```
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
-    let twiddle_factors = build_twiddle_factors_backward(items.len());
+    let twiddle_factors = build_twiddle_factors(items.len());
     ifft_with_twiddle_factors(items, &twiddle_factors);
 }
 
@@ -153,34 +147,30 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::build_twiddle_factors_backward;
+/// use fp_fft::build_twiddle_factors;
 /// use fp_fft::ifft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
 /// let mut a = [fp::<P>(12), fp::<P>(4)];
-/// let twiddle_factors = build_twiddle_factors_backward(2);
+/// let twiddle_factors = build_twiddle_factors(2);
 /// ifft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
 /// assert_eq!(a[0], fp::<P>(8));
 /// assert_eq!(a[1], fp::<P>(4));
 /// ```
-pub fn ifft_with_twiddle_factors<const P: u64>(
-    items: &mut [Fp<P>],
-    twiddle_factor_backward: &[Fp<P>],
-) {
-    assert!(items.len().is_power_of_two());
-    assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
-    let mut n = 2;
-    while n <= items.len() {
+pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
+    let items_len = items.len();
+    assert!(items_len.is_power_of_two());
+    assert!(items_len.trailing_zeros() <= (P - 1).trailing_zeros());
+    for n in successors(Some(2), |&n| Some(2 * n)).take_while(|&n| n <= items_len) {
         for chunk in items.chunks_mut(n) {
             for i in 0..n / 2 {
                 let [a, b] = unsafe { chunk.get_disjoint_unchecked_mut([i, i + n / 2]) };
-                *b *= twiddle_factor_backward[n / 2 + i];
+                *b *= twiddle_factors[2 * n - i];
                 [*a, *b] = [*a + *b, *a - *b];
             }
         }
-        n *= 2;
     }
     let len_inv = fp(items.len() as u64).inv();
     for item in items {
@@ -190,52 +180,38 @@ pub fn ifft_with_twiddle_factors<const P: u64>(
 
 /// Twiddle factors を計算する(FFT用)
 ///
+/// 長さ $2n + 1$ の配列ができます。最初の $1$ つは使わない場所。最後の $1$ つは番兵です。
+///
 /// $$
-/// (1, e(0), e(0), e(1/4), e(0), e(1/8), e(2/8), e(3/8), e(0), e(1/16), \dots)
+/// t _ { 2 ^ p + i } = e( i / 2 ^ p)
 /// $$
 ///
-/// ただし $e(p / q)$ は $1$ の原始 $q$ 乗根の $p$ 乗です。
+/// ただし $e(a / b)$ は $1$ の原始 $b$ 乗根の $a$ 乗です。
 ///
 /// # Examples
 ///
 /// ```
 /// use fp::fp;
-/// use fp_fft::build_twiddle_factors_forward;
+/// use fp_fft::build_twiddle_factors;
 /// use fp_fft::fft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
 /// let mut a = [fp::<P>(3), fp::<P>(5)];
-/// let twiddle_factors = build_twiddle_factors_forward(2);
+/// let twiddle_factors = build_twiddle_factors(2);
 /// fft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
 /// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
-pub fn build_twiddle_factors_forward<const P: u64>(n: usize) -> Vec<Fp<P>> {
-    build_twiddle_factors(n, &Diroot::FORWARD)
-}
-
-/// Twiddle factors を計算する(IFFT用)
-pub fn build_twiddle_factors_backward<const P: u64>(n: usize) -> Vec<Fp<P>> {
-    build_twiddle_factors(n, &Diroot::BACKWARD)
-}
-
-fn build_twiddle_factors<const P: u64>(
-    n: usize,
-    diroots: &[Fp<P>; DIADIC_ROOTS_BUFFER_LEN],
-) -> Vec<Fp<P>> {
-    let mut twiddle_factors = vec![fp::<P>(1); n];
-    let mut len = 4;
-    while len <= n {
-        let w = diroots[len.trailing_zeros() as usize];
-        for i in 0..len / 4 {
-            twiddle_factors[len / 2 + i * 2] = twiddle_factors[len / 4 + i];
+pub fn build_twiddle_factors<const P: u64>(n: usize) -> Vec<Fp<P>> {
+    let mut twiddle_factors = vec![fp::<P>(1); 2 * n + 1];
+    for n in successors(Some(2), |&x| Some(2 * x)).take_while(|&x| x <= n) {
+        let w = DiadicRoots::VALUE[n.trailing_zeros() as usize];
+        for i in 0..n / 2 {
+            twiddle_factors[n + i * 2] = twiddle_factors[n / 2 + i];
+            twiddle_factors[n + i * 2 + 1] = twiddle_factors[n + i * 2] * w;
         }
-        for i in 0..len / 4 {
-            twiddle_factors[len / 2 + i * 2 + 1] = twiddle_factors[len / 2 + i * 2] * w;
-        }
-        len *= 2;
     }
     twiddle_factors
 }
@@ -250,9 +226,24 @@ mod tests {
     }
 
     #[test]
-    fn test_build_twiddle_factors() {
-        let twiddle_factors = build_diadic_roots::<998_244_353>(fp(3));
-        assert_eq!(twiddle_factors[0], fp(1));
-        assert_eq!(twiddle_factors[1], -fp(1));
+    fn test_build_diadic_roots_small() {
+        let diadic_roots = build_diadic_roots::<998_244_353>(fp(3));
+        assert_eq!(diadic_roots[0], fp(1));
+        assert_eq!(diadic_roots[1], fp(998_244_352));
+        assert_eq!(diadic_roots[2], fp(911_660_635));
+        assert_eq!(diadic_roots[3], fp(372_528_824));
+    }
+
+    #[test]
+    fn test_build_twiddle_factors_small() {
+        let diadic_roots = build_twiddle_factors::<998_244_353>(1024);
+        assert_eq!(diadic_roots[0], fp(1));
+        assert_eq!(diadic_roots[1], fp(1));
+        assert_eq!(diadic_roots[2], fp(1));
+        assert_eq!(diadic_roots[3], fp(998_244_352));
+        assert_eq!(diadic_roots[4], fp(1));
+        assert_eq!(diadic_roots[5], fp(911_660_635));
+        assert_eq!(diadic_roots[6], fp(998_244_352));
+        assert_eq!(diadic_roots[7], fp(86_583_718));
     }
 }
