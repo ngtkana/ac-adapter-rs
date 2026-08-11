@@ -46,7 +46,7 @@ use std::ops::Index;
 #[derive(Clone, Debug)]
 pub struct Graph<E> {
     start: Vec<usize>,
-    tar: Vec<E>,
+    edges: Vec<E>,
 }
 impl Graph<usize> {
     /// 有向グラフを構築する
@@ -137,40 +137,7 @@ impl Graph<usize> {
     /// assert_eq!(parent, [0, 0, 1]);
     /// ```
     pub fn sort_undirected_tree(&mut self, root: usize) -> (Vec<usize>, Vec<usize>) {
-        let n = self.start.len() - 1;
-        assert_eq!(self.tar.len(), 2 * (n - 1));
-
-        let mut sorted = vec![];
-        let mut stack = vec![root];
-        let mut parent = vec![usize::MAX; n];
-        parent[root] = 0;
-        while let Some(x) = stack.pop() {
-            sorted.push(x);
-            for &y in &self[x] {
-                if parent[y] != usize::MAX {
-                    continue;
-                }
-                parent[y] = x;
-                stack.push(y);
-            }
-        }
-
-        let mut i = 0;
-        let mut j = 0;
-        for x in 0..n {
-            while j < self.start[x + 1] {
-                if self.tar[j] != parent[x] {
-                    self.tar.swap(i, j);
-                    i += 1;
-                }
-                j += 1;
-            }
-            self.start[x + 1] = i;
-        }
-        assert_eq!(i, n - 1);
-
-        self.tar.truncate(n - 1);
-        (sorted, parent)
+        self.sort_undirected_tree_generic(root, |&y| y)
     }
 }
 
@@ -238,6 +205,35 @@ impl<T: Copy + Default> Graph<(usize, T)> {
                 .flat_map(|&(i, j, w)| [(i, (j, w)), (j, (i, w))]),
         )
     }
+
+    /// 無向グラフ表現された木を外向き有向木表現にして、`(sorted, parent)` を返す
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flat_graph::Graph;
+    ///
+    /// let mut g = Graph::from_undirected_edges_with_weight(
+    ///     3,
+    ///     &[(0, 1, 'a'), (1, 2, 'b')],
+    /// );
+    ///
+    /// assert_eq!(&g[0], [(1, 'a')]);
+    /// assert_eq!(&g[1], [(0, 'a'), (2, 'b')]);
+    /// assert_eq!(&g[2], [(1, 'b')]);
+    ///
+    /// let (sorted, parent) = g.sort_undirected_tree_with_weight(0);
+    ///
+    /// assert_eq!(&g[0], [(1, 'a')]);
+    /// assert_eq!(&g[1], [(2, 'b')]);
+    /// assert_eq!(&g[2], []);
+    ///
+    /// assert_eq!(sorted, [0, 1, 2]);
+    /// assert_eq!(parent, [0, 0, 1]);
+    /// ```
+    pub fn sort_undirected_tree_with_weight(&mut self, root: usize) -> (Vec<usize>, Vec<usize>) {
+        self.sort_undirected_tree_generic(root, |e| e.0)
+    }
 }
 
 impl<E: Default + Clone> Graph<E> {
@@ -262,7 +258,49 @@ impl<E: Default + Clone> Graph<E> {
         }
         start.rotate_right(1);
         start[0] = 0;
-        Self { start, tar }
+        Self { start, edges: tar }
+    }
+
+    pub fn sort_undirected_tree_generic(
+        &mut self,
+        root: usize,
+        tar: impl Fn(&E) -> usize,
+    ) -> (Vec<usize>, Vec<usize>) {
+        let n = self.start.len() - 1;
+        assert_eq!(self.edges.len(), 2 * (n - 1));
+
+        let mut sorted = vec![];
+        let mut stack = vec![root];
+        let mut parent = vec![usize::MAX; n];
+        parent[root] = 0;
+        while let Some(x) = stack.pop() {
+            sorted.push(x);
+            for e in &self[x] {
+                let y = tar(e);
+                if parent[y] != usize::MAX {
+                    continue;
+                }
+                parent[y] = x;
+                stack.push(y);
+            }
+        }
+
+        let mut i = 0;
+        let mut j = 0;
+        for x in 0..n {
+            while j < self.start[x + 1] {
+                if tar(&self.edges[j]) != parent[x] {
+                    self.edges.swap(i, j);
+                    i += 1;
+                }
+                j += 1;
+            }
+            self.start[x + 1] = i;
+        }
+        assert_eq!(i, n - 1);
+
+        self.edges.truncate(n - 1);
+        (sorted, parent)
     }
 }
 
@@ -299,7 +337,7 @@ impl<E> Index<usize> for Graph<E> {
     type Output = [E];
 
     fn index(&self, index: usize) -> &Self::Output {
-        &self.tar[self.start[index]..self.start[index + 1]]
+        &self.edges[self.start[index]..self.start[index + 1]]
     }
 }
 
@@ -348,7 +386,7 @@ mod tests {
             let g = Graph::from_directed_edges(n, &edges);
 
             assert_eq!(g.start.len(), n + 1);
-            assert_eq!(g.tar.len(), m);
+            assert_eq!(g.edges.len(), m);
 
             let mut expected_tar = vec![vec![]; n];
             for &(i, j) in &edges {
@@ -357,7 +395,7 @@ mod tests {
 
             for i in 0..n {
                 assert_eq!(g.start[i + 1] - g.start[i], expected_tar[i].len());
-                assert_eq!(g.tar[g.start[i]..g.start[i + 1]], expected_tar[i]);
+                assert_eq!(g.edges[g.start[i]..g.start[i + 1]], expected_tar[i]);
             }
         }
     }
@@ -374,7 +412,7 @@ mod tests {
             let g = Graph::from_undirected_edges(n, &edges);
 
             assert_eq!(g.start.len(), n + 1);
-            assert_eq!(g.tar.len(), 2 * m);
+            assert_eq!(g.edges.len(), 2 * m);
 
             let mut expected_tar = vec![vec![]; n];
             for &(i, j) in &edges {
@@ -384,7 +422,7 @@ mod tests {
 
             for i in 0..n {
                 assert_eq!(g.start[i + 1] - g.start[i], expected_tar[i].len());
-                assert_eq!(g.tar[g.start[i]..g.start[i + 1]], expected_tar[i]);
+                assert_eq!(g.edges[g.start[i]..g.start[i + 1]], expected_tar[i]);
             }
         }
     }
@@ -408,7 +446,7 @@ mod tests {
             let g = Graph::from_directed_edges_with_weight(n, &edges);
 
             assert_eq!(g.start.len(), n + 1);
-            assert_eq!(g.tar.len(), m);
+            assert_eq!(g.edges.len(), m);
 
             let mut expected_tar = vec![vec![]; n];
             for &(i, j, w) in &edges {
@@ -417,7 +455,7 @@ mod tests {
 
             for i in 0..n {
                 assert_eq!(g.start[i + 1] - g.start[i], expected_tar[i].len());
-                assert_eq!(g.tar[g.start[i]..g.start[i + 1]], expected_tar[i]);
+                assert_eq!(g.edges[g.start[i]..g.start[i + 1]], expected_tar[i]);
             }
         }
     }
@@ -441,7 +479,7 @@ mod tests {
             let g = Graph::from_undirected_edges_with_weight(n, &edges);
 
             assert_eq!(g.start.len(), n + 1);
-            assert_eq!(g.tar.len(), 2 * m);
+            assert_eq!(g.edges.len(), 2 * m);
 
             let mut expected_tar = vec![vec![]; n];
             for &(i, j, w) in &edges {
@@ -451,7 +489,7 @@ mod tests {
 
             for i in 0..n {
                 assert_eq!(g.start[i + 1] - g.start[i], expected_tar[i].len());
-                assert_eq!(g.tar[g.start[i]..g.start[i + 1]], expected_tar[i]);
+                assert_eq!(g.edges[g.start[i]..g.start[i + 1]], expected_tar[i]);
             }
         }
     }
