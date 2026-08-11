@@ -22,19 +22,19 @@
   });
 </script>
 
-</head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">fft_<wbr>with_<wbr>twiddle_<wbr>factors</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate fp_<wbr>fft</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">fp_fft</a></div><h1>Function <span class="fn">fft_with_twiddle_factors</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#108-125">Source</a> </span></div><pre class="rust item-decl"><code>pub fn fft_with_twiddle_factors&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>&gt;(
+</head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fp_fft/index.html">fp_fft</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">fft_<wbr>with_<wbr>twiddle_<wbr>factors</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate fp_<wbr>fft</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">fp_fft</a></div><h1>Function <span class="fn">fft_with_twiddle_factors</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fp_fft/lib.rs.html#107-119">Source</a> </span></div><pre class="rust item-decl"><code>pub fn fft_with_twiddle_factors&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>&gt;(
     items: &amp;mut [Fp&lt;P&gt;],
-    twiddle_factor_forward: &amp;[Fp&lt;P&gt;],
+    twiddle_factors: &amp;[Fp&lt;P&gt;],
 )</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Twiddle factor 前計算済みの場合の、<a href="fn.fft.html" title="fn fp_fft::fft"><code>fft</code></a>。</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
-<span class="kw">use </span>fp_fft::build_twiddle_factors_forward;
+<span class="kw">use </span>fp_fft::build_twiddle_factors;
 <span class="kw">use </span>fp_fft::fft_with_twiddle_factors;
 
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
 <span class="kw">let </span><span class="kw-2">mut </span>a = [fp::&lt;P&gt;(<span class="number">3</span>), fp::&lt;P&gt;(<span class="number">5</span>)];
-<span class="kw">let </span>twiddle_factors = build_twiddle_factors_forward(<span class="number">2</span>);
+<span class="kw">let </span>twiddle_factors = build_twiddle_factors(<span class="number">2</span>);
 fft_with_twiddle_factors(<span class="kw-2">&amp;mut </span>a, <span class="kw-2">&amp;</span>twiddle_factors);
 
 <span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">8</span>)); <span class="comment">// 3 + 5

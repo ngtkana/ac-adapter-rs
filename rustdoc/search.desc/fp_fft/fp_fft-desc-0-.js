@@ -1,1 +1,1 @@
-searchState.loadedDescShard("fp_fft", 0, "有限体 $𝔽_P$ …\nTwiddle factors を計算する(IFFT用)\nTwiddle factors を計算する(FFT用)\nFFT …\nTwiddle factor 前計算済みの場合の、<code>fft</code>。\nIFFT …\nTwiddle factor 前計算済みの場合の、<code>ifft</code>。")
+searchState.loadedDescShard("fp_fft", 0, "有限体 $𝔽_P$ …\nTwiddle factors を計算する(FFT用)\nFFT …\nTwiddle factor 前計算済みの場合の、<code>fft</code>。\nIFFT …\nTwiddle factor 前計算済みの場合の、<code>ifft</code>。")
