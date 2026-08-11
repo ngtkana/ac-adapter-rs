@@ -110,6 +110,68 @@ impl Graph<usize> {
             edges.iter().flat_map(|&(i, j)| [(i, j), (j, i)]),
         )
     }
+
+    /// 無向グラフ表現された木を外向き有向木表現にして、`(sorted, parent)` を返す
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flat_graph::Graph;
+    ///
+    /// let mut g = Graph::from_undirected_edges(
+    ///     3,
+    ///     &[(0, 1), (1, 2)],
+    /// );
+    ///
+    /// assert_eq!(&g[0], [1]);
+    /// assert_eq!(&g[1], [0, 2]);
+    /// assert_eq!(&g[2], [1]);
+    ///
+    /// let (sorted, parent) = g.sort_undirected_tree(0);
+    ///
+    /// assert_eq!(&g[0], [1]);
+    /// assert_eq!(&g[1], [2]);
+    /// assert_eq!(&g[2], []);
+    ///
+    /// assert_eq!(sorted, [0, 1, 2]);
+    /// assert_eq!(parent, [0, 0, 1]);
+    /// ```
+    pub fn sort_undirected_tree(&mut self, root: usize) -> (Vec<usize>, Vec<usize>) {
+        let n = self.start.len() - 1;
+        assert_eq!(self.tar.len(), 2 * (n - 1));
+
+        let mut sorted = vec![];
+        let mut stack = vec![root];
+        let mut parent = vec![usize::MAX; n];
+        parent[root] = 0;
+        while let Some(x) = stack.pop() {
+            sorted.push(x);
+            for &y in &self[x] {
+                if parent[y] != usize::MAX {
+                    continue;
+                }
+                parent[y] = x;
+                stack.push(y);
+            }
+        }
+
+        let mut i = 0;
+        let mut j = 0;
+        for x in 0..n {
+            while j < self.start[x + 1] {
+                if self.tar[j] != parent[x] {
+                    self.tar.swap(i, j);
+                    i += 1;
+                }
+                j += 1;
+            }
+            self.start[x + 1] = i;
+        }
+        assert_eq!(i, n - 1);
+
+        self.tar.truncate(n - 1);
+        (sorted, parent)
+    }
 }
 
 impl<T: Copy + Default> Graph<(usize, T)> {
