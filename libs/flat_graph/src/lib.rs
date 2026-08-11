@@ -49,6 +49,33 @@ pub struct Graph<E> {
     edges: Vec<E>,
 }
 impl Graph<usize> {
+    /// $p_1, p_2, \dots, p_{n-1}$ を受け取って、外向き有向木を構築する
+    ///
+    /// 各隣接リストはソート済みになります。
+    ///
+    /// # Example
+    ///
+    /// ```
+    /// use flat_graph::Graph;
+    ///
+    /// let g = Graph::from_parents(
+    ///     &[0, 0, 1],
+    /// );
+    ///
+    /// assert_eq!(g[0], [1, 2]);
+    /// assert_eq!(g[1], [3]);
+    /// assert_eq!(g[2], []);
+    /// assert_eq!(g[3], []);
+    /// ```
+    pub fn from_parents(parents: &[usize]) -> Self {
+        let n = parents.len() + 1;
+        Self::from_edges_generic(
+            n,
+            n - 1,
+            parents.iter().copied(),
+            parents.iter().copied().zip(1..),
+        )
+    }
     /// 有向グラフを構築する
     ///
     /// 各隣接リストは入力の順番通りになります。
@@ -272,7 +299,7 @@ impl<E: Default + Clone> Graph<E> {
         let mut sorted = vec![];
         let mut stack = vec![root];
         let mut parent = vec![usize::MAX; n];
-        parent[root] = 0;
+        parent[root] = root;
         while let Some(x) = stack.pop() {
             sorted.push(x);
             for e in &self[x] {
