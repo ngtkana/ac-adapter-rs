@@ -1,0 +1,1 @@
+searchState.loadedDescShard("rand_range", 0, "整数の増加列を一様ランダムに生成する\nHelper trait\nHelper trait\n<code>gen_range_many</code> を実装している、<code>Rng</code> …\n範囲が <code>range</code> ($I$) に収まる長さ $K$ …")
