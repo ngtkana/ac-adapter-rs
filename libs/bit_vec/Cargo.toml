@@ -1,5 +1,5 @@
 [package]
-name = "bitvec"
+name = "bit_vec"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,3 +9,4 @@ edition = "2021"
 
 [dev-dependencies]
 rand = { workspace = true }
+rand_range.path = "../rand_range"
