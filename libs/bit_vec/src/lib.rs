@@ -1,16 +1,22 @@
 //! 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \\# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
 
+mod range;
+mod range_mut;
+
 use std::{
-    fmt::Display,
+    fmt::{Debug, Display},
     ops::{Bound, Deref, DerefMut, RangeBounds},
     str::FromStr,
 };
+
+pub use range::Range;
+pub use range_mut::RangeMut;
 
 const B: usize = u64::BITS as usize;
 const C: usize = B.trailing_zeros() as usize;
 
 /// 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \\# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
-#[derive(Clone, Debug)]
+#[derive(Clone)]
 pub struct BitVec {
     items: Vec<u64>,
     len: usize,
@@ -48,6 +54,36 @@ impl BitVec {
         self.len
     }
 
+    pub fn extend(&mut self, extra_len: usize) {
+        self.resize(self.len() + extra_len);
+    }
+
+    pub fn resize(&mut self, new_len: usize) {
+        self.items.resize(new_len.div_ceil(B), 0);
+        self.len = new_len;
+    }
+
+    pub fn pop_front_many(&mut self, count: usize) {
+        let (q, r) = div_rem(count);
+        self.items.rotate_left(q);
+        for _ in 0..q {
+            self.items.pop().unwrap();
+        }
+        if r != 0 {
+            for i in 0..self.items.len() {
+                if i + 1 < self.items.len() {
+                    self.items[i] = self.items[i] >> r | (self.items[i + 1] & ((1 << r) - 1));
+                } else {
+                    self.items[i] >>= r;
+                }
+            }
+        }
+        self.len -= count;
+        if self.len + B <= self.items.len() * B {
+            self.items.pop().unwrap();
+        }
+    }
+
     /// 論理的な [`bool`] 配列 $A$ が空列のとき [`true`] を返します。
     ///
     /// # Example
@@ -75,6 +111,7 @@ impl BitVec {
     /// ```
     pub fn range(&self, range: impl RangeBounds<usize>) -> Range<'_> {
         let std::ops::Range { start, end } = to_range(range, self.len);
+        assert!(start <= end);
         Range {
             items: &self.items,
             start,
@@ -98,6 +135,7 @@ impl BitVec {
     /// ```
     pub fn range_mut(&mut self, range: impl RangeBounds<usize>) -> RangeMut<'_> {
         let std::ops::Range { start, end } = to_range(range, self.len);
+        assert!(start <= end);
         RangeMut {
             items: &mut self.items,
             start,
@@ -183,6 +221,7 @@ impl BitVec {
                 }
             }
         }
+        self.clear_extra_zeros();
     }
 
     /// 論理的な [`bool`] 配列 $A$ の要素を順に返す iterator を構築します。
@@ -223,6 +262,25 @@ impl BitVec {
     pub fn collect_vec(&self) -> Vec<bool> {
         self.iter().collect()
     }
+
+    fn clear_extra_zeros(&mut self) {
+        let (q, r) = div_rem(self.len);
+        if r != 0 {
+            self.items[q] &= (1 << r) - 1;
+        }
+    }
+}
+
+impl Debug for BitVec {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.iter()
+                .map(|b| if b { '1' } else { '0' })
+                .collect::<String>()
+        )
+    }
 }
 
 impl Display for BitVec {
@@ -234,6 +292,43 @@ impl Display for BitVec {
                 .map(|b| if b { '1' } else { '0' })
                 .collect::<String>()
         )
+    }
+}
+
+pub struct PrintDetails<'a>(pub &'a BitVec);
+impl Debug for PrintDetails<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BitVec")
+            .field("len", &self.0.len)
+            .field(
+                "items",
+                &self
+                    .0
+                    .items
+                    .iter()
+                    .map(|&x| {
+                        (0..B)
+                            .map(|i| if x >> i & 1 == 1 { '1' } else { '0' })
+                            .collect::<String>()
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
+    }
+}
+
+pub struct PrintOnes<'a>(pub &'a BitVec);
+impl Debug for PrintOnes<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("BitVec")
+            .field("len", &self.0.len)
+            .field(
+                "ones",
+                &(0..self.0.len)
+                    .filter(|&i| self.0.get(i))
+                    .collect::<Vec<_>>(),
+            )
+            .finish()
     }
 }
 
@@ -281,307 +376,6 @@ impl FromStr for BitVec {
                 _ => panic!(),
             })
             .collect())
-    }
-}
-
-/// [`BitVec`] の immutable な部分列。[`BitVec::range`] で構築できます。
-#[derive(Clone, Copy)]
-pub struct Range<'a> {
-    items: &'a [u64],
-    start: usize,
-    end: usize,
-}
-
-impl<'a> Range<'a> {
-    /// 範囲内の $1$ の bit の個数を返します。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let bv: BitVec = "00110101".parse().unwrap();
-    ///
-    /// assert_eq!(bv.range(2..6).count_ones(), 3);
-    /// ```
-    pub fn count_ones(self) -> usize {
-        assert!(self.start <= self.end);
-        if self.start == self.end {
-            return 0;
-        }
-        let (q0, r0) = div_rem(self.start);
-        let (q1, r1) = div_rem(self.end);
-        if q0 == q1 {
-            return (self.items[q0] & ((1 << r1) - (1 << r0))).count_ones() as usize;
-        }
-        let mut result = 0;
-        result += (self.items[q0] >> r0).count_ones() as usize;
-        for item in &self.items[q0 + 1..q1] {
-            result += item.count_ones() as usize;
-        }
-        if r1 != 0 {
-            result += (self.items[q1] & ((1 << r1) - 1)).count_ones() as usize;
-        }
-        result
-    }
-    /// 範囲内の bit を順に返す iterator を構築します
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let bv: BitVec = "00110101".parse().unwrap();
-    ///
-    /// let mut iter = bv.range(3..5).iter();
-    /// assert_eq!(iter.next(), Some(true));
-    /// assert_eq!(iter.next(), Some(false));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    pub fn iter(self) -> Iter<'a> {
-        Iter {
-            items: self.items,
-            start: self.start,
-            end: self.end,
-        }
-    }
-    /// 範囲内の bit 全体からなる [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let bv: BitVec = "00110101".parse().unwrap();
-    ///
-    /// assert_eq!(bv.range(3..5).collect_vec()[..], [true, false][..]);
-    /// ```
-    pub fn collect_vec(&self) -> Vec<bool> {
-        self.iter().collect()
-    }
-}
-
-impl Display for Range<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.iter()
-                .map(|b| if b { '1' } else { '0' })
-                .collect::<String>()
-        )
-    }
-}
-
-impl<'a> IntoIterator for Range<'a> {
-    type Item = bool;
-
-    type IntoIter = Iter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a> From<&'a BitVec> for Range<'a> {
-    fn from(value: &'a BitVec) -> Self {
-        let BitVec { ref items, len } = *value;
-        Self {
-            items,
-            start: 0,
-            end: len,
-        }
-    }
-}
-
-/// [`BitVec`] の mutable な部分列。[`BitVec::range`] で構築できます。
-pub struct RangeMut<'a> {
-    items: &'a mut [u64],
-    start: usize,
-    end: usize,
-}
-
-impl RangeMut<'_> {
-    /// 範囲内の bit を全て flip します。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let mut bv: BitVec = "00110101".parse().unwrap();
-    /// bv.range_mut(2..6).flip();
-    ///
-    /// assert_eq!(bv.to_string(), "00001001");
-    /// ```
-    pub fn flip(&mut self) {
-        assert!(self.start <= self.end);
-        if self.start == self.end {
-            return;
-        }
-        let (q0, r0) = div_rem(self.start);
-        let (q1, r1) = div_rem(self.end);
-        if q0 == q1 {
-            self.items[q0] ^= (1 << r1) - (1 << r0);
-            return;
-        }
-        if r0 == 0 {
-            self.items[q0] = !self.items[q0];
-        } else {
-            self.items[q0] ^= ((1 << (B - r0)) - 1) << r0;
-        }
-        for item in &mut self.items[q0 + 1..q1] {
-            *item = !*item;
-        }
-        if r1 != 0 {
-            self.items[q1] ^= (1 << r1) - 1;
-        }
-    }
-    /// Bitwise or で更新します。長さが異なる場合は短い方に合わせます。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let mut bv: BitVec = "00110101".parse().unwrap();
-    /// bv.range_mut(2..6).or_assign(&("1111").parse::<BitVec>().unwrap());
-    ///
-    /// assert_eq!(bv.to_string(), "00111101");
-    /// ```
-    pub fn or_assign<'a>(&'a mut self, other: impl Into<Range<'a>>) {
-        let other = other.into();
-        let mut self_start = self.start;
-        let mut other_start = other.start;
-        while self_start < self.end && other_start < other.end {
-            let (q0, r0) = div_rem(self_start);
-            let (q1, r1) = div_rem(other_start);
-            let d = (self.end - self_start)
-                .min(B - r0)
-                .min(other.end - other_start)
-                .min(B - r1);
-            if d == B {
-                self.items[q0] |= other.items[q1];
-            } else {
-                let mut value = other.items[q1] & (((1 << d) - 1) << r1);
-                if r0 < r1 {
-                    value >>= r1 - r0;
-                } else if r0 > r1 {
-                    value <<= r0 - r1;
-                }
-                self.items[q0] |= value;
-            }
-            self_start += d;
-            other_start += d;
-        }
-    }
-    /// Bitwise xor で更新します。長さが異なる場合は短い方に合わせます。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let mut bv: BitVec = "00110101".parse().unwrap();
-    /// bv.range_mut(2..6).xor_assign(&("1111").parse::<BitVec>().unwrap());
-    ///
-    /// assert_eq!(bv.to_string(), "00001001");
-    /// ```
-    pub fn xor_assign<'a>(&'a mut self, other: impl Into<Range<'a>>) {
-        let other = other.into();
-        let mut self_start = self.start;
-        let mut other_start = other.start;
-        while self_start < self.end && other_start < other.end {
-            let (q0, r0) = div_rem(self_start);
-            let (q1, r1) = div_rem(other_start);
-            let d = (self.end - self_start)
-                .min(B - r0)
-                .min(other.end - other_start)
-                .min(B - r1);
-            if d == B {
-                self.items[q0] ^= other.items[q1];
-            } else {
-                let mut value = other.items[q1] & (((1 << d) - 1) << r1);
-                if r0 < r1 {
-                    value >>= r1 - r0;
-                } else if r0 > r1 {
-                    value <<= r0 - r1;
-                }
-                self.items[q0] ^= value;
-            }
-            self_start += d;
-            other_start += d;
-        }
-    }
-    /// 範囲内の bit を順に返す iterator を構築します
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let mut bv: BitVec = "00110101".parse().unwrap();
-    /// let mut range = bv.range_mut(3..5);
-    ///
-    /// let mut iter = range.iter();
-    /// assert_eq!(iter.next(), Some(true));
-    /// assert_eq!(iter.next(), Some(false));
-    /// assert_eq!(iter.next(), None);
-    /// ```
-    pub fn iter(&self) -> Iter<'_> {
-        Iter {
-            items: self.items,
-            start: self.start,
-            end: self.end,
-        }
-    }
-    /// 範囲内の bit 全体からなる [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
-    ///
-    /// # Example
-    ///
-    /// ```
-    /// use bit_vec::BitVec;
-    ///
-    /// let mut bv: BitVec = "00110101".parse().unwrap();
-    /// let mut range = bv.range_mut(3..5);
-    ///
-    /// assert_eq!(range.collect_vec()[..], [true, false][..]);
-    /// ```
-    pub fn collect_vec(&self) -> Vec<bool> {
-        self.iter().collect()
-    }
-}
-
-impl Display for RangeMut<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            self.iter()
-                .map(|b| if b { '1' } else { '0' })
-                .collect::<String>()
-        )
-    }
-}
-
-impl<'a> IntoIterator for &'a RangeMut<'a> {
-    type Item = bool;
-
-    type IntoIter = Iter<'a>;
-
-    fn into_iter(self) -> Self::IntoIter {
-        self.iter()
-    }
-}
-
-impl<'a> From<&'a mut BitVec> for RangeMut<'a> {
-    fn from(value: &'a mut BitVec) -> Self {
-        let BitVec { ref mut items, len } = *value;
-        Self {
-            items,
-            start: 0,
-            end: len,
-        }
     }
 }
 
