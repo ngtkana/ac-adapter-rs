@@ -31,14 +31,14 @@
 <li><code>ifft</code>: <code>fft</code> の逆変換（$1/n$ でスケール）</li>
 </ul>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_fft::fft;
 
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
-<span class="kw">let </span><span class="kw-2">mut </span>data = [fp::&lt;P&gt;(<span class="number">1</span>), fp::&lt;P&gt;(<span class="number">2</span>)];
+<span class="kw">let </span><span class="kw-2">mut </span>data = [fp_new::&lt;P&gt;(<span class="number">1</span>), fp_new::&lt;P&gt;(<span class="number">2</span>)];
 fft(<span class="kw-2">&amp;mut </span>data);
-<span class="macro">assert_eq!</span>(data[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">3</span>)); <span class="comment">// 1 + 2
-</span><span class="macro">assert_eq!</span>(data[<span class="number">1</span>], fp::&lt;P&gt;(<span class="number">998244352</span>)); <span class="comment">// 1 - 2 ≡ -1 (mod P)</span></code></pre></div>
+<span class="macro">assert_eq!</span>(data[<span class="number">0</span>], fp_new::&lt;P&gt;(<span class="number">3</span>)); <span class="comment">// 1 + 2
+</span><span class="macro">assert_eq!</span>(data[<span class="number">1</span>], fp_new::&lt;P&gt;(<span class="number">998244352</span>)); <span class="comment">// 1 - 2 ≡ -1 (mod P)</span></code></pre></div>
 <h2 id="公開-api"><a class="doc-anchor" href="#公開-api">§</a>公開 API</h2>
 <ul>
 <li><a href="fn.fft.html" title="fn fp_fft::fft"><code>fft</code></a>: 前方フーリエ変換、$O(n \log n)$</li>

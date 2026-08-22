@@ -29,16 +29,16 @@ t _ { 2 ^ p + i } = e( i / 2 ^ p)
 $$</p>
 <p>ただし $e(a / b)$ は $1$ の原始 $b$ 乗根の $a$ 乗です。</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_fft::build_twiddle_factors;
 <span class="kw">use </span>fp_fft::fft_with_twiddle_factors;
 
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
 
-<span class="kw">let </span><span class="kw-2">mut </span>a = [fp::&lt;P&gt;(<span class="number">3</span>), fp::&lt;P&gt;(<span class="number">5</span>)];
+<span class="kw">let </span><span class="kw-2">mut </span>a = [fp_new::&lt;P&gt;(<span class="number">3</span>), fp_new::&lt;P&gt;(<span class="number">5</span>)];
 <span class="kw">let </span>twiddle_factors = build_twiddle_factors(<span class="number">2</span>);
 fft_with_twiddle_factors(<span class="kw-2">&amp;mut </span>a, <span class="kw-2">&amp;</span>twiddle_factors);
 
-<span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">8</span>)); <span class="comment">// 3 + 5
-</span><span class="macro">assert_eq!</span>(a[<span class="number">1</span>], fp::&lt;P&gt;(<span class="number">998244351</span>)); <span class="comment">// 3 - 5 ≡ -1</span></code></pre></div>
+<span class="macro">assert_eq!</span>(a[<span class="number">0</span>], fp_new::&lt;P&gt;(<span class="number">8</span>)); <span class="comment">// 3 + 5
+</span><span class="macro">assert_eq!</span>(a[<span class="number">1</span>], fp_new::&lt;P&gt;(<span class="number">998244351</span>)); <span class="comment">// 3 - 5 ≡ -1</span></code></pre></div>
 </div></details></section></div></main></body></html>

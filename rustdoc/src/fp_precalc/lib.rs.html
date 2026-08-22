@@ -29,11 +29,11 @@
 <a href=#5 id=5 data-nosnippet>5</a>//! # 使用例
 <a href=#6 id=6 data-nosnippet>6</a>//!
 <a href=#7 id=7 data-nosnippet>7</a>//! ```
-<a href=#8 id=8 data-nosnippet>8</a>//! use fp::fp;
+<a href=#8 id=8 data-nosnippet>8</a>//! use fp::fp_new;
 <a href=#9 id=9 data-nosnippet>9</a>//! use fp_precalc::Precalc;
 <a href=#10 id=10 data-nosnippet>10</a>//! const P: u64 = 1009;
 <a href=#11 id=11 data-nosnippet>11</a>//! let pc = Precalc::&lt;P&gt;::new(100).build_fact().build_finv_using_fact();
-<a href=#12 id=12 data-nosnippet>12</a>//! assert_eq!(pc.binom(5, 2), fp::&lt;P&gt;(10)); // C(5,2) = 10
+<a href=#12 id=12 data-nosnippet>12</a>//! assert_eq!(pc.binom(5, 2), fp_new::&lt;P&gt;(10)); // C(5,2) = 10
 <a href=#13 id=13 data-nosnippet>13</a>//! ```
 <a href=#14 id=14 data-nosnippet>14</a>//!
 <a href=#15 id=15 data-nosnippet>15</a>//! # API
@@ -109,13 +109,13 @@
 <a href=#85 id=85 data-nosnippet>85</a>    /// # Examples
 <a href=#86 id=86 data-nosnippet>86</a>    ///
 <a href=#87 id=87 data-nosnippet>87</a>    /// ```
-<a href=#88 id=88 data-nosnippet>88</a>    /// use fp::fp;
+<a href=#88 id=88 data-nosnippet>88</a>    /// use fp::fp_new;
 <a href=#89 id=89 data-nosnippet>89</a>    /// use fp_precalc::Precalc;
 <a href=#90 id=90 data-nosnippet>90</a>    ///
 <a href=#91 id=91 data-nosnippet>91</a>    /// const P: u64 = 1009;
 <a href=#92 id=92 data-nosnippet>92</a>    /// let precalc = Precalc::&lt;P&gt;::new(6).build_fact();
-<a href=#93 id=93 data-nosnippet>93</a>    /// assert_eq!(precalc.fact(0), fp::&lt;P&gt;(1)); // 0! = 1
-<a href=#94 id=94 data-nosnippet>94</a>    /// assert_eq!(precalc.fact(5), fp::&lt;P&gt;(120)); // 5! = 120
+<a href=#93 id=93 data-nosnippet>93</a>    /// assert_eq!(precalc.fact(0), fp_new::&lt;P&gt;(1)); // 0! = 1
+<a href=#94 id=94 data-nosnippet>94</a>    /// assert_eq!(precalc.fact(5), fp_new::&lt;P&gt;(120)); // 5! = 120
 <a href=#95 id=95 data-nosnippet>95</a>    /// ```
 <a href=#96 id=96 data-nosnippet>96</a>    </span><span class="kw">pub fn </span>build_fact(<span class="self">self</span>) -&gt; Precalc&lt;P, On, Finv, Inv&gt; {
 <a href=#97 id=97 data-nosnippet>97</a>        <span class="kw">let </span>Precalc { len, finv, inv, .. } = <span class="self">self</span>;
@@ -144,13 +144,13 @@
 <a href=#120 id=120 data-nosnippet>120</a>    /// # Examples
 <a href=#121 id=121 data-nosnippet>121</a>    ///
 <a href=#122 id=122 data-nosnippet>122</a>    /// ```
-<a href=#123 id=123 data-nosnippet>123</a>    /// use fp::fp;
+<a href=#123 id=123 data-nosnippet>123</a>    /// use fp::fp_new;
 <a href=#124 id=124 data-nosnippet>124</a>    /// use fp_precalc::Precalc;
 <a href=#125 id=125 data-nosnippet>125</a>    ///
 <a href=#126 id=126 data-nosnippet>126</a>    /// const P: u64 = 1009;
 <a href=#127 id=127 data-nosnippet>127</a>    /// let precalc = Precalc::&lt;P&gt;::new(10).build_inv();
 <a href=#128 id=128 data-nosnippet>128</a>    /// let inv_2 = precalc.inv(2);
-<a href=#129 id=129 data-nosnippet>129</a>    /// assert_eq!(inv_2 * fp::&lt;P&gt;(2), fp::&lt;P&gt;(1)); // 2^{-1} * 2 = 1 mod P
+<a href=#129 id=129 data-nosnippet>129</a>    /// assert_eq!(inv_2 * fp_new::&lt;P&gt;(2), fp_new::&lt;P&gt;(1)); // 2^{-1} * 2 = 1 mod P
 <a href=#130 id=130 data-nosnippet>130</a>    /// ```
 <a href=#131 id=131 data-nosnippet>131</a>    </span><span class="kw">pub fn </span>build_inv(<span class="self">self</span>) -&gt; Precalc&lt;P, Fact, Finv, On&gt; {
 <a href=#132 id=132 data-nosnippet>132</a>        <span class="kw">let </span>Precalc {
@@ -187,7 +187,7 @@
 <a href=#163 id=163 data-nosnippet>163</a>    /// # Examples
 <a href=#164 id=164 data-nosnippet>164</a>    ///
 <a href=#165 id=165 data-nosnippet>165</a>    /// ```
-<a href=#166 id=166 data-nosnippet>166</a>    /// use fp::fp;
+<a href=#166 id=166 data-nosnippet>166</a>    /// use fp::fp_new;
 <a href=#167 id=167 data-nosnippet>167</a>    /// use fp_precalc::Precalc;
 <a href=#168 id=168 data-nosnippet>168</a>    ///
 <a href=#169 id=169 data-nosnippet>169</a>    /// const P: u64 = 1009;
@@ -197,7 +197,7 @@
 <a href=#173 id=173 data-nosnippet>173</a>    ///     .build_finv_using_inv();
 <a href=#174 id=174 data-nosnippet>174</a>    /// let fact_5 = precalc.fact(5);
 <a href=#175 id=175 data-nosnippet>175</a>    /// let finv_5 = precalc.finv(5);
-<a href=#176 id=176 data-nosnippet>176</a>    /// assert_eq!(fact_5 * finv_5, fp::&lt;P&gt;(1)); // fact[5] * finv[5] = 1
+<a href=#176 id=176 data-nosnippet>176</a>    /// assert_eq!(fact_5 * finv_5, fp_new::&lt;P&gt;(1)); // fact[5] * finv[5] = 1
 <a href=#177 id=177 data-nosnippet>177</a>    /// ```
 <a href=#178 id=178 data-nosnippet>178</a>    </span><span class="kw">pub fn </span>build_finv_using_inv(<span class="self">self</span>) -&gt; Precalc&lt;P, Fact, On, On&gt; {
 <a href=#179 id=179 data-nosnippet>179</a>        <span class="kw">let </span>Precalc { len, fact, inv, .. } = <span class="self">self</span>;
@@ -230,14 +230,14 @@
 <a href=#206 id=206 data-nosnippet>206</a>    /// # Examples
 <a href=#207 id=207 data-nosnippet>207</a>    ///
 <a href=#208 id=208 data-nosnippet>208</a>    /// ```
-<a href=#209 id=209 data-nosnippet>209</a>    /// use fp::fp;
+<a href=#209 id=209 data-nosnippet>209</a>    /// use fp::fp_new;
 <a href=#210 id=210 data-nosnippet>210</a>    /// use fp_precalc::Precalc;
 <a href=#211 id=211 data-nosnippet>211</a>    ///
 <a href=#212 id=212 data-nosnippet>212</a>    /// const P: u64 = 1009;
 <a href=#213 id=213 data-nosnippet>213</a>    /// let precalc = Precalc::&lt;P&gt;::new(6).build_fact().build_finv_using_fact();
 <a href=#214 id=214 data-nosnippet>214</a>    /// let fact_5 = precalc.fact(5);
 <a href=#215 id=215 data-nosnippet>215</a>    /// let finv_5 = precalc.finv(5);
-<a href=#216 id=216 data-nosnippet>216</a>    /// assert_eq!(fact_5 * finv_5, fp::&lt;P&gt;(1)); // fact[5] * finv[5] = 1
+<a href=#216 id=216 data-nosnippet>216</a>    /// assert_eq!(fact_5 * finv_5, fp_new::&lt;P&gt;(1)); // fact[5] * finv[5] = 1
 <a href=#217 id=217 data-nosnippet>217</a>    /// ```
 <a href=#218 id=218 data-nosnippet>218</a>    </span><span class="kw">pub fn </span>build_finv_using_fact(<span class="self">self</span>) -&gt; Precalc&lt;P, On, On, Inv&gt; {
 <a href=#219 id=219 data-nosnippet>219</a>        <span class="kw">let </span>Precalc { len, fact, inv, .. } = <span class="self">self</span>;

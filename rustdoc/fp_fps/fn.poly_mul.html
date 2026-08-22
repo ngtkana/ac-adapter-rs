@@ -29,11 +29,11 @@
 </ul>
 <p>計算量 $O(n \log n)$。</p>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_fps::poly_mul;
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
-<span class="kw">let </span>a = [fp(<span class="number">1</span>), fp(<span class="number">2</span>)]; <span class="comment">// 1 + 2x
-</span><span class="kw">let </span>b = [fp(<span class="number">3</span>), fp(<span class="number">4</span>)]; <span class="comment">// 3 + 4x
+<span class="kw">let </span>a = [fp_new(<span class="number">1</span>), fp_new(<span class="number">2</span>)]; <span class="comment">// 1 + 2x
+</span><span class="kw">let </span>b = [fp_new(<span class="number">3</span>), fp_new(<span class="number">4</span>)]; <span class="comment">// 3 + 4x
 </span><span class="kw">let </span>c = poly_mul::&lt;P&gt;(a.to_vec(), b.to_vec());
-<span class="macro">assert_eq!</span>(c.as_slice(), [fp(<span class="number">3</span>), fp(<span class="number">10</span>), fp(<span class="number">8</span>)]);</code></pre></div>
+<span class="macro">assert_eq!</span>(c.as_slice(), [fp_new(<span class="number">3</span>), fp_new(<span class="number">10</span>), fp_new(<span class="number">8</span>)]);</code></pre></div>
 </div></details></section></div></main></body></html>

@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"struct":["BitVec","Entry","Iter","Range","RangeMut"]};
+window.SIDEBAR_ITEMS = {"struct":["BitVec","Entry","Iter","PrintDetails","PrintOnes","Range","RangeMut"]};

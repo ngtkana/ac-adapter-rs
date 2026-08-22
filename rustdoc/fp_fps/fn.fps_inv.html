@@ -26,11 +26,11 @@
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <p>$m$ が $2$ べきのとき、 $10 \mathcal{F}_m$</p>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_fps::fps_inv;
 <span class="kw">const </span>P: u64 = <span class="number">998_244_353</span>;
-<span class="kw">let </span>f = [fp::&lt;P&gt;(<span class="number">1</span>), fp::&lt;P&gt;(<span class="number">2</span>)];
+<span class="kw">let </span>f = [fp_new::&lt;P&gt;(<span class="number">1</span>), fp_new::&lt;P&gt;(<span class="number">2</span>)];
 <span class="kw">let </span>g = fps_inv(<span class="kw-2">&amp;</span>f, <span class="number">2</span>);
-<span class="macro">assert_eq!</span>(g[<span class="number">0</span>], fp::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// (1+2x)^{-1} の 0 次項 = 1
-</span><span class="macro">assert_eq!</span>(g[<span class="number">1</span>], fp::&lt;P&gt;(<span class="number">998244351</span>)); <span class="comment">// (1+2x)^{-1} の 1 次項 = -2</span></code></pre></div>
+<span class="macro">assert_eq!</span>(g[<span class="number">0</span>], fp_new::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// (1+2x)^{-1} の 0 次項 = 1
+</span><span class="macro">assert_eq!</span>(g[<span class="number">1</span>], fp_new::&lt;P&gt;(<span class="number">998244351</span>)); <span class="comment">// (1+2x)^{-1} の 1 次項 = -2</span></code></pre></div>
 </div></details></section></div></main></body></html>

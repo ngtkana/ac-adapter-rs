@@ -31,31 +31,31 @@
 </div></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.build_fact" class="method"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#96-110">Source</a><h4 class="code-header">pub fn <a href="#method.build_fact" class="fn">build_fact</a>(self) -&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, Finv, Inv&gt;</h4></section></summary><div class="docblock"><p>階乗 $n!$、計算量 $O(n)$。</p>
 <p>例:</p>
 <h5 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_precalc::Precalc;
 
 <span class="kw">const </span>P: u64 = <span class="number">1009</span>;
 <span class="kw">let </span>precalc = Precalc::&lt;P&gt;::new(<span class="number">6</span>).build_fact();
-<span class="macro">assert_eq!</span>(precalc.fact(<span class="number">0</span>), fp::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// 0! = 1
-</span><span class="macro">assert_eq!</span>(precalc.fact(<span class="number">5</span>), fp::&lt;P&gt;(<span class="number">120</span>)); <span class="comment">// 5! = 120</span></code></pre></div>
+<span class="macro">assert_eq!</span>(precalc.fact(<span class="number">0</span>), fp_new::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// 0! = 1
+</span><span class="macro">assert_eq!</span>(precalc.fact(<span class="number">5</span>), fp_new::&lt;P&gt;(<span class="number">120</span>)); <span class="comment">// 5! = 120</span></code></pre></div>
 </div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Precalc%3CP,+Fact,+Finv%3E" class="impl"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#114-150">Source</a><a href="#impl-Precalc%3CP,+Fact,+Finv%3E" class="anchor">§</a><h3 class="code-header">impl&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>, Fact: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>, Finv: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, Fact, Finv, <a class="enum" href="enum.Off.html" title="enum fp_precalc::Off">Off</a>&gt;</h3><div class="docblock"><p>逆元テーブルを構築。</p>
 </div></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.build_inv" class="method"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#131-149">Source</a><h4 class="code-header">pub fn <a href="#method.build_inv" class="fn">build_inv</a>(self) -&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, Fact, Finv, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>&gt;</h4></section></summary><div class="docblock"><p>逆元 $i^{-1}$、拡張ユークリッド、$O(n)$。</p>
 <p>例:</p>
 <h5 id="examples-1"><a class="doc-anchor" href="#examples-1">§</a>Examples</h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_precalc::Precalc;
 
 <span class="kw">const </span>P: u64 = <span class="number">1009</span>;
 <span class="kw">let </span>precalc = Precalc::&lt;P&gt;::new(<span class="number">10</span>).build_inv();
 <span class="kw">let </span>inv_2 = precalc.inv(<span class="number">2</span>);
-<span class="macro">assert_eq!</span>(inv_2 * fp::&lt;P&gt;(<span class="number">2</span>), fp::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// 2^{-1} * 2 = 1 mod P</span></code></pre></div>
+<span class="macro">assert_eq!</span>(inv_2 * fp_new::&lt;P&gt;(<span class="number">2</span>), fp_new::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// 2^{-1} * 2 = 1 mod P</span></code></pre></div>
 </div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Precalc%3CP,+Fact,+Off,+On%3E" class="impl"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#153-193">Source</a><a href="#impl-Precalc%3CP,+Fact,+Off,+On%3E" class="anchor">§</a><h3 class="code-header">impl&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>, Fact: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, Fact, <a class="enum" href="enum.Off.html" title="enum fp_precalc::Off">Off</a>, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>&gt;</h3><div class="docblock"><p>逆元テーブルを使用して逆階乗を構築。</p>
 </div></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.build_finv_using_inv" class="method"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#178-192">Source</a><h4 class="code-header">pub fn <a href="#method.build_finv_using_inv" class="fn">build_finv_using_inv</a>(self) -&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, Fact, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>&gt;</h4></section></summary><div class="docblock"><p>逆元テーブルから逆階乗を構築。</p>
 <p>例:</p>
 <h5 id="panics"><a class="doc-anchor" href="#panics">§</a>Panics</h5>
 <p>Panics if <code>inv</code> table is not built (accessed via <code>self.inv[i]</code>).</p>
 <h5 id="examples-2"><a class="doc-anchor" href="#examples-2">§</a>Examples</h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_precalc::Precalc;
 
 <span class="kw">const </span>P: u64 = <span class="number">1009</span>;
@@ -65,21 +65,21 @@
     .build_finv_using_inv();
 <span class="kw">let </span>fact_5 = precalc.fact(<span class="number">5</span>);
 <span class="kw">let </span>finv_5 = precalc.finv(<span class="number">5</span>);
-<span class="macro">assert_eq!</span>(fact_5 * finv_5, fp::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// fact[5] * finv[5] = 1</span></code></pre></div>
+<span class="macro">assert_eq!</span>(fact_5 * finv_5, fp_new::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// fact[5] * finv[5] = 1</span></code></pre></div>
 </div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Precalc%3CP,+On,+Off,+Inv%3E" class="impl"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#196-236">Source</a><a href="#impl-Precalc%3CP,+On,+Off,+Inv%3E" class="anchor">§</a><h3 class="code-header">impl&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>, Inv: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, <a class="enum" href="enum.Off.html" title="enum fp_precalc::Off">Off</a>, Inv&gt;</h3><div class="docblock"><p>階乗テーブルを使用して逆階乗を構築。</p>
 </div></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.build_finv_using_fact" class="method"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#218-235">Source</a><h4 class="code-header">pub fn <a href="#method.build_finv_using_fact" class="fn">build_finv_using_fact</a>(self) -&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, Inv&gt;</h4></section></summary><div class="docblock"><p>階乗テーブルから逆階乗を構築。</p>
 <p>例:</p>
 <h5 id="panics-1"><a class="doc-anchor" href="#panics-1">§</a>Panics</h5>
 <p>Panics if <code>len</code> is 0 or if <code>fact</code> table is not built.</p>
 <h5 id="examples-3"><a class="doc-anchor" href="#examples-3">§</a>Examples</h5>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp;
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fp::fp_new;
 <span class="kw">use </span>fp_precalc::Precalc;
 
 <span class="kw">const </span>P: u64 = <span class="number">1009</span>;
 <span class="kw">let </span>precalc = Precalc::&lt;P&gt;::new(<span class="number">6</span>).build_fact().build_finv_using_fact();
 <span class="kw">let </span>fact_5 = precalc.fact(<span class="number">5</span>);
 <span class="kw">let </span>finv_5 = precalc.finv(<span class="number">5</span>);
-<span class="macro">assert_eq!</span>(fact_5 * finv_5, fp::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// fact[5] * finv[5] = 1</span></code></pre></div>
+<span class="macro">assert_eq!</span>(fact_5 * finv_5, fp_new::&lt;P&gt;(<span class="number">1</span>)); <span class="comment">// fact[5] * finv[5] = 1</span></code></pre></div>
 </div></details></div></details><details class="toggle implementors-toggle" open><summary><section id="impl-Precalc%3CP,+On,+Finv,+Inv%3E" class="impl"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#243-262">Source</a><a href="#impl-Precalc%3CP,+On,+Finv,+Inv%3E" class="anchor">§</a><h3 class="code-header">impl&lt;const P: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.u64.html">u64</a>, Finv: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>, Inv: <a class="trait" href="trait.Switch.html" title="trait fp_precalc::Switch">Switch</a>&gt; <a class="struct" href="struct.Precalc.html" title="struct fp_precalc::Precalc">Precalc</a>&lt;P, <a class="enum" href="enum.On.html" title="enum fp_precalc::On">On</a>, Finv, Inv&gt;</h3><div class="docblock"><p>階乗テーブルをクエリ。</p>
 </div></section></summary><div class="impl-items"><details class="toggle method-toggle" open><summary><section id="method.fact" class="method"><a class="src rightside" href="../src/fp_precalc/lib.rs.html#259-261">Source</a><h4 class="code-header">pub fn <a href="#method.fact" class="fn">fact</a>(&amp;self, n: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>) -&gt; Fp&lt;P&gt;</h4></section></summary><div class="docblock"><p>$n!$ を返す。</p>
 <h5 id="panics-2"><a class="doc-anchor" href="#panics-2">§</a>Panics</h5>

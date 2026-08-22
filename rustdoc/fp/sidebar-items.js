@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["fp","fpu"],"struct":["Fp"]};
+window.SIDEBAR_ITEMS = {"fn":["fp_new","fpu"],"struct":["Fp"]};
