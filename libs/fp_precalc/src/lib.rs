@@ -5,11 +5,11 @@
 //! # 使用例
 //!
 //! ```
-//! use fp::fp;
+//! use fp::fp_new;
 //! use fp_precalc::Precalc;
 //! const P: u64 = 1009;
 //! let pc = Precalc::<P>::new(100).build_fact().build_finv_using_fact();
-//! assert_eq!(pc.binom(5, 2), fp::<P>(10)); // C(5,2) = 10
+//! assert_eq!(pc.binom(5, 2), fp_new::<P>(10)); // C(5,2) = 10
 //! ```
 //!
 //! # API
@@ -85,13 +85,13 @@ impl<const P: u64, Finv: Switch, Inv: Switch> Precalc<P, Off, Finv, Inv> {
     /// # Examples
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(6).build_fact();
-    /// assert_eq!(precalc.fact(0), fp::<P>(1)); // 0! = 1
-    /// assert_eq!(precalc.fact(5), fp::<P>(120)); // 5! = 120
+    /// assert_eq!(precalc.fact(0), fp_new::<P>(1)); // 0! = 1
+    /// assert_eq!(precalc.fact(5), fp_new::<P>(120)); // 5! = 120
     /// ```
     pub fn build_fact(self) -> Precalc<P, On, Finv, Inv> {
         let Precalc { len, finv, inv, .. } = self;
@@ -120,13 +120,13 @@ impl<const P: u64, Fact: Switch, Finv: Switch> Precalc<P, Fact, Finv, Off> {
     /// # Examples
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(10).build_inv();
     /// let inv_2 = precalc.inv(2);
-    /// assert_eq!(inv_2 * fp::<P>(2), fp::<P>(1)); // 2^{-1} * 2 = 1 mod P
+    /// assert_eq!(inv_2 * fp_new::<P>(2), fp_new::<P>(1)); // 2^{-1} * 2 = 1 mod P
     /// ```
     pub fn build_inv(self) -> Precalc<P, Fact, Finv, On> {
         let Precalc {
@@ -163,7 +163,7 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     /// # Examples
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
@@ -173,7 +173,7 @@ impl<const P: u64, Fact: Switch> Precalc<P, Fact, Off, On> {
     ///     .build_finv_using_inv();
     /// let fact_5 = precalc.fact(5);
     /// let finv_5 = precalc.finv(5);
-    /// assert_eq!(fact_5 * finv_5, fp::<P>(1)); // fact[5] * finv[5] = 1
+    /// assert_eq!(fact_5 * finv_5, fp_new::<P>(1)); // fact[5] * finv[5] = 1
     /// ```
     pub fn build_finv_using_inv(self) -> Precalc<P, Fact, On, On> {
         let Precalc { len, fact, inv, .. } = self;
@@ -206,14 +206,14 @@ impl<const P: u64, Inv: Switch> Precalc<P, On, Off, Inv> {
     /// # Examples
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// use fp_precalc::Precalc;
     ///
     /// const P: u64 = 1009;
     /// let precalc = Precalc::<P>::new(6).build_fact().build_finv_using_fact();
     /// let fact_5 = precalc.fact(5);
     /// let finv_5 = precalc.finv(5);
-    /// assert_eq!(fact_5 * finv_5, fp::<P>(1)); // fact[5] * finv[5] = 1
+    /// assert_eq!(fact_5 * finv_5, fp_new::<P>(1)); // fact[5] * finv[5] = 1
     /// ```
     pub fn build_finv_using_fact(self) -> Precalc<P, On, On, Inv> {
         let Precalc { len, fact, inv, .. } = self;

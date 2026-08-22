@@ -1,5 +1,5 @@
 use fp::Fp;
-use fp::fp;
+use fp::fp_new;
 use fp_precalc::Precalc;
 use rand::Rng;
 use rand::SeedableRng;
@@ -8,7 +8,7 @@ use rand::rngs::StdRng;
 const P: u64 = 998_244_353;
 
 fn fact_naive(n: usize) -> Fp<P> {
-    (1..=n).fold(fp(1), |acc, i| acc * fp(i as u64))
+    (1..=n).fold(fp_new(1), |acc, i| acc * fp_new(i as u64))
 }
 
 fn inv_fact_naive(n: usize) -> Fp<P> {
@@ -17,7 +17,7 @@ fn inv_fact_naive(n: usize) -> Fp<P> {
 
 fn binom_naive(n: usize, k: usize) -> Fp<P> {
     if k > n {
-        return fp(0);
+        return fp_new(0);
     }
     fact_naive(n) * inv_fact_naive(k) * inv_fact_naive(n - k)
 }
@@ -83,7 +83,7 @@ fn test_inv_compare_with_naive() {
 
     for n in 1..size {
         let result = precalc.inv(n);
-        let expected = fp(n as u64).inv();
+        let expected = fp_new(n as u64).inv();
         assert_eq!(result, expected, "inv({n})");
     }
 }

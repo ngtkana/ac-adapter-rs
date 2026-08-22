@@ -8,12 +8,12 @@
 //! # 例
 //!
 //! ```
-//! use fp::fp;
+//! use fp::fp_new;
 //! const P: u64 = 1009;
-//! let a = fp::<P>(123);
+//! let a = fp_new::<P>(123);
 //! let b = a.pow(100); // $a^{100} \bmod P$, $O(\log n)$
-//! let c = a / fp::<P>(456); // $a \cdot 456^{-1}$, 逆元は $O(\log P)$
-//! assert_eq!(a * a.inv(), fp::<P>(1));
+//! let c = a / fp_new::<P>(456); // $a \cdot 456^{-1}$, 逆元は $O(\log P)$
+//! assert_eq!(a * a.inv(), fp_new::<P>(1));
 //! ```
 //!
 //! # API
@@ -28,10 +28,10 @@
 /// # 例
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp::fpu;
 /// const P: u64 = 1009;
-/// assert_eq!(fpu::<P>(2000), fp::<P>(991)); // 2000 mod 1009
+/// assert_eq!(fpu::<P>(2000), fp_new::<P>(991)); // 2000 mod 1009
 /// ```
 pub const fn fpu<const P: u64>(value: usize) -> Fp<P> {
     Fp::new(value as u64)
@@ -42,11 +42,11 @@ pub const fn fpu<const P: u64>(value: usize) -> Fp<P> {
 /// # 例
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// const P: u64 = 1009;
-/// assert_eq!(fp::<P>(123), fp::<P>(1132)); // 1132 mod 1009 = 123
+/// assert_eq!(fp_new::<P>(123), fp_new::<P>(1132)); // 1132 mod 1009 = 123
 /// ```
-pub const fn fp<const P: u64>(value: u64) -> Fp<P> {
+pub const fn fp_new<const P: u64>(value: u64) -> Fp<P> {
     Fp::new(value)
 }
 
@@ -57,11 +57,11 @@ pub const fn fp<const P: u64>(value: u64) -> Fp<P> {
 /// # 例
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// const P: u64 = 1009;
-/// let x = fp::<P>(100);
-/// let y = fp::<P>(200);
-/// assert_eq!(x + y, fp::<P>(300)); // $𝔽_{1009}$ 上の加算
+/// let x = fp_new::<P>(100);
+/// let y = fp_new::<P>(200);
+/// assert_eq!(x + y, fp_new::<P>(300)); // $𝔽_{1009}$ 上の加算
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Fp<const P: u64> {
@@ -74,10 +74,9 @@ impl<const P: u64> Fp<P> {
     /// # 例
     ///
     /// ```
-    /// use fp::fp;
-    /// use fp::Fp;
+    /// use fp::fp_new;
     /// const P: u64 = 1009;
-    /// assert_eq!(Fp::<P>::new(2000), fp::<P>(991));
+    /// assert_eq!(fp_new::<P>(2000), fp_new::<P>(991));
     /// ```
     pub const fn new(value: u64) -> Self {
         Self { value: value % P }
@@ -99,10 +98,10 @@ impl<const P: u64> Fp<P> {
     /// # 例
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// const P: u64 = 1009;
-    /// let a = fp::<P>(123);
-    /// let b = fp::<P>(456);
+    /// let a = fp_new::<P>(123);
+    /// let b = fp_new::<P>(456);
     /// assert_eq!(a.mul(b), a * b);
     /// ```
     pub const fn mul(self, rhs: Self) -> Self {
@@ -116,9 +115,9 @@ impl<const P: u64> Fp<P> {
     /// # 例
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// const P: u64 = 1009;
-    /// assert_eq!(fp::<P>(2).pow(10), fp::<P>(15)); // $2^{10} \equiv 15 \pmod{1009}$
+    /// assert_eq!(fp_new::<P>(2).pow(10), fp_new::<P>(15)); // $2^{10} \equiv 15 \pmod{1009}$
     /// ```
     pub const fn pow(mut self, mut exp: u64) -> Self {
         if exp == 0 {
@@ -143,10 +142,10 @@ impl<const P: u64> Fp<P> {
     /// # 例
     ///
     /// ```
-    /// use fp::fp;
+    /// use fp::fp_new;
     /// const P: u64 = 1009;
-    /// let a = fp::<P>(123);
-    /// assert_eq!(a * a.inv(), fp::<P>(1));
+    /// let a = fp_new::<P>(123);
+    /// assert_eq!(a * a.inv(), fp_new::<P>(1));
     /// ```
     pub const fn inv(self) -> Self {
         const fn euclid(a: i64, m: i64) -> i64 {
@@ -167,9 +166,9 @@ impl<const P: u64> Fp<P> {
 /// # 例
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// const P: u64 = 1009;
-/// assert_eq!(format!("{:?}", fp::<P>(2).inv()), "1/2"); // $2^{-1}$ を 1/2 で表示
+/// assert_eq!(format!("{:?}", fp_new::<P>(2).inv()), "1/2"); // $2^{-1}$ を 1/2 で表示
 /// ```
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -212,10 +211,10 @@ impl<const P: u64> std::fmt::Debug for Fp<P> {
 /// # 例
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// const P: u64 = 1009;
-/// assert_eq!(fp::<P>(123).to_string(), "123");
-/// assert_eq!(fp::<P>(2000).to_string(), "991"); // 2000 mod 1009
+/// assert_eq!(fp_new::<P>(123).to_string(), "123");
+/// assert_eq!(fp_new::<P>(2000).to_string(), "991"); // 2000 mod 1009
 /// ```
 impl<const P: u64> std::fmt::Display for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

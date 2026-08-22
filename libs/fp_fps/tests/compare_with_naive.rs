@@ -1,5 +1,5 @@
 use fp::Fp;
-use fp::fp;
+use fp::fp_new;
 use fp_fps::fps_inv;
 use fp_fps::poly_mul;
 use rand::Rng;
@@ -12,15 +12,15 @@ const P: u64 = 998_244_353;
 struct FpHomogeneous;
 impl Distribution<Fp<P>> for FpHomogeneous {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Fp<P> {
-        fp(rng.gen_range(0..P))
+        fp_new(rng.gen_range(0..P))
     }
 }
 
 fn naive_fps_inv(f: &[Fp<P>], precision: usize) -> Vec<Fp<P>> {
-    let mut g = vec![fp(0); precision];
+    let mut g = vec![fp_new(0); precision];
     g[0] = f[0].inv();
     for i in 1..precision {
-        let mut sum = fp(0);
+        let mut sum = fp_new(0);
         for j in 1..=i.min(f.len() - 1) {
             sum += f[j] * g[i - j];
         }
@@ -36,7 +36,7 @@ fn naive_poly_mul(f: &[Fp<P>], g: &[Fp<P>]) -> Vec<Fp<P>> {
     if g.is_empty() {
         return f.to_vec();
     }
-    let mut h = vec![fp(0); f.len() + g.len() - 1];
+    let mut h = vec![fp_new(0); f.len() + g.len() - 1];
     for (i, f) in f.iter().enumerate() {
         for (j, g) in g.iter().enumerate() {
             h[i + j] += *f * *g;
@@ -46,20 +46,20 @@ fn naive_poly_mul(f: &[Fp<P>], g: &[Fp<P>]) -> Vec<Fp<P>> {
 }
 
 fn naive_poly_div_rem(mut a: Vec<Fp<P>>, b: &[Fp<P>]) -> (Vec<Fp<P>>, Vec<Fp<P>>) {
-    assert_ne!(*b.last().unwrap(), fp(0));
+    assert_ne!(*b.last().unwrap(), fp_new(0));
     if a.len() < b.len() {
         return (vec![], a);
     }
     let blinv = b.last().unwrap().inv();
-    let mut q = vec![fp(0); a.len() - b.len() + 1];
+    let mut q = vec![fp_new(0); a.len() - b.len() + 1];
     for i in (0..=a.len() - b.len()).rev() {
         q[i] = a[i + b.len() - 1] * blinv;
         for (a, b) in a[i..].iter_mut().zip(b) {
             *a -= *b * q[i];
         }
-        assert_eq!(a[i + b.len() - 1], fp(0));
+        assert_eq!(a[i + b.len() - 1], fp_new(0));
     }
-    while a.pop_if(|a| *a == fp(0)).is_some() {}
+    while a.pop_if(|a| *a == fp_new(0)).is_some() {}
     (q, a)
 }
 
@@ -67,8 +67,8 @@ fn naive_multipoint_evaluation<const P: u64>(f: &[Fp<P>], points: &[Fp<P>]) -> V
     points
         .iter()
         .map(|&x| {
-            let mut state = fp(1);
-            let mut result = fp(0);
+            let mut state = fp_new(1);
+            let mut result = fp_new(0);
             for &f in f {
                 result += f * state;
                 state *= x;
@@ -121,7 +121,7 @@ fn test_fps_inv_compare_with_naive() {
         let f_len = 1 << rng.gen_range(0..=6);
         let mut f: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(f_len).collect();
 
-        f[0] = fp(rng.gen_range(1..P));
+        f[0] = fp_new(rng.gen_range(1..P));
         let precision = rng.gen_range(1..=32);
 
         let result = fps_inv(&f, precision);
@@ -136,7 +136,7 @@ fn test_fps_inv_inverse_property() {
     for _ in 0..100 {
         let f_len = 1 << rng.gen_range(0..=5);
         let mut f: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(f_len).collect();
-        f[0] = fp(rng.gen_range(1..P));
+        f[0] = fp_new(rng.gen_range(1..P));
 
         let precision = 1 << rng.gen_range(0..=5);
         let inv = fps_inv(&f, precision);
@@ -145,9 +145,9 @@ fn test_fps_inv_inverse_property() {
 
         for (i, &val) in product.iter().enumerate() {
             if i == 0 {
-                assert_eq!(val, fp(1));
+                assert_eq!(val, fp_new(1));
             } else if i < precision {
-                assert_eq!(val, fp(0));
+                assert_eq!(val, fp_new(0));
             }
         }
     }
@@ -165,7 +165,7 @@ fn test_poly_div_rem_compare_with_naive() {
         let mut b: Vec<_> = (&mut rng).sample_iter(FpHomogeneous).take(b_len).collect();
 
         let idx = b.len() - 1;
-        b[idx] = fp(rng.gen_range(1..P));
+        b[idx] = fp_new(rng.gen_range(1..P));
 
         let (q, r) = poly_div_rem(a.clone(), b.clone());
         let (q_exp, r_exp) = naive_poly_div_rem(a, &b);

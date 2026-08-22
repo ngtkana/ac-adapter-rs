@@ -11,14 +11,14 @@
 //! # 例
 //!
 //! ```
-//! use fp::fp;
+//! use fp::fp_new;
 //! use fp_fft::fft;
 //!
 //! const P: u64 = 998_244_353;
-//! let mut data = [fp::<P>(1), fp::<P>(2)];
+//! let mut data = [fp_new::<P>(1), fp_new::<P>(2)];
 //! fft(&mut data);
-//! assert_eq!(data[0], fp::<P>(3)); // 1 + 2
-//! assert_eq!(data[1], fp::<P>(998244352)); // 1 - 2 ≡ -1 (mod P)
+//! assert_eq!(data[0], fp_new::<P>(3)); // 1 + 2
+//! assert_eq!(data[1], fp_new::<P>(998244352)); // 1 - 2 ≡ -1 (mod P)
 //! ```
 //!
 //! # 公開 API
@@ -29,23 +29,23 @@
 use std::iter::successors;
 
 use fp::Fp;
-use fp::fp;
+use fp::fp_new;
 
 const DIADIC_ROOTS_BUFFER_LEN: usize = 64;
 
 const fn find_primitive_root<const P: u64>() -> Fp<P> {
-    let mut x = fp(2);
+    let mut x = fp_new(2);
     while x.value() != P {
         if x.pow((P - 1) / 2).value() != 1 {
             return x;
         }
-        x.add_assign(fp(1));
+        x.add_assign(fp_new(1));
     }
     panic!("primitive root not found");
 }
 
 const fn build_diadic_roots<const P: u64>(root: Fp<P>) -> [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] {
-    let mut result = [fp(0); DIADIC_ROOTS_BUFFER_LEN];
+    let mut result = [fp_new(0); DIADIC_ROOTS_BUFFER_LEN];
     let k = (P - 1).trailing_zeros();
     let mut i = k as usize;
     result[i] = root.pow((P - 1) >> k);
@@ -71,15 +71,15 @@ impl<const P: u64> DiadicRootsTrait<P> for DiadicRoots<P> {
 /// # Examples
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp_fft::fft;
 ///
 /// const P: u64 = 998_244_353;
 ///
-/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// let mut a = [fp_new::<P>(3), fp_new::<P>(5)];
 /// fft(&mut a);
-/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
-/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
+/// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
+/// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     let twiddle_factors = build_twiddle_factors(items.len());
@@ -91,18 +91,18 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 /// # Examples
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp_fft::build_twiddle_factors;
 /// use fp_fft::fft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
-/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// let mut a = [fp_new::<P>(3), fp_new::<P>(5)];
 /// let twiddle_factors = build_twiddle_factors(2);
 /// fft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
-/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
-/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
+/// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
+/// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
     assert!(items.len().is_power_of_two());
@@ -125,16 +125,16 @@ pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_facto
 /// # Examples
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp_fft::ifft;
 ///
 /// const P: u64 = 998_244_353;
 ///
-/// let mut a = [fp::<P>(12), fp::<P>(4)];
+/// let mut a = [fp_new::<P>(12), fp_new::<P>(4)];
 /// ifft(&mut a);
 ///
-/// assert_eq!(a[0], fp::<P>(8));
-/// assert_eq!(a[1], fp::<P>(4));
+/// assert_eq!(a[0], fp_new::<P>(8));
+/// assert_eq!(a[1], fp_new::<P>(4));
 /// ```
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     let twiddle_factors = build_twiddle_factors(items.len());
@@ -146,18 +146,18 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
 /// # Examples
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp_fft::build_twiddle_factors;
 /// use fp_fft::ifft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
-/// let mut a = [fp::<P>(12), fp::<P>(4)];
+/// let mut a = [fp_new::<P>(12), fp_new::<P>(4)];
 /// let twiddle_factors = build_twiddle_factors(2);
 /// ifft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
-/// assert_eq!(a[0], fp::<P>(8));
-/// assert_eq!(a[1], fp::<P>(4));
+/// assert_eq!(a[0], fp_new::<P>(8));
+/// assert_eq!(a[1], fp_new::<P>(4));
 /// ```
 pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
     let items_len = items.len();
@@ -172,7 +172,7 @@ pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_fact
             }
         }
     }
-    let len_inv = fp(items.len() as u64).inv();
+    let len_inv = fp_new(items.len() as u64).inv();
     for item in items {
         *item *= len_inv;
     }
@@ -191,21 +191,21 @@ pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_fact
 /// # Examples
 ///
 /// ```
-/// use fp::fp;
+/// use fp::fp_new;
 /// use fp_fft::build_twiddle_factors;
 /// use fp_fft::fft_with_twiddle_factors;
 ///
 /// const P: u64 = 998_244_353;
 ///
-/// let mut a = [fp::<P>(3), fp::<P>(5)];
+/// let mut a = [fp_new::<P>(3), fp_new::<P>(5)];
 /// let twiddle_factors = build_twiddle_factors(2);
 /// fft_with_twiddle_factors(&mut a, &twiddle_factors);
 ///
-/// assert_eq!(a[0], fp::<P>(8)); // 3 + 5
-/// assert_eq!(a[1], fp::<P>(998244351)); // 3 - 5 ≡ -1
+/// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
+/// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
 pub fn build_twiddle_factors<const P: u64>(n: usize) -> Vec<Fp<P>> {
-    let mut twiddle_factors = vec![fp::<P>(1); 2 * n + 1];
+    let mut twiddle_factors = vec![fp_new::<P>(1); 2 * n + 1];
     for n in successors(Some(2), |&x| Some(2 * x)).take_while(|&x| x <= n) {
         let w = DiadicRoots::VALUE[n.trailing_zeros() as usize];
         for i in 0..n / 2 {
@@ -222,28 +222,28 @@ mod tests {
 
     #[test]
     fn test_find_primitive_root() {
-        assert_eq!(find_primitive_root::<998_244_353>(), fp(3));
+        assert_eq!(find_primitive_root::<998_244_353>(), fp_new(3));
     }
 
     #[test]
     fn test_build_diadic_roots_small() {
-        let diadic_roots = build_diadic_roots::<998_244_353>(fp(3));
-        assert_eq!(diadic_roots[0], fp(1));
-        assert_eq!(diadic_roots[1], fp(998_244_352));
-        assert_eq!(diadic_roots[2], fp(911_660_635));
-        assert_eq!(diadic_roots[3], fp(372_528_824));
+        let diadic_roots = build_diadic_roots::<998_244_353>(fp_new(3));
+        assert_eq!(diadic_roots[0], fp_new(1));
+        assert_eq!(diadic_roots[1], fp_new(998_244_352));
+        assert_eq!(diadic_roots[2], fp_new(911_660_635));
+        assert_eq!(diadic_roots[3], fp_new(372_528_824));
     }
 
     #[test]
     fn test_build_twiddle_factors_small() {
         let diadic_roots = build_twiddle_factors::<998_244_353>(1024);
-        assert_eq!(diadic_roots[0], fp(1));
-        assert_eq!(diadic_roots[1], fp(1));
-        assert_eq!(diadic_roots[2], fp(1));
-        assert_eq!(diadic_roots[3], fp(998_244_352));
-        assert_eq!(diadic_roots[4], fp(1));
-        assert_eq!(diadic_roots[5], fp(911_660_635));
-        assert_eq!(diadic_roots[6], fp(998_244_352));
-        assert_eq!(diadic_roots[7], fp(86_583_718));
+        assert_eq!(diadic_roots[0], fp_new(1));
+        assert_eq!(diadic_roots[1], fp_new(1));
+        assert_eq!(diadic_roots[2], fp_new(1));
+        assert_eq!(diadic_roots[3], fp_new(998_244_352));
+        assert_eq!(diadic_roots[4], fp_new(1));
+        assert_eq!(diadic_roots[5], fp_new(911_660_635));
+        assert_eq!(diadic_roots[6], fp_new(998_244_352));
+        assert_eq!(diadic_roots[7], fp_new(86_583_718));
     }
 }
