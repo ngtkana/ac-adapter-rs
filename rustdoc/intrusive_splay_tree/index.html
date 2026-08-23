@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation."><title>intrusive_splay_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="intrusive_splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="動的集約に対応した柔軟な二分探索木のための割り込み型スプレイ木。"><title>intrusive_splay_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="intrusive_splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,25 +22,25 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to use">When to use</a></li><li><a href="#how-it-works" title="How it works">How it works</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#core-items" title="Core Items">Core Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1578">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation.</p>
-<p>This crate provides a splay tree where you define the node structure and the aggregation logic
-via the <a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> trait. This allows efficient tree operations while computing arbitrary
-aggregate values (sum, min, max, etc.) on subtrees.</p>
-<h2 id="when-to-use"><a class="doc-anchor" href="#when-to-use">§</a>When to use</h2>
-<p>Use this crate when you need:</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#使用時期" title="使用時期">使用時期</a></li><li><a href="#仕組み" title="仕組み">仕組み</a></li><li><a href="#例" title="例">例</a></li><li><a href="#コア要素" title="コア要素">コア要素</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1578">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>動的集約に対応した柔軟な二分探索木のための割り込み型スプレイ木。</p>
+<p>このクレートは、<a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> トレイトを介してノード構造と集約ロジックを定義するスプレイ木を提供します。
+部分木に対して任意の集約値（合計、最小値、最大値など）を計算しながら、
+効率的なツリー操作が可能になります。</p>
+<h2 id="使用時期"><a class="doc-anchor" href="#使用時期">§</a>使用時期</h2>
+<p>以下が必要な場合に、このクレートを使用してください：</p>
 <ul>
-<li>A self-balancing binary search tree with O(log n) amortized operations</li>
-<li>Flexible control over node values and tree aggregates</li>
-<li>Frequent insertions, deletions, and queries on the same dataset</li>
-<li>Ordered access to elements (e.g., sorted ranges or k-th element queries)</li>
+<li>O(log n) 償却時間の自己平衡二分探索木</li>
+<li>ノード値とツリー集約に対する柔軟な制御</li>
+<li>同じデータセットに対する頻繁な挿入、削除、クエリ</li>
+<li>要素への順序付きアクセス（例：ソート済み範囲やk番目要素クエリ）</li>
 </ul>
-<h2 id="how-it-works"><a class="doc-anchor" href="#how-it-works">§</a>How it works</h2>
-<p>Insert and remove operations guide traversal via a closure that compares at each node.
-The tree rebalances via <strong>splaying</strong>: moving the accessed node to the root.
-This is particularly efficient when accessing the same or nearby nodes repeatedly.</p>
-<p>You define aggregation (e.g., sum of values) by implementing the <a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> trait,
-which is called whenever the tree structure changes.</p>
-<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<h2 id="仕組み"><a class="doc-anchor" href="#仕組み">§</a>仕組み</h2>
+<p>挿入と削除操作は、各ノードで比較するクロージャを使ってトラバーサルを制御します。
+ツリーは<strong>スプレイ</strong>（アクセスされたノードをルートに移動）によってリバランスされます。
+これは、同じノードまたは近くのノードに繰り返しアクセスする場合に特に効率的です。</p>
+<p><a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> トレイトを実装することで集約（例：値の合計）を定義でき、
+ツリー構造が変更されるたびに呼び出されます。</p>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>intrusive_splay_tree::Op;
 <span class="kw">use </span>intrusive_splay_tree::Tree;
 
@@ -73,16 +73,16 @@ which is called whenever the tree structure changes.</p>
 tree.insert_lower_bound_by_key(Store { value: <span class="number">10</span>, sum: <span class="number">10 </span>}, Store::value);
 tree.insert_lower_bound_by_key(Store { value: <span class="number">5</span>, sum: <span class="number">5 </span>}, Store::value);
 
-<span class="comment">// Query the entire tree's aggregate
+<span class="comment">// ツリー全体の集約をクエリ
 </span><span class="macro">assert_eq!</span>(tree.fold().unwrap().sum, <span class="number">15</span>);</code></pre></div>
-<h2 id="core-items"><a class="doc-anchor" href="#core-items">§</a>Core Items</h2>
+<h2 id="コア要素"><a class="doc-anchor" href="#コア要素">§</a>コア要素</h2>
 <ul>
-<li><a href="struct.Tree.html" title="struct intrusive_splay_tree::Tree"><code>Tree&lt;O&gt;</code></a>: The main splay tree structure</li>
-<li><a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a>: Trait for defining aggregation logic</li>
-<li><a href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2"><code>Navi2</code></a>: Navigation enum for insert/split operations (never-terminating search)</li>
-<li><a href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3"><code>Navi3</code></a>: Navigation enum for remove/get operations (can terminate early)</li>
+<li><a href="struct.Tree.html" title="struct intrusive_splay_tree::Tree"><code>Tree&lt;O&gt;</code></a> — メインのスプレイ木構造</li>
+<li><a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> — 集約ロジックを定義するトレイト</li>
+<li><a href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2"><code>Navi2</code></a> — 挿入/分割操作用のナビゲーション列挙型（終わらない検索）</li>
+<li><a href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3"><code>Navi3</code></a> — 削除/取得操作用のナビゲーション列挙型（早期終了可能）</li>
 </ul>
-<h2 id="complexity"><a class="doc-anchor" href="#complexity">§</a>Complexity</h2>
-<p>All operations (insert, remove, get, split, merge) are <strong>O(log n) amortized</strong>.
-Splaying ensures that frequently accessed elements are brought near the root.</p>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RangeEntry.html" title="struct intrusive_splay_tree::RangeEntry">Range<wbr>Entry</a></dt><dd>A mutable reference to a range of elements within a tree.</dd><dt><a class="struct" href="struct.Tree.html" title="struct intrusive_splay_tree::Tree">Tree</a></dt><dd>A splay tree.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2">Navi2</a></dt><dd>A navigation direction for binary searches that always progress (never terminate early).</dd><dt><a class="enum" href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3">Navi3</a></dt><dd>A navigation direction for binary searches that can terminate early upon finding a target.</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait intrusive_splay_tree::Op">Op</a></dt><dd>An adapter trait for specifying what to do during a structural change.</dd></dl></section></div></main></body></html>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<p>すべての操作（挿入、削除、取得、分割、マージ）は <strong>O(log n) 償却時間</strong>です。
+スプレイにより、頻繁にアクセスされる要素がルートの近くに移動します。</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RangeEntry.html" title="struct intrusive_splay_tree::RangeEntry">Range<wbr>Entry</a></dt><dd>ツリー内の要素の範囲への可変参照。</dd><dt><a class="struct" href="struct.Tree.html" title="struct intrusive_splay_tree::Tree">Tree</a></dt><dd>スプレイ木。</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2">Navi2</a></dt><dd>常に進行する二分探索のナビゲーション方向（早期終了しない）。</dd><dt><a class="enum" href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3">Navi3</a></dt><dd>ターゲットを見つけたら早期に終了できる二分探索のナビゲーション方向。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait intrusive_splay_tree::Op">Op</a></dt><dd>構造的な変更の際に実行する内容を指定するアダプタトレイト。</dd></dl></section></div></main></body></html>
