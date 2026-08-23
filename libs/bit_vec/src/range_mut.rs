@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{div_rem, BitVec, Iter, Range, B};
+use crate::{div_rem, range_mask, BitVec, Iter, Range, B};
 
 /// [`BitVec`] の mutable な部分列。[`BitVec::range`] で構築できます。
 pub struct RangeMut<'a> {
@@ -9,7 +9,7 @@ pub struct RangeMut<'a> {
     pub end: usize,
 }
 
-impl RangeMut<'_> {
+impl<'a> RangeMut<'a> {
     /// 範囲内の bit を全て flip します。
     ///
     /// # Example
@@ -57,31 +57,8 @@ impl RangeMut<'_> {
     ///
     /// assert_eq!(bv.to_string(), "00111101");
     /// ```
-    pub fn or_assign<'a>(&'a mut self, other: impl Into<Range<'a>>) {
-        let other = other.into();
-        let mut self_start = self.start;
-        let mut other_start = other.start;
-        while self_start < self.end && other_start < other.end {
-            let (q0, r0) = div_rem(self_start);
-            let (q1, r1) = div_rem(other_start);
-            let d = (self.end - self_start)
-                .min(B - r0)
-                .min(other.end - other_start)
-                .min(B - r1);
-            if d == B {
-                self.items[q0] |= other.items[q1];
-            } else {
-                let mut value = other.items[q1] & (((1 << d) - 1) << r1);
-                if r0 < r1 {
-                    value >>= r1 - r0;
-                } else if r0 > r1 {
-                    value <<= r0 - r1;
-                }
-                self.items[q0] |= value;
-            }
-            self_start += d;
-            other_start += d;
-        }
+    pub fn or_assign(&'a mut self, other: impl Into<Range<'a>>) {
+        self.visit(other, |x, y| *x |= y);
     }
     /// Bitwise xor で更新します。長さが異なる場合は短い方に合わせます。
     ///
@@ -95,31 +72,8 @@ impl RangeMut<'_> {
     ///
     /// assert_eq!(bv.to_string(), "00001001");
     /// ```
-    pub fn xor_assign<'a>(&'a mut self, other: impl Into<Range<'a>>) {
-        let other = other.into();
-        let mut self_start = self.start;
-        let mut other_start = other.start;
-        while self_start < self.end && other_start < other.end {
-            let (q0, r0) = div_rem(self_start);
-            let (q1, r1) = div_rem(other_start);
-            let d = (self.end - self_start)
-                .min(B - r0)
-                .min(other.end - other_start)
-                .min(B - r1);
-            if d == B {
-                self.items[q0] ^= other.items[q1];
-            } else {
-                let mut value = other.items[q1] & (((1 << d) - 1) << r1);
-                if r0 < r1 {
-                    value >>= r1 - r0;
-                } else if r0 > r1 {
-                    value <<= r0 - r1;
-                }
-                self.items[q0] ^= value;
-            }
-            self_start += d;
-            other_start += d;
-        }
+    pub fn xor_assign(&mut self, other: impl Into<Range<'a>>) {
+        self.visit(other, |x, y| *x ^= y);
     }
     /// 範囲内の bit を順に返す iterator を構築します
     ///
@@ -141,6 +95,108 @@ impl RangeMut<'_> {
             items: self.items,
             start: self.start,
             end: self.end,
+        }
+    }
+    #[allow(clippy::precedence)]
+    fn visit(&mut self, other: impl Into<Range<'a>>, mut f: impl FnMut(&mut u64, u64)) {
+        let mut a = RangeMut {
+            items: &mut *self.items,
+            start: self.start,
+            end: self.end,
+        };
+        let mut b: Range = other.into();
+        let len = (a.end - a.start).min(b.end - b.start);
+        if len == 0 {
+            return;
+        }
+        a.end = a.start + len;
+        b.end = b.start + len;
+
+        if a.start % B == b.start % B {
+            if a.start / B == a.end / B {
+                f(
+                    &mut a.items[a.start / B],
+                    b.items[b.start / B] & range_mask(b.start % B..b.end % B),
+                );
+            } else {
+                f(
+                    &mut a.items[a.start / B],
+                    b.items[b.start / B] & range_mask(a.start % B..),
+                );
+                for (i, j) in (a.start / B + 1..a.end / B).zip(b.start / B + 1..b.end / B) {
+                    f(&mut a.items[i], b.items[j]);
+                }
+                if a.end % B != 0 {
+                    f(
+                        &mut a.items[a.end / B],
+                        b.items[b.end / B] & range_mask(..b.end % B),
+                    );
+                }
+            }
+        } else {
+            let dbit = b.start as isize - a.start as isize;
+            let dq = dbit.div_euclid(B as isize);
+            let dr = (dbit - dq * B as isize) as usize;
+            let j = |i: usize| -> usize { i.checked_add_signed(dq).unwrap() };
+            if a.start / B == a.end / B {
+                if a.start % B < b.start % B {
+                    if a.end % B + dr <= B {
+                        f(
+                            &mut a.items[a.start / B],
+                            b.items[j(a.start / B)] >> dr & range_mask(a.start % B..a.end % B),
+                        );
+                    } else {
+                        f(
+                            &mut a.items[a.start / B],
+                            b.items[j(a.start / B)] >> dr & range_mask(a.start % B..),
+                        );
+                        f(
+                            &mut a.items[a.start / B],
+                            b.items[j(a.start / B) + 1] << B - dr & range_mask(..a.end % B),
+                        );
+                    }
+                } else {
+                    f(
+                        &mut a.items[a.start / B],
+                        b.items[((a.start / B) as isize + dq + 1) as usize] << B - dr
+                            & range_mask(a.start % B..a.end % B),
+                    );
+                }
+            } else {
+                if a.start % B < b.start % B {
+                    f(
+                        &mut a.items[a.start / B],
+                        b.items[j(a.start / B)] >> dr & range_mask(a.start % B..),
+                    );
+                    f(
+                        &mut a.items[a.start / B],
+                        b.items[j(a.start / B) + 1] << B - dr,
+                    );
+                } else {
+                    f(
+                        &mut a.items[a.start / B],
+                        b.items[b.start / B] << B - dr & range_mask(a.start % B..),
+                    );
+                }
+                for i in a.start / B + 1..a.end / B {
+                    f(&mut a.items[i], b.items[j(i)] >> dr);
+                    f(&mut a.items[i], b.items[j(i) + 1] << B - dr);
+                }
+                if a.end % B != 0 {
+                    if a.end % B + dr <= B {
+                        f(
+                            &mut a.items[a.end / B],
+                            b.items[j(a.end / B)] >> dr & range_mask(..a.end % B),
+                        );
+                    } else {
+                        f(&mut a.items[a.end / B], b.items[j(a.end / B)] >> dr);
+                        f(
+                            &mut a.items[a.end / B],
+                            b.items[j(a.end / B) + 1] << B - dr & range_mask(..a.end % B),
+                        );
+                    }
+                }
+            }
         }
     }
     /// 範囲内の bit 全体からなる [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
@@ -192,72 +248,3 @@ impl<'a> From<&'a mut BitVec> for RangeMut<'a> {
         }
     }
 }
-
-// pub fn or_assign<'a>(&'a mut self, other: impl Into<Range<'a>>) {
-//     let other = other.into();
-//     let len = (self.end - self.start).min(other.end - other.start);
-//     let (qi0, ri0) = div_rem(self.start);
-//     let (qj0, rj0) = div_rem(other.start);
-//     let (qi1, ri1) = div_rem(self.start + len);
-//     let (qj1, rj1) = div_rem(other.start + len);
-//     let a = &mut self.items;
-//     let b = &other.items;
-//     #[allow(unused_variables)]
-//     let (qi0, ri0, qj0, rj0) = match ri0.cmp(&rj0) {
-//         Ordering::Less => {
-//             if qj0 == qj1 {
-//                 a[qi0] |= (a[qj0] >> (rj0 - ri0)) & ((1 << ri1) - (1 << ri0));
-//                 return;
-//             }
-//             a[qi0] |= (a[qj0] & (u64::MAX - (1 << rj0))) >> (rj0 - ri0);
-//             if qi0 == qj1 {
-//                 a[qi0] |= a[qj0 + 1] & ((1 << rj0) - 1) << (ri0 + B - rj0);
-//                 return;
-//             }
-//             a[qi0] |= a[qj0 + 1] << (B - rj0 + ri0);
-//             (qi0 + 1, 0, qj0 + 1, rj0 - ri0)
-//         }
-//         Ordering::Greater => {
-//             if qi0 == qj1 {
-//                 a[qi0] |= (b[qj0] << (ri0 - rj0)) & ((1 << ri1) - (1 << ri0));
-//                 return;
-//             }
-//             a[qi0] |= (b[qj0] << (ri0 - rj0)) & (u64::MAX - (1 << ri0));
-//             (qi0 + 1, 0, qj0, B - ri0 + rj0)
-//         }
-//         Ordering::Equal => {
-//             if qi0 == qj1 {
-//                 a[qi0] |= b[qj0] & ((1 << ri1) - (1 << ri0));
-//                 return;
-//             }
-//             if ri0 != 0 {
-//                 a[qi0] |= b[qj0] & (u64::MAX - (1 << ri0));
-//             }
-//             (qi0 + 1, 0, qj0, 0)
-//         }
-//     };
-//     if rj0 == 0 {
-//         assert_eq!(ri1, rj1);
-//         assert_eq!(qi1 - qi0, qj1 - qj0);
-//         for (qi, qj) in (qi0..qi1).zip(qj0..) {
-//             a[qi] |= b[qj];
-//         }
-//         if ri1 != 0 {
-//             a[qi1] |= b[qj1] & ((1 << rj1) - 1);
-//         }
-//     } else {
-//         if 2 <= qi1 - qi0 {
-//             for (qi, qj) in (qi0..qi1 - 1).zip(qj0..) {
-//                 a[qi] |= a[qj] >> rj0 | a[qj + 1] << (B - rj0);
-//             }
-//         }
-//         if ri1 < rj1 {
-//             assert_eq!(qi1 - qi0, qj1 - qj0);
-//             a[qi1 - 1] |= (b[qj1 - 1] >> rj0) & (1 << rj0);
-//         } else {
-//             assert_eq!(qi1 - qi0 + 1, qj1 - qj0);
-//             a[qi1 - 1] |= b[qj1 - 2] >> rj0;
-//             a[qi1 - 1] |= (b[qj1 - 1] << (B - rj0)) & ((1 << ri1) - 1);
-//         }
-//     }
-// }

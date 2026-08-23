@@ -5,7 +5,7 @@ mod range_mut;
 
 use std::{
     fmt::{Debug, Display},
-    ops::{Bound, Deref, DerefMut, RangeBounds},
+    ops::{self, Bound, Deref, DerefMut, RangeBounds},
     str::FromStr,
 };
 
@@ -435,6 +435,32 @@ fn div_rem(index: usize) -> (usize, usize) {
     let q = index >> C;
     let r = index & (B - 1);
     (q, r)
+}
+
+trait RangeMask {
+    fn range_mask(self) -> u64;
+}
+
+fn range_mask<R: RangeMask>(range: R) -> u64 {
+    range.range_mask()
+}
+
+impl RangeMask for ops::Range<usize> {
+    fn range_mask(self) -> u64 {
+        (1 << self.end) - (1 << self.start)
+    }
+}
+
+impl RangeMask for ops::RangeFrom<usize> {
+    fn range_mask(self) -> u64 {
+        u64::MAX << self.start
+    }
+}
+
+impl RangeMask for ops::RangeTo<usize> {
+    fn range_mask(self) -> u64 {
+        (1 << self.end) - 1
+    }
 }
 
 fn to_range(range: impl RangeBounds<usize>, len: usize) -> std::ops::Range<usize> {
