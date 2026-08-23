@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{fmt::Display, ops};
 
 use crate::{div_rem, range_mask, BitVec, Iter, Range, B};
 
@@ -97,105 +97,33 @@ impl<'a> RangeMut<'a> {
             end: self.end,
         }
     }
-    #[allow(clippy::precedence)]
-    fn visit(&mut self, other: impl Into<Range<'a>>, mut f: impl FnMut(&mut u64, u64)) {
-        let mut a = RangeMut {
-            items: &mut *self.items,
-            start: self.start,
-            end: self.end,
-        };
-        let mut b: Range = other.into();
-        let len = (a.end - a.start).min(b.end - b.start);
+    fn visit(&mut self, other: impl Into<Range<'a>>, f: impl FnMut(&mut u64, u64)) {
+        let other: Range = other.into();
+        let len = (self.end - self.start).min(other.end - other.start);
         if len == 0 {
             return;
         }
-        a.end = a.start + len;
-        b.end = b.start + len;
 
-        if a.start % B == b.start % B {
-            if a.start / B == a.end / B {
-                f(
-                    &mut a.items[a.start / B],
-                    b.items[b.start / B] & range_mask(b.start % B..b.end % B),
-                );
+        let dbit = other.start as isize - self.start as isize;
+        let dq = dbit.div_euclid(B as isize);
+        let dr = (dbit - dq * B as isize) as usize;
+        let j = |i: usize| -> usize { i.checked_add_signed(dq).unwrap() };
+
+        let (q0, r0) = div_rem(self.start);
+        let (q1, r1) = div_rem(self.start + len);
+
+        #[allow(clippy::collapsible_else_if)]
+        if dr == 0 {
+            if q0 == q1 {
+                visit_case_1_parallel_short(&mut *self.items, other.items, q0, r0..r1, f, j);
             } else {
-                f(
-                    &mut a.items[a.start / B],
-                    b.items[b.start / B] & range_mask(a.start % B..),
-                );
-                for (i, j) in (a.start / B + 1..a.end / B).zip(b.start / B + 1..b.end / B) {
-                    f(&mut a.items[i], b.items[j]);
-                }
-                if a.end % B != 0 {
-                    f(
-                        &mut a.items[a.end / B],
-                        b.items[b.end / B] & range_mask(..b.end % B),
-                    );
-                }
+                visit_case_2_parallel_long(&mut *self.items, other.items, q0..q1, r0..r1, f, j);
             }
         } else {
-            let dbit = b.start as isize - a.start as isize;
-            let dq = dbit.div_euclid(B as isize);
-            let dr = (dbit - dq * B as isize) as usize;
-            let j = |i: usize| -> usize { i.checked_add_signed(dq).unwrap() };
-            if a.start / B == a.end / B {
-                if a.start % B < b.start % B {
-                    if a.end % B + dr <= B {
-                        f(
-                            &mut a.items[a.start / B],
-                            b.items[j(a.start / B)] >> dr & range_mask(a.start % B..a.end % B),
-                        );
-                    } else {
-                        f(
-                            &mut a.items[a.start / B],
-                            b.items[j(a.start / B)] >> dr & range_mask(a.start % B..),
-                        );
-                        f(
-                            &mut a.items[a.start / B],
-                            b.items[j(a.start / B) + 1] << B - dr & range_mask(..a.end % B),
-                        );
-                    }
-                } else {
-                    f(
-                        &mut a.items[a.start / B],
-                        b.items[((a.start / B) as isize + dq + 1) as usize] << B - dr
-                            & range_mask(a.start % B..a.end % B),
-                    );
-                }
+            if q0 == q1 {
+                visit_case_3_skew_short(&mut *self.items, other.items, q0, r0..r1, f, j, dr);
             } else {
-                if a.start % B < b.start % B {
-                    f(
-                        &mut a.items[a.start / B],
-                        b.items[j(a.start / B)] >> dr & range_mask(a.start % B..),
-                    );
-                    f(
-                        &mut a.items[a.start / B],
-                        b.items[j(a.start / B) + 1] << B - dr,
-                    );
-                } else {
-                    f(
-                        &mut a.items[a.start / B],
-                        b.items[b.start / B] << B - dr & range_mask(a.start % B..),
-                    );
-                }
-                for i in a.start / B + 1..a.end / B {
-                    f(&mut a.items[i], b.items[j(i)] >> dr);
-                    f(&mut a.items[i], b.items[j(i) + 1] << B - dr);
-                }
-                if a.end % B != 0 {
-                    if a.end % B + dr <= B {
-                        f(
-                            &mut a.items[a.end / B],
-                            b.items[j(a.end / B)] >> dr & range_mask(..a.end % B),
-                        );
-                    } else {
-                        f(&mut a.items[a.end / B], b.items[j(a.end / B)] >> dr);
-                        f(
-                            &mut a.items[a.end / B],
-                            b.items[j(a.end / B) + 1] << B - dr & range_mask(..a.end % B),
-                        );
-                    }
-                }
+                visit_case_4_skew_long(&mut *self.items, other.items, q0..q1, r0..r1, f, j, dr);
             }
         }
     }
@@ -213,6 +141,86 @@ impl<'a> RangeMut<'a> {
     /// ```
     pub fn collect_vec(&self) -> Vec<bool> {
         self.iter().collect()
+    }
+}
+
+fn visit_case_1_parallel_short(
+    a: &mut [u64],
+    b: &[u64],
+    q0: usize,
+    ops::Range { start: r0, end: r1 }: ops::Range<usize>,
+    mut f: impl FnMut(&mut u64, u64),
+    j: impl Fn(usize) -> usize,
+) {
+    f(&mut a[q0], b[j(q0)] & range_mask(r0..r1));
+}
+
+fn visit_case_2_parallel_long(
+    a: &mut [u64],
+    b: &[u64],
+    ops::Range { start: q0, end: q1 }: ops::Range<usize>,
+    ops::Range { start: r0, end: r1 }: ops::Range<usize>,
+    mut f: impl FnMut(&mut u64, u64),
+    j: impl Fn(usize) -> usize,
+) {
+    f(&mut a[q0], b[j(q0)] & range_mask(r0..));
+    for i in q0 + 1..q1 {
+        f(&mut a[i], b[j(i)]);
+    }
+    if r1 != 0 {
+        f(&mut a[q1], b[j(q1)] & range_mask(..r1));
+    }
+}
+
+#[allow(clippy::precedence)]
+fn visit_case_3_skew_short(
+    a: &mut [u64],
+    b: &[u64],
+    q0: usize,
+    ops::Range { start: r0, end: r1 }: ops::Range<usize>,
+    mut f: impl FnMut(&mut u64, u64),
+    j: impl Fn(usize) -> usize,
+    dr: usize,
+) {
+    if r0 + dr < B {
+        if r1 + dr <= B {
+            f(&mut a[q0], b[j(q0)] >> dr & range_mask(r0..r1));
+        } else {
+            f(&mut a[q0], b[j(q0)] >> dr & range_mask(r0..));
+            f(&mut a[q0], b[j(q0 + 1)] << B - dr & range_mask(..r1));
+        }
+    } else {
+        f(&mut a[q0], b[j(q0 + 1)] << B - dr & range_mask(r0..r1));
+    }
+}
+
+#[allow(clippy::precedence)]
+fn visit_case_4_skew_long(
+    a: &mut [u64],
+    b: &[u64],
+    ops::Range { start: q0, end: q1 }: ops::Range<usize>,
+    ops::Range { start: r0, end: r1 }: ops::Range<usize>,
+    mut f: impl FnMut(&mut u64, u64),
+    j: impl Fn(usize) -> usize,
+    dr: usize,
+) {
+    if r0 + dr < B {
+        f(&mut a[q0], b[j(q0)] >> dr & range_mask(r0..));
+        f(&mut a[q0], b[j(q0 + 1)] << B - dr);
+    } else {
+        f(&mut a[q0], b[j(q0 + 1)] << B - dr & range_mask(r0..));
+    }
+    for i in q0 + 1..q1 {
+        f(&mut a[i], b[j(i)] >> dr);
+        f(&mut a[i], b[j(i + 1)] << B - dr);
+    }
+    if r1 != 0 {
+        if r1 + dr <= B {
+            f(&mut a[q1], b[j(q1)] >> dr & range_mask(..r1));
+        } else {
+            f(&mut a[q1], b[j(q1)] >> dr);
+            f(&mut a[q1], b[j(q1 + 1)] << B - dr & range_mask(..r1));
+        }
     }
 }
 
