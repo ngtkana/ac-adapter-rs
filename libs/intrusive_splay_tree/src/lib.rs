@@ -1,27 +1,27 @@
-//! An intrusive splay tree for flexible, generic binary search trees with dynamic aggregation.
+//! 動的集約に対応した柔軟な二分探索木のための割り込み型スプレイ木。
 //!
-//! This crate provides a splay tree where you define the node structure and the aggregation logic
-//! via the [`Op`] trait. This allows efficient tree operations while computing arbitrary
-//! aggregate values (sum, min, max, etc.) on subtrees.
+//! このクレートは、[`Op`] トレイトを介してノード構造と集約ロジックを定義するスプレイ木を提供します。
+//! 部分木に対して任意の集約値（合計、最小値、最大値など）を計算しながら、
+//! 効率的なツリー操作が可能になります。
 //!
-//! # When to use
+//! # 使用時期
 //!
-//! Use this crate when you need:
-//! - A self-balancing binary search tree with O(log n) amortized operations
-//! - Flexible control over node values and tree aggregates
-//! - Frequent insertions, deletions, and queries on the same dataset
-//! - Ordered access to elements (e.g., sorted ranges or k-th element queries)
+//! 以下が必要な場合に、このクレートを使用してください：
+//! - O(log n) 償却時間の自己平衡二分探索木
+//! - ノード値とツリー集約に対する柔軟な制御
+//! - 同じデータセットに対する頻繁な挿入、削除、クエリ
+//! - 要素への順序付きアクセス（例：ソート済み範囲やk番目要素クエリ）
 //!
-//! # How it works
+//! # 仕組み
 //!
-//! Insert and remove operations guide traversal via a closure that compares at each node.
-//! The tree rebalances via **splaying**: moving the accessed node to the root.
-//! This is particularly efficient when accessing the same or nearby nodes repeatedly.
+//! 挿入と削除操作は、各ノードで比較するクロージャを使ってトラバーサルを制御します。
+//! ツリーは**スプレイ**（アクセスされたノードをルートに移動）によってリバランスされます。
+//! これは、同じノードまたは近くのノードに繰り返しアクセスする場合に特に効率的です。
 //!
-//! You define aggregation (e.g., sum of values) by implementing the [`Op`] trait,
-//! which is called whenever the tree structure changes.
+//! [`Op`] トレイトを実装することで集約（例：値の合計）を定義でき、
+//! ツリー構造が変更されるたびに呼び出されます。
 //!
-//! # Examples
+//! # 例
 //!
 //! ```
 //! use intrusive_splay_tree::Op;
@@ -56,21 +56,21 @@
 //! tree.insert_lower_bound_by_key(Store { value: 10, sum: 10 }, Store::value);
 //! tree.insert_lower_bound_by_key(Store { value: 5, sum: 5 }, Store::value);
 //!
-//! // Query the entire tree's aggregate
+//! // ツリー全体の集約をクエリ
 //! assert_eq!(tree.fold().unwrap().sum, 15);
 //! ```
 //!
-//! # Core Items
+//! # コア要素
 //!
-//! - [`Tree<O>`]: The main splay tree structure
-//! - [`Op`]: Trait for defining aggregation logic
-//! - [`Navi2`]: Navigation enum for insert/split operations (never-terminating search)
-//! - [`Navi3`]: Navigation enum for remove/get operations (can terminate early)
+//! - [`Tree<O>`] — メインのスプレイ木構造
+//! - [`Op`] — 集約ロジックを定義するトレイト
+//! - [`Navi2`] — 挿入/分割操作用のナビゲーション列挙型（終わらない検索）
+//! - [`Navi3`] — 削除/取得操作用のナビゲーション列挙型（早期終了可能）
 //!
-//! # Complexity
+//! # 計算量
 //!
-//! All operations (insert, remove, get, split, merge) are **O(log n) amortized**.
-//! Splaying ensures that frequently accessed elements are brought near the root.
+//! すべての操作（挿入、削除、取得、分割、マージ）は **O(log n) 償却時間**です。
+//! スプレイにより、頻繁にアクセスされる要素がルートの近くに移動します。
 
 use std::borrow::Borrow;
 use std::cmp::Ordering;
@@ -91,13 +91,13 @@ use node::merge3;
 use node::split2;
 use node::split3;
 
-/// A navigation direction for binary searches that always progress (never terminate early).
+/// 常に進行する二分探索のナビゲーション方向（早期終了しない）。
 ///
-/// This enum is used by [`insert`](Tree::insert), [`split_off`](Tree::split_off),
-/// and related operations. Since the search continues until hitting a leaf,
-/// you always end up inserting or splitting at a specific location.
+/// この列挙型は [`insert`](Tree::insert)、[`split_off`](Tree::split_off)、
+/// および関連操作で使用されます。検索がリーフに達するまで続くため、
+/// 常に特定の位置への挿入または分割で終わります。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use intrusive_splay_tree::Navi2;
@@ -160,13 +160,13 @@ impl Navi2 {
     }
 }
 
-/// A navigation direction for binary searches that can terminate early upon finding a target.
+/// ターゲットを見つけたら早期に終了できる二分探索のナビゲーション方向。
 ///
-/// This enum is used by [`remove`](Tree::remove), [`get`](Tree::get),
-/// and related operations. It allows you to communicate whether the current node is the target
-/// or whether to continue searching left or right.
+/// この列挙型は [`remove`](Tree::remove)、[`get`](Tree::get)、
+/// および関連操作で使用されます。現在のノードがターゲットであるか、
+/// または左または右で検索を続けるかを伝える方法を提供します。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use intrusive_splay_tree::Navi3;
@@ -231,15 +231,15 @@ impl Navi3 {
     }
 }
 
-/// A splay tree.
+/// スプレイ木。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use intrusive_splay_tree::{Op, Tree, Navi2, Navi3};
 /// use std::cmp::Ordering;
 ///
-/// // Boilerplates.
+/// // ボイラープレート。
 /// struct Store {
 ///     value: u32,
 ///     sum: u32,
@@ -263,7 +263,7 @@ impl Navi3 {
 ///
 /// let mut tree = Tree::<O>::new();
 ///
-/// // Insertions. When inserting, you must specify the full value of the node and the binary search method.
+/// // 挿入。挿入するときは、ノードの完全な値と二分探索方法を指定する必要があります。
 /// for value in 10..=13 {
 ///     tree.insert(Store { value, sum: value }, |center, _left, _right| {
 ///         match value.cmp(&center.value) {
@@ -273,7 +273,7 @@ impl Navi3 {
 ///     });
 /// }
 ///
-/// // Removals. You must also specify this when removing.
+/// // 削除。削除するときもこれを指定する必要があります。
 /// tree.remove(|center, _left, _right| {
 ///     match center.value.cmp(&12) {
 ///         Ordering::Less => Navi3::GoDownRight,
@@ -282,7 +282,7 @@ impl Navi3 {
 ///    }
 /// });
 ///
-/// // Debugging.
+/// // デバッグ。
 /// assert_eq!(
 ///     tree.collect(|value| value.value).as_slice(),
 ///     &[
@@ -292,7 +292,7 @@ impl Navi3 {
 ///     ],
 /// );
 ///
-/// // Folding. Only overall aggregation (`fold()`) is available.
+/// // 集約。全体的な集約（`fold()`）のみが利用可能です。
 /// assert_eq!(tree.fold().unwrap().sum, 34);
 /// ```
 pub struct Tree<O: Op> {
@@ -311,20 +311,20 @@ impl<O: Op> Drop for Tree<O> {
     }
 }
 
-/// A mutable reference to a range of elements within a tree.
+/// ツリー内の要素の範囲への可変参照。
 ///
-/// This type is returned by [`range_by_key`](Tree::range_by_key) and [`range_by_index`](Tree::range_by_index).
-/// It provides temporary mutable access to a contiguous range of the tree while maintaining the overall tree structure.
-/// When the entry is dropped, the range is automatically reintegrated into the tree.
+/// この型は [`range_by_key`](Tree::range_by_key) と [`range_by_index`](Tree::range_by_index) から返されます。
+/// ツリー全体の構造を保持しながら、連続した範囲への一時的な可変アクセスを提供します。
+/// エントリがドロップされるとき、範囲は自動的にツリーに再統合されます。
 ///
-/// # Invariants
+/// # 不変性
 ///
-/// The `RangeEntry` maintains the tree structure invariants:
-/// - The tree is split into three parts: left (untouched), center (the range), and right (untouched)
-/// - Modifying the center does not affect the left or right subtrees
-/// - When dropped, all three parts are automatically merged back together
+/// `RangeEntry` はツリー構造の不変性を保持します：
+/// - ツリーは 3 つの部分に分割されます：左（未変更）、中央（範囲）、右（未変更）
+/// - 中央を修正しても、左または右の部分木には影響しません
+/// - ドロップされるとき、3 つの部分すべてが自動的にマージされます
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use intrusive_splay_tree::Op;
@@ -342,9 +342,9 @@ impl<O: Op> Drop for Tree<O> {
 /// tree.insert_lower_bound_by_key(2, |v| *v);
 /// tree.insert_lower_bound_by_key(3, |v| *v);
 ///
-/// // Extract range [1, 3] and modify it
+/// // 範囲 [1, 3] を抽出して修正
 /// let mut range = tree.range_by_key(1..=3, |v| *v);
-/// // Modifications to range stay within the range
+/// // 範囲への修正は範囲内に留まります
 /// ```
 pub struct RangeEntry<'a, O: Op> {
     tree: &'a mut Tree<O>,
@@ -381,9 +381,9 @@ impl<O: Op> Drop for RangeEntry<'_, O> {
 }
 
 impl<T, O: Op<Store = T>> Tree<O> {
-    /// Creates a new empty tree.
+    /// 新しい空のツリーを作成します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -403,9 +403,9 @@ impl<T, O: Op<Store = T>> Tree<O> {
         Self::default()
     }
 
-    /// Returns `true` if the tree is empty.
+    /// ツリーが空の場合 `true` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -425,18 +425,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.root.is_none()
     }
 
-    /// Returns the total size of the tree using the provided size function.
+    /// 提供されたサイズ関数を使用して、ツリーの合計サイズを返します。
     ///
-    /// The size function is typically used to compute aggregate size information
-    /// (e.g., the sum of element counts if each element can span multiple indices).
-    /// If the tree maintains size information via the [`Op`] trait, you can extract
-    /// it from the root node's aggregate value.
+    /// サイズ関数は通常、集約サイズ情報を計算するために使用されます
+    /// （例：各要素が複数のインデックスにまたがることができる場合の要素数の合計）。
+    /// ツリーが [`Op`] トレイトを介してサイズ情報を保持している場合、
+    /// ルートノードの集約値から抽出できます。
     ///
-    /// # Arguments
+    /// # 引数
     ///
-    /// * `size` - A closure that computes the size component of the aggregate value
+    /// * `size` - 集約値のサイズコンポーネントを計算するクロージャ
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -477,18 +477,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
             .map_or(0, |root| unsafe { size(&(*root.as_ptr()).store) })
     }
 
-    /// Extracts a range of elements by key bounds, returning a mutable reference to the range.
+    /// キーの境界により要素の範囲を抽出し、その範囲への可変参照を返します。
     ///
-    /// This method splits the tree to isolate elements within the specified key range,
-    /// giving you a [`RangeEntry`] that implements [`Deref`] and [`DerefMut`] to [`Tree<O>`].
-    /// When the entry is dropped, the range is automatically reintegrated into the original tree.
+    /// このメソッドは、指定されたキー範囲内の要素を分離するためにツリーを分割し、
+    /// [`Deref`] と [`DerefMut`] を [`Tree<O>`] に実装する [`RangeEntry`] を提供します。
+    /// エントリがドロップされるとき、範囲は自動的に元のツリーに再統合されます。
     ///
-    /// # Arguments
+    /// # 引数
     ///
-    /// * `range` - The range bounds (using standard Rust [`RangeBounds`] syntax: `..`, `1..`, `..3`, `1..3`, `1..=3`, etc.)
-    /// * `f` - A closure that extracts a sortable key from each element
+    /// * `range` - 範囲の境界（標準 Rust [`RangeBounds`] 構文を使用：`..`、`1..`、`..3`、`1..3`、`1..=3` など）
+    /// * `f` - 各要素からソート可能なキーを抽出するクロージャ
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -506,7 +506,7 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(2, |v| *v);
     /// tree.insert_lower_bound_by_key(3, |v| *v);
     ///
-    /// // Get elements in range [2, 3]
+    /// // 範囲 [2, 3] 内の要素を取得
     /// let range = tree.range_by_key(2..=3, |v| *v);
     /// let collected = range.collect(|v| *v);
     /// ```
@@ -537,18 +537,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
         RangeEntry::new(self, left, center, right)
     }
 
-    /// Extracts a range of elements by index bounds, returning a mutable reference to the range.
+    /// インデックスの境界により要素の範囲を抽出し、その範囲への可変参照を返します。
     ///
-    /// This method splits the tree to isolate elements at indices within the specified range,
-    /// giving you a [`RangeEntry`] that implements [`Deref`] and [`DerefMut`] to [`Tree<O>`].
-    /// When the entry is dropped, the range is automatically reintegrated into the original tree.
+    /// このメソッドは、指定された範囲内のインデックスにある要素を分離するためにツリーを分割し、
+    /// [`Deref`] と [`DerefMut`] を [`Tree<O>`] に実装する [`RangeEntry`] を提供します。
+    /// エントリがドロップされるとき、範囲は自動的に元のツリーに再統合されます。
     ///
-    /// # Arguments
+    /// # 引数
     ///
-    /// * `range` - The index bounds (using standard Rust [`RangeBounds`] syntax)
-    /// * `size` - A closure that computes the logical size of each element (often 1 for single-element nodes)
+    /// * `range` - インデックスの境界（標準 Rust [`RangeBounds`] 構文を使用）
+    /// * `size` - 各要素の論理的なサイズを計算するクロージャ（単一要素ノードの場合は通常 1）
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -584,7 +584,7 @@ impl<T, O: Op<Store = T>> Tree<O> {
     /// tree.insert_lower_bound_by_key(Store { value: 20, size: 1 }, |v| v.value);
     /// tree.insert_lower_bound_by_key(Store { value: 30, size: 1 }, |v| v.value);
     ///
-    /// // Get elements at indices [0, 2)
+    /// // インデックス [0, 2) にある要素を取得
     /// let range = tree.range_by_index(0..2, Store::size);
     /// let collected = range.collect(|v| v.value);
     /// ```
@@ -621,15 +621,15 @@ impl<T, O: Op<Store = T>> Tree<O> {
         RangeEntry::new(self, left, center, right)
     }
 
-    /// Computes and returns the aggregate value of the entire tree.
+    /// ツリー全体の集約値を計算して返します。
     ///
-    /// This method returns a reference to the aggregated value maintained at the tree's root.
-    /// The aggregation is computed by the [`Op`] trait's [`update`](Op::update) method whenever
-    /// the tree structure changes. This is O(1) since the aggregate is always kept up-to-date.
+    /// このメソッドは、ツリーのルートで管理される集約値への参照を返します。
+    /// 集約は、ツリー構造が変更されるたびに [`Op`] トレイトの [`update`](Op::update) メソッドによって計算されます。
+    /// 集約は常に最新に保たれているため、これは O(1) です。
     ///
-    /// Returns `None` if the tree is empty.
+    /// ツリーが空の場合は `None` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -665,13 +665,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
         unsafe { self.root.map(|root| &(*root.as_ptr()).store) }
     }
 
-    /// Splits the tree using a custom closure to guide the split operation.
+    /// カスタムクロージャを使用してツリーを分割します。
     ///
-    /// The closure is called at each node to determine whether to descend left or right.
-    /// The tree is split so that this tree retains the left subtree and the returned tree
-    /// gets the right subtree at the split point.
+    /// クロージャは各ノードで呼び出され、左または右に下降するかを決定します。
+    /// ツリーは、このツリーが左の部分木を保持し、返されるツリーが
+    /// 分割ポイントで右の部分木を取得するように分割されます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Navi2;
@@ -705,11 +705,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         Self { root: right }
     }
 
-    /// Splits the tree at a given index, returning the elements at or after that index.
+    /// 指定されたインデックスでツリーを分割し、そのインデックス以降の要素を返します。
     ///
-    /// Uses a size function to compute subtree sizes and guide the split operation.
+    /// サイズ関数を使用してサブツリーサイズを計算し、分割操作を制御します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -760,11 +760,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.split_off(|_center, left, _right| Navi2::by_index(&mut index, &mut size, left))
     }
 
-    /// Splits the tree at the lower bound of a key, returning elements >= the key.
+    /// キーの下限でツリーを分割し、キー以上の要素を返します。
     ///
-    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    /// プローブ型 `Q` は `Borrow` を介してキー型 `K` と異なる場合があります。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Tree;
@@ -806,11 +806,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.split_off(|center, _left, _right| Navi2::lower_bound_by_key(probe, center, &mut f))
     }
 
-    /// Splits the tree at the upper bound of a key, returning elements > the key.
+    /// キーの上限でツリーを分割し、キーより大きい要素を返します。
     ///
-    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    /// プローブ型 `Q` は `Borrow` を介してキー型 `K` と異なる場合があります。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Tree;
@@ -850,9 +850,9 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.split_off(|center, _left, _right| Navi2::upper_bound_by_key(probe, center, &mut f))
     }
 
-    /// Concatenates another tree to this one, consuming the other tree.
+    /// 別のツリーをこのツリーに連結し、他のツリーを消費します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Tree;
@@ -878,13 +878,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.root = merge2(self.root.take(), other.root.take());
     }
 
-    /// Inserts a new node by using a closure to guide traversal.
+    /// クロージャを使用してトラバーサルを制御して、新しいノードを挿入します。
     ///
-    /// The closure is called at each node to determine whether to descend left or right.
-    /// A new node is inserted when encountering a boundary (no child in the chosen direction).
-    /// The tree is rebalanced via splaying.
+    /// クロージャは各ノードで呼び出され、左または右に下降するかを決定します。
+    /// 新しいノードは境界を遭遇したとき（選択された方向に子がない）に挿入されます。
+    /// ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Navi2;
@@ -913,11 +913,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.root = Some(merge3(left, center, right));
     }
 
-    /// Inserts a new node at a specific index position.
+    /// 指定されたインデックス位置に新しいノードを挿入します。
     ///
-    /// Uses a size function to compute subtree sizes and guide the insertion.
+    /// サイズ関数を使用してサブツリーサイズを計算し、挿入を制御します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -963,11 +963,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         });
     }
 
-    /// Inserts a new node by extracting a key and using lower_bound semantics.
+    /// キーを抽出して lower_bound のセマンティクスを使用して、新しいノードを挿入します。
     ///
-    /// Duplicates are inserted to the left (allowing multiple equal keys).
+    /// 重複は左に挿入されます（複数の同じキーを許可）。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -993,11 +993,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         });
     }
 
-    /// Inserts a new node by extracting a key and using upper_bound semantics.
+    /// キーを抽出して upper_bound のセマンティクスを使用して、新しいノードを挿入します。
     ///
-    /// Duplicates are inserted to the right (allowing multiple equal keys).
+    /// 重複は右に挿入されます（複数の同じキーを許可）。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1023,12 +1023,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         });
     }
 
-    /// Inserts a new node at the front (left-most position) of the tree.
+    /// ツリーの前（最も左の位置）に新しいノードを挿入します。
     ///
-    /// This method always navigates left until reaching a leaf, inserting
-    /// the new node as the left-most element. The tree is rebalanced via splaying.
+    /// このメソッドは常にリーフに達するまで左にナビゲートし、
+    /// 新しいノードを最も左の要素として挿入します。ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1051,12 +1051,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.insert(store, |_, _, _| Navi2::GoDownLeft);
     }
 
-    /// Inserts a new node at the back (right-most position) of the tree.
+    /// ツリーの後ろ（最も右の位置）に新しいノードを挿入します。
     ///
-    /// This method always navigates right until reaching a leaf, inserting
-    /// the new node as the right-most element. The tree is rebalanced via splaying.
+    /// このメソッドは常にリーフに達するまで右にナビゲートし、
+    /// 新しいノードを最も右の要素として挿入します。ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1079,13 +1079,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.insert(store, |_, _, _| Navi2::GoDownRight);
     }
 
-    /// Removes a node by using a closure to guide traversal and identify the target.
+    /// クロージャを使用してトラバーサルを制御し、ターゲットを識別してノードを削除します。
     ///
-    /// The closure is called at each node to determine whether to descend left, right, or if the node is found.
-    /// If found, the node is removed and its value is returned; otherwise `None` is returned.
-    /// The tree is rebalanced via splaying.
+    /// クロージャは各ノードで呼び出され、左、右に下降するか、またはノードが見つかったかを決定します。
+    /// 見つかった場合、ノードが削除され、その値が返されます。そうでない場合は `None` が返されます。
+    /// ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Navi3;
@@ -1131,12 +1131,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         }
     }
 
-    /// Removes a node at a specific index, returning its value.
+    /// 指定されたインデックスのノードを削除し、その値を返します。
     ///
-    /// Uses a size function to compute subtree sizes and guide the removal.
-    /// Returns `None` if the index is out of bounds.
+    /// サイズ関数を使用してサブツリーサイズを計算し、削除を制御します。
+    /// インデックスが範囲外の場合は `None` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1181,13 +1181,13 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.remove(|_center, left, _right| Navi3::by_index(&mut index, &mut size, left))
     }
 
-    /// Removes a node by extracting a key from each node and comparing with a probe.
+    /// 各ノードからキーを抽出し、プローブと比較してノードを削除します。
     ///
-    /// This is a convenience wrapper around [`remove`](Self::remove) that extracts a key from each node's value
-    /// and compares it with the probe using `Ord`. The probe type `Q` need not match the key type `K` exactly,
-    /// as long as `K` implements `Borrow<Q>` (enabling `String` nodes to be searched by `&str`, for example).
+    /// これは [`remove`](Self::remove) の便利なラッパーで、各ノード値からキーを抽出し、
+    /// `Ord` を使用してプローブと比較します。プローブ型 `Q` はキー型 `K` と正確に一致する必要はありません。
+    /// `K` が `Borrow<Q>` を実装している限り（例えば、`String` ノードが `&str` で検索できるようにします）。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1215,12 +1215,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.remove(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
-    /// Removes and returns the minimum element in the tree (leftmost node).
+    /// ツリーの最小要素（最も左のノード）を削除して返します。
     ///
-    /// This method navigates to the leftmost node, removes it, and returns its value.
-    /// Returns `None` if the tree is empty. The tree is rebalanced via splaying.
+    /// このメソッドは最も左のノードにナビゲートし、それを削除して、その値を返します。
+    /// ツリーが空の場合は `None` を返します。ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1249,12 +1249,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         )
     }
 
-    /// Removes and returns the maximum element in the tree (rightmost node).
+    /// ツリーの最大要素（最も右のノード）を削除して返します。
     ///
-    /// This method navigates to the rightmost node, removes it, and returns its value.
-    /// Returns `None` if the tree is empty. The tree is rebalanced via splaying.
+    /// このメソッドは最も右のノードにナビゲートし、それを削除して、その値を返します。
+    /// ツリーが空の場合は `None` を返します。ツリーはスプレイによってリバランスされます。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1283,12 +1283,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         )
     }
 
-    /// Retrieves a reference to a node's value via a closure-guided traversal.
+    /// クロージャで導かれたトラバーサルを介してノード値への参照を取得します。
     ///
-    /// The closure is called at each node to determine whether to descend left, right, or if found.
-    /// The tree is rebalanced via splaying but the node is not removed.
+    /// クロージャは各ノードで呼び出され、左、右に下降するか、見つかったかを決定します。
+    /// ツリーはスプレイによってリバランスされますが、ノードは削除されません。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Navi3;
@@ -1332,12 +1332,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         }
     }
 
-    /// Retrieves a reference to a node's value at a specific index.
+    /// 指定されたインデックスのノード値への参照を取得します。
     ///
-    /// Uses a size function to compute subtree sizes and guide the search.
-    /// Returns `None` if the index is out of bounds.
+    /// サイズ関数を使用してサブツリーサイズを計算し、検索を制御します。
+    /// インデックスが範囲外の場合は `None` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1386,11 +1386,11 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.get(|_center, left, _right| Navi3::by_index(&mut index, &mut size, left))
     }
 
-    /// Retrieves a reference to a node's value by extracting a key and comparing.
+    /// キーを抽出して比較することで、ノード値への参照を取得します。
     ///
-    /// The probe type `Q` may differ from the key type `K` via `Borrow`.
+    /// プローブ型 `Q` は `Borrow` を介してキー型 `K` と異なる場合があります。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Tree;
@@ -1425,12 +1425,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         self.get(|center, _left, _right| Navi3::by_key(probe, center, &mut f))
     }
 
-    /// Returns a reference to the minimum element in the tree (leftmost node).
+    /// ツリーの最小要素（最も左のノード）への参照を返します。
     ///
-    /// This method navigates to the leftmost node in the tree, which contains
-    /// the minimum value. Returns `None` if the tree is empty.
+    /// このメソッドはツリーの最も左のノードにナビゲートします。このノードは
+    /// 最小値を含んでいます。ツリーが空の場合は `None` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1458,12 +1458,12 @@ impl<T, O: Op<Store = T>> Tree<O> {
         )
     }
 
-    /// Returns a reference to the maximum element in the tree (rightmost node).
+    /// ツリーの最大要素（最も右のノード）への参照を返します。
     ///
-    /// This method navigates to the rightmost node in the tree, which contains
-    /// the maximum value. Returns `None` if the tree is empty.
+    /// このメソッドはツリーの最も右のノードにナビゲートします。このノードは
+    /// 最大値を含んでいます。ツリーが空の場合は `None` を返します。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1491,17 +1491,17 @@ impl<T, O: Op<Store = T>> Tree<O> {
         )
     }
 
-    /// Collects all elements from the tree into a vector, applying a transformation.
+    /// ツリーから変換を適用してすべての要素をベクターに集約します。
     ///
-    /// This method performs an in-order traversal of the tree, collecting each element
-    /// after applying the provided transformation function. The result is sorted in the
-    /// tree's natural order (left-to-right in-order traversal).
+    /// このメソッドは、提供された変換関数を適用した後、各要素を集約して
+    /// ツリーの中順トラバーサルを実行します。結果はツリーの自然な順序
+    /// （左から右の中順トラバーサル）でソート済みです。
     ///
-    /// # Arguments
+    /// # 引数
     ///
-    /// * `f` - A closure that transforms each element value into the output type
+    /// * `f` - 各要素値を出力型に変換するクロージャ
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use intrusive_splay_tree::Op;
@@ -1529,18 +1529,18 @@ impl<T, O: Op<Store = T>> Tree<O> {
     }
 }
 
-/// An adapter trait for specifying what to do during a structural change.
+/// 構造的な変更の際に実行する内容を指定するアダプタトレイト。
 ///
-/// The [`update`](Op::update) method is called whenever a node is inserted, deleted, or rotated.
-/// It receives the node's value and optional references to the left and right children's aggregated values,
-/// allowing you to maintain tree-wide aggregates (e.g., sum, min, max) in O(log n) time.
+/// [`update`](Op::update) メソッドは、ノードが挿入、削除、または回転されるたびに呼び出されます。
+/// このメソッドは、ノードの値と左および右の子の集約値への参照を受け取り、
+/// ツリー全体の集約（例：合計、最小値、最大値）を O(log n) 時間で保守できます。
 ///
-/// # Invariants
+/// # 不変性
 ///
-/// The `update` method must be associative and must not depend on tree structure or traversal order.
-/// Implementations that violate this invariant will produce incorrect aggregation results.
+/// `update` メソッドは結合法則に従う必要があり、ツリー構造またはトラバーサル順序に依存しないようにする必要があります。
+/// この不変性に違反する実装は、不正な集約結果を生成します。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use intrusive_splay_tree::Navi2;
