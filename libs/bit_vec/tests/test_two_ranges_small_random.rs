@@ -62,8 +62,8 @@ fn test_xor_assign_small_random() {
             result  : {a_changed_result}\n\
             expected: {a_changed_expected}\n\
             ",
-            a_changed_result = format_range(&a_changed, a_start, a_end),
-            a_changed_expected = format_range(&a_bv.iter().collect::<Vec<_>>(), a_start, a_end),
+            a_changed_result = format_range(&a_bv.iter().collect::<Vec<_>>(), a_start, a_end),
+            a_changed_expected = format_range(&a_changed, a_start, a_end),
         );
 
         for i in 0..a.len() {
@@ -113,8 +113,8 @@ fn test_or_assign_small_random() {
             result  : {a_changed_result}\n\
             expected: {a_changed_expected}\n\
             ",
-            a_changed_result = format_range(&a_changed, a_start, a_end),
-            a_changed_expected = format_range(&a_bv.iter().collect::<Vec<_>>(), a_start, a_end),
+            a_changed_result = format_range(&a_bv.iter().collect::<Vec<_>>(), a_start, a_end),
+            a_changed_expected = format_range(&a_changed, a_start, a_end),
         );
 
         for i in 0..a.len() {
