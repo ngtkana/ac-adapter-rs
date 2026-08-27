@@ -62,14 +62,25 @@ criterion_main!(benches);
 ```
 
 **重要なポイント:**
-- コンパイラの最適化を防ぐため、`black_box()` で入力をラップする
+- コンパイラの最適化を防ぐため、**入力データと計測結果の両方を `black_box()` でラップする**
+  - 例：`b.iter(|| { func(black_box(&input)); })` ではなく `b.iter(|| black_box(func(black_box(&input))))`
+  - または、クエリなどの操作に `black_box()` を適用：`tree.execute(black_box(&queries))`
 - 現実的なテストデータを使用する（些細なケースではない）
+- 複数シナリオでテスト（例：dense と sparse なデータセット）
 - ベンチマーク文字列の関数名は一致する必要があります：`"{function_name}_{size}"`
 - 有限体クレート用に `const P: u64 = 998_244_353` を使用する
 
 #### 1.3 REPORT.md テンプレートを作成
 
-テンプレートは `report-template.md` を参照してください。`benches/benches/{function_name}_benchmark/REPORT.md` にコピーしてから、`{関数名}` をプレースホルダーとして使用します。
+シンプルなテンプレート構成：
+- 設定（パラメータ値）
+- ベンチマーク結果表
+- パフォーマンス（単位）
+- ベースライン（Criterion 出力）
+- 重要事項（計測対象/外）
+- 最適化記録テンプレート
+
+詳細は `report-template.md` を参照。
 
 ### フェーズ 2: ベースラインを登録して実行
 
@@ -183,6 +194,22 @@ cargo bench --bench {function_name}_benchmark -- --output-format bencher
 - **安定した測定**：静かなマシンで実行。バックグラウンドアプリを閉じる
 - **サイズ選択**：保守的に開始（2^20 以下）、必要に応じてスケールアップ
 - **結果をドキュメント化**：REPORT.md はラボノート。予期しない結果をメモする
+- **sparsity 生成（Predecessor/Set 系）**: Exact Count Sampling（Fisher-Yates）を使用
+  ```rust
+  use rand::seq::SliceRandom;
+  fn gen_sparse_exact(n: usize, count: usize) -> Vec<bool> {
+      let mut bits = vec![false; n];
+      let mut indices: Vec<usize> = (0..n).collect();
+      indices.shuffle(&mut rng);
+      for i in 0..count.min(n) { bits[indices[i]] = true; }
+      bits
+  }
+  ```
+- **複数シナリオでベンチマーク**: 単純な操作だけでなく、異なる入力特性（dense/sparse）でテスト
+- **N と Q のバランス**: 反復時間を調整する主要パラメータ
+  - N: ツリーサイズ、構築時間、操作の複雑さに影響
+  - Q: クエリ数、反復あたりの操作量に直接影響
+  - 反復時間が目標範囲外なら N と Q を同方向に調整
 
 ## 制限事項
 
