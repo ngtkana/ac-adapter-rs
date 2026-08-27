@@ -9,7 +9,7 @@ const LG_B: usize = B.ilog2() as usize;
 
 /// $w$-ary tree による predecessor データ構造です。
 #[allow(dead_code)]
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct WAryTree {
     items: Vec<u64>,
     offset: usize,
