@@ -107,17 +107,18 @@ macro_rules! input {
     } => {
         let source = &mut $source;
         $(
+            #[allow(unknown_lints)]
             #[allow(ignored_unit_patterns)]
             let $name = $crate::Parser::read(&$parser, &mut *source);
         )*
     };
     {
-        $rest:tt
+        $($name:tt: $parser:expr),* $(,)?
     } => {
-        let mut source = $crate::source();
+        let mut source = $crate::stdin_source();
         input! {
             @from [source]
-            $rest
+            $($name: $parser,)*
         }
     };
 }
