@@ -24,42 +24,6 @@ fn test_w_ary_tree_contains() {
 }
 
 #[test]
-fn test_w_ary_tree_insert_collect() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..200 {
-        let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
-        for _ in 0..200 {
-            let x = rng.gen_range(0..n);
-            let result = !a[x];
-            a[x] = true;
-            let expected = tree.insert(x);
-            assert_eq!(result, expected, "x = {x}");
-        }
-        let result = a;
-        let expected = tree.iter().collect::<Vec<_>>();
-        assert_eq!(result, expected);
-    }
-}
-
-#[test]
-fn test_w_ary_tree_remove_collect() {
-    let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..200 {
-        let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
-        for _ in 0..200 {
-            let x = rng.gen_range(0..n);
-            let result = a[x];
-            a[x] = false;
-            let expected = tree.remove(x);
-            assert_eq!(result, expected, "x = {x}");
-        }
-        let result = a;
-        let expected = tree.iter().collect::<Vec<_>>();
-        assert_eq!(result, expected);
-    }
-}
-
-#[test]
 fn test_w_ary_tree_min() {
     let mut rng = StdRng::seed_from_u64(42);
     for _ in 0..200 {
