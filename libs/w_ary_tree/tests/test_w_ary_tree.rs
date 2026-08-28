@@ -2,8 +2,8 @@ use rand::{Rng, SeedableRng, rngs::StdRng};
 use w_ary_tree::*;
 
 fn gen_instance(mut rng: impl Rng, p: f64) -> (usize, Vec<bool>, WAryTree) {
-    let depth = rng.gen_range(0..=2);
-    let n = rng.gen_range(1 << (depth * 6)..(1 << ((depth + 1) * 6)).min(1 << 13));
+    let height = rng.gen_range(1..=3);
+    let n = rng.gen_range(1 << ((height - 1) * 6)..(1 << (height * 6)).min(1 << 13));
     let a = (0..n).map(|_| rng.gen_bool(p)).collect::<Vec<_>>();
     let tree = WAryTree::from_slice_of_bool(&a);
     (n, a, tree)
@@ -12,7 +12,7 @@ fn gen_instance(mut rng: impl Rng, p: f64) -> (usize, Vec<bool>, WAryTree) {
 #[test]
 fn test_w_ary_tree_contains() {
     let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
+    for _ in 0..200 {
         let (n, a, tree) = gen_instance(&mut rng, 0.5);
         for _ in 0..200 {
             let x = rng.gen_range(0..n);
@@ -26,7 +26,7 @@ fn test_w_ary_tree_contains() {
 #[test]
 fn test_w_ary_tree_insert_collect() {
     let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
+    for _ in 0..200 {
         let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
         for _ in 0..200 {
             let x = rng.gen_range(0..n);
@@ -44,7 +44,7 @@ fn test_w_ary_tree_insert_collect() {
 #[test]
 fn test_w_ary_tree_remove_collect() {
     let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
+    for _ in 0..200 {
         let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
         for _ in 0..200 {
             let x = rng.gen_range(0..n);
@@ -78,7 +78,7 @@ fn test_w_ary_tree_min() {
 #[test]
 fn test_w_ary_tree_successor_excluding() {
     let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
+    for _ in 0..200 {
         let p = 2f64.powf(rng.gen_range(-8f64..=-1f64));
         let (n, a, tree) = gen_instance(&mut rng, p);
         for _ in 0..200 {
@@ -105,7 +105,7 @@ fn test_w_ary_tree_max() {
 #[test]
 fn test_w_ary_tree_predecessor_excluding() {
     let mut rng = StdRng::seed_from_u64(42);
-    for _ in 0..20 {
+    for _ in 0..200 {
         let p = 2f64.powf(rng.gen_range(-8f64..=-1f64));
         let (n, a, tree) = gen_instance(&mut rng, p);
         for _ in 0..200 {
