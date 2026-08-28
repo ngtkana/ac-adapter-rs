@@ -1,28 +1,54 @@
-//! 標準入力から型安全に構造化データを読み取るパーサーライブラリ。
+//! 競技プログラミング用の入力ライブラリです。
 //!
-//! # 概要
-//!
-//! トークン単位での字句解析と、パーサーコンビネータを用いた型安全な解析を提供します。
-//! 競技プログラミング向けに、$1$ つの `read()` 関数で複数の型を同時に読み取れます。
-//!
-//! # 例
+//! # Examples
 //!
 //! ```
-//! use io_reader::{read, Usize, I32, Vector};
+//! use io_reader::{input, Usize, I32, Vector};
+//! # let mut source = io_reader::Source::from("2 3 10 20 30");
 //!
-//! // 入力："2 3 10 20 30"
-//! // let n: usize = read(Usize);
-//! // let m: usize = read(Usize);
-//! // let v: Vec<i32> = read(Vector(I32, 3));
+//! input! {
+//! #   @from [source]
+//!     n: Usize,
+//!     m: Usize,
+//!     a: Vector(I32, 3),
+//! }
+//! # assert_eq!(n, 2);
+//! # assert_eq!(m, 3);
+//! # assert_eq!(a, [10, 20, 30]);
 //! ```
+//!
+//! # Parser
+//!
+//! `input` macro において、右辺に書いてあるのは型ではなく値です。
+//!
+//! パーサー [`Parser`] trait を実装した型の**値**であり、これを組み合わせて新しい parser を作ります。
+//!
+//!
+//! # Source
+//!
+//! 入力源は [`BufRead`] trait を実装した型をラップした、[`Source`] 型を使えます。
+//!
+//! 代表的な用法は標準入力 [`Stdin`] と、テスト用に文字列 `&'static str` です。
+//!
+//!
+//! ## 標準入力
+//!
+//! 何も記載せず `input!` マクロを使えば使えます。
+//!
+//! 明示的に [`Source`] を取得したければ [`stdin_source`] 関数が使えます。[`MutexGuard`] で wrap
+//! したものが返ってきます。実体は [`OnceLock<Mutex<_>>`] に包まれて `static` に置かれています。
+//!
+//! ## 文字列
+//!
+//! [`Source::from`] を使って `&str` から変換することで構築できます。
 //!
 //! # パーサーの種類
 //!
-//! - **基本型**: `Char`, `Str`, `I32`, `U64`, など（`Canonical<T>` による）
-//! - **列**: `Vector<P>` で $n$ 個の要素
-//! - **配列**: `Array<N, P>` で長さ $N$ の配列
-//! - **ペア**: `Tuple2<P0, P1>` で 2-tuple
-//! - **特殊**: `Usize1` で 1-indexed usize、`Bools<Z, O>` で 0/1 文字列
+//! - **基本型**: [`Char`], [`Str`], [`I32`], [`U64`], など（`Canonical<P>` による）
+//! - **列**: [`Vector<P>`] で $n$ 個の要素
+//! - **配列**: [`Array<N, P>`] で長さ $N$ の配列
+//! - **ペア**: [`Tuple2<P0, P1>`] で 2-tuple
+//! - **特殊**: [`Usize1`] で 1-indexed usize、[`Bools<Z, O>`] で 0/1 文字列、[`Bytes`] でバイト列
 
 use std::{
     fmt::Debug,
@@ -32,30 +58,84 @@ use std::{
     sync::{Mutex, MutexGuard, OnceLock},
 };
 
-/// パーサーを用いて標準入力から値を読み取る。
-///
-/// # 例
-///
-/// ```
-/// use io_reader::{read, I32};
-/// // let x = read(I32);  // 標準入力から i32 を読む
-/// ```
-pub fn read<T: Parser>(parser: T) -> T::Output {
-    parser.read(&mut source())
-}
+static STDIN_SOURCE: OnceLock<Mutex<Source<BufReader<Stdin>>>> = OnceLock::new();
 
-fn source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
-    SOURCE
+/// Static に置かれた stdin source にアクセスします。
+///
+/// 実体は [`OnceLock<Mutex<_>>`] に包まれていて、遅延初期化され、mutex 管理されます。
+pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
+    STDIN_SOURCE
         .get_or_init(|| Mutex::new(Source::new(BufReader::new(stdin()))))
         .lock()
         .unwrap()
 }
 
-static SOURCE: OnceLock<Mutex<Source<BufReader<Stdin>>>> = OnceLock::new();
-
-/// 入力ソースから行・トークン単位で読み取るリーダー。
+/// Parser を複数用いて、複数の変数を定義・初期化する macro です。
 ///
-/// 行単位で読み込み、空白で分割したトークンを提供します。
+/// # Examples
+///
+/// ```
+/// use io_reader::{input, I32, Usize};
+/// # let mut source = io_reader::Source::from("10\n3");
+/// input! {
+/// #   @from [source]
+///     x: I32,
+///     n: Usize,
+/// }
+/// # assert_eq!(x, 10);
+/// # assert_eq!(n, 3);
+/// ```
+///
+/// ## 文字列版 (`@from` の使い方)
+///
+/// ```
+/// use io_reader::{input, I32, Usize, Source};
+/// input! {
+///     @from [Source::from("10\n3")]
+///     x: I32,
+///     n: Usize,
+/// }
+/// assert_eq!(x, 10);
+/// assert_eq!(n, 3);
+/// ```
+///
+#[macro_export]
+macro_rules! input {
+    {
+        @from [$source:expr] $(,)?
+        $($name:tt: $parser:expr),* $(,)?
+    } => {
+        let source = &mut $source;
+        $(
+            #[allow(ignored_unit_patterns)]
+            let $name = $crate::Parser::read(&$parser, &mut *source);
+        )*
+    };
+    {
+        $rest:tt
+    } => {
+        let mut source = $crate::source();
+        input! {
+            @from [source]
+            $rest
+        }
+    };
+}
+
+/// [`BufRead`] を wrap し、token を返す型です。
+///
+/// # Examples
+///
+/// ```
+/// use io_reader::Source;
+///
+/// let mut source = Source::from("0120 444 444");
+///
+/// assert_eq!(source.next_token_unwrap(), "0120");
+/// assert_eq!(source.next_token_unwrap(), "444");
+/// assert_eq!(source.next_token_unwrap(), "444");
+/// assert_eq!(source.next_token(), None);
+/// ```
 #[derive(Debug)]
 pub struct Source<R: BufRead> {
     reader: R,
@@ -64,13 +144,13 @@ pub struct Source<R: BufRead> {
 }
 
 impl<R: BufRead> Source<R> {
-    /// 新しいソースを作成する。
+    /// [`BufReader`] から新しい [`Source`] を構築します。
     ///
-    /// # 例
+    /// # Examples
     ///
     /// ```
     /// use io_reader::Source;
-    /// let source = Source::from("1 2 3");
+    /// let mut source = Source::from("hello world");
     /// ```
     pub fn new(reader: R) -> Self {
         let line = String::new();
@@ -86,19 +166,9 @@ impl<R: BufRead> Source<R> {
         }
     }
 
-    /// 次のトークンを読み取る。
+    /// whitespace 区切りで、次の token を取得します。
     ///
-    /// トークンが存在しなければ `None` を返す。
-    ///
-    /// # 例
-    ///
-    /// ```
-    /// use io_reader::Source;
-    /// let mut source = Source::from("hello world");
-    /// assert_eq!(source.next_token(), Some("hello"));
-    /// assert_eq!(source.next_token(), Some("world"));
-    /// assert_eq!(source.next_token(), None);
-    /// ```
+    /// 入力の終端に達した場合は `None` を返します。
     pub fn next_token(&mut self) -> Option<&str> {
         loop {
             if let Some(result) = self.tokens.next() {
@@ -117,17 +187,7 @@ impl<R: BufRead> Source<R> {
         }
     }
 
-    /// 次のトークンを読み取る。トークンが存在しなければパニックする。
-    ///
-    /// # 例
-    ///
-    /// ```
-    /// use io_reader::Source;
-    /// let mut source = Source::from("hello world");
-    /// assert_eq!(source.next_token_unwrap(), "hello");
-    /// assert_eq!(source.next_token_unwrap(), "world");
-    /// // panic!("unexpected end of input.")
-    /// ```
+    /// Panic 版の [`next_token`](Self::next_token) です。
     pub fn next_token_unwrap(&mut self) -> &str {
         self.next_token()
             .unwrap_or_else(|| panic!("unexpected end of input."))
@@ -135,55 +195,36 @@ impl<R: BufRead> Source<R> {
 }
 
 impl<'a> From<&'a str> for Source<BufReader<&'a [u8]>> {
-    /// 文字列から `Source` を構成する。
     fn from(value: &'a str) -> Self {
         Self::new(BufReader::new(value.as_bytes()))
     }
 }
 
-/// 入力ソースから値を解析するパーサー。
-///
-/// `Copy` 型であり、`read()` 関数から渡されます。
+/// 文字列(0個以上のtoken)を parse するアルゴリズムと、その戻り値型の情報を提要する trait です。
 pub trait Parser: Copy {
-    /// パーサーが解析する値の型。
+    /// 戻り値型
     type Output;
 
-    /// ソースから値を読み取り解析する。
+    /// [`Source`] から token を 0 個以上受け取って、目的の型に parse します。
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output;
 }
 
-/// `FromStr` を実装する型の標準パーサー。
-///
-/// 次のトークンを文字列として取得し、`parse()` で型 `T` に変換します。
-pub struct Canonical<T>(PhantomData<fn(T)>);
-impl<T> Clone for Canonical<T> {
+/// [`FromStr`] 経由で $P$ を parse する [`Parser`] です。
+pub struct Canonical<P>(PhantomData<fn(P)>);
+impl<P> Clone for Canonical<P> {
     fn clone(&self) -> Self {
         *self
     }
 }
-impl<T> Copy for Canonical<T> {}
-
-/// 型 `T` の標準パーサーを構成する。
-///
-/// # 例
-///
-/// ```
-/// use io_reader::{canonical, Parser, Source};
-/// let parser: _ = canonical::<i32>();
-/// let mut source = Source::from("42");
-/// assert_eq!(parser.read(&mut source), 42);
-/// ```
-pub const fn canonical<T>() -> Canonical<T> {
-    Canonical(PhantomData)
-}
+impl<P> Copy for Canonical<P> {}
 
 macro_rules! define_cannonical_parser {
     ($($prim:ty => $cann:ident),+$(,)?) => {$(
-        /// 型 [`
+        /// [`FromStr`] 経由で [`
         #[doc = stringify!($prim)]
-        /// `] の標準パーサー定数。
+        /// `] を parse する [`Parser`] です。
         #[allow(non_upper_case_globals)]
-        pub const $cann: Canonical<$prim> = canonical::<$prim>();
+        pub const $cann: Canonical<$prim> = Canonical::<$prim>(PhantomData);
     )+}
 }
 
@@ -204,33 +245,68 @@ define_cannonical_parser! {
     isize => Isize,
 }
 
-impl<T: FromStr> Parser for Canonical<T>
+impl<P: FromStr> Parser for Canonical<P>
 where
-    T::Err: Debug,
+    P::Err: Debug,
 {
-    type Output = T;
+    type Output = P;
 
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
         let token = source.next_token_unwrap();
         token.parse().unwrap_or_else(|e| {
             panic!(
                 "failed to parse the token `{token}` to the value of type `{ty}`: {e:?}.",
-                ty = std::any::type_name::<T>()
+                ty = std::any::type_name::<P>()
             )
         })
     }
 }
 
-/// 1-indexed usize のパーサー。
+/// 固定の token string を期待して読み取る [`Parser`] です。
 ///
-/// 入力値から 1 を減じて返す。0 を入力したらパニックする。
+/// [`Source`] から token をちょうど 1 個読んで、それが指定の文字列と一致していることを確認します。
+/// 一致しない場合は panic します。
+///
+/// # Examples
+///
+/// ```
+/// use io_reader::{input, Expect, U32, Source};
+///
+/// input! {
+///     @from [Source::from("0 1 -1 2")]
+///     a: U32,
+///     b: U32,
+///     _: Expect("-1"),
+///     c: U32,
+/// }
+/// ```
+#[derive(Clone, Copy)]
+pub struct Expect(pub &'static str);
+impl Parser for Expect {
+    type Output = ();
+
+    fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
+        let token = source.next_token_unwrap();
+        assert_eq!(
+            self.0,
+            token,
+            "Expected a fixed token `{expected}`, but got `{token}`",
+            expected = self.0
+        );
+    }
+}
+
+/// 1-indexed の `usize` を読み取り、0-indexed に変換する [`Parser`] です。
+///
+/// 0 が入力された場合は panic します。
 ///
 /// # 例
 ///
 /// ```
-/// use io_reader::{Usize1, Parser, Source};
-/// let mut source = Source::from("3");
-/// assert_eq!(Usize1.read(&mut source), 2);
+/// use io_reader::{Usize1, Source, Parser};
+/// # let mut source = Source::from("5");
+/// let result = Usize1.read(&mut source);
+/// assert_eq!(result, 4);  // 5 - 1 = 4
 /// ```
 #[derive(Clone, Copy)]
 pub struct Usize1;
@@ -245,22 +321,24 @@ impl Parser for Usize1 {
     }
 }
 
-/// パーサーを $n$ 回繰り返す。
+/// 長さを指定して [`Vec<P::Output>`] を parse します。
 ///
-/// `Vector(parser, n)` は `parser` を $n$ 回実行した結果を `Vec` で返す。
-///
-/// # 例
+/// # Examples
 ///
 /// ```
-/// use io_reader::{Vector, I32, Parser, Source};
-/// let mut source = Source::from("1 2 3");
-/// let v: Vec<i32> = Vector(I32, 3).read(&mut source);
+/// use io_reader::{Vector, I32, Source, Parser, input};
+///
+/// input! {
+///    @from [Source::from("1 2 3")]
+///     v: Vector(I32, 3)
+/// }
+///
 /// assert_eq!(v, vec![1, 2, 3]);
 /// ```
 #[derive(Clone, Copy)]
-pub struct Vector<T>(pub T, pub usize);
-impl<T: Parser> Parser for Vector<T> {
-    type Output = std::vec::Vec<T::Output>;
+pub struct Vector<P>(pub P, pub usize);
+impl<P: Parser> Parser for Vector<P> {
+    type Output = std::vec::Vec<P::Output>;
 
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
         std::iter::repeat_with(|| self.0.read(source))
@@ -269,62 +347,77 @@ impl<T: Parser> Parser for Vector<T> {
     }
 }
 
-/// パーサーを $N$ 回繰り返し、長さ $N$ の配列を生成する。
+/// Array `[P::Output; N]` の [`Parser`] です。
 ///
-/// `Array::<N, P>(parser)` は `parser` を $N$ 回実行した結果を配列で返す。
+/// Parser は順序通り実行されます。
 ///
-/// # 例
+/// # Examples
 ///
 /// ```
-/// use io_reader::{Array, I32, Parser, Source};
-/// let mut source = Source::from("1 2 3");
-/// let arr: [i32; 3] = Array::<3, _>(I32).read(&mut source);
-/// assert_eq!(arr, [1, 2, 3]);
+/// use io_reader::{input, Array, I32, Source, Parser};
+///
+/// input! {
+///     @from [Source::from("10 20 30")]
+///     arr: Array::<3, _>(I32),
+/// }
+///
+/// assert_eq!(arr, [10, 20, 30]);
 /// ```
 #[derive(Clone, Copy)]
-pub struct Array<const N: usize, T>(pub T);
-impl<const N: usize, T: Parser> Parser for Array<N, T> {
-    type Output = [T::Output; N];
+pub struct Array<const N: usize, P>(pub P);
+impl<const N: usize, P: Parser> Parser for Array<N, P> {
+    type Output = [P::Output; N];
 
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
         std::array::from_fn(|_| self.0.read(source))
     }
 }
 
-/// 2 つのパーサーから 2-tuple を構成する。
+/// Tuple `(P0::Output, P1::Output)` の [`Parser`] です。
 ///
-/// `Tuple2(parser0, parser1)` は順に `parser0` と `parser1` を実行し、結果をペアで返す。
+/// Parser は順序通り実行されます。
 ///
-/// # 例
+/// # Examples
 ///
 /// ```
-/// use io_reader::{Tuple2, I32, Parser, Source};
-/// let mut source = Source::from("10 20");
-/// let (x, y): (i32, i32) = Tuple2(I32, I32).read(&mut source);
-/// assert_eq!((x, y), (10, 20));
+/// use io_reader::{input, Tuple2, I32, Str, Source, Parser};
+///
+/// input! {
+///     @from [Source::from("42 hello")]
+///     ns: Tuple2(I32, Str), // 左辺に pattern は使えないので注意
+/// }
+///
+/// let (n, s) = ns;
+///
+/// assert_eq!(n, 42);
+/// assert_eq!(s, "hello");
 /// ```
 #[derive(Clone, Copy)]
-pub struct Tuple2<T0, T1>(pub T0, pub T1);
-impl<T0: Parser, T1: Parser> Parser for Tuple2<T0, T1> {
-    type Output = (T0::Output, T1::Output);
+pub struct Tuple2<P0, P1>(pub P0, pub P1);
+impl<P0: Parser, P1: Parser> Parser for Tuple2<P0, P1> {
+    type Output = (P0::Output, P1::Output);
 
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
         (self.0.read(&mut *source), self.1.read(&mut *source))
     }
 }
 
-/// 2 つの指定文字で bool 列を解析する。
+/// `Vec<bool>` の [`Parser`] です。
 ///
-/// `Bools<Z, O>` は、文字 `Z` を false、`O` を true にマップして bool ベクトルに変換します。
+/// `Bools::<Z, O>` で、次のトークンの各文字を解析します。
+/// 文字 $Z$ は `false`, 文字 $O$ は `true` に対応します。
 ///
-/// # 例
+/// # Examples
 ///
 /// ```
-/// use io_reader::{Bools, Source, Parser};
+/// use io_reader::{Bools, Source, Parser, input};
 ///
-/// let mut source = Source::from("..#.");
-/// let result: Vec<bool> = Bools::<'.', '#'>.read(&mut source);
-/// assert_eq!(result, vec![false, false, true, false]);
+/// input! {
+///     @from [Source::from("001101")]
+///     bits: Bools::<'0', '1'>,
+/// }
+///
+/// assert_eq!(bits, vec![false, false, true, true, false, true]);
 /// ```
 #[derive(Clone, Copy)]
 pub struct Bools<const Z: char, const O: char>;
@@ -345,5 +438,29 @@ impl<const Z: char, const O: char> Parser for Bools<Z, O> {
                 }
             })
             .collect()
+    }
+}
+
+/// `Vec<u8>` の [`Parser`] です。
+///
+/// # Examples
+///
+/// ```
+/// use io_reader::{Bytes, Source, Parser, input};
+///
+/// input! {
+///     @from [Source::from("hello")]
+///     bytes: Bytes,
+/// }
+///
+/// assert_eq!(bytes, [104, 101, 108, 108, 111]);
+/// ```
+#[derive(Clone, Copy)]
+pub struct Bytes;
+impl Parser for Bytes {
+    type Output = Vec<u8>;
+
+    fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
+        source.next_token_unwrap().as_bytes().to_vec()
     }
 }
