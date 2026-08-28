@@ -1,4 +1,4 @@
-use io_reader::{Array, Bools, Char, I32, Parser, Source, Str, Tuple2, U32, Usize1, Vector};
+use io_reader::{Array, Bools, Char, Expect, I32, Source, Str, Tuple2, U32, Usize1, Vector, input};
 
 #[test]
 fn test_empty() {
@@ -19,10 +19,13 @@ fn test_tokenize() {
 #[test]
 fn test_primitive() {
     let mut source = Source::from("1 2 token -3");
-    let a = U32.read(&mut source);
-    let b = I32.read(&mut source);
-    let s = Str.read(&mut source);
-    let c = I32.read(&mut source);
+    input! {
+        @from [source]
+        a: U32,
+        b: U32,
+        s: Str,
+        c: I32,
+    }
     assert_eq!(a, 1);
     assert_eq!(b, 2);
     assert_eq!(s, "token");
@@ -32,9 +35,12 @@ fn test_primitive() {
 #[test]
 fn test_usize1() {
     let mut source = Source::from("1 2 3");
-    let a = Usize1.read(&mut source);
-    let b = Usize1.read(&mut source);
-    let c = Usize1.read(&mut source);
+    input! {
+        @from [source]
+        a: Usize1,
+        b: Usize1,
+        c: Usize1,
+    }
     assert_eq!(a, 0);
     assert_eq!(b, 1);
     assert_eq!(c, 2);
@@ -43,15 +49,21 @@ fn test_usize1() {
 #[test]
 fn test_vector() {
     let mut source = Source::from("1 2 3");
-    let a = Vector(U32, 3).read(&mut source);
+    input! {
+        @from [source]
+        a: Vector(U32, 3),
+    }
     assert_eq!(a, [1, 2, 3]);
 }
 
 #[test]
 fn test_array() {
     let mut source = Source::from("1 2 3");
-    let a = Array::<2, _>(U32).read(&mut source);
-    let b = Array::<1, _>(I32).read(&mut source);
+    input! {
+        @from [source]
+        a: Array::<2, _>(U32),
+        b: Array::<1, _>(U32),
+    }
     assert_eq!(a, [1, 2]);
     assert_eq!(b, [3]);
 }
@@ -59,8 +71,11 @@ fn test_array() {
 #[test]
 fn test_tuple() {
     let mut source = Source::from("10 a four");
-    let a = Tuple2(U32, Char).read(&mut source);
-    let b = Str.read(&mut source);
+    input! {
+        @from [source]
+        a: Tuple2(U32, Char),
+        b: Str,
+    }
     assert_eq!(a, (10, 'a'));
     assert_eq!(b, "four");
 }
@@ -68,6 +83,19 @@ fn test_tuple() {
 #[test]
 fn test_bools() {
     let mut source = Source::from(".#\n#.\n");
-    let a = Vector(Bools::<'.', '#'>, 2).read(&mut source);
+    input! {
+        @from [source]
+        a: Vector(Bools::<'.', '#'>, 2),
+    }
     assert_eq!(a, [vec![false, true], vec![true, false]]);
+}
+
+#[test]
+fn test_expcted() {
+    let mut source = Source::from(".#\n#.\n");
+    input! {
+        @from [source]
+        _: Expect(".#"),
+        _: Expect("#."),
+    }
 }
