@@ -47,7 +47,7 @@
 //! - **基本型**: [`Char`], [`Str`], [`I32`], [`U64`], など（`Canonical<P>` による）
 //! - **列**: [`Vector<P>`] で $n$ 個の要素
 //! - **配列**: [`Array<N, P>`] で長さ $N$ の配列
-//! - **ペア**: `(P0, P1)` でペア
+//! - **タプル**: `(P0, P1)` 等でタプル
 //! - **特殊**: [`Usize1`] で 1-indexed usize、[`Bools<Z, O>`] で 0/1 文字列、[`Bytes`] でバイト列
 
 use std::{
@@ -373,12 +373,26 @@ impl<const N: usize, P: Parser> Parser for Array<N, P> {
     }
 }
 
-impl<P0: Parser, P1: Parser> Parser for (P0, P1) {
-    type Output = (P0::Output, P1::Output);
+macro_rules! impl_parser_for_tuples {
+    ($head:ident, $($tail:ident,)*) => {
+        impl<$head: Parser, $($tail: Parser,)*> Parser for ($head, $($tail,)*) {
+            type Output = ($head::Output, $($tail::Output,)*);
 
-    fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
-        (self.0.read(&mut *source), self.1.read(&mut *source))
-    }
+            fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {
+                #[allow(non_snake_case)]
+                let ($head, $($tail,)*) = self;
+                ($head.read(source), $($tail.read(source),)*)
+            }
+        }
+        impl_parser_for_tuples!{$($tail,)*}
+    };
+    {} => {};
+}
+
+impl_parser_for_tuples! {
+    P0, P1, P2, P3, P4, P5,
+    P6, P7, P8, P9, P10, P11,
+    P12, P13, P14, P15, P16,
 }
 
 /// `Vec<bool>` の [`Parser`] です。
