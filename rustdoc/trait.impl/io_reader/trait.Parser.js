@@ -1,9 +1,9 @@
 (function() {
-    var implementors = Object.fromEntries([["io",[]]]);
+    var implementors = Object.fromEntries([["io_reader",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {
         window.pending_implementors = implementors;
     }
 })()
-//{"start":57,"fragment_lengths":[9]}
+//{"start":57,"fragment_lengths":[16]}
