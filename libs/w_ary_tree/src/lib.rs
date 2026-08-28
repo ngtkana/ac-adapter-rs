@@ -77,30 +77,7 @@ impl WAryTree {
     /// assert!(!tree.contains(3));
     /// ```
     pub fn from_slice_of_bool(slice: &[bool]) -> Self {
-        if slice.is_empty() {
-            return Self::new(0);
-        }
-        let base_items = slice
-            .chunks(B)
-            .map(|chunk| chunk.iter().rev().fold(0, |bs, &b| bs << 1 | u64::from(b)))
-            .collect::<Vec<_>>();
-        let items = std::iter::successors(Some(base_items), |last| {
-            (last.len() > 1).then(|| {
-                last.chunks(B)
-                    .map(|chunk| {
-                        chunk
-                            .iter()
-                            .rev()
-                            .fold(0, |bs, &b| bs << 1 | u64::from(b != 0))
-                    })
-                    .collect()
-            })
-        })
-        .collect::<Vec<_>>();
-        Self {
-            items,
-            len: slice.len(),
-        }
+        slice.iter().copied().collect()
     }
 
     /// $x \in S$ かどうかを答えます。
@@ -331,7 +308,37 @@ fn subtree_max(items: &[Vec<u64>], mut j: usize) -> usize {
 
 impl FromIterator<bool> for WAryTree {
     fn from_iter<T: IntoIterator<Item = bool>>(iter: T) -> Self {
-        let slice = iter.into_iter().collect::<Vec<_>>();
-        Self::from_slice_of_bool(&slice)
+        let iter = iter.into_iter();
+        let mut base_items = Vec::with_capacity(iter.size_hint().0);
+        let mut bs = 0u64;
+        let mut len = 0;
+        for b in iter {
+            bs |= u64::from(b) << (len % B);
+            len += 1;
+            if len % B == 0 {
+                base_items.push(bs);
+                bs = 0;
+            }
+        }
+        if len == 0 {
+            return Self { items: vec![], len };
+        }
+        if len % B != 0 {
+            base_items.push(bs);
+        }
+        let items = std::iter::successors(Some(base_items), |last| {
+            (last.len() > 1).then(|| {
+                last.chunks(B)
+                    .map(|chunk| {
+                        chunk
+                            .iter()
+                            .rev()
+                            .fold(0, |bs, &b| bs << 1 | u64::from(b != 0))
+                    })
+                    .collect()
+            })
+        })
+        .collect::<Vec<_>>();
+        Self { items, len }
     }
 }
