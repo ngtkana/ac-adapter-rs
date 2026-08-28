@@ -155,6 +155,9 @@ impl WAryTree {
         }
         for items in &mut self.items {
             items[x / B] ^= 1 << (x % B);
+            if items[x / B] != 0 {
+                break;
+            }
             x /= B;
         }
         true
@@ -340,5 +343,55 @@ impl FromIterator<bool> for WAryTree {
         })
         .collect::<Vec<_>>();
         Self { items, len }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::WAryTree;
+    use rand::{Rng, SeedableRng, rngs::StdRng};
+
+    fn gen_instance(mut rng: impl Rng, p: f64) -> (usize, Vec<bool>, WAryTree) {
+        let height = rng.gen_range(1..=3);
+        let n = rng.gen_range(1 << ((height - 1) * 6)..(1 << (height * 6)).min(1 << 13));
+        let a = (0..n).map(|_| rng.gen_bool(p)).collect::<Vec<_>>();
+        let tree = WAryTree::from_slice_of_bool(&a);
+        (n, a, tree)
+    }
+
+    #[test]
+    fn test_w_ary_tree_insert() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
+
+            let x = rng.gen_range(0..n);
+            let result = !a[x];
+            a[x] = true;
+            let expected = tree.insert(x);
+            assert_eq!(result, expected, "x = {x}");
+
+            let result = a.iter().copied().collect::<WAryTree>().items;
+            let expected = tree.items;
+            assert_eq!(result, expected);
+        }
+    }
+
+    #[test]
+    fn test_w_ary_tree_remove() {
+        let mut rng = StdRng::seed_from_u64(42);
+        for _ in 0..200 {
+            let (n, mut a, mut tree) = gen_instance(&mut rng, 0.5);
+
+            let x = rng.gen_range(0..n);
+            let result = a[x];
+            a[x] = false;
+            let expected = tree.remove(x);
+            assert_eq!(result, expected, "x = {x}");
+
+            let result = a.iter().copied().collect::<WAryTree>().items;
+            let expected = tree.items;
+            assert_eq!(result, expected);
+        }
     }
 }
