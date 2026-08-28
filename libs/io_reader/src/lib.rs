@@ -47,7 +47,7 @@
 //! - **基本型**: [`Char`], [`Str`], [`I32`], [`U64`], など（`Canonical<P>` による）
 //! - **列**: [`Vector<P>`] で $n$ 個の要素
 //! - **配列**: [`Array<N, P>`] で長さ $N$ の配列
-//! - **ペア**: [`Tuple2<P0, P1>`] で 2-tuple
+//! - **ペア**: `(P0, P1)` でペア
 //! - **特殊**: [`Usize1`] で 1-indexed usize、[`Bools<Z, O>`] で 0/1 文字列、[`Bytes`] でバイト列
 
 use std::{
@@ -373,28 +373,7 @@ impl<const N: usize, P: Parser> Parser for Array<N, P> {
     }
 }
 
-/// Tuple `(P0::Output, P1::Output)` の [`Parser`] です。
-///
-/// Parser は順序通り実行されます。
-///
-/// # Examples
-///
-/// ```
-/// use io_reader::{input, Tuple2, I32, Str, Source, Parser};
-///
-/// input! {
-///     @from [Source::from("42 hello")]
-///     ns: Tuple2(I32, Str), // 左辺に pattern は使えないので注意
-/// }
-///
-/// let (n, s) = ns;
-///
-/// assert_eq!(n, 42);
-/// assert_eq!(s, "hello");
-/// ```
-#[derive(Clone, Copy)]
-pub struct Tuple2<P0, P1>(pub P0, pub P1);
-impl<P0: Parser, P1: Parser> Parser for Tuple2<P0, P1> {
+impl<P0: Parser, P1: Parser> Parser for (P0, P1) {
     type Output = (P0::Output, P1::Output);
 
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output {

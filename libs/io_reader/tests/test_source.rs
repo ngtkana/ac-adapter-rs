@@ -1,4 +1,4 @@
-use io_reader::{Array, Bools, Char, Expect, I32, Source, Str, Tuple2, U32, Usize1, Vector, input};
+use io_reader::{Array, Bools, Char, Expect, I32, Source, Str, U32, Usize1, Vector, input};
 
 #[test]
 fn test_empty() {
@@ -73,7 +73,7 @@ fn test_tuple() {
     let mut source = Source::from("10 a four");
     input! {
         @from [source]
-        a: Tuple2(U32, Char),
+        a: (U32, Char),
         b: Str,
     }
     assert_eq!(a, (10, 'a'));
