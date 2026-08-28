@@ -174,7 +174,7 @@ impl WAryTree {
     /// assert_eq!(empty.min(), None);
     /// ```
     pub fn min(&self) -> Option<usize> {
-        (self.len > 0 && self.items[0][0] != 0).then(|| subtree_min(&self.items, 0))
+        (self.items.last().is_some_and(|last| last[0] != 0)).then(|| subtree_min(&self.items, 0))
     }
 
     /// $\mathrm{min}(S \cap \small[x, \infty\small[)$ を返します。なければ `None`。
@@ -230,7 +230,7 @@ impl WAryTree {
     /// assert_eq!(empty.max(), None);
     /// ```
     pub fn max(&self) -> Option<usize> {
-        (self.len > 0 && self.items[0][0] != 0).then(|| subtree_max(&self.items, 0))
+        (self.items.last().is_some_and(|last| last[0] != 0)).then(|| subtree_max(&self.items, 0))
     }
 
     /// $\mathrm{max}(S \cap (-\infty, x])$ を返します。なければ `None`。
