@@ -5,14 +5,12 @@
 //! 言い換えると、$[0, n[$ の部分集合 $S$ を管理していると思うことも出来ます。
 
 const B: usize = u64::BITS as usize;
-const LG_B: usize = B.ilog2() as usize;
 
 /// $w$-ary tree による predecessor データ構造です。
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct WAryTree {
-    items: Vec<u64>,
-    offset: usize,
+    items: Vec<Vec<u64>>,
     len: usize,
 }
 
@@ -38,19 +36,17 @@ impl WAryTree {
         if len == 0 {
             return Self {
                 items: vec![],
-                offset: 0,
-                len,
+                len: 0,
             };
         }
-        let mut offset = 0;
-        for _ in 0..len.ilog2() as usize / LG_B {
-            offset = offset << LG_B | 1;
+        let mut n = len;
+        let mut items = vec![];
+        while n != 1 {
+            let q = n.div_ceil(B);
+            items.push(vec![0; q]);
+            n = q;
         }
-        Self {
-            items: vec![0; offset + len.div_ceil(B)],
-            offset,
-            len,
-        }
+        Self { items, len }
     }
 
     /// 管理している boolean 配列の長さを返します。
@@ -81,26 +77,30 @@ impl WAryTree {
     /// assert!(!tree.contains(3));
     /// ```
     pub fn from_slice_of_bool(slice: &[bool]) -> Self {
-        let mut result = Self::new(slice.len());
-        let mut offset = result.offset;
-        for (bs, chunk) in result.items[offset..].iter_mut().zip(slice.chunks(B)) {
-            for &b in chunk.iter().rev() {
-                *bs <<= 1;
-                *bs |= u64::from(b);
-            }
+        if slice.is_empty() {
+            return Self::new(0);
         }
-        while offset != 0 {
-            let upper_offset = offset >> LG_B;
-            let (items, lower) = result.items.split_at_mut(offset);
-            for (upper, chunk) in items[upper_offset..].iter_mut().zip(lower.chunks(B)) {
-                for &item in chunk.iter().rev() {
-                    *upper <<= 1;
-                    *upper |= u64::from(item != 0);
-                }
-            }
-            offset >>= LG_B;
+        let base_items = slice
+            .chunks(B)
+            .map(|chunk| chunk.iter().rev().fold(0, |bs, &b| bs << 1 | u64::from(b)))
+            .collect::<Vec<_>>();
+        let items = std::iter::successors(Some(base_items), |last| {
+            (last.len() > 1).then(|| {
+                last.chunks(B)
+                    .map(|chunk| {
+                        chunk
+                            .iter()
+                            .rev()
+                            .fold(0, |bs, &b| bs << 1 | u64::from(b != 0))
+                    })
+                    .collect()
+            })
+        })
+        .collect::<Vec<_>>();
+        Self {
+            items,
+            len: slice.len(),
         }
-        result
     }
 
     /// $x \in S$ かどうかを答えます。
@@ -120,7 +120,7 @@ impl WAryTree {
     /// ```
     pub fn contains(&self, x: usize) -> bool {
         assert!(x < self.len());
-        self.items[self.offset + x / B] >> (x % B) & 1 == 1
+        self.items[0][x / B] >> (x % B) & 1 == 1
     }
 
     /// $x$ を$S$ に追加します。
@@ -146,15 +146,11 @@ impl WAryTree {
         if self.contains(x) {
             return false;
         }
-        let mut offset = self.offset;
-        loop {
-            self.items[offset + x / B] |= 1 << (x % B);
-            if offset == 0 {
-                return true;
-            }
-            x >>= LG_B;
-            offset >>= LG_B;
+        for items in &mut self.items {
+            items[x / B] |= 1 << (x % B);
+            x /= B;
         }
+        true
     }
 
     /// $S$ から $x$ を取り除きます。
@@ -180,15 +176,11 @@ impl WAryTree {
         if !self.contains(x) {
             return false;
         }
-        let mut offset = self.offset;
-        loop {
-            self.items[offset + x / B] ^= 1 << (x % B);
-            if offset == 0 || self.items[offset + x / B] != 0 {
-                return true;
-            }
-            x >>= LG_B;
-            offset >>= LG_B;
+        for items in &mut self.items {
+            items[x / B] ^= 1 << (x % B);
+            x /= B;
         }
+        true
     }
 
     /// $\mathrm{min}(S)$ を返します。なければ `None`。
@@ -205,7 +197,7 @@ impl WAryTree {
     /// assert_eq!(empty.min(), None);
     /// ```
     pub fn min(&self) -> Option<usize> {
-        (self.len > 0 && self.items[0] != 0).then(|| self.subtree_min(0, 0))
+        (self.len > 0 && self.items[0][0] != 0).then(|| subtree_min(&self.items, 0))
     }
 
     /// $\mathrm{min}(S \cap \small[x, \infty\small[)$ を返します。なければ `None`。
@@ -235,23 +227,16 @@ impl WAryTree {
     /// assert_eq!(tree.successor_excluding(2), None);
     /// ```
     pub fn successor_excluding(&self, mut x: usize) -> Option<usize> {
-        let mut offset = self.offset;
-        loop {
-            if x % B != B - 1 {
-                let bs = self.items[offset + x / B] & u64::MAX << (x % B + 1);
-                if bs != 0 {
-                    let lsb = bs.trailing_zeros() as usize;
-                    offset = offset << LG_B | 1;
-                    x = x & usize::MAX << LG_B | lsb;
-                    return Some(self.subtree_min(offset, x));
-                }
+        for (i, items) in self.items.iter().enumerate() {
+            let bs = items[x / B] >> (x % B) & !1;
+            if bs == 0 {
+                x /= B;
+            } else {
+                x += bs.trailing_zeros() as usize;
+                return Some(subtree_min(&self.items[..i], x));
             }
-            if offset == 0 {
-                return None;
-            }
-            offset >>= LG_B;
-            x >>= LG_B;
         }
+        None
     }
 
     /// $\mathrm{max}(S)$ を返します。なければ `None`。
@@ -268,7 +253,7 @@ impl WAryTree {
     /// assert_eq!(empty.max(), None);
     /// ```
     pub fn max(&self) -> Option<usize> {
-        (self.len > 0 && self.items[0] != 0).then(|| self.subtree_max(0, 0))
+        (self.len > 0 && self.items[0][0] != 0).then(|| subtree_max(&self.items, 0))
     }
 
     /// $\mathrm{max}(S \cap (-\infty, x])$ を返します。なければ `None`。
@@ -298,23 +283,16 @@ impl WAryTree {
     /// assert_eq!(tree.predecessor_excluding(0), None);
     /// ```
     pub fn predecessor_excluding(&self, mut x: usize) -> Option<usize> {
-        let mut offset = self.offset;
-        loop {
-            if x % B != 0 {
-                let bs = self.items[offset + x / B] & u64::MAX >> (B - x % B);
-                if bs != 0 {
-                    let msb = bs.ilog2() as usize;
-                    offset = offset << LG_B | 1;
-                    x = x & usize::MAX << LG_B | msb;
-                    return Some(self.subtree_max(offset, x));
-                }
+        for (i, items) in self.items.iter().enumerate() {
+            let bs = items[x / B] << (B - 1 - x % B) & (u64::MAX >> 1);
+            if bs == 0 {
+                x /= B;
+            } else {
+                x -= bs.leading_zeros() as usize;
+                return Some(subtree_max(&self.items[..i], x));
             }
-            if offset == 0 {
-                return None;
-            }
-            offset >>= LG_B;
-            x >>= LG_B;
         }
+        None
     }
 
     /// bool のイテレータを返します。
@@ -331,26 +309,24 @@ impl WAryTree {
     pub fn iter(&self) -> impl Iterator<Item = bool> {
         (0..self.len).map(|x| self.contains(x))
     }
+}
 
-    fn subtree_min(&self, mut offset: usize, mut i: usize) -> usize {
-        while offset < self.items.len() {
-            assert_ne!(self.items[offset + i], 0);
-            let lsb = self.items[offset + i].trailing_zeros() as usize;
-            i = i << LG_B | lsb;
-            offset = offset << LG_B | 1;
-        }
-        i
+fn subtree_min(items: &[Vec<u64>], mut j: usize) -> usize {
+    for items in items.iter().rev() {
+        assert_ne!(items[j], 0);
+        let lsb = items[j].trailing_zeros() as usize;
+        j = j * B + lsb;
     }
+    j
+}
 
-    fn subtree_max(&self, mut offset: usize, mut i: usize) -> usize {
-        while offset < self.items.len() {
-            assert_ne!(self.items[offset + i], 0);
-            let msb = self.items[offset + i].ilog2() as usize;
-            i = i << LG_B | msb;
-            offset = offset << LG_B | 1;
-        }
-        i
+fn subtree_max(items: &[Vec<u64>], mut j: usize) -> usize {
+    for items in items.iter().rev() {
+        assert_ne!(items[j], 0);
+        let lsb = items[j].ilog2() as usize;
+        j = j * B + lsb;
     }
+    j
 }
 
 impl FromIterator<bool> for WAryTree {

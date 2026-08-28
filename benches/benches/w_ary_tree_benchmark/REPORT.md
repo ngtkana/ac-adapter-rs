@@ -6,30 +6,32 @@
 - **$Q$**: $3 \times 10^6$
 - **ターゲット**: 100–500 ms/反復
 
-## ベンチマーク
+## クエリ定義
 
-| 名前 | 反復時間 | クエリ単位 | 説明 |
-|------|---------|---------|------|
-| constructor | 192.9 ms ✓ | — | 確率 $1/2$ のビット列から構築 |
-| predecessor_sparse | 111.4 ms ✓ | 37.1 ns/op | $10^3$ 個（Fisher-Yates）での操作 |
-| insert | 127.6 ms ✓ | 42.5 ns/op | 空の木からのinsert |
+| 名前 | 説明 |
+|------|------|
+| constructor | 確率 $1/2$ のビット列から構築 |
+| predecessor_sparse | $10^3$ 個（Fisher-Yates）での操作 |
+| insert | 空の木からのinsert |
 
-## ベースライン（Criterion）
+## par_iter
 
-```
-test constructor ... bench:   192938203 ns/iter (+/- 1861368)
-test predecessor_sparse ... bench:   111381825 ns/iter (+/- 5572326)
-test insert ... bench:   127612102 ns/iter (+/- 5271561)
-```
+| バージョン | constructor | predecessor_sparse | insert |
+|----------|-------------|-------------------|--------|
+| v0 | 192.9 ms | 111.4 ms | 127.6 ms |
+| v1 | 119.9 ms | 107.6 ms | 127.1 ms |
 
-## 最適化記録（vN）
+## par_query
 
-### 最適化 v1: [説明]
+| バージョン | predecessor_sparse | insert |
+|----------|-------------------|--------|
+| v0 | 37.1 ns/op | 42.5 ns/op |
+| v1 | 35.9 ns/op | 42.4 ns/op |
 
-```
-test constructor ... bench:   XXX ns/iter (+/- YYY)
-test predecessor_sparse ... bench:   XXX ns/iter (+/- YYY)
-test insert ... bench:   XXX ns/iter (+/- YYY)
-```
+## バージョン説明
 
-改善：constructor [X%] / predecessor_sparse [X%] / insert [X%]
+### v0（ベースライン）
+フラット `Vec<u64>` 構造にオフセット計算を用いたレイアウト。複雑なビット演算と LG_B シフト計算が特徴。
+
+### v1（Vec<Vec<u64>>）
+階層化メモリアクセスへのリストラクチャリング。オフセット計算を廃止し、各レベルを明示的な Vec として管理。構築性能が 37.8% 向上し、可読性と性能を両立。
