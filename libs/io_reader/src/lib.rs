@@ -7,7 +7,7 @@
 //! # let mut source = io_reader::Source::from("2 3 10 20 30");
 //!
 //! input! {
-//! #   @from [source]
+//! #   @from [&mut source]
 //!     n: Usize,
 //!     m: Usize,
 //!     a: Vector(I32, 3),
@@ -78,7 +78,7 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
 /// use io_reader::{input, I32, Usize};
 /// # let mut source = io_reader::Source::from("10\n3");
 /// input! {
-/// #   @from [source]
+/// #   @from [&mut source]
 ///     x: I32,
 ///     n: Usize,
 /// }
@@ -90,8 +90,11 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
 ///
 /// ```
 /// use io_reader::{input, I32, Usize, Source};
+///
+/// let mut source = Source::from("10\n3");
+///
 /// input! {
-///     @from [Source::from("10\n3")]
+///     @from [&mut source]
 ///     x: I32,
 ///     n: Usize,
 /// }
@@ -101,48 +104,50 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
 ///
 #[macro_export]
 macro_rules! input {
-    {
-        @from [$source:expr] $(,)?
-        $($name:tt: $parser:expr),* $(,)?
-    } => {
+    (@from [$source:expr] @rest $($name:tt: $parser:expr),* $(,)?) => {
         let source = &mut $source;
         $(
             #[allow(unknown_lints)]
             #[allow(ignored_unit_patterns)]
-            let $name = $crate::Parser::read(&$parser, &mut *source);
+            let $name = $crate::read_value!(@from [$source] @rest $parser);
         )*
     };
-    {
-        $($name:tt: $parser:expr),* $(,)?
-    } => {
-        $(
-            let $name = {
-                let mut source = $crate::stdin_source();
-                $crate::Parser::read(&$parser, &mut *source)
-            };
-        )*
+
+    // interface
+    (@from [$source:expr] $($rest:tt)*) => {
+        input! {
+            @from [$source]
+            @rest $($rest)*
+        }
+    };
+    ($($rest:tt)*) => {
+        let mut source = $crate::stdin_source();
+        input! {
+            @from [&mut *source]
+            $($rest)*
+        }
+        drop(source)
     };
 }
 
 #[macro_export]
 macro_rules! read_value {
+    (@from [$source:expr] $(,)? @rest $parser:expr) => {
+        $crate::Parser::read(&$parser, $source)
+    };
+
+    // interface
     {
         @from [$source:expr] $(,)?
         $parser:expr
     } => {
-        {
-            #[allow(unknown_lints)]
-            #[allow(ignored_unit_patterns)]
-            $crate::Parser::read(&$parser, $source)
-        }
+        read_value!(@from [$source] @rest $parser)
     };
     {
         $parser:expr
     } => {
-        {
-            let mut source = $crate::stdin_source();
-            $crate::Parser::read(&$parser, &mut *source)
-        }
+        let mut source = $crate::stdin_source();
+        read_value!(@from [$source] @rest parser)
     };
 }
 
@@ -296,8 +301,10 @@ where
 /// ```
 /// use io_reader::{input, Expect, U32, Source};
 ///
+/// let mut source = Source::from("0 1 -1 2");
+///
 /// input! {
-///     @from [Source::from("0 1 -1 2")]
+///     @from [&mut source]
 ///     a: U32,
 ///     b: U32,
 ///     _: Expect("-1"),
@@ -352,8 +359,10 @@ impl Parser for Usize1 {
 /// ```
 /// use io_reader::{Vector, I32, Source, Parser, input};
 ///
+/// let mut source = Source::from("1 2 3");
+///
 /// input! {
-///    @from [Source::from("1 2 3")]
+///    @from [&mut source]
 ///     v: Vector(I32, 3)
 /// }
 ///
@@ -380,8 +389,10 @@ impl<P: Parser> Parser for Vector<P> {
 /// ```
 /// use io_reader::{input, Array, I32, Source, Parser};
 ///
+/// let mut source = Source::from("10 20 30");
+///
 /// input! {
-///     @from [Source::from("10 20 30")]
+///     @from [&mut source]
 ///     arr: Array::<3, _>(I32),
 /// }
 ///
@@ -429,8 +440,10 @@ impl_parser_for_tuples! {
 /// ```
 /// use io_reader::{Bools, Source, Parser, input};
 ///
+/// let mut source = Source::from("001101");
+///
 /// input! {
-///     @from [Source::from("001101")]
+///     @from [&mut source]
 ///     bits: Bools::<'0', '1'>,
 /// }
 ///
@@ -465,8 +478,10 @@ impl<const Z: char, const O: char> Parser for Bools<Z, O> {
 /// ```
 /// use io_reader::{Bytes, Source, Parser, input};
 ///
+/// let mut source = Source::from("hello");
+///
 /// input! {
-///     @from [Source::from("hello")]
+///     @from [&mut source]
 ///     bytes: Bytes,
 /// }
 ///

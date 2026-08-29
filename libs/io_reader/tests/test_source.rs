@@ -20,7 +20,7 @@ fn test_tokenize() {
 fn test_primitive() {
     let mut source = Source::from("1 2 token -3");
     input! {
-        @from [source]
+        @from [&mut source]
         a: U32,
         b: U32,
         s: Str,
@@ -36,7 +36,7 @@ fn test_primitive() {
 fn test_usize1() {
     let mut source = Source::from("1 2 3");
     input! {
-        @from [source]
+        @from [&mut source]
         a: Usize1,
         b: Usize1,
         c: Usize1,
@@ -50,7 +50,7 @@ fn test_usize1() {
 fn test_vector() {
     let mut source = Source::from("1 2 3");
     input! {
-        @from [source]
+        @from [&mut source]
         a: Vector(U32, 3),
     }
     assert_eq!(a, [1, 2, 3]);
@@ -60,7 +60,7 @@ fn test_vector() {
 fn test_array() {
     let mut source = Source::from("1 2 3");
     input! {
-        @from [source]
+        @from [&mut source]
         a: Array::<2, _>(U32),
         b: Array::<1, _>(U32),
     }
@@ -72,7 +72,7 @@ fn test_array() {
 fn test_tuple() {
     let mut source = Source::from("10 a four");
     input! {
-        @from [source]
+        @from [&mut source]
         a: (U32, Char),
         b: Str,
     }
@@ -84,7 +84,7 @@ fn test_tuple() {
 fn test_bools() {
     let mut source = Source::from(".#\n#.\n");
     input! {
-        @from [source]
+        @from [&mut source]
         a: Vector(Bools::<'.', '#'>, 2),
     }
     assert_eq!(a, [vec![false, true], vec![true, false]]);
@@ -94,7 +94,7 @@ fn test_bools() {
 fn test_expcted() {
     let mut source = Source::from(".#\n#.\n");
     input! {
-        @from [source]
+        @from [&mut source]
         _: Expect(".#"),
         _: Expect("#."),
     }
