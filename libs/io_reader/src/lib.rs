@@ -115,11 +115,12 @@ macro_rules! input {
     {
         $($name:tt: $parser:expr),* $(,)?
     } => {
-        let mut source = $crate::stdin_source();
-        input! {
-            @from [source]
-            $($name: $parser,)*
-        }
+        $(
+            let $name = {
+                let mut source = $crate::stdin_source();
+                $crate::Parser::read(&$parser, &mut *source)
+            };
+        )*
     };
 }
 
