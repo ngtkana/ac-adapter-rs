@@ -124,6 +124,28 @@ macro_rules! input {
     };
 }
 
+#[macro_export]
+macro_rules! read_value {
+    {
+        @from [$source:expr] $(,)?
+        $parser:expr
+    } => {
+        {
+            #[allow(unknown_lints)]
+            #[allow(ignored_unit_patterns)]
+            $crate::Parser::read(&$parser, $source)
+        }
+    };
+    {
+        $parser:expr
+    } => {
+        {
+            let mut source = $crate::stdin_source();
+            $crate::Parser::read(&$parser, &mut *source)
+        }
+    };
+}
+
 /// [`BufRead`] を wrap し、token を返す型です。
 ///
 /// # Examples
