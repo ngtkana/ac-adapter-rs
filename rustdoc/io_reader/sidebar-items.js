@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"constant":["Char","I128","I16","I32","I64","I8","Isize","Str","U128","U16","U32","U64","U8","Usize"],"fn":["stdin_source"],"macro":["input"],"struct":["Array","Bools","Bytes","Canonical","Expect","Source","Usize1","Vector"],"trait":["Parser"]};
+window.SIDEBAR_ITEMS = {"constant":["Char","I128","I16","I32","I64","I8","Isize","Str","U128","U16","U32","U64","U8","Usize"],"fn":["stdin_source"],"macro":["input","read_value"],"struct":["Array","Bools","Bytes","Canonical","Expect","Source","Usize1","Vector"],"trait":["Parser"]};

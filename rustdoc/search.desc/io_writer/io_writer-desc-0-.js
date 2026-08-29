@@ -1,0 +1,1 @@
+searchState.loadedDescShard("io_writer", 0, "…\nFlush を遅延した版の <code>print</code> です。\nFlush を遅延した版の <code>println</code> です。")

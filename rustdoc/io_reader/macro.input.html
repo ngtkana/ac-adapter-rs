@@ -22,14 +22,10 @@
   });
 </script>
 
-</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../io_reader/index.html">io_<wbr>reader</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">input</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#文字列版-from-の使い方" title="文字列版 (`@from` の使い方)">文字列版 (<code>@from</code> の使い方)</a></li></ul></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate io_<wbr>reader</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">io_reader</a></div><h1>Macro <span class="macro">input</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/io_reader/lib.rs.html#103-123">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! input {
-    {
-        @from [$source:expr] $(,)?
-        $($name:tt: $parser:expr),* $(,)?
-    } =&gt; { ... };
-    {
-        $rest:tt
-    } =&gt; { ... };
+</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../io_reader/index.html">io_<wbr>reader</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">input</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#examples" title="Examples">Examples</a><ul><li><a href="#文字列版-from-の使い方" title="文字列版 (`@from` の使い方)">文字列版 (<code>@from</code> の使い方)</a></li></ul></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate io_<wbr>reader</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">io_reader</a></div><h1>Macro <span class="macro">input</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/io_reader/lib.rs.html#106-131">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! input {
+    (@from [$source:expr] @rest $($name:tt: $parser:expr),* $(,)?) =&gt; { ... };
+    (@from [$source:expr] $($rest:tt)*) =&gt; { ... };
+    ($($rest:tt)*) =&gt; { ... };
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Parser を複数用いて、複数の変数を定義・初期化する macro です。</p>
 <h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>io_reader::{input, I32, Usize};
@@ -39,8 +35,11 @@
 }</code></pre></div>
 <h3 id="文字列版-from-の使い方"><a class="doc-anchor" href="#文字列版-from-の使い方">§</a>文字列版 (<code>@from</code> の使い方)</h3>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>io_reader::{input, I32, Usize, Source};
+
+<span class="kw">let </span><span class="kw-2">mut </span>source = Source::from(<span class="string">"10\n3"</span>);
+
 <span class="macro">input!</span> {
-    @from [Source::from(<span class="string">"10\n3"</span>)]
+    @from [<span class="kw-2">&amp;mut </span>source]
     x: I32,
     n: Usize,
 }
