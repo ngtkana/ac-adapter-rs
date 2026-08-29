@@ -1,10 +1,10 @@
-use io_reader::{I32, read_bind};
+use io_reader::{I32, input};
 
 fn main() {
-    read_bind! {
+    input! {
         a = I32,
     }
-    read_bind! {
+    input! {
         b = I32,
     }
     println!("a={a}, b={b}");

@@ -3,9 +3,9 @@
 //! # Examples
 //!
 //! ```
-//! use io_reader::{read_bind, Usize, I32, Vector};
+//! use io_reader::{input, Usize, I32, Vector};
 //!
-//! read_bind! {
+//! input! {
 //! #   from "2 3 10 20 30",
 //!     n = Usize,
 //!     m = Usize,
@@ -18,7 +18,7 @@
 //!
 //! # Parser
 //!
-//! `read_bind` macro において、右辺に書いてあるのは型ではなく値です。
+//! `input` macro において、右辺に書いてあるのは型ではなく値です。
 //!
 //! パーサー [`Parser`] trait を実装した型の**値**であり、これを組み合わせて新しい parser を作ります。
 //!
@@ -32,7 +32,7 @@
 //!
 //! ## 標準入力
 //!
-//! 何も記載せず `read_bind!` マクロを使えば使えます。
+//! 何も記載せず `input!` マクロを使えば使えます。
 //!
 //! 明示的に [`Source`] を取得したければ [`stdin_source`] 関数が使えます。[`MutexGuard`] で wrap
 //! したものが返ってきます。実体は [`OnceLock<Mutex<_>>`] に包まれて `static` に置かれています。
@@ -70,9 +70,8 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
 }
 
 #[macro_export]
-macro_rules! read_bind {
+macro_rules! input {
     (@from [$source:expr] @rest $($pat:pat = $parser:expr,)*) => {
-        let source = &mut $source;
         $(
             let $pat = $crate::read_value!(@from [$source] @rest $parser);
         )*
@@ -80,14 +79,14 @@ macro_rules! read_bind {
 
     (from $str:expr, $($rest:tt)*) => {
         let mut source = $crate::Source::from($str);
-        $crate::read_bind! {
+        $crate::input! {
             @from [&mut source]
             @rest $($rest)*
         }
     };
     ($($rest:tt)*) => {
         let mut source = $crate::stdin_source();
-        $crate::read_bind! {
+        $crate::input! {
             @from [&mut *source]
             @rest $($rest)*
         }
@@ -264,11 +263,11 @@ where
 /// # Examples
 ///
 /// ```
-/// use io_reader::{read_bind, Expect, U32, Source};
+/// use io_reader::{input, Expect, U32, Source};
 ///
 /// let mut source = Source::from("0 1 -1 2");
 ///
-/// read_bind! {
+/// input! {
 ///     @from [&mut source] @rest
 ///     a = U32,
 ///     b = U32,
@@ -322,11 +321,11 @@ impl Parser for Usize1 {
 /// # Examples
 ///
 /// ```
-/// use io_reader::{read_bind, Vector, I32, Source, Parser};
+/// use io_reader::{input, Vector, I32, Source, Parser};
 ///
 /// let mut source = Source::from("1 2 3");
 ///
-/// read_bind! {
+/// input! {
 ///    @from [&mut source] @rest
 ///     v = Vector(I32, 3),
 /// }
@@ -352,11 +351,11 @@ impl<P: Parser> Parser for Vector<P> {
 /// # Examples
 ///
 /// ```
-/// use io_reader::{read_bind, Array, I32, Source, Parser};
+/// use io_reader::{input, Array, I32, Source, Parser};
 ///
 /// let mut source = Source::from("10 20 30");
 ///
-/// read_bind! {
+/// input! {
 ///     @from [&mut source] @rest
 ///     arr = Array::<3, _>(I32),
 /// }
@@ -403,11 +402,11 @@ impl_parser_for_tuples! {
 /// # Examples
 ///
 /// ```
-/// use io_reader::{read_bind, Bools, Source, Parser};
+/// use io_reader::{input, Bools, Source, Parser};
 ///
 /// let mut source = Source::from("001101");
 ///
-/// read_bind! {
+/// input! {
 ///     @from [&mut source] @rest
 ///     bits = Bools::<'0', '1'>,
 /// }
@@ -441,11 +440,11 @@ impl<const Z: char, const O: char> Parser for Bools<Z, O> {
 /// # Examples
 ///
 /// ```
-/// use io_reader::{read_bind, Bytes, Source, Parser};
+/// use io_reader::{input, Bytes, Source, Parser};
 ///
 /// let mut source = Source::from("hello");
 ///
-/// read_bind! {
+/// input! {
 ///     @from [&mut source] @rest
 ///     bytes = Bytes,
 /// }

@@ -1,7 +1,7 @@
-use io_reader::{I32, read_bind};
+use io_reader::{I32, input};
 
 fn main() {
-    read_bind! {
+    input! {
         a = I32,
         b = I32,
     }
