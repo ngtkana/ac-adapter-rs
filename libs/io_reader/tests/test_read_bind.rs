@@ -1,8 +1,8 @@
-use io_reader::{Str, U32, Usize, Usize1, Vector, read_bind};
+use io_reader::{Str, U32, Usize, Usize1, Vector, input};
 
 #[test]
 fn test_read_bind() {
-    read_bind! {
+    input! {
         from "42 abc",
         x = U32,
         s = Str,
@@ -13,7 +13,7 @@ fn test_read_bind() {
 
 #[test]
 fn test_mutability() {
-    read_bind! {
+    input! {
         from "5 10 11 12 13 14 5 4",
         n = Usize,
         mut a = Vector(U32, n),

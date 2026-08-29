@@ -1,4 +1,4 @@
-use io_reader::{Array, Bools, Char, Expect, I32, Source, Str, U32, Usize1, Vector, read_bind};
+use io_reader::{Array, Bools, Char, Expect, I32, Source, Str, U32, Usize1, Vector, input};
 
 #[test]
 fn test_empty() {
@@ -19,7 +19,7 @@ fn test_tokenize() {
 #[test]
 fn test_primitive() {
     let mut source = Source::from("1 2 token -3");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = U32,
         b = U32,
@@ -35,7 +35,7 @@ fn test_primitive() {
 #[test]
 fn test_usize1() {
     let mut source = Source::from("1 2 3");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = Usize1,
         b = Usize1,
@@ -49,7 +49,7 @@ fn test_usize1() {
 #[test]
 fn test_vector() {
     let mut source = Source::from("1 2 3");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = Vector(U32, 3),
     }
@@ -59,7 +59,7 @@ fn test_vector() {
 #[test]
 fn test_array() {
     let mut source = Source::from("1 2 3");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = Array::<2, _>(U32),
         b = Array::<1, _>(U32),
@@ -71,7 +71,7 @@ fn test_array() {
 #[test]
 fn test_tuple() {
     let mut source = Source::from("10 a four");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = (U32, Char),
         b = Str,
@@ -83,7 +83,7 @@ fn test_tuple() {
 #[test]
 fn test_bools() {
     let mut source = Source::from(".#\n#.\n");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         a = Vector(Bools::<'.', '#'>, 2),
     }
@@ -93,7 +93,7 @@ fn test_bools() {
 #[test]
 fn test_expcted() {
     let mut source = Source::from(".#\n#.\n");
-    read_bind! {
+    input! {
         @from [&mut source] @rest
         () = Expect(".#"),
         () = Expect("#."),
