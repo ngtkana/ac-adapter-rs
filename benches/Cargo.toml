@@ -10,6 +10,7 @@ fp_fps = { path = "../libs/fp_fps" }
 bipartite_matching = { path = "../libs/bipartite_matching" }
 max_flow = { path = "../libs/max_flow" }
 w_ary_tree = { path = "../libs/w_ary_tree" }
+parse_int = { path = "../libs/parse_int" }
 rand = "0.8"
 
 [dev-dependencies]
@@ -33,4 +34,8 @@ harness = false
 
 [[bench]]
 name = "w_ary_tree_benchmark"
+harness = false
+
+[[bench]]
+name = "fast_parse_u64_benchmark"
 harness = false
