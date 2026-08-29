@@ -78,13 +78,6 @@ macro_rules! read_bind {
         )*
     };
 
-    // interface
-    (@from [$source:expr] $($rest:tt)*) => {
-        $crate::read_bind! {
-            @from [$source]
-            @rest $($rest)*
-        }
-    };
     (from $str:expr, $($rest:tt)*) => {
         let mut source = $crate::Source::from($str);
         $crate::read_bind! {
@@ -96,7 +89,7 @@ macro_rules! read_bind {
         let mut source = $crate::stdin_source();
         $crate::read_bind! {
             @from [&mut *source]
-            $($rest)*
+            @rest $($rest)*
         }
         drop(source)
     };
@@ -276,7 +269,7 @@ where
 /// let mut source = Source::from("0 1 -1 2");
 ///
 /// read_bind! {
-///     @from [&mut source]
+///     @from [&mut source] @rest
 ///     a = U32,
 ///     b = U32,
 ///     _ = Expect("-1"),
@@ -334,7 +327,7 @@ impl Parser for Usize1 {
 /// let mut source = Source::from("1 2 3");
 ///
 /// read_bind! {
-///    @from [&mut source]
+///    @from [&mut source] @rest
 ///     v = Vector(I32, 3),
 /// }
 ///
@@ -364,7 +357,7 @@ impl<P: Parser> Parser for Vector<P> {
 /// let mut source = Source::from("10 20 30");
 ///
 /// read_bind! {
-///     @from [&mut source]
+///     @from [&mut source] @rest
 ///     arr = Array::<3, _>(I32),
 /// }
 ///
@@ -415,7 +408,7 @@ impl_parser_for_tuples! {
 /// let mut source = Source::from("001101");
 ///
 /// read_bind! {
-///     @from [&mut source]
+///     @from [&mut source] @rest
 ///     bits = Bools::<'0', '1'>,
 /// }
 ///
@@ -453,7 +446,7 @@ impl<const Z: char, const O: char> Parser for Bools<Z, O> {
 /// let mut source = Source::from("hello");
 ///
 /// read_bind! {
-///     @from [&mut source]
+///     @from [&mut source] @rest
 ///     bytes = Bytes,
 /// }
 ///
