@@ -3,14 +3,13 @@
 //! # Examples
 //!
 //! ```
-//! use io_reader::{input, Usize, I32, Vector};
-//! # let mut source = io_reader::Source::from("2 3 10 20 30");
+//! use io_reader::{read_bind, Usize, I32, Vector};
 //!
-//! input! {
-//! #   @from [&mut source]
-//!     n: Usize,
-//!     m: Usize,
-//!     a: Vector(I32, 3),
+//! read_bind! {
+//! #   from "2 3 10 20 30",
+//!     n = Usize,
+//!     m = Usize,
+//!     a = Vector(I32, 3),
 //! }
 //! # assert_eq!(n, 2);
 //! # assert_eq!(m, 3);
@@ -125,6 +124,33 @@ macro_rules! input {
         input! {
             @from [&mut *source]
             $($rest)*
+        }
+        drop(source)
+    };
+}
+
+#[macro_export]
+macro_rules! read_bind {
+    (@from [$source:expr] @rest $($pat:pat = $parser:expr,)*) => {
+        let source = &mut $source;
+        $(
+            let $pat = $crate::read_value!(@from [$source] @rest $parser);
+        )*
+    };
+
+    // interface
+    (from $str:expr, $($rest:tt)*) => {
+        let mut source = $crate::Source::from($str);
+        $crate::read_bind! {
+            @from [&mut source]
+            @rest $($rest)*
+        }
+    };
+    ($($rest:tt)*) => {
+        let mut source = $crate::stdin_source();
+        $crate::read_bind! {
+            @from [&mut *source]
+            @rest $($rest)*
         }
         drop(source)
     };

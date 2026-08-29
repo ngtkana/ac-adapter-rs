@@ -4,7 +4,7 @@ use std::{
 };
 
 #[test]
-fn test_stdin_input() {
+fn test_input_stdin_input() {
     // テスト対象のバイナリを起動
     let mut child = Command::new("cargo")
         .args(["run", "--example", "test_io_reader_input"])
@@ -30,7 +30,7 @@ fn test_stdin_input() {
 }
 
 #[test]
-fn test_stdin_multiple_input() {
+fn test_input_stdin_multiple_input() {
     // テスト対象のバイナリを起動
     let mut child = Command::new("cargo")
         .args(["run", "--example", "test_io_reader_multiple_input"])
