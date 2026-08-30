@@ -2,17 +2,17 @@
 //!
 //! [`println`], [`print`] はマクロの呼び出しのたびに flush されて遅いです。
 //!
-//! そこでプログラムの中断・終了時に纏めて flush する版として、[`deferred_println`],
-//! [`deferred_print`] を用意してあります。
+//! そこでプログラムの中断・終了時に纏めて flush する版として、[`dprintln`],
+//! [`dprint`] を用意してあります。
 //!
 //! Flush は `atexit` と [`std::panic::set_hook`] に登録されます。
 //!
 //! # Examples
 //!
 //! ```
-//! use io_writer::deferred_println;
+//! use io_writer::dprintln;
 //!
-//! deferred_println!("{:?}", ["hello", "world!"]);
+//! dprintln!("{:?}", ["hello", "world!"]);
 //! ```
 
 use std::fmt;
@@ -43,7 +43,7 @@ fn flush_buffered_stdout() {
     }
 }
 
-fn init_deferred_printer() {
+fn init_dprinter() {
     if !REGISTERED.swap(true, Ordering::SeqCst) {
         unsafe {
             atexit(flush_on_exit);
@@ -60,7 +60,7 @@ fn init_deferred_printer() {
 #[doc(hidden)]
 pub fn _print(args: fmt::Arguments) {
     if !REGISTERED.load(Ordering::Relaxed) {
-        init_deferred_printer();
+        init_dprinter();
     }
 
     if let Ok(mut buf) = BUFFER.lock() {
@@ -70,7 +70,7 @@ pub fn _print(args: fmt::Arguments) {
 
 /// Flush を遅延した版の [`print`] です。
 #[macro_export]
-macro_rules! deferred_print {
+macro_rules! dprint {
     () => {
         $crate::_print(format_args!())
     };
@@ -81,7 +81,7 @@ macro_rules! deferred_print {
 
 /// Flush を遅延した版の [`println`] です。
 #[macro_export]
-macro_rules! deferred_println {
+macro_rules! dprintln {
     () => {
         $crate::_print(format_args!("\n"))
     };
