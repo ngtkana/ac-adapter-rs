@@ -152,9 +152,9 @@ impl<M: Mod> Mint<M> {
         self.value
     }
     /// 整数を受け取って、[`Mint`] を構築する
-    pub const fn new(value: M::Value) -> Self {
+    pub fn new(value: M::Value) -> Self {
         Self {
-            value,
+            value: value % M::get(),
             _marker: PhantomData,
         }
     }
@@ -184,7 +184,7 @@ impl<M: Mod> Clone for Mint<M> {
 impl<M: Mod> Copy for Mint<M> {}
 
 /// [`Mint::new`] と同じ
-pub const fn mint<M: Mod>(value: M::Value) -> Mint<M> {
+pub fn mint<M: Mod>(value: M::Value) -> Mint<M> {
     Mint::new(value)
 }
 
