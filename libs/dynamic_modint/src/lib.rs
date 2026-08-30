@@ -17,12 +17,8 @@
 //! use std::cell::Cell;
 //! use dynamic_modint::{define_mod, Mod, mint};
 //!
-//! // 遅延初期化される MOD を置く
-//! // `STORAGE` は衝突しない任意の名前にしてください
-//! define_mod!(M(usize); STORAGE);
+//! define_mod! { M: usize = 19 }
 //!
-//! // 以下 main 関数
-//! M::set(19);
 //! let x = mint::<M>(12);
 //! let y = mint::<M>(13);
 //! assert_eq!(x + y, mint::<M>(6));
@@ -39,25 +35,65 @@ use std::{
 ///
 /// * `$name`: 型名
 /// * `$type`: 内部型
-/// * `$storage_name`: [`thread_local`] な [`Cell`](std::cell::Cell) の名前 (以降書かない。衝突しない名前ならなんでも OK)
+/// * `$value`: 法
 ///
+/// # Examples
+///
+/// まず、定義と初期化を同時に行う方法です。
+/// 実行時初期化文を含むので、実行時評価文を書けるところにしか書けません。
+///
+/// ```
+/// use std::cell::Cell;
+/// use dynamic_modint::{define_mod, Mod, mint};
+///
+/// define_mod! { M: usize = 19 }
+///
+/// let x = mint::<M>(12);
+/// let y = mint::<M>(13);
+/// assert_eq!(x + y, mint::<M>(6));
+/// ```
+///
+/// あとから set することもできます。
+///
+/// ```
+/// use std::cell::Cell;
+/// use dynamic_modint::{define_mod, Mod, mint};
+///
+/// define_mod! { M: usize }
+/// M::set(19);
+///
+/// let x = mint::<M>(12);
+/// let y = mint::<M>(13);
+/// assert_eq!(x + y, mint::<M>(6));
+/// ```
 #[macro_export]
 macro_rules! define_mod {
-    ($name:ident($type:ty); $storage_name:ident) => {
-        thread_local! {
-            static $storage_name: std::cell::Cell<$type> = const { std::cell::Cell::new(0) };
-        }
-
+    ($name:ident: $type:ty) => {
         enum $name {}
+        impl $name {
+            fn with<F, R>(f: F) -> R
+            where
+                F: FnOnce(&std::cell::Cell<$type>) -> R,
+            {
+                thread_local! {
+                    static STORAGE: std::cell::Cell<$type> = const { std::cell::Cell::new(0) };
+                }
+                STORAGE.with(f)
+            }
+        }
         impl $crate::Mod for $name {
             type Value = $type;
             fn get() -> $type {
-                $storage_name.get()
+                Self::with(|cell| cell.get())
             }
             fn set(value: $type) {
-                $storage_name.set(value)
+                Self::with(|cell| cell.set(value))
             }
         }
+    };
+    ($name:ident: $type:ty = $value:expr) => {
+        $crate::define_mod! { $name: $type }
+        $name::set($value);
     };
 }
 
@@ -224,11 +260,10 @@ impl<M: Mod> std::iter::Product for Mint<M> {
 mod tests {
     use super::*;
 
-    define_mod!(M(u64); STORAGE);
-
     #[test]
     fn test_set_mod_19() {
-        M::set(19);
+        define_mod! { M: u64 = 19 }
+
         let x = mint::<M>(12);
         let y = mint::<M>(13);
         assert_eq!(x + y, mint::<M>(6));
