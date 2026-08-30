@@ -110,8 +110,10 @@ macro_rules! read_value {
     {
         $parser:expr
     } => {
-        let mut source = $crate::stdin_source();
-        read_value!(@from [$source] @rest parser)
+        {
+            let mut source = $crate::stdin_source();
+            read_value!(@from [&mut source] @rest $parser)
+        }
     };
 }
 
