@@ -71,7 +71,7 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
 
 #[macro_export]
 macro_rules! input {
-    (@from [$source:expr] @rest $($pat:pat = $parser:expr,)*) => {
+    (@from [$source:expr] @rest $($pat:pat = $parser:expr),* $(,)?) => {
         $(
             let $pat = $crate::read_value!(@from [$source] @rest $parser);
         )*
