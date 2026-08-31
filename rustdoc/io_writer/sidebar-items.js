@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"macro":["deferred_print","deferred_println"]};
+window.SIDEBAR_ITEMS = {"macro":["dprint","dprintln"]};

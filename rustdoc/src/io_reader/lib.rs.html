@@ -95,7 +95,7 @@
 <a href=#71 id=71 data-nosnippet>71</a>
 <a href=#72 id=72 data-nosnippet>72</a><span class="attr">#[macro_export]
 <a href=#73 id=73 data-nosnippet>73</a></span><span class="macro">macro_rules!</span> input {
-<a href=#74 id=74 data-nosnippet>74</a>    (@from [<span class="macro-nonterminal">$source</span>:expr] @rest $(<span class="macro-nonterminal">$pat</span>:pat = <span class="macro-nonterminal">$parser</span>:expr,)<span class="kw-2">*</span>) =&gt; {
+<a href=#74 id=74 data-nosnippet>74</a>    (@from [<span class="macro-nonterminal">$source</span>:expr] @rest $(<span class="macro-nonterminal">$pat</span>:pat = <span class="macro-nonterminal">$parser</span>:expr),* $(,)<span class="question-mark">?</span>) =&gt; {
 <a href=#75 id=75 data-nosnippet>75</a>        $(
 <a href=#76 id=76 data-nosnippet>76</a>            <span class="kw">let </span><span class="macro-nonterminal">$pat </span>= <span class="macro-nonterminal">$</span><span class="macro">crate::read_value!</span>(@<span class="macro-nonterminal">from </span>[<span class="macro-nonterminal">$source</span>] @rest <span class="macro-nonterminal">$parser</span>);
 <a href=#77 id=77 data-nosnippet>77</a>        )*

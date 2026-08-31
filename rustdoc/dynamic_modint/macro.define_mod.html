@@ -22,12 +22,36 @@
   });
 </script>
 
-</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../dynamic_modint/index.html">dynamic_<wbr>modint</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">define_<wbr>mod</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#遅延初期化される-mod-を定義する" title="遅延初期化される MOD を定義する">遅延初期化される MOD を定義する</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate dynamic_<wbr>modint</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">dynamic_modint</a></div><h1>Macro <span class="macro">define_mod</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/dynamic_modint/lib.rs.html#45-62">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! define_mod {
-    ($name:ident($type:ty); $storage_name:ident) =&gt; { ... };
+</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../dynamic_modint/index.html">dynamic_<wbr>modint</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">define_<wbr>mod</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#遅延初期化される-mod-を定義する" title="遅延初期化される MOD を定義する">遅延初期化される MOD を定義する</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate dynamic_<wbr>modint</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">dynamic_modint</a></div><h1>Macro <span class="macro">define_mod</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/dynamic_modint/lib.rs.html#70-98">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! define_mod {
+    ($name:ident: $type:ty) =&gt; { ... };
+    ($name:ident: $type:ty = $value:expr) =&gt; { ... };
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><h2 id="遅延初期化される-mod-を定義する"><a class="doc-anchor" href="#遅延初期化される-mod-を定義する">§</a>遅延初期化される MOD を定義する</h2>
 <ul>
 <li><code>$name</code>: 型名</li>
 <li><code>$type</code>: 内部型</li>
-<li><code>$storage_name</code>: <a href="https://doc.rust-lang.org/1.89.0/std/macro.thread_local.html" title="macro std::thread_local"><code>thread_local</code></a> な <a href="https://doc.rust-lang.org/1.89.0/core/cell/struct.Cell.html" title="struct core::cell::Cell"><code>Cell</code></a> の名前 (以降書かない。衝突しない名前ならなんでも OK)</li>
+<li><code>$value</code>: 法</li>
 </ul>
+<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>まず、定義と初期化を同時に行う方法です。
+実行時初期化文を含むので、実行時評価文を書けるところにしか書けません。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::cell::Cell;
+<span class="kw">use </span>dynamic_modint::{define_mod, Mod, mint};
+
+<span class="macro">define_mod!</span> { M: usize = <span class="number">19 </span>}
+
+<span class="kw">let </span>x = mint::&lt;M&gt;(<span class="number">12</span>);
+<span class="kw">let </span>y = mint::&lt;M&gt;(<span class="number">13</span>);
+<span class="macro">assert_eq!</span>(x + y, mint::&lt;M&gt;(<span class="number">6</span>));</code></pre></div>
+<p>あとから set することもできます。</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>std::cell::Cell;
+<span class="kw">use </span>dynamic_modint::{define_mod, Mod, mint};
+
+<span class="macro">define_mod!</span> { M: usize }
+M::set(<span class="number">19</span>);
+
+<span class="kw">let </span>x = mint::&lt;M&gt;(<span class="number">12</span>);
+<span class="kw">let </span>y = mint::&lt;M&gt;(<span class="number">13</span>);
+<span class="macro">assert_eq!</span>(x + y, mint::&lt;M&gt;(<span class="number">6</span>));</code></pre></div>
 </div></details></section></div></main></body></html>
