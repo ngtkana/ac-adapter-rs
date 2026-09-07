@@ -2,6 +2,9 @@
 resolver = "2"
 members = ['libs/*', 'benches', 'snippetter', 'stats/stat_bipartite_matching', 'stats/stat_max_flow']
 
+[workspace.package]
+edition = "2024"
+
 [workspace.dependencies]
 ansi_term = "0.12.1"
 approx = "0.5"
