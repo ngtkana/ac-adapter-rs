@@ -270,7 +270,7 @@
 <a href=#246 id=246 data-nosnippet>246</a>
 <a href=#247 id=247 data-nosnippet>247</a><span class="kw">impl</span>&lt;M: Mod&gt; std::iter::Sum <span class="kw">for </span>Mint&lt;M&gt; {
 <a href=#248 id=248 data-nosnippet>248</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#249 id=249 data-nosnippet>249</a>        Mint::new(iter.map(Mint::value).fold(M::Value::CONST_0, Add::add) % M::get())
+<a href=#249 id=249 data-nosnippet>249</a>        iter.fold(Mint::new(M::Value::CONST_0), Add::add)
 <a href=#250 id=250 data-nosnippet>250</a>    }
 <a href=#251 id=251 data-nosnippet>251</a>}
 <a href=#252 id=252 data-nosnippet>252</a>

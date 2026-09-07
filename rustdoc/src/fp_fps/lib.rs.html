@@ -106,7 +106,7 @@
 <a href=#82 id=82 data-nosnippet>82</a>        <span class="kw">return </span>a;
 <a href=#83 id=83 data-nosnippet>83</a>    }
 <a href=#84 id=84 data-nosnippet>84</a>    <span class="kw">let </span>len = a.len() + b.len() - <span class="number">1</span>;
-<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>fft_len = len.next_power_of_two() * <span class="number">2</span>;
+<a href=#85 id=85 data-nosnippet>85</a>    <span class="kw">let </span>fft_len = len.next_power_of_two();
 <a href=#86 id=86 data-nosnippet>86</a>    a.resize(fft_len, fp_new(<span class="number">0</span>));
 <a href=#87 id=87 data-nosnippet>87</a>    b.resize(fft_len, fp_new(<span class="number">0</span>));
 <a href=#88 id=88 data-nosnippet>88</a>    fft(<span class="kw-2">&amp;mut </span>a);

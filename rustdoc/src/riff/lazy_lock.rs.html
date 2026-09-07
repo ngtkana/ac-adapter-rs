@@ -77,4 +77,15 @@
 <a href=#53 id=53 data-nosnippet>53</a>    </span><span class="kw">fn </span>deref(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="kw-2">&amp;</span>T {
 <a href=#54 id=54 data-nosnippet>54</a>        LazyLock::force(<span class="self">self</span>)
 <a href=#55 id=55 data-nosnippet>55</a>    }
-<a href=#56 id=56 data-nosnippet>56</a>}</code></pre></div></section></main></body></html>
+<a href=#56 id=56 data-nosnippet>56</a>}
+<a href=#57 id=57 data-nosnippet>57</a>
+<a href=#58 id=58 data-nosnippet>58</a><span class="kw">impl</span>&lt;T, F&gt; Drop <span class="kw">for </span>LazyLock&lt;T, F&gt; {
+<a href=#59 id=59 data-nosnippet>59</a>    <span class="kw">fn </span>drop(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#60 id=60 data-nosnippet>60</a>        <span class="kw">let </span>data = <span class="self">self</span>.data.get_mut();
+<a href=#61 id=61 data-nosnippet>61</a>        <span class="kw">if </span><span class="self">self</span>.once.is_completed() {
+<a href=#62 id=62 data-nosnippet>62</a>            <span class="kw">unsafe </span>{ ManuallyDrop::drop(<span class="kw-2">&amp;mut </span>data.value) };
+<a href=#63 id=63 data-nosnippet>63</a>        } <span class="kw">else </span>{
+<a href=#64 id=64 data-nosnippet>64</a>            <span class="kw">unsafe </span>{ ManuallyDrop::drop(<span class="kw-2">&amp;mut </span>data.f) };
+<a href=#65 id=65 data-nosnippet>65</a>        }
+<a href=#66 id=66 data-nosnippet>66</a>    }
+<a href=#67 id=67 data-nosnippet>67</a>}</code></pre></div></section></main></body></html>

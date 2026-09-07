@@ -214,7 +214,7 @@
 <a href=#190 id=190 data-nosnippet>190</a>            stack.push([x, y]);
 <a href=#191 id=191 data-nosnippet>191</a>            <span class="kw">if </span><span class="self">self</span>.ord[x] &lt; <span class="self">self</span>.ord[y] {
 <a href=#192 id=192 data-nosnippet>192</a>                <span class="self">self</span>.__biconnected_components_dfs(y, stack, cmp);
-<a href=#193 id=193 data-nosnippet>193</a>                <span class="kw">if </span><span class="self">self</span>.parent[x] == x || <span class="self">self</span>.ord[x] &lt;= <span class="self">self</span>.low[y] {
+<a href=#193 id=193 data-nosnippet>193</a>                <span class="kw">if </span><span class="self">self</span>.ord[x] &lt;= <span class="self">self</span>.low[y] {
 <a href=#194 id=194 data-nosnippet>194</a>                    <span class="kw">let </span><span class="kw-2">mut </span>c = Vec::new();
 <a href=#195 id=195 data-nosnippet>195</a>                    <span class="kw">while let </span><span class="prelude-val">Some</span>([u, v]) = stack.pop() {
 <a href=#196 id=196 data-nosnippet>196</a>                        c.push([u, v]);
