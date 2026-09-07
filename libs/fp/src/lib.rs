@@ -106,7 +106,7 @@ impl<const P: u64> Fp<P> {
     /// ```
     pub const fn mul(self, rhs: Self) -> Self {
         Self {
-            value: self.value * rhs.value % P,
+            value: (self.value as u128 * rhs.value as u128 % P as u128) as u64,
         }
     }
 
@@ -148,7 +148,7 @@ impl<const P: u64> Fp<P> {
     /// assert_eq!(a * a.inv(), fp_new::<P>(1));
     /// ```
     pub const fn inv(self) -> Self {
-        const fn euclid(a: i64, m: i64) -> i64 {
+        const fn euclid(a: i128, m: i128) -> i128 {
             if a == 1 {
                 1
             } else {
@@ -156,7 +156,7 @@ impl<const P: u64> Fp<P> {
             }
         }
         Self {
-            value: euclid(self.value as i64, P as i64) as u64,
+            value: euclid(self.value as i128, P as i128) as u64,
         }
     }
 }
@@ -172,9 +172,9 @@ impl<const P: u64> Fp<P> {
 /// ```
 impl<const P: u64> std::fmt::Debug for Fp<P> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        pub const fn berlekamp_massey(a: i64, p: i64) -> [i64; 2] {
+        pub const fn berlekamp_massey(a: i128, p: i128) -> [i128; 2] {
             let mut u0 = 0;
-            let mut v0 = 1_i64;
+            let mut v0 = 1_i128;
             let mut w0 = a * u0 + p * v0;
             let mut u1 = 1;
             let mut v1 = 0;
@@ -193,7 +193,7 @@ impl<const P: u64> std::fmt::Debug for Fp<P> {
         if self.value == 0 {
             return write!(f, "0");
         }
-        let [mut num, mut den] = berlekamp_massey(self.value as i64, P as i64);
+        let [mut num, mut den] = berlekamp_massey(self.value as i128, P as i128);
         if den < 0 {
             num = -num;
             den = -den;
