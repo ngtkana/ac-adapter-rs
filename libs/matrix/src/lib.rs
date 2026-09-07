@@ -182,7 +182,7 @@ mod test {
         assert_eq!(b.items, [7, 10, 15, 22]);
         assert_eq!(b.width, 2);
 
-        let b = a.clone().pow(3);
+        let b = a.pow(3);
         assert_eq!(b.items, [37, 54, 81, 118]);
         assert_eq!(b.width, 2);
     }
