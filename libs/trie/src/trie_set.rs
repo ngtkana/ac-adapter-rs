@@ -13,7 +13,7 @@ impl Debug for TrieSet {
     fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
         let mut f = w.debug_set();
         self.for_each(|k| {
-            f.entry(&k.to_vec());
+            f.entry(&k);
         });
         f.finish()
     }
