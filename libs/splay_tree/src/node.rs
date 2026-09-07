@@ -2,7 +2,6 @@ use super::LazyOps;
 use std::cmp::Ordering;
 use std::fmt::Debug;
 use std::mem::replace;
-use std::mem::swap;
 use std::ptr::null_mut;
 use std::ptr::{self};
 
@@ -17,64 +16,133 @@ pub fn deep_free<O: LazyOps>(root: *mut Node<O>) {
     }
 }
 
-pub fn access_index<O: LazyOps>(mut root: &mut Node<O>, mut i: usize) -> &mut Node<O> {
+/// # Safety notes
+///
+/// `root` は生ポインタで受け渡しします。スプレー操作は祖先へ辿ってから元のノードへ戻って
+/// 書き換えることがあるため、`&mut Node<O>` を引数に取ると（呼び出し期間中ずっと有効な排他参照
+/// という強い保証のもとで）別名経由の書き込みと衝突し、未定義動作になります（Stacked/Tree
+/// Borrows で検証済み）。そのため、この関数とその内部で呼ぶ `splay`/`rotate` は生ポインタのみを
+/// 扱い、フィールドアクセスの瞬間だけ一時的に参照を作ります。
+pub fn access_index<O: LazyOps>(root: *mut Node<O>, mut i: usize) -> *mut Node<O> {
+    let mut root = root;
     loop {
-        root.push();
-        if let Some(left) = unsafe { root.left.as_mut() } {
+        unsafe { (*root).push() };
+        let left = unsafe { (*root).left };
+        if let Some(left) = unsafe { left.as_mut() } {
             left.push();
         }
-        if let Some(right) = unsafe { root.right.as_mut() } {
+        let right = unsafe { (*root).right };
+        if let Some(right) = unsafe { right.as_mut() } {
             right.push();
         }
-        let lsize = unsafe { root.left.as_ref() }.map_or(0, |left| left.len);
+        let lsize = unsafe { left.as_ref() }.map_or(0, |left| left.len);
         root = match i.cmp(&lsize) {
-            Ordering::Less => unsafe { root.left.as_mut() }.unwrap(),
+            Ordering::Less => left,
             Ordering::Equal => {
-                root.splay();
+                splay(root);
                 return root;
             }
             Ordering::Greater => {
                 i -= lsize + 1;
-                unsafe { root.right.as_mut() }.unwrap()
+                right
             }
         };
     }
 }
 
 pub fn merge<O: LazyOps>(left: *mut Node<O>, right: *mut Node<O>) -> *mut Node<O> {
-    let ans = if let Some(mut left) = unsafe { left.as_mut() } {
-        if let Some(right) = unsafe { right.as_mut() } {
-            left = access_index(left, left.len - 1);
-            left.push();
-            left.right = right;
-            right.parent = left;
-            left.update();
-        }
-        left
-    } else {
-        right
-    };
-    ans
+    if left.is_null() {
+        return right;
+    }
+    if right.is_null() {
+        return left;
+    }
+    let left = access_index(left, unsafe { (*left).len } - 1);
+    unsafe {
+        (*left).push();
+        (*left).right = right;
+        (*right).parent = left;
+        (*left).update();
+    }
+    left
 }
 
 pub fn split_at<O: LazyOps>(root: *mut Node<O>, at: usize) -> [*mut Node<O>; 2] {
-    if let Some(mut root) = unsafe { root.as_mut() } {
-        if at == root.len {
-            [root, null_mut()]
-        } else if at == 0 {
-            [null_mut(), root]
-        } else {
-            root = access_index(root, at);
-            root.push();
-            let left = replace(&mut root.left, null_mut());
-            if let Some(left) = unsafe { left.as_mut() } {
-                left.parent = null_mut();
-                root.update();
-            }
-            [left, root]
-        }
+    if root.is_null() {
+        return [null_mut(), null_mut()];
+    }
+    let len = unsafe { (*root).len };
+    if at == len {
+        [root, null_mut()]
+    } else if at == 0 {
+        [null_mut(), root]
     } else {
-        [null_mut(), null_mut()]
+        let root = access_index(root, at);
+        unsafe { (*root).push() };
+        let left = replace(unsafe { &mut (*root).left }, null_mut());
+        if let Some(left) = unsafe { left.as_mut() } {
+            left.parent = null_mut();
+            unsafe { (*root).update() };
+        }
+        [left, root]
+    }
+}
+
+/// ノード `x` を根まで splay します。生ポインタで実装している理由は [`access_index`] を参照してください。
+fn splay<O: LazyOps>(x: *mut Node<O>) {
+    loop {
+        let p = unsafe { (*x).parent };
+        if p.is_null() {
+            return;
+        }
+        let g = unsafe { (*p).parent };
+        if !g.is_null() {
+            let x_is_p_left = ptr::eq(x, unsafe { (*p).left });
+            let p_is_g_left = ptr::eq(p, unsafe { (*g).left });
+            if x_is_p_left == p_is_g_left {
+                rotate(p);
+            } else {
+                rotate(x);
+            }
+        }
+        rotate(x);
+    }
+}
+
+/// `x` をその親 `p` の位置まで回転させます。生ポインタで実装している理由は [`access_index`] を参照してください。
+fn rotate<O: LazyOps>(x: *mut Node<O>) {
+    let p = unsafe { (*x).parent };
+    let g = unsafe { (*p).parent };
+    unsafe { (*x).push() };
+    if ptr::eq(x, unsafe { (*p).left }) {
+        let xr = unsafe { (*x).right };
+        unsafe { (*p).left = xr };
+        if let Some(c) = unsafe { xr.as_mut() } {
+            c.parent = p;
+        }
+        unsafe { (*x).right = p };
+    } else {
+        let xl = unsafe { (*x).left };
+        unsafe { (*p).right = xl };
+        if let Some(c) = unsafe { xl.as_mut() } {
+            c.parent = p;
+        }
+        unsafe { (*x).left = p };
+    }
+    unsafe {
+        (*p).parent = x;
+        (*x).parent = g;
+    }
+    if let Some(g) = unsafe { g.as_mut() } {
+        if ptr::eq(p, g.left) {
+            g.left = x;
+        } else {
+            g.right = x;
+        }
+    }
+    unsafe {
+        (*p).update();
+        (*x).update();
     }
 }
 
@@ -156,56 +224,13 @@ impl<O: LazyOps> Node<O> {
             }
         }
         if replace(&mut self.rev, false) {
-            swap(&mut self.left, &mut self.right);
+            std::mem::swap(&mut self.left, &mut self.right);
             if let Some(left) = unsafe { self.left.as_mut() } {
                 left.rev ^= true;
             }
             if let Some(right) = unsafe { self.right.as_mut() } {
                 right.rev ^= true;
             }
-        }
-    }
-
-    pub fn rotate(&mut self) {
-        let p = unsafe { &mut *self.parent };
-        let g = p.parent;
-        self.push();
-        if ptr::eq(self, p.left) {
-            p.left = self.right;
-            if let Some(c) = unsafe { p.left.as_mut() } {
-                c.parent = p;
-            }
-            self.right = p;
-        } else {
-            p.right = self.left;
-            if let Some(c) = unsafe { p.right.as_mut() } {
-                c.parent = p;
-            }
-            self.left = p;
-        }
-        p.parent = self;
-        self.parent = g;
-        if let Some(g) = unsafe { g.as_mut() } {
-            if ptr::eq(p, g.left) {
-                g.left = self;
-            } else {
-                g.right = self;
-            }
-        }
-        p.update();
-        self.update();
-    }
-
-    pub fn splay(&mut self) {
-        while let Some(p) = unsafe { self.parent.as_mut() } {
-            if let Some(g) = unsafe { p.parent.as_mut() } {
-                if ptr::eq(self, p.left) == ptr::eq(p, g.left) {
-                    p.rotate();
-                } else {
-                    self.rotate();
-                }
-            }
-            self.rotate();
         }
     }
 }

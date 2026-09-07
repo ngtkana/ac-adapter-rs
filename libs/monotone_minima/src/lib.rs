@@ -17,6 +17,9 @@ pub fn monotone_minima_by(
     mut cmp: impl FnMut(usize, usize, usize) -> Ordering + Copy, // a[i][j].cmp(&a[i][k])
 ) -> Vec<usize> {
     assert!(0 < w);
+    if h == 0 {
+        return Vec::new();
+    }
     let mut ans = vec![0; h];
     ans[0] = (0..w).rev().min_by(|&j, &k| cmp(0, j, k)).unwrap();
     for d in (0..h.next_power_of_two().trailing_zeros() as usize)
@@ -59,7 +62,7 @@ pub fn convex_minplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
     T: Copy + Ord + Add<Output = T>,
 {
-    if a.is_empty() && b.is_empty() {
+    if a.is_empty() || b.is_empty() {
         return Vec::new();
     }
     monotone_maxima(a.len() + b.len() - 1, a.len(), move |i, j| {
@@ -78,7 +81,7 @@ pub fn concave_maxplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
     T: Copy + Ord + Add<Output = T>,
 {
-    if a.is_empty() && b.is_empty() {
+    if a.is_empty() || b.is_empty() {
         return Vec::new();
     }
     monotone_maxima(a.len() + b.len() - 1, a.len(), move |i, j| {

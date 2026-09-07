@@ -44,9 +44,9 @@ impl<S: SieveKind> SieveBase<S> {
         assert!(T::zero() <= x);
         let x = x.as_usize();
         if self.sieve.len() <= x {
-            *self = Self::with_len(x + 1);
+            self.extend(2 * (x + 1));
         }
-        S::is_prime(x, self.sieve[x.as_usize()])
+        S::is_prime(x, self.sieve[x])
     }
 
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, S, T> {

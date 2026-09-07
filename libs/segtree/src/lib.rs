@@ -81,7 +81,7 @@ impl<O: Op> Segtree<O> {
             ref values,
         } = *self;
         let (mut start, mut end) = open(range, len);
-        assert!((start..=len).contains(&len));
+        assert!(start <= end && end <= len);
         start += offset;
         end += offset;
         let mut left = O::identity();
@@ -294,9 +294,9 @@ impl<K: Ord, O: Op> SegtreeWithCompression<K, O> {
         K: Clone,
         O::Value: Clone,
     {
-        let mut keys = kv.iter().map(|(k, _)| k.clone()).collect::<Vec<_>>();
-        keys.sort();
-        let values = kv.iter().map(|(_, v)| v.clone()).collect::<Vec<_>>();
+        let mut kv = kv.to_vec();
+        kv.sort_by(|(a, _), (b, _)| a.cmp(b));
+        let (keys, values): (Vec<K>, Vec<O::Value>) = kv.into_iter().unzip();
         Self {
             inner: Segtree::new(&values),
             keys,

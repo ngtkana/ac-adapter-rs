@@ -221,7 +221,7 @@ impl<O: LazyOps> SplayTree<O> {
             splay_tree_index_out_of_range_fail(at, self.len());
         }
         let [left, right] = split_at(self.0.get(), at);
-        let node = Box::leak(Box::new(Node::new(value)));
+        let node = Box::into_raw(Box::new(Node::new(value)));
         self.0.set(merge(merge(left, node), right));
     }
 
@@ -398,11 +398,9 @@ impl<O: LazyOps> SplayTree<O> {
         if self.len() <= i {
             return None;
         }
-        let mut root = unsafe { self.0.get().as_mut() }.unwrap();
-        root = access_index(root, i);
+        let root = access_index(self.0.get(), i);
         self.0.set(root);
-        let ans = &root.value;
-        Some(ans)
+        Some(unsafe { &(*root).value })
     }
 
     /// 指定した場所の要素への可変ハンドラを返します。範囲外のときには `None` を返します。
@@ -423,8 +421,7 @@ impl<O: LazyOps> SplayTree<O> {
         if self.len() <= i {
             return None;
         }
-        let mut root = unsafe { self.0.get().as_mut() }.unwrap();
-        root = access_index(root, i);
+        let root = access_index(self.0.get(), i);
         self.0.set(root);
         Some(Entry(self))
     }
@@ -542,15 +539,17 @@ impl<O: LazyOps> SplayTree<O> {
 impl<O: LazyOps> FromIterator<O::Value> for SplayTree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let mut iter = iter.into_iter();
-        let mut root = match iter.next() {
+        let mut root: *mut Node<O> = match iter.next() {
             None => return Self::new(),
-            Some(value) => Box::leak(Box::new(Node::new(value))),
+            Some(value) => Box::into_raw(Box::new(Node::new(value))),
         };
         for value in iter {
-            let node = Box::leak(Box::new(Node::new(value)));
-            root.parent = node;
-            node.left = root;
-            node.update();
+            let node: *mut Node<O> = Box::into_raw(Box::new(Node::new(value)));
+            unsafe {
+                (*root).parent = node;
+                (*node).left = root;
+                (*node).update();
+            }
             root = node;
         }
         Self(Cell::new(root))

@@ -243,7 +243,7 @@ where
     /// ```
     pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeKey {
         assert!(
-            from < self.res.len() || to < self.res.len(),
+            from < self.res.len() && to < self.res.len(),
             "`Dinic::add_edge` is called with from = {}, to = {}, but the number of verticies is \
              {}",
             from,

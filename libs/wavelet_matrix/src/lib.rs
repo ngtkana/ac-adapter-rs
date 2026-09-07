@@ -127,7 +127,7 @@ impl WaveletMatrix {
         let mut ans = 0;
         for row in &self.table {
             let here = row.access(i);
-            i = next_position(row, i, row.access(i));
+            i = next_position(row, i, here);
             ans <<= 1;
             ans |= usize::from(here);
         }

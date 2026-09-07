@@ -269,6 +269,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// tree.add(2, &10);
     /// ```
     pub fn add(&mut self, mut index: usize, value: &T) {
+        assert!(index + 1 < self.items.len(), "index out of bounds");
         index += 1;
         while index < self.items.len() {
             self.items[index] = O::add(&self.items[index], value);
@@ -337,6 +338,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// tree.sub(2, &3);
     /// ```
     pub fn sub(&mut self, mut index: usize, value: &T) {
+        assert!(index + 1 < self.items.len(), "index out of bounds");
         index += 1;
         while index < self.items.len() {
             self.items[index] = O::sub(&self.items[index], value);

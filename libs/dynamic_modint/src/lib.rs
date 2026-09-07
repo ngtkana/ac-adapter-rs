@@ -246,7 +246,7 @@ impl<M: Mod> Neg for Mint<M> {
 
 impl<M: Mod> std::iter::Sum for Mint<M> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        Mint::new(iter.map(Mint::value).fold(M::Value::CONST_0, Add::add) % M::get())
+        iter.fold(Mint::new(M::Value::CONST_0), Add::add)
     }
 }
 

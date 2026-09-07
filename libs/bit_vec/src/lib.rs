@@ -72,7 +72,7 @@ impl BitVec {
         if r != 0 {
             for i in 0..self.items.len() {
                 if i + 1 < self.items.len() {
-                    self.items[i] = self.items[i] >> r | (self.items[i + 1] & ((1 << r) - 1));
+                    self.items[i] = self.items[i] >> r | (self.items[i + 1] << (B - r));
                 } else {
                     self.items[i] >>= r;
                 }
@@ -475,4 +475,76 @@ fn to_range(range: impl RangeBounds<usize>, len: usize) -> std::ops::Range<usize
         Bound::Unbounded => len,
     };
     start..end
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use rand::{rngs::StdRng, Rng, SeedableRng};
+
+    #[test]
+    fn test_pop_front_many_random() {
+        let mut rng = StdRng::seed_from_u64(1);
+        for _ in 0..2000 {
+            let len = rng.gen_range(1..400);
+            let count = rng.gen_range(0..=len);
+            let bits: Vec<bool> = (0..len).map(|_| rng.gen_bool(0.5)).collect();
+            let mut bv: BitVec = bits.iter().copied().collect();
+            bv.pop_front_many(count);
+            let expected = &bits[count..];
+            let actual = bv.collect_vec();
+            assert_eq!(actual, expected, "len={len} count={count}");
+        }
+    }
+
+    #[test]
+    fn test_or_shift_convolution_with_zero_random() {
+        let mut rng = StdRng::seed_from_u64(2);
+        for _ in 0..2000 {
+            let len = rng.gen_range(1..300);
+            let k = rng.gen_range(0..5);
+            let shift: Vec<usize> = (0..k).map(|_| rng.gen_range(0..len)).collect();
+            let bits: Vec<bool> = (0..len).map(|_| rng.gen_bool(0.5)).collect();
+            let mut bv: BitVec = bits.iter().copied().collect();
+            bv.or_shift_convolution_with_zero(&shift);
+
+            let mut expected = bits.clone();
+            for i in 0..len {
+                if bits[i] {
+                    for &s in shift.iter().chain(std::iter::once(&0)) {
+                        if i + s < len {
+                            expected[i + s] = true;
+                        }
+                    }
+                }
+            }
+            let actual = bv.collect_vec();
+            assert_eq!(actual, expected, "len={len} shift={shift:?}");
+        }
+    }
+
+    #[test]
+    fn test_range_count_ones_and_first_one_random() {
+        let mut rng = StdRng::seed_from_u64(3);
+        for _ in 0..2000 {
+            let len = rng.gen_range(1..600);
+            let start = rng.gen_range(0..=len);
+            let end = rng.gen_range(start..=len);
+            let bits: Vec<bool> = (0..len).map(|_| rng.gen_bool(0.5)).collect();
+            let bv: BitVec = bits.iter().copied().collect();
+            let range = bv.range(start..end);
+            let expected_count = bits[start..end].iter().filter(|&&b| b).count();
+            assert_eq!(
+                range.count_ones(),
+                expected_count,
+                "len={len} start={start} end={end}"
+            );
+            let expected_first = bits[start..end].iter().position(|&b| b).map(|p| p + start);
+            assert_eq!(
+                range.first_one(),
+                expected_first,
+                "len={len} start={start} end={end}"
+            );
+        }
+    }
 }

@@ -64,8 +64,9 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// * If `c` and `p` are already connected.
     pub fn link(&mut self, p: usize, c: usize) {
         unsafe {
-            let c = std::ptr::addr_of_mut!(self.nodes[c]);
-            let p = std::ptr::addr_of_mut!(self.nodes[p]);
+            let base = self.nodes.as_mut_ptr();
+            let c = base.add(c);
+            let p = base.add(p);
             expose(c);
             assert!((*c).left.is_null(), "c = {} is not a root", (*c).id);
             expose(p);
@@ -100,11 +101,11 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// The id of the parent of `x` before the cut.
     pub fn cut(&mut self, x: usize) -> Option<usize> {
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
+            let x = self.nodes.as_mut_ptr().add(x);
             expose(x);
             let p = (*x).left;
             (*x).left = std::ptr::null_mut();
-            let ans = p.as_ref().map(|p| p.id);
+            let ans = if p.is_null() { None } else { Some((*p).id) };
             if !p.is_null() {
                 (*p).parent = std::ptr::null_mut();
             }
@@ -129,7 +130,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// Makes `x` the root of the tree.
     pub fn evert(&mut self, x: usize) {
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
+            let x = self.nodes.as_mut_ptr().add(x);
             expose(x);
             rev(x);
             push(x);
@@ -147,8 +148,9 @@ impl<O: OpBase> LinkCutTreeBase<O> {
             return true;
         }
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
-            let y = std::ptr::addr_of_mut!(self.nodes[y]);
+            let base = self.nodes.as_mut_ptr();
+            let x = base.add(x);
+            let y = base.add(y);
             expose(x);
             expose(y);
             !(*x).parent.is_null()
@@ -161,8 +163,9 @@ impl<O: OpBase> LinkCutTreeBase<O> {
             return Some(x);
         }
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
-            let y = std::ptr::addr_of_mut!(self.nodes[y]);
+            let base = self.nodes.as_mut_ptr();
+            let x = base.add(x);
+            let y = base.add(y);
             expose(x);
             let lca = expose(y);
             if (*x).parent.is_null() {
@@ -176,7 +179,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// Sets the value of `x` to `f(x)`.
     pub fn set(&mut self, x: usize, mut f: impl FnMut(O::Value) -> O::Value) {
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
+            let x = self.nodes.as_mut_ptr().add(x);
             expose(x);
             (*x).value = O::from_front(f(O::into_front((*x).value.clone())));
             update(x);
@@ -186,7 +189,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// Folds the path from the root to `x`.
     pub fn fold(&mut self, x: usize) -> O::Value {
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
+            let x = self.nodes.as_mut_ptr().add(x);
             expose(x);
             O::into_front((*x).acc.clone())
         }
@@ -204,14 +207,17 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     /// Returns the id of the parent of `x`.
     pub fn parent(&mut self, x: usize) -> Option<usize> {
         unsafe {
-            let x = std::ptr::addr_of_mut!(self.nodes[x]);
+            let x = self.nodes.as_mut_ptr().add(x);
             expose(x);
-            let mut p = (*x).left.as_mut()?;
-            while let Some(next) = p.right.as_mut() {
-                p = next;
+            let mut p = (*x).left;
+            if p.is_null() {
+                return None;
+            }
+            while !(*p).right.is_null() {
+                p = (*p).right;
             }
             splay(p);
-            Some(p.id)
+            Some((*p).id)
         }
     }
 }
@@ -228,40 +234,40 @@ struct Node<O: OpBase> {
 }
 
 unsafe fn is_splay_root<O: OpBase>(x: *mut Node<O>) -> bool {
-    let x = &*x;
-    let Some(p) = x.parent.as_ref() else { return true };
-    !std::ptr::eq(x, p.left) && !std::ptr::eq(x, p.right)
+    let p = (*x).parent;
+    p.is_null() || (!std::ptr::eq((*p).left, x) && !std::ptr::eq((*p).right, x))
 }
 
 unsafe fn push<O: OpBase>(x: *mut Node<O>) {
-    let x = &mut *x;
-    if x.rev {
-        if let Some(l) = x.left.as_mut() {
+    if (*x).rev {
+        let l = (*x).left;
+        let r = (*x).right;
+        if !l.is_null() {
             rev(l);
         }
-        if let Some(r) = x.right.as_mut() {
+        if !r.is_null() {
             rev(r);
         }
-        x.rev = false;
+        (*x).rev = false;
     }
 }
 
 unsafe fn update<O: OpBase>(x: *mut Node<O>) {
-    let x = &mut *x;
-    x.acc = x.value.clone();
-    if !x.left.is_null() {
-        x.acc = O::mul(&(*x.left).acc, &x.acc);
+    (*x).acc = (*x).value.clone();
+    let l = (*x).left;
+    let r = (*x).right;
+    if !l.is_null() {
+        (*x).acc = O::mul(&(*l).acc, &(*x).acc);
     }
-    if !x.right.is_null() {
-        x.acc = O::mul(&x.acc, &(*x.right).acc);
+    if !r.is_null() {
+        (*x).acc = O::mul(&(*x).acc, &(*r).acc);
     }
 }
 
 unsafe fn rev<O: OpBase>(x: *mut Node<O>) {
-    let x = &mut *x;
-    std::mem::swap(&mut x.left, &mut x.right);
-    O::rev(&mut x.acc);
-    x.rev ^= true;
+    std::mem::swap(&mut (*x).left, &mut (*x).right);
+    O::rev(&mut (*x).acc);
+    (*x).rev ^= true;
 }
 
 unsafe fn expose<O: OpBase>(x: *mut Node<O>) -> *mut Node<O> {
@@ -279,26 +285,25 @@ unsafe fn expose<O: OpBase>(x: *mut Node<O>) -> *mut Node<O> {
 }
 
 unsafe fn splay<O: OpBase>(x: *mut Node<O>) {
-    let x = &mut *x;
     push(x);
     while !is_splay_root(x) {
-        let p = &mut *x.parent;
+        let p = (*x).parent;
         if is_splay_root(p) {
             push(p);
             push(x);
-            if std::ptr::eq(p.left, x) {
+            if std::ptr::eq((*p).left, x) {
                 rotate_right(p);
             } else {
                 rotate_left(p);
             }
         } else {
-            let g = &mut *p.parent;
+            let g = (*p).parent;
             push(g);
             push(p);
             push(x);
             #[allow(clippy::collapsible_else_if)]
-            if std::ptr::eq(p.left, x) {
-                if std::ptr::eq(g.left, p) {
+            if std::ptr::eq((*p).left, x) {
+                if std::ptr::eq((*g).left, p) {
                     rotate_right(g);
                     rotate_right(p);
                 } else {
@@ -306,7 +311,7 @@ unsafe fn splay<O: OpBase>(x: *mut Node<O>) {
                     rotate_left(g);
                 }
             } else {
-                if std::ptr::eq(g.left, p) {
+                if std::ptr::eq((*g).left, p) {
                     rotate_left(p);
                     rotate_right(g);
                 } else {
@@ -319,17 +324,16 @@ unsafe fn splay<O: OpBase>(x: *mut Node<O>) {
 }
 
 unsafe fn rotate_left<O: OpBase>(l: *mut Node<O>) {
-    let l = &mut *l;
-    let r = &mut *l.right;
-    let p = l.parent;
-    let c = r.left;
-    l.right = c;
+    let r = (*l).right;
+    let p = (*l).parent;
+    let c = (*r).left;
+    (*l).right = c;
     if !c.is_null() {
         (*c).parent = l;
     }
-    r.left = l;
-    l.parent = r;
-    r.parent = p;
+    (*r).left = l;
+    (*l).parent = r;
+    (*r).parent = p;
     update(l);
     update(r);
     if !p.is_null() {
@@ -338,22 +342,21 @@ unsafe fn rotate_left<O: OpBase>(l: *mut Node<O>) {
         } else if std::ptr::eq((*p).right, l) {
             (*p).right = r;
         }
-        update(&raw mut *p);
+        update(p);
     }
 }
 
 unsafe fn rotate_right<O: OpBase>(r: *mut Node<O>) {
-    let r = &mut *r;
-    let l = &mut *r.left;
-    let p = r.parent;
-    let c = l.right;
-    r.left = c;
+    let l = (*r).left;
+    let p = (*r).parent;
+    let c = (*l).right;
+    (*r).left = c;
     if !c.is_null() {
         (*c).parent = r;
     }
-    l.right = r;
-    r.parent = l;
-    l.parent = p;
+    (*l).right = r;
+    (*r).parent = l;
+    (*l).parent = p;
     update(r);
     update(l);
     if !p.is_null() {
@@ -362,6 +365,6 @@ unsafe fn rotate_right<O: OpBase>(r: *mut Node<O>) {
         } else if std::ptr::eq((*p).right, r) {
             (*p).right = l;
         }
-        update(&raw mut *p);
+        update(p);
     }
 }
