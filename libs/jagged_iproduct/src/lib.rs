@@ -1,16 +1,16 @@
 //! 多重 for 文の代わりに、skew な多次元インデックス列を遅延イテレータとして列挙するマクロです。
 //!
-//! [`higher_vec!`](https://docs.rs/higher_vec) の姉妹クレートで、同じクロージャ列の構文を
+//! [`jagged_vec!`](https://docs.rs/jagged_vec) の姉妹クレートで、同じクロージャ列の構文を
 //! 使ってインデックスの直積（の一般化）を生成します。内側の次元の長さが外側のインデックスに
 //! 依存する場合（例：`i + j + k < n`）でも、手書きのネストした for 文を書かずに列挙できます。
 //!
 //! # Examples
 //!
 //! ```
-//! use higher_iproduct::higher_iproduct;
+//! use jagged_iproduct::jagged_iproduct;
 //!
 //! let n = 3;
-//! let v = higher_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
+//! let v = jagged_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
 //! assert_eq!(v, vec![
 //!     [0, 0, 0], [0, 0, 1], [0, 0, 2],
 //!     [0, 1, 0], [0, 1, 1],
@@ -25,7 +25,7 @@
 ///
 /// # 構文
 ///
-/// `higher_iproduct![len0, f1, ..., fk]`
+/// `jagged_iproduct![len0, f1, ..., fk]`
 ///
 /// - `len0`: 最外次元（0 次元目）の長さ
 /// - `f1, ..., fk`: 各次元の長さを決めるクロージャ。`fj` は外側 `j` 個のインデックス
@@ -52,28 +52,28 @@
 /// 1 次元（`0..len0` と同じ）:
 ///
 /// ```
-/// use higher_iproduct::higher_iproduct;
+/// use jagged_iproduct::jagged_iproduct;
 ///
-/// let v = higher_iproduct![3].collect::<Vec<_>>();
+/// let v = jagged_iproduct![3].collect::<Vec<_>>();
 /// assert_eq!(v, vec![[0], [1], [2]]);
 /// ```
 ///
 /// 2 次元（三角形）:
 ///
 /// ```
-/// use higher_iproduct::higher_iproduct;
+/// use jagged_iproduct::jagged_iproduct;
 ///
-/// let v = higher_iproduct![3, |i| i + 1].collect::<Vec<_>>();
+/// let v = jagged_iproduct![3, |i| i + 1].collect::<Vec<_>>();
 /// assert_eq!(v, vec![[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2]]);
 /// ```
 ///
 /// 3 次元（`i + j + k < n` を満たす形の skew なインデックス列。三重 for 文の代わりに使えます）:
 ///
 /// ```
-/// use higher_iproduct::higher_iproduct;
+/// use jagged_iproduct::jagged_iproduct;
 ///
 /// let n = 3;
-/// let v = higher_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
+/// let v = jagged_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
 /// assert_eq!(v, vec![
 ///     [0, 0, 0], [0, 0, 1], [0, 0, 2],
 ///     [0, 1, 0], [0, 1, 1],
@@ -84,9 +84,9 @@
 /// ]);
 /// ```
 #[macro_export]
-macro_rules! higher_iproduct {
+macro_rules! jagged_iproduct {
     ($len0:expr $(, $f:expr)* $(,)?) => {{
-        $crate::__higher_iproduct_body!(
+        $crate::__jagged_iproduct_body!(
             $len0;
             [];
             [__hip0, __hip1, __hip2, __hip3, __hip4, __hip5, __hip6, __hip7];
@@ -97,7 +97,7 @@ macro_rules! higher_iproduct {
 
 #[doc(hidden)]
 #[macro_export]
-macro_rules! __higher_iproduct_body {
+macro_rules! __jagged_iproduct_body {
     ($len:expr; [$($acc:ident),*]; [$($pool:ident),*]; ) => {{
         let __hip_len: usize = $len;
         (0..__hip_len).map(move |__hip_last| [$($acc,)* __hip_last])
@@ -106,7 +106,7 @@ macro_rules! __higher_iproduct_body {
         let __hip_len: usize = $len;
         (0..__hip_len).flat_map(move |$pool_head| {
             let __hip_next_len: usize = ($head)($($acc,)* $pool_head);
-            $crate::__higher_iproduct_body!(
+            $crate::__jagged_iproduct_body!(
                 __hip_next_len;
                 [$($acc,)* $pool_head];
                 [$($pool_tail),*];
@@ -122,26 +122,26 @@ mod tests {
 
     #[test]
     fn test_1d() {
-        let v = higher_iproduct![3].collect::<Vec<_>>();
+        let v = jagged_iproduct![3].collect::<Vec<_>>();
         assert_eq!(v, vec![[0], [1], [2]]);
     }
 
     #[test]
     fn test_1d_empty() {
-        let v = higher_iproduct![0].collect::<Vec<_>>();
+        let v = jagged_iproduct![0].collect::<Vec<_>>();
         assert_eq!(v, Vec::<[usize; 1]>::new());
     }
 
     #[test]
     fn test_2d_triangular() {
-        let v = higher_iproduct![3, |i| i + 1].collect::<Vec<_>>();
+        let v = jagged_iproduct![3, |i| i + 1].collect::<Vec<_>>();
         assert_eq!(v, vec![[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2]]);
     }
 
     #[test]
     fn test_3d_skew() {
         let n = 3;
-        let v = higher_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
+        let v = jagged_iproduct![n, |i| n - i, |i, j| n - i - j].collect::<Vec<_>>();
         assert_eq!(
             v,
             vec![
@@ -161,7 +161,7 @@ mod tests {
 
     #[test]
     fn test_trailing_comma() {
-        let v = higher_iproduct![3, |i| i + 1,].collect::<Vec<_>>();
+        let v = jagged_iproduct![3, |i| i + 1,].collect::<Vec<_>>();
         assert_eq!(v, vec![[0, 0], [1, 0], [1, 1], [2, 0], [2, 1], [2, 2]]);
     }
 
@@ -177,7 +177,7 @@ mod tests {
             }
         }
         let actual =
-            higher_iproduct![pos + 1, |i| pos + 1 - i, |i, j| pos + 1 - i - j].collect::<Vec<_>>();
+            jagged_iproduct![pos + 1, |i| pos + 1 - i, |i, j| pos + 1 - i - j].collect::<Vec<_>>();
         assert_eq!(actual, expected);
     }
 
@@ -188,7 +188,7 @@ mod tests {
         let expected = iproduct!(0..n, 0..m, 0..l)
             .map(|(i, j, k)| [i, j, k])
             .collect::<Vec<_>>();
-        let actual = higher_iproduct![n, |_| m, |_, _| l].collect::<Vec<_>>();
+        let actual = jagged_iproduct![n, |_| m, |_, _| l].collect::<Vec<_>>();
         assert_eq!(actual, expected);
     }
 }
