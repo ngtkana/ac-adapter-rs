@@ -41,9 +41,12 @@ impl WAryTree {
         }
         let mut n = len;
         let mut items = vec![];
-        while n != 1 {
+        loop {
             let q = n.div_ceil(B);
             items.push(vec![0; q]);
+            if q == 1 {
+                break;
+            }
             n = q;
         }
         Self { items, len }
@@ -303,8 +306,8 @@ fn subtree_min(items: &[Vec<u64>], mut j: usize) -> usize {
 fn subtree_max(items: &[Vec<u64>], mut j: usize) -> usize {
     for items in items.iter().rev() {
         assert_ne!(items[j], 0);
-        let lsb = items[j].ilog2() as usize;
-        j = j * B + lsb;
+        let msb = items[j].ilog2() as usize;
+        j = j * B + msb;
     }
     j
 }
