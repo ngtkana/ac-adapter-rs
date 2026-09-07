@@ -142,13 +142,13 @@ impl<C: ConvexOrConcave> VecCht<C> {
         let p = C::negate_if_concave(first);
         let q = C::negate_if_concave(-zeroth);
         let line = Line { p, q };
-        if let Some(&seg) = self.vec.last() {
-            if seg.line.p == p {
-                if seg.line.q <= q {
-                    return;
-                }
-                self.vec.pop().unwrap();
+        if let Some(&seg) = self.vec.last()
+            && seg.line.p == p
+        {
+            if seg.line.q <= q {
+                return;
             }
+            self.vec.pop().unwrap();
         }
 
         while let Some(seg) = self.vec.pop() {

@@ -192,8 +192,8 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..150 {
             let len = rng.gen_range(0..50);
-            let values: Vec<u32> = (0..len).map(|_| rng.gen()).collect();
-            let threshold: u32 = rng.gen();
+            let values: Vec<u32> = (0..len).map(|_| rng.r#gen()).collect();
+            let threshold: u32 = rng.r#gen();
             let pred = |&x: &u32| x < threshold;
 
             // Tag each value with its original index
@@ -229,8 +229,8 @@ mod tests {
         let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..150 {
             let len = rng.gen_range(0..50);
-            let values: Vec<u32> = (0..len).map(|_| rng.gen()).collect();
-            let threshold: u32 = rng.gen();
+            let values: Vec<u32> = (0..len).map(|_| rng.r#gen()).collect();
+            let threshold: u32 = rng.r#gen();
 
             // Map values to their original indices for stability verification
             let indices: Vec<usize> = (0..len).collect();

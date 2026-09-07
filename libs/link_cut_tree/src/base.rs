@@ -234,89 +234,101 @@ struct Node<O: OpBase> {
 }
 
 unsafe fn is_splay_root<O: OpBase>(x: *mut Node<O>) -> bool {
-    let p = (*x).parent;
-    p.is_null() || (!std::ptr::eq((*p).left, x) && !std::ptr::eq((*p).right, x))
+    unsafe {
+        let p = (*x).parent;
+        p.is_null() || (!std::ptr::eq((*p).left, x) && !std::ptr::eq((*p).right, x))
+    }
 }
 
 unsafe fn push<O: OpBase>(x: *mut Node<O>) {
-    if (*x).rev {
-        let l = (*x).left;
-        let r = (*x).right;
-        if !l.is_null() {
-            rev(l);
+    unsafe {
+        if (*x).rev {
+            let l = (*x).left;
+            let r = (*x).right;
+            if !l.is_null() {
+                rev(l);
+            }
+            if !r.is_null() {
+                rev(r);
+            }
+            (*x).rev = false;
         }
-        if !r.is_null() {
-            rev(r);
-        }
-        (*x).rev = false;
     }
 }
 
 unsafe fn update<O: OpBase>(x: *mut Node<O>) {
-    (*x).acc = (*x).value.clone();
-    let l = (*x).left;
-    let r = (*x).right;
-    if !l.is_null() {
-        (*x).acc = O::mul(&(*l).acc, &(*x).acc);
-    }
-    if !r.is_null() {
-        (*x).acc = O::mul(&(*x).acc, &(*r).acc);
+    unsafe {
+        (*x).acc = (*x).value.clone();
+        let l = (*x).left;
+        let r = (*x).right;
+        if !l.is_null() {
+            (*x).acc = O::mul(&(*l).acc, &(*x).acc);
+        }
+        if !r.is_null() {
+            (*x).acc = O::mul(&(*x).acc, &(*r).acc);
+        }
     }
 }
 
 unsafe fn rev<O: OpBase>(x: *mut Node<O>) {
-    std::mem::swap(&mut (*x).left, &mut (*x).right);
-    O::rev(&mut (*x).acc);
-    (*x).rev ^= true;
+    unsafe {
+        std::mem::swap(&mut (*x).left, &mut (*x).right);
+        O::rev(&mut (*x).acc);
+        (*x).rev ^= true;
+    }
 }
 
 unsafe fn expose<O: OpBase>(x: *mut Node<O>) -> *mut Node<O> {
-    let mut last = std::ptr::null_mut();
-    let mut current = x;
-    while !current.is_null() {
-        splay(current);
-        (*current).right = last;
-        update(current);
-        last = current;
-        current = (*current).parent;
+    unsafe {
+        let mut last = std::ptr::null_mut();
+        let mut current = x;
+        while !current.is_null() {
+            splay(current);
+            (*current).right = last;
+            update(current);
+            last = current;
+            current = (*current).parent;
+        }
+        splay(x);
+        last
     }
-    splay(x);
-    last
 }
 
 unsafe fn splay<O: OpBase>(x: *mut Node<O>) {
-    push(x);
-    while !is_splay_root(x) {
-        let p = (*x).parent;
-        if is_splay_root(p) {
-            push(p);
-            push(x);
-            if std::ptr::eq((*p).left, x) {
-                rotate_right(p);
-            } else {
-                rotate_left(p);
-            }
-        } else {
-            let g = (*p).parent;
-            push(g);
-            push(p);
-            push(x);
-            #[allow(clippy::collapsible_else_if)]
-            if std::ptr::eq((*p).left, x) {
-                if std::ptr::eq((*g).left, p) {
-                    rotate_right(g);
+    unsafe {
+        push(x);
+        while !is_splay_root(x) {
+            let p = (*x).parent;
+            if is_splay_root(p) {
+                push(p);
+                push(x);
+                if std::ptr::eq((*p).left, x) {
                     rotate_right(p);
                 } else {
-                    rotate_right(p);
-                    rotate_left(g);
+                    rotate_left(p);
                 }
             } else {
-                if std::ptr::eq((*g).left, p) {
-                    rotate_left(p);
-                    rotate_right(g);
+                let g = (*p).parent;
+                push(g);
+                push(p);
+                push(x);
+                #[allow(clippy::collapsible_else_if)]
+                if std::ptr::eq((*p).left, x) {
+                    if std::ptr::eq((*g).left, p) {
+                        rotate_right(g);
+                        rotate_right(p);
+                    } else {
+                        rotate_right(p);
+                        rotate_left(g);
+                    }
                 } else {
-                    rotate_left(g);
-                    rotate_left(p);
+                    if std::ptr::eq((*g).left, p) {
+                        rotate_left(p);
+                        rotate_right(g);
+                    } else {
+                        rotate_left(g);
+                        rotate_left(p);
+                    }
                 }
             }
         }
@@ -324,47 +336,51 @@ unsafe fn splay<O: OpBase>(x: *mut Node<O>) {
 }
 
 unsafe fn rotate_left<O: OpBase>(l: *mut Node<O>) {
-    let r = (*l).right;
-    let p = (*l).parent;
-    let c = (*r).left;
-    (*l).right = c;
-    if !c.is_null() {
-        (*c).parent = l;
-    }
-    (*r).left = l;
-    (*l).parent = r;
-    (*r).parent = p;
-    update(l);
-    update(r);
-    if !p.is_null() {
-        if std::ptr::eq((*p).left, l) {
-            (*p).left = r;
-        } else if std::ptr::eq((*p).right, l) {
-            (*p).right = r;
+    unsafe {
+        let r = (*l).right;
+        let p = (*l).parent;
+        let c = (*r).left;
+        (*l).right = c;
+        if !c.is_null() {
+            (*c).parent = l;
         }
-        update(p);
+        (*r).left = l;
+        (*l).parent = r;
+        (*r).parent = p;
+        update(l);
+        update(r);
+        if !p.is_null() {
+            if std::ptr::eq((*p).left, l) {
+                (*p).left = r;
+            } else if std::ptr::eq((*p).right, l) {
+                (*p).right = r;
+            }
+            update(p);
+        }
     }
 }
 
 unsafe fn rotate_right<O: OpBase>(r: *mut Node<O>) {
-    let l = (*r).left;
-    let p = (*r).parent;
-    let c = (*l).right;
-    (*r).left = c;
-    if !c.is_null() {
-        (*c).parent = r;
-    }
-    (*l).right = r;
-    (*r).parent = l;
-    (*l).parent = p;
-    update(r);
-    update(l);
-    if !p.is_null() {
-        if std::ptr::eq((*p).left, r) {
-            (*p).left = l;
-        } else if std::ptr::eq((*p).right, r) {
-            (*p).right = l;
+    unsafe {
+        let l = (*r).left;
+        let p = (*r).parent;
+        let c = (*l).right;
+        (*r).left = c;
+        if !c.is_null() {
+            (*c).parent = r;
         }
-        update(p);
+        (*l).right = r;
+        (*r).parent = l;
+        (*l).parent = p;
+        update(r);
+        update(l);
+        if !p.is_null() {
+            if std::ptr::eq((*p).left, r) {
+                (*p).left = l;
+            } else if std::ptr::eq((*p).right, r) {
+                (*p).right = l;
+            }
+            update(p);
+        }
     }
 }
