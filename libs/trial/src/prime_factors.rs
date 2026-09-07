@@ -69,11 +69,7 @@ impl<T: Value> Iterator for PrimeFactorsRle<T> {
 /// assert_eq!(iter.next(), None);
 /// ```
 pub fn prime_factors<T: Value>(n: T) -> PrimeFactors<T> {
-    assert_ne!(
-        n,
-        T::zero(),
-        "Cannot call `prime_factorprime_factors` by `0`."
-    );
+    assert_ne!(n, T::zero(), "Cannot call `prime_factors` by `0`.");
     PrimeFactors { n, p: T::one() }
 }
 
