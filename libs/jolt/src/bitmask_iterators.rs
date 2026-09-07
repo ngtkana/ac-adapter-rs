@@ -1,3 +1,4 @@
+use super::bitmask_operations::i2powm1;
 use super::numeric_traits::Unsigned;
 
 /// Generates all the $k$-subsets of $[0, N[$
@@ -13,10 +14,11 @@ use super::numeric_traits::Unsigned;
 /// ]);
 /// ```
 pub fn bitmask_combinations<T: Unsigned>(n: u32, k: u32) -> BitmaskCombinations<T> {
-    assert!(k < T::bit_length() && k < T::bit_length());
+    assert!(k < T::bit_length() && n <= T::bit_length());
     BitmaskCombinations {
         n,
         bs: (T::ONE << k) - T::ONE,
+        finished: false,
     }
 }
 
@@ -24,22 +26,33 @@ pub fn bitmask_combinations<T: Unsigned>(n: u32, k: u32) -> BitmaskCombinations<
 pub struct BitmaskCombinations<T> {
     n: u32,
     bs: T,
+    finished: bool,
 }
 impl<T: Unsigned> Iterator for BitmaskCombinations<T> {
     type Item = T;
 
     fn next(&mut self) -> Option<Self::Item> {
-        if (T::ONE << self.n) <= self.bs {
+        if self.finished {
             return None;
         }
         let res = Some(self.bs);
-        self.bs = if self.bs == T::ZERO {
-            T::ONE << self.n
+        if self.bs == T::ZERO {
+            self.finished = true;
         } else {
             let x = self.bs & self.bs.wrapping_neg();
-            let y = self.bs + x;
-            (((self.bs & !y) / x) >> 1) | y
-        };
+            if self.bs > T::MAX - x {
+                // `self.bs + x` would overflow `T`: `self.bs` was the last combination.
+                self.finished = true;
+            } else {
+                let y = self.bs + x;
+                let next_bs = (((self.bs & !y) / x) >> 1) | y;
+                if next_bs > i2powm1::<T>(self.n) {
+                    self.finished = true;
+                } else {
+                    self.bs = next_bs;
+                }
+            }
+        }
         res
     }
 }
