@@ -22,19 +22,18 @@
   });
 </script>
 
-</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../higher_vec/index.html">higher_<wbr>vec</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">higher_<wbr>vec</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#構文" title="構文">構文</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate higher_<wbr>vec</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">higher_vec</a></div><h1>Macro <span class="macro">higher_vec</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/higher_vec/lib.rs.html#68-82">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! higher_vec {
-    ($len0:expr; $init:expr) =&gt; { ... };
-    ($len0:expr; $($f:expr),+ $(,)?; $init:expr) =&gt; { ... };
+</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../higher_vec/index.html">higher_<wbr>vec</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">higher_<wbr>vec</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#構文" title="構文">構文</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate higher_<wbr>vec</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">higher_vec</a></div><h1>Macro <span class="macro">higher_vec</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/higher_vec/lib.rs.html#68-79">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! higher_vec {
+    ($init:expr, $len0:expr $(, $f:expr)* $(,)?) =&gt; { ... };
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>skew な多次元 <code>Vec</code> を生成します。</p>
 <h2 id="構文"><a class="doc-anchor" href="#構文">§</a>構文</h2>
-<p><code>higher_vec![len0; f1, f2, ..., fk; init]</code></p>
+<p><code>higher_vec![init, len0, f1, ..., fk]</code></p>
 <ul>
+<li><code>init</code>: 末端要素の初期値（<code>Clone</code>）。1 度だけ評価され、各要素に <code>clone</code> されます</li>
 <li><code>len0</code>: 最外次元（0 次元目）の長さ</li>
 <li><code>f1, ..., fk</code>: 各次元の長さを決めるクロージャ。<code>fj</code> は外側 <code>j</code> 個のインデックス
 <code>(i0, ..., i_{j-1})</code> を引数に取り、<code>j</code> 次元目の長さを <code>usize</code> で返す</li>
-<li><code>init</code>: 末端要素の初期値（<code>Clone</code>）。1 度だけ評価され、各要素に <code>clone</code> されます</li>
 </ul>
-<p>クロージャを省略すると、通常の <code>vec![init; len0]</code> と同じ 1 次元 <code>Vec</code> になります。</p>
+<p>クロージャを省略すると、<code>vec![init; len0]</code> と同じ 1 次元 <code>Vec</code> になります。</p>
 <p>依存関係が型では表現できない可変個・可変引数のクロージャ列を扱うため、
 ネストしたループの組み立てはマクロが担い、各次元の長さ計算・要素の複製は
 通常の Rust の型（クロージャ・<code>Clone</code>）に委ねています。</p>
@@ -43,20 +42,20 @@
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>higher_vec::higher_vec;
 
-<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[<span class="number">3</span>; <span class="number">0</span>];
+<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[<span class="number">0</span>, <span class="number">3</span>];
 <span class="macro">assert_eq!</span>(v, <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]);</code></pre></div>
 <p>2 次元（三角形）:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>higher_vec::higher_vec;
 
-<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[<span class="number">3</span>; |i| i + <span class="number">1</span>; <span class="number">0</span>];
+<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[<span class="number">0</span>, <span class="number">3</span>, |i| i + <span class="number">1</span>];
 <span class="macro">assert_eq!</span>(v, <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>]]);</code></pre></div>
 <p>3 次元（<code>i + j + k &lt; n</code> を満たす形の skew な <code>Vec</code>）:</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>higher_vec::higher_vec;
 
 <span class="kw">let </span>n = <span class="number">3</span>;
-<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[n; |i| n - i, |i, j| n - i - j; <span class="number">0</span>];
+<span class="kw">let </span>v = <span class="macro">higher_vec!</span>[<span class="number">0</span>, n, |i| n - i, |i, j| n - i - j];
 <span class="macro">assert_eq!</span>(v, <span class="macro">vec!</span>[
     <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">0</span>]],
     <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">0</span>], <span class="macro">vec!</span>[<span class="number">0</span>]],
