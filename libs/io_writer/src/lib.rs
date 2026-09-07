@@ -32,9 +32,8 @@ extern "C" fn flush_on_exit() {
 }
 
 fn flush_buffered_stdout() {
-    if let Ok(mut buf) = BUFFER.lock()
-        && !buf.is_empty()
-    {
+    let mut buf = BUFFER.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    if !buf.is_empty() {
         let stdout = io::stdout();
         let mut handle = stdout.lock();
         let _ = handle.write_all(&buf);
@@ -63,9 +62,14 @@ pub fn _print(args: fmt::Arguments) {
         init_dprinter();
     }
 
-    if let Ok(mut buf) = BUFFER.lock() {
-        let _ = buf.write_fmt(args);
-    }
+    // Format into a local buffer first, without holding the shared lock: `args`
+    // may contain a user-provided `Display`/`Debug` impl that panics, and
+    // panicking while `BUFFER` is locked would deadlock the panic hook's own
+    // attempt to lock `BUFFER` in order to flush already-buffered output.
+    let mut local = Vec::new();
+    let _ = local.write_fmt(args);
+    let mut buf = BUFFER.lock().unwrap_or_else(std::sync::PoisonError::into_inner);
+    buf.extend_from_slice(&local);
 }
 
 /// Flush を遅延した版の [`print`] です。
