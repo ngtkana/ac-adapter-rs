@@ -1,0 +1,1 @@
+searchState.loadedDescShard("jagged_iproduct", 0, "多重 for 文の代わりに、skew …\nskew な多次元インデックス列を、多重 for …")
