@@ -19,8 +19,7 @@ pub fn for_each_permutation<T: Ord, F: FnMut(&[T])>(a: &mut [T], mut f: F) {
     } {}
 }
 /// Returns all permutations of `a` in lexicographic order.
-pub fn permutations<T: Ord + Clone>(a: Vec<T>) -> Vec<Vec<T>> {
-    let mut a = a;
+pub fn permutations<T: Ord + Clone>(mut a: Vec<T>) -> Vec<Vec<T>> {
     let mut result = Vec::new();
     for_each_permutation(&mut a, |a| result.push(a.to_vec()));
     result
@@ -54,8 +53,7 @@ pub fn for_each_shuffle<T: Ord, F: FnMut(&[T])>(a: &mut [T], k: usize, mut f: F)
     } {}
 }
 /// Returns all $(K, N - K)$-shuffles of `a` in lexicographic order.
-pub fn shuffles<T: Ord + Clone>(a: Vec<T>, k: usize) -> Vec<Vec<T>> {
-    let mut a = a;
+pub fn shuffles<T: Ord + Clone>(mut a: Vec<T>, k: usize) -> Vec<Vec<T>> {
     let mut result = Vec::new();
     for_each_shuffle(&mut a, k, |a| result.push(a.to_vec()));
     result
