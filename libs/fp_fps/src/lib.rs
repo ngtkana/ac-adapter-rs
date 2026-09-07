@@ -82,7 +82,7 @@ pub fn poly_mul<const P: u64>(mut a: Vec<Fp<P>>, mut b: Vec<Fp<P>>) -> Vec<Fp<P>
         return a;
     }
     let len = a.len() + b.len() - 1;
-    let fft_len = len.next_power_of_two() * 2;
+    let fft_len = len.next_power_of_two();
     a.resize(fft_len, fp_new(0));
     b.resize(fft_len, fp_new(0));
     fft(&mut a);
