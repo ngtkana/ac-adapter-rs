@@ -1,5 +1,5 @@
 [package]
-name = "higher_vec"
+name = "jagged_iproduct"
 version = "0.1.0"
 authors = ["Kana <ngtkana@gmail.com>"]
 edition.workspace = true
@@ -9,3 +9,4 @@ edition.workspace = true
 [dependencies]
 
 [dev-dependencies]
+itertools = { workspace = true }

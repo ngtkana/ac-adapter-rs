@@ -1,5 +1,5 @@
 [package]
-name = "higher_iproduct"
+name = "jagged_iterator"
 version = "0.1.0"
 authors = ["Kana <ngtkana@gmail.com>"]
 edition.workspace = true
