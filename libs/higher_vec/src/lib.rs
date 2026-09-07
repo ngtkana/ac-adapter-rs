@@ -6,7 +6,7 @@
 //! use higher_vec::higher_vec;
 //!
 //! let n = 3;
-//! let v = higher_vec![n; |i| n - i, |i, j| n - i - j; 0];
+//! let v = higher_vec![0, n, |i| n - i, |i, j| n - i - j];
 //! assert_eq!(v, vec![
 //!     vec![vec![0, 0, 0], vec![0, 0], vec![0]],
 //!     vec![vec![0, 0], vec![0]],
@@ -18,14 +18,14 @@
 ///
 /// # 構文
 ///
-/// `higher_vec![len0; f1, f2, ..., fk; init]`
+/// `higher_vec![init, len0, f1, ..., fk]`
 ///
+/// - `init`: 末端要素の初期値（`Clone`）。1 度だけ評価され、各要素に `clone` されます
 /// - `len0`: 最外次元（0 次元目）の長さ
 /// - `f1, ..., fk`: 各次元の長さを決めるクロージャ。`fj` は外側 `j` 個のインデックス
 ///   `(i0, ..., i_{j-1})` を引数に取り、`j` 次元目の長さを `usize` で返す
-/// - `init`: 末端要素の初期値（`Clone`）。1 度だけ評価され、各要素に `clone` されます
 ///
-/// クロージャを省略すると、通常の `vec![init; len0]` と同じ 1 次元 `Vec` になります。
+/// クロージャを省略すると、`vec![init; len0]` と同じ 1 次元 `Vec` になります。
 ///
 /// 依存関係が型では表現できない可変個・可変引数のクロージャ列を扱うため、
 /// ネストしたループの組み立てはマクロが担い、各次元の長さ計算・要素の複製は
@@ -38,7 +38,7 @@
 /// ```
 /// use higher_vec::higher_vec;
 ///
-/// let v = higher_vec![3; 0];
+/// let v = higher_vec![0, 3];
 /// assert_eq!(v, vec![0, 0, 0]);
 /// ```
 ///
@@ -47,7 +47,7 @@
 /// ```
 /// use higher_vec::higher_vec;
 ///
-/// let v = higher_vec![3; |i| i + 1; 0];
+/// let v = higher_vec![0, 3, |i| i + 1];
 /// assert_eq!(v, vec![vec![0], vec![0, 0], vec![0, 0, 0]]);
 /// ```
 ///
@@ -57,7 +57,7 @@
 /// use higher_vec::higher_vec;
 ///
 /// let n = 3;
-/// let v = higher_vec![n; |i| n - i, |i, j| n - i - j; 0];
+/// let v = higher_vec![0, n, |i| n - i, |i, j| n - i - j];
 /// assert_eq!(v, vec![
 ///     vec![vec![0, 0, 0], vec![0, 0], vec![0]],
 ///     vec![vec![0, 0], vec![0]],
@@ -66,17 +66,14 @@
 /// ```
 #[macro_export]
 macro_rules! higher_vec {
-    ($len0:expr; $init:expr) => {
-        ::std::vec![$init; $len0]
-    };
-    ($len0:expr; $($f:expr),+ $(,)?; $init:expr) => {{
+    ($init:expr, $len0:expr $(, $f:expr)* $(,)?) => {{
         let __higher_vec_init = $init;
         $crate::__higher_vec_body!(
             &__higher_vec_init;
             $len0;
             [];
             [__hv0, __hv1, __hv2, __hv3, __hv4, __hv5, __hv6, __hv7];
-            $($f),+
+            $($f),*
         )
     }};
 }
@@ -111,26 +108,26 @@ mod tests {
 
     #[test]
     fn test_1d() {
-        let v = higher_vec![3; 0];
+        let v = higher_vec![0, 3];
         assert_eq!(v, vec![0, 0, 0]);
     }
 
     #[test]
     fn test_1d_empty() {
-        let v: Vec<i32> = higher_vec![0; 0];
+        let v: Vec<i32> = higher_vec![0, 0];
         assert_eq!(v, Vec::<i32>::new());
     }
 
     #[test]
     fn test_2d_triangular() {
-        let v = higher_vec![3; |i| i + 1; 0];
+        let v = higher_vec![0, 3, |i| i + 1];
         assert_eq!(v, vec![vec![0], vec![0, 0], vec![0, 0, 0]]);
     }
 
     #[test]
     fn test_3d_skew() {
         let n = 3;
-        let v = higher_vec![n; |i| n - i, |i, j| n - i - j; 0];
+        let v = higher_vec![0, n, |i| n - i, |i, j| n - i - j];
         assert_eq!(v, vec![
             vec![vec![0, 0, 0], vec![0, 0], vec![0]],
             vec![vec![0, 0], vec![0]],
@@ -146,14 +143,20 @@ mod tests {
             calls.set(calls.get() + 1);
             0
         };
-        let v = higher_vec![3; |i| i + 1; make()];
+        let v = higher_vec![make(), 3, |i| i + 1];
         assert_eq!(calls.get(), 1);
         assert_eq!(v, vec![vec![0], vec![0, 0], vec![0, 0, 0]]);
     }
 
     #[test]
     fn test_non_copy_init() {
-        let v = higher_vec![2; |i| i + 1; String::from("x")];
+        let v = higher_vec![String::from("x"), 2, |i| i + 1];
         assert_eq!(v, vec![vec!["x".to_string()], vec!["x".into(), "x".into()]]);
+    }
+
+    #[test]
+    fn test_trailing_comma() {
+        let v = higher_vec![0, 3, |i| i + 1,];
+        assert_eq!(v, vec![vec![0], vec![0, 0], vec![0, 0, 0]]);
     }
 }
