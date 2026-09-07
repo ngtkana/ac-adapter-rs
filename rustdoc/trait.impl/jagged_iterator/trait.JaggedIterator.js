@@ -1,5 +1,5 @@
 (function() {
-    var implementors = Object.fromEntries([["higher_iterator",[]]]);
+    var implementors = Object.fromEntries([["jagged_iterator",[]]]);
     if (window.register_implementors) {
         window.register_implementors(implementors);
     } else {

@@ -1,0 +1,1 @@
+searchState.loadedDescShard("jagged_vec", 0, "インデックス依存の長さを持つ、skew …\nskew な多次元 <code>Vec</code> を生成します。")

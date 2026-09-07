@@ -1,1 +1,0 @@
-searchState.loadedDescShard("higher_iterator", 0, "…\n多次元コンテナの各要素を <code>([usize; D], Item)</code> …\n列挙される要素の型。\n各要素を <code>([usize; D], Item)</code> …")

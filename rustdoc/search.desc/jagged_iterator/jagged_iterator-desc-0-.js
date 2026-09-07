@@ -1,0 +1,1 @@
+searchState.loadedDescShard("jagged_iterator", 0, "…\n列挙される要素の型。\n多次元コンテナの各要素を <code>([usize; D], Item)</code> …\n各要素を <code>([usize; D], Item)</code> …")
