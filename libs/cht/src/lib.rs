@@ -111,14 +111,18 @@ impl<C: ConvexOrConcave> VecCht<C> {
 
     pub fn eval(&mut self, x: i64) -> i64 {
         assert!(!self.vec.is_empty(), "cannot eval an empty cht");
-        while self
-            .vec
-            .get(self.current)
-            .is_some_and(|last| Min(x) <= last.min)
+        if self.current >= self.vec.len() {
+            self.current = self.vec.len() - 1;
+        }
+        while self.current > 0
+            && self
+                .vec
+                .get(self.current)
+                .is_some_and(|last| Min(x) <= last.min)
         {
             self.current -= 1;
         }
-        while self.vec[self.current].max <= Max(x) {
+        while self.current + 1 < self.vec.len() && self.vec[self.current].max <= Max(x) {
             self.current += 1;
         }
         C::negate_if_concave(self.vec[self.current].line.eval(x)) + self.coeff_at_two * x * x

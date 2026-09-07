@@ -54,3 +54,14 @@ impl<T, F: FnOnce() -> T> Deref for LazyLock<T, F> {
         LazyLock::force(self)
     }
 }
+
+impl<T, F> Drop for LazyLock<T, F> {
+    fn drop(&mut self) {
+        let data = self.data.get_mut();
+        if self.once.is_completed() {
+            unsafe { ManuallyDrop::drop(&mut data.value) };
+        } else {
+            unsafe { ManuallyDrop::drop(&mut data.f) };
+        }
+    }
+}

@@ -11,7 +11,7 @@ impl<V: Debug> Debug for TrieMap<V> {
     fn fmt(&self, w: &mut Formatter<'_>) -> fmt::Result {
         let mut f = w.debug_map();
         self.for_each_kv(|k, v| {
-            f.key(&k.to_vec()).value(v);
+            f.key(&k).value(v);
         });
         f.finish()
     }
@@ -96,12 +96,17 @@ impl<V> TrieMap<V> {
     pub fn remove(&mut self, key: impl IntoIterator<Item = usize>) -> Option<V> {
         let mut key = key.into_iter();
         let me = self.0.as_deref_mut()?;
-        match key.next() {
+        let removed = match key.next() {
             Some(next) => me.child[next].remove(key),
-            // TODO:
-            // 不要になったノードを削除したいです。しかし、サイズを管理しておかないと実現できません。
             None => me.value.take(),
+        };
+        if removed.is_some() {
+            let me = self.0.as_deref().unwrap();
+            if me.value.is_none() && me.child.iter().all(|child| child.0.is_none()) {
+                self.0 = None;
+            }
         }
+        removed
     }
 
     /// Returns a reference to the value corresponding to the key.

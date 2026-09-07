@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{div_rem, BitVec, Iter};
+use crate::{div_rem, BitVec, Iter, B};
 
 /// [`BitVec`] の immutable な部分列。[`BitVec::range`] で構築できます。
 #[derive(Clone, Copy)]
@@ -47,20 +47,20 @@ impl<'a> Range<'a> {
         let (q1, r1) = div_rem(self.end);
         if q0 == q1 {
             let masked = self.items[q0] & ((1 << r1) - (1 << r0));
-            return checked_lsb_position(masked);
+            return checked_lsb_position(masked).map(|lsb| q0 * B + lsb);
         }
-        let masked = self.items[q0] & (u64::MAX - (1 << r0));
+        let masked = self.items[q0] & (u64::MAX << r0);
         if let Some(lsb) = checked_lsb_position(masked) {
-            return Some(lsb);
+            return Some(q0 * B + lsb);
         }
-        for &value in &self.items[q0 + 1..q1] {
+        for (i, &value) in self.items[q0 + 1..q1].iter().enumerate() {
             if let Some(lsb) = checked_lsb_position(value) {
-                return Some(lsb);
+                return Some((q0 + 1 + i) * B + lsb);
             }
         }
         if r1 != 0 {
             let masked = self.items[q1] & ((1 << r1) - 1);
-            return checked_lsb_position(masked);
+            return checked_lsb_position(masked).map(|lsb| q1 * B + lsb);
         }
         None
     }

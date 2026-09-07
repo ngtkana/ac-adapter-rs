@@ -11,7 +11,9 @@ pub struct LogUniform(pub Range<usize>);
 impl Distribution<usize> for LogUniform {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
         let Range { start, end } = self.0;
-        assert!(start <= end);
+        // start must be positive and the range non-empty: ln(0) is -inf, which
+        // makes `gen_range` panic with an unhelpful "low non-finite" message.
+        assert!(0 < start && start < end);
         let ln = rng.gen_range((start as f64).ln()..(end as f64).ln());
         (ln.exp().floor() as usize).max(start).min(end - 1)
     }
@@ -113,7 +115,7 @@ pub struct SimpleGraphEdges(pub usize, pub usize);
 impl Distribution<Vec<(usize, usize)>> for SimpleGraphEdges {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<(usize, usize)> {
         let &Self(n, m) = self;
-        assert!(m <= n * (n - 1) / 2);
+        assert!(m <= n.saturating_sub(1) * n / 2);
         let mut set = HashSet::new();
         DistinctTwo(0..n)
             .sample_iter(rng)
@@ -133,7 +135,9 @@ pub struct SimpleDigraphEdges(pub usize, pub usize);
 impl Distribution<Vec<(usize, usize)>> for SimpleDigraphEdges {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<(usize, usize)> {
         let &Self(n, m) = self;
-        assert!(m <= n * (n - 1) / 2);
+        // Directed edges are ordered pairs, so the capacity is n * (n - 1),
+        // not n * (n - 1) / 2 (which undercounts by half and rejects valid m).
+        assert!(m <= n.saturating_sub(1) * n);
         let mut set = HashSet::new();
         DistinctTwo(0..n)
             .sample_iter(rng)

@@ -58,7 +58,7 @@ pub fn convex_hull(a: &[[i64; 2]]) -> Vec<[i64; 2]> {
             }
             hull.push(p);
         }
-        if hull.first().unwrap() == hull.first().unwrap() {
+        if hull.len() > 1 && hull.first() == hull.last() {
             hull.pop();
         }
         hull
@@ -105,7 +105,8 @@ pub fn caliper(a: &[[i64; 2]]) -> (i64, [[i64; 2]; 2]) {
 
 /// 凸であれば true を返します。
 pub fn is_convex(a: &[[i64; 2]]) -> bool {
-    a.len() <= 2 || (0..a.len() - 2).all(|i| ccw(a[i], a[i + 1], a[i + 2]) < 0)
+    let n = a.len();
+    n <= 2 || (0..n).all(|i| ccw(a[i], a[(i + 1) % n], a[(i + 2) % n]) < 0)
 }
 
 #[cfg(test)]

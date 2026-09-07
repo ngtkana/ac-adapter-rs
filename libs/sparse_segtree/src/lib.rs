@@ -101,6 +101,10 @@ impl<O: Op> SparseSegtree<O> {
     pub fn visit_items(&self, range: impl RangeBounds<usize>, mut f: impl FnMut(usize, &O::Value)) {
         let range = open(range, self.root.as_ref().map_or(0..0, |n| n.start..n.end));
         if let Some(root) = &self.root {
+            assert!(
+                root.start <= range.start && range.start <= range.end && range.end <= root.end,
+                "Range out of bounds for segment tree"
+            );
             root.visit_items(range, &mut f);
         }
     }
@@ -113,6 +117,10 @@ impl<O: Op> SparseSegtree<O> {
     ) {
         let range = open(range, self.root.as_ref().map_or(0..0, |n| n.start..n.end));
         if let Some(root) = &self.root {
+            assert!(
+                root.start <= range.start && range.start <= range.end && range.end <= root.end,
+                "Range out of bounds for segment tree"
+            );
             root.visit_ranges(range, &mut f);
         }
     }
@@ -351,7 +359,7 @@ mod tests {
 
     #[test]
     fn test() {
-        let mut rng = StdRng::from_entropy();
+        let mut rng = StdRng::seed_from_u64(42);
         for _ in 0..200 {
             let n = rng.gen_range(1..=30);
             let mut seg = SparseSegtree::<O>::from_range(0..n);
