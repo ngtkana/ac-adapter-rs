@@ -178,7 +178,7 @@ fn build_hld(root: usize, g: &mut [Vec<usize>], parent: Vec<usize>) -> Hld {
     let mut index = vec![usize::MAX; n];
     let mut head = vec![usize::MAX; n];
     head[root] = root;
-    dfs_calculate(root, g, &mut head, &mut index, &mut (0..));
+    dfs_calculate(root, g, &mut head, &mut index);
     Hld {
         parent,
         index,
@@ -186,32 +186,40 @@ fn build_hld(root: usize, g: &mut [Vec<usize>], parent: Vec<usize>) -> Hld {
     }
 }
 
-fn dfs_calculate(
-    i: usize,
-    g: &[Vec<usize>],
-    head: &mut [usize],
-    index: &mut [usize],
-    current: &mut std::ops::RangeFrom<usize>,
-) {
-    index[i] = current.next().unwrap();
-    for &j in &g[i] {
-        head[j] = if j == g[i][0] { head[i] } else { j };
-        dfs_calculate(j, g, head, index, current);
+// Iterative (stack-based) preorder, to avoid stack overflow on deep (e.g. path-shaped) trees.
+fn dfs_calculate(root: usize, g: &[Vec<usize>], head: &mut [usize], index: &mut [usize]) {
+    let mut stack = vec![root];
+    let mut current = 0;
+    while let Some(i) = stack.pop() {
+        index[i] = current;
+        current += 1;
+        for (e, &j) in g[i].iter().enumerate().rev() {
+            head[j] = if e == 0 { head[i] } else { j };
+            stack.push(j);
+        }
     }
 }
 
-fn dfs_heavy_first(i: usize, g: &mut [Vec<usize>]) -> usize {
-    let mut max = 0;
-    let mut size = 1;
-    for e in 0..g[i].len() {
-        let csize = dfs_heavy_first(g[i][e], g);
-        if max < csize {
-            max = csize;
-            g[i].swap(0, e);
-        }
-        size += csize;
+// Iterative (stack-based) postorder, to avoid stack overflow on deep (e.g. path-shaped) trees.
+fn dfs_heavy_first(root: usize, g: &mut [Vec<usize>]) {
+    let mut order = Vec::new();
+    let mut stack = vec![root];
+    while let Some(i) = stack.pop() {
+        order.push(i);
+        stack.extend(g[i].iter().copied());
     }
-    size
+    let mut size = vec![1; g.len()];
+    for &i in order.iter().rev() {
+        let mut max = 0;
+        for e in 0..g[i].len() {
+            let csize = size[g[i][e]];
+            if max < csize {
+                max = csize;
+                g[i].swap(0, e);
+            }
+        }
+        size[i] = 1 + g[i].iter().map(|&j| size[j]).sum::<usize>();
+    }
 }
 
 #[cfg(test)]
