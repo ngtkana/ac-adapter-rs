@@ -220,15 +220,15 @@ impl<O: Op> Node<O> {
             f(self.start, &self.value);
         } else {
             let mid = usize::midpoint(self.start, self.end);
-            if range.start < mid {
-                if let Some(left) = &self.left {
-                    left.visit_items(open(range.start..range.end, self.start..mid), f);
-                }
+            if range.start < mid
+                && let Some(left) = &self.left
+            {
+                left.visit_items(open(range.start..range.end, self.start..mid), f);
             }
-            if range.end > mid {
-                if let Some(right) = &self.right {
-                    right.visit_items(open(range.start..range.end, mid..self.end), f);
-                }
+            if range.end > mid
+                && let Some(right) = &self.right
+            {
+                right.visit_items(open(range.start..range.end, mid..self.end), f);
             }
         }
     }

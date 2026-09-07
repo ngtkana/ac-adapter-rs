@@ -477,7 +477,7 @@ impl SpanInNode<'_> {
     }
 
     fn quantile(&self, k: usize, target: &Range<usize>) -> Result<usize, usize> {
-        let ans = if is_disjoint_with(&self.value, target) {
+        if is_disjoint_with(&self.value, target) {
             Err(0)
         } else if is_subrange_of(&self.value, target) && self.index.len() <= k {
             Err(self.index.len())
@@ -489,8 +489,7 @@ impl SpanInNode<'_> {
                     .quantile(k - len, target)
                     .map_err(|e| e + len)
             })
-        };
-        ans
+        }
     }
 }
 

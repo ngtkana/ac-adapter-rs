@@ -184,13 +184,13 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
             self.lines.last().is_none_or(|prv| C::ok(*prv, Line(line))),
             "傾きの単調性に違反しています。"
         );
-        if let Some(&Line(prv)) = self.lines.last() {
-            if prv[0] == line[0] {
-                if C::strictly_better(line[1], prv[1]) {
-                    self.lines.pop();
-                } else {
-                    return;
-                }
+        if let Some(&Line(prv)) = self.lines.last()
+            && prv[0] == line[0]
+        {
+            if C::strictly_better(line[1], prv[1]) {
+                self.lines.pop();
+            } else {
+                return;
             }
         }
         self.lines.push(Line(line));
