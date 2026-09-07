@@ -190,7 +190,7 @@ impl LowLink {
             stack.push([x, y]);
             if self.ord[x] < self.ord[y] {
                 self.__biconnected_components_dfs(y, stack, cmp);
-                if self.parent[x] == x || self.ord[x] <= self.low[y] {
+                if self.ord[x] <= self.low[y] {
                     let mut c = Vec::new();
                     while let Some([u, v]) = stack.pop() {
                         c.push([u, v]);
