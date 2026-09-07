@@ -230,7 +230,7 @@ impl<O: Op> UnionFind<O> {
 
     pub fn value_mut(&mut self, x: usize) -> &mut O::Value {
         assert!(x < self.parent_or_size.len());
-        let x = self.find(x);
+        let x = self.find_mut(x);
         &mut self.values[x]
     }
 
@@ -276,8 +276,9 @@ where
             .entries(
                 groups
                     .into_iter()
-                    .filter(|group| !group.is_empty())
-                    .map(|list| (&self.values[self.find(*list.first().unwrap())], list)),
+                    .enumerate()
+                    .filter(|(_, group)| !group.is_empty())
+                    .map(|(root, list)| (&self.values[root], list)),
             )
             .finish()
     }
