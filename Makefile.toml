@@ -46,7 +46,12 @@ description = "Install the `libbundle` binary to ~/.cargo/bin (usable from any d
 script = '''
 cargo install --path bundler --locked --force
 echo ""
-echo "Add this to your shell rc (~/.zshrc or ~/.bashrc) if not already present:"
+case "$SHELL" in
+    */zsh) RC="~/.zshrc" ;;
+    */bash) RC="~/.bashrc" ;;
+    *) RC="your shell's rc file" ;;
+esac
+echo "Add this to $RC (detected from \$SHELL=$SHELL) if not already present:"
 echo ""
 echo "    export AC_ADAPTER_RS_ROOT=\"$(pwd)\""
 echo ""
