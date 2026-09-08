@@ -33,6 +33,12 @@ export AC_ADAPTER_RS_ROOT="/path/to/ac-adapter-rs"  # add to your shell rc; use 
 libbundle fp_fps dinic > bundled.rs                    # multiple crates, deduped
 ```
 
+If some crates are already bundled into an existing file (recognizable by the `// <name> {{{` fold markers this tool emits), pass `--skip-from` to avoid re-declaring them:
+
+```sh
+libbundle fp_fps --skip-from src/main.rs > new_snippet.rs
+```
+
 Shell completion for crate names (`bundler/completions/`):
 
 ```sh
