@@ -1,0 +1,13 @@
+#compdef libbundle
+
+_libbundle() {
+    local -a crates
+    crates=(${(f)"$(libbundle --list-crates 2>/dev/null)"})
+
+    _arguments \
+        '--keep-docs[Keep doc comments in the bundled output]' \
+        '--keep-tests[Keep #[cfg(test)] modules in the bundled output]' \
+        '*:crate name:(($crates))'
+}
+
+_libbundle "$@"

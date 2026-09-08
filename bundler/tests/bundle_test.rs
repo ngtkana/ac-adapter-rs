@@ -119,6 +119,19 @@ fn multiple_crates_share_deduplicated_dependencies() {
 }
 
 #[test]
+fn list_crates_includes_known_crate_names() {
+    let output = libbundle(&["--list-crates"]);
+    let names: Vec<&str> = output.lines().collect();
+    assert!(names.contains(&"jagged_vec"));
+    assert!(names.contains(&"fp"));
+    assert_eq!(names, {
+        let mut sorted = names.clone();
+        sorted.sort_unstable();
+        sorted
+    });
+}
+
+#[test]
 fn unknown_crate_name_is_reported() {
     let bin = env!("CARGO_BIN_EXE_libbundle");
     let output = Command::new(bin)
