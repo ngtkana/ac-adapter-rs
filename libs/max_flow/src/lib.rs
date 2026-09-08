@@ -1,25 +1,19 @@
-//! フローネットワークの最大流を求める
+//! フローネットワークの最大流を、highest-label 方式の push-relabel 法で求める。
 //!
-//! # Usage
+//! 各頂点に「高さ」ラベルを持たせ、余剰流量（excess）を持つ頂点のうち最も高いものから
+//! 優先的に隣接辺へ push する。どの隣接辺にも push できなくなった頂点は、まだ残余容量の
+//! ある隣接辺の中で最小の高さ + 1 までラベルを引き上げる（relabel）。この highest-label
+//! 戦略により、素朴な FIFO 版よりよい $O(V^2 \sqrt E)$ の計算量を達成する。
 //!
-//! ## 構築
+//! # 仕様
 //!
-//! * [`MaxFlow::new`]
-//! * [`MaxFlow::add_edge`]
+//! - [`MaxFlow::new`][]: 空のネットワークを構築
+//! - [`MaxFlow::add_edge`][]: 容量 `cap` の有向辺 `src -> tar` を追加（逆辺も内部で管理）
+//! - [`MaxFlow::solve`][]: 頂点数 `n`、始点 `source`、終点 `sink` を指定し、最大流量と
+//!   最小カット（各頂点が始点側に残るか）を返す
+//! - [`MaxFlow::original_edges`][]: `add_edge` で追加した辺（逆辺を除く）を現在の流量込みで取得
 //!
-//!
-//! ## 実行
-//!
-//! * [`MaxFlow::solve`]
-//!
-//! source, sink は複数指定できます。
-//!
-//!
-//! ## 総流量以外の情報の取得
-//!
-//! [`MaxFlow::edges`] を public にしてあるのでそれでなんとか
-//!
-//! # Examples
+//! # 例
 //!
 //! ```
 //! use max_flow::MaxFlow;
@@ -34,20 +28,40 @@
 //!
 //! let (flow, cut) = inst.solve(4, 0, 3);
 //! assert_eq!(flow, 30);
-//! assert_eq!(cut, [true, false, false, false]);
+//! assert_eq!(cut, [true, false, false, false]); // 頂点 0 のみ始点側に残る
 //! ```
+//!
+//! # 計算量
+//!
+//! - [`MaxFlow::add_edge`][]: $O(1)$
+//! - [`MaxFlow::solve`][]: $O(V^2 \sqrt E)$（$V$: 頂点数、$E$: 辺数）
 
 use std::collections::{BinaryHeap, VecDeque};
 
-/// フローネットワーク
+/// push-relabel 法で最大流を解くフローネットワーク。
 #[derive(Default, Debug)]
 pub struct MaxFlow {
     pub edges: Vec<Edge>,
 }
 impl MaxFlow {
+    /// 空のネットワークを構築する。
     pub fn new() -> Self {
         Self::default()
     }
+
+    /// 容量 `cap` の有向辺 `src -> tar` を追加する。
+    ///
+    /// 内部では容量 `cap`・初期流量 `cap`（残余容量 0）の逆辺も同時に追加し、
+    /// [`solve`](Self::solve) はこの逆辺を通じて流量を押し戻す。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use max_flow::MaxFlow;
+    /// let mut g = MaxFlow::new();
+    /// g.add_edge(0, 1, 5);
+    /// assert_eq!(g.original_edges()[0].cap, 5);
+    /// ```
     pub fn add_edge(&mut self, src: usize, tar: usize, cap: u64) {
         self.edges.push(Edge {
             src,
@@ -62,9 +76,37 @@ impl MaxFlow {
             flow: cap,
         });
     }
+    /// `add_edge` で追加した辺（逆辺を除く）を、現在の流量込みで返す。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use max_flow::MaxFlow;
+    /// let mut g = MaxFlow::new();
+    /// g.add_edge(0, 1, 20);
+    /// g.solve(2, 0, 1);
+    /// assert_eq!(g.original_edges()[0].flow, 20);
+    /// ```
     pub fn original_edges(&self) -> Vec<Edge> {
         self.edges.iter().step_by(2).copied().collect()
     }
+
+    /// 頂点数 `n` のネットワークで `source` から `sink` への最大流を求め、
+    /// （流量, 最小カット）を返す。
+    ///
+    /// 最小カットは長さ `n` の真偽値列で、`i` 番目が `true` なら頂点 `i` は
+    /// 最大流確定後も `source` 側に残る（$s$-$t$ カットの $s$ 側）。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use max_flow::MaxFlow;
+    /// let mut g = MaxFlow::new();
+    /// g.add_edge(0, 1, 3);
+    /// let (flow, cut) = g.solve(2, 0, 1);
+    /// assert_eq!(flow, 3);
+    /// assert_eq!(cut, [true, false]);
+    /// ```
     pub fn solve(&mut self, n: usize, source: usize, sink: usize) -> (u64, Vec<bool>) {
         let Self { edges } = self;
 
@@ -139,7 +181,7 @@ impl MaxFlow {
     }
 }
 
-/// フロー辺
+/// [`MaxFlow`] が管理する有向辺（残余グラフ上の辺、逆辺を含む）。
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Edge {
     pub src: usize,

@@ -40,15 +40,15 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [x] `low_link`
 - [x] `manacher`
 - [x] `matrix`
-- [ ] `max_flow`
-- [ ] `mincost_flow`
-- [ ] `monotone_minima`
-- [ ] `next_permutation`
-- [ ] `numeric_search`
-- [ ] `parse_int`
-- [ ] `partially_persistent_union_find`
-- [ ] `partition`
-- [ ] `rand_range`
+- [x] `max_flow`
+- [x] `mincost_flow`
+- [x] `monotone_minima`
+- [x] `next_permutation`
+- [x] `numeric_search`
+- [x] `parse_int`
+- [x] `partially_persistent_union_find`
+- [x] `partition`
+- [x] `rand_range`
 - [ ] `randtools`
 - [ ] `rational`
 - [ ] `segbeats`

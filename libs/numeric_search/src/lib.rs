@@ -1,11 +1,29 @@
-//! Run classic binary or exponential search on integer or floating point numbers.
+//! 単調述語 $f$ に対する二分探索・指数探索。整数・浮動小数点数に対応。
 //!
-//! Both classic binary seach and exponential search has their streangth and weakness.
+//! 探索範囲 $[L, R]$（$\neg f(L) \land f(R)$）が既知なら二分探索で $O(\log(R - L))$ で境界を求める。
+//! 範囲が未知の場合は指数探索で $1, 2, 4, \ldots$ と倍々に範囲を広げてから二分探索に切り替えることで、
+//! 求める境界までの距離に応じた出力依存の計算量で境界を求める。
 //!
-//! - The classic binary search is (about $\times 2$)) faster in worst case.
-//! - The classic binary search never fails, even if the partition function is not monotone.
-//! - We do not have to know the limit values to use the exponential search.
-//! - The running time of the exponential search is output-sensitively fast.
+//! # 仕様
+//!
+//! $f$ は単調（ある値を境に `false` から `true` に変わる）であることが前提。
+//!
+//! - [`binary_search_unsigned`][], [`binary_search_signed`][]: 範囲 $[L, R]$（$\neg f(L) \land f(R)$）が既知の場合に、$\neg f(x-1) \land f(x)$ を満たす $x$ を返す
+//! - [`exp_search_unsigned`][], [`exp_search_signed`][]: 範囲が未知の場合。$f$ が恒真でなければ $\neg f(x-1) \land f(x)$ を満たす $x$ を `Some` で返し、恒真なら `None`
+//! - [`exp_search_float`][]: 浮動小数点数版。$\neg f(\mathrm{prev}(x)) \land f(x)$（$\mathrm{prev}(x)$ は $x$ の一つ前の浮動小数点数）を満たす正規化数 $x$ を返し、存在しなければ `INFINITY`/`NEG_INFINITY` を返す
+//!
+//! # 例
+//!
+//! ```
+//! use numeric_search::exp_search_unsigned;
+//! assert_eq!(exp_search_unsigned(|x: u32| 6 <= x), Some(6));
+//! assert_eq!(exp_search_unsigned(|_: u32| false), None);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`binary_search_unsigned`][], [`binary_search_signed`][]: $O(\log(R - L))$
+//! - [`exp_search_unsigned`][], [`exp_search_signed`][], [`exp_search_float`][]: 境界までの距離を $d$ として $O(\log d)$
 
 use std::fmt::Debug;
 use std::mem::size_of;
@@ -19,7 +37,7 @@ use std::ops::Shl;
 use std::ops::Shr;
 use std::ops::Sub;
 
-/// Floating pont number.
+/// 浮動小数点数を表すトレイト（`f32`, `f64` に実装）。
 pub trait Float:
     Sized
     + Copy
@@ -63,24 +81,14 @@ impl Float for f64 {
     }
 }
 
-/// Run an exponential search on floating point numbers.
+/// 浮動小数点数上で指数探索を行う。
 ///
-/// Given a binary function $f: \mathbb R \rightarrow \mathtt { bool }$,
-/// it trys to find a normal number $x \in \mathbb R$ satisfying
-/// $\neg f( \mathtt { prev } ( x ) ) \land f(x)$
-/// (where $\mathtt { prev } ( x )$ is the previous normal number of $x$).
+/// 単調述語 $f: \mathbb{R} \to \mathrm{bool}$ に対し、$\neg f(\mathrm{prev}(x)) \land f(x)$
+/// を満たす正規化数 $x$（$\mathrm{prev}(x)$ は $x$ の一つ前の浮動小数点数）を返す。
+/// そのような $x$ が `-T::MAX.sqrt()..=T::MAX.sqrt()` の範囲に存在しなければ
+/// `T::INFINITY` または `T::NEG_INFINITY` を返す。
 ///
-/// This trial always succeeds provided that
-///
-/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
-/// - there exist such $x$'s in `-T::MAX.sqrt()..=T::MAX.sqrt()`.
-///
-/// If it falis to find it, it returns `T::{INFINITY, NEG_INFINITY}`.
-///
-///
-/// # Examples
-///
-/// They are some usual usages where the function $f$ is monotone.
+/// # 例
 ///
 /// ```
 /// # use numeric_search::exp_search_float;
@@ -163,7 +171,7 @@ pub fn exp_search_float<T: Float>(mut f: impl FnMut(T) -> bool) -> T {
     }
 }
 
-/// Unsigned integers.
+/// 符号なし整数を表すトレイト。
 pub trait Unsigned:
     Sized
     + Copy
@@ -193,22 +201,13 @@ macro_rules! impl_unsigned {
 }
 impl_unsigned! { u8, u16, u32, u64, u128, usize }
 
-/// Run an exponential search on unsigned numbers.
+/// 符号なし整数上で指数探索を行う。
 ///
-/// Given a function $f: \mathbb N \to \mathtt { bool }$,
-/// it try to find $x \in \mathbb N$ satisfying $\neg f ( x - 1 ) \land f ( x )$ (where we assume that $\neg f ( -1 )$).
+/// 単調述語 $f: \mathbb{N} \to \mathrm{bool}$（$f$ は恒真でない）に対し、
+/// $\neg f(x-1) \land f(x)$ を満たす $x$ を `Some` で返す（$f(-1)$ は `false` とみなす）。
+/// $f$ が恒真の場合は `None` を返す。
 ///
-/// This trial always succeeds provided that
-///
-/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
-/// - $f$ is not always-true
-///
-/// If it falis to find it, it returns `None`.
-///
-///
-/// # Examples
-///
-/// They are some usual usages where the function $f$ is monotone.
+/// # 例
 ///
 /// ```
 /// # use numeric_search::exp_search_unsigned;
@@ -235,13 +234,12 @@ pub fn exp_search_unsigned<T: Unsigned>(mut f: impl FnMut(T) -> bool) -> Option<
     Some(binary_search_unsigned(lower, upper, f))
 }
 
-/// Run a binary search search on unsigned numbers.
+/// 符号なし整数上で二分探索を行う。
 ///
-/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
-/// satisfying $\neg f ( L ) \land f ( R )$,
-/// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
+/// 単調述語 $f: [L, R] \to \mathrm{bool}$（$\neg f(L) \land f(R)$）に対し、
+/// $\neg f(x-1) \land f(x)$ を満たす $x \in [L, R]$ を返す。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// # use numeric_search::binary_search_unsigned;
@@ -265,7 +263,7 @@ pub fn binary_search_unsigned<T: Unsigned>(
     upper
 }
 
-/// Signed integers.
+/// 符号付き整数を表すトレイト。
 pub trait Signed:
     Sized
     + Copy
@@ -298,19 +296,13 @@ macro_rules! impl_signed {
 }
 impl_signed! { i8, i16, i32, i64, i128 }
 
-/// Run an exponential search on unsigned numbers.
+/// 符号付き整数上で指数探索を行う。
 ///
-/// Given a function $f: \mathbb Z \to \mathtt { bool }$,
-/// it try to find $x \in \mathbb Z$ satisfying $\neg f ( x - 1 ) \land f ( x )$ (where we assume that $\neg f ( \mathtt { MIN } - 1 )$).
+/// 単調述語 $f: \mathbb{Z} \to \mathrm{bool}$（$f$ は恒真でない）に対し、
+/// $\neg f(x-1) \land f(x)$ を満たす $x$ を `Some` で返す（$f(\mathtt{MIN}-1)$ は `false` とみなす）。
+/// $f$ が恒真の場合は `None` を返す。
 ///
-/// This trial always succeeds provided that
-///
-/// - $f$ is monotone from $\mathbb { F }$ to $\mathbb { T }$ and
-/// - $f$ is not always-true
-///
-/// If it falis to find it, it returns `None`.
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// # use numeric_search::exp_search_signed;
@@ -356,17 +348,16 @@ pub fn exp_search_signed<T: Signed>(mut f: impl FnMut(T) -> bool) -> Option<T> {
     Some(upper)
 }
 
-/// Run a binary search search on signed numbers.
+/// 符号付き整数上で二分探索を行う。
 ///
-/// Given a function $f: \lbrack L, R \rbrack \to \mathtt { bool }$
-/// satisfying $\neg f ( L ) \land f ( R )$,
-/// it returns $x \in \lbrack L, R \rbrack$ satisfying $\neg f ( x - 1 ) \land f ( x )$
+/// 単調述語 $f: [L, R] \to \mathrm{bool}$（$\neg f(L) \land f(R)$）に対し、
+/// $\neg f(x-1) \land f(x)$ を満たす $x \in [L, R]$ を返す。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
-/// # use numeric_search::binary_search_unsigned;
-/// assert_eq!(binary_search_unsigned(10_u32, 20, |x| 200 <= x * x), 15);
+/// # use numeric_search::binary_search_signed;
+/// assert_eq!(binary_search_signed(-10_i32, 20, |x| 5 <= x), 5);
 /// ```
 pub fn binary_search_signed<T: Signed>(
     mut lower: T,

@@ -1,45 +1,53 @@
-//! Stable partition algorithm
+//! 述語で安定的にスライスを2分割する（stable partition）。
 //!
-//! See [`partition`] for details.
+//! 述語が真の要素を前方、偽の要素を後方に集めつつ、各グループ内での相対順序を保つ。
+//! 真の要素は読み取り位置から書き込み位置へその場で詰め、偽の要素は一時バッファへ退避して
+//! 走査後にまとめて書き戻すことで、追加の $O(n)$ 領域のみで安定性を実現する。
+//! 述語呼び出し中にパニックしても、[`Drop`] 実装がバッファの内容をスライスへ復元するため、
+//! 全要素が（順序は保証されないが）欠落・重複なく残る。
+//!
+//! # 仕様
+//!
+//! - [`partition`][]: 述語 `pred` が `true` を返す要素をスライス前方に、`false` を返す要素を
+//!   後方に、それぞれ元の相対順序を保ったまま並べ替える。`true` だった要素数を返す
+//!
+//! # 例
+//!
+//! ```
+//! let mut v = vec![1, 2, 3, 4, 5, 6];
+//! let n = partition::partition(&mut v, |&x| x % 2 == 0);
+//! assert_eq!(n, 3);
+//! assert_eq!(v[0..n], [2, 4, 6]);
+//! assert_eq!(v[n..], [1, 3, 5]);
+//! ```
+//!
+//! 重複キーがあっても各グループ内の相対順序は保たれる。
+//!
+//! ```
+//! let mut pairs = vec![(2, 'a'), (1, 'b'), (2, 'c'), (1, 'd')];
+//! let n = partition::partition(&mut pairs, |&(k, _)| k == 2);
+//! assert_eq!(n, 2);
+//! assert_eq!(&pairs[0..n], &[(2, 'a'), (2, 'c')]); // key 2 は a, c の順のまま
+//! assert_eq!(&pairs[n..], &[(1, 'b'), (1, 'd')]); // key 1 は b, d の順のまま
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`partition`][]: $O(n)$ 時間、$O(n)$ 追加メモリ（一時バッファ）
 
-/// Partitions a mutable slice in-place, stably.
+/// 述語 `pred` に基づき、`slice` を安定的に2分割する。
 ///
-/// Rearranges elements such that those for which `pred` returns `true` are placed before
-/// those for which `pred` returns `false`, while preserving the relative order within each group.
+/// `pred` が `true` を返す要素を前方、`false` を返す要素を後方に集め、各グループ内の
+/// 相対順序を保つ。戻り値は `true` だった要素数（前方部分の長さ）。
 ///
-/// # Time Complexity
-/// O(n), where n is the length of the slice.
+/// # 例
 ///
-/// # Extra Memory
-/// O(n) for an auxiliary buffer that temporarily holds elements.
-///
-/// # Stability
-/// The relative order of elements for which `pred` returns `true` is preserved.
-/// The relative order of elements for which `pred` returns `false` is also preserved.
-///
-/// # Returns
-/// The number of elements for which `pred` returned `true`.
-///
-/// # Examples
-///
-/// Basic usage:
 /// ```
 /// let mut v = vec![1, 2, 3, 4, 5, 6];
 /// let n = partition::partition(&mut v, |&x| x % 2 == 0);
 /// assert_eq!(n, 3);
 /// assert_eq!(v[0..n], [2, 4, 6]);
 /// assert_eq!(v[n..], [1, 3, 5]);
-/// ```
-///
-/// Stability with duplicate keys:
-/// ```
-/// let mut pairs = vec![(2, 'a'), (1, 'b'), (2, 'c'), (1, 'd')];
-/// let n = partition::partition(&mut pairs, |&(k, _)| k == 2);
-/// assert_eq!(n, 2);
-/// // Elements with key 2 come first, and their relative order (a before c) is preserved.
-/// assert_eq!(&pairs[0..n], &[(2, 'a'), (2, 'c')]);
-/// // Elements with key 1 come next, and their relative order (b before d) is preserved.
-/// assert_eq!(&pairs[n..], &[(1, 'b'), (1, 'd')]);
 /// ```
 pub fn partition<T>(slice: &mut [T], mut pred: impl FnMut(&T) -> bool) -> usize {
     let n = slice.len();
