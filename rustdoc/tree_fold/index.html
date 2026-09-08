@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="全方位木DP（rerooting）。各頂点を根としたときの集約値をまとめて計算する。"><title>tree_fold - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="tree_fold" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="2-way tree DP"><title>tree_fold - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="tree_fold" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,55 +22,25 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../tree_fold/index.html">tree_<wbr>fold</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>tree_fold</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/tree_fold/lib.rs.html#1-256">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>全方位木DP（rerooting）。各頂点を根としたときの集約値をまとめて計算する。</p>
-<p>森を頂点集合 $V$、モノイド $(F, \mathrm{mul}, \mathrm{identity})$ の要素とみなし、
-「頂点 $v$ をルートとして森 $F$ に接続し木にする」演算 $\mathrm{up}: F \times V \to F$ を追加で与える。
-通常の部分木DP（子の集約値を <code>mul</code> で畳み込み <code>up</code> でルートに接続する）を根から葉・葉から根の
-両方向に行うことで、「頂点 $v$ を根とする部分木の集約値」だけでなく「$v$ の親側を含めた
-残り全体の集約値」も $O(n)$ 回の演算で求まる。<code>mul</code> は可換でなくてよく、各頂点で子を
-元の順序で <code>mul</code> した前後の累積（prefix/suffix）を使って「自分を除いた残り」を計算する。</p>
-<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
-<p><a href="trait.Op.html" title="trait tree_fold::Op"><code>Op</code></a> トレイトで演算を定義する。</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../tree_fold/index.html">tree_<wbr>fold</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#graph-theoritic-notation" title="Graph-theoritic notation">Graph-theoritic notation</a></li><li><a href="#algebraic-notation" title="Algebraic notation">Algebraic notation</a></li><li><a href="#operations" title="Operations">Operations</a></li><li><a href="#return-value" title="Return value">Return value</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>tree_fold</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/tree_fold/lib.rs.html#1-258">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>2-way tree DP</p>
+<h2 id="graph-theoritic-notation"><a class="doc-anchor" href="#graph-theoritic-notation">§</a>Graph-theoritic notation</h2>
 <ul>
-<li><code>Op::up</code>: $F \times V \to F$。森に頂点 $v$ をルートとして接続する</li>
-<li><code>Op::mul</code>: $F \times F \to F$。森どうしの結合（結合律を満たせばよく、可換律は不要）</li>
-<li><code>Op::identity</code>: 空の森</li>
+<li>$V$: vertex type</li>
+<li>$T$: (rooted) tree type</li>
+<li>$F$: (rooted) forest type (with ordering of the trees)</li>
 </ul>
-<p><a href="fn.two_way_tree_fold.html" title="fn tree_fold::two_way_tree_fold"><code>two_way_tree_fold</code></a> は木（頂点数 $n$）を根から葉への有向グラフとして表す隣接リスト
-<code>g: &amp;[Vec&lt;usize&gt;]</code>（<code>g[i]</code> は $i$ の子）と、親が子より前に来るトポロジカル順 <code>sorted</code> を
-受け取り、<a href="struct.TwoWayTreeFoldResult.html" title="struct tree_fold::TwoWayTreeFoldResult"><code>TwoWayTreeFoldResult</code></a> を返す。</p>
-<ul>
-<li><code>branch[i]</code>: 頂点 $i$ を根とする部分木の集約値</li>
-<li><code>lower[i]</code>: 頂点 $i$ の子部分木をすべて <code>mul</code> で結合した値（<code>branch[i] = up(lower[i], i)</code>）</li>
-<li><code>upper[i]</code>: 頂点 $i$ を除いた残り全体を $i$ に接続した集約値。根では <code>identity</code></li>
-</ul>
-<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>tree_fold::Op;
-<span class="kw">use </span>tree_fold::two_way_tree_fold;
-
-<span class="kw">struct </span>SubtreeSize;
-<span class="kw">impl </span>Op <span class="kw">for </span>SubtreeSize {
-    <span class="kw">type </span>Value = usize;
-    <span class="kw">fn </span>up(<span class="kw-2">&amp;</span><span class="self">self</span>, value: <span class="kw-2">&amp;</span>usize, _root: usize) -&gt; usize {
-        value + <span class="number">1
-    </span>}
-    <span class="kw">fn </span>mul(<span class="kw-2">&amp;</span><span class="self">self</span>, lhs: <span class="kw-2">&amp;</span>usize, rhs: <span class="kw-2">&amp;</span>usize) -&gt; usize {
-        lhs + rhs
-    }
-    <span class="kw">fn </span>identity(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
-        <span class="number">0
-    </span>}
-}
-
-<span class="comment">// 木: 0 -&gt; 1, 0 -&gt; 2, 1 -&gt; 3
-</span><span class="kw">let </span>g = <span class="macro">vec!</span>[<span class="macro">vec!</span>[<span class="number">1</span>, <span class="number">2</span>], <span class="macro">vec!</span>[<span class="number">3</span>], <span class="macro">vec!</span>[], <span class="macro">vec!</span>[]];
-<span class="kw">let </span>sorted = <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>];
-<span class="kw">let </span>result = two_way_tree_fold(<span class="kw-2">&amp;</span>SubtreeSize, <span class="kw-2">&amp;</span>g, <span class="kw-2">&amp;</span>sorted);
-<span class="macro">assert_eq!</span>(result.branch, <span class="macro">vec!</span>[<span class="number">4</span>, <span class="number">2</span>, <span class="number">1</span>, <span class="number">1</span>]); <span class="comment">// 各頂点を根とする部分木のサイズ
-</span><span class="macro">assert_eq!</span>(result.upper, <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">3</span>]); <span class="comment">// 各頂点から見た残り全体のサイズ（根は 0）</span></code></pre></div>
-<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
-<ul>
-<li><code>two_way_tree_fold</code>: $O(n)$ 回の <code>up</code>/<code>mul</code> 呼び出し（$n$ は頂点数）</li>
-</ul>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.TwoWayTreeFoldResult.html" title="struct tree_fold::TwoWayTreeFoldResult">TwoWay<wbr>Tree<wbr>Fold<wbr>Result</a></dt><dd><a href="fn.two_way_tree_fold.html" title="fn tree_fold::two_way_tree_fold"><code>two_way_tree_fold</code></a> の返り値。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait tree_fold::Op">Op</a></dt><dd>全方位木DPの演算。モノイド $(F, \mathrm{mul}, \mathrm{identity})$ と、
-頂点 $v$ をルートとして森 $F$ に接続する演算 $\mathrm{up}$ を定義する。</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.two_way_tree_fold.html" title="fn tree_fold::two_way_tree_fold">two_<wbr>way_<wbr>tree_<wbr>fold</a></dt><dd>全方位木DPを行う。詳細はモジュールレベルドキュメントの <code># 仕様</code> を参照。</dd></dl></section></div></main></body></html>
+<h2 id="algebraic-notation"><a class="doc-anchor" href="#algebraic-notation">§</a>Algebraic notation</h2>
+<p>$$
+\phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
+$$</p>
+<h2 id="operations"><a class="doc-anchor" href="#operations">§</a>Operations</h2><div><table><thead><tr><th></th><th>graph-theoritic</th><th>algebraic</th></tr></thead><tbody>
+<tr><td><code>up</code></td><td>$F \times V \to T \to F$: join by a root</td><td>$f \circ g$</td></tr>
+<tr><td><code>mul</code></td><td>$F \times F \to F$: concatenate two forests</td><td>product of $M$</td></tr>
+<tr><td><code>identity</code></td><td>$* \to F$: empty forest</td><td>identity of $M$</td></tr>
+</tbody></table>
+</div><h2 id="return-value"><a class="doc-anchor" href="#return-value">§</a>Return value</h2><div><table><thead><tr><th></th><th>description</th></tr></thead><tbody>
+<tr><td><code>upper</code></td><td>$f(\phi(T_i^\triangle))$</td></tr>
+<tr><td><code>lower</code></td><td>$\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$</td></tr>
+<tr><td><code>branch</code></td><td>$f(\phi(T_i^\blacktriangledown))$</td></tr>
+</tbody></table>
+</div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.TwoWayTreeFoldResult.html" title="struct tree_fold::TwoWayTreeFoldResult">TwoWay<wbr>Tree<wbr>Fold<wbr>Result</a></dt><dd>The return value of <a href="trait.Op.html#method.two_way_tree_fold" title="method tree_fold::Op::two_way_tree_fold"><code>Op::two_way_tree_fold()</code></a> ans <a href="fn.two_way_tree_fold.html" title="fn tree_fold::two_way_tree_fold"><code>two_way_tree_fold()</code></a></dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait tree_fold::Op">Op</a></dt><dd>Operations</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.two_way_tree_fold.html" title="fn tree_fold::two_way_tree_fold">two_<wbr>way_<wbr>tree_<wbr>fold</a></dt><dd>Performs 2-way tree DP</dd></dl></section></div></main></body></html>

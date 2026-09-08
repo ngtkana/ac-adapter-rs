@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="文字列 $s$ の全中心について、最長回文の半径を格納した配列を返す。"><title>manacher in manacher - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="manacher" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Returns the palindrome array $A$ of the given string $s$."><title>manacher in manacher - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="manacher" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,38 +22,48 @@
   });
 </script>
 
-</head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../manacher/index.html">manacher</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">manacher</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate manacher</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">manacher</a></div><h1>Function <span class="fn">manacher</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/manacher/lib.rs.html#80-104">Source</a> </span></div><pre class="rust item-decl"><code>pub fn manacher&lt;T: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/cmp/trait.Eq.html" title="trait core::cmp::Eq">Eq</a>&gt;(s: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.slice.html">[T]</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>文字列 $s$ の全中心について、最長回文の半径を格納した配列を返す。</p>
-<p>中心ごとに愚直に伸ばすと $O(n^2)$ かかるが、確定済みの回文の対称性を利用して
-多くの中心の計算を省略し、$O(n)$ で求める。</p>
-<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
-<p>$n = $ <code>s.len()</code> として、長さ $2n + 1$ の配列 $A$ を返す。</p>
-<p>$$
-A_i = \max \left{ r - l ;\middle|; 0 \le l \le r \le n,\ l + r = i,\ s[l..r] \text{ は回文} \right}
-$$</p>
-<p>$i$ が偶数のとき中心は文字 $s_{i / 2}$ 上、奇数のとき文字と文字の間にある。</p>
-<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<p>$s = $ “mississippi” のとき、中心 $i$ ごとの最長回文の半径 $A_i$ は次の通り
-（<code>_</code> は文字と文字の間の中心）。</p>
-<div><table><thead><tr><th>$i$</th><th>中心</th><th>$A_i$</th><th>対応する回文</th></tr></thead><tbody>
-<tr><td>0</td><td>(前端)</td><td>0</td><td></td></tr>
-<tr><td>1</td><td>m</td><td>1</td><td>m</td></tr>
-<tr><td>2</td><td>_</td><td>0</td><td></td></tr>
-<tr><td>3</td><td>i</td><td>1</td><td>i</td></tr>
-<tr><td>4</td><td>_</td><td>0</td><td></td></tr>
-<tr><td>5</td><td>s</td><td>1</td><td>s</td></tr>
-<tr><td>6</td><td>_</td><td>4</td><td>issi</td></tr>
-<tr><td>7</td><td>s</td><td>1</td><td>s</td></tr>
-<tr><td>8</td><td>_</td><td>0</td><td></td></tr>
-<tr><td>9</td><td>i</td><td>7</td><td>ississi</td></tr>
-<tr><td>10</td><td>_</td><td>0</td><td></td></tr>
-</tbody></table>
-</div>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>manacher::manacher;
-<span class="kw">let </span>s = <span class="string">"mississippi"</span>;
+</head><body class="rustdoc fn"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../manacher/index.html">manacher</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">manacher</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#definition" title="Definition">Definition</a></li><li><a href="#example" title="Example">Example</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate manacher</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">manacher</a></div><h1>Function <span class="fn">manacher</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/manacher/lib.rs.html#56-80">Source</a> </span></div><pre class="rust item-decl"><code>pub fn manacher&lt;T: <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/cmp/trait.Eq.html" title="trait core::cmp::Eq">Eq</a>&gt;(s: &amp;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.slice.html">[T]</a>) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Returns the palindrome array $A$ of the given string $s$.</p>
+<h2 id="definition"><a class="doc-anchor" href="#definition">§</a>Definition</h2>
+<p>$A$ is an array of length $2n + 1$ where $n$ is the length of $s$.</p>
+<p>$A_i = \max \left\{
+r - l \middle |
+\begin{array}{l}
+0 \le l \le r \le n, \ l + r = i, \\
+s[l..r] \text{ is a palindrome}
+\end{array}
+\right\}$.</p>
+<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
+<p>If $s = \text{“mississippi”}$, then
+$A = [0, 1, 0, 1, 0, 1, 4, 1, 0, 7, 0, 1, 4, 1, 0, 1, 0, 1, 4, 1, 0, 1, 0]$.</p>
+
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span>s = <span class="string">"mississippi"</span>;
 <span class="kw">let </span>a = manacher(s.as_bytes());
 <span class="macro">assert_eq!</span>(a, <span class="macro">vec!</span>[
     <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">7</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">1</span>, <span class="number">0
 </span>]);</code></pre></div>
-<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
-<p>$O(n)$</p>
-</div></details></section></div></main></body></html>
+<div><table><thead><tr><th>$i$</th><th>$s_{(i - 1) / 2}$</th><th>$A_i$</th><th>$s_{(i - A_i) / 2..(i + A_i) / 2}$</th></tr></thead><tbody>
+<tr><td>0</td><td></td><td>0</td><td></td></tr>
+<tr><td>1</td><td>m</td><td>1</td><td>m</td></tr>
+<tr><td>2</td><td></td><td>0</td><td></td></tr>
+<tr><td>3</td><td>i</td><td>1</td><td>i</td></tr>
+<tr><td>4</td><td></td><td>0</td><td></td></tr>
+<tr><td>5</td><td>s</td><td>1</td><td>s</td></tr>
+<tr><td>6</td><td></td><td>4</td><td>issi</td></tr>
+<tr><td>7</td><td>s</td><td>1</td><td>s</td></tr>
+<tr><td>8</td><td></td><td>0</td><td></td></tr>
+<tr><td>9</td><td>i</td><td>7</td><td>ississi</td></tr>
+<tr><td>10</td><td></td><td>0</td><td></td></tr>
+<tr><td>11</td><td>s</td><td>1</td><td>s</td></tr>
+<tr><td>12</td><td></td><td>4</td><td>issi</td></tr>
+<tr><td>13</td><td>s</td><td>1</td><td>s</td></tr>
+<tr><td>14</td><td></td><td>0</td><td></td></tr>
+<tr><td>15</td><td>i</td><td>1</td><td>i</td></tr>
+<tr><td>16</td><td></td><td>0</td><td></td></tr>
+<tr><td>17</td><td>p</td><td>1</td><td>p</td></tr>
+<tr><td>18</td><td></td><td>4</td><td>ippi</td></tr>
+<tr><td>19</td><td>p</td><td>1</td><td>p</td></tr>
+<tr><td>20</td><td></td><td>0</td><td></td></tr>
+<tr><td>21</td><td>i</td><td>1</td><td>i</td></tr>
+<tr><td>22</td><td></td><td>0</td><td></td></tr>
+</tbody></table>
+</div></div></details></section></div></main></body></html>
