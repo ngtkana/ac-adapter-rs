@@ -1,11 +1,18 @@
 use super::bitmask_operations::i2powm1;
 use super::numeric_traits::Unsigned;
 
-/// Generates all the $k$-subsets of $[0, N[$
+/// ちょうど $k$ ビット立っている $n$ ビットのビットマスクを昇順に列挙する。
 ///
-/// # Examples
+/// $[0, 2^n)$ の整数のうち popcount が $k$ であるもの全体を昇順に返す。
+/// 立っている最下位ビットの塊を 1 段上にずらす古典的な手法（Gosper's hack）で、
+/// 各要素を $O(1)$ で次に進める。
 ///
-/// Basic usage:
+/// # 計算量
+///
+/// 全体で $O(\binom{n}{k})$。
+///
+/// # 例
+///
 /// ```
 /// use riff::bitmask_combinations;
 ///
@@ -22,6 +29,7 @@ pub fn bitmask_combinations<T: Unsigned>(n: u32, k: u32) -> BitmaskCombinations<
     }
 }
 
+/// [`bitmask_combinations`] が返すイテレータ。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct BitmaskCombinations<T> {
     n: u32,
@@ -57,11 +65,18 @@ impl<T: Unsigned> Iterator for BitmaskCombinations<T> {
     }
 }
 
-/// Generates all the subsets of `bs`.
+/// `bs` の部分ビットマスク（`bs` 自身と $0$ を含む）を昇順に列挙する。
 ///
-/// # Examples
+/// $s \mathbin{\&} \mathrm{bs} = s$ を満たす整数 $s$ 全体を昇順に返す。
+/// 部分マスクを $1$ ずつ減らして `bs` との AND を取っていく古典的な手法を、
+/// `bs` との XOR で反転させることで昇順化している。各要素 $O(1)$。
 ///
-/// Basic usage:
+/// # 計算量
+///
+/// 全体で $O(2^{\mathrm{popcount}(\mathrm{bs})})$。
+///
+/// # 例
+///
 /// ```
 /// use riff::bitmask_subsets;
 ///
@@ -77,6 +92,7 @@ pub fn bitmask_subsets<T: Unsigned>(bs: T) -> BitmaskSubsets<T> {
     }
 }
 
+/// [`bitmask_subsets`] が返すイテレータ。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct BitmaskSubsets<T> {
     bs: T,

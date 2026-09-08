@@ -1,4 +1,47 @@
-//! Monotone minima のアルゴリズムと、それによる tropical convolutions を提供します。
+//! 行列が単調性を持つとき、各行の最小値の列インデックスをまとめて高速に求める Monotone Minima 法。
+//!
+//! 行列 $A$ の各行の最小値を与える列インデックス（複数あれば最大のもの）が行番号に対して
+//! 単調非減少（totally monotone）であれば、中央の行の最小値位置を全探索してから、
+//! 上下の行の探索範囲をその位置で挟み込んで再帰することで、比較回数
+//! $O((h+w)\log h)$ で全行の最小値インデックスがまとめて求まる。
+//! 凸列同士の $(\min, +)$ 畳み込みや凹列同士の $(\max, +)$ 畳み込みは、この単調性
+//! （逆モンジュ条件）を満たす行列として書けるため、同じアルゴリズムで高速化できる。
+//!
+//! # 仕様
+//!
+//! - [`monotone_minima_by`][]: 比較関数 `cmp(i, j, k)`（$a_{i,j}$ と $a_{i,k}$ の比較）を受け取り、
+//!   各行 $i$ の最小値を与える列インデックスを返す。行列が単調であることが前提
+//! - [`monotone_maxima_by`][]: [`monotone_minima_by`][] の比較を反転した版。各行の最大値インデックスを返す
+//! - [`monotone_minima`][] / [`monotone_maxima`][]: 比較関数の代わりに値関数 `f(i, j)` を受け取る版
+//! - [`convex_minplus_convolution`][]: 凸列 $a$, $b$ に対し $(\min, +)$ 畳み込み
+//!   $c_k = \min_{i+j=k} (a_i + b_j)$ を計算
+//! - [`concave_maxplus_convolution`][]: 凹列 $a$, $b$ に対し $(\max, +)$ 畳み込み
+//!   $c_k = \max_{i+j=k} (a_i + b_j)$ を計算
+//!
+//! # 例
+//!
+//! ```
+//! use monotone_minima::monotone_minima;
+//!
+//! let a = [[3, 1, 2], [5, 4, 0]];
+//! let result = monotone_minima(2, 3, |i, j| a[i][j]);
+//! assert_eq!(result, vec![1, 2]); // 各行の最小値の列インデックス
+//! ```
+//!
+//! ```
+//! use monotone_minima::convex_minplus_convolution;
+//!
+//! let a = vec![0, 1, 3]; // convex（階差 1, 2 が単調増加）
+//! let b = vec![0, 2, 5]; // convex（階差 2, 3 が単調増加）
+//! assert_eq!(convex_minplus_convolution(&a, &b), vec![0, 1, 3, 5, 8]);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`monotone_minima_by`][] / [`monotone_maxima_by`][] / [`monotone_minima`][] / [`monotone_maxima`][]:
+//!   $O((h+w) \log h)$（`cmp`/`f` の呼び出し回数）
+//! - [`convex_minplus_convolution`][] / [`concave_maxplus_convolution`][]:
+//!   列の長さを $n, m$ として $O((n+m) \log(n+m))$
 //!
 //! # 問題例
 //!
@@ -10,7 +53,9 @@ use std::ops::Add;
 ////////////////////////////////////////////////////////////////////////////////
 // Monotone minima
 ////////////////////////////////////////////////////////////////////////////////
-/// 行ごとのセル比較 `cmp(i, j, k)` を受け取って、monotone minima をします。
+/// 各行 $i$ について、$j \in [0, w)$ の中で `cmp(i, j, k)` が最小となる $j$ を返す（複数あれば最大の $j$）。
+///
+/// 行列が単調（totally monotone）であることが前提。
 pub fn monotone_minima_by(
     h: usize,                                                    // a.len()
     w: usize,                                                    // a[0].len()
@@ -35,7 +80,7 @@ pub fn monotone_minima_by(
     ans
 }
 
-/// 行ごとのセル比較 `cmp(i, j, k)` を受け取って、monotone maxima をします。
+/// [`monotone_minima_by`] の比較を反転し、各行の最大値を与える $j$ を返す。
 pub fn monotone_maxima_by(
     h: usize,                                                    // a.len()
     w: usize,                                                    // a[0].len()
@@ -44,12 +89,12 @@ pub fn monotone_maxima_by(
     monotone_minima_by(h, w, move |i, j, k| cmp(i, k, j))
 }
 
-/// 行列 `f(i, j)` を受け取って、monotone minima をします。
+/// [`monotone_minima_by`] の比較関数版。値関数 $f(i, j)$ を受け取り、各行の最小値インデックスを返す。
 pub fn monotone_minima<T: Ord>(h: usize, w: usize, f: impl Fn(usize, usize) -> T) -> Vec<usize> {
     monotone_minima_by(h, w, |i, j, k| f(i, j).cmp(&f(i, k)))
 }
 
-/// 行列 `f(i, j)` を受け取って、monotone maxima をします。
+/// [`monotone_maxima_by`] の値関数版。値関数 $f(i, j)$ を受け取り、各行の最大値インデックスを返す。
 pub fn monotone_maxima<T: Ord>(h: usize, w: usize, f: impl Fn(usize, usize) -> T) -> Vec<usize> {
     monotone_maxima_by(h, w, |i, j, k| f(i, j).cmp(&f(i, k)))
 }
@@ -57,7 +102,7 @@ pub fn monotone_maxima<T: Ord>(h: usize, w: usize, f: impl Fn(usize, usize) -> T
 ////////////////////////////////////////////////////////////////////////////////
 // Convolution
 ////////////////////////////////////////////////////////////////////////////////
-/// convex な列に対して min-plus convolution を計算します。
+/// 凸列 $a$, $b$ の $(\min, +)$ 畳み込み $c_k = \min_{i+j=k} (a_i + b_j)$ を計算する。
 pub fn convex_minplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
     T: Copy + Ord + Add<Output = T>,
@@ -76,7 +121,7 @@ where
     .collect()
 }
 
-/// concave な列に対して max-plus convolution を計算します。
+/// 凹列 $a$, $b$ の $(\max, +)$ 畳み込み $c_k = \max_{i+j=k} (a_i + b_j)$ を計算する。
 pub fn concave_maxplus_convolution<T>(a: &[T], b: &[T]) -> Vec<T>
 where
     T: Copy + Ord + Add<Output = T>,

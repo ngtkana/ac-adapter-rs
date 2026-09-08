@@ -1,18 +1,17 @@
-/// `successors` for `Iterator`
+/// `Iterator` に `successors` 風の逐次計算を追加するトレイト。
 pub trait IteratorSuccessors: Iterator {
-    /// Creates an iterator like [`std::iter::successors`], but unlike it, uses an iterator to
-    /// calculate the next element.
+    /// `self` の要素を使って次の値を計算する、[`std::iter::successors`] 風のイテレータを作る。
     ///
-    /// # Specification
+    /// `std::iter::successors` は直前の値だけから次の値を計算するが、こちらは加えて
+    /// `self` から 1 つずつ要素を取り出して計算に使う。
     ///
-    /// Returns an iterator that generates the sequence $b_0, b_1, \ldots$ where:
+    /// # 仕様
     ///
-    /// * `self`: $a_0, a_1, \ldots, a_{n - 1}$
-    /// * `first`: $b_0$
-    /// * `succ`: $f(a_i, b_i) = b_{i + 1}$
+    /// `self` を $a_0, a_1, \ldots, a_{n-1}$、`first` を $b_0$ とし、
+    /// $b_{i+1} = \mathrm{succ}(a_i, b_i)$ で定まる列 $b_0, b_1, \ldots$ を返す
+    /// （`succ` が `None` を返すか `self` が尽きたら終了）。
     ///
-    ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// # use riff::IteratorSuccessors;
@@ -35,6 +34,7 @@ pub trait IteratorSuccessors: Iterator {
 }
 impl<I: Iterator> IteratorSuccessors for I {}
 
+/// [`IteratorSuccessors::successors`] が返すイテレータ。
 pub struct IterSuccessors<I, T, F> {
     iter: I,
     next: Option<T>,

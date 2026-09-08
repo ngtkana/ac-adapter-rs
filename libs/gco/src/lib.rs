@@ -1,43 +1,24 @@
-//! Solve a submodular graph cut optimizaion problem of degree $\le 2$
+//! 次数 $2$ 以下の劣モジュラなグラフカット最適化問題を解く。
 //!
-//! As in [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization),
-//! any pseudo-boolean function $f: \lbrace 0, 1 \rbrace ^ n → \mathbb R$ can be written uniquely
-//! as a multi-linear polynominal:
+//! 任意の擬似ブール関数 $f: \{0, 1\}^n \to \mathbb{R}$ は、多重線形多項式
+//! $f(\boldsymbol{x}) = a + \sum_i a_i x_i + \sum_{i,j} a_{i,j} x_i x_j + \dots$
+//! として一意に表せる。次数が $2$ 以下で、各二次項が劣モジュラ条件
+//! $a_{i,i} + a_{j,j} \le a_{i,j} + a_{j,i}$ を満たすとき、$f$ の最小化は $s$-$t$ 最小カット問題に
+//! 帰着できる。変数ごとに頂点を用意し、一次項をソース・シンクへの辺重みに、二次項を変数間の辺重みに
+//! 変換することでこれを実現し、最小カットの計算には [`dinic`] を用いる。
 //!
-//! $$
-//! f ( \boldsymbol x ) =
-//!     a
-//!     + \sum _ { i } a _ i x _ i
-//!     + \sum _ { i, j } a _ { i, j } x _ i x _ j
-//!     + \dots
-//! $$
+//! # 仕様
 //!
-//! This library can solve the minimum value of $f$ satisfying
+//! - [`Gco::unary`] で一次項 $c_0 (1 - x_i) + c_1 x_i$ を、[`Gco::binary`] で二次項
+//!   $c_{0,0}(1-x_i)(1-x_j) + c_{0,1}(1-x_i)x_j + c_{1,0}x_i(1-x_j) + c_{1,1}x_ix_j$ を追加する
+//! - 二次項は劣モジュラ条件 $c_{0,0} + c_{1,1} \le c_{0,1} + c_{1,0}$ を満たす必要がある（違反時は panic）
+//! - コストの型は [`i64`]
+//! - [`Gco::solve`] で最小値と、それを達成する $x$（`false` は $0$、`true` は $1$）を得る
+//! - 変数の反転（$x_i \mapsto 1 - x_i$）は自動で行われない
 //!
-//! - $\mathop { \mathrm { deg } } f \le 2$
-//! - $f$ is submodular $a _ { i, i } + a _ { j , j } \le a _ { i, j } + a _ { j, i }$
+//! # 例
 //!
-//!
-//! # Dependencies
-//!
-//! [`dinic`]
-//!
-//!
-//! # Usages
-//!
-//!
-//! - Use two methods [`unary`](`Gco::unary), [`binary`](Gco::binary) to add terms.
-//! - The cost must has a type [`i64`].
-//! - The result has a type [`bool`]. ($0$ is `false`, $1$ is `true`)
-//! - We cannot automatically "filp" variables.
-//!
-//! This example code shows that a function
-//!
-//! $$
-//! f (x, y) = (10 + 10 x) + (40 - 30 y) + 99 (x + y - 2xy)
-//! $$
-//!
-//! takes its minimum $30$ at $(x, y) = (1, 1)$.
+//! $f(x, y) = (10 + 10x) + (40 - 30y) + 99(x + y - 2xy)$ は $(x, y) = (1, 1)$ で最小値 $30$ を取る。
 //!
 //! ```
 //! use gco::Gco;
@@ -51,11 +32,18 @@
 //! assert_eq!(result.value, 30);
 //! assert_eq!(&result.args, &[true, true]);
 //! ```
+//!
+//! # 計算量
+//!
+//! - [`Gco::solve`][]: $O(n^2 m)$（$n$ は頂点数、$m$ は辺数。[`dinic`] の最大流計算量に従う）
 
 use dinic::Dinic;
 use std::cmp::Ordering;
 
-/// A solver of graph cut optimization problems.
+/// グラフカット最適化問題のソルバー。
+///
+/// [`Gco::new`] で変数の個数を指定して初期化し、[`Gco::unary`], [`Gco::binary`] で
+/// $f$ に項を追加してから [`Gco::solve`] で最小値と最小点を求める。
 #[derive(Clone, Debug, Default, Hash, PartialEq)]
 pub struct Gco {
     vars: usize,
@@ -63,7 +51,7 @@ pub struct Gco {
     binary: Vec<Binary>,
 }
 impl Gco {
-    /// Initialize a solver with $n$ terms.
+    /// $n$ 個の変数を持つソルバーを初期化する。項は何も追加されていない状態（$f \equiv 0$）から始まる。
     pub fn new(n: usize) -> Self {
         Self {
             vars: n,
@@ -71,49 +59,36 @@ impl Gco {
         }
     }
 
-    /// Add a unary term.
+    /// 一次項 $c_0 (1 - x_i) + c_1 x_i$ を $f$ に加える。
     ///
-    /// # Effects
-    ///
-    /// Add a unary term $c _ 0 ( 1 - x _ i ) + c _ 1 x _ i$ to $f$.
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use gco::Gco;
     /// # let mut gco = gco::Gco::new(2);
-    /// gco.unary(0, [0, 10]);
-    /// gco.unary(1, [-40, 0]);
+    /// gco.unary(0, [0, 10]); // 10 x_0
+    /// gco.unary(1, [-40, 0]); // -40 (1 - x_1)
     /// ```
     pub fn unary(&mut self, i: usize, cost: [i64; 2]) {
         self.unary.push(Unary { i, cost });
     }
 
-    /// Add a binary term.
-    ///
-    /// # Effects
-    ///
-    /// Add the following binary term to $f$:
-    ///
+    /// 二次項
     /// $$
-    /// c _ { 0, 0 } ( 1 - x _ i) ( 1 - x _ j )
-    ///     + c _ { 0, 1 } ( 1 - x _ i ) x _ j
-    ///     + c _ { 1, 0 } x _ i ( 1 - x _ j )
-    ///     + c _ { 1, 1 } x _ i x _ j
+    /// c_{0,0}(1-x_i)(1-x_j) + c_{0,1}(1-x_i)x_j + c_{1,0}x_i(1-x_j) + c_{1,1}x_ix_j
     /// $$
+    /// を $f$ に加える。
     ///
+    /// # panics
     ///
-    /// # Panics
+    /// 劣モジュラ条件 $c_{0,0} + c_{1,1} \le c_{0,1} + c_{1,0}$ を満たさないとき。
     ///
-    /// If this binary term is not submodular.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use gco::Gco;
     /// # let mut gco = gco::Gco::new(2);
-    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // Costs 10 when x0 = 0, x1 = 1
+    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // x_0 = 0, x_1 = 1 のとき 10
     /// ```
     pub fn binary(&mut self, ij: [usize; 2], cost: [[i64; 2]; 2]) {
         assert!(
@@ -123,21 +98,25 @@ impl Gco {
         self.binary.push(Binary { ij, cost });
     }
 
-    /// Returns the minimum value and an argmin of $f$.
+    /// $f$ の最小値とそれを達成する $x$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n^2 m)$（$n$ は頂点数、$m$ は辺数）
     pub fn solve(&self) -> GcoResult {
         solve(self)
     }
 }
 
-/// The minimum value and and an argmin of $f$.
+/// [`Gco::solve`] の結果。$f$ の最小値と、それを達成する $x$ を保持する。
 ///
-/// - $x _ i = 0 \Leftrightarrow \mathtt { args } _ i = \mathtt { false }$
-/// - $x _ i = 1 \Leftrightarrow \mathtt { args } _ i = \mathtt { true }$
+/// - $x_i = 0 \Leftrightarrow$ `args[i] == false`
+/// - $x_i = 1 \Leftrightarrow$ `args[i] == true`
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct GcoResult {
-    /// The minimum value
+    /// $f$ の最小値。
     pub value: i64,
-    /// An argmin
+    /// 最小値を達成する $x$。
     pub args: Vec<bool>,
 }
 
