@@ -1,4 +1,34 @@
-//! 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
+//! 論理配列 $A \in \{0, 1\}^n$ を64ビット単位でpackして保持するbit vector。
+//!
+//! `Vec<u64>` にビットを詰めることで、範囲へのOR/XOR/popcountなどの操作をword単位（64ビットずつ）に
+//! まとめて処理でき、素朴な `Vec<bool>` より高速に扱える。範囲アクセスは [`Range`] / [`RangeMut`] が
+//! word境界をまたぐケースをマスク処理で吸収して提供する。
+//!
+//! # 仕様
+//!
+//! - 構築: [`BitVec::new`]（全要素 `false`）、`"01"` からなる文字列の `FromStr`
+//! - アクセス: [`BitVec::get`], [`BitVec::entry`]（mutable参照）, [`BitVec::iter`]
+//! - 部分列: [`BitVec::range`] → [`Range`]、[`BitVec::range_mut`] → [`RangeMut`]
+//! - 集合演算: [`BitVec::or_shift_convolution_with_zero`]
+//!
+//! # 例
+//!
+//! ```
+//! use bit_vec::BitVec;
+//!
+//! let mut bv: BitVec = "00110101".parse().unwrap();
+//! assert_eq!(bv.range(2..6).count_ones(), 3);
+//! bv.range_mut(0..4).flip();
+//! assert_eq!(bv.to_string(), "11000101");
+//! ```
+//!
+//! # 計算量
+//!
+//! $n$: 要素数、$w = 64$ をword幅とする。
+//!
+//! - [`BitVec::get`], [`BitVec::entry`], [`BitVec::range`], [`BitVec::range_mut`][]: $O(1)$
+//! - [`Range::count_ones`], [`Range::first_one`], [`RangeMut::flip`] などの範囲操作: $O(n / w)$
+//! - [`BitVec::or_shift_convolution_with_zero`]（shift数 $K$）: $O(nK / w)$
 
 mod range;
 mod range_mut;
@@ -15,7 +45,7 @@ pub use range_mut::RangeMut;
 const B: usize = u64::BITS as usize;
 const C: usize = B.trailing_zeros() as usize;
 
-/// 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \\# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
+/// 論理配列 $A \in \{0, 1\}^n$ を64ビット単位でpackして保持するbit vector。
 #[derive(Clone)]
 pub struct BitVec {
     items: Vec<u64>,
@@ -23,9 +53,9 @@ pub struct BitVec {
 }
 
 impl BitVec {
-    /// 指定した長さの all-zero ビットベクターを構築します。
+    /// 長さ $n$、全要素 `false` のbit vectorを構築する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -40,9 +70,9 @@ impl BitVec {
         }
     }
 
-    /// 長さを返します
+    /// 長さ $n$ を返す。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -54,15 +84,48 @@ impl BitVec {
         self.len
     }
 
+    /// 末尾に `false` を `extra_len` 個追加し、長さを伸ばす。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv = BitVec::new(2);
+    /// bv.extend(2);
+    /// assert_eq!(bv.len(), 4);
+    /// ```
     pub fn extend(&mut self, extra_len: usize) {
         self.resize(self.len() + extra_len);
     }
 
+    /// 長さを `new_len` に変更する。伸びた分は `false` で埋め、縮む場合は末尾を切り捨てる。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv: BitVec = "1111".parse().unwrap();
+    /// bv.resize(2);
+    /// assert_eq!(bv.to_string(), "11");
+    /// ```
     pub fn resize(&mut self, new_len: usize) {
         self.items.resize(new_len.div_ceil(B), 0);
         self.len = new_len;
     }
 
+    /// 先頭 `count` 要素を取り除き、残りを前に詰める。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let mut bv: BitVec = "00110101".parse().unwrap();
+    /// bv.pop_front_many(3);
+    /// assert_eq!(bv.to_string(), "10101");
+    /// ```
     pub fn pop_front_many(&mut self, count: usize) {
         let (q, r) = div_rem(count);
         self.items.rotate_left(q);
@@ -84,9 +147,9 @@ impl BitVec {
         }
     }
 
-    /// 論理的な [`bool`] 配列 $A$ が空列のとき [`true`] を返します。
+    /// 長さ $n = 0$ のとき `true` を返す。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -98,9 +161,9 @@ impl BitVec {
         self.len == 0
     }
 
-    /// Immutable な部分列を取得します。
+    /// 区間 `range` のimmutableな部分列 [`Range`] を取得する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -119,9 +182,9 @@ impl BitVec {
         }
     }
 
-    /// Mutable な部分列を取得します。
+    /// 区間 `range` のmutableな部分列 [`RangeMut`] を取得する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -143,9 +206,9 @@ impl BitVec {
         }
     }
 
-    /// 論理的な [`bool`] 配列 $A$ の要素への mutable 参照を取得する
+    /// $A_i$ への mutable な参照を [`Entry`] として取得する。`Drop` 時に書き戻される。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -165,9 +228,9 @@ impl BitVec {
         }
     }
 
-    /// 論理的な [`bool`] 配列 $A$ のビットを取得する
+    /// $A_i$（`index` 番目のビット）を返す。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -183,21 +246,13 @@ impl BitVec {
         self.items[q] >> r & 1 == 1
     }
 
-    /// Or-Shift Convolution を行います。
+    /// `shift` の要素集合を $S$ として、$A_i \gets \bigvee_{j \in \{0\} \cup S} A_{i - j}$ を同時に行う（OR-shift畳み込み）。
     ///
-    /// # Specification
+    /// # 計算量
     ///
-    /// `shift` の要素全体の集合を $S$ として、次の更新を同時に行います。($0$ が追加されていることに注意)
+    /// $n$: 要素数、$K$: `shift.len()` として $O(nK / w)$（$w = 64$）
     ///
-    /// $$
-    /// A _ i ← \bigvee _ { j \\{ 0 \\} \cup S } A _ {i - j}
-    /// $$
-    ///
-    /// # Complexity
-    ///
-    /// $A, S$ の要素数を $N, K$ として、$O(NK / w)$
-    ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -224,9 +279,9 @@ impl BitVec {
         self.clear_extra_zeros();
     }
 
-    /// 論理的な [`bool`] 配列 $A$ の要素を順に返す iterator を構築します。
+    /// $A_0, \ldots, A_{n-1}$ を順に返すイテレータを構築する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -249,9 +304,9 @@ impl BitVec {
             end: self.len,
         }
     }
-    /// [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
+    /// `Vec<bool>` に変換する。`.iter().collect()` の短絡メソッド。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -295,6 +350,7 @@ impl Display for BitVec {
     }
 }
 
+/// `{:?}` で内部の各wordをビット列として表示するデバッグ用ラッパー。
 pub struct PrintDetails<'a>(pub &'a BitVec);
 impl Debug for PrintDetails<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -317,6 +373,7 @@ impl Debug for PrintDetails<'_> {
     }
 }
 
+/// `{:?}` で $1$ が立っているインデックス一覧を表示するデバッグ用ラッパー。
 pub struct PrintOnes<'a>(pub &'a BitVec);
 impl Debug for PrintOnes<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
@@ -365,6 +422,7 @@ impl FromIterator<bool> for BitVec {
     }
 }
 
+/// `'0'`/`'1'` からなる文字列をパースする。それ以外の文字が含まれるとpanicする。
 impl FromStr for BitVec {
     type Err = ();
 
@@ -379,7 +437,7 @@ impl FromStr for BitVec {
     }
 }
 
-/// [`BitVec`] 内の bit の handler 型。 [`BitVec::entry`] で取得できます。
+/// [`BitVec`] 内のビットへのmutableな参照。`Drop` 時に元のビットへ書き戻す。[`BitVec::entry`] で取得する。
 pub struct Entry<'a> {
     bit_vec: &'a mut BitVec,
     index: usize,
