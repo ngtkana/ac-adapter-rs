@@ -41,6 +41,41 @@ script = '''
 cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'note: `-W clippy::' | sed -n 's/.*note: `-W clippy::\([a-z|-]*\).*/\1/p' | sort | uniq
 '''
 
+[tasks.install-acbundle]
+description = "Install the `acbundle` binary to ~/.cargo/bin (usable from any directory, e.g. rust-atcoder)"
+script = '''
+cargo install --path bundler --locked --force
+echo ""
+case "$SHELL" in
+    */zsh) RC="~/.zshrc" ;;
+    */bash) RC="~/.bashrc" ;;
+    *) RC="your shell's rc file" ;;
+esac
+DIR="$(pwd)"
+case "$DIR" in
+    "$HOME"/*) DIR="\$HOME${DIR#"$HOME"}" ;;
+esac
+echo "Add this to $RC (detected from \$SHELL=$SHELL) if not already present:"
+echo ""
+echo "    export AC_ADAPTER_RS_ROOT=\"$DIR\""
+echo ""
+'''
+
+[tasks.uninstall-acbundle]
+description = "Uninstall the `acbundle` binary"
+script = '''
+cargo uninstall bundler
+echo ""
+case "$SHELL" in
+    */zsh) RC="~/.zshrc" ;;
+    */bash) RC="~/.bashrc" ;;
+    *) RC="your shell's rc file" ;;
+esac
+echo "Don't forget to also remove the AC_ADAPTER_RS_ROOT export (and, if added, the"
+echo "bundler completion source line) from $RC."
+echo ""
+'''
+
 [tasks.dev]
 script = '''
 cd docs && python3 -m http.server 8000

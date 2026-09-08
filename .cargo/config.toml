@@ -1,3 +1,9 @@
+[alias]
+# ac-adapter-rs 内部での開発・動作確認用の副経路。
+# 主なユースケース（rust-atcoder 等、リポジトリ外からの利用）には
+# `cargo install --path bundler` でインストールした `acbundle` バイナリを使う。
+acbundle = "run --quiet --release -p bundler --"
+
 [target.'cfg(all())']
 rustflags = [
     "-Dwarnings",
