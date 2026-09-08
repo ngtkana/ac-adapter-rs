@@ -23,7 +23,7 @@ cargo run --bin snippetter
 if [ ! -e "docs" ]; then
     mkdir -p "docs"
 fi
-cp contents/* docs/
+cp $(find contents -maxdepth 1 -type f) docs/
 if [ ! -e "docs/rustdoc" ]; then
     mkdir -p "docs/rustdoc"
 fi
