@@ -51,7 +51,9 @@ a {
 
 a:focus-visible,
 .tag-pill:focus-visible,
-.catalog-item:focus-visible {
+.catalog-item:focus-visible,
+#catalog-main:focus-visible,
+#catalog-list:focus-visible {
   outline: 2px solid var(--color-accent-strong);
   outline-offset: 2px;
   border-radius: 4px;
@@ -249,6 +251,30 @@ a:focus-visible,
   padding: 1.25rem 1.5rem;
 }
 
+.back-to-list {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  min-height: 44px;
+  margin-bottom: .8rem;
+  padding: .4rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.back-to-list:hover {
+  background: var(--color-accent-strong);
+  color: var(--color-on-accent-strong);
+}
+
 .catalog-main h2 {
   margin: 0 0 .3rem;
   font-size: 1.75rem;
@@ -383,6 +409,65 @@ a:focus-visible,
   font-family: inherit;
   font-size: .9em;
   background: var(--color-bg-primary);
+}
+
+/* モバイル: サイドバーと本文を上下1画面ずつに切り替える（一覧⇔詳細） */
+@media (max-width: 768px) {
+  #main-layout {
+    flex-direction: column;
+  }
+
+  .catalog-sidebar {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .catalog-sidebar,
+  .catalog-main {
+    flex: 1 1 auto;
+  }
+
+  /* iOSでinput focus時に自動ズームされるのを防ぐ（16px未満だと発生） */
+  .catalog-search input {
+    font-size: 16px;
+  }
+
+  .catalog-item {
+    padding: .55rem .7rem;
+  }
+
+  .meta-bar .tag-pill {
+    padding: .3rem .8rem;
+  }
+
+  .catalog-main {
+    padding: 1rem;
+  }
+
+  .doc-body table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* キーボードショートカットの案内はタッチ操作では意味がない */
+  #shortcuts-bar {
+    display: none;
+  }
+
+  #app.mobile-detail .catalog-sidebar {
+    display: none;
+  }
+
+  #app:not(.mobile-detail) .catalog-main {
+    display: none;
+  }
+
+  #app.mobile-detail .back-to-list {
+    display: inline-flex;
+  }
 }
 
 @media (prefers-color-scheme: dark) {
