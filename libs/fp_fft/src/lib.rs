@@ -1,12 +1,20 @@
-//! 有限体 $𝔽_P$ 上の高速フーリエ変換（FFT）。
+//! 有限体 $𝔽_P$ 上の高速フーリエ変換（数論変換, NTT）。
 //!
-//! Cooley-Tukey アルゴリズムで、多項式乗算を $O(n^2)$ から $O(n \log n)$ に削減。
+//! Cooley–Tukey 型のバタフライ演算を $\log n$ 段繰り返し、多項式の点値変換を
+//! $O(n^2)$ から $O(n \log n)$ に削減する。$P$ が NTT-friendly
+//! （$P - 1$ が十分大きな $2$ の冪で割り切れる）であることを利用し、$1$ の冪根を
+//! [`fp`] クレート上で計算する。
 //!
 //! # 仕様
 //!
-//! 配列 $(x_0, \ldots, x_{n-1})$ に対して：
-//! - `fft`: $X_i = \sum_{j=0}^{n-1} x_j \cdot w^{ij}$（$w$ は $n$ 次原始単位根）
-//! - `ifft`: `fft` の逆変換（$1/n$ でスケール）
+//! 長さ $n = 2^k$ の配列 $(x_0, \ldots, x_{n-1})$、$w$ を $1$ の原始 $n$ 乗根として：
+//!
+//! - [`fft`][]: $X_i = \sum_{j=0}^{n-1} x_j w^{ij}$ を計算する。出力はビット反転順
+//! - [`ifft`][]: [`fft`] の逆変換（結果を $1/n$ 倍）。入力はビット反転順を想定
+//! - [`build_twiddle_factors`][]: [`fft`]、[`ifft`] で使う回転因子（twiddle factor）を前計算
+//! - [`fft_with_twiddle_factors`]、[`ifft_with_twiddle_factors`][]: 回転因子を使い回す版
+//!
+//! いずれも `items.len()` は $2$ の冪であること、$n \mid P - 1$ であることが前提。
 //!
 //! # 例
 //!
@@ -21,10 +29,11 @@
 //! assert_eq!(data[1], fp_new::<P>(998244352)); // 1 - 2 ≡ -1 (mod P)
 //! ```
 //!
-//! # 公開 API
+//! # 計算量
 //!
-//! - [`fft`]: 前方フーリエ変換、$O(n \log n)$
-//! - [`ifft`]: 逆フーリエ変換、$O(n \log n)$
+//! - [`fft`]、[`ifft`][]: $O(n \log n)$（回転因子の前計算込み）
+//! - [`fft_with_twiddle_factors`]、[`ifft_with_twiddle_factors`][]: $O(n \log n)$
+//! - [`build_twiddle_factors`][]: $O(n)$
 
 use std::iter::successors;
 
@@ -64,11 +73,17 @@ impl<const P: u64> DiadicRootsTrait<P> for DiadicRoots<P> {
     const VALUE: [Fp<P>; DIADIC_ROOTS_BUFFER_LEN] = build_diadic_roots(find_primitive_root());
 }
 
-/// FFT をします。周波数間引き(Sande–Tukey)で、出力はbit-reversedです。
+/// FFT（数論変換）をする。周波数間引き（Sande–Tukey）型で、出力はビット反転順になる。
 ///
-/// 内部で [`build_twiddle_factors`] と [`fft_with_twiddle_factors`] が呼ばれます。
+/// 内部で [`build_twiddle_factors`] を呼んでから [`fft_with_twiddle_factors`] を適用する。
+/// 回転因子を使い回したい場合は [`fft_with_twiddle_factors`] を直接使う。
 ///
-/// # Examples
+/// # 仕様
+///
+/// `items` の長さ $n$ は $2$ の冪、かつ $n \mid P - 1$ であること。
+/// $X_i = \sum_{j=0}^{n-1} x_j w^{ij}$（$w$ は $1$ の原始 $n$ 乗根）をビット反転順に並べて返す。
+///
+/// # 例
 ///
 /// ```
 /// use fp::fp_new;
@@ -81,14 +96,21 @@ impl<const P: u64> DiadicRootsTrait<P> for DiadicRoots<P> {
 /// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
+///
+/// # 計算量
+///
+/// $O(n \log n)$
+#[doc(alias = "ntt")]
 pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
     let twiddle_factors = build_twiddle_factors(items.len());
     fft_with_twiddle_factors(items, &twiddle_factors);
 }
 
-/// Twiddle factor 前計算済みの場合の、[`fft`]。
+/// 回転因子を前計算済みの場合の [`fft`]。
 ///
-/// # Examples
+/// `twiddle_factors` には [`build_twiddle_factors`] に `items.len()` を渡した結果を使う。
+///
+/// # 例
 ///
 /// ```
 /// use fp::fp_new;
@@ -104,6 +126,10 @@ pub fn fft<const P: u64>(items: &mut [Fp<P>]) {
 /// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
+///
+/// # 計算量
+///
+/// $O(n \log n)$
 pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
     assert!(items.len().is_power_of_two());
     assert!(items.len().trailing_zeros() <= (P - 1).trailing_zeros());
@@ -118,11 +144,16 @@ pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_facto
     }
 }
 
-/// IFFT をします。時間間引き(Cooley–Tukey)で、入力はbit-reversed想定です。
+/// 逆FFT（数論変換の逆変換）をする。時間間引き（Cooley–Tukey）型で、入力はビット反転順を想定する。
 ///
-/// 内部で [`build_twiddle_factors`] と [`fft_with_twiddle_factors`] が呼ばれます。
+/// [`fft`] の逆変換：$x_j = \frac{1}{n}\sum_{i=0}^{n-1} X_i w^{-ij}$ を計算する。
+/// 内部で [`build_twiddle_factors`] を呼んでから [`ifft_with_twiddle_factors`] を適用する。
 ///
-/// # Examples
+/// # 仕様
+///
+/// 前提は [`fft`] と同じ（長さ $n$ は $2$ の冪、$n \mid P - 1$）。
+///
+/// # 例
 ///
 /// ```
 /// use fp::fp_new;
@@ -136,14 +167,22 @@ pub fn fft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_facto
 /// assert_eq!(a[0], fp_new::<P>(8));
 /// assert_eq!(a[1], fp_new::<P>(4));
 /// ```
+///
+/// # 計算量
+///
+/// $O(n \log n)$
+#[doc(alias = "ntt")]
+#[doc(alias = "intt")]
 pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
     let twiddle_factors = build_twiddle_factors(items.len());
     ifft_with_twiddle_factors(items, &twiddle_factors);
 }
 
-/// Twiddle factor 前計算済みの場合の、[`ifft`]。
+/// 回転因子を前計算済みの場合の [`ifft`]。
 ///
-/// # Examples
+/// `twiddle_factors` には [`build_twiddle_factors`] に `items.len()` を渡した結果を使う。
+///
+/// # 例
 ///
 /// ```
 /// use fp::fp_new;
@@ -159,6 +198,10 @@ pub fn ifft<const P: u64>(items: &mut [Fp<P>]) {
 /// assert_eq!(a[0], fp_new::<P>(8));
 /// assert_eq!(a[1], fp_new::<P>(4));
 /// ```
+///
+/// # 計算量
+///
+/// $O(n \log n)$
 pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_factors: &[Fp<P>]) {
     let items_len = items.len();
     assert!(items_len.is_power_of_two());
@@ -178,17 +221,18 @@ pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_fact
     }
 }
 
-/// Twiddle factors を計算する(FFT用)
+/// [`fft`]、[`ifft`] で使う回転因子（twiddle factor）を前計算する。
 ///
-/// 長さ $2n + 1$ の配列ができます。最初の $1$ つは使わない場所。最後の $1$ つは番兵です。
+/// 長さ $2n+1$ の配列を返す。添字 $0$ は未使用、添字 $2n$ は番兵（値 $1$）。
+/// $2$ の冪 $m$（$2 \le m \le n$）ごとに
 ///
 /// $$
-/// t _ { 2 ^ p + i } = e( i / 2 ^ p)
+/// t_{m+i} = w_m^i \quad (0 \le i < m)
 /// $$
 ///
-/// ただし $e(a / b)$ は $1$ の原始 $b$ 乗根の $a$ 乗です。
+/// を満たす（$w_m$ は $1$ の原始 $m$ 乗根）。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use fp::fp_new;
@@ -204,6 +248,10 @@ pub fn ifft_with_twiddle_factors<const P: u64>(items: &mut [Fp<P>], twiddle_fact
 /// assert_eq!(a[0], fp_new::<P>(8)); // 3 + 5
 /// assert_eq!(a[1], fp_new::<P>(998244351)); // 3 - 5 ≡ -1
 /// ```
+///
+/// # 計算量
+///
+/// $O(n)$
 pub fn build_twiddle_factors<const P: u64>(n: usize) -> Vec<Fp<P>> {
     let mut twiddle_factors = vec![fp_new::<P>(1); 2 * n + 1];
     for n in successors(Some(2), |&x| Some(2 * x)).take_while(|&x| x <= n) {

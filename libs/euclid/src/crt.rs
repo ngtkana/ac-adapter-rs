@@ -1,15 +1,29 @@
 use super::Signed;
 
-/// Returns an integer `res2, mod2` such that (res0 + mod0 ℤ) ∩(res1 + mod1ℤ) = res2 + mod2ℤ
+/// 中国剰余定理（CRT）。$2$ つの合同式の共通解を求める。
 ///
-/// # Examples
+/// $(r_0 + m_0\mathbb{Z}) \cap (r_1 + m_1\mathbb{Z})$ は空集合か、ある $(r_2, m_2)$ を用いて
+/// $r_2 + m_2\mathbb{Z}$ と書ける。空集合なら `None`、そうでなければ $(r_2, m_2)$ を返す。
+/// 内部では拡張ユークリッドの互除法（[`ext_gcd`](super::ext_gcd)）で $\gcd(m_0, m_1)$ の
+/// 線形結合を求め、解が存在する条件 $\gcd(m_0, m_1) \mid (r_1 - r_0)$ を判定する。
 ///
-/// Basic usage:
+/// # 仕様
+///
+/// - 前提: $m_0 > 0$, $m_1 > 0$（`res0`, `mod0`, `res1`, `mod1` の順に対応）
+/// - 戻り値: 解があれば `Some((r2, m2))`、なければ `None`
+///
+/// # 例
+///
 /// ```
 /// use euclid::crt;
 ///
+/// // x ≡ 5 (mod 6) かつ x ≡ 3 (mod 8) の解は x ≡ 11 (mod 24)
 /// assert_eq!(crt(5, 6, 3, 8), Some((11, 24)));
 /// ```
+///
+/// # 計算量
+///
+/// $O(\log \min(m_0, m_1))$
 pub fn crt<T: Signed>(res0: T, mod0: T, res1: T, mod1: T) -> Option<(T, T)> {
     assert!(T::zero() < mod0);
     assert!(T::zero() < mod1);

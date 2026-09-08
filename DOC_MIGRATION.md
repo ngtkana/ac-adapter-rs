@@ -13,15 +13,15 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [x] `convex_hull`
 - [x] `dinic`
 - [x] `dual_segtree`
-- [ ] `dynamic_modint`
-- [ ] `elim`
-- [ ] `euclid`
-- [ ] `fenwick`
-- [ ] `flat_graph`
-- [ ] `fp_fft`
-- [ ] `fp_fps`
-- [ ] `fp_precalc`
-- [ ] `gco`
+- [x] `dynamic_modint`
+- [x] `elim`
+- [x] `euclid`
+- [x] `fenwick`
+- [x] `flat_graph`
+- [x] `fp_fft`
+- [x] `fp_fps`
+- [x] `fp_precalc`
+- [x] `gco`
 - [x] `gss`
 - [x] `heap_slope_trick`
 - [x] `heap_tricks`
