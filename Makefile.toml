@@ -41,6 +41,11 @@ script = '''
 cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'note: `-W clippy::' | sed -n 's/.*note: `-W clippy::\([a-z|-]*\).*/\1/p' | sort | uniq
 '''
 
+[tasks.install-libbundle]
+command = "cargo"
+args = ["install", "--path", "bundler", "--locked", "--force"]
+description = "Install the `libbundle` binary to ~/.cargo/bin (usable from any directory, e.g. rust-atcoder)"
+
 [tasks.dev]
 script = '''
 cd docs && python3 -m http.server 8000
