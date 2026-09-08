@@ -75,7 +75,7 @@ fn find_root() -> Result<PathBuf> {
     bail!(
         "ac-adapter-rs リポジトリが見つかりません。\n\n\
          以下を ~/.zshrc または ~/.bashrc に追記してください:\n\n\
-         \x20\x20\x20\x20export AC_ADAPTER_RS_ROOT=\"$HOME/repos/ac-adapter-rs\"\n\n\
+         \x20\x20\x20\x20export AC_ADAPTER_RS_ROOT=\"/path/to/ac-adapter-rs\"  # このリポジトリのルート\n\n\
          追記後、シェルを再起動するか `source ~/.zshrc` を実行してください。"
     );
 }
