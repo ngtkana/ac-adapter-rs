@@ -1,0 +1,38 @@
+name: Claude Code PR Review
+
+on:
+  pull_request:
+    types: [opened, ready_for_review]
+
+concurrency:
+  group: claude-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  claude-review:
+    if: ${{ !github.event.pull_request.draft }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Claude Code Review
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+            LANGUAGE: ja
+
+            このPRの差分をレビューしてください。
+            - バグ、設計上の問題、改善点があれば日本語で具体的に指摘する
+            - 指摘が無ければその旨を簡潔に述べる
+
+            レビューコメントの最後に、区切り線を挟んで次のリンクを追記する:
+            [Anthropic Console で使用量を確認](https://console.anthropic.com)
+          claude_args: |
+            --model claude-sonnet-5
