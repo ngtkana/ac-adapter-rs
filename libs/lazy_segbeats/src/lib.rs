@@ -1,3 +1,41 @@
+//! 区間 chmin・chmax・区間加算と、区間 min・max・sum 取得に対応する Segment Tree Beats。
+//!
+//! 各ノードに区間の最大値上位 2 種類（`max[0]` が最大値、`max[1]` はそれ未満で最大の値）とその個数、
+//! 最小値についても対称な情報、および区間和を持たせる。区間 chmin（$a_i \gets \min(a_i, x)$）は、
+//! 最大値が $x$ 以下ならその区間は変化しないので打ち切り、２番目に大きい値が $x$ 未満なら
+//! 最大値だけを $x$ に書き換えて総和を差分更新するだけで済み、それ以外の場合だけ子に再帰する。
+//! chmax・区間加算も対称に実装する。再帰するたびに区間内の相異なる値の個数が真に減ることを用いた
+//! ならし解析（potential 論法）により、これらの更新はならし $O(\log^2 n)$ で処理できる。
+//!
+//! # 仕様
+//!
+//! 半開区間 $[l, r)$ に対する操作。
+//!
+//! - `change_min`: $a_i \gets \min(a_i, x)$（chmin）
+//! - `change_max`: $a_i \gets \max(a_i, x)$（chmax）
+//! - `range_add`: $a_i \gets a_i + x$（区間加算）
+//! - `query_min`, `query_max`, `query_sum`: 区間の最小値・最大値・総和の取得
+//!
+//! 要素の型は [`Elm`] トレイトを実装すること（符号付き・符号なし整数型に実装済み）。
+//!
+//! # 例
+//!
+//! ```
+//! use lazy_segbeats::Segbeats;
+//!
+//! let mut segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+//! segbeats.change_min(1..4, 3); // [1, 3, 2, 3, 5]
+//! assert_eq!(segbeats.query_sum(..), 1 + 3 + 2 + 3 + 5);
+//! segbeats.range_add(0..2, 10); // [11, 13, 2, 3, 5]
+//! assert_eq!(segbeats.query_max(..), 13);
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築（[`Segbeats::new`]）: $O(n)$
+//! - chmin・chmax・区間加算（[`Segbeats::change_min`], [`Segbeats::change_max`], [`Segbeats::range_add`]）: ならし $O(\log^2 n)$
+//! - 区間 min・max・sum（[`Segbeats::query_min`], [`Segbeats::query_max`], [`Segbeats::query_sum`]）: $O(\log n)$
+
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::ops::Add;
@@ -8,6 +46,16 @@ use std::ops::RangeBounds;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
+/// `RangeBounds` を半開区間 $[l, r)$ に変換する。
+///
+/// # 例
+///
+/// ```
+/// use lazy_segbeats::open;
+/// assert_eq!(open(10, 2..5), 2..5);
+/// assert_eq!(open(10, ..), 0..10);
+/// assert_eq!(open(10, 2..=5), 2..6);
+/// ```
 pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     use Bound::Excluded;
     use Bound::Included;
@@ -23,6 +71,10 @@ pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     })
 }
 
+/// chmin・chmax・区間加算と、区間 min・max・sum 取得に対応する Segment Tree Beats。
+///
+/// 各ノードが最大値上位 2 種類・最小値下位 2 種類とその個数、区間和、区間加算の遅延値を持つ。
+/// 仕組みの詳細はモジュールドキュメントを参照。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Segbeats<T> {
     len: usize,
@@ -31,6 +83,19 @@ pub struct Segbeats<T> {
 }
 
 impl<T: Elm> Segbeats<T> {
+    /// 配列から構築する。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// assert_eq!(segbeats.query_sum(..), 20);
+    /// ```
     pub fn new(src: &[T]) -> Self {
         let len = src.len().next_power_of_two();
         let lg = len.trailing_zeros();
@@ -48,31 +113,112 @@ impl<T: Elm> Segbeats<T> {
         }
     }
 
+    /// 区間 $[l, r)$ を chmin する: $a_i \gets \min(a_i, x)$。
+    ///
+    /// # 計算量
+    ///
+    /// ならし $O(\log^2 n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let mut segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// segbeats.change_min(1..4, 3);
+    /// assert_eq!(segbeats.query_sum(..), 1 + 3 + 2 + 3 + 5);
+    /// ```
     pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMin<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ を chmax する: $a_i \gets \max(a_i, x)$。
+    ///
+    /// # 計算量
+    ///
+    /// ならし $O(\log^2 n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let mut segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// segbeats.change_max(0..3, 3);
+    /// assert_eq!(segbeats.query_sum(..), 3 + 4 + 3 + 8 + 5);
+    /// ```
     pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMax<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ に $x$ を加算する: $a_i \gets a_i + x$。
+    ///
+    /// # 計算量
+    ///
+    /// ならし $O(\log^2 n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let mut segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// segbeats.range_add(0..2, 10);
+    /// assert_eq!(segbeats.query_sum(..), 11 + 14 + 2 + 8 + 5);
+    /// ```
     pub fn range_add(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<RangeAdd<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ の最小値 $\min_{i \in [l, r)} a_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(\log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// assert_eq!(segbeats.query_min(1..4), 2);
+    /// ```
     pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMin<T>>(range, ())
     }
 
+    /// 区間 $[l, r)$ の最大値 $\max_{i \in [l, r)} a_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(\log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// assert_eq!(segbeats.query_max(1..4), 8);
+    /// ```
     pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
     }
 
+    /// 区間 $[l, r)$ の総和 $\sum_{i \in [l, r)} a_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(\log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use lazy_segbeats::Segbeats;
+    /// let segbeats = Segbeats::new(&[1_i64, 4, 2, 8, 5]);
+    /// assert_eq!(segbeats.query_sum(1..4), 4 + 2 + 8);
+    /// ```
     pub fn query_sum(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QuerySum<T>>(range, ())
@@ -376,6 +522,11 @@ fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
     i.end <= j.start || j.end <= i.start
 }
 
+/// [`Segbeats`] の要素として使える型の要件。
+///
+/// 全順序（`Ord`）と加減算（`Add`/`Sub` とその代入版）を持つことに加え、
+/// 番兵として使う最大値・最小値、加法の単位元、`u32` 倍を提供する。
+/// 符号付き・符号なし整数型（`u8` から `u128`, `usize`, `i8` から `i128`, `isize`）に実装済み。
 pub trait Elm:
     Sized
     + std::fmt::Debug
@@ -386,9 +537,13 @@ pub trait Elm:
     + Sub<Output = Self>
     + SubAssign
 {
+    /// 番兵として使う最大値（`min` 配列の空きスロットや chmin の初期打ち切り値に使用）。
     fn max_value() -> Self;
+    /// 番兵として使う最小値（`max` 配列の空きスロットや chmax の初期打ち切り値に使用）。
     fn min_value() -> Self;
+    /// 加法の単位元 $0$。
     fn zero() -> Self;
+    /// $u32$ 倍を返す: $\mathrm{self} \times x$（区間和の差分更新に使用）。
     fn mul_u32(&self, x: u32) -> Self;
 }
 macro_rules! impl_elm {

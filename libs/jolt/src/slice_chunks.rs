@@ -1,8 +1,19 @@
-/// Chunk by predicate.
+/// 述語で隣接要素をグループ化（chunk 化）するトレイト。
 pub trait SliceChunks {
+    /// スライスの要素型。
     type Item;
-    /// Groups adjacent elements by a predicate.
-    /// (Rust 1.77.0)
+    /// 隣接する要素対が述語 $f$ を満たす限り、まとめて 1 つのチャンクにする。
+    ///
+    /// 標準ライブラリの `slice::chunk_by`（Rust 1.77.0 で安定化）と同じ仕様。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use riff::SliceChunks;
+    /// let a = [1, 1, 2, 2, 2, 3];
+    /// let chunks: Vec<&[i32]> = a.chunk_by(|x, y| x == y).collect();
+    /// assert_eq!(chunks, vec![&[1, 1][..], &[2, 2, 2][..], &[3][..]]);
+    /// ```
     fn chunk_by<F>(&self, f: F) -> SliceChunkBy<'_, Self::Item, F>
     where
         F: FnMut(&Self::Item, &Self::Item) -> bool;
@@ -18,6 +29,7 @@ impl<T> SliceChunks for [T] {
     }
 }
 
+/// [`SliceChunks::chunk_by`] が返すイテレータ。
 pub struct SliceChunkBy<'a, T, F> {
     a: &'a [T],
     f: F,
