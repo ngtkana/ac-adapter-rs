@@ -117,23 +117,16 @@ document.addEventListener('DOMContentLoaded', function () {
       <h2>${crateName}</h2>
       ${summaryHtml ? `<p class="summary">${summaryHtml}</p>` : ''}
       <div class="meta-bar">
-        ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}" role="button" tabindex="0">#${t}</span>`).join("")}
+        ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}">#${t}</span>`).join("")}
         <span>依存: ${crateMetadata.dependencies.length ? crateMetadata.dependencies.join(", ") : "なし"}</span>
         <a href="rustdoc/${crateName}/index.html">rustdocはこちら →</a>
       </div>
       <div class="doc-body">${bodyHtml}</div>
     `;
     main.querySelectorAll(".clickable-tag").forEach(el => {
-      const activate = () => {
+      el.addEventListener("click", () => {
         searchInput.value = `tag:${el.dataset.tag}`;
         renderList();
-      };
-      el.addEventListener("click", activate);
-      el.addEventListener("keydown", e => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          activate();
-        }
       });
     });
     renderMath(main);
