@@ -76,6 +76,22 @@ lazy.nvim:
 { "ngtkana/ac-adapter-rs" }
 ```
 
+ネイティブpackage（vim8 packages）を使う場合は、リポジトリ本体をクローンし直さず `$AC_ADAPTER_RS_ROOT`（インストール時に export 済み）を実行時に読んでランタイムパスへ追加するだけの薄いローダーを置く。dotfilesをリポジトリで同期している場合でも絶対パスを一切書かないので、そのままコミットして良い:
+
+```lua
+-- ~/.config/nvim/pack/plugins/start/acbundle-loader/plugin/acbundle.lua
+local root = os.getenv("AC_ADAPTER_RS_ROOT")
+if not root or root == "" then
+  return
+end
+
+local plugin_file = root .. "/nvim/plugin/acbundle.lua"
+if vim.fn.filereadable(plugin_file) == 1 then
+  vim.opt.rtp:append(root .. "/nvim")
+  dofile(plugin_file)
+end
+```
+
 ### アンインストール
 
 ```sh
