@@ -9,10 +9,10 @@
 //!
 //! 多重集合 $S$ を管理する。
 //!
-//! - [`IntervalHeap::new`]: 空の $S$ を構築
-//! - [`IntervalHeap::push`]: $x$ を挿入（$S \leftarrow S \uplus \{x\}$）
-//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`]: $\min(S)$, $\max(S)$ を参照
-//! - [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`]: $\min(S)$, $\max(S)$ を削除して返す
+//! - [`IntervalHeap::new`][]: 空の $S$ を構築
+//! - [`IntervalHeap::push`][]: $x$ を挿入（$S \leftarrow S \uplus \{x\}$）
+//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`][]: $\min(S)$, $\max(S)$ を参照
+//! - [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`][]: $\min(S)$, $\max(S)$ を削除して返す
 //! - `From<Vec<T>>`: 任意の列から $S$ を構築
 //! - `Extend`, `FromIterator`, `IntoIterator` も実装する
 //!
@@ -31,8 +31,8 @@
 //! # 計算量
 //!
 //! - 構築（`From<Vec<T>>`）: $O(n)$
-//! - [`IntervalHeap::push`], [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`]: $O(\log n)$
-//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`]: $O(1)$
+//! - [`IntervalHeap::push`], [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`][]: $O(\log n)$
+//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`][]: $O(1)$
 //!
 //! # 出典
 //!

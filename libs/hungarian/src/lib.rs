@@ -8,8 +8,8 @@
 //!
 //! # 仕様
 //!
-//! - 入力 `cost_matrix`：$h$ 行 $w$ 列（$h \le w$、各行は同じ長さ）
-//! - 出力 [`HungarianResult`]：全行 $i$ を列 $\mathrm{forward}_i$ に割り当てる最小費用の
+//! - 入力 `cost_matrix`: $h$ 行 $w$ 列（$h \le w$、各行は同じ長さ）
+//! - 出力 [`HungarianResult`][]: 全行 $i$ を列 $\mathrm{forward}_i$ に割り当てる最小費用の
 //!   マッチングと、その双対解（ポテンシャル）
 //!
 //! # 例
@@ -26,7 +26,7 @@
 //!
 //! # 計算量
 //!
-//! - [`hungarian`]：$O(h^2 w)$（$h$ は行数、$w$ は列数）
+//! - [`hungarian`][]: $O(h^2 w)$（$h$ は行数、$w$ は列数）
 
 use std::iter::Sum;
 use std::ops::Add;
@@ -165,8 +165,8 @@ pub struct HungarianResult<T: Value> {
 ///
 /// # 仕様
 ///
-/// - `zero()`：加法単位元 $0$
-/// - `infinity()`：任意の値以上となる番兵（整数型は `MAX`、浮動小数点型は `INFINITY`）
+/// - `zero()`: 加法単位元 $0$
+/// - `infinity()`: 任意の値以上となる番兵（整数型は `MAX`、浮動小数点型は `INFINITY`）
 pub trait Value:
     Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + PartialOrd
 {
