@@ -1,1 +1,1 @@
-searchState.loadedDescShard("manacher", 0, "Manacher’s algorithm\nReturns the palindrome array $A$ of the given string $s$.")
+searchState.loadedDescShard("manacher", 0, "…\n文字列 $s$ …")
