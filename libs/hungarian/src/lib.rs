@@ -1,18 +1,32 @@
-//! Solve an assignment problem by Hungarian algorithm.
+//! 割当問題を Hungarian 法（Jonker–Volgenant 法）で解く。
 //!
-//! # Example
+//! 行ごとにポテンシャル付き Dijkstra 法で最短増加路を探し、貪欲に augment することで
+//! 全行を過不足なく割り当てる最小費用マッチングを求める。ポテンシャル $\mathrm{left}_i$,
+//! $\mathrm{right}_j$ は常に実行可能性 $\mathrm{right}_j \le \mathrm{cost}_{i,j} + \mathrm{left}_i$
+//! を保つように更新され、割り当てられた辺ではこれが等号（相補性条件）になる。
+//! これは割当問題の LP 双対解に他ならず、双対性より原始解の最適性が保証される。
 //!
-//! Basic usage:
+//! # 仕様
+//!
+//! - 入力 `cost_matrix`：$h$ 行 $w$ 列（$h \le w$、各行は同じ長さ）
+//! - 出力 [`HungarianResult`]：全行 $i$ を列 $\mathrm{forward}_i$ に割り当てる最小費用の
+//!   マッチングと、その双対解（ポテンシャル）
+//!
+//! # 例
 //!
 //! ```
 //! use hungarian::hungarian;
 //!
 //! let result = hungarian(&[vec![2, 100, 10], vec![10, 100, 15]]);
 //!
-//! assert_eq!(result.value, 17);
+//! assert_eq!(result.value, 17); // 2 + 15
 //! assert_eq!(&*result.forward, vec![0, 2].as_slice());
 //! assert_eq!(&*result.backward, vec![Some(0), None, Some(1)].as_slice());
 //! ```
+//!
+//! # 計算量
+//!
+//! - [`hungarian`]：$O(h^2 w)$（$h$ は行数、$w$ は列数）
 
 use std::iter::Sum;
 use std::ops::Add;
@@ -20,7 +34,13 @@ use std::ops::AddAssign;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
-/// [See the crate level documentation](crate)
+/// コスト行列 `cost_matrix`（$h$ 行 $w$ 列、$h \le w$）に対する最小費用の割当を求める。
+///
+/// 詳細は[クレートレベルのドキュメント](crate)を参照。
+///
+/// # 計算量
+///
+/// $O(h^2 w)$
 pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     let h = cost_matrix.len();
     let w = cost_matrix[0].len();
@@ -121,24 +141,32 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
     }
 }
 
-/// A value object to represent the optimal solution of an assignment problem.
+/// [`hungarian`] の戻り値。原始解（マッチング）と双対解（ポテンシャル）の組。
+///
+/// $j = \mathrm{forward}_i$ のとき相補性条件 $\mathrm{right}_j - \mathrm{left}_i = \mathrm{cost}_{i,j}$
+/// が成り立つ。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct HungarianResult<T: Value> {
-    /// Takes the first component of a match and returns the second one.
+    /// 行 $i$ の割当先の列 $\mathrm{forward}_i$。全ての行が割り当てられる。
     pub forward: Box<[usize]>,
-    /// Takes the second component of a match and returns the first one.
+    /// 列 $j$ を割り当てられている行。割り当てがなければ `None`。
     pub backward: Box<[Option<usize>]>,
-    /// A left half of an optimal potential.
+    /// 双対解の左側（行のポテンシャル）。
     pub left: Box<[T]>,
-    /// A right half of an optimal potential.
+    /// 双対解の右側（列のポテンシャル）。
     pub right: Box<[T]>,
-    /// The value of an optimal solution.
+    /// 最適値 $\sum_i \mathrm{cost}_{i, \mathrm{forward}_i}$。
     pub value: T,
 }
 
-/// A trait to adapt a value type to [`hungarian`]
+/// [`hungarian`] が扱える値の型が実装するトレイト。
 ///
-/// This trait is already implemented for all the signed and unsigned integer types.
+/// 加減算・比較・総和が定義されていればよく、符号なし/符号付き整数型と `f32`/`f64` に実装済み。
+///
+/// # 仕様
+///
+/// - `zero()`：加法単位元 $0$
+/// - `infinity()`：任意の値以上となる番兵（整数型は `MAX`、浮動小数点型は `INFINITY`）
 pub trait Value:
     Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + PartialOrd
 {

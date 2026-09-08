@@ -1,37 +1,43 @@
-//! 黄金分割探索をします。
+//! 単峰関数の最小点を黄金分割探索で求める。
 //!
-//! 次の 2 つの関数のお好きな方をどうぞです。
+//! 関数 $f$ が区間内である点 $x$ を境に狭義単調減少→広義単調増加（単峰）であれば、
+//! 黄金比 $\phi = (1+\sqrt5)/2$ で区間を分割しながら評価点を使い回すことで、
+//! 呼び出し 1 回あたり `f` を高々 1 回しか呼ばずに探索区間を $1/\phi$ 倍へ縮小できる。
+//! 引数 `lower`, `upper` は名前に反して大小どちらの順でも動くが、
+//! 以下では説明のため `lower <= upper` とする。
 //!
+//! # 仕様
 //!
-//! # 共通仕様
+//! 入力 `lower`, `upper`, `f` は次を満たす必要がある。
 //!
-//! 引数名 `lower`, `upper`
-//! は、お名前に反して、別に逆でも動きます。ただ、このセクションでは説明のため `lower <= upper`
-//! であるとします。
+//! - （浮動小数点数のときのみ）`lower`, `upper` はともに有限
+//! - `f` は区間 $[lower, upper]$ 内のすべての値でパニックしない
+//! - `f` は凸である必要はなく、ある $x$ が存在して
+//!     - `f` は区間 $[lower, x]$ で狭義単調減少
+//!     - `f` は区間 $[x, upper]$ で広義単調増加
 //!
+//! 上記 $x$ は一意なので、それに「そこそこ近い」値を返す。打ち切り方の違いで次の 4 関数を提供する。
 //!
-//! ## Requirements
+//! - 整数
+//!     - 通常版: [`gss_integer`]
+//!     - スライス添字版: [`gss_on_slice`]
+//! - 浮動小数点数
+//!     - 回数指定版: [`gss_by_count`]
+//!     - 絶対誤差指定版: [`gss_by_absolute_eps`]
 //!
-//! 入力 `lower`, `upper`, `f` は次の要件を満たす必要があります。
+//! # 例
 //!
-//! * （浮動小数点数のときのみ）`lower.is_finite() && upper.is_finite()`
-//! * 関数 `f` が区間 [`lower`, `upper`] 内のすべての値でパニックしないこと
-//! * 関数 `f` は凸である必要はなく、次を満たす `x` が存在すること
-//!     * `f` は区間 [`lower`, `x`] で狭義単調減少
-//!     * `f` は区間 [`x`, `upper`] で広義単調増加
+//! ```
+//! use gss::gss_integer;
+//! let f = |x: i32| (x - 3) * (x - 3); // x = 3 で最小
+//! assert_eq!(gss_integer(0, 10, f), 3);
+//! ```
 //!
+//! # 計算量
 //!
-//! ## Returns
-//!
-//! Requirements 内の `x`
-//! は唯一なので、それに「そこそこ近いもの」を返します。探索の打ち切りの仕方のバリエーションでいくつかの関数があります。
-//!
-//! * 浮動小数点数
-//!     * 回数指定バージョン: [`gss_by_count`]
-//!     * 絶対誤差指定バージョン: [`gss_by_absolute_eps`]
-//! * 整数
-//!     * 普通バージョン: [`gss_integer`]
-//!     * スライス添字バージョン: [`gss_on_slice`]
+//! - [`gss_integer`], [`gss_on_slice`][]: $O(\log(upper - lower))$ 回の `f` 呼び出し
+//! - [`gss_by_count`][]: `count` 回の `f` 呼び出し
+//! - [`gss_by_absolute_eps`][]: $O\left(\log \dfrac{upper - lower}{eps}\right)$ 回の `f` 呼び出し
 
 use std::fmt::Debug;
 use std::ops::Add;
@@ -39,13 +45,39 @@ use std::ops::Div;
 use std::ops::Mul;
 use std::ops::Sub;
 
-/// スライスの添字バージョン。正確な値を返します。
+/// スライスの添字版。`a[i]` を `f(i)` とみなして黄金分割探索し、最小値の添字を厳密に返す。
+///
+/// `a` は単峰（クレートの仕様を参照）であることを要求する。
+///
+/// # 例
+///
+/// ```
+/// use gss::gss_on_slice;
+/// let a = [5, 3, 1, 2, 4];
+/// assert_eq!(gss_on_slice(&a), 2); // a[2] = 1 が最小
+/// ```
+///
+/// # 計算量
+///
+/// $O(\log n)$（$n$ は `a` の長さ）
 pub fn gss_on_slice<T: PartialOrd + Debug>(a: &[T]) -> usize {
     assert!(!a.is_empty());
     gss_integer(0, a.len() - 1, |i| &a[i])
 }
 
-/// 整数バージョン。正確な値を返します。
+/// 整数版。区間 $[lower, upper]$ の端点まで厳密に絞り込み、最小点を返す。
+///
+/// # 例
+///
+/// ```
+/// use gss::gss_integer;
+/// let f = |x: i32| (x - 3) * (x - 3);
+/// assert_eq!(gss_integer(0, 10, f), 3);
+/// ```
+///
+/// # 計算量
+///
+/// $O(\log(upper - lower))$
 pub fn gss_integer<T: Int + Golden, U: PartialOrd + Debug>(
     lower: T,
     upper: T,
@@ -72,7 +104,20 @@ pub fn gss_integer<T: Int + Golden, U: PartialOrd + Debug>(
     }
 }
 
-/// 回数指定バージョン。`count` 回イテレートします。
+/// 浮動小数点数版（回数指定）。`count` 回イテレートしたら打ち切る。
+///
+/// # 例
+///
+/// ```
+/// use gss::gss_by_count;
+/// let f = |x: f64| (x - 3.0) * (x - 3.0);
+/// let x = gss_by_count(0.0, 10.0, f, 50);
+/// assert!((x - 3.0).abs() < 1e-9);
+/// ```
+///
+/// # 計算量
+///
+/// `count` 回の `f` 呼び出し
 pub fn gss_by_count<T: Float + Golden, U: PartialOrd + Debug>(
     lower: T,
     upper: T,
@@ -89,11 +134,24 @@ pub fn gss_by_count<T: Float + Golden, U: PartialOrd + Debug>(
         .0
 }
 
-/// 絶対誤差指定バージョン。真の答えとの差が `eps` 以内になる保証ができるまでイテレートします。
+/// 浮動小数点数版（絶対誤差指定）。真の最小点との差が `eps` 以内になる保証ができるまでイテレートする。
 ///
 /// # 追加要件
 ///
-/// `T::zero() < eps && eps / lower.abs().max(upper.abs()) != T::zero()`
+/// $0 < eps$ かつ $eps / \max(|lower|, |upper|) \neq 0$（`eps` が丸め誤差に埋もれないため）
+///
+/// # 例
+///
+/// ```
+/// use gss::gss_by_absolute_eps;
+/// let f = |x: f64| (x - 3.0) * (x - 3.0);
+/// let x = gss_by_absolute_eps(0.0, 10.0, f, 1e-6);
+/// assert!((x - 3.0).abs() < 1e-6);
+/// ```
+///
+/// # 計算量
+///
+/// $O\left(\log \dfrac{upper - lower}{eps}\right)$
 pub fn gss_by_absolute_eps<T: Float + Golden, U: PartialOrd + Debug>(
     lower: T,
     upper: T,
@@ -138,22 +196,23 @@ fn gss_base<T: Golden + Debug, U: PartialOrd + Debug>(
     kv
 }
 
-/// 黄金分割をする関数 [`golden_sect`](Self::golden_sect)
-/// を提供します。すべての整数型、浮動小数点型に実装されています。
+/// 黄金分割点 [`golden_sect`](Self::golden_sect) を提供するトレイト。すべての組み込み整数型・浮動小数点型に実装済み。
 pub trait Golden:
     Add<Output = Self> + Mul<Output = Self> + Div<Output = Self> + Debug + PartialOrd + Copy
 {
-    /// `self` と `other` を φ:1 で内分します。整数の場合は近い方に丸めます。
+    /// `self` と `other` を $\phi : 1$ に内分する点を返す。整数の場合は最も近い整数に丸める。
     fn golden_sect(self, other: Self) -> Self;
 }
 
-/// [`gss_integer`] の引数型のためのトレイトです。全ての整数型に実装されています。
+/// [`gss_integer`] の引数型が満たすべきトレイト。すべての組み込み整数型に実装済み。
 pub trait Int: Add<Output = Self> + Debug + PartialOrd + Copy {
-    /// 数学的な `floor((self + upper)/2)` と厳密に等しいものを計算します。
+    /// $\lfloor (self + upper) / 2 \rfloor$ を厳密に計算する（`self <= upper` を仮定）。
     fn midpoint_sorted(self, upper: Self) -> Self;
-    /// `1`
+    /// $1$
     fn one() -> Self;
+    /// `self` を `f64` に変換する。
     fn as_f64(self) -> f64;
+    /// `x` を `Self` に変換する（`as` キャストと同じ丸め）。
     fn f64_as(x: f64) -> Self;
 }
 
@@ -209,7 +268,7 @@ impl_int! {
     (usize, isize),
 }
 
-/// [`gss_by_count`] の引数型のためのトレイトです。全ての整数型に実装されています。
+/// [`gss_by_count`], [`gss_by_absolute_eps`] の引数型が満たすべきトレイト。`f32`, `f64` に実装済み。
 pub trait Float:
     Add<Output = Self>
     + Sub<Output = Self>
@@ -219,17 +278,17 @@ pub trait Float:
     + PartialOrd
     + Copy
 {
-    /// 1 / φ = 0.6180339887498949
+    /// $1/\phi = 0.6180339887498949\ldots$
     const INVPHI: Self;
-    /// 0.0
+    /// $0$
     fn zero() -> Self;
-    /// 2.0
+    /// $2$
     fn two() -> Self;
-    /// `Self` の同名メソッド
+    /// `Self` の同名メソッドに委譲する。
     fn max(self, other: Self) -> Self;
-    /// `Self` の同名メソッド
+    /// `Self` の同名メソッドに委譲する。
     fn abs(self) -> Self;
-    /// `Self` の同名メソッド
+    /// `Self` の同名メソッドに委譲する。
     fn is_finite(self) -> bool;
 }
 

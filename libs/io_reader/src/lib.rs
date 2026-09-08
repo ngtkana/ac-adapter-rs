@@ -1,6 +1,21 @@
-//! 競技プログラミング用の入力ライブラリです。
+//! 空白区切りの標準入力・文字列を型安全にパースする。
 //!
-//! # Examples
+//! `input!` マクロの右辺には型ではなく [`Parser`] trait を実装した**値**を書き、それらを組み合わせて
+//! 複合的なパーサーを作る。入力元は [`BufRead`] を実装した型を [`Source`] でラップして与え、
+//! 省略時は標準入力（[`stdin_source`]）、テストでは文字列（[`Source::from`]）を使うのが典型的。
+//!
+//! # 仕様
+//!
+//! - `input! { pat = parser, ... }`: 標準入力から読み取り `pat` に束縛
+//! - `input! { from expr, pat = parser, ... }`: `expr`（[`Source`] に変換可能な値）から読み取り
+//! - パーサーの種類:
+//!   - 基本型: [`Char`], [`Str`], [`I32`], [`U64`] など（`Canonical<P>` により [`FromStr`] へ委譲）
+//!   - 列: [`Vector<P>`] で長さ $n$ の `Vec`
+//!   - 配列: [`Array<N, P>`] で長さ $N$ の配列
+//!   - タプル: `(P0, P1, ...)` で複数要素をまとめて読み取り
+//!   - 特殊: [`Usize1`]（1-indexed → 0-indexed）、[`Bools<Z, O>`]（0/1 文字列）、[`Bytes`]（バイト列）、[`Expect`]（固定トークンの検証）
+//!
+//! # 例
 //!
 //! ```
 //! use io_reader::{input, Usize, I32, Vector};
@@ -15,39 +30,6 @@
 //! # assert_eq!(m, 3);
 //! # assert_eq!(a, [10, 20, 30]);
 //! ```
-//!
-//! # Parser
-//!
-//! `input` macro において、右辺に書いてあるのは型ではなく値です。
-//!
-//! パーサー [`Parser`] trait を実装した型の**値**であり、これを組み合わせて新しい parser を作ります。
-//!
-//!
-//! # Source
-//!
-//! 入力源は [`BufRead`] trait を実装した型をラップした、[`Source`] 型を使えます。
-//!
-//! 代表的な用法は標準入力 [`Stdin`] と、テスト用に文字列 `&'static str` です。
-//!
-//!
-//! ## 標準入力
-//!
-//! 何も記載せず `input!` マクロを使えば使えます。
-//!
-//! 明示的に [`Source`] を取得したければ [`stdin_source`] 関数が使えます。[`MutexGuard`] で wrap
-//! したものが返ってきます。実体は [`OnceLock<Mutex<_>>`] に包まれて `static` に置かれています。
-//!
-//! ## 文字列
-//!
-//! [`Source::from`] を使って `&str` から変換することで構築できます。
-//!
-//! # パーサーの種類
-//!
-//! - **基本型**: [`Char`], [`Str`], [`I32`], [`U64`], など（`Canonical<P>` による）
-//! - **列**: [`Vector<P>`] で $n$ 個の要素
-//! - **配列**: [`Array<N, P>`] で長さ $N$ の配列
-//! - **タプル**: `(P0, P1)` 等でタプル
-//! - **特殊**: [`Usize1`] で 1-indexed usize、[`Bools<Z, O>`] で 0/1 文字列、[`Bytes`] でバイト列
 
 use std::{
     fmt::Debug,
@@ -59,9 +41,10 @@ use std::{
 
 static STDIN_SOURCE: OnceLock<Mutex<Source<BufReader<Stdin>>>> = OnceLock::new();
 
-/// Static に置かれた stdin source にアクセスします。
+/// プロセス全体で共有する標準入力の [`Source`] を取得する。
 ///
-/// 実体は [`OnceLock<Mutex<_>>`] に包まれていて、遅延初期化され、mutex 管理されます。
+/// 実体は [`OnceLock<Mutex<_>>`] に包まれた `static` で、初回呼び出し時に遅延初期化する。
+/// 返り値は [`MutexGuard`] なので、drop されるまでロックを保持する。
 pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
     STDIN_SOURCE
         .get_or_init(|| Mutex::new(Source::new(BufReader::new(stdin()))))
@@ -69,6 +52,29 @@ pub fn stdin_source() -> MutexGuard<'static, Source<BufReader<Stdin>>> {
         .unwrap()
 }
 
+/// 入力をパースして変数に束縛する。
+///
+/// 右辺には型ではなく [`Parser`] の値を書く。`pat = parser` をコンマ区切りで並べると、書いた順に
+/// 読み取って束縛する。`from` 節を省略すると標準入力（[`stdin_source`]）から読み取る。
+///
+/// # 仕様
+///
+/// - `input! { pat = parser, ... }`: 標準入力から読み取り
+/// - `input! { from expr, pat = parser, ... }`: `expr`（[`Source`] に変換可能な値）から読み取り
+///
+/// # 例
+///
+/// ```
+/// use io_reader::{input, U32, Str};
+///
+/// input! {
+///     from "42 abc",
+///     x = U32,
+///     s = Str,
+/// }
+/// assert_eq!(x, 42);
+/// assert_eq!(s, "abc");
+/// ```
 #[macro_export]
 macro_rules! input {
     (@from [$source:expr] @rest $($pat:pat = $parser:expr),* $(,)?) => {
@@ -94,6 +100,24 @@ macro_rules! input {
     };
 }
 
+/// 単一の値を 1 回だけパースする。
+///
+/// `input!` マクロが内部で使う 1 回分の読み取り処理だが、単発の読み取りにも直接使える。
+///
+/// # 仕様
+///
+/// - `read_value! { @from [source_expr] parser }`: 指定した [`Source`] から読み取り
+/// - `read_value! { parser }`: 標準入力（[`stdin_source`]）から読み取り
+///
+/// # 例
+///
+/// ```
+/// use io_reader::{read_value, Source, U32};
+///
+/// let mut source = Source::from("12");
+/// let x = read_value! { @from [&mut source] U32 };
+/// assert_eq!(x, 12);
+/// ```
 #[macro_export]
 macro_rules! read_value {
     (@from [$source:expr] $(,)? @rest $parser:expr) => {
@@ -117,9 +141,11 @@ macro_rules! read_value {
     };
 }
 
-/// [`BufRead`] を wrap し、token を返す型です。
+/// [`BufRead`] をラップし、空白区切りの token を順に取り出す。
 ///
-/// # Examples
+/// 内部で行を読み込みながら `split_whitespace` するため、改行をまたいでも連続した token 列として扱う。
+///
+/// # 例
 ///
 /// ```
 /// use io_reader::Source;
@@ -139,9 +165,9 @@ pub struct Source<R: BufRead> {
 }
 
 impl<R: BufRead> Source<R> {
-    /// [`BufReader`] から新しい [`Source`] を構築します。
+    /// [`BufRead`] から [`Source`] を構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use io_reader::Source;
@@ -161,9 +187,7 @@ impl<R: BufRead> Source<R> {
         }
     }
 
-    /// whitespace 区切りで、次の token を取得します。
-    ///
-    /// 入力の終端に達した場合は `None` を返します。
+    /// 空白区切りで次の token を取得する。入力の終端では `None` を返す。
     pub fn next_token(&mut self) -> Option<&str> {
         loop {
             if let Some(result) = self.tokens.next() {
@@ -182,7 +206,7 @@ impl<R: BufRead> Source<R> {
         }
     }
 
-    /// Panic 版の [`next_token`](Self::next_token) です。
+    /// [`next_token`](Self::next_token) の panic 版。終端に達すると panic する。
     pub fn next_token_unwrap(&mut self) -> &str {
         self.next_token()
             .unwrap_or_else(|| panic!("unexpected end of input."))
@@ -190,21 +214,26 @@ impl<R: BufRead> Source<R> {
 }
 
 impl<'a> From<&'a str> for Source<BufReader<&'a [u8]>> {
+    /// 文字列から [`Source`] を構築する。テストでの入力構築に使う。
     fn from(value: &'a str) -> Self {
         Self::new(BufReader::new(value.as_bytes()))
     }
 }
 
-/// 文字列(0個以上のtoken)を parse するアルゴリズムと、その戻り値型の情報を提要する trait です。
+/// [`Source`] から 0 個以上の token を読み取り、値へ変換するアルゴリズムを表す。
+///
+/// `input!` マクロの右辺に書く値の型は、すべてこの trait を実装する。
 pub trait Parser: Copy {
-    /// 戻り値型
+    /// 変換後の値の型。
     type Output;
 
-    /// [`Source`] から token を 0 個以上受け取って、目的の型に parse します。
+    /// [`Source`] から token を読み取り、[`Output`](Self::Output) 型の値に変換する。
     fn read<R: BufRead>(&self, source: &mut Source<R>) -> Self::Output;
 }
 
-/// [`FromStr`] 経由で $P$ を parse する [`Parser`] です。
+/// [`FromStr`] へ委譲して 1 token を parse する [`Parser`]。
+///
+/// [`Char`], [`Str`], [`I32`] などの基本型パーサーは、すべてこの型のインスタンスとして定義される。
 pub struct Canonical<P>(PhantomData<fn(P)>);
 impl<P> Clone for Canonical<P> {
     fn clone(&self) -> Self {
@@ -215,9 +244,9 @@ impl<P> Copy for Canonical<P> {}
 
 macro_rules! define_cannonical_parser {
     ($($prim:ty => $cann:ident),+$(,)?) => {$(
-        /// [`FromStr`] 経由で [`
+        /// [`
         #[doc = stringify!($prim)]
-        /// `] を parse する [`Parser`] です。
+        /// `] を [`FromStr`] 経由で parse する [`Parser`]。
         #[allow(non_upper_case_globals)]
         pub const $cann: Canonical<$prim> = Canonical::<$prim>(PhantomData);
     )+}
@@ -257,12 +286,12 @@ where
     }
 }
 
-/// 固定の token string を期待して読み取る [`Parser`] です。
+/// 固定の token を期待して読み取る [`Parser`]。
 ///
-/// [`Source`] から token をちょうど 1 個読んで、それが指定の文字列と一致していることを確認します。
-/// 一致しない場合は panic します。
+/// [`Source`] から token をちょうど 1 個読み、指定した文字列と一致するかを検証する。
+/// 一致しない場合は panic する。区切り文字や固定フォーマットの検証に使う。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use io_reader::{input, Expect, U32, Source};
@@ -293,9 +322,9 @@ impl Parser for Expect {
     }
 }
 
-/// 1-indexed の `usize` を読み取り、0-indexed に変換する [`Parser`] です。
+/// 1-indexed の `usize` を読み取り、0-indexed に変換する [`Parser`]。
 ///
-/// 0 が入力された場合は panic します。
+/// 読み取った値を $x$ とすると $x - 1$ を返す。$x = 0$ の場合は panic する。
 ///
 /// # 例
 ///
@@ -318,9 +347,11 @@ impl Parser for Usize1 {
     }
 }
 
-/// 長さを指定して [`Vec<P::Output>`] を parse します。
+/// 長さ $n$ を指定して `Vec<P::Output>` を parse する [`Parser`]。
 ///
-/// # Examples
+/// `P` を $n$ 回連続で適用して集める。
+///
+/// # 例
 ///
 /// ```
 /// use io_reader::{input, Vector, I32, Source, Parser};
@@ -346,11 +377,11 @@ impl<P: Parser> Parser for Vector<P> {
     }
 }
 
-/// Array `[P::Output; N]` の [`Parser`] です。
+/// 長さ $N$ の `[P::Output; N]` を parse する [`Parser`]。
 ///
-/// Parser は順序通り実行されます。
+/// `N` はコンパイル時に固定する定数で、`P` を $N$ 回連続で適用する。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use io_reader::{input, Array, I32, Source, Parser};
@@ -396,12 +427,11 @@ impl_parser_for_tuples! {
     P12, P13, P14, P15, P16,
 }
 
-/// `Vec<bool>` の [`Parser`] です。
+/// 1 token を文字ごとに解釈し `Vec<bool>` として parse する [`Parser`]。
 ///
-/// `Bools::<Z, O>` で、次のトークンの各文字を解析します。
-/// 文字 $Z$ は `false`, 文字 $O$ は `true` に対応します。
+/// 文字 $Z$ を `false`、文字 $O$ を `true` に対応させる。それ以外の文字が現れると panic する。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use io_reader::{input, Bools, Source, Parser};
@@ -437,9 +467,9 @@ impl<const Z: char, const O: char> Parser for Bools<Z, O> {
     }
 }
 
-/// `Vec<u8>` の [`Parser`] です。
+/// 1 token をそのまま `Vec<u8>` として parse する [`Parser`]。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use io_reader::{input, Bytes, Source, Parser};

@@ -1,13 +1,16 @@
-//! 競技プログラミング用の出力ライブラリです。
+//! 呼び出しのたびに flush しない出力マクロ。
 //!
-//! [`println`], [`print`] はマクロの呼び出しのたびに flush されて遅いです。
+//! [`println`], [`print`] は呼び出しのたびに標準出力を flush するため、大量に呼び出すと低速。
+//! [`dprintln`], [`dprint`] は内部バッファへの書き込みに留め、プログラム終了時（`atexit`）と
+//! パニック時（[`std::panic::set_hook`]）にまとめて flush することで呼び出しあたりのコストを下げる。
 //!
-//! そこでプログラムの中断・終了時に纏めて flush する版として、[`dprintln`],
-//! [`dprint`] を用意してあります。
+//! # 仕様
 //!
-//! Flush は `atexit` と [`std::panic::set_hook`] に登録されます。
+//! - [`dprint!`][]: [`print!`] 相当。バッファに書き込むのみで flush しない
+//! - [`dprintln!`][]: [`println!`] 相当。同様に遅延 flush
+//! - flush されるタイミング: プログラム正常終了時、パニック時
 //!
-//! # Examples
+//! # 例
 //!
 //! ```
 //! use io_writer::dprintln;
@@ -72,7 +75,18 @@ pub fn _print(args: fmt::Arguments) {
     buf.extend_from_slice(&local);
 }
 
-/// Flush を遅延した版の [`print`] です。
+/// バッファリングして遅延 flush する [`print!`] 相当のマクロ。
+///
+/// 呼び出しのたびに flush する [`print!`] と異なり、内部バッファに書き込むだけに留める。
+/// プログラム終了時またはパニック時にまとめて flush される。
+///
+/// # 例
+///
+/// ```
+/// use io_writer::dprint;
+///
+/// dprint!("{}", 42);
+/// ```
 #[macro_export]
 macro_rules! dprint {
     () => {
@@ -83,7 +97,18 @@ macro_rules! dprint {
     };
 }
 
-/// Flush を遅延した版の [`println`] です。
+/// バッファリングして遅延 flush する [`println!`] 相当のマクロ。
+///
+/// 呼び出しのたびに flush する [`println!`] と異なり、内部バッファに書き込むだけに留める。
+/// プログラム終了時またはパニック時にまとめて flush される。
+///
+/// # 例
+///
+/// ```
+/// use io_writer::dprintln;
+///
+/// dprintln!("{:?}", ["hello", "world!"]);
+/// ```
 #[macro_export]
 macro_rules! dprintln {
     () => {
