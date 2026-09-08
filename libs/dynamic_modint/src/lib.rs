@@ -1,28 +1,33 @@
-//! 実行時(遅延初期化) modint
+//! 法を実行時に決定できる mod 整数演算。
 //!
-//! 法が素数であることは仮定しません。実行時 mod はそういう使い方が多いですからね。
+//! 法をコンパイル時定数にできない場合に使う。法はスレッドローカルな `Cell` に保持し、
+//! [`define_mod!`] マクロが生成するタグ型（[`Mod`] トレイト実装）を介してアクセスする。
+//! 法が素数であることは要求しないため、逆元・除算は提供しない。
 //!
-//! # 実装されているもの
+//! # 仕様
 //!
-//! * 足し算: $a + b$
-//! * 引き算: $a - b$
-//! * Negation: $-a$
-//! * 掛け算: $a * b$
-//! * 総和: $\sum_i a_i$
-//! * 総積: $\prod_i a_i$
+//! - `define_mod! { M: T = value }`: 型 `M`（内部型 `T`）を定義し、法を `value` に初期化
+//! - `define_mod! { M: T }` + `M::set(value)`: 定義と初期化を分離
+//! - 型: `Mint<M>`（`M: Mod`）
+//! - 生成: [`mint::<M>(value)`](mint), [`Mint::new(value)`](Mint::new) — 値を法で還元
+//! - 演算: `+`, `-`, `*`, 単項 `-`
+//! - `Sum`: $\sum_i a_i$、`Product`: $\prod_i a_i$
 //!
-//! # Examples
+//! # 例
 //!
 //! ```
-//! use std::cell::Cell;
-//! use dynamic_modint::{define_mod, Mod, mint};
+//! use dynamic_modint::{define_mod, mint, Mod};
 //!
 //! define_mod! { M: usize = 19 }
 //!
 //! let x = mint::<M>(12);
 //! let y = mint::<M>(13);
-//! assert_eq!(x + y, mint::<M>(6));
+//! assert_eq!(x + y, mint::<M>(6)); // (12 + 13) mod 19 = 6
 //! ```
+//!
+//! # 計算量
+//!
+//! - 加減乗算: $O(1)$
 
 use std::{
     cmp::{Eq, PartialEq},
@@ -31,20 +36,22 @@ use std::{
     ops::{Add, AddAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign},
 };
 
-/// # 遅延初期化される MOD を定義する
+/// 実行時に法を持つタグ型 `$name` を定義する。
 ///
-/// * `$name`: 型名
-/// * `$type`: 内部型
-/// * `$value`: 法
+/// 法はスレッドローカルな `Cell<$type>` に保持する。`$value` を与えると定義と同時に
+/// 法を設定でき、省略すると後から `$name::set(value)` で設定する。
 ///
-/// # Examples
+/// # 仕様
 ///
-/// まず、定義と初期化を同時に行う方法です。
-/// 実行時初期化文を含むので、実行時評価文を書けるところにしか書けません。
+/// - `define_mod! { $name: $type }`: 法未設定（初期値 0）で `$name` を定義
+/// - `define_mod! { $name: $type = $value }`: 法を `$value` として `$name` を定義
+///
+/// # 例
+///
+/// 定義と初期化を同時に行う。
 ///
 /// ```
-/// use std::cell::Cell;
-/// use dynamic_modint::{define_mod, Mod, mint};
+/// use dynamic_modint::{define_mod, mint, Mod};
 ///
 /// define_mod! { M: usize = 19 }
 ///
@@ -53,11 +60,10 @@ use std::{
 /// assert_eq!(x + y, mint::<M>(6));
 /// ```
 ///
-/// あとから set することもできます。
+/// 定義と初期化を分ける。
 ///
 /// ```
-/// use std::cell::Cell;
-/// use dynamic_modint::{define_mod, Mod, mint};
+/// use dynamic_modint::{define_mod, mint, Mod};
 ///
 /// define_mod! { M: usize }
 /// M::set(19);
@@ -97,16 +103,23 @@ macro_rules! define_mod {
     };
 }
 
-/// 法を指定するためのタグ型
+/// 実行時に決まる法を保持するタグ型が実装するトレイト。
+///
+/// [`define_mod!`] マクロが実装を自動生成するため、直接実装する必要はない。
 pub trait Mod {
+    /// 法・値の内部表現型。
     type Value: Scalar;
 
+    /// 現在設定されている法を返す。
     fn get() -> Self::Value;
 
+    /// 法を `value` に設定する。
     fn set(value: Self::Value);
 }
 
-/// ベースとなる整数型 (primitive unsigned int)
+/// [`Mint`] の内部値として使える符号なし整数型が満たすべき制約。
+///
+/// `u8`, `u16`, `u32`, `u64`, `u128`, `usize` に実装済み。
 pub trait Scalar:
     PartialEq
     + Eq
@@ -125,7 +138,9 @@ pub trait Scalar:
     + MulAssign
     + RemAssign
 {
+    /// 加法単位元 $0$。
     const CONST_0: Self;
+    /// 乗法単位元 $1$。
     const CONST_1: Self;
 }
 
@@ -141,17 +156,40 @@ macro_rules! impl_scalar {
 }
 impl_scalar!(u8, u16, u32, u64, u128, usize);
 
-/// 実行時 modint 型
+/// 法 `M` を実行時に持つ mod 整数。
+///
+/// 内部値は常に $[0, M)$ に還元された状態で保持する。四則演算のうち加減乗算と
+/// 単項マイナスを実装し、法が素数と限らないため逆元・除算は提供しない。
+///
+/// # 例
+///
+/// ```
+/// use dynamic_modint::{define_mod, mint, Mod};
+///
+/// define_mod! { M: u64 = 19 }
+/// let x = mint::<M>(12);
+/// let y = mint::<M>(13);
+/// assert_eq!(x + y, mint::<M>(6)); // (12 + 13) mod 19 = 6
+/// ```
 pub struct Mint<M: Mod> {
     value: M::Value,
     _marker: PhantomData<M>,
 }
 impl<M: Mod> Mint<M> {
-    /// 中身の整数を取り出す
+    /// 内部値 $[0, M)$ をそのまま取り出す。
     pub const fn value(self) -> M::Value {
         self.value
     }
-    /// 整数を受け取って、[`Mint`] を構築する
+    /// 値を法 $M$ で還元して [`Mint`] を構築する。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use dynamic_modint::{define_mod, Mint, Mod};
+    ///
+    /// define_mod! { M: u64 = 19 }
+    /// assert_eq!(Mint::<M>::new(25).value(), 6); // 25 mod 19 = 6
+    /// ```
     pub fn new(value: M::Value) -> Self {
         Self {
             value: value % M::get(),
@@ -183,7 +221,16 @@ impl<M: Mod> Clone for Mint<M> {
 }
 impl<M: Mod> Copy for Mint<M> {}
 
-/// [`Mint::new`] と同じ
+/// [`Mint::new`] のエイリアス。
+///
+/// # 例
+///
+/// ```
+/// use dynamic_modint::{define_mod, mint, Mod};
+///
+/// define_mod! { M: u64 = 19 }
+/// assert_eq!(mint::<M>(25).value(), 6); // 25 mod 19 = 6
+/// ```
 pub fn mint<M: Mod>(value: M::Value) -> Mint<M> {
     Mint::new(value)
 }

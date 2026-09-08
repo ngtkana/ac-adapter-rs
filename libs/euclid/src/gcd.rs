@@ -1,7 +1,22 @@
 use super::Int;
 use std::mem::swap;
 
-/// Returns the greatest common divisor of `x` and `y`.
+/// 最大公約数 $\gcd(x, y)$ を返す。符号は無視し、$\gcd(0, 0) = 0$。
+///
+/// ユークリッドの互除法で $O(\log \min(|x|, |y|))$ で計算する。
+///
+/// # 例
+///
+/// ```
+/// use euclid::gcd;
+/// assert_eq!(gcd(42, 48), 6);
+/// assert_eq!(gcd(-42, 48), 6); // 符号は無視
+/// assert_eq!(gcd(0, 0), 0);
+/// ```
+///
+/// # 計算量
+///
+/// $O(\log \min(|x|, |y|))$
 pub fn gcd<T: Int>(mut x: T, mut y: T) -> T {
     while x != T::zero() {
         y = y.rem_euclid(x);
