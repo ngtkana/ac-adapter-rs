@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A Fenwick tree (Binary Indexed Tree) for efficient range queries."><title>fenwick - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fenwick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="結合的な演算を載せたFenwick木（Binary Indexed Tree）。"><title>fenwick - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="fenwick" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,18 +22,20 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fenwick/index.html">fenwick</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#when-to-use" title="When to use">When to use</a></li><li><a href="#examples" title="Examples">Examples</a></li><li><a href="#how-it-works" title="How it works">How it works</a></li><li><a href="#core-items" title="Core Items">Core Items</a></li><li><a href="#complexity" title="Complexity">Complexity</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fenwick</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fenwick/lib.rs.html#1-382">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A Fenwick tree (Binary Indexed Tree) for efficient range queries.</p>
-<p>This crate provides a generic implementation of Fenwick trees,
-which support point updates and prefix/range queries in O(log n) time.</p>
-<h2 id="when-to-use"><a class="doc-anchor" href="#when-to-use">§</a>When to use</h2>
-<p>A Fenwick tree is useful when you need to:</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../fenwick/index.html">fenwick</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>fenwick</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/fenwick/lib.rs.html#1-321">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>結合的な演算を載せたFenwick木（Binary Indexed Tree）。</p>
+<p>長さ$n$の配列を添字の最下位ビットで木構造化し、添字$i$のノードに区間
+$[i - (i \mathbin{&amp;} (-i)), i)$（1-indexed）の総積を持たせる。この構造により、
+1点更新も前計算和の取得も、木の根から葉までの経路上高々$O(\log n)$個の
+ノードを辿るだけで完了する。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p><a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a>トレイトで結合律を満たす二項演算 $(S, \oplus, e)$ を定義する。</p>
 <ul>
-<li>Quickly update individual elements</li>
-<li>Query aggregate values over ranges (sum, XOR, min, etc.)</li>
-<li>Process online queries where the dataset changes dynamically</li>
+<li><a href="trait.Op.html#tymethod.identity" title="associated function fenwick::Op::identity"><code>Op::identity</code></a>: 単位元 $e$</li>
+<li><a href="trait.Op.html#tymethod.add" title="associated function fenwick::Op::add"><code>Op::add</code></a>: 演算 $a \oplus b$（結合律を満たすこと）</li>
 </ul>
-<p>It’s particularly common in competitive programming for range sum queries.</p>
-<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<p>逆演算 $\ominus$ を持つ場合は<a href="trait.OpSub.html" title="trait fenwick::OpSub"><code>OpSub</code></a>も実装すると、任意区間 $[l, r)$ の
+畳み込みを $\mathrm{fold_to}(r) \ominus \mathrm{fold_to}(l)$ で計算できる。</p>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>fenwick::Fenwick;
 <span class="kw">use </span>fenwick::Op;
 <span class="kw">use </span>fenwick::OpSub;
@@ -59,29 +61,11 @@ which support point updates and prefix/range queries in O(log n) time.</p>
 <span class="kw">let </span><span class="kw-2">mut </span>tree = Fenwick::&lt;Sum&gt;::new(<span class="number">5</span>);
 tree.add(<span class="number">1</span>, <span class="kw-2">&amp;</span><span class="number">10</span>);
 tree.add(<span class="number">3</span>, <span class="kw-2">&amp;</span><span class="number">20</span>);
-
-<span class="comment">// Sum of elements in [1, 4)
-</span><span class="macro">assert_eq!</span>(tree.fold(<span class="number">1</span>..<span class="number">4</span>), <span class="number">30</span>);</code></pre></div>
-<h2 id="how-it-works"><a class="doc-anchor" href="#how-it-works">§</a>How it works</h2>
-<p>This crate uses a generic <a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a> trait to define the aggregation operation.
-Your type must implement:</p>
+<span class="macro">assert_eq!</span>(tree.fold(<span class="number">1</span>..<span class="number">4</span>), <span class="number">30</span>); <span class="comment">// 10 + 0 + 20</span></code></pre></div>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
-<li>An identity element (via <a href="trait.Op.html#tymethod.identity" title="associated function fenwick::Op::identity"><code>Op::identity</code></a>)</li>
-<li>An associative binary operation (via <a href="trait.Op.html#tymethod.add" title="associated function fenwick::Op::add"><code>Op::add</code></a>)</li>
+<li>構築（<a href="struct.Fenwick.html#method.new" title="associated function fenwick::Fenwick::new"><code>Fenwick::new</code></a>）: $O(n)$</li>
+<li>1点更新（<a href="struct.Fenwick.html#method.add" title="method fenwick::Fenwick::add"><code>Fenwick::add</code></a>, <a href="struct.Fenwick.html#method.sub" title="method fenwick::Fenwick::sub"><code>Fenwick::sub</code></a>）: $O(\log n)$</li>
+<li>畳み込み（<a href="struct.Fenwick.html#method.fold_to" title="method fenwick::Fenwick::fold_to"><code>Fenwick::fold_to</code></a>, <a href="struct.Fenwick.html#method.fold" title="method fenwick::Fenwick::fold"><code>Fenwick::fold</code></a>）: $O(\log n)$</li>
 </ul>
-<p>For range queries over arbitrary intervals, additionally implement <a href="trait.OpSub.html" title="trait fenwick::OpSub"><code>OpSub</code></a>
-to support subtraction. This enables the formula:
-<code>range_sum(start..end) = prefix_sum(end) - prefix_sum(start)</code>.</p>
-<h2 id="core-items"><a class="doc-anchor" href="#core-items">§</a>Core Items</h2>
-<ul>
-<li><a href="struct.Fenwick.html" title="struct fenwick::Fenwick"><code>Fenwick&lt;O&gt;</code></a>: The main data structure for efficient range queries</li>
-<li><a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a>: Trait defining associative operations (identity + add)</li>
-<li><a href="trait.OpSub.html" title="trait fenwick::OpSub"><code>OpSub</code></a>: Extension of <a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a> that also supports subtraction</li>
-</ul>
-<h2 id="complexity"><a class="doc-anchor" href="#complexity">§</a>Complexity</h2>
-<ul>
-<li><code>new(n)</code>: O(n)</li>
-<li><code>add()</code>, <code>sub()</code>: O(log n)</li>
-<li><code>fold_to()</code>, <code>fold()</code>: O(log n)</li>
-</ul>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fenwick.html" title="struct fenwick::Fenwick">Fenwick</a></dt><dd>A Fenwick tree (also known as a Binary Indexed Tree).</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait fenwick::Op">Op</a></dt><dd>A trait for defining associative operations on values.</dd><dt><a class="trait" href="trait.OpSub.html" title="trait fenwick::OpSub">OpSub</a></dt><dd>An extension of <a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a> that also supports subtraction.</dd></dl></section></div></main></body></html>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Fenwick.html" title="struct fenwick::Fenwick">Fenwick</a></dt><dd>Fenwick木（Binary Indexed Tree）。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait fenwick::Op">Op</a></dt><dd>結合律を満たす二項演算 $(S, \oplus, e)$。</dd><dt><a class="trait" href="trait.OpSub.html" title="trait fenwick::OpSub">OpSub</a></dt><dd>逆演算 $\ominus$ を追加する<a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a>の拡張。</dd></dl></section></div></main></body></html>
