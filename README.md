@@ -52,4 +52,12 @@ cp bundler/completions/_libbundle ~/.zsh/completions/
 echo 'source "$AC_ADAPTER_RS_ROOT/bundler/completions/libbundle.bash"' >> ~/.bashrc
 ```
 
+アンインストール:
+
+```sh
+cargo make uninstall-libbundle
+```
+
+シェル補完スクリプトをコピー・追記した場合は、`~/.zsh/completions/_libbundle` の削除と、rc ファイルに追記した `export AC_ADAPTER_RS_ROOT=...` / `source ...` 行も手動で削除してください。
+
 

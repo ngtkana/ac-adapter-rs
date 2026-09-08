@@ -61,6 +61,21 @@ echo "    export AC_ADAPTER_RS_ROOT=\"$DIR\""
 echo ""
 '''
 
+[tasks.uninstall-libbundle]
+description = "Uninstall the `libbundle` binary"
+script = '''
+cargo uninstall bundler
+echo ""
+case "$SHELL" in
+    */zsh) RC="~/.zshrc" ;;
+    */bash) RC="~/.bashrc" ;;
+    *) RC="your shell's rc file" ;;
+esac
+echo "Don't forget to also remove the AC_ADAPTER_RS_ROOT export (and, if added, the"
+echo "bundler completion source line) from $RC."
+echo ""
+'''
+
 [tasks.dev]
 script = '''
 cd docs && python3 -m http.server 8000
