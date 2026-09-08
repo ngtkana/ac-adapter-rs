@@ -1,143 +1,239 @@
-use itertools::Itertools;
-use once_cell::sync::OnceCell;
+use cargo_metadata::DependencyKind;
+use cargo_metadata::MetadataCommand;
 use std::collections::HashMap;
-use std::ffi::OsStr;
 use std::fs;
-use std::path::Path;
 use std::path::PathBuf;
-
-static PROJECT_ROOT: OnceCell<PathBuf> = OnceCell::new();
-static CRATE_METADATAS: OnceCell<HashMap<String, CrateMetadata>> = OnceCell::new();
 
 #[derive(Clone, Debug, PartialEq, serde::Serialize)]
 struct CrateMetadata {
     dependencies: Vec<String>,
     tags: Vec<String>,
+    /// crate root doc comment の要約行（1行目）のプレーンテキスト。検索用。
     description: Option<String>,
+    /// 要約行を HTML にレンダリングしたもの。表示用。
+    description_html: Option<String>,
+    /// crate root doc comment の要約行より後（本文）を HTML にレンダリングしたもの。
+    full: Option<String>,
 }
 
-#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
-struct MetadataFile {
-    tags: Option<TagsSection>,
-    description: Option<DescriptionSection>,
-}
-
-#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
-struct TagsSection {
-    list: Vec<String>,
-}
-
-#[derive(Clone, Debug, PartialEq, serde::Deserialize)]
-struct DescriptionSection {
-    short: String,
-}
-
-// TODO: use crates.js etc. in target/doc/{crates.js,source-files.js} to bundle files
-// TODO: or use `.packages | map({ "name": .name, "dependencies": .dependencies })` of `cargo
-// metadata
 fn main() {
-    PROJECT_ROOT.set(find_project_root_path()).unwrap();
-    CRATE_METADATAS
-        .set(
-            PROJECT_ROOT
-                .get()
+    let metadata = MetadataCommand::new().no_deps().exec().unwrap();
+    let project_root = metadata.workspace_root.clone();
+
+    let crate_metadatas: HashMap<String, CrateMetadata> = metadata
+        .packages
+        .iter()
+        .filter(|package| package.manifest_path.starts_with(project_root.join("libs")))
+        .map(|package| {
+            let dependencies = package
+                .dependencies
+                .iter()
+                .filter(|dep| dep.kind == DependencyKind::Normal && dep.path.is_some())
+                .map(|dep| dep.name.clone())
+                .collect();
+            let tags = package.keywords.clone();
+            let lib_rs_path: PathBuf = package
+                .manifest_path
+                .parent()
                 .unwrap()
-                .join(Path::new("libs"))
-                .read_dir()
-                .unwrap()
-                .filter_map(Result::ok)
-                .filter_map(|crate_entry| {
-                    let crate_path = crate_entry.path();
-                    let cargo_toml_path = crate_path.join("Cargo.toml");
-                    let metadata_path = crate_path.join("metadata.toml");
+                .join("src")
+                .join("lib.rs")
+                .into();
+            let (description, description_html, full) = fs::read_to_string(&lib_rs_path)
+                .map(|content| parse_crate_docs(&content))
+                .unwrap_or((None, None, None));
 
-                    if cargo_toml_path.exists() {
-                        let crate_name = crate_path
-                            .file_name()
-                            .unwrap()
-                            .to_string_lossy()
-                            .into_owned();
-                        let dependencies = parse_local_dependencies_from_cargo_toml(
-                            &fs::read_to_string(&cargo_toml_path).unwrap(),
-                        );
+            (
+                package.name.clone(),
+                CrateMetadata {
+                    dependencies,
+                    tags,
+                    description,
+                    description_html,
+                    full,
+                },
+            )
+        })
+        .collect();
 
-                        // メタデータファイルからタグと説明を読み取る
-                        let (tags, description) = if metadata_path.exists() {
-                            let metadata_content =
-                                fs::read_to_string(&metadata_path).unwrap_or_default();
-                            let metadata: MetadataFile = toml::from_str(&metadata_content)
-                                .unwrap_or(MetadataFile {
-                                    tags: None,
-                                    description: None,
-                                });
-
-                            let tags = metadata.tags.map_or(Vec::new(), |t| t.list);
-                            let description = metadata.description.map(|d| d.short);
-
-                            (tags, description)
-                        } else {
-                            (Vec::new(), None)
-                        };
-
-                        Some((crate_name, CrateMetadata {
-                            dependencies,
-                            tags,
-                            description,
-                        }))
-                    } else {
-                        None
-                    }
-                })
-                .collect(),
-        )
-        .unwrap();
-
-    let json = serde_json::to_string(CRATE_METADATAS.get().unwrap()).unwrap();
-    fs::create_dir_all(PROJECT_ROOT.get().unwrap().join("docs")).unwrap();
+    let json = serde_json::to_string(&crate_metadatas).unwrap();
+    let docs_dir = PathBuf::from(&project_root).join("docs");
+    fs::create_dir_all(&docs_dir).unwrap();
     fs::write(
-        PROJECT_ROOT
-            .get()
-            .unwrap()
-            .join("docs")
-            .join("dependencies.js"),
+        docs_dir.join("dependencies.js"),
         format!("dependencies = {json}"),
     )
     .unwrap();
 }
 
-fn find_project_root_path() -> PathBuf {
-    std::env::current_dir()
-        .unwrap()
-        .ancestors()
-        .find(|&ancestor| {
-            ancestor.read_dir().unwrap().any(|entry| {
-                entry.unwrap().path().as_path().file_name() == Some(OsStr::new("Cargo.lock"))
-            })
+/// crate ルートの `//!` doc comment を、要約行（1行目）と本文（2行目以降を HTML レンダリングしたもの）に分ける。
+fn parse_crate_docs(lib_rs_content: &str) -> (Option<String>, Option<String>, Option<String>) {
+    let lines: Vec<&str> = lib_rs_content
+        .lines()
+        .take_while(|line| line.starts_with("//!"))
+        .map(|line| {
+            let rest = &line["//!".len()..];
+            rest.strip_prefix(' ').unwrap_or(rest)
         })
-        .unwrap()
-        .to_path_buf()
+        .collect();
+
+    let mut idx = 0;
+    while idx < lines.len() && lines[idx].trim().is_empty() {
+        idx += 1;
+    }
+    if idx >= lines.len() {
+        return (None, None, None);
+    }
+    let description = lines[idx].trim().to_owned();
+    let description_html = render_markdown(&description, true);
+    idx += 1;
+    while idx < lines.len() && lines[idx].trim().is_empty() {
+        idx += 1;
+    }
+    if idx >= lines.len() {
+        return (Some(description), Some(description_html), None);
+    }
+
+    let markdown = lines[idx..].join("\n");
+    let full = render_markdown(&markdown, false);
+    (Some(description), Some(description_html), Some(full))
 }
 
-fn parse_local_dependencies_from_cargo_toml(file_content: &str) -> Vec<String> {
-    match toml::from_str::<toml::Value>(file_content).unwrap() {
-        toml::Value::Table(table) => match table.get("dependencies") {
-            None => Vec::new(),
-            Some(toml::Value::Table(table)) => table
-                .iter()
-                .filter_map(|(key, value)| -> Option<String> {
-                    (match value {
-                        toml::Value::Table(table) => table.get("path").map(|value| match value {
-                            toml::Value::String(path) => path,
-                            _ => unreachable!(),
-                        }),
-                        toml::Value::String(path) => Some(path),
-                        _ => unreachable!(),
-                    })
-                    .and_then(|path| path.starts_with("../").then(|| key.clone()))
-                })
-                .collect_vec(),
-            _ => unreachable!(),
-        },
-        _ => unreachable!(),
+const MARKDOWN_OPTIONS: pulldown_cmark::Options = pulldown_cmark::Options::ENABLE_TABLES;
+
+/// Markdown を HTML にレンダリングする。`$...$` / `$$...$$` の数式は、CommonMark のバックスラッシュ
+/// エスケープ規則（`\{` 等の記号直前のバックスラッシュを除去してしまう）で LaTeX が壊れないよう、
+/// パース前に退避させてパース後に生の内容のまま復元する。
+fn render_markdown(markdown: &str, inline_only: bool) -> String {
+    let (protected, math_spans) = protect_math(markdown);
+    let mut html = String::new();
+    pulldown_cmark::html::push_html(
+        &mut html,
+        pulldown_cmark::Parser::new_ext(&protected, MARKDOWN_OPTIONS),
+    );
+    for (i, span) in math_spans.iter().enumerate() {
+        html = html.replace(&math_placeholder(i), &escape_html_minimal(span));
+    }
+    if inline_only {
+        html = strip_outer_block_tag(html.trim());
+    }
+    html
+}
+
+/// 要約行（1行目）は常にインライン表示したいが、`# 見出し`のようにMarkdownの
+/// ブロック要素（`<h1>`〜`<h6>`, `<p>`, `<blockquote>`等）としてレンダリングされることがある。
+/// それらのタグをそのまま埋め込むと表示先の文脈（`<p class="summary">`等）でレイアウトが壊れるため、
+/// 最外周のブロックタグ1つだけを剥がしてテキストとして扱う。
+fn strip_outer_block_tag(html: &str) -> String {
+    if let Some(rest) = html.strip_prefix('<')
+        && let Some(tag_end) = rest.find('>')
+    {
+        let tag_name = rest[..tag_end].split_whitespace().next().unwrap_or("");
+        let closing = format!("</{tag_name}>");
+        if !tag_name.is_empty() && !tag_name.starts_with('/') && html.ends_with(&closing) {
+            return html[tag_end + 2..html.len() - closing.len()].to_owned();
+        }
+    }
+    html.to_owned()
+}
+
+fn math_placeholder(index: usize) -> String {
+    format!("KATEXMATHPLACEHOLDER{index}")
+}
+
+/// `$...$`（インライン）・`$$...$$`（ディスプレイ）の数式部分をプレースホルダーに置き換える。
+/// `\$` はエスケープされたただのドル記号として扱い、数式の区切りとは見なさない。
+fn protect_math(markdown: &str) -> (String, Vec<String>) {
+    let chars: Vec<char> = markdown.chars().collect();
+    let mut protected = String::with_capacity(markdown.len());
+    let mut math_spans = Vec::new();
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] == '\\' && i + 1 < chars.len() {
+            protected.push(chars[i]);
+            protected.push(chars[i + 1]);
+            i += 2;
+            continue;
+        }
+        if chars[i] == '$' {
+            let display = chars.get(i + 1) == Some(&'$');
+            let delim_len = if display { 2 } else { 1 };
+            let mut j = i + delim_len;
+            let mut end = None;
+            while j < chars.len() {
+                if chars[j] == '\\' && j + 1 < chars.len() {
+                    j += 2;
+                    continue;
+                }
+                if !display && chars[j] == '\n' {
+                    break;
+                }
+                if chars[j] == '$' && (!display || chars.get(j + 1) == Some(&'$')) {
+                    end = Some(j + delim_len);
+                    break;
+                }
+                j += 1;
+            }
+            if let Some(end) = end {
+                let span: String = chars[i..end].iter().collect();
+                protected.push_str(&math_placeholder(math_spans.len()));
+                math_spans.push(span);
+                i = end;
+                continue;
+            }
+        }
+        protected.push(chars[i]);
+        i += 1;
+    }
+    (protected, math_spans)
+}
+
+fn escape_html_minimal(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn tables_are_rendered() {
+        let markdown = "| a | b |\n|---|---|\n| 1 | 2 |\n";
+        let html = render_markdown(markdown, false);
+        assert!(html.contains("<table>"), "got: {html}");
+    }
+
+    #[test]
+    fn latex_punctuation_escapes_survive_markdown() {
+        // `\{`, `\}`, `\,`, `\#` はいずれも CommonMark 的には「記号の前のバックスラッシュ除去」
+        // の対象だが、数式中では KaTeX コマンドとしてバックスラッシュを残す必要がある。
+        let markdown = r"$\# \{\, x \,\}$";
+        let html = render_markdown(markdown, false);
+        assert!(html.contains(r"$\# \{\, x \,\}$"), "got: {html}");
+    }
+
+    #[test]
+    fn angle_brackets_in_math_are_html_escaped() {
+        let markdown = "$a < b$";
+        let html = render_markdown(markdown, false);
+        assert!(html.contains("$a &lt; b$"), "got: {html}");
+    }
+
+    #[test]
+    fn heading_as_description_is_unwrapped_to_plain_text() {
+        let (_, description_html, _) = parse_crate_docs("//! # Manacher's algorithm\n");
+        assert_eq!(description_html.unwrap(), "Manacher's algorithm");
+    }
+
+    #[test]
+    fn description_is_rendered_as_inline_html_without_p_wrapper() {
+        let (_, description_html, _) =
+            parse_crate_docs("//! [`Vec<u64>`] の話 $O(n)$\n//!\n//! 本文。\n");
+        let html = description_html.unwrap();
+        assert!(!html.contains("<p>"), "got: {html}");
+        assert!(html.contains("<code>Vec&lt;u64&gt;</code>"), "got: {html}");
+        assert!(html.contains("$O(n)$"), "got: {html}");
     }
 }

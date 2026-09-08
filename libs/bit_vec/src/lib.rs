@@ -1,4 +1,4 @@
-//! 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \\# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
+//! 論理的な [`bool`] 配列 $A$ を、長さ $\lceil \# A / 64 \rceil$ の [`Vec<u64>`] に pack した、bit vector です。
 
 mod range;
 mod range_mut;

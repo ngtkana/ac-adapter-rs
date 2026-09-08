@@ -1,18 +1,53 @@
-//! Segment tree and its variants.
+//! モノイドを載せた完全二分木（セグメント木）
 //!
-//! # [`Op`] trait
+//! 葉に要素を並べ、各内部ノードに左右の子の積を持たせた完全二分木として実装する。
+//! 結合律さえ満たせば区間 $[l, r)$ の総積は $O(\log n)$ 個のノード値の積に分解でき、
+//! 1 点更新も葉から根への経路上 $O(\log n)$ 個のノードを更新するだけで済む。
 //!
-//! * [`Op::identity`] returns the identity value $e$.
-//! * [`Op::mul`] multiplies two values: $x \cdot y$.
+//! # 仕様
 //!
-//! The multiplication must be associative.
+//! [`Op`] トレイトでモノイド $(S, \cdot, e)$ を定義する。
 //!
-//! Furthermore, when this is used for [`Sparse2dSegtree`] or [`Dense2dSegtree`], the multiplication must be commutative.
+//! * [`Op::identity`]: 単位元 $e$
+//! * [`Op::mul`]: 積 $x \cdot y$（結合律を満たすこと）
 //!
-//! # Modifier APIs
+//! [`Sparse2dSegtree`], [`Dense2dSegtree`] で使う場合は、さらに可換律も要求する。
 //!
-//! While [`Segtree`], [`SegtreeWithCompression`], and [`Dense2dSegtree`] have `entry` API, [`Sparse2dSegtree`] does not have it.
-//! Instead, it has `apply` API. You can apply a function $f$ that satisfies $f(x \cdot y) = x \cdot f(y)$ to a single element..
+//! 更新には 2 種類の API がある。
+//!
+//! * `entry` API（[`Segtree`], [`SegtreeWithCompression`], [`Dense2dSegtree`]）: 要素を直接書き換える
+//! * `apply` API（[`Sparse2dSegtree`]）: $f(x \cdot y) = x \cdot f(y)$ を満たす関数 $f$ を 1 要素に適用する
+//!
+//! # 例
+//!
+//! ```
+//! use segtree::Op;
+//! use segtree::Segtree;
+//!
+//! enum Add {}
+//! impl Op for Add {
+//!     type Value = i64;
+//!     fn identity() -> i64 {
+//!         0
+//!     }
+//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!         lhs + rhs
+//!     }
+//! }
+//!
+//! let mut segtree = Segtree::<Add>::new(&[1, 2, 3, 4, 5]);
+//! assert_eq!(segtree.fold(1..4), 2 + 3 + 4);
+//!
+//! *segtree.entry(0) = 10;
+//! assert_eq!(segtree.fold(..), 10 + 2 + 3 + 4 + 5);
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築（[`Segtree::new`]）: $O(n)$
+//! - 畳み込み（[`Segtree::fold`]）: $O(\log n)$
+//! - 1 点更新（[`Segtree::entry`]）: $O(\log n)$
+//! - 二分探索（[`Segtree::max_right`], [`Segtree::min_left`]）: $O(\log n)$
 
 use core::fmt;
 use std::collections::BTreeMap;

@@ -1,8 +1,39 @@
-//! Heavy-Light Decomposition
+//! 木を「重い辺」優先で連結パスに分解し、2頂点間パスを $O(\log n)$ 個の区間に分解する。
+//!
+//! 各頂点から部分木サイズ最大の子への辺を「重い辺」とし、重い辺だけを辿ってできる極大な鎖を連結パスとする。
+//! 連結パスごとに DFS 順の連続番号（シリアル番号）を割り当てると、根から任意の頂点へのパスは高々 $O(\log n)$ 本の連結パスをまたぐ。
+//! 軽い辺（重い辺でない辺）を1回通るごとに部分木サイズが半分以下になるため。
+//!
+//! # 仕様
+//! - 頂点数 $n$ の木を親配列（[`Hld::from_parents`]）または辺集合（[`Hld::from_edges`]）から構築する
+//! - [`Hld::path_segments`] は2頂点間のパスを [`PathSegment`]（連結パス内の連続区間）の列に、根側から葉側の順で分解する。区間数は $O(\log n)$
+//! - [`Hld::lca`], [`Hld::dist`], [`Hld::in_this_order`] は `path_segments` を用いて実装される
+//!
+//! # 例
+//! ```
+//! use hld::Hld;
+//!
+//! //     0
+//! //     |
+//! //     1
+//! //    / \
+//! //   2   3
+//! let parent = vec![0, 0, 1, 1];
+//! let (hld, _g) = Hld::from_parents(parent);
+//!
+//! assert_eq!(hld.lca(2, 3), 1);
+//! assert_eq!(hld.dist(2, 3), 2);
+//! assert!(hld.in_this_order(2, 1, 3));
+//! ```
+//!
+//! # 計算量
+//! - [`Hld::from_parents`], [`Hld::from_edges`]: $O(n)$
+//! - [`Hld::path_segments`], [`Hld::lca`], [`Hld::dist`], [`Hld::in_this_order`]: $O(\log n)$
 
 use std::iter::FusedIterator;
 
 /// The result of the heavy-light decomposition.
+#[doc(alias = "Heavy-Light Decomposition")]
 pub struct Hld {
     /// original id -> parent original id
     parent: Vec<usize>,

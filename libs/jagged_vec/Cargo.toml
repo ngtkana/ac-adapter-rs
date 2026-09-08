@@ -3,6 +3,7 @@ name = "jagged_vec"
 version = "0.1.0"
 authors = ["Kana <ngtkana@gmail.com>"]
 edition.workspace = true
+keywords = ["data-structure"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
