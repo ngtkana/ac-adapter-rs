@@ -22,7 +22,7 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../segtree/index.html">segtree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>segtree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/segtree/lib.rs.html#1-1107">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>モノイドを載せた完全二分木（セグメント木）</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../segtree/index.html">segtree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>segtree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/segtree/lib.rs.html#1-1112">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>モノイドを載せた完全二分木（セグメント木）</p>
 <p>葉に要素を並べ、各内部ノードに左右の子の積を持たせた完全二分木として実装する。
 結合律さえ満たせば区間 $[l, r)$ の総積は $O(\log n)$ 個のノード値の積に分解でき、
 1 点更新も葉から根への経路上 $O(\log n)$ 個のノードを更新するだけで済む。</p>
@@ -30,9 +30,14 @@
 <p><a href="trait.Op.html" title="trait segtree::Op"><code>Op</code></a> トレイトでモノイド $(S, \cdot, e)$ を定義する。</p>
 <ul>
 <li><a href="trait.Op.html#tymethod.identity" title="associated function segtree::Op::identity"><code>Op::identity</code></a>: 単位元 $e$</li>
-<li><a href="trait.Op.html#tymethod.mul" title="associated function segtree::Op::mul"><code>Op::mul</code></a>: 積 $x \cdot y$（結合律を満たすこと）</li>
+<li><a href="trait.Op.html#tymethod.op" title="associated function segtree::Op::op"><code>Op::op</code></a>: 積 $x \cdot y$（結合律を満たすこと）</li>
 </ul>
 <p><a href="struct.Sparse2dSegtree.html" title="struct segtree::Sparse2dSegtree"><code>Sparse2dSegtree</code></a>, <a href="struct.Dense2dSegtree.html" title="struct segtree::Dense2dSegtree"><code>Dense2dSegtree</code></a> で使う場合は、さらに可換律も要求する。</p>
+<p>構築には 2 種類の API がある。</p>
+<ul>
+<li><code>new</code>: 長さのみを指定し、単位元で初期化する</li>
+<li><code>from_slice</code>: 初期値のスライスから構築する</li>
+</ul>
 <p>更新には 2 種類の API がある。</p>
 <ul>
 <li><code>entry</code> API（<a href="struct.Segtree.html" title="struct segtree::Segtree"><code>Segtree</code></a>, <a href="struct.SegtreeWithCompression.html" title="struct segtree::SegtreeWithCompression"><code>SegtreeWithCompression</code></a>, <a href="struct.Dense2dSegtree.html" title="struct segtree::Dense2dSegtree"><code>Dense2dSegtree</code></a>）: 要素を直接書き換える</li>
@@ -48,19 +53,19 @@
     <span class="kw">fn </span>identity() -&gt; i64 {
         <span class="number">0
     </span>}
-    <span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
+    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
         lhs + rhs
     }
 }
 
-<span class="kw">let </span><span class="kw-2">mut </span>segtree = Segtree::&lt;Add&gt;::new(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
+<span class="kw">let </span><span class="kw-2">mut </span>segtree = Segtree::&lt;Add&gt;::from_slice(<span class="kw-2">&amp;</span>[<span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>]);
 <span class="macro">assert_eq!</span>(segtree.fold(<span class="number">1</span>..<span class="number">4</span>), <span class="number">2 </span>+ <span class="number">3 </span>+ <span class="number">4</span>);
 
 <span class="kw-2">*</span>segtree.entry(<span class="number">0</span>) = <span class="number">10</span>;
 <span class="macro">assert_eq!</span>(segtree.fold(..), <span class="number">10 </span>+ <span class="number">2 </span>+ <span class="number">3 </span>+ <span class="number">4 </span>+ <span class="number">5</span>);</code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
-<li>構築（<a href="struct.Segtree.html#method.new" title="associated function segtree::Segtree::new"><code>Segtree::new</code></a>）: $O(n)$</li>
+<li>構築（<a href="struct.Segtree.html#method.new" title="associated function segtree::Segtree::new"><code>Segtree::new</code></a>, <a href="struct.Segtree.html#method.from_slice" title="associated function segtree::Segtree::from_slice"><code>Segtree::from_slice</code></a>）: $O(n)$</li>
 <li>畳み込み（<a href="struct.Segtree.html#method.fold" title="method segtree::Segtree::fold"><code>Segtree::fold</code></a>）: $O(\log n)$</li>
 <li>1 点更新（<a href="struct.Segtree.html#method.entry" title="method segtree::Segtree::entry"><code>Segtree::entry</code></a>）: $O(\log n)$</li>
 <li>二分探索（<a href="struct.Segtree.html#method.max_right" title="method segtree::Segtree::max_right"><code>Segtree::max_right</code></a>, <a href="struct.Segtree.html#method.min_left" title="method segtree::Segtree::min_left"><code>Segtree::min_left</code></a>）: $O(\log n)$</li>
