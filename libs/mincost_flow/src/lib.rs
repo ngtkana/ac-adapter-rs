@@ -1,13 +1,48 @@
-//! Dijkstra 法の最短路反復により、最小費用流問題を解きます。
+//! 最小費用流問題を Primal-Dual 法（Dijkstra 法による最短路反復）で解く。
 //!
-//! [See the document of `MinCostFlow`](MinCostFlow)
+//! 各頂点にポテンシャル（[`MinCostFlow::slope`] 内部の `dual`）を持たせ、辺のコストを
+//! reduced cost $\mathrm{cost}(u, v) + \mathrm{dual}(u) - \mathrm{dual}(v) \ge 0$ に保つことで、
+//! 負辺があっても Dijkstra 法で最短増加路を求められる（Johnson 法と同じ考え方）。
+//! 増加路が見つかるたびにそのボトルネック容量分だけ一気に流し、ポテンシャルを更新して
+//! 次の増加路を探す、という操作を最短路長が単調に増加しなくなるまで繰り返す。
+//!
+//! # 仕様
+//!
+//! - [`MinCostFlow::new`][]: 頂点数 `n` で初期化
+//! - [`MinCostFlow::add_edge`][]: 辺 `(u, v)` を容量 `cap`・コスト `cost` で追加し、辺番号を返す
+//! - [`MinCostFlow::get_edge`][]: 辺番号から現在の流量込みの [`Edge`] を取得
+//! - [`MinCostFlow::flow`][]: `source` から `sink` へ流量 `flow_limit` を上限に最小費用で流し、
+//!   `(流量, 費用)` を返す
+//! - [`MinCostFlow::slope`][]: 流量を $0$ から `flow_limit` まで増やす過程の
+//!   費用関数（流量の区分線形凸関数）の頂点列 `(流量, 費用)` を返す
+//!
+//! # 例
+//!
+//! ```
+//! use mincost_flow::MinCostFlow;
+//!
+//! let mut mcf = MinCostFlow::new(4);
+//! mcf.add_edge(0, 1, 1, 20); // from, to, cap, cost
+//! mcf.add_edge(0, 2, 1, 20);
+//! mcf.add_edge(1, 2, 1, 10);
+//!
+//! let slope = mcf.slope(0, 2, i64::MAX);
+//! assert_eq!(slope, vec![(0, 0), (1, 20), (2, 50)]);
+//! ```
+//!
+//! # 計算量
+//!
+//! 頂点数 $n$、辺数 $m$、増加路を見つけた回数 $K$ とする。
+//!
+//! - Dijkstra 法 1 回: $O((n + m) \log n)$
+//! - [`MinCostFlow::flow`][]、[`MinCostFlow::slope`][]: $O(K(n + m) \log n)$
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
 use std::fmt::Debug;
 use std::mem::replace;
 
-/// [`MinCostFlow::get_edge`] の戻り値型
+/// [`MinCostFlow::get_edge`] が返す、辺の現在の状態（容量・流量・コスト）。
 #[derive(Clone, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Edge {
     from: usize,
@@ -51,13 +86,10 @@ struct __InternalEdge {
     cost: i64,
 }
 
-/// Dijkstra 法の最短路反復により、最小費用流問題を解きます。
+/// 最小費用流を管理するグラフ本体。[`MinCostFlow::new`] で構築し、
+/// [`MinCostFlow::add_edge`] で辺を追加してから [`MinCostFlow::flow`] / [`MinCostFlow::slope`] を呼ぶ。
 ///
-/// # 使い方
-///
-/// - [`new()`](MinCostFlow::new) で空グラフを構築してき、
-/// - [`add_edge()`](MinCostFlow::add_edge) で辺を挿入していき、
-/// - [`flow()`](MinCostFlow::flow) または [`slope()`](MinCostFlow::slope) で答えを聞きます。
+/// # 例
 ///
 /// ```
 /// # use mincost_flow::MinCostFlow;
@@ -69,9 +101,6 @@ struct __InternalEdge {
 /// let slope = mcf.slope(0, 2, i64::MAX);
 /// assert_eq!(slope, vec![(0, 0), (1, 20), (2, 50)]);
 /// ```
-///
-///
-/// また [`Debug`] トレイトを独自実装しています。
 #[derive(Clone, Default, Hash, PartialEq)]
 pub struct MinCostFlow {
     g: Vec<Vec<__InternalEdge>>,
@@ -86,7 +115,7 @@ impl Debug for MinCostFlow {
 }
 
 impl MinCostFlow {
-    /// 空グラフを構築します。
+    /// 頂点数 `n` の空グラフを構築する。
     pub fn new(n: usize) -> Self {
         Self {
             g: vec![Vec::new(); n],
@@ -94,7 +123,7 @@ impl MinCostFlow {
         }
     }
 
-    /// 辺を追加します。
+    /// 頂点 `u` から `v` へ容量 `cap`・コスト `cost` の辺を追加し、辺番号（[`MinCostFlow::get_edge`] で使う）を返す。
     pub fn add_edge(&mut self, u: usize, v: usize, cap: i64, cost: i64) -> usize {
         let res = self.edge_position.len();
         let su = self.g[u].len();
@@ -115,7 +144,7 @@ impl MinCostFlow {
         res
     }
 
-    /// `i` 番目に挿入した辺を取得します。
+    /// `i` 番目に追加した辺の現在の状態（流量込み）を [`Edge`] として取得する。
     pub fn get_edge(&self, i: usize) -> Edge {
         assert!(i < self.edge_position.len());
         let [from, i] = self.edge_position[i];
@@ -131,20 +160,23 @@ impl MinCostFlow {
         }
     }
 
-    /// 解きます
-    ///
-    /// # 出力形式
-    ///
-    /// `(flow, cost)`
+    /// `source` から `sink` へ流量 `flow_limit` を上限に最小費用で流し、`(流量, 費用)` を返す。
     pub fn flow(&mut self, source: usize, sink: usize, flow_limit: i64) -> (i64, i64) {
         self.slope(source, sink, flow_limit).pop().unwrap()
     }
 
-    /// 解きます
+    /// 流量を $0$ から `flow_limit` まで増やす過程の費用関数（流量の区分線形凸関数）の
+    /// 頂点列 `(流量, 費用)` を、流量の昇順に返す。
     ///
-    /// # 出力形式
+    /// # 例
     ///
-    /// `(flow, cost)`
+    /// ```
+    /// use mincost_flow::MinCostFlow;
+    ///
+    /// let mut mcf = MinCostFlow::new(2);
+    /// mcf.add_edge(0, 1, 3, 5); // 容量3・コスト5の辺のみ
+    /// assert_eq!(mcf.slope(0, 1, i64::MAX), vec![(0, 0), (3, 15)]); // 傾き5の線分1本
+    /// ```
     pub fn slope(&mut self, source: usize, sink: usize, flow_limit: i64) -> Vec<(i64, i64)> {
         let n = self.g.len();
         let mut slope = vec![(0, 0)];
