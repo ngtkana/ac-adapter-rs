@@ -24,6 +24,7 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
           prompt: |
             REPO: ${{ github.repository }}
             PR NUMBER: ${{ github.event.pull_request.number }}
@@ -37,4 +38,4 @@ jobs:
             [Anthropic Console で使用量を確認](https://console.anthropic.com)
           claude_args: |
             --model claude-sonnet-5
-            --allowedTools "Bash,Read,Grep,Glob"
+            --allowedTools "Bash(git diff:*),Bash(git log:*),Bash(gh pr diff:*),Read,Grep,Glob"
