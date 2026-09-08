@@ -174,6 +174,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   window.addEventListener("popstate", (e) => {
+    if (!isMobileLayout()) return;
     if (e.state && e.state.view === "detail") showMobileDetailView();
     else hideMobileDetailView();
   });
