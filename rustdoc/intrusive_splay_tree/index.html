@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="ノードに集約値の更新ロジックを持たせる侵入型（intrusive）のスプレイ木。"><title>intrusive_splay_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="intrusive_splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="動的集約に対応した柔軟な二分探索木のための割り込み型スプレイ木。"><title>intrusive_splay_tree - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="intrusive_splay_tree" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,38 +22,24 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#解説" title="解説">解説</a></li><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1511">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>ノードに集約値の更新ロジックを持たせる侵入型（intrusive）のスプレイ木。</p>
-<p>ノードへのアクセス・挿入・削除のたびに対象ノードを回転でルートまで浮上させる操作
-（<strong>スプレイ</strong>）によって木を平衡に保つ、自己調整型（self-adjusting）の二分探索木である。
-同じノードやその近傍への繰り返しアクセスに対してならし $O(\log n)$ を達成する。
-各ノードの集約値（合計・最小値など）は木の構造が変わるたびに <a href="trait.Op.html#tymethod.update" title="associated function intrusive_splay_tree::Op::update"><code>Op::update</code></a> が再計算するため、
-利用側は値そのものではなく更新規則だけを与えればよい。</p>
-<h2 id="解説"><a class="doc-anchor" href="#解説">§</a>解説</h2>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../intrusive_splay_tree/index.html">intrusive_<wbr>splay_<wbr>tree</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#使用時期" title="使用時期">使用時期</a></li><li><a href="#仕組み" title="仕組み">仕組み</a></li><li><a href="#例" title="例">例</a></li><li><a href="#コア要素" title="コア要素">コア要素</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>intrusive_splay_tree</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/intrusive_splay_tree/lib.rs.html#1-1578">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>動的集約に対応した柔軟な二分探索木のための割り込み型スプレイ木。</p>
+<p>このクレートは、<a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> トレイトを介してノード構造と集約ロジックを定義するスプレイ木を提供します。
+部分木に対して任意の集約値（合計、最小値、最大値など）を計算しながら、
+効率的なツリー操作が可能になります。</p>
+<h2 id="使用時期"><a class="doc-anchor" href="#使用時期">§</a>使用時期</h2>
+<p>以下が必要な場合に、このクレートを使用してください：</p>
 <ul>
-<li>分割・併合は <a href="trait.Op.html#tymethod.update" title="associated function intrusive_splay_tree::Op::update"><code>Op::update</code></a> の呼び出しを内包する 4 つのプリミティブ（split2 / split3 / merge2 / merge3）
-で構成する。対象ノードを splay でルートまで浮かせてから子を切り離す、あるいは 2 つの根を直接つなぐだけでよい。</li>
-<li>二分探索の方向は呼び出し側が渡すクロージャで指定する。<a href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2"><code>Navi2</code></a> は必ず葉まで進んで挿入・分割位置を決め、
-<a href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3"><code>Navi3</code></a> は <code>Found</code> で早期終了できるため削除・検索に使う。</li>
-<li><a href="struct.RangeEntry.html" title="struct intrusive_splay_tree::RangeEntry"><code>RangeEntry</code></a> は木を 左 / 中央 / 右 の 3 部分木に分割し、中央だけを一時的な <a href="struct.Tree.html" title="struct intrusive_splay_tree::Tree"><code>Tree</code></a> として貸し出す。
-drop 時に 3 部分を結合し直すことで、範囲操作の間も木全体の構造的な不変性を保つ。</li>
+<li>O(log n) 償却時間の自己平衡二分探索木</li>
+<li>ノード値とツリー集約に対する柔軟な制御</li>
+<li>同じデータセットに対する頻繁な挿入、削除、クエリ</li>
+<li>要素への順序付きアクセス（例：ソート済み範囲やk番目要素クエリ）</li>
 </ul>
-<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
-<p>型は <code>Tree&lt;O: Op&gt;</code>（<code>O::Store</code> はノードに格納する値の型）。主な操作：</p>
-<ul>
-<li>挿入: <a href="struct.Tree.html#method.insert" title="method intrusive_splay_tree::Tree::insert"><code>insert</code></a>, <a href="struct.Tree.html#method.insert_by_index" title="method intrusive_splay_tree::Tree::insert_by_index"><code>insert_by_index</code></a>,
-<a href="struct.Tree.html#method.insert_lower_bound_by_key" title="method intrusive_splay_tree::Tree::insert_lower_bound_by_key"><code>insert_lower_bound_by_key</code></a>,
-<a href="struct.Tree.html#method.insert_upper_bound_by_key" title="method intrusive_splay_tree::Tree::insert_upper_bound_by_key"><code>insert_upper_bound_by_key</code></a>,
-<a href="struct.Tree.html#method.push_front" title="method intrusive_splay_tree::Tree::push_front"><code>push_front</code></a>, <a href="struct.Tree.html#method.push_back" title="method intrusive_splay_tree::Tree::push_back"><code>push_back</code></a></li>
-<li>削除: <a href="struct.Tree.html#method.remove" title="method intrusive_splay_tree::Tree::remove"><code>remove</code></a>, <a href="struct.Tree.html#method.remove_by_index" title="method intrusive_splay_tree::Tree::remove_by_index"><code>remove_by_index</code></a>,
-<a href="struct.Tree.html#method.remove_by_key" title="method intrusive_splay_tree::Tree::remove_by_key"><code>remove_by_key</code></a>, <a href="struct.Tree.html#method.pop_front" title="method intrusive_splay_tree::Tree::pop_front"><code>pop_front</code></a>, <a href="struct.Tree.html#method.pop_back" title="method intrusive_splay_tree::Tree::pop_back"><code>pop_back</code></a></li>
-<li>検索: <a href="struct.Tree.html#method.get" title="method intrusive_splay_tree::Tree::get"><code>get</code></a>, <a href="struct.Tree.html#method.get_by_index" title="method intrusive_splay_tree::Tree::get_by_index"><code>get_by_index</code></a>, <a href="struct.Tree.html#method.get_by_key" title="method intrusive_splay_tree::Tree::get_by_key"><code>get_by_key</code></a>,
-<a href="struct.Tree.html#method.front" title="method intrusive_splay_tree::Tree::front"><code>front</code></a>, <a href="struct.Tree.html#method.back" title="method intrusive_splay_tree::Tree::back"><code>back</code></a></li>
-<li>分割・結合: <a href="struct.Tree.html#method.split_off" title="method intrusive_splay_tree::Tree::split_off"><code>split_off</code></a>, <a href="struct.Tree.html#method.split_off_by_index" title="method intrusive_splay_tree::Tree::split_off_by_index"><code>split_off_by_index</code></a>,
-<a href="struct.Tree.html#method.split_off_lower_bound_by_key" title="method intrusive_splay_tree::Tree::split_off_lower_bound_by_key"><code>split_off_lower_bound_by_key</code></a>,
-<a href="struct.Tree.html#method.split_off_upper_bound_by_key" title="method intrusive_splay_tree::Tree::split_off_upper_bound_by_key"><code>split_off_upper_bound_by_key</code></a>, <a href="struct.Tree.html#method.append" title="method intrusive_splay_tree::Tree::append"><code>append</code></a></li>
-<li>範囲アクセス: <a href="struct.Tree.html#method.range_by_key" title="method intrusive_splay_tree::Tree::range_by_key"><code>range_by_key</code></a>, <a href="struct.Tree.html#method.range_by_index" title="method intrusive_splay_tree::Tree::range_by_index"><code>range_by_index</code></a></li>
-<li>集約取得: <a href="struct.Tree.html#method.fold" title="method intrusive_splay_tree::Tree::fold"><code>fold</code></a>（ルートの集約値を $O(1)$ で返す）</li>
-</ul>
+<h2 id="仕組み"><a class="doc-anchor" href="#仕組み">§</a>仕組み</h2>
+<p>挿入と削除操作は、各ノードで比較するクロージャを使ってトラバーサルを制御します。
+ツリーは<strong>スプレイ</strong>（アクセスされたノードをルートに移動）によってリバランスされます。
+これは、同じノードまたは近くのノードに繰り返しアクセスする場合に特に効率的です。</p>
+<p><a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> トレイトを実装することで集約（例：値の合計）を定義でき、
+ツリー構造が変更されるたびに呼び出されます。</p>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>intrusive_splay_tree::Op;
 <span class="kw">use </span>intrusive_splay_tree::Tree;
@@ -62,22 +48,41 @@ drop 時に 3 部分を結合し直すことで、範囲操作の間も木全体
     value: i32,
     sum: i32,
 }
+<span class="kw">impl </span>Store {
+    <span class="kw">fn </span>value(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; i32 {
+        <span class="self">self</span>.value
+    }
+}
 
 <span class="kw">enum </span>O {}
 <span class="kw">impl </span>Op <span class="kw">for </span>O {
     <span class="kw">type </span>Store = Store;
 
     <span class="kw">fn </span>update(node: <span class="kw-2">&amp;mut </span>Store, left: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Store&gt;, right: <span class="prelude-ty">Option</span>&lt;<span class="kw-2">&amp;</span>Store&gt;) {
-        node.sum = node.value + left.map_or(<span class="number">0</span>, |l| l.sum) + right.map_or(<span class="number">0</span>, |r| r.sum);
+        node.sum = node.value;
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(l) = left {
+            node.sum += l.sum;
+        }
+        <span class="kw">if let </span><span class="prelude-val">Some</span>(r) = right {
+            node.sum += r.sum;
+        }
     }
 }
 
 <span class="kw">let </span><span class="kw-2">mut </span>tree = Tree::&lt;O&gt;::new();
-tree.insert_lower_bound_by_key(Store { value: <span class="number">10</span>, sum: <span class="number">10 </span>}, |v| v.value);
-tree.insert_lower_bound_by_key(Store { value: <span class="number">5</span>, sum: <span class="number">5 </span>}, |v| v.value);
+tree.insert_lower_bound_by_key(Store { value: <span class="number">10</span>, sum: <span class="number">10 </span>}, Store::value);
+tree.insert_lower_bound_by_key(Store { value: <span class="number">5</span>, sum: <span class="number">5 </span>}, Store::value);
 
-<span class="macro">assert_eq!</span>(tree.fold().unwrap().sum, <span class="number">15</span>);</code></pre></div>
+<span class="comment">// ツリー全体の集約をクエリ
+</span><span class="macro">assert_eq!</span>(tree.fold().unwrap().sum, <span class="number">15</span>);</code></pre></div>
+<h2 id="コア要素"><a class="doc-anchor" href="#コア要素">§</a>コア要素</h2>
+<ul>
+<li><a href="struct.Tree.html" title="struct intrusive_splay_tree::Tree"><code>Tree&lt;O&gt;</code></a> — メインのスプレイ木構造</li>
+<li><a href="trait.Op.html" title="trait intrusive_splay_tree::Op"><code>Op</code></a> — 集約ロジックを定義するトレイト</li>
+<li><a href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2"><code>Navi2</code></a> — 挿入/分割操作用のナビゲーション列挙型（終わらない検索）</li>
+<li><a href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3"><code>Navi3</code></a> — 削除/取得操作用のナビゲーション列挙型（早期終了可能）</li>
+</ul>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
-<p>挿入・削除・検索・分割・結合・範囲アクセス — いずれもならし $O(\log n)$（$n$ はノード数）</p>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RangeEntry.html" title="struct intrusive_splay_tree::RangeEntry">Range<wbr>Entry</a></dt><dd><a href="struct.Tree.html#method.range_by_key" title="method intrusive_splay_tree::Tree::range_by_key"><code>range_by_key</code></a> / <a href="struct.Tree.html#method.range_by_index" title="method intrusive_splay_tree::Tree::range_by_index"><code>range_by_index</code></a> が返す、
-範囲への一時的な可変参照。</dd><dt><a class="struct" href="struct.Tree.html" title="struct intrusive_splay_tree::Tree">Tree</a></dt><dd>スプレイ木。ノードの値の型は <code>O::Store</code>。</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2">Navi2</a></dt><dd>必ず葉まで進む二分探索の方向（早期終了なし）。</dd><dt><a class="enum" href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3">Navi3</a></dt><dd>目的のノードが見つかったら早期終了できる二分探索の方向。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait intrusive_splay_tree::Op">Op</a></dt><dd>構造変更のたびに集約値を再計算するロジックを定義するトレイト。</dd></dl></section></div></main></body></html>
+<p>すべての操作（挿入、削除、取得、分割、マージ）は <strong>O(log n) 償却時間</strong>です。
+スプレイにより、頻繁にアクセスされる要素がルートの近くに移動します。</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.RangeEntry.html" title="struct intrusive_splay_tree::RangeEntry">Range<wbr>Entry</a></dt><dd>ツリー内の要素の範囲への可変参照。</dd><dt><a class="struct" href="struct.Tree.html" title="struct intrusive_splay_tree::Tree">Tree</a></dt><dd>スプレイ木。</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Navi2.html" title="enum intrusive_splay_tree::Navi2">Navi2</a></dt><dd>常に進行する二分探索のナビゲーション方向（早期終了しない）。</dd><dt><a class="enum" href="enum.Navi3.html" title="enum intrusive_splay_tree::Navi3">Navi3</a></dt><dd>ターゲットを見つけたら早期に終了できる二分探索のナビゲーション方向。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait intrusive_splay_tree::Op">Op</a></dt><dd>構造的な変更の際に実行する内容を指定するアダプタトレイト。</dd></dl></section></div></main></body></html>
