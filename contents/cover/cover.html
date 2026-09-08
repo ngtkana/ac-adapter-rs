@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Zen+Kaku+Gothic+New:wght@500;700;900&display=swap" rel="stylesheet" />
+<style>
+  html,body{margin:0;padding:0;}
+  svg{display:block;font-family:"Zen Kaku Gothic New", sans-serif;}
+</style>
+</head>
+<body>
+<svg id="stage" width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- pictogram symbols: 40x40 viewBox, monoline style -->
+    <symbol id="ico-array" viewBox="0 0 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round">
+        <rect x="3" y="14" width="9" height="12" rx="3"/>
+        <rect x="15.5" y="14" width="9" height="12" rx="3"/>
+        <rect x="28" y="14" width="9" height="12" rx="3"/>
+      </g>
+    </symbol>
+    <symbol id="ico-tree" viewBox="0 0 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="20" y1="10" x2="10" y2="24"/>
+        <line x1="20" y1="10" x2="30" y2="24"/>
+        <line x1="10" y1="24" x2="5" y2="34"/>
+        <line x1="10" y1="24" x2="15" y2="34"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="20" cy="8" r="4.5"/>
+        <circle cx="10" cy="24" r="4"/>
+        <circle cx="30" cy="24" r="4"/>
+        <circle cx="5" cy="35" r="3.2"/>
+        <circle cx="15" cy="35" r="3.2"/>
+      </g>
+    </symbol>
+    <symbol id="ico-graph" viewBox="0 0 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <line x1="8" y1="10" x2="30" y2="14"/>
+        <line x1="8" y1="10" x2="12" y2="32"/>
+        <line x1="30" y1="14" x2="12" y2="32"/>
+        <line x1="30" y1="14" x2="34" y2="30"/>
+        <line x1="12" y1="32" x2="34" y2="30"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="8" cy="10" r="4"/>
+        <circle cx="30" cy="14" r="4"/>
+        <circle cx="12" cy="32" r="4"/>
+        <circle cx="34" cy="30" r="4"/>
+      </g>
+    </symbol>
+    <symbol id="ico-matrix" viewBox="0 0 40 40">
+      <g fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+        <path d="M10 4 C5 4 5 4 5 9 V31 C5 36 5 36 10 36"/>
+        <path d="M30 4 C35 4 35 4 35 9 V31 C35 36 35 36 30 36"/>
+      </g>
+      <g fill="currentColor">
+        <circle cx="14" cy="13" r="2.2"/><circle cx="20" cy="13" r="2.2"/><circle cx="26" cy="13" r="2.2"/>
+        <circle cx="14" cy="20" r="2.2"/><circle cx="20" cy="20" r="2.2"/><circle cx="26" cy="20" r="2.2"/>
+        <circle cx="14" cy="27" r="2.2"/><circle cx="20" cy="27" r="2.2"/><circle cx="26" cy="27" r="2.2"/>
+      </g>
+    </symbol>
+  </defs>
+
+  <rect width="1200" height="630" fill="#FFFDF6"/>
+  <g id="tiles"></g>
+
+  <g id="foreground">
+    <text x="90" y="290" font-size="122" font-weight="900" fill="#6b4700">AC Adapter</text>
+    <text x="94" y="340" font-size="33" font-weight="500" fill="#5c4520">A Rust Library for Competitive Programming</text>
+    <rect x="92" y="360" width="150" height="9" rx="4.5" fill="#FFBF00"/>
+  </g>
+</svg>
+
+<script>
+  // seeded RNG for reproducible tile placement
+  function mulberry32(a){
+    return function(){
+      a |= 0; a = a + 0x6D2B79F5 | 0;
+      let t = Math.imul(a ^ a >>> 15, 1 | a);
+      t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+      return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+  }
+  const rand = mulberry32(20260909);
+  const icons = ["ico-array","ico-tree","ico-graph","ico-matrix"];
+  const NS = "http://www.w3.org/2000/svg";
+  const tiles = document.getElementById("tiles");
+
+  // Bridson's Poisson-disk sampling: guarantees a minimum spacing between
+  // points while still filling all available space, which is what makes
+  // blue-noise scatter read as "evenly random" instead of clumped/gapped
+  // (see: Bridson 2007, "Fast Poisson Disk Sampling in Arbitrary Dimensions")
+  function poissonDisk(width, height, minDist, k, rng) {
+    const cellSize = minDist / Math.SQRT2;
+    const gridW = Math.ceil(width / cellSize);
+    const gridH = Math.ceil(height / cellSize);
+    const grid = new Array(gridW * gridH).fill(-1);
+    const points = [];
+    const active = [];
+    const cellOf = (x, y) => Math.floor(x / cellSize) + Math.floor(y / cellSize) * gridW;
+    const add = (p) => { points.push(p); active.push(p); grid[cellOf(p[0], p[1])] = points.length - 1; };
+    add([rng() * width, rng() * height]);
+    while (active.length) {
+      const ai = Math.floor(rng() * active.length);
+      const p = active[ai];
+      let placed = false;
+      for (let i = 0; i < k; i++) {
+        const angle = rng() * 2 * Math.PI;
+        const radius = minDist * (1 + rng());
+        const q = [p[0] + Math.cos(angle) * radius, p[1] + Math.sin(angle) * radius];
+        if (q[0] < 0 || q[0] >= width || q[1] < 0 || q[1] >= height) continue;
+        const gx = Math.floor(q[0] / cellSize), gy = Math.floor(q[1] / cellSize);
+        let ok = true;
+        for (let dx = -2; dx <= 2 && ok; dx++) {
+          for (let dy = -2; dy <= 2 && ok; dy++) {
+            const nx = gx + dx, ny = gy + dy;
+            if (nx < 0 || nx >= gridW || ny < 0 || ny >= gridH) continue;
+            const pi = grid[nx + ny * gridW];
+            if (pi >= 0 && Math.hypot(points[pi][0] - q[0], points[pi][1] - q[1]) < minDist) ok = false;
+          }
+        }
+        if (ok) { add(q); placed = true; break; }
+      }
+      if (!placed) active.splice(ai, 1);
+    }
+    return points;
+  }
+
+  const pad = 70;
+  const points = poissonDisk(1200 + pad * 2, 630 + pad * 2, 120, 30, rand);
+  for (const [px, py] of points) {
+    const x = px - pad, y = py - pad;
+    const icon = icons[Math.floor(rand() * icons.length)];
+    const rot = (rand() - 0.5) * 36;
+    const scale = 1.3 + rand() * 0.55;
+    const color = "#efe7d4"; // uniform, low-contrast paper-texture color
+    const g = document.createElementNS(NS, "g");
+    g.setAttribute("transform", `translate(${x},${y}) rotate(${rot}) scale(${scale})`);
+    g.setAttribute("color", color);
+    const use = document.createElementNS(NS, "use");
+    use.setAttributeNS("http://www.w3.org/1999/xlink", "href", "#" + icon);
+    use.setAttribute("width", "40");
+    use.setAttribute("height", "40");
+    g.appendChild(use);
+    tiles.appendChild(g);
+  }
+</script>
+</body>
+</html>
