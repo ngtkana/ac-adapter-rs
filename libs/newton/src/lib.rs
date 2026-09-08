@@ -17,68 +17,10 @@ pub fn triangular_root(y: u64) -> u64 {
     }
 }
 
-pub fn sqrt(y: u64) -> u64 {
-    if y == 0 {
-        0
-    } else {
-        // `y.next_power_of_two().trailing_zeros()` overflows for `y > 1 << 63`, so we compute
-        // the same value (`ceil(log2(y))`) via `leading_zeros` instead.
-        let bits = u64::BITS - (y - 1).leading_zeros();
-        let mut x = 1 << bits.div_ceil(2);
-        loop {
-            let next_x = u64::midpoint(x, y / x);
-            if x <= next_x {
-                return x;
-            }
-            x = next_x;
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
-    use super::sqrt;
     use super::triangular_root;
     use rand::prelude::*;
-
-    #[test]
-    fn test_sqrt() {
-        fn square(x: u64) -> u64 {
-            x * x
-        }
-        let mut rng = StdRng::seed_from_u64(42);
-        for y in 0..100 {
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-        for y in (0..100).map(square) {
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-        for y in (0..100).map(|x| square(x) + 1) {
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-        for y in (1..100).map(|x| square(x) - 1) {
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-        for &y in &[u64::MAX / 2, u64::MAX / 2 + 1] {
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-        for _ in 0..100 {
-            let y = rng.gen_range(0..u64::MAX / 2);
-            let x = sqrt(y);
-            assert!(square(x) <= y);
-            assert!(y < square(x + 1));
-        }
-    }
 
     #[test]
     fn test_triangular_root() {
