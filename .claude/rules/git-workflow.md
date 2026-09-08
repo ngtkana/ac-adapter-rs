@@ -8,6 +8,7 @@
 1. `git-workflow:create-worktree` で新しい branch の worktree を作成
 2. worktree 内で変更
 3. `git-workflow:pr-and-cleanup` で PR 作成 + worktree cleanup
+   （UI目視確認待ちの場合は [[ui-visual-verification]] 手順6が優先、cleanupを保留する）
 
 **禁止**:
 - `main` への直接コミット
