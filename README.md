@@ -29,7 +29,7 @@ cargo make install-libbundle
 Then run from anywhere (e.g. your competitive-programming repo), pointing `AC_ADAPTER_RS_ROOT` at this repo:
 
 ```sh
-export AC_ADAPTER_RS_ROOT="$HOME/repos/ac-adapter-rs"  # add to your shell rc
+export AC_ADAPTER_RS_ROOT="/path/to/ac-adapter-rs"  # add to your shell rc; use this repo's root
 libbundle fp_fps dinic > bundled.rs                    # multiple crates, deduped
 ```
 

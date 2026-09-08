@@ -92,14 +92,25 @@ fn insert_fold_markers(source: &str, crate_names: &[String]) -> String {
 
     let mut result = String::with_capacity(source.len());
     let mut depth = None::<(usize, String)>;
+    // `mod <name> {` の直前に付く `#[allow(..)]` 等の属性行を、fold の外に出さず
+    // 内側に含めるため、いったんバッファに溜めてから fold開始マーカーの後に流し込む。
+    let mut pending_attrs = Vec::new();
     for line in source.lines() {
         if depth.is_none() {
+            if line.starts_with("#[") {
+                pending_attrs.push(line);
+                continue;
+            }
             for name in crate_names {
                 if line.starts_with(&format!("mod {name} {{")) {
                     let _ = writeln!(result, "// {name} {{{{{{");
                     depth = Some((0, name.clone()));
                     break;
                 }
+            }
+            for attr_line in pending_attrs.drain(..) {
+                result.push_str(attr_line);
+                result.push('\n');
             }
         }
         result.push_str(line);
