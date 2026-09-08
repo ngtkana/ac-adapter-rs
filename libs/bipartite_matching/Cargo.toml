@@ -2,6 +2,7 @@
 name = "bipartite_matching"
 version = "0.1.0"
 edition.workspace = true
+keywords = ["graph"]
 
 [dependencies]
 rand = { workspace = true }

@@ -1,72 +1,52 @@
-//! Use the two types of sieve of eratosthenes to query.
+//! エラトステネスの篩により、素数判定・素数列挙・素因数分解を行う。
 //!
-//! # Difference between [`Sieve`] and [`LpdSieve`]
+//! 篩は $2$ から順に合成数を篩い落とすことで素数を求める。本クレートは 2 種類の篩を提供する。
+//! [`Sieve`] は篩全体を bool 配列として持つ素朴な実装で、素因数分解は試し割りで行う。
+//! [`LpdSieve`] は各数について最小素因数（least prime divisor）を記録する実装で、
+//! テーブル引きにより素因数分解を高速化できるが、構築コストと必要な篩の長さが大きくなる。
 //!
-//! [`Sieve`] is an ordinary sieve of eratosthenes, which is constructed in O ( n lg lg n ) time,
-//! while [`LpdSieve`] is a table of "least prime divisors'.
+//! # 仕様
 //!
-//! Least prime divisors will accelerate prime factorization, but it takes O ( n lg n ) time to
-//! construct it. Furthermore, it requires a sieve to constructed to the length n + 1, while the
-//! trial division algorithm requires a sieve to constructed to the length √n + 1.
+//! 長さ $n$ の篩を構築すると、$2 \le i \le n$ を満たす各 $i$ の素数性・最小素因数を判定できる。
 //!
+//! - [`Sieve::is_prime`] / [`LpdSieve::is_prime`]: $i$ が素数かどうかを判定
+//! - [`Sieve::prime_numbers`] / [`LpdSieve::prime_numbers`]: 素数を昇順に列挙するイテレータ
+//! - [`Sieve::prime_factors`] は試し割り（$\sqrt{i} + 1$ までの篩が必要）、
+//!   [`LpdSieve::prime_factors`] はテーブル引き（$i + 1$ までの篩が必要）で、
+//!   $i$ を素因数の昇順の列に分解する
 //!
-//! # Common usage
+//! いずれの篩も必要な長さを超えたクエリを受けると自動的に伸長される。
 //!
-//! It can be used to check if an integer is a prime number.
+//! # 例
 //!
 //! ```
 //! use erato::LpdSieve;
 //! use erato::Sieve;
 //!
+//! // 素数判定
 //! let mut sieve = Sieve::new();
 //! assert!(sieve.is_prime(2));
 //! assert!(!sieve.is_prime(20));
 //!
-//! let mut sieve = LpdSieve::new();
-//! assert!(sieve.is_prime(2));
-//! assert!(!sieve.is_prime(20));
-//! ```
-//!
-//!
-//! And it can enumerate all the prime numbers.
-//!
-//! ```
-//! use erato::LpdSieve;
-//! use erato::Sieve;
-//!
-//! let mut sieve = Sieve::new();
+//! // 素数列挙
 //! let mut prime_numbers = sieve.prime_numbers();
 //! assert_eq!(prime_numbers.next(), Some(2));
 //! assert_eq!(prime_numbers.next(), Some(3));
 //!
-//! let mut sieve = LpdSieve::new();
-//! let mut prime_numbers = sieve.prime_numbers();
-//! assert_eq!(prime_numbers.next(), Some(2));
-//! assert_eq!(prime_numbers.next(), Some(3));
-//! ```
-//!
-//!
-//! # Prime factorization
-//!
-//! `Sieve` provides a trial-division algorithm,
-//!
-//! ```
-//! use erato::Sieve;
-//!
-//! let mut sieve = Sieve::new();
+//! // 素因数分解（試し割り）
 //! itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
+//!
+//! // 素因数分解（テーブル引き）
+//! let mut lpd_sieve = LpdSieve::new();
+//! itertools::assert_equal(lpd_sieve.prime_factors(84), vec![2, 2, 3, 7]);
 //! ```
 //!
-//! while `LpdSieve` provides a table-lookup algorithm.
+//! [`PrimeFactors`] を使うと、素因数列を重複除去したり連長圧縮したりできる。
 //!
-//! ```
-//! use erato::LpdSieve;
+//! # 計算量
 //!
-//! let mut sieve = LpdSieve::new();
-//! itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
-//! ```
-//!
-//! See [`PrimeFactors`] to make unique or run-length encode them.
+//! - [`Sieve`] 構築: $\Theta(n \log \log n)$、素因数分解: $\Theta(\pi(\sqrt{n}))$
+//! - [`LpdSieve`] 構築: $O(n \log n)$、素因数分解: $O(\omega(n))$（重複込みの素因数の個数）
 
 mod converters;
 mod int;
