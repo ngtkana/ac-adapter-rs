@@ -1,10 +1,49 @@
-//! Suffix Array を計算します。
+//! 接尾辞配列 (Suffix Array) と LCP 配列を計算する。
+//!
+//! 接尾辞配列は文字列の全接尾辞を辞書順に並べたときの開始位置の列であり、
+//! 文字列検索・最長共通部分文字列などの土台になるデータ構造。
+//! [`suffix_array`] は倍加法（prefix doubling）で構築する：長さ $d$ の接頭辞に基づく
+//! 順位を保ったまま $d = 1, 2, 4, \ldots$ と倍加させ、各段階でバケットソートにより
+//! 長さ $2d$ の接頭辞での順位に更新する。
+//! [`lcp_array`] は接尾辞配列上で隣接する接尾辞どうしの最長共通接頭辞の長さを、
+//! Kasai のアルゴリズムにより $O(n)$ で計算する。
+//!
+//! # 仕様
+//!
+//! - [`suffix_array`][]: 長さ $n$ の列 `s` に対し、`s[sa[0]..], s[sa[1]..], ..., s[sa[n-1]..]`
+//!   が辞書順に並ぶような添字列 `sa` を返す
+//! - [`lcp_array`][]: `sa` に対し、`s[sa[i]..]` と `s[sa[i+1]..]` の最長共通接頭辞の長さを
+//!   並べた長さ $n - 1$ の列を返す
+//!
+//! # 例
+//!
+//! ```
+//! use suffix_array::lcp_array;
+//! use suffix_array::suffix_array;
+//! let s = "abracadabra";
+//! let sa = suffix_array(s.as_bytes());
+//! assert_eq!(sa, vec![10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);
+//! let lcp = lcp_array(s.as_bytes(), &sa);
+//! assert_eq!(lcp, vec![1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`suffix_array`][]: $O(n \log n)$
+//! - [`lcp_array`][]: $O(n)$
 
-/// Surrix Array を計算します。
+/// 接尾辞配列を構築する。
 ///
-/// TODO: 実装を短くできるような気がします。
+/// 長さ $d$ の接頭辞に基づく順位を保ちながら $d = 1, 2, 4, \ldots$ と倍加させる
+/// 倍加法で構築する。各段階で $(\mathrm{rank}_i, \mathrm{rank}_{i+d})$ をキーに
+/// バケットソートし直すことで、`s[i..]` どうしの辞書順比較を長さ $2d$ の
+/// 接頭辞の比較に帰着させる。
 ///
-/// # Examples
+/// # 仕様
+///
+/// `s[sa[0]..], s[sa[1]..], ..., s[sa[n-1]..]` が辞書順に並ぶような添字列 `sa` を返す。
+///
+/// # 例
 ///
 /// ```
 /// use suffix_array::suffix_array;
@@ -12,6 +51,10 @@
 /// let sa = suffix_array(s.as_bytes());
 /// assert_eq!(sa, vec![10, 7, 0, 3, 5, 8, 1, 4, 6, 9, 2]);
 /// ```
+///
+/// # 計算量
+///
+/// $O(n \log n)$
 pub fn suffix_array<T: Ord>(s: &[T]) -> Vec<usize> {
     let n = s.len();
     let mut ord: Vec<usize> = (0..n).collect();
@@ -61,12 +104,31 @@ pub fn suffix_array<T: Ord>(s: &[T]) -> Vec<usize> {
     ord
 }
 
-/// LCP 配列を計算します。
+/// LCP 配列を構築する。
 ///
-/// # 戻り値
+/// 接尾辞配列上を辞書順に走査しながら、直前に処理した接尾辞との共通接頭辞長を
+/// 使い回す Kasai のアルゴリズムにより、各文字の比較回数を償却定数回に抑えて
+/// $O(n)$ で計算する。
 ///
-/// `s[sa[i]..]` と `s[sa[i + 1]..]` の最小共通部分列のの長さ `lcp[i]` を並べた、長さ `n - 1`
-/// の配列 `lcp` を返します。
+/// # 仕様
+///
+/// 接尾辞配列 `sa`（[`suffix_array`] の出力）に対し、`s[sa[i]..]` と `s[sa[i+1]..]`
+/// の最長共通接頭辞の長さを `lcp[i]` とする長さ $n - 1$ の列を返す。
+///
+/// # 例
+///
+/// ```
+/// use suffix_array::lcp_array;
+/// use suffix_array::suffix_array;
+/// let s = "abracadabra";
+/// let sa = suffix_array(s.as_bytes());
+/// let lcp = lcp_array(s.as_bytes(), &sa);
+/// assert_eq!(lcp, vec![1, 4, 1, 1, 0, 3, 0, 0, 0, 2]);
+/// ```
+///
+/// # 計算量
+///
+/// $O(n)$
 pub fn lcp_array<T: Ord>(s: &[T], sa: &[usize]) -> Vec<usize> {
     assert_eq!(s.len(), sa.len());
     assert!(!s.is_empty());

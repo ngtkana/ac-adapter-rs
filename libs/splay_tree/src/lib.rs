@@ -1,4 +1,61 @@
-//! スプレー木です。
+//! 挿入・削除・区間反転・区間作用・区間畳み込みに対応した平衡二分探索木（スプレー木）。
+//!
+//! 要素を現在の並び順の添字（0-indexed）でアクセスする、配列を模した木構造。ノードに
+//! モノイド $(Acc, \cdot)$ の集約値と、値・集約値へ作用する $Lazy$ を持たせ、遅延伝播で
+//! 管理する。任意位置へアクセスするたびに対象ノードを回転で根まで引き上げる「スプレー」
+//! 操作を行うことで、平衡条件を明示的に保たなくてもならし $O(\log n)$ でアクセス・分割・
+//! 併合ができる。
+//!
+//! # 仕様
+//!
+//! [`LazyOps`] トレイトで集約 $Acc$ と作用 $Lazy$ を定義し、[`SplayTree<O>`](SplayTree) を使う。
+//!
+//! - [`proj`](LazyOps::proj), [`op`](LazyOps::op): 値 $\to$ 集約値の変換と、集約どうしの積（結合律が必要）
+//! - [`act_value`](LazyOps::act_value), [`act_acc`](LazyOps::act_acc), [`compose`](LazyOps::compose): 値・集約値への作用と作用の合成
+//! - 作用が不要なら [`Ops`] を実装して [`NoLazy`] でラップする
+//! - 集約も作用も不要なら [`Nop`] をそのまま使う
+//!
+//! 主な操作：
+//!
+//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete): 添字を指定した挿入・削除
+//! - [`reverse`](SplayTree::reverse): 区間 $[l, r)$ の反転
+//! - [`act`](SplayTree::act): 区間 $[l, r)$ への作用の適用
+//! - [`fold`](SplayTree::fold): 区間 $[l, r)$ の集約値の取得
+//! - [`get`](SplayTree::get), [`entry`](SplayTree::entry): 1点の参照・書き換え
+//! - [`split_off`](SplayTree::split_off), [`append`](SplayTree::append): 木の分割・併合
+//!
+//! # 例
+//!
+//! ```
+//! use splay_tree::NoLazy;
+//! use splay_tree::Ops;
+//! use splay_tree::SplayTree;
+//!
+//! enum Sum {}
+//! impl Ops for Sum {
+//!     type Value = i32;
+//!     type Acc = i32;
+//!     fn proj(&x: &i32) -> i32 {
+//!         x
+//!     }
+//!     fn op(&x: &i32, &y: &i32) -> i32 {
+//!         x + y
+//!     }
+//! }
+//!
+//! let mut splay = (0..5).collect::<SplayTree<NoLazy<Sum>>>();
+//! splay.insert(2, 100);
+//! assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
+//!     0, 1, 100, 2, 3, 4
+//! ]);
+//! assert_eq!(splay.fold(..), Some(0 + 1 + 100 + 2 + 3 + 4));
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete), [`get`](SplayTree::get), [`entry`](SplayTree::entry): ならし $O(\log n)$
+//! - [`reverse`](SplayTree::reverse), [`act`](SplayTree::act), [`fold`](SplayTree::fold): ならし $O(\log n)$
+//! - [`split_off`](SplayTree::split_off), [`append`](SplayTree::append): ならし $O(\log n)$
 
 mod node;
 
@@ -64,11 +121,19 @@ use std::ops::Range;
 use std::ops::RangeBounds;
 use std::ptr::null_mut;
 
-/// [`Sized`], [`Debug`], [`Clone`] をまとめたトレイト
+/// `Sized + Debug + Clone` をまとめたトレイト境界。[`LazyOps`] の関連型はすべてこれを要求する。
 pub trait Value: Sized + Debug + Clone {}
 impl<T: Sized + Debug + Clone> Value for T {}
 
-/// 集約も作用もなしの場合に使うトレイト
+/// 集約も作用も行わない場合に使う [`LazyOps`] 実装。要素の並びを管理するだけでよいときに使う。
+///
+/// # 例
+///
+/// ```
+/// # use splay_tree::{Nop, SplayTree};
+/// let splay = (0..3).collect::<SplayTree<Nop<i32>>>();
+/// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![0, 1, 2]);
+/// ```
 pub struct Nop<T: Value>(PhantomData<fn(T) -> T>);
 impl<T: Value> LazyOps for Nop<T> {
     type Acc = ();
@@ -85,18 +150,18 @@ impl<T: Value> LazyOps for Nop<T> {
 
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
-/// 作用なしの場合に使うトレイト
+/// 作用（更新）を持たない、集約だけを定義するトレイト。[`NoLazy`] でラップすると [`LazyOps`] になる。
 pub trait Ops {
-    /// 頂点重み型
+    /// 頂点重みの型。
     type Value: Value;
-    /// 集約値型
+    /// 集約値の型。
     type Acc: Value;
-    /// 集約化
+    /// 値 $x$ の集約値 $\mathrm{proj}(x)$ を返す。
     fn proj(value: &Self::Value) -> Self::Acc;
-    /// 集約演算
+    /// 集約値どうしの積 $x \cdot y$ を返す。結合律を満たすこと。
     fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc;
 }
-/// [`Ops`] を実装する型をラップして [`LazyOps`] を実装する型
+/// [`Ops`] を実装する型を、作用なしの [`LazyOps`] に変換するラッパー型。
 pub struct NoLazy<O>(PhantomData<fn(O) -> O>);
 impl<O: Ops> LazyOps for NoLazy<O> {
     type Acc = O::Acc;
@@ -118,25 +183,28 @@ impl<O: Ops> LazyOps for NoLazy<O> {
     fn compose(&(): &Self::Lazy, &mut (): &mut Self::Lazy) {}
 }
 
-/// 集約と作用のトレイト
+/// 集約と、集約・値への作用を定義するトレイト。[`SplayTree`] の要素型・集約型・作用型を決める。
+///
+/// 集約値の型を $Acc$、作用の型を $Lazy$ とする。$Lazy$ は可換とは限らないため、
+/// [`compose`](Self::compose) は「先に既存の作用、後から新しい作用」の順で合成する。
 pub trait LazyOps {
-    /// 頂点重み型
+    /// 頂点重みの型。
     type Value: Value;
-    /// 集約値型
+    /// 集約値の型 $Acc$。
     type Acc: Value;
-    /// 作用値型
+    /// 作用の型 $Lazy$。
     type Lazy: Value;
-    /// 集約化
+    /// 値 $x$ の集約値 $\mathrm{proj}(x)$ を返す。
     fn proj(value: &Self::Value) -> Self::Acc;
-    /// 集約演算
+    /// 集約値どうしの積 $x \cdot y$ を返す。結合律を満たすこと。
     fn op(lhs: &Self::Acc, rhs: &Self::Acc) -> Self::Acc;
-    /// 頂点重みへの作用
+    /// 値 `value` に作用 `lazy` を適用する。
     fn act_value(lazy: &Self::Lazy, value: &mut Self::Value);
-    /// 集約値への作用
+    /// 集約値 `acc` に作用 `lazy` を適用する。
     fn act_acc(lazy: &Self::Lazy, acc: &mut Self::Acc);
-    /// 作用の合成
+    /// `lower` を、先に `lower`、後から `upper` を適用したのと同じ効果になるよう更新する。
     fn compose(upper: &Self::Lazy, lower: &mut Self::Lazy);
-    /// Option へ作用の合成
+    /// `lower` が `None` なら `upper` で埋め、`Some` なら [`compose`](Self::compose) で合成する。
     fn compose_to_option(upper: &Self::Lazy, lower: &mut Option<Self::Lazy>) {
         match lower {
             None => *lower = Some(upper.clone()),
@@ -145,12 +213,12 @@ pub trait LazyOps {
     }
 }
 
-/// スプレー木
+/// 挿入・削除・区間操作に対応したスプレー木本体。[モジュールレベルの説明を参照](self)。
 pub struct SplayTree<O: LazyOps>(Cell<*mut Node<O>>);
 impl<O: LazyOps> SplayTree<O> {
-    /// 空のスプレー木を構築します。
+    /// 空のスプレー木を構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -161,9 +229,9 @@ impl<O: LazyOps> SplayTree<O> {
         Self(Cell::new(null_mut()))
     }
 
-    /// 空ならば `true` を返します。
+    /// 要素数が 0 なら `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -174,9 +242,13 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.get().is_null()
     }
 
-    /// 要素数を返します。
+    /// 要素数を返す。
     ///
-    /// # Examples
+    /// # 計算量
+    ///
+    /// $O(1)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -194,14 +266,17 @@ impl<O: LazyOps> SplayTree<O> {
         unsafe { self.0.get().as_ref() }.map_or(0, |root| root.len)
     }
 
-    /// 指定した場所に挿入します。
+    /// 添字 `at` の位置に `value` を挿入し、以降の要素を後ろへずらす。
     ///
-    /// # Panics
+    /// # パニック
     ///
-    /// - 範囲外
+    /// `at > self.len()` のときパニックする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -225,14 +300,17 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(merge(merge(left, node), right));
     }
 
-    /// 指定した場所の要素を削除します。
+    /// 添字 `at` の要素を削除して返し、以降の要素を前へずらす。
     ///
-    /// # Panics
+    /// # パニック
     ///
-    /// - 範囲外
+    /// `at >= self.len()` のときパニックする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -256,14 +334,17 @@ impl<O: LazyOps> SplayTree<O> {
         ans
     }
 
-    /// 指定した範囲の要素を逆順にします。
+    /// 区間 `range`（添字）の要素を反転する。遅延伝播で行うため、木全体を書き換えない。
     ///
-    /// # Panics
+    /// # パニック
     ///
-    /// - 範囲外
+    /// `range` が範囲外のときパニックする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -289,14 +370,17 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(merge(merge(l, c), r));
     }
 
-    /// 指定した範囲の要素を畳み込みます。
+    /// 区間 `range` の要素を [`LazyOps::op`] で畳み込んだ集約値を返す。区間が空なら `None`。
     ///
-    /// # Panics
+    /// # パニック
     ///
-    /// - 範囲外
+    /// `range` が範囲外のときパニックする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, NoLazy, Ops};
@@ -330,14 +414,17 @@ impl<O: LazyOps> SplayTree<O> {
         ans
     }
 
-    /// 指定した範囲の要素すべてに作用します。
+    /// 区間 `range` の要素すべてに作用 `lazy` を [`LazyOps::act_value`] で適用する。
     ///
-    /// # Panics
+    /// # パニック
     ///
-    /// - 範囲外
+    /// `range` が範囲外のときパニックする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, LazyOps};
@@ -380,10 +467,13 @@ impl<O: LazyOps> SplayTree<O> {
         self.0.set(merge(merge(l, c), r));
     }
 
-    /// 指定した場所の要素への参照を返します。範囲外のときには `None` を返します。
+    /// 添字 `i` の要素への参照を返す。範囲外なら `None`。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -403,10 +493,13 @@ impl<O: LazyOps> SplayTree<O> {
         Some(unsafe { &(*root).value })
     }
 
-    /// 指定した場所の要素への可変ハンドラを返します。範囲外のときには `None` を返します。
+    /// 添字 `i` の要素への可変ハンドル（[`Entry`]）を返す。範囲外なら `None`。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -426,15 +519,17 @@ impl<O: LazyOps> SplayTree<O> {
         Some(Entry(self))
     }
 
-    /// 指定した場所以降を切り離して返します。
+    /// 添字 `at` 以降を切り離し、新しい木として返す。`self` には `[0, at)` が残る。
     ///
+    /// # パニック
     ///
-    /// # Panics
+    /// `at > self.len()` のときパニックする。
     ///
-    /// - 範囲外
+    /// # 計算量
     ///
+    /// ならし $O(\log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -454,10 +549,13 @@ impl<O: LazyOps> SplayTree<O> {
         Self(Cell::new(right))
     }
 
-    /// 受け取ったスプレー木の値をすべて後ろにつなげます。
+    /// `right` の要素をすべて `self` の末尾に連結し、`right` を空にする。
     ///
+    /// # 計算量
     ///
-    /// # Examples
+    /// ならし $O(\log n)$。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -469,6 +567,7 @@ impl<O: LazyOps> SplayTree<O> {
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![
     ///     10, 11, 12, 20, 21, 22
     /// ]);
+    /// assert!(other.is_empty());
     /// ```
     pub fn append(&mut self, right: &Self) {
         let root = merge(self.0.get(), right.0.get());
@@ -476,10 +575,9 @@ impl<O: LazyOps> SplayTree<O> {
         right.0.set(null_mut());
     }
 
-    /// 要素を順番に返すイテレータを返します。
+    /// 要素を前から順に返す両端イテレータを返す。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -500,10 +598,9 @@ impl<O: LazyOps> SplayTree<O> {
         }
     }
 
-    /// 指定した範囲の要素を順番に返すイテレータを返します。
+    /// 区間 `range` の要素を前から順に返す両端イテレータを返す。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use splay_tree::{SplayTree, Nop};
@@ -525,7 +622,7 @@ impl<O: LazyOps> SplayTree<O> {
         }
     }
 
-    /// 内部情報をダンプします。
+    /// 内部構造を標準出力にダンプする（デバッグ用）。
     pub fn dump(&self) {
         println!("    === start dump ===    ");
         match unsafe { self.0.get().as_ref() } {
@@ -637,7 +734,7 @@ impl<O: LazyOps> Index<usize> for SplayTree<O> {
     }
 }
 
-/// [`SplayTree::iter`], [`SplayTree::range`] の戻り値型です。
+/// [`SplayTree::iter`], [`SplayTree::range`] が返すイテレータ。
 pub struct Iter<'a, O: LazyOps> {
     splay: &'a SplayTree<O>,
     start: usize,
@@ -668,7 +765,7 @@ impl<O: LazyOps> DoubleEndedIterator for Iter<'_, O> {
     }
 }
 
-/// [`SplayTree::entry`] の戻り値型です。
+/// [`SplayTree::entry`] が返す、要素への可変ハンドル。`Deref`/`DerefMut` で値にアクセスする。
 pub struct Entry<'a, O: LazyOps>(&'a mut SplayTree<O>);
 impl<O: LazyOps> Deref for Entry<'_, O> {
     type Target = O::Value;
