@@ -1,17 +1,67 @@
-//! Sparse Segment Tree
+//! 動的確保によるモノイド載せ二分木（疎セグメント木）
+//!
+//! `segtree` クレートの完全二分木を、内部ノードの動的確保に置き換えた実装。
+//! 定義域 $[0, n)$ をあらかじめ固定しておき、実際に触れた添字への経路上のノードだけを
+//! `Box` で確保する。未確保の部分木は単位元 $e$ を持つとみなして畳み込みに参加させる。
+//! 触れた添字の個数を $k$ とすると、空間計算量は $O(k \log n)$ に抑えられる。
+//!
+//! # 仕様
+//!
+//! [`Op`] トレイトでモノイド $(S, \cdot, e)$ を定義する。
+//!
+//! - [`Op::identity`][]: 単位元 $e$
+//! - [`Op::mul`][]: 積 $x \cdot y$（結合律を満たすこと）
+//!
+//! [`SparseSegtree::from_range`] で定義域 $[0, n)$ を指定して構築し、
+//! [`SparseSegtree::update`] で 1 点更新、[`SparseSegtree::fold`] で区間畳み込みを行う。
+//!
+//! # 例
+//!
+//! ```
+//! use sparse_segtree::Op;
+//! use sparse_segtree::SparseSegtree;
+//!
+//! enum Add {}
+//! impl Op for Add {
+//!     type Value = i64;
+//!     fn identity() -> i64 {
+//!         0
+//!     }
+//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!         lhs + rhs
+//!     }
+//! }
+//!
+//! let mut seg = SparseSegtree::<Add>::from_range(0..10);
+//! seg.update(2, |x| *x += 5);
+//! seg.update(5, |x| *x += 3);
+//! assert_eq!(seg.fold(0..10), 8);
+//! ```
+//!
+//! # 計算量
+//!
+//! 定義域の大きさを $n$ とする。
+//!
+//! - 構築（[`SparseSegtree::from_range`]）: $O(1)$
+//! - 1 点更新（[`SparseSegtree::update`]）: $O(\log n)$（未確保ノードの新規確保を含む）
+//! - 畳み込み（[`SparseSegtree::fold`]）: $O(\log n)$
+//! - 走査（[`SparseSegtree::visit_items`], [`SparseSegtree::visit_ranges`]）: $O(\log n)$ に加え、実際に確保済みのノード数に比例
 use std::ops::Range;
 use std::ops::RangeBounds;
 
-/// Trait for operations on the segment tree.
+/// モノイド $(S, \cdot, e)$ の演算を定義するトレイト。
 pub trait Op {
+    /// 値の型 $S$。
     type Value;
+    /// 単位元 $e$。
     fn identity() -> Self::Value;
+    /// 積 $x \cdot y$。結合律を満たすこと。
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
-/// A sparse segment tree.
+/// 動的確保によるセグメント木。定義域 $[0, n)$ を固定し、触れた添字への経路上のノードだけを確保する。
 ///
-/// # Example
+/// # 例
 ///
 /// ```rust
 /// use sparse_segtree::Op;
@@ -43,13 +93,19 @@ pub struct SparseSegtree<O: Op> {
     root: Option<Box<Node<O>>>,
 }
 impl<O: Op> SparseSegtree<O> {
-    /// Create a new sparse segment tree from a range (domain of definition).
+    /// 定義域 $[0, n)$（`range`）を指定してセグメント木を構築する。
+    ///
+    /// 全体を覆う 1 個のノードのみ確保する（子ノードは未確保）。$n = 0$ のときは何も確保しない。
     pub fn from_range(range: Range<usize>) -> Self {
         let root = (!range.is_empty()).then(|| Box::new(Node::new_leaf(range)));
         SparseSegtree { root }
     }
 
-    /// Mutate $x_i$ by $f(x_i)$.
+    /// $x_i \gets f(x_i)$ に更新する。経路上の未確保ノードは新たに確保する。
+    ///
+    /// # Panics
+    ///
+    /// 木が空、または $i$ が定義域外のとき panic する。
     pub fn update(&mut self, i: usize, f: impl FnMut(&mut O::Value)) {
         let Some(root) = self.root.as_mut() else {
             panic!("Cannot update an empty segment tree");
@@ -61,7 +117,7 @@ impl<O: Op> SparseSegtree<O> {
         root.update(i, f);
     }
 
-    /// Return $x_l \cdot x_{l+1} \cdots x_{r-1}$.
+    /// 総積 $x_l \cdot x_{l+1} \cdots x_{r-1}$ を返す。未確保の部分木は単位元 $e$ とみなす。
     pub fn fold(&self, range: Range<usize>) -> O::Value {
         let mut result = O::identity();
         self.visit_ranges(range, |_, value| {
@@ -70,13 +126,17 @@ impl<O: Op> SparseSegtree<O> {
         result
     }
 
-    /// Call $f(i, x_i)$ for each $i \in [l, r[$ from left to right,
+    /// 確保済みの添字 $i \in [l, r)$ について、左から右へ $f(i, x_i)$ を呼ぶ。
     ///
-    /// # Notes
+    /// 一度も [`update`](Self::update) されていない添字はノードごと未確保のため呼ばれない。
+    /// ただし確保済みでも値が単位元 $e$ のままのノードは呼ばれることがある
+    /// （フィルタが必要なら呼び出し側で $x_i = e$ を判定する）。
     ///
-    /// This may visit extra $\mathrm{id}$s.
+    /// # Panics
     ///
-    /// # Example
+    /// `range` が定義域外のとき panic する。
+    ///
+    /// # 例
     ///
     /// ```rust
     /// use sparse_segtree::Op;
@@ -109,7 +169,14 @@ impl<O: Op> SparseSegtree<O> {
         }
     }
 
-    /// Call $f(l..r, \mathrm{fold}(l..r))$ decomposing the range into segments.
+    /// 区間 $[l, r)$ を部分木の境界に沿って分解し、分解後の各区間 $[a, b)$ に対して
+    /// $f([a, b), x_a \cdot \dots \cdot x_{b-1})$ を呼ぶ。
+    ///
+    /// 未確保の部分木は単位元 $e$ とみなされるため、その部分の呼び出しは省略される。
+    ///
+    /// # Panics
+    ///
+    /// `range` が定義域外のとき panic する。
     pub fn visit_ranges(
         &self,
         range: impl RangeBounds<usize>,

@@ -1,27 +1,58 @@
-//! # Sliding Window Aggregation (SWAG)
+//! モノイドを載せた両端キュー（SWAG: Sliding Window Aggregation）。
 //!
-//! * [`DequeueSwag`]: A foldable deque.
+//! 前後 2 本のスタックと、それぞれの累積積を保持する。front 側の操作は前方累積積を、
+//! back 側の操作は後方累積積を演算 1 回の呼び出しで更新するだけで済む。片側が空になったら
+//! 残った要素を半分ずつ振り分けて両側の均衡を取り直すため、この再配分の償却込みで
+//! push・pop が均し $O(1)$、全体の畳み込みは両側の累積積を 1 回演算するだけの $O(1)$ で行える。
 //!
-//! # Constructors
+//! # 仕様
 //!
-//! * [`new()`](DequeueSwag::new): Constructs a new [`DequeueSwag`].
-//! * [`from`](DequeueSwag::from): [`Vec`] -> [`DequeueSwag`].
-//! * [`from_iter`](DequeueSwag::from_iter): [`IntoIterator`] -> [`DequeueSwag`].
-//! * [`clone_from_slice`](DequeueSwag::clone_from_slice), [`copy_from_slice`](DequeueSwag::copy_from_slice): [`&[T]`] -> [`DequeueSwag`].
+//! [`Op`] トレイトで結合律を満たす演算 $x \cdot y$ を定義する。本体は [`DequeueSwag`]。
+//!
+//! - [`DequeueSwag::push_front`][] / [`DequeueSwag::push_back`][]: 要素を追加
+//! - [`DequeueSwag::pop_front`][] / [`DequeueSwag::pop_back`][]: 要素を削除して返す（空なら `None`）
+//! - [`DequeueSwag::fold`][]: 全要素の積を返す（空なら `None`）
+//! - [`DequeueSwag::get`][] / `Index`: 前から $i$ 番目の要素を参照
+//!
+//! # 例
+//!
+//! ```
+//! use swag::DequeueSwag;
+//! use swag::Op;
+//!
+//! enum Add {}
+//! impl Op for Add {
+//!     type Value = i32;
+//!     fn op(a: &i32, b: &i32) -> i32 {
+//!         a + b
+//!     }
+//! }
+//!
+//! let mut swag = DequeueSwag::<Add>::copy_from_slice(&[2, 3, 4]);
+//! swag.push_front(1);
+//! assert_eq!(swag.collect_vec(), vec![1, 2, 3, 4]);
+//! assert_eq!(swag.fold(), Some(10)); // 1 + 2 + 3 + 4
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`DequeueSwag::push_front`][] / [`DequeueSwag::push_back`][]: $O(1)$
+//! - [`DequeueSwag::pop_front`][] / [`DequeueSwag::pop_back`][]: 均し $O(1)$
+//! - [`DequeueSwag::fold`][]: $O(1)$
 
 use std::iter::FromIterator;
 use std::ops::Index;
 
-/// Operations
+/// 結合律を満たす二項演算 $x \cdot y$ を定義するトレイト。
 pub trait Op {
-    /// Value type
+    /// 演算対象の値の型。
     type Value;
 
-    /// Associative operation
+    /// 演算 $a \cdot b$（結合律 $\mathrm{op}(\mathrm{op}(a, b), c) = \mathrm{op}(a, \mathrm{op}(b, c))$ を満たすこと）。
     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
-/// DequeueSwag
+/// モノイドを載せた両端キュー。前後 2 本のスタックと累積積を保持する。
 pub struct DequeueSwag<O: Op> {
     front: Vec<O::Value>,
     back: Vec<O::Value>,
@@ -29,7 +60,7 @@ pub struct DequeueSwag<O: Op> {
     back_sum: Vec<O::Value>,
 }
 impl<O: Op> DequeueSwag<O> {
-    /// Constructs a new `DequeueSwag`.
+    /// 空の `DequeueSwag` を構築する。
     pub fn new() -> Self {
         Self {
             front: Vec::new(),
@@ -39,7 +70,7 @@ impl<O: Op> DequeueSwag<O> {
         }
     }
 
-    /// Returns the element at the index.
+    /// 前から $i$ 番目（0-indexed）の要素を返す。範囲外なら `None`。
     pub fn get(&self, i: usize) -> Option<&O::Value> {
         if i < self.front.len() {
             Some(&self.front[self.front.len() - i - 1])
@@ -50,19 +81,19 @@ impl<O: Op> DequeueSwag<O> {
         }
     }
 
-    /// Returns the length of the `DequeueSwag`.
+    /// 要素数を返す。
     pub fn len(&self) -> usize {
         self.front.len() + self.back.len()
     }
 
-    /// Returns whether the `DequeueSwag` is empty.
+    /// 要素数が $0$ かどうかを返す。
     pub fn is_empty(&self) -> bool {
         self.front.is_empty() && self.back.is_empty()
     }
 
-    /// Append an element to the front.
+    /// 先頭に要素を追加する。$O(1)$。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use swag::DequeueSwag;
@@ -90,9 +121,9 @@ impl<O: Op> DequeueSwag<O> {
         self.front.push(x);
     }
 
-    /// Append an element to the back.
+    /// 末尾に要素を追加する。$O(1)$。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// use swag::DequeueSwag;
     /// enum O {}
@@ -119,9 +150,8 @@ impl<O: Op> DequeueSwag<O> {
         self.back.push(x);
     }
 
-    /// Pop an element from the front.
-    /// Returns `None` if the `DequeueSwag` is empty.
-    /// # Example
+    /// 先頭の要素を削除して返す。空なら `None`。均し $O(1)$。
+    /// # 例
     /// ```
     /// use swag::DequeueSwag;
     /// # enum O {}
@@ -154,9 +184,8 @@ impl<O: Op> DequeueSwag<O> {
         self.front.pop()
     }
 
-    /// Pop an element from the back.
-    /// Returns `None` if the `DequeueSwag` is empty.
-    /// # Example
+    /// 末尾の要素を削除して返す。空なら `None`。均し $O(1)$。
+    /// # 例
     /// ```
     /// use swag::DequeueSwag;
     /// enum O {}
@@ -190,9 +219,8 @@ impl<O: Op> DequeueSwag<O> {
         self.back.pop()
     }
 
-    /// Fold the `DequeueSwag`.
-    /// Returns `None` if the `DequeueSwag` is empty.
-    /// # Example
+    /// 全要素の積 $x_0 \cdot x_1 \cdots x_{n-1}$ を返す。空なら `None`。$O(1)$。
+    /// # 例
     /// ```
     /// use swag::DequeueSwag;
     /// enum O {}
@@ -217,12 +245,12 @@ impl<O: Op> DequeueSwag<O> {
         }
     }
 
-    /// Returns an iterator over the `DequeueSwag`.
+    /// 前から順に要素を走査するイテレータを返す。
     pub fn iter(&self) -> impl Iterator<Item = &O::Value> {
         self.front.iter().rev().chain(self.back.iter())
     }
 
-    /// Collects the `DequeueSwag` into a `Vec`.
+    /// 前から順に要素を集めた `Vec` を返す。
     pub fn collect_vec(&self) -> Vec<O::Value>
     where
         O::Value: Clone,
@@ -230,12 +258,15 @@ impl<O: Op> DequeueSwag<O> {
         self.iter().cloned().collect()
     }
 
-    /// Returns two slices, joining that is exactly the all elements.
+    /// 前後 2 本のスタックをスライスのまま返す。
+    ///
+    /// 前側は逆順（先頭要素が末尾に来る）で格納されている。全要素を先頭から順に並べるには
+    /// `front.iter().rev().chain(back)` とする必要がある。
     pub fn as_two_slices(&self) -> (&[O::Value], &[O::Value]) {
         (&self.front, &self.back)
     }
 
-    /// Constructs a new `DequeueSwag` from a slice.
+    /// スライスの要素を複製して `DequeueSwag` を構築する。
     pub fn clone_from_slice(slice: &[O::Value]) -> Self
     where
         O::Value: Clone,
@@ -247,7 +278,7 @@ impl<O: Op> DequeueSwag<O> {
         reslt
     }
 
-    /// Constructs a new `DequeueSwag` from a slice.
+    /// スライスの要素をコピーして `DequeueSwag` を構築する。
     pub fn copy_from_slice(slice: &[O::Value]) -> Self
     where
         O::Value: Copy,

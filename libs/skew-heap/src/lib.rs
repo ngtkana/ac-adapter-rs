@@ -1,51 +1,44 @@
-//! Meld のできるヒープ
+//! Meld 可能な二分ヒープ（skew heap）
 //!
-//! # 使い方
+//! 各ノードは高々 2 つの子を持つ二分木で、親の値が両方の子の値以上というヒープ性質を保つ。
+//! 2 つのヒープの合併 `meld` は、値の大きい方を根として残し、その右部分木ともう一方を
+//! 再帰的に合併したうえで左右の子を入れ替える。明示的な平衡条件は持たないが、
+//! この左右反転により長い経路への合併が繰り返されるのを防ぎ、
+//! 償却 $O(\log n)$ の合併を達成する。`push`, `pop` はいずれも `meld` を用いて実装する。
 //!
-//! ## ヒープ
+//! # 仕様
+//!
+//! - 型: `SkewHeap<T>`（`T: Ord`）
+//! - 構築: `SkewHeap::new()`（空）, `SkewHeap::singleton(value)`（要素 1 つ）
+//! - 合併: `SkewHeap::meld(&mut self, rhs)`、フリー関数 `meld(a, b)`
+//! - 挿入: `push(value)`
+//! - 参照・取り出し: `peek()` は最大要素への参照、`pop()` は最大要素を取り除いて返す
+//! - 変換: `into_sorted_vec()` はすべての要素を昇順に並べた `Vec`
+//!
+//! 親ポインタを持たないため、`iter`, `len`, `is_empty`, `peek_mut` などは提供しない。
+//!
+//! # 例
 //!
 //! ```
-//! use skew_heap::meld;
 //! use skew_heap::SkewHeap;
 //!
-//! let mut heap = SkewHeap::new(); // new で構築
-//! heap.push(3); // push で挿入
+//! let mut heap = SkewHeap::new();
+//! heap.push(3);
 //! heap.push(4);
 //! heap.push(2);
-//!
-//! assert_eq!(heap.pop(), Some(4)); // pop で最大がでてきます。
-//!
-//! assert_eq!(heap.peek(), Some(&3)); // peek で次が見られます。
+//! assert_eq!(heap.pop(), Some(4));
+//! assert_eq!(heap.peek(), Some(&3));
 //! assert_eq!(heap.pop(), Some(3));
 //! assert_eq!(heap.pop(), Some(2));
 //! assert_eq!(heap.pop(), None);
 //! ```
 //!
+//! # 計算量
 //!
-//! ## Meld
-//!
-//! ```
-//! use skew_heap::meld;
-//! use skew_heap::SkewHeap;
-//!
-//! // フリー関数 `meld` を使う方法
-//! let heap_a = [0, 2, 4, 6].iter().copied().collect::<SkewHeap<_>>();
-//! let heap_b = [1, 3, 5, 7].iter().copied().collect::<SkewHeap<_>>();
-//! let mut heap = meld(heap_a, heap_b);
-//! assert_eq!(heap.into_sorted_vec(), vec![0, 1, 2, 3, 4, 5, 6, 7]);
-//!
-//! // メソッド `SkewHeap::meld` を使う方法
-//! let mut heap_a = [0, 2, 4, 6].iter().copied().collect::<SkewHeap<_>>();
-//! let mut heap_b = [1, 3, 5, 7].iter().copied().collect::<SkewHeap<_>>();
-//! heap_a.meld(heap_b);
-//! assert_eq!(heap_a.into_sorted_vec(), vec![0, 1, 2, 3, 4, 5, 6, 7]);
-//! ```
-//!
-//! # ありそうでないもの
-//!
-//! * `iter()`, `into_iter()`, `into_iter_sorted()`, `drain()`, `drain_sorted()`: 親ポインタないので面倒です。
-//! * `len(), is_empty()`: 長さ保持するの面倒です。
-//! * `peek_mut()`: 再挿入面倒です。
+//! - `meld`: 償却 $O(\log(n + m))$（$n, m$ は合併前の要素数）
+//! - `push`, `pop`: 償却 $O(\log n)$
+//! - `peek`: $O(1)$
+//! - `into_sorted_vec`: $O(n \log n)$
 use std::fmt::DebugList;
 use std::fmt::Formatter;
 use std::fmt::{self};
@@ -55,7 +48,19 @@ use std::iter::IntoIterator;
 use std::mem::swap;
 use std::mem::take;
 
-/// Meld のできるヒープ
+/// Meld 可能な二分ヒープ。
+///
+/// 空、またはヒープ性質を満たす二分木として要素を保持する。
+///
+/// # 例
+///
+/// ```
+/// use skew_heap::SkewHeap;
+///
+/// let mut heap = SkewHeap::new();
+/// heap.push(1);
+/// assert_eq!(heap.peek(), Some(&1));
+/// ```
 #[derive(Clone, Hash, PartialEq)]
 pub struct SkewHeap<T>(Option<Box<SkeyHeapNode<T>>>);
 impl<T: Ord> Default for SkewHeap<T> {
@@ -90,43 +95,86 @@ impl<T: fmt::Debug + Ord> fmt::Debug for SkewHeap<T> {
     }
 }
 impl<T: Ord> SkewHeap<T> {
-    /// 新しく構築します。
+    /// 空のヒープを構築する。
     pub fn new() -> Self {
         Self(None)
     }
 
-    /// 中身を殻にします。
+    /// ヒープを空にする。
     pub fn clear(&mut self) {
         *self = Self::new();
     }
 
-    /// 要素一つからなる `SkewHeap` を構築します。
+    /// 要素 1 つからなるヒープを構築する。
     pub fn singleton(value: T) -> Self {
         Self(Some(Box::new(SkeyHeapNode::singleton(value))))
     }
 
-    /// 2 つの `SkewHeap` から、その合併を構築します。
+    /// 2 つのヒープを合併し、`rhs` の要素をすべて `self` に移す。
     ///
     /// # 計算量
     ///
-    /// O ( lg ( self.len(), rhs.len() ) )
+    /// 償却 $O(\log(n + m))$（$n$ は `self`、$m$ は `rhs` の要素数）
     ///
-    /// ただし `SkewHeap::len` メソッドはありません。（あの！？）
+    /// # 例
+    ///
+    /// ```
+    /// use skew_heap::SkewHeap;
+    ///
+    /// let mut a: SkewHeap<i32> = [1, 3].into_iter().collect();
+    /// let b: SkewHeap<i32> = [2, 4].into_iter().collect();
+    /// a.meld(b);
+    /// assert_eq!(a.into_sorted_vec(), vec![1, 2, 3, 4]);
+    /// ```
     pub fn meld(&mut self, rhs: Self) {
         *self = meld(take(self), rhs);
     }
 
-    /// 要素を一つ、追加します。
+    /// 要素を 1 つ挿入する。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use skew_heap::SkewHeap;
+    ///
+    /// let mut heap = SkewHeap::new();
+    /// heap.push(5);
+    /// assert_eq!(heap.peek(), Some(&5));
+    /// ```
     pub fn push(&mut self, value: T) {
         self.meld(Self::singleton(value));
     }
 
-    /// 含んでいる最大の要素への参照を返します。
+    /// 最大の要素への参照を返す。空なら `None`。
+    ///
+    /// # 計算量
+    ///
+    /// $O(1)$
     pub fn peek(&self) -> Option<&T> {
         self.0.as_ref().map(|heap| &heap.value)
     }
 
-    /// 含んでいる最大の要素を取り除き、それを返します。
+    /// 最大の要素を取り除いて返す。空なら `None`。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use skew_heap::SkewHeap;
+    ///
+    /// let mut heap: SkewHeap<i32> = [1, 3, 2].into_iter().collect();
+    /// assert_eq!(heap.pop(), Some(3));
+    /// assert_eq!(heap.pop(), Some(2));
+    /// assert_eq!(heap.pop(), Some(1));
+    /// assert_eq!(heap.pop(), None);
+    /// ```
     pub fn pop(&mut self) -> Option<T> {
         let me = take(self);
         let SkeyHeapNode { left, right, value } = *me.0?;
@@ -134,7 +182,20 @@ impl<T: Ord> SkewHeap<T> {
         Some(value)
     }
 
-    /// ソート済みの `Vec` に変換します。
+    /// すべての要素を昇順に並べた `Vec` に変換する。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n \log n)$
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use skew_heap::SkewHeap;
+    ///
+    /// let heap: SkewHeap<i32> = [3, 1, 2].into_iter().collect();
+    /// assert_eq!(heap.into_sorted_vec(), vec![1, 2, 3]);
+    /// ```
     pub fn into_sorted_vec(mut self) -> Vec<T> {
         let mut vec = Vec::new();
         while let Some(x) = self.pop() {
@@ -144,13 +205,23 @@ impl<T: Ord> SkewHeap<T> {
         vec
     }
 }
-/// 2 つの `SkewHeap` から、その合併を構築します。
+/// 2 つのヒープから、その合併を構築する（[`SkewHeap::meld`] のフリー関数版）。
 ///
 /// # 計算量
 ///
-/// O ( lg ( self.len(), rhs.len() ) )
+/// 償却 $O(\log(n + m))$（$n, m$ は合併前の要素数）
 ///
-/// ただし `SkewHeap::len` メソッドはありません。（あの！？）
+/// # 例
+///
+/// ```
+/// use skew_heap::meld;
+/// use skew_heap::SkewHeap;
+///
+/// let a: SkewHeap<i32> = [0, 2, 4].into_iter().collect();
+/// let b: SkewHeap<i32> = [1, 3].into_iter().collect();
+/// let heap = meld(a, b);
+/// assert_eq!(heap.into_sorted_vec(), vec![0, 1, 2, 3, 4]);
+/// ```
 pub fn meld<T: Ord>(a: SkewHeap<T>, b: SkewHeap<T>) -> SkewHeap<T> {
     SkewHeap(meld_node(a.0, b.0))
 }

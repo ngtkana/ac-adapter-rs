@@ -1,62 +1,76 @@
-//! 2-way tree DP
+//! 全方位木DP（rerooting）。各頂点を根としたときの集約値をまとめて計算する。
 //!
-//! # Graph-theoritic notation
+//! 森を頂点集合 $V$、モノイド $(F, \mathrm{mul}, \mathrm{identity})$ の要素とみなし、
+//! 「頂点 $v$ をルートとして森 $F$ に接続し木にする」演算 $\mathrm{up}: F \times V \to F$ を追加で与える。
+//! 通常の部分木DP（子の集約値を `mul` で畳み込み `up` でルートに接続する）を根から葉・葉から根の
+//! 両方向に行うことで、「頂点 $v$ を根とする部分木の集約値」だけでなく「$v$ の親側を含めた
+//! 残り全体の集約値」も $O(n)$ 回の演算で求まる。`mul` は可換でなくてよく、各頂点で子を
+//! 元の順序で `mul` した前後の累積（prefix/suffix）を使って「自分を除いた残り」を計算する。
 //!
-//! - $V$: vertex type
-//! - $T$: (rooted) tree type
-//! - $F$: (rooted) forest type (with ordering of the trees)
+//! # 仕様
 //!
-//! # Algebraic notation
+//! [`Op`] トレイトで演算を定義する。
 //!
-//! $$
-//! \phi(T_i^\triangle) = g\left( \prod_{j \lessdot i} f(T_j^\triangle) \right)
-//! $$
+//! - `Op::up`: $F \times V \to F$。森に頂点 $v$ をルートとして接続する
+//! - `Op::mul`: $F \times F \to F$。森どうしの結合（結合律を満たせばよく、可換律は不要）
+//! - `Op::identity`: 空の森
 //!
-//! # Operations
+//! [`two_way_tree_fold`] は木（頂点数 $n$）を根から葉への有向グラフとして表す隣接リスト
+//! `g: &[Vec<usize>]`（`g[i]` は $i$ の子）と、親が子より前に来るトポロジカル順 `sorted` を
+//! 受け取り、[`TwoWayTreeFoldResult`] を返す。
 //!
-//! | | graph-theoritic | algebraic |
-//! | - | - | - |
-//! | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
-//! | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
-//! | `identity` | $* \to F$: empty forest | identity of $M$ |
+//! - `branch[i]`: 頂点 $i$ を根とする部分木の集約値
+//! - `lower[i]`: 頂点 $i$ の子部分木をすべて `mul` で結合した値（`branch[i] = up(lower[i], i)`）
+//! - `upper[i]`: 頂点 $i$ を除いた残り全体を $i$ に接続した集約値。根では `identity`
 //!
-//! # Return value
+//! # 例
 //!
-//! | | description |
-//! | - | - |
-//! | `upper` | $f(\phi(T_i^\triangle))$ |
-//! | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
-//! | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
+//! ```
+//! use tree_fold::Op;
+//! use tree_fold::two_way_tree_fold;
+//!
+//! struct SubtreeSize;
+//! impl Op for SubtreeSize {
+//!     type Value = usize;
+//!     fn up(&self, value: &usize, _root: usize) -> usize {
+//!         value + 1
+//!     }
+//!     fn mul(&self, lhs: &usize, rhs: &usize) -> usize {
+//!         lhs + rhs
+//!     }
+//!     fn identity(&self) -> usize {
+//!         0
+//!     }
+//! }
+//!
+//! // 木: 0 -> 1, 0 -> 2, 1 -> 3
+//! let g = vec![vec![1, 2], vec![3], vec![], vec![]];
+//! let sorted = vec![0, 1, 2, 3];
+//! let result = two_way_tree_fold(&SubtreeSize, &g, &sorted);
+//! assert_eq!(result.branch, vec![4, 2, 1, 1]); // 各頂点を根とする部分木のサイズ
+//! assert_eq!(result.upper, vec![0, 2, 3, 3]); // 各頂点から見た残り全体のサイズ（根は 0）
+//! ```
+//!
+//! # 計算量
+//!
+//! - `two_way_tree_fold`: $O(n)$ 回の `up`/`mul` 呼び出し（$n$ は頂点数）
 
-/// # Operations
-///
-/// | | graph-theoritic | algebraic |
-/// | - | - | - |
-/// | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
-/// | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
-/// | `identity` | $* \to F$: empty forest | identity of $M$ |
-///
-/// # Return value
-///
-/// | | description |
-/// | - | - |
-/// | `upper` | $f(\phi(T_i^\triangle))$ |
-/// | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
-/// | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
+/// 全方位木DPの演算。モノイド $(F, \mathrm{mul}, \mathrm{identity})$ と、
+/// 頂点 $v$ をルートとして森 $F$ に接続する演算 $\mathrm{up}$ を定義する。
 pub trait Op: Sized {
-    /// A monoid $M$.
+    /// モノイド $F$ の値の型。
     type Value: Clone;
 
-    /// $F \times V \to T \to F$: join by a root
+    /// 森 `value` に頂点 `root` をルートとして接続する: $F \times V \to F$。
     fn up(&self, value: &Self::Value, root: usize) -> Self::Value;
 
-    /// $F \times F \to F$: concatenate two forests
+    /// 森どうしを結合する: $F \times F \to F$（結合律を満たせばよく、可換律は不要）。
     fn mul(&self, lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 
-    /// $* \to F$: empty forest
+    /// 空の森を返す: $\mathrm{identity} \in F$。
     fn identity(&self) -> Self::Value;
 
-    /// Performs 2-way tree DP
+    /// [`two_way_tree_fold`] を呼び出す。詳細はそちらを参照。
     fn two_way_tree_fold(
         &self,
         g: &[Vec<usize>],
@@ -66,33 +80,17 @@ pub trait Op: Sized {
     }
 }
 
-/// The return value of [`Op::two_way_tree_fold()`] ans [`two_way_tree_fold()`]
+/// [`two_way_tree_fold`] の返り値。
 pub struct TwoWayTreeFoldResult<T> {
-    /// $f(\phi(T_i^\triangle))$
+    /// `upper[i]`: 頂点 $i$ を除いた残り全体を $i$ に接続した集約値。根では `identity`。
     pub upper: Vec<T>,
-    /// $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$
+    /// `lower[i]`: 頂点 $i$ の子部分木をすべて `mul` で結合した値。
     pub lower: Vec<T>,
-    /// $f(\phi(T_i^\blacktriangledown))$
+    /// `branch[i]`: 頂点 $i$ を根とする部分木の集約値（`up(lower[i], i)`）。
     pub branch: Vec<T>,
 }
 
-/// Performs 2-way tree DP
-///
-/// # Operations
-///
-/// | | graph-theoritic | algebraic |
-/// | - | - | - |
-/// | `up` | $F \times V \to T \to F$: join by a root | $f \circ g$ |
-/// | `mul` | $F \times F \to F$: concatenate two forests | product of $M$ |
-/// | `identity` | $* \to F$: empty forest | identity of $M$ |
-///
-/// # Return value
-///
-/// | | description |
-/// | - | - |
-/// | `upper` | $f(\phi(T_i^\triangle))$ |
-/// | `lower` | $\prod_{j \lessdot i} f(\phi(T_j^\blacktriangledown))$ |
-/// | `branch` | $f(\phi(T_i^\blacktriangledown))$ |
+/// 全方位木DPを行う。詳細はモジュールレベルドキュメントの `# 仕様` を参照。
 pub fn two_way_tree_fold<O: Op>(
     o: &O,
     g: &[Vec<usize>],

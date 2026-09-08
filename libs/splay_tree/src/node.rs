@@ -5,6 +5,7 @@ use std::mem::replace;
 use std::ptr::null_mut;
 use std::ptr::{self};
 
+/// 部分木 `root` を根から葉へたどり、すべてのノードを解放する。
 #[allow(unused_must_use)]
 pub fn deep_free<O: LazyOps>(root: *mut Node<O>) {
     if !root.is_null() {
@@ -16,6 +17,11 @@ pub fn deep_free<O: LazyOps>(root: *mut Node<O>) {
     }
 }
 
+/// 添字 `i` にあたるノードを根から辿って探し、[`splay`] で根まで回転させて返す。
+///
+/// 各ノードで `push` して遅延作用・反転フラグを確定させたうえで左部分木の `len` を見て、
+/// `i` が左部分木に入るか・自分自身か・右部分木かを判定しながら降りていく。
+///
 /// # Safety notes
 ///
 /// `root` は生ポインタで受け渡しします。スプレー操作は祖先へ辿ってから元のノードへ戻って
@@ -50,6 +56,9 @@ pub fn access_index<O: LazyOps>(root: *mut Node<O>, mut i: usize) -> *mut Node<O
     }
 }
 
+/// `left` の全要素の後ろに `right` の全要素を連結した木の根を返す。
+///
+/// `left` の最右ノードを [`access_index`] で根まで splay し、その右の子として `right` を繋ぐ。
 pub fn merge<O: LazyOps>(left: *mut Node<O>, right: *mut Node<O>) -> *mut Node<O> {
     if left.is_null() {
         return right;
@@ -67,6 +76,9 @@ pub fn merge<O: LazyOps>(left: *mut Node<O>, right: *mut Node<O>) -> *mut Node<O
     left
 }
 
+/// 木 `root` を添字 `at` の直前で `[前半, 後半]`（前半は `[0, at)`、後半は `[at, len)`）に分割する。
+///
+/// `at` 番目のノードを [`access_index`] で根まで splay し、その左部分木を切り離すことで実現する。
 pub fn split_at<O: LazyOps>(root: *mut Node<O>, at: usize) -> [*mut Node<O>; 2] {
     if root.is_null() {
         return [null_mut(), null_mut()];
@@ -88,7 +100,10 @@ pub fn split_at<O: LazyOps>(root: *mut Node<O>, at: usize) -> [*mut Node<O>; 2] 
     }
 }
 
-/// ノード `x` を根まで splay します。生ポインタで実装している理由は [`access_index`] を参照してください。
+/// ノード `x` を回転で根まで持ち上げる（splay 操作）。生ポインタで実装している理由は [`access_index`] を参照。
+///
+/// `x`・親・祖父の位置関係（一直線か、く の字か）に応じて zig-zig / zig-zag の2段回転を
+/// まとめて行うことで、ならし計算量を $O(\log n)$ に抑える。
 fn splay<O: LazyOps>(x: *mut Node<O>) {
     loop {
         let p = unsafe { (*x).parent };
@@ -109,7 +124,7 @@ fn splay<O: LazyOps>(x: *mut Node<O>) {
     }
 }
 
-/// `x` をその親 `p` の位置まで回転させます。生ポインタで実装している理由は [`access_index`] を参照してください。
+/// `x` をその親 `p` の位置まで1段回転させる。生ポインタで実装している理由は [`access_index`] を参照。
 fn rotate<O: LazyOps>(x: *mut Node<O>) {
     let p = unsafe { (*x).parent };
     let g = unsafe { (*p).parent };
@@ -146,17 +161,27 @@ fn rotate<O: LazyOps>(x: *mut Node<O>) {
     }
 }
 
+/// スプレー木のノード。`left`/`right`/`parent` は生ポインタで管理する（[`access_index`] の Safety notes を参照）。
 pub struct Node<O: LazyOps> {
+    /// 左の子。無ければ `null_mut()`。
     pub left: *mut Self,
+    /// 右の子。無ければ `null_mut()`。
     pub right: *mut Self,
+    /// 親。根なら `null_mut()`。
     pub parent: *mut Self,
+    /// この部分木の要素数。
     pub len: usize,
+    /// この部分木が左右反転待ちなら `true`（[`push`](Self::push) で子へ伝播する遅延フラグ）。
     pub rev: bool,
+    /// このノード自身の値。
     pub value: O::Value,
+    /// この部分木の集約値。
     pub acc: O::Acc,
+    /// 未伝播の作用。[`push`](Self::push) で自分に適用し、子へ伝播する。
     pub lazy: Option<O::Lazy>,
 }
 impl<O: LazyOps> Node<O> {
+    /// 値 `value` 単独からなる葉ノード（`len = 1`）を作る。
     pub fn new(value: O::Value) -> Self {
         Node {
             left: null_mut(),
@@ -170,6 +195,7 @@ impl<O: LazyOps> Node<O> {
         }
     }
 
+    /// 部分木を中間順（左・自分・右）で標準出力にダンプする（デバッグ用）。
     pub fn dump(&self)
     where
         O::Value: Debug,
@@ -197,6 +223,7 @@ impl<O: LazyOps> Node<O> {
         }
     }
 
+    /// 左右の子を `push` してから、その `len`・`acc` を使って自分の `len`・`acc` を再計算する。
     pub fn update(&mut self) {
         self.len = 1;
         self.acc = O::proj(&self.value);
@@ -212,6 +239,10 @@ impl<O: LazyOps> Node<O> {
         }
     }
 
+    /// 保留中の作用・反転フラグを自分自身に確定させ、子へ伝播する。
+    ///
+    /// `lazy` があれば `value`/`acc` に適用してから子の `lazy` へ合成し、`rev` が立っていれば
+    /// 左右の子を入れ替えて子の `rev` を反転する。ノードの実データを読む前には必ず呼ぶこと。
     pub fn push(&mut self) {
         if let Some(lazy) = self.lazy.take() {
             O::act_value(&lazy, &mut self.value);

@@ -1,37 +1,71 @@
-//! # Sparse Table
+//! 冪等半群上の区間畳み込みを $O(1)$ で答える静的データ構造。
 //!
-//! * [`SparseTable`] (1-dimensional)
-//! * [`SparseTable2d`] (2-dimensional)
+//! 長さ $1$ の区間から始め、長さを $2$ 倍ずつ伸ばしながら区間の積をすべて前計算する。
+//! 問い合わせ $[l, r)$ には、長さ $2^p \le r - l$ の区間を左右の端からそれぞれ $1$ つ取り、
+//! 重なりを許したまま $2$ つの積を掛け合わせて答える。演算が結合的かつ冪等（$x \cdot x = x$）
+//! であれば重複部分の混入は結果に影響しないため、単位元がなくても正しく計算できる。
+//! 更新はできないが、前計算 $O(n \log n)$ のあとは各問い合わせを $O(1)$ で答えられる。
 //!
-//! # [`Op`] trait
+//! # 仕様
 //!
-//! [`Op::mul`] must be associative and idempotent.
+//! [`Op`] トレイトで冪等半群を定義する。
+//!
+//! - [`Op::mul`][]: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）
+//!
+//! 構造体は次の $2$ 種類。
+//!
+//! - [`SparseTable`]（1 次元）
+//! - [`SparseTable2d`]（2 次元。[`Op::mul`] にさらに可換律も要求する）
+//!
+//! # 例
+//!
+//! ```
+//! use sparse_table::Op;
+//! use sparse_table::SparseTable;
+//!
+//! enum Max {}
+//! impl Op for Max {
+//!     type Value = i64;
+//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!         (*lhs).max(*rhs)
+//!     }
+//! }
+//!
+//! let st = SparseTable::<Max>::clone_from_slice(&[3, 1, 4, 1, 5]);
+//! assert_eq!(st.fold(1..4), Some(4)); // max(1, 4, 1)
+//! assert_eq!(st.fold(2..2), None); // 空区間
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築（[`SparseTable::new`]）: $O(n \log n)$
+//! - 畳み込み（[`SparseTable::fold`]）: $O(1)$
 
 use std::fmt::Debug;
 use std::iter::FromIterator;
 use std::ops::Index;
 use std::ops::RangeBounds;
 
-/// A trait for the operation used in sparse tables.
+/// 区間畳み込みに使う二項演算。結合律・冪等律 $x \cdot x = x$ を満たすこと。
 pub trait Op {
-    /// The type of the values.
+    /// 値の型。
     type Value;
 
-    /// Multiplies two values: $x \cdot y$.
+    /// 積 $x \cdot y$ を計算する。
     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
-/// A sparse table for 1-dimensional range queries.
+/// 1 次元のスパーステーブル。区間 $[l, r)$ の畳み込みを $O(1)$ で答える。
 pub struct SparseTable<O: Op> {
     table: Vec<Vec<O::Value>>,
 }
 impl<O: Op> SparseTable<O> {
-    /// Constructs a sparse table from a vector of values.
+    /// 値の列からスパーステーブルを構築する。$O(n \log n)$。
     pub fn new(values: Vec<O::Value>) -> Self {
         values.into()
     }
 
-    /// Constructs a sparse table from a slice of values.
+    /// 値のスライスを複製してスパーステーブルを構築する。$O(n \log n)$。
     pub fn clone_from_slice(values: &[O::Value]) -> Self
     where
         O::Value: Clone,
@@ -39,12 +73,31 @@ impl<O: Op> SparseTable<O> {
         values.into()
     }
 
-    /// Returns the value at the given index.
+    /// $x_i$ を返す。
     pub fn get(&self, index: usize) -> &O::Value {
         &self.table[0][index]
     }
 
-    /// Returns $x_l \cdot x_{l+1} \cdot \ldots \cdot x_{r-1}$, or `None` if $l = r$.
+    /// $x_l \cdot x_{l+1} \cdot \ldots \cdot x_{r-1}$ を返す。$l = r$ のときは `None`。$O(1)$。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use sparse_table::Op;
+    /// use sparse_table::SparseTable;
+    ///
+    /// enum Max {}
+    /// impl Op for Max {
+    ///     type Value = i64;
+    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///         (*lhs).max(*rhs)
+    ///     }
+    /// }
+    ///
+    /// let st = SparseTable::<Max>::clone_from_slice(&[3, 1, 4, 1, 5]);
+    /// assert_eq!(st.fold(1..4), Some(4));
+    /// assert_eq!(st.fold(2..2), None);
+    /// ```
     pub fn fold(&self, range: impl RangeBounds<usize>) -> Option<O::Value> {
         let (start, end) = open(range, self.table[0].len());
         assert!(start <= end);
@@ -54,17 +107,17 @@ impl<O: Op> SparseTable<O> {
         Some(O::mul(&row[start], &row[end - (1 << p)]))
     }
 
-    /// Returns an iterator over the values.
+    /// $x_0, x_1, \ldots, x_{n-1}$ を順に返すイテレータ。
     pub fn iter(&self) -> impl Iterator<Item = &O::Value> {
         self.table[0].iter()
     }
 
-    /// Returns a slice of the values.
+    /// $x_0, x_1, \ldots, x_{n-1}$ のスライスを返す。
     pub fn as_slice(&self) -> &[O::Value] {
         &self.table[0]
     }
 
-    /// Collects the values into a vector.
+    /// $x_0, x_1, \ldots, x_{n-1}$ を複製して `Vec` にまとめる。
     pub fn collect_vec(&self) -> Vec<O::Value>
     where
         O::Value: Clone,
@@ -72,7 +125,7 @@ impl<O: Op> SparseTable<O> {
         self.table[0].clone()
     }
 
-    /// Returns the inner table.
+    /// 内部テーブルを返す。`table[k][i]` は $x_i \cdot x_{i+1} \cdot \ldots \cdot x_{i+2^k-1}$。
     pub fn inner(&self) -> &Vec<Vec<O::Value>> {
         &self.table
     }
@@ -131,20 +184,20 @@ impl<O: Op> Index<usize> for SparseTable<O> {
     }
 }
 
-/// A sparse table for 2-dimensional range queries.
+/// 2 次元のスパーステーブル。矩形領域の畳み込みを $O(1)$ で答える。
 ///
-/// The operation must also be commutative.
+/// 矩形を高々 4 個の角ブロックに分解して積を取るため、[`Op::mul`] は可換律も満たす必要がある。
 pub struct SparseTable2d<O: Op> {
     table: Vec<Vec<Vec<Vec<O::Value>>>>,
 }
 
 impl<O: Op> SparseTable2d<O> {
-    /// Constructs a sparse table from a vector of values.
+    /// 値の 2 次元配列からスパーステーブルを構築する。$O(hw \log h \log w)$。
     pub fn new(values: Vec<Vec<O::Value>>) -> Self {
         values.into()
     }
 
-    /// Constructs a sparse table from a slice of values.
+    /// 値の 2 次元スライスを複製してスパーステーブルを構築する。$O(hw \log h \log w)$。
     pub fn clone_from_slice(values: &[Vec<O::Value>]) -> Self
     where
         O::Value: Clone,
@@ -152,7 +205,9 @@ impl<O: Op> SparseTable2d<O> {
         values.into()
     }
 
-    /// Returns $(x_{i_0, j_0} \cdot \dots \cdot x_{i_1-1, j_0}) \cdot \dots \cdot (x_{i_0, j_1-1} \cdot \dots \cdot x_{i_1-1, j_1-1})$, or `None` if $i_0 = i_1$ or $j_0 = j_1$.
+    /// $\left \lbrace x_{i, j} \mid i \in \text{{range}}_i, j \in \text{{range}}_j \right \rbrace$ の総積を返す。
+    ///
+    /// $i_0 = i_1$ または $j_0 = j_1$ のときは `None`。$O(1)$。
     pub fn fold(&self, i: impl RangeBounds<usize>, j: impl RangeBounds<usize>) -> Option<O::Value> {
         let (i0, mut i1) = open(i, self.table[0][0].len());
         let (j0, mut j1) = open(j, self.table[0][0].first().map_or(0, Vec::len));
@@ -170,17 +225,17 @@ impl<O: Op> SparseTable2d<O> {
         ))
     }
 
-    /// Returns that yields the row of the table.
+    /// 各行 $(x_{i, 0}, x_{i, 1}, \ldots, x_{i, w-1})$ を順に返すイテレータ。
     pub fn iter(&self) -> impl Iterator<Item = &[O::Value]> {
         self.table[0][0].iter().map(Vec::as_slice)
     }
 
-    /// Returns a slice of the values.
+    /// 値の 2 次元スライスを返す。
     pub fn as_slice(&self) -> &[Vec<O::Value>] {
         &self.table[0][0]
     }
 
-    /// Collects the values into a vector of vectors.
+    /// 値を複製して 2 次元の `Vec` にまとめる。
     pub fn collect_vec(&self) -> Vec<Vec<O::Value>>
     where
         O::Value: Clone,
@@ -188,7 +243,8 @@ impl<O: Op> SparseTable2d<O> {
         self.table[0][0].clone()
     }
 
-    /// Returns the inner table.
+    /// 内部テーブルを返す。`table[p][q][i][j]` は $i$ 行 $j$ 列を起点とする
+    /// $2^p \times 2^q$ ブロックの積。
     pub fn inner(&self) -> &Vec<Vec<Vec<Vec<O::Value>>>> {
         &self.table
     }

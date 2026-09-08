@@ -1,6 +1,43 @@
-//! 傾き単調な直線の列を `Vec` で管理します。
+//! 傾き単調な直線群を管理し、任意の $x$ における最大値・最小値クエリに答える Convex Hull Trick。
 //!
-//! [基本的な使い方は `VecLines` をご覧ください。](VecLines)
+//! 直線を追加するたびに、傾きの単調性と定数項の優劣から不要な直線をスタック的に取り除き、
+//! 常に「下側（または上側）包絡線を構成する直線だけ」を `Vec` で保持する。クエリは黄金分割探索で
+//! 答える。クエリの $x$ が挿入順に単調に動く場合は [`VecLines::get`] としゃくとり法を組み合わせる
+//! ことで、`eval_gcc` よりさらに高速に処理できる。
+//!
+//! # 仕様
+//!
+//! [`Constraint`] で傾きの単調方向を指定する（[`VecLinesDecreasing`] は単調減少、
+//! [`VecLinesIncreasing`] は単調増加）。
+//!
+//! - `push` は直線 $y = ax + b$ を `[a, b]` で追加する。傾きの単調性に反すると panic する
+//! - `eval_gcc` は $x$ における最適値（[`VecLinesDecreasing`] は最小値、
+//!   [`VecLinesIncreasing`] は最大値）を返す
+//! - `get` は `index` 番目の直線 [`Line`] を返す
+//! - `len`、`is_empty`、`iter_copied` で内部状態を参照する
+//!
+//! 傾きが等しい直線を追加した場合、定数項が真に改善していれば直前の直線を置き換えてから
+//! 通常の不要直線除去を行い、改善していなければ追加を無視する。
+//!
+//! # 例
+//!
+//! ```
+//! use vec_lines::VecLinesDecreasing;
+//!
+//! let mut lines = VecLinesDecreasing::<i32>::new();
+//! lines.push([1, 0]); // y = x
+//! lines.push([0, 10]); // y = 10
+//! lines.push([-1, 30]); // y = -x + 30
+//!
+//! assert_eq!(lines.eval_gcc(-10), Some(-10)); // x = -10 での最小値
+//! assert_eq!(lines.eval_gcc(15), Some(10)); // y = 10 での最小値
+//! assert_eq!(lines.eval_gcc(40), Some(-10)); // -x + 30 での最小値
+//! ```
+//!
+//! # 計算量
+//!
+//! - `push`: 償却 $O(1)$
+//! - `eval_gcc`: $O(\log n)$（$n$ は管理している直線の本数）
 use std::convert::TryFrom;
 use std::fmt::Debug;
 use std::hash::Hash;
@@ -9,98 +46,25 @@ use std::ops::Add;
 use std::ops::Mul;
 use std::ops::Sub;
 
-/// 傾きが単調減少な直線の列を管理します。
+/// 傾きが単調減少な直線群を管理する [`VecLines`]。
 pub type VecLinesDecreasing<T> = VecLines<T, DecreasingTilt>;
-/// 傾きが単調増加な直線の列を管理します。
+/// 傾きが単調増加な直線群を管理する [`VecLines`]。
 pub type VecLinesIncreasing<T> = VecLines<T, IncreasingTilt>;
 
-/// 傾き単調な直線の列を `Vec` で管理します。
-///
-/// # 使い方
-///
-/// ```
-/// # use vec_lines::VecLinesDecreasing;
-/// // 傾きが単調減少な直線の列を管理します。
-/// let mut lines = VecLinesDecreasing::<i32>::new();
-///
-/// // 直線を挿入していきます。
-/// lines.push([1, 0]);
-/// lines.push([0, 10]);
-/// lines.push([-1, 30]);
-/// assert_eq!(lines.len(), 3);
-///
-/// // 黄金分割探索で最適値を計算できます。
-/// assert_eq!(lines.eval_gcc(-10), Some(-10)); // x
-/// assert_eq!(lines.eval_gcc(15), Some(10)); // 10
-/// assert_eq!(lines.eval_gcc(40), Some(-10)); // -x + 30
-///
-/// // 直線番号指定でも評価します。（しゃくとり法などのため）
-/// assert_eq!(lines.get(0).unwrap().eval(100), 100);
-/// assert_eq!(lines.get(1).unwrap().eval(100), 10);
-/// assert_eq!(lines.get(2).unwrap().eval(100), -70);
-/// ```
-///
-///
-/// # 傾きの等しい直線を入れたときの挙動
-///
-/// 定数項を比較して、真に改善している場合は直前のものを消して挿入し、
-/// そこから改めて通常の不要直線除去のアルゴリズムを実行します。
-/// 一方改善していない場合は挿入せず処理を終了します。
-///
-/// ただし改善しているというのは、
-///
-/// * 制約が [`DecreasingTilt`] のときには、定数項が小さいことを、
-/// * 制約が [`IncreasingTilt`] のときには、定数項が大きいこと
-///
-/// を意味します。
-///
-/// ```
-/// # use vec_lines::{VecLinesDecreasing, Line};
-/// // 前よりも良いものがくると置き換えます。
-/// let mut lines = VecLinesDecreasing::<i32>::new();
-/// lines.push([0, 10]);
-/// lines.push([0, 0]);
-/// let expected = vec![Line([0, 0])];
-/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
-///
-/// // 前よりも良くないものは無視します。
-/// let mut lines = VecLinesDecreasing::<i32>::new();
-/// lines.push([0, 0]);
-/// lines.push([0, 10]);
-/// let expected = vec![Line([0, 0])];
-/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
-///
-/// // 置き換えたあとは通常の不要直線除去アルゴリズムが走ります。
-/// let mut lines = VecLinesDecreasing::<i32>::new();
-/// lines.push([1, 0]);
-/// lines.push([0, 10]);
-/// lines.push([-1, 1000]);
-/// lines.push([-1, 0]);
-/// let expected = vec![Line([1, 0]), Line([-1, 0])];
-/// assert_eq!(lines.iter_copied().collect::<Vec<_>>(), expected);
-/// ```
+/// 傾き単調な直線群。詳細はクレートの説明を参照。
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct VecLines<T, C> {
     lines: Vec<Line<T>>,
     _marker: PhantomData<fn(C) -> C>,
 }
 impl<T: Signed, C: Constraint> VecLines<T, C> {
-    /// 傾き単調な直線の列を `Vec` で管理します。
+    /// 空の直線群を構築する。
     ///
-    /// # 使い方
-    ///
+    /// # 例
     /// ```
-    /// # use vec_lines::{VecLinesDecreasing, VecLinesIncreasing, VecLines, DecreasingTilt,
-    /// # IncreasingTilt};
-    /// // 傾きが単調減少な直線の列を管理します。
+    /// use vec_lines::VecLinesDecreasing;
     /// let lines = VecLinesDecreasing::<i32>::new();
-    ///
-    /// // 傾きが単調減少な直線の列を管理します。
-    /// let lines = VecLinesDecreasing::<i32>::new();
-    ///
-    /// // それぞれ、別名を使わずに構築する方法です。
-    /// let lines = VecLines::<i32, DecreasingTilt>::new();
-    /// let lines = VecLines::<i32, IncreasingTilt>::new();
+    /// assert!(lines.is_empty());
     /// ```
     pub fn new() -> Self {
         Self {
@@ -109,76 +73,40 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
         }
     }
 
-    /// 管理している直線が 0 本のとき `true`、さもなくば `false` を返します。
-    ///
-    /// # 使い方
-    /// ```
-    /// # use vec_lines::VecLinesDecreasing;
-    /// let lines = VecLinesDecreasing::<i32>::new();
-    /// assert!(lines.is_empty());
-    /// ```
+    /// 直線を 1 本も持たなければ `true` を返す。
     pub fn is_empty(&self) -> bool {
         self.lines.is_empty()
     }
 
-    /// 管理している直線の本数を返します。
-    ///
-    /// 不要な直線が自動的に削除されると、このメソッドの返す値も減少します。
-    ///
-    /// # 使い方
-    /// ```
-    /// # use vec_lines::VecLinesDecreasing;
-    /// let mut lines = VecLinesDecreasing::<i32>::new();
-    /// assert_eq!(lines.len(), 0);
-    ///
-    /// lines.push([0, 0]);
-    /// ```
+    /// 管理している直線の本数を返す。不要な直線は自動的に削除されるため、
+    /// [`push`](Self::push) のたびに単調増加するとは限らない。
     pub fn len(&self) -> usize {
         self.lines.len()
     }
 
-    /// index 番目の直線を返します。
+    /// `index` 番目の直線 [`Line`] を返す。範囲外なら `None`。
     ///
-    /// # 使い方
-    ///
+    /// # 例
     /// ```
-    /// # use vec_lines::VecLinesDecreasing;
+    /// use vec_lines::VecLinesDecreasing;
     /// let mut lines = VecLinesDecreasing::<i32>::new();
     /// lines.push([1, 0]);
-    /// lines.push([0, 10]);
-    /// lines.push([-1, 30]);
-    ///
-    /// // 直線を手に入れたら、次は `Line::eval` で評価です。
     /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
+    /// assert!(lines.get(1).is_none());
     /// ```
     pub fn get(&self, index: usize) -> Option<Line<T>> {
         self.lines.get(index).copied()
     }
 
-    /// 後ろに直線を挿入します。
+    /// 直線 $y = ax + b$ を `[a, b]` で追加する。
     ///
     /// # Panics
     ///
-    /// * マーカー `C` の定める傾きの単調性に反するとき。
-    ///
+    /// マーカー `C` の定める傾きの単調性に違反するとき。
     ///
     /// # 計算量
     ///
-    /// 償却定数時間。
-    ///
-    ///
-    /// # 使い方
-    ///
-    /// ```
-    /// # use vec_lines::VecLinesDecreasing;
-    /// let mut lines = VecLinesDecreasing::<i32>::new();
-    /// lines.push([1, 0]);
-    /// lines.push([0, 10]);
-    /// lines.push([-1, 30]);
-    ///
-    /// // 直線を手に入れたら、次は `Line::eval` で評価です。
-    /// assert_eq!(lines.get(0).unwrap().eval(100), 100);
-    /// ```
+    /// 償却 $O(1)$。
     pub fn push(&mut self, line: [T; 2]) {
         assert!(
             self.lines.last().is_none_or(|prv| C::ok(*prv, Line(line))),
@@ -205,26 +133,11 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
         }
     }
 
-    /// 黄金分割探索で最適値を計算します。
+    /// 黄金分割探索で $x$ における最適値を計算する。直線が 1 本もなければ `None`。
     ///
     /// # 計算量
     ///
-    /// 管理している直線の本数を n として、Θ( lg n )。
-    ///
-    ///
-    /// # 使い方
-    ///
-    /// ```
-    /// # use vec_lines::VecLinesDecreasing;
-    /// let mut lines = VecLinesDecreasing::<i32>::new();
-    /// lines.push([1, 0]);
-    /// lines.push([0, 10]);
-    /// lines.push([-1, 30]);
-    ///
-    /// assert_eq!(lines.eval_gcc(-10), Some(-10)); // x
-    /// assert_eq!(lines.eval_gcc(15), Some(10)); // 10
-    /// assert_eq!(lines.eval_gcc(40), Some(-10)); // -x + 30
-    /// ```
+    /// $O(\log n)$（$n$ は管理している直線の本数）。
     pub fn eval_gcc(&self, x: T) -> Option<T> {
         if self.lines.is_empty() {
             return None;
@@ -248,39 +161,31 @@ impl<T: Signed, C: Constraint> VecLines<T, C> {
         Some(if C::strictly_better(y1, y2) { y1 } else { y2 })
     }
 
-    /// 管理している直線を順番に返すイテレータを返します。
+    /// 管理している直線を順番に返すイテレータを返す。
     ///
-    /// # 使い方
-    ///
+    /// # 例
     /// ```
-    /// # use vec_lines::{VecLinesDecreasing, Line};
+    /// use vec_lines::VecLinesDecreasing;
     /// let mut lines = VecLinesDecreasing::<i32>::new();
     /// lines.push([1, 0]);
     /// lines.push([0, 10]);
-    /// lines.push([-1, 30]);
-    ///
-    /// let lines = lines
-    ///     .iter_copied()
-    ///     .map(Line::into_coeff)
-    ///     .collect::<Vec<_>>();
-    /// assert_eq!(lines, vec![[1, 0], [0, 10], [-1, 30]]);
+    /// let coeffs = lines.iter_copied().map(|l| l.into_coeff()).collect::<Vec<_>>();
+    /// assert_eq!(coeffs, vec![[1, 0], [0, 10]]);
     /// ```
     pub fn iter_copied(&self) -> impl '_ + Iterator<Item = Line<T>> {
         self.lines.iter().copied()
     }
 }
 
-/// 一次関数 $ax + b$ を、`[a, b]` の形で管理します。
-///
-/// 中身は `.0` でも `into_coeff` でもとれます。
+/// 一次関数 $ax + b$ を `[a, b]` の形で保持する。中身は `.0` でも [`Line::into_coeff`] でも取れる。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Line<T>(pub [T; 2]);
 impl<T: Signed> Line<T> {
-    /// 特定の x 座標における値を計算します。
+    /// $x$ における値 $ax + b$ を計算する。
     ///
-    /// # 使い方
+    /// # 例
     /// ```
-    /// # use vec_lines::Line;
+    /// use vec_lines::Line;
     /// let line = Line([2, 10]);
     /// assert_eq!(line.eval(2), 14);
     /// ```
@@ -288,14 +193,7 @@ impl<T: Signed> Line<T> {
         self.0[0] * x + self.0[1]
     }
 
-    /// 係数を返します。
-    ///
-    /// # 使い方
-    /// ```
-    /// # use vec_lines::Line;
-    /// let line = Line([2, 10]);
-    /// assert_eq!(line.into_coeff(), [2, 10]);
-    /// ```
+    /// 係数 `[a, b]` を返す。
     pub fn into_coeff(self) -> [T; 2] {
         self.0
     }
@@ -312,16 +210,16 @@ fn golden_section([i0, i3]: [isize; 2]) -> [isize; 2] {
     [i3 - d, i0 + d]
 }
 
-/// 傾きがどちら向きに単調かをあらわすマーカー
+/// 傾きがどちら向きに単調かを表すマーカートレイト。
 pub trait Constraint: Clone + Debug + Hash + PartialEq {
     fn ok<T: Signed>(prv: Line<T>, crr: Line<T>) -> bool;
     fn strictly_better<T: Signed>(x: T, y: T) -> bool;
 }
-/// 傾き単調減少を意味するマーカー
+/// 傾き単調減少を意味するマーカー型。
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub enum DecreasingTilt {}
+/// 傾き単調増加を意味するマーカー型。
 #[derive(Clone, Debug, Hash, PartialEq, Eq)]
-/// 傾き単調増加を意味するマーカー
 pub enum IncreasingTilt {}
 impl Constraint for DecreasingTilt {
     fn ok<T: Signed>(Line([a0, _]): Line<T>, Line([a1, _]): Line<T>) -> bool {
@@ -342,7 +240,7 @@ impl Constraint for IncreasingTilt {
     }
 }
 
-/// 符号つき整数
+/// [`VecLines`] が要素として扱える符号つき整数。標準の符号つき整数型に実装済み。
 pub trait Signed:
     Debug
     + Clone

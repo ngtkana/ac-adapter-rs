@@ -1,12 +1,34 @@
-//! A predecessor data structure based on van Emde Boas trees.
+//! van Emde Boas 木による整数集合の述語（predecessor/successor）データ構造。
 //!
-//! This is implemented with hash maps, so `new()` is $O(\log\log n)$.
+//! 全体を $\sqrt n$ 個ずつの塊（チャンク）に分割し、各チャンクを容量 $\sqrt n$ の
+//! van Emde Boas 木として再帰的に管理する。どのチャンクが空でないかは
+//! 別の van Emde Boas 木（summary）で管理し、目的の値が属するチャンク内に
+//! 答えがなければ summary を辿って次の非空チャンクへ飛ぶ。この再帰により
+//! 容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、`succ`/`pred`/`insert`/`remove`
+//! もすべて同じ計算量で行える。最小値・最大値は各ノードにキャッシュしておくことで
+//! `min`/`max` を $O(1)$ で返す。ハッシュマップ実装のため、事前に確保するのは
+//! 容量 $n$ の数値のみで、実メモリは要素数に応じて増える。
 //!
-//! # Example
+//! # 仕様
+//!
+//! - [`VebSet`][]: 整数集合 $S \subseteq \{0, \ldots, n-1\}$
+//!   - `new(n)`: 容量 $n$ で空集合を構築
+//!   - `insert(x)`: $S \leftarrow S \cup \{x\}$、新規追加なら `true`
+//!   - `remove(x)`: $S \leftarrow S \setminus \{x\}$、存在したら `true`
+//!   - `contains(x)`: $x \in S$
+//!   - `min()`, `max()`: $\min(S)$, $\max(S)$（空なら `None`）
+//!   - `succ(x)`: $x$ より大きい最小要素、`pred(x)`: $x$ より小さい最大要素
+//!   - `pred_eq(x)`: $x$ 以下の最大要素
+//!   - `len()`, `is_empty()`, `collect()`: 要素数、空判定、昇順の [`Vec`] 化
+//! - [`VebMap`][]`<V>`: [`VebSet`] にキーごとの値 `V` を付加したマップ
+//!   - 各操作はキー用の `VebSet` と値の `HashMap` を同期して更新する
+//!   - `_key`/`_value` 接尾辞のメソッドでキーのみ・値のみを取得できる
+//!
+//! # 例
 //!
 //! ```
 //! # use veb::VebSet;
-//! let mut veb = VebSet::new(1000); // capacity
+//! let mut veb = VebSet::new(1000); // 容量
 //! veb.insert(42);
 //! assert!(veb.contains(42));
 //! veb.remove(42);
@@ -21,28 +43,15 @@
 //! assert_eq!(veb.contains(34), true);
 //! assert_eq!(veb.contains(35), false);
 //! assert_eq!(veb.len(), 4);
-//!
-//! assert_eq!(veb.collect(), vec![12, 34, 56, 78]); // Useful for debugging
 //! ```
 //!
-//! # Operations
+//! # 計算量
 //!
-//! NOTE: `min`, `max`, `succ`, and `pred` return `None` if the set is empty.
+//! $n$ を容量とする。
 //!
-//! | Operation    | Time Complexity | Explanation |
-//! |--------------|-----------------|-------------|
-//! | `insert(x)`  | $O(\log\log n)$ | $S \leftarrow S \cup \{x\}$ |
-//! | `remove(x)`  | $O(\log\log n)$ | $S \leftarrow S \setminus \{x\}$ |
-//! | `contains(x)`| $O(\log\log n)$ | $x \in S$ |
-//! | `min()`      | $O(1)$          | $\min\left( S \right)$ |
-//! | `max()`      | $O(1)$          | $\max\left( S \right)$ |
-//! | `succ(x)`    | $O(\log\log n)$ | $\min\left( x^△ \right)$ |
-//! | `succ_eq(x)` | $O(\log\log n)$ | $\min\left( x^▲ \right)$ |
-//! | `pred(x)`    | $O(\log\log n)$ | $\max\left( x^▽ \right)$ |
-//! | `pred_eq(x)` | $O(\log\log n)$ | $\max\left( x^▲ \right)$ |
-//! | `len()`      | $O(1)$          | $\|S\|$ |
-//! | `is_empty()` | $O(1)$          | $S = \emptyset$ |
-//! | `collect()`  | $O(\|S\|\log\log n)$ | Convert to a [`Vec`] |
+//! - `insert`, `remove`, `contains`, `succ`, `pred`, `pred_eq`: $O(\log \log n)$
+//! - `min`, `max`, `len`, `is_empty`: $O(1)$
+//! - `collect`: $O(|S| \log \log n)$
 
 use std::collections::HashMap;
 
@@ -55,10 +64,9 @@ macro_rules! multi_or_else {
     };
 }
 
-/// A van Emde Boas tree-based map.
-/// The map is implemented as a van Emde Boas tree with a hash map.
+/// [`VebSet`] にハッシュマップで値を対応付けたマップ。
 ///
-/// # Example
+/// # 例
 /// ```
 /// use veb::VebMap;
 /// let mut veb = VebMap::from_iter(vec![(42, "foo"), (43, "bar")]);
@@ -75,9 +83,9 @@ pub struct VebMap<V> {
     map: HashMap<usize, V>,
 }
 impl<V> VebMap<V> {
-    /// Creates a new van Emde Boas tree-based map with the given capacity.
+    /// 容量 $n$ の空のマップを構築する。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::new(1000);
@@ -89,10 +97,9 @@ impl<V> VebMap<V> {
         }
     }
 
-    /// Inserts an element into the map.
-    /// Returns the previous value if the key was already present.
+    /// キー $i$ に値 $v$ を挿入する。キーが既に存在した場合は前の値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
@@ -104,9 +111,9 @@ impl<V> VebMap<V> {
         self.map.insert(i, v)
     }
 
-    /// Returns the value at $i$.
+    /// キー $i$ を削除し、その値を返す。存在しなければ `None`。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
@@ -119,8 +126,9 @@ impl<V> VebMap<V> {
         self.map.remove(&i)
     }
 
-    /// Returns the value corresponding to the key.
-    /// # Example
+    /// キーに対応する値の参照を返す。
+    ///
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
@@ -132,9 +140,9 @@ impl<V> VebMap<V> {
         self.map.get(&i)
     }
 
-    /// Returns a mutable reference to the value corresponding to the key.
+    /// キーに対応する値の可変参照を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let mut veb = VebMap::new(1000);
@@ -146,23 +154,23 @@ impl<V> VebMap<V> {
         self.map.get_mut(&i)
     }
 
-    /// Returns the key $\min \left( S \right)$.
+    /// 最小キー $\min(S)$ を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
-    /// assert_eq!(veb.min(), None);
+    /// assert_eq!(veb.min_key(), None);
     /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.min(), Some((42, &"foo")));
+    /// assert_eq!(veb.min_key(), Some(42));
     /// ```
     pub fn min_key(&self) -> Option<usize> {
         self.veb.min()
     }
 
-    /// Returns the value at $\min \left( S \right)$.
+    /// 最小キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -174,9 +182,9 @@ impl<V> VebMap<V> {
         self.veb.min().and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the entry at $\min \left( S \right)$.
+    /// 最小キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -190,23 +198,23 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the key $\max \left( S \right)$.
+    /// 最大キー $\max(S)$ を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
-    /// assert_eq!(veb.max(), None);
+    /// assert_eq!(veb.max_key(), None);
     /// let veb = VebMap::from_iter(vec![(42, "foo")]);
-    /// assert_eq!(veb.max(), Some((42, &"foo")));
+    /// assert_eq!(veb.max_key(), Some(42));
     /// ```
     pub fn max_key(&self) -> Option<usize> {
         self.veb.max()
     }
 
-    /// Returns the value at $\max \left( S \right)$.
+    /// 最大キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -218,9 +226,9 @@ impl<V> VebMap<V> {
         self.veb.max().and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the entry at $\max \left( S \right)$.
+    /// 最大キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -234,9 +242,9 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the key $\min \left (i^△ \right)$.
+    /// $i$ より大きい最小キーを返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -249,9 +257,9 @@ impl<V> VebMap<V> {
         self.veb.succ(i)
     }
 
-    /// Returns the value at $\min \left (i^△ \right)$.
+    /// $i$ より大きい最小キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -262,9 +270,9 @@ impl<V> VebMap<V> {
         self.veb.succ(i).and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the entry at $\min \left (i^△ \right)$.
+    /// $i$ より大きい最小キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -277,9 +285,9 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the key $\min \left (i^▲ \right)$.
+    /// $i$ 以上の最小キーを返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -293,9 +301,9 @@ impl<V> VebMap<V> {
         self.succ_key(i)
     }
 
-    /// Returns the value at $\min \left (i^▲ \right)$.
+    /// $i$ 以上の最小キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -309,9 +317,9 @@ impl<V> VebMap<V> {
         self.succ_value(i)
     }
 
-    /// Returns the entry at $\min \left (i^▲ \right)$.
+    /// $i$ 以上の最小キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -325,9 +333,9 @@ impl<V> VebMap<V> {
         self.succ(i)
     }
 
-    /// Returns the key $\max \left (i^▽ \right)$.
+    /// $i$ より小さい最大キーを返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -340,9 +348,9 @@ impl<V> VebMap<V> {
         self.veb.pred(i)
     }
 
-    /// Returns the value at $\max \left (i^▽ \right)$.
+    /// $i$ より小さい最大キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -353,9 +361,9 @@ impl<V> VebMap<V> {
         self.veb.pred(i).and_then(|i| self.map.get(&i))
     }
 
-    /// Returns the entry at $\max \left (i^▽ \right)$.
+    /// $i$ より小さい最大キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -368,9 +376,9 @@ impl<V> VebMap<V> {
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
-    /// Returns the key $\max \left (i^▲ \right)$.
+    /// $i$ 以下の最大キーを返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -384,9 +392,9 @@ impl<V> VebMap<V> {
         self.pred_key(i)
     }
 
-    /// Returns the value at $\max \left (i^▲ \right)$.
+    /// $i$ 以下の最大キーに対応する値を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -400,9 +408,9 @@ impl<V> VebMap<V> {
         self.pred_value(i)
     }
 
-    /// Returns the entry at $\max \left (i^▲ \right)$.
+    /// $i$ 以下の最大キーとその値の組を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -416,9 +424,9 @@ impl<V> VebMap<V> {
         self.pred(i)
     }
 
-    /// Returns $\|S\|$.
+    /// マップの要素数 $|S|$ を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -430,8 +438,9 @@ impl<V> VebMap<V> {
         self.veb.len()
     }
 
-    /// Returns `true` if the map is empty.
-    /// # Example
+    /// マップが空なら `true` を返す。
+    ///
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::<()>::from_iter(vec![]);
@@ -443,8 +452,9 @@ impl<V> VebMap<V> {
         self.veb.is_empty()
     }
 
-    /// Returns `true` if the map contains the given key.
-    /// # Example
+    /// マップが指定したキーを含むなら `true` を返す。
+    ///
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(42, "foo")]);
@@ -455,9 +465,9 @@ impl<V> VebMap<V> {
         self.veb.contains(i)
     }
 
-    /// Returns the elements in the map in ascending order.
-    /// The elements are collected into a [`Vec`].
-    /// # Example
+    /// マップの要素をキーの昇順に並べた [`Vec`] を返す。
+    ///
+    /// # 例
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
@@ -507,7 +517,7 @@ impl<V> std::ops::IndexMut<usize> for VebMap<V> {
     }
 }
 
-/// A van Emde Boas tree.
+/// van Emde Boas 木で実装した整数集合。
 pub enum VebSet {
     Internal {
         min: usize,
@@ -520,9 +530,9 @@ pub enum VebSet {
     Leaf(u64),
 }
 impl VebSet {
-    /// Creates a new van Emde Boas tree with the given capacity.
+    /// 容量 $n$ の空集合を構築する。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// use veb::VebSet;
     /// let veb = VebSet::new(1000);
@@ -544,10 +554,9 @@ impl VebSet {
         }
     }
 
-    /// Returns the minimum element in the set.
-    /// Returns `None` if the set is empty.
+    /// 集合の最小値を返す。空なら `None`。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// assert_eq!(VebSet::from_iter(vec![]).min(), None);
@@ -561,10 +570,9 @@ impl VebSet {
         }
     }
 
-    /// Returns the maximum element in the set.
-    /// Returns `None` if the set is empty.
+    /// 集合の最大値を返す。空なら `None`。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// assert_eq!(VebSet::from_iter(vec![]).max(), None);
@@ -578,9 +586,9 @@ impl VebSet {
         }
     }
 
-    /// Returns the number of elements in the set.
+    /// 集合の要素数を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// use veb::VebSet;
     /// assert_eq!(VebSet::from_iter(vec![]).len(), 0);
@@ -594,11 +602,9 @@ impl VebSet {
         }
     }
 
-    /// Returns `true` if the set is empty.
-    /// Returns `false` if the set is not empty.
-    /// Equivalent to `self.len() == 0`.
+    /// 集合が空なら `true` を返す。`self.len() == 0` と等価。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// assert_eq!(VebSet::from_iter(vec![]).is_empty(), true);
@@ -608,11 +614,9 @@ impl VebSet {
         self.len() == 0
     }
 
-    /// Inserts an element into the set.
-    /// Returns `true` if the element was not already present.
-    /// Returns `false` if the element was already present.
+    /// 要素を集合に挿入する。既に存在しなければ `true` を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// let mut veb = VebSet::new(1000);
@@ -667,11 +671,9 @@ impl VebSet {
         }
     }
 
-    /// Removes an element from the set.
-    /// Returns `true` if the element was present.
-    /// Returns `false` if the element was not present.
+    /// 要素を集合から削除する。存在すれば `true` を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// let mut veb = VebSet::new(1000);
@@ -733,10 +735,9 @@ impl VebSet {
         }
     }
 
-    /// Returns the minimum element greater than given element.
-    /// Returns `None` if the given element is the maximum element.
+    /// $i$ より大きい最小要素を返す。$i$ が最大要素なら `None`。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// let veb: VebSet = vec![12, 34, 56, 78].into_iter().collect();
@@ -777,9 +778,9 @@ impl VebSet {
         }
     }
 
-    /// Returns $\min\{j \in S \mid j \le i\}$.
+    /// $i$ より小さい最大要素 $\max\{j \in S \mid j < i\}$ を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// let veb: VebSet = vec![12, 34, 56, 78].into_iter().collect();
@@ -817,7 +818,7 @@ impl VebSet {
         }
     }
 
-    /// Returns $\max\{j \in S \mid j \leq i\}$.
+    /// $i$ 以下の最大要素 $\max\{j \in S \mid j \le i\}$ を返す。
     pub fn pred_eq(&self, i: usize) -> Option<usize> {
         if self.contains(i) {
             return Some(i);
@@ -825,10 +826,9 @@ impl VebSet {
         self.pred(i)
     }
 
-    /// Returns `true` if the set contains the given element.
-    /// Returns `false` if the set does not contain the given element.
+    /// 集合が指定した要素を含むなら `true` を返す。
     ///
-    /// # Example
+    /// # 例
     /// ```
     /// # use veb::VebSet;
     /// let veb: VebSet = vec![12, 34, 56, 78].into_iter().collect();
@@ -852,8 +852,7 @@ impl VebSet {
         }
     }
 
-    /// Returns the elements in the set in ascending order.
-    /// The elements are collected into a [`Vec`].
+    /// 集合の要素を昇順に並べた [`Vec`] を返す。
     pub fn collect(&self) -> Vec<usize> {
         let mut result = Vec::with_capacity(self.len());
         let mut i = self.min();

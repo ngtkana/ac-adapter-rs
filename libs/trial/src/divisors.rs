@@ -1,15 +1,21 @@
 use super::Value;
 
-/// Returns a `Vec` of the divisors. The divisors is guaranteed to be sorted in ascending order.
+/// `n` の約数を昇順に列挙した `Vec` を返す。
 ///
-/// # Example
+/// $d^2 \le n$ を満たす $d$ を $1$ から順に試し割りする。$d$ が約数なら相方 $n / d$ も
+/// 約数なので、小さい方の列と大きい方の列（逆順）を両側から積んでソート済みの結果を作る。
 ///
-/// Basic usage:
+/// # 例
+///
 /// ```
 /// use trial::divisors;
 ///
 /// assert_eq!(divisors(12u32), vec![1, 2, 3, 4, 6, 12]);
 /// ```
+///
+/// # 計算量
+///
+/// $O(\sqrt n)$
 pub fn divisors<T: Value>(n: T) -> Vec<T> {
     let mut former = Vec::new();
     let mut latter = Vec::new();
@@ -27,16 +33,14 @@ pub fn divisors<T: Value>(n: T) -> Vec<T> {
     former
 }
 
-/// Takes an unsigned integer and returns an iterator to yield all the divisors_unordered of it.
+/// `n` の約数を「小さい方・大きい方」交互の順で列挙するイテレータを返す。
 ///
-/// # Note
+/// $d^2 \le n$ を満たす $d$ を小さい方から試し割りし、見つかるたびに $d$ とその相方
+/// $n / d$ を交互に返す（例: `n = 36` なら `1, 36, 2, 18, 3, 12, 4, 9, 6`）。
+/// $d^2 = n$ のときは相方を返さず $d$ のみで打ち切る。
 ///
-/// The order of the return value is not necessarily ascending, but ordered in "alternating" order.
-/// (eg. 1, 36, 2, 18, 3, 12, 4, 9)
+/// # 例
 ///
-/// # Example
-///
-/// Basic usage:
 /// ```
 /// use trial::divisors_unordered;
 ///
@@ -49,6 +53,10 @@ pub fn divisors<T: Value>(n: T) -> Vec<T> {
 /// assert_eq!(iter.next(), Some(4));
 /// assert_eq!(iter.next(), None);
 /// ```
+///
+/// # 計算量
+///
+/// $O(\sqrt n)$
 pub fn divisors_unordered<T: Value>(n: T) -> Divisors<T> {
     Divisors {
         n,
@@ -56,7 +64,7 @@ pub fn divisors_unordered<T: Value>(n: T) -> Divisors<T> {
         rev: false,
     }
 }
-/// [See the document of a function `divisors_unordered`](`divisors_unordered`)
+/// [`divisors_unordered`] が返すイテレータ。
 pub struct Divisors<T> {
     n: T,
     d: T,

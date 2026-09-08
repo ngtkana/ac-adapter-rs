@@ -1,12 +1,46 @@
-//! $w$-ary tree による predecessor データ構造です。
+//! $w$-ary tree による整数集合の predecessor/successor データ構造。
 //!
-//! 論理的な boolean 配列 $B_1, \dots, B_n$ を管理します。
+//! 要素を $B = 64$（`u64::BITS`）分木のビットマスクとして管理する。深さ $i$ の各ノードは
+//! 64 個の子のうち要素を含むものを 1 ビットで表し、根から葉までの経路をビット演算
+//! （trailing/leading zeros）でたどることで、挿入・削除・predecessor/successor 探索を
+//! すべて $O(\log_B n)$ で行える。
 //!
-//! 言い換えると、$[0, n[$ の部分集合 $S$ を管理していると思うことも出来ます。
+//! # 仕様
+//!
+//! 全体集合 $[0, n)$ の部分集合 $S$ を管理する。
+//!
+//! - `WAryTree::new`: 空の $S$（全体集合のサイズ $n$）を構築
+//! - `WAryTree::from_slice_of_bool`: `bool` スライスから構築（`true` の位置が $S$ の要素）
+//! - `WAryTree::insert`: $x$ を $S$ に追加し、追加前に $x \notin S$ だったかを返す
+//! - `WAryTree::remove`: $x$ を $S$ から削除し、削除前に $x \in S$ だったかを返す
+//! - `WAryTree::contains`: $x \in S$ か判定
+//! - `WAryTree::min`, `WAryTree::max`: $\min(S)$, $\max(S)$
+//! - `WAryTree::successor_including`, `WAryTree::successor_excluding`: $\min(S \cap [x, \infty))$, $\min(S \cap (x, \infty))$
+//! - `WAryTree::predecessor_including`, `WAryTree::predecessor_excluding`: $\max(S \cap (-\infty, x])$, $\max(S \cap (-\infty, x))$
+//!
+//! # 例
+//!
+//! ```
+//! use w_ary_tree::WAryTree;
+//!
+//! let mut tree = WAryTree::new(10);
+//! tree.insert(3);
+//! tree.insert(7);
+//! assert_eq!(tree.min(), Some(3));
+//! assert_eq!(tree.successor_excluding(3), Some(7));
+//! ```
+//!
+//! # 計算量
+//!
+//! 木の高さは $O(\log_B n)$（$B = 64$）。
+//!
+//! - 構築: $O(n / B)$
+//! - `WAryTree::insert`, `WAryTree::remove`, `WAryTree::contains`: $O(\log_B n)$
+//! - `WAryTree::min`, `WAryTree::max`、predecessor/successor 系: $O(\log_B n)$
 
 const B: usize = u64::BITS as usize;
 
-/// $w$-ary tree による predecessor データ構造です。
+/// $B$-分木（$B = 64$）で整数集合を管理するデータ構造。
 #[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct WAryTree {
@@ -15,12 +49,9 @@ pub struct WAryTree {
 }
 
 impl WAryTree {
-    /// 与えられた長さの空の $w$-ary tree を構築します。
+    /// 全体集合 $[0, \mathrm{len})$、部分集合 $S = \emptyset$ で構築する。
     ///
-    /// 長さ `len` の boolean 配列を管理する tree データ構造を作成します。
-    /// 初期状態ではすべての要素が `false` です。
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -52,21 +83,19 @@ impl WAryTree {
         Self { items, len }
     }
 
-    /// 管理している boolean 配列の長さを返します。
+    /// 全体集合の大きさ $n$（`len`）を返す。
     pub fn len(&self) -> usize {
         self.len
     }
 
-    /// tree が空 (長さが $0$) かどうかを返します。
+    /// 全体集合が空（$n = 0$）かどうかを返す。
     pub fn is_empty(&self) -> bool {
         self.len == 0
     }
 
-    /// boolean スライスから $w$-ary tree を構築します。
+    /// `bool` スライスから構築する。`slice[i]` が `true` の位置が $S$ の要素になる。
     ///
-    /// 与えられた boolean スライスから tree データ構造を初期化します。
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -83,12 +112,9 @@ impl WAryTree {
         slice.iter().copied().collect()
     }
 
-    /// $x \in S$ かどうかを答えます。
+    /// $x \in S$ かどうかを返す（`x < self.len()` が前提）。
     ///
-    /// # Panics if
-    /// `x >= self.len()`
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -103,15 +129,11 @@ impl WAryTree {
         self.items[0][x / B] >> (x % B) & 1 == 1
     }
 
-    /// $x$ を$S$ に追加します。
+    /// $x$ を $S$ に追加する（`x < self.len()` が前提）。
     ///
-    /// # Panics if
-    /// `x >= self.len()`
+    /// 追加前に $x \notin S$ だったかを返す。
     ///
-    /// # Returns
-    /// 操作前の `!self.contains(x)`
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -133,15 +155,11 @@ impl WAryTree {
         true
     }
 
-    /// $S$ から $x$ を取り除きます。
+    /// $x$ を $S$ から削除する（`x < self.len()` が前提）。
     ///
-    /// # Panics if
-    /// `x >= self.len()`
+    /// 削除前に $x \in S$ だったかを返す。
     ///
-    /// # Returns
-    /// 操作前の `!self.contains(x)`
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -166,9 +184,9 @@ impl WAryTree {
         true
     }
 
-    /// $\mathrm{min}(S)$ を返します。なければ `None`。
+    /// $\mathrm{min}(S)$ を返す。なければ `None`。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -183,9 +201,9 @@ impl WAryTree {
         (self.items.last().is_some_and(|last| last[0] != 0)).then(|| subtree_min(&self.items, 0))
     }
 
-    /// $\mathrm{min}(S \cap \small[x, \infty\small[)$ を返します。なければ `None`。
+    /// $\mathrm{min}(S \cap \small[x, \infty\small[)$ を返す。なければ `None`。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -198,9 +216,9 @@ impl WAryTree {
         if self.contains(x) { Some(x) } else { self.successor_excluding(x) }
     }
 
-    /// $\min(S \cap \small] x, \infty \small[)$ を返します。
+    /// $\min(S \cap \small] x, \infty \small[)$ を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -222,9 +240,9 @@ impl WAryTree {
         None
     }
 
-    /// $\mathrm{max}(S)$ を返します。なければ `None`。
+    /// $\mathrm{max}(S)$ を返す。なければ `None`。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -239,9 +257,9 @@ impl WAryTree {
         (self.items.last().is_some_and(|last| last[0] != 0)).then(|| subtree_max(&self.items, 0))
     }
 
-    /// $\mathrm{max}(S \cap (-\infty, x])$ を返します。なければ `None`。
+    /// $\mathrm{max}(S \cap (-\infty, x])$ を返す。なければ `None`。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -254,9 +272,9 @@ impl WAryTree {
         if self.contains(x) { Some(x) } else { self.predecessor_excluding(x) }
     }
 
-    /// $\mathrm{max}(S \cap (-\infty, x))$ を返します。
+    /// $\mathrm{max}(S \cap (-\infty, x))$ を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
@@ -278,9 +296,9 @@ impl WAryTree {
         None
     }
 
-    /// bool のイテレータを返します。
+    /// $x \in S$ かどうかを $x = 0, 1, \ldots, n - 1$ の順に並べたイテレータを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use w_ary_tree::WAryTree;
