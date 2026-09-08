@@ -51,9 +51,13 @@ case "$SHELL" in
     */bash) RC="~/.bashrc" ;;
     *) RC="your shell's rc file" ;;
 esac
+DIR="$(pwd)"
+case "$DIR" in
+    "$HOME"/*) DIR="\$HOME${DIR#"$HOME"}" ;;
+esac
 echo "Add this to $RC (detected from \$SHELL=$SHELL) if not already present:"
 echo ""
-echo "    export AC_ADAPTER_RS_ROOT=\"$(pwd)\""
+echo "    export AC_ADAPTER_RS_ROOT=\"$DIR\""
 echo ""
 '''
 
