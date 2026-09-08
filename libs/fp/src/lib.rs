@@ -1,4 +1,4 @@
-//! 素体 $𝔽_P$ 上の四則演算・べき乗・逆元。
+//! 素体 $\mathbb{F}_P$ 上の四則演算・べき乗・逆元。
 //!
 //! `P` を `const` 型パラメータとして固定し、$\{0, 1, \ldots, P-1\}$ 上の演算を提供。
 //! 加減乗は `u64`/`u128` の範囲内で完結し、逆元は拡張ユークリッド互除法で求める。
@@ -30,7 +30,7 @@
 //! - `pow(e)`: $O(\log e)$
 //! - `inv()`: $O(\log P)$
 
-/// $𝔽_P$ の要素を `usize` から生成。自動的に mod P に削減。
+/// $\mathbb{F}_P$ の要素を `usize` から生成。自動的に mod P に削減。
 ///
 /// # 例
 ///
@@ -44,7 +44,7 @@ pub const fn fpu<const P: u64>(value: usize) -> Fp<P> {
     Fp::new(value as u64)
 }
 
-/// $𝔽_P$ の要素を `u64` から生成。自動的に mod P に削減。
+/// $\mathbb{F}_P$ の要素を `u64` から生成。自動的に mod P に削減。
 ///
 /// # 例
 ///
@@ -57,7 +57,7 @@ pub const fn fp_new<const P: u64>(value: u64) -> Fp<P> {
     Fp::new(value)
 }
 
-/// 素体 $𝔽_P$ の要素。$(0, 1, \ldots, P-1)$ 上の値を表現。
+/// 素体 $\mathbb{F}_P$ の要素。$(0, 1, \ldots, P-1)$ 上の値を表現。
 ///
 /// `const P: u64` で素数を固定。ほぼすべての操作は `const fn` 対応。
 ///
@@ -68,7 +68,7 @@ pub const fn fp_new<const P: u64>(value: u64) -> Fp<P> {
 /// const P: u64 = 1009;
 /// let x = fp_new::<P>(100);
 /// let y = fp_new::<P>(200);
-/// assert_eq!(x + y, fp_new::<P>(300)); // $𝔽_{1009}$ 上の加算
+/// assert_eq!(x + y, fp_new::<P>(300)); // $\mathbb{F}_{1009}$ 上の加算
 /// ```
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Fp<const P: u64> {
@@ -76,7 +76,7 @@ pub struct Fp<const P: u64> {
 }
 
 impl<const P: u64> Fp<P> {
-    /// 値を mod P に削減して $𝔽_P$ の要素を生成。
+    /// 値を mod P に削減して $\mathbb{F}_P$ の要素を生成。
     ///
     /// # 例
     ///
