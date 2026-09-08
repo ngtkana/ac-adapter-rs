@@ -2,7 +2,7 @@ use std::{fmt::Display, ops};
 
 use crate::{div_rem, range_mask, BitVec, Iter, Range, B};
 
-/// [`BitVec`] の mutable な部分列。[`BitVec::range`] で構築できます。
+/// [`BitVec`] のmutableな部分列。[`BitVec::range_mut`] で構築する。
 pub struct RangeMut<'a> {
     pub items: &'a mut [u64],
     pub start: usize,
@@ -10,9 +10,9 @@ pub struct RangeMut<'a> {
 }
 
 impl<'a> RangeMut<'a> {
-    /// 範囲内の bit を全て flip します。
+    /// 範囲内のビットを全て反転する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -45,9 +45,9 @@ impl<'a> RangeMut<'a> {
             self.items[q1] ^= (1 << r1) - 1;
         }
     }
-    /// Bitwise or で更新します。長さが異なる場合は短い方に合わせます。
+    /// bitwise ORで更新する。範囲の長さが異なる場合は短い方に合わせる。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -60,9 +60,9 @@ impl<'a> RangeMut<'a> {
     pub fn or_assign(&'a mut self, other: impl Into<Range<'a>>) {
         self.visit(other, |x, y| *x |= y);
     }
-    /// Bitwise xor で更新します。長さが異なる場合は短い方に合わせます。
+    /// bitwise XORで更新する。範囲の長さが異なる場合は短い方に合わせる。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -75,9 +75,9 @@ impl<'a> RangeMut<'a> {
     pub fn xor_assign(&mut self, other: impl Into<Range<'a>>) {
         self.visit(other, |x, y| *x ^= y);
     }
-    /// 範囲内の bit を順に返す iterator を構築します
+    /// 範囲内のビットを順に返すイテレータを構築する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -127,9 +127,9 @@ impl<'a> RangeMut<'a> {
             }
         }
     }
-    /// 範囲内の bit 全体からなる [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
+    /// 範囲内のビット全体を `Vec<bool>` に変換する。`.iter().collect()` の短絡メソッド。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;

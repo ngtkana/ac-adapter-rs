@@ -1,36 +1,48 @@
-//! 双対セグメント木（右作用）
+//! 区間作用・1 点取得を扱う双対セグメント木（右作用）
 //!
-//! 作用の方向迷うのですが、右作用にしました。
+//! セグメント木と双対の構造を持つ。内部ノードに集約値ではなく「まだ子孫へ伝播していない作用」を
+//! 持たせることで、区間 $[l, r)$ への作用適用は経路上 $O(\log n)$ 個のノードへの作用の合成だけで済み、
+//! 1 点取得は根から葉への経路上 $O(\log n)$ 個のノードの作用を伝播（push）してから読み出す。
+//! セグメント木が「1 点更新・区間取得」であるのに対し、こちらは「区間更新・1 点取得」を担う。
 //!
+//! # 仕様
 //!
-//! # Examples
+//! [`Ops`] トレイトで右作用の演算を定義する。
+//!
+//! - 単位元: [`Ops::identity`]
+//! - 結合律 $\mathrm{op}(\mathrm{op}(x, y), z) = \mathrm{op}(x, \mathrm{op}(y, z))$ を満たす右作用: [`Ops::op`]
+//!
+//! [`DualSegtree::apply`] は区間 $[l, r)$ の各要素 $v$ を $\mathrm{op}(v, x)$ に置き換える。
+//!
+//! # 例
 //!
 //! ```
-//! # use dual_segtree::{DualSegtree, Ops};
-//! // 演算定義（historical minimum）
-//! enum O {}
-//! impl Ops for O {
-//!     type Value = [i32; 2];
+//! use dual_segtree::DualSegtree;
+//! use dual_segtree::Ops;
 //!
-//!     fn op([a, b]: [i32; 2], [c, d]: [i32; 2]) -> [i32; 2] {
-//!         [a.min(b + c), b + d]
+//! // 区間加算・1 点取得（右作用なので op(v, x) = v + x）
+//! enum Add {}
+//! impl Ops for Add {
+//!     type Value = i32;
+//!     fn op(lhs: i32, rhs: i32) -> i32 {
+//!         lhs + rhs
 //!     }
-//!
-//!     fn identity() -> [i32; 2] {
-//!         [0, 0]
+//!     fn identity() -> i32 {
+//!         0
 //!     }
 //! }
 //!
-//! // 構築
-//! let mut seg = DualSegtree::<O>::new(vec![[0, 0], [0, 0]]);
-//! assert_eq!(seg.collect_vec(), vec![[0, 0], [0, 0]]);
-//!
-//! // 更新
-//! seg.apply(0..1, &[-2, -2]); // -2
-//! assert_eq!(seg.collect_vec(), vec![[-2, -2], [0, 0]]);
-//! seg.apply(0..1, &[0, 3]); // +3
-//! assert_eq!(seg.collect_vec(), vec![[-2, 1], [0, 0]]);
+//! let mut seg = DualSegtree::<Add>::new(vec![0, 0, 0]);
+//! seg.apply(0..2, &10); // [0, 2) に +10
+//! assert_eq!(seg.collect_vec(), vec![10, 10, 0]);
 //! ```
+//!
+//! # 計算量
+//!
+//! - 構築（[`DualSegtree::new`]）: $O(n)$
+//! - 区間作用（[`DualSegtree::apply`]）: $O(\log n)$
+//! - 1 点取得（[`DualSegtree::get`], [`DualSegtree::get_mut`]）: $O(\log n)$
+//! - 全体展開（[`DualSegtree::collect_vec`], [`DualSegtree::into_vec`]）: $O(n)$
 use std::collections::VecDeque;
 use std::fmt::Debug;
 use std::iter::repeat_with;
@@ -40,26 +52,28 @@ use std::ops::Bound;
 use std::ops::Range;
 use std::ops::RangeBounds;
 
-/// 双対セグメント木（右作用）
+/// 双対セグメント木本体。長さ $n$ の配列を管理する。
 #[derive(Clone, Default, PartialEq)]
 pub struct DualSegtree<O: Ops> {
     table: Vec<O::Value>,
 }
-/// 演算（右作用）
+/// 双対セグメント木が扱う右作用の演算。
+///
+/// [`op`](Self::op) は結合律 $\mathrm{op}(\mathrm{op}(x, y), z) = \mathrm{op}(x, \mathrm{op}(y, z))$ を満たす必要がある。
 pub trait Ops {
-    /// 値型
+    /// 値型。
     type Value: Clone + Debug;
-    /// 作用する演算（右作用）
+    /// 右作用 $\mathrm{op}(lhs, rhs)$：`lhs` に `rhs` を右から作用させた結果。
     fn op(lhs: Self::Value, rhs: Self::Value) -> Self::Value;
-    /// [`op`](Self::op) の単位元
+    /// [`op`](Self::op) の単位元。
     fn identity() -> Self::Value;
-    /// `lhs` を `op(lhs, rhs)` で置き換えます。
+    /// `lhs` を $\mathrm{op}(lhs, rhs)$ で置き換える。
     fn op_assign_from_right(lhs: &mut Self::Value, rhs: Self::Value) {
         *lhs = Self::op(lhs.clone(), rhs);
     }
 }
 impl<O: Ops> DualSegtree<O> {
-    /// [`ExactSizeIterator`] から作ります。
+    /// 長さ $n$ の [`ExactSizeIterator`] から構築する。各要素の初期値をそのまま並べる。
     pub fn new<
         T: IntoIterator<IntoIter = I, Item = O::Value>,
         I: ExactSizeIterator<Item = O::Value>,
@@ -75,17 +89,37 @@ impl<O: Ops> DualSegtree<O> {
         }
     }
 
-    /// 空なら `true` を返します。
+    /// 空（$n = 0$）なら `true` を返す。
     pub fn is_empty(&self) -> bool {
         self.table.is_empty()
     }
 
-    /// 管理している配列の長さを返します。
+    /// 管理する配列の長さ $n$ を返す。
     pub fn len(&self) -> usize {
         self.table.len() / 2
     }
 
-    /// `range` に `x` を作用させます。（右作用）
+    /// 区間 $[l, r)$ の各要素 $v$ を $\mathrm{op}(v, x)$ に置き換える。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use dual_segtree::DualSegtree;
+    /// use dual_segtree::Ops;
+    /// enum Add {}
+    /// impl Ops for Add {
+    ///     type Value = i32;
+    ///     fn op(lhs: i32, rhs: i32) -> i32 {
+    ///         lhs + rhs
+    ///     }
+    ///     fn identity() -> i32 {
+    ///         0
+    ///     }
+    /// }
+    /// let mut seg = DualSegtree::<Add>::new(vec![1, 2, 3]);
+    /// seg.apply(1..3, &10);
+    /// assert_eq!(seg.collect_vec(), vec![1, 12, 13]);
+    /// ```
     pub fn apply(&mut self, range: impl RangeBounds<usize>, x: &O::Value) {
         let Range { mut start, mut end } = into_slice_range(self.len(), range);
         if end < start {
@@ -112,7 +146,7 @@ impl<O: Ops> DualSegtree<O> {
         }
     }
 
-    /// `i` 番目の要素への可変参照を返します。
+    /// $i$ 番目の要素への可変参照を返す。読み出し前に経路上の未伝播の作用を解消する。
     pub fn get_mut(&mut self, i: usize) -> &mut O::Value {
         if self.len() <= i {
             dual_segtree_index_out_of_range_fail(i, self.len())
@@ -122,12 +156,12 @@ impl<O: Ops> DualSegtree<O> {
         &mut self.table[i]
     }
 
-    /// `i` 番目の要素への参照を返します。
+    /// $i$ 番目の要素への参照を返す。
     pub fn get(&mut self, i: usize) -> &O::Value {
         self.get_mut(i)
     }
 
-    /// `i` 番目の要素をコピーして返します。
+    /// $i$ 番目の要素をコピーして返す。
     pub fn get_copied(&mut self, i: usize) -> O::Value
     where
         O::Value: Copy,
@@ -135,7 +169,7 @@ impl<O: Ops> DualSegtree<O> {
         *self.get_mut(i)
     }
 
-    /// `i` 番目の要素をクローンして返します。
+    /// $i$ 番目の要素をクローンして返す。
     pub fn get_cloned(&mut self, i: usize) -> O::Value
     where
         O::Value: Clone,
@@ -143,13 +177,13 @@ impl<O: Ops> DualSegtree<O> {
         self.get_mut(i).clone()
     }
 
-    /// [`Vec`] に変換します。
+    /// 全要素を [`Vec`] に展開する。
     pub fn collect_vec(&mut self) -> Vec<O::Value> {
         update_all::<O>(&mut self.table);
         self.table[self.len()..].to_vec()
     }
 
-    /// [`Vec`] に変換します。
+    /// 全要素を [`Vec`] に展開して消費する。
     pub fn into_vec(mut self) -> Vec<O::Value> {
         update_all::<O>(&mut self.table);
         self.table[self.len()..].to_vec()
