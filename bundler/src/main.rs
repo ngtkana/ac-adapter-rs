@@ -1,0 +1,38 @@
+mod bundle;
+mod inline;
+mod metadata;
+mod rewrite;
+mod strip;
+
+use anyhow::Result;
+use anyhow::bail;
+use metadata::Workspace;
+
+fn main() -> Result<()> {
+    let mut crate_names = Vec::new();
+    let mut strip_docs = true;
+    let mut strip_tests = true;
+    for arg in std::env::args().skip(1) {
+        match arg.as_str() {
+            "--keep-docs" => strip_docs = false,
+            "--keep-tests" => strip_tests = false,
+            _ if arg.starts_with('-') => bail!("unknown option: {arg}"),
+            _ => crate_names.push(arg),
+        }
+    }
+    if crate_names.is_empty() {
+        bail!("usage: libbundle <CRATE_NAME>... [--keep-docs] [--keep-tests]");
+    }
+
+    let ws = Workspace::resolve()?;
+    let output = bundle::bundle(
+        &ws,
+        &crate_names,
+        &bundle::Options {
+            strip_tests,
+            strip_docs,
+        },
+    )?;
+    print!("{output}");
+    Ok(())
+}
