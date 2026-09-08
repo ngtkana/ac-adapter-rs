@@ -63,9 +63,21 @@ document.addEventListener('DOMContentLoaded', function () {
       (item.doc && item.doc.toLowerCase().includes(query)));
   }
 
+  // rustdocのintra-doc link記法（[`Item`]や[`Item`][]）をクレートのrustdocトップへのリンクにする。
+  // 正確なアイテムのページ（struct.Foo.html等）はrustdocのsearch-indexが持つ型コードが
+  // 非公開・不安定な内部フォーマットなので解読せず、確実に存在するクレートトップに留める。
+  // <pre>...</pre>（コード例）の中身は対象外にする。
+  function linkifyIntraDocRefs(html, crateName) {
+    const target = `rustdoc/${crateName}/index.html`;
+    return html.split(/(<pre>[\s\S]*?<\/pre>)/).map((chunk, i) => {
+      if (i % 2 === 1) return chunk;
+      return chunk.replace(/\[(<code>[^<]*<\/code>)\](\[\])?/g, (_, codeSpan) => `<a href="${target}">${codeSpan}</a>`);
+    }).join('');
+  }
+
   function showDetail(crateName, crateMetadata) {
     const bodyHtml = crateMetadata.full
-      ? crateMetadata.full
+      ? linkifyIntraDocRefs(crateMetadata.full, crateName)
       : '<p class="placeholder">(doc comment 未整備。一覧の要約のみ)</p>';
     main.innerHTML = `
       <h4>${crateName}</h4>
@@ -86,6 +98,13 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(main);
   }
 
+  function selectItem(item) {
+    document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
+    item.classList.add("selected");
+    item.scrollIntoView({ block: "nearest" });
+    showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
+  }
+
   function renderList() {
     const { tagQueries, textQueries } = parseQuery(searchInput.value);
     sidebar.innerHTML = '';
@@ -101,12 +120,9 @@ document.addEventListener('DOMContentLoaded', function () {
       .forEach(([crateName, crateMetadata]) => {
         const item = document.createElement("div");
         item.className = "catalog-item";
+        item.dataset.crate = crateName;
         item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description || ''}</span>`;
-        item.addEventListener("click", () => {
-          document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
-          item.classList.add("selected");
-          showDetail(crateName, crateMetadata);
-        });
+        item.addEventListener("click", () => selectItem(item));
         sidebar.appendChild(item);
       });
 
@@ -115,6 +131,26 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     renderMath(sidebar);
   }
+
+  // j/k で前後のクレートに移動、/ で検索欄にフォーカス、Esc で検索欄を離れる
+  document.addEventListener('keydown', (e) => {
+    if (document.activeElement === searchInput) {
+      if (e.key === 'Escape') searchInput.blur();
+      return;
+    }
+    const items = Array.from(sidebar.querySelectorAll('.catalog-item'));
+    if (!items.length) return;
+    if (e.key === 'j' || e.key === 'k') {
+      e.preventDefault();
+      const currentIndex = items.findIndex(el => el.classList.contains('selected'));
+      const step = e.key === 'j' ? 1 : -1;
+      const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + step));
+      selectItem(items[nextIndex]);
+    } else if (e.key === '/') {
+      e.preventDefault();
+      searchInput.focus();
+    }
+  });
 
   if (typeof dependencies !== 'undefined') {
     loadSearchIndex();
