@@ -33,4 +33,16 @@ export AC_ADAPTER_RS_ROOT="/path/to/ac-adapter-rs"  # add to your shell rc; use 
 libbundle fp_fps dinic > bundled.rs                    # multiple crates, deduped
 ```
 
+Shell completion for crate names (`bundler/completions/`):
+
+```sh
+# zsh
+mkdir -p ~/.zsh/completions
+cp bundler/completions/_libbundle ~/.zsh/completions/
+# add once to ~/.zshrc: fpath=(~/.zsh/completions $fpath); autoload -Uz compinit && compinit
+
+# bash
+echo 'source /path/to/ac-adapter-rs/bundler/completions/libbundle.bash' >> ~/.bashrc
+```
+
 
