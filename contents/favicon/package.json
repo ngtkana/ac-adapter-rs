@@ -1,0 +1,11 @@
+{
+  "name": "ac-adapter-rs-favicon",
+  "private": true,
+  "description": "Regenerates contents/favicon.svg and contents/favicon-*.png / apple-touch-icon.png",
+  "scripts": {
+    "generate": "node generate.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
