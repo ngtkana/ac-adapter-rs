@@ -9,9 +9,14 @@
 //! [`Op`] トレイトでモノイド $(S, \cdot, e)$ を定義する。
 //!
 //! * [`Op::identity`]: 単位元 $e$
-//! * [`Op::mul`]: 積 $x \cdot y$（結合律を満たすこと）
+//! * [`Op::op`]: 積 $x \cdot y$（結合律を満たすこと）
 //!
 //! [`Sparse2dSegtree`], [`Dense2dSegtree`] で使う場合は、さらに可換律も要求する。
+//!
+//! 構築には 2 種類の API がある。
+//!
+//! * `new`: 長さのみを指定し、単位元で初期化する
+//! * `from_slice`: 初期値のスライスから構築する
 //!
 //! 更新には 2 種類の API がある。
 //!
@@ -30,12 +35,12 @@
 //!     fn identity() -> i64 {
 //!         0
 //!     }
-//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!     fn op(lhs: &i64, rhs: &i64) -> i64 {
 //!         lhs + rhs
 //!     }
 //! }
 //!
-//! let mut segtree = Segtree::<Add>::new(&[1, 2, 3, 4, 5]);
+//! let mut segtree = Segtree::<Add>::from_slice(&[1, 2, 3, 4, 5]);
 //! assert_eq!(segtree.fold(1..4), 2 + 3 + 4);
 //!
 //! *segtree.entry(0) = 10;
@@ -44,7 +49,7 @@
 //!
 //! # 計算量
 //!
-//! - 構築（[`Segtree::new`]）: $O(n)$
+//! - 構築（[`Segtree::new`], [`Segtree::from_slice`]）: $O(n)$
 //! - 畳み込み（[`Segtree::fold`]）: $O(\log n)$
 //! - 1 点更新（[`Segtree::entry`]）: $O(\log n)$
 //! - 二分探索（[`Segtree::max_right`], [`Segtree::min_left`]）: $O(\log n)$
@@ -65,7 +70,7 @@ pub trait Op {
     /// Returns the identity value $e$.
     fn identity() -> Self::Value;
     /// Multiplies two values: $x \cdot y$.
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
 /// A segment tree.
@@ -76,8 +81,8 @@ pub struct Segtree<O: Op> {
     values: Vec<O::Value>,
 }
 impl<O: Op> Segtree<O> {
-    /// Constructs a new segment tree with the specified length.
-    pub fn from_len(len: usize) -> Self
+    /// Constructs a new segment tree with the specified length, filled with the identity value.
+    pub fn new(len: usize) -> Self
     where
         O::Value: Clone,
     {
@@ -89,8 +94,8 @@ impl<O: Op> Segtree<O> {
         }
     }
 
-    /// Constructs with the specified values.
-    pub fn new(elms: &[O::Value]) -> Self
+    /// Constructs from the specified values.
+    pub fn from_slice(elms: &[O::Value]) -> Self
     where
         O::Value: Clone,
     {
@@ -99,7 +104,7 @@ impl<O: Op> Segtree<O> {
         let mut values = vec![O::identity(); 2 * offset];
         values[offset..offset + len].clone_from_slice(elms);
         for i in (1..offset).rev() {
-            values[i] = O::mul(&values[i * 2], &values[i * 2 + 1]);
+            values[i] = O::op(&values[i * 2], &values[i * 2 + 1]);
         }
         Self {
             len,
@@ -123,17 +128,17 @@ impl<O: Op> Segtree<O> {
         let mut right = O::identity();
         while start < end {
             if start % 2 == 1 {
-                left = O::mul(&left, &values[start]);
+                left = O::op(&left, &values[start]);
                 start += 1;
             }
             if end % 2 == 1 {
                 end -= 1;
-                right = O::mul(&values[end], &right);
+                right = O::op(&values[end], &right);
             }
             start /= 2;
             end /= 2;
         }
-        O::mul(&left, &right)
+        O::op(&left, &right)
     }
 
     /// Returns the maximum $r$ s.t. $f(x _ l \cdot \dots \cdot x _ { r - 1 })$ is `true`, if $f$ is monotone.
@@ -157,7 +162,7 @@ impl<O: Op> Segtree<O> {
             if offset + len < end1 {
                 break;
             }
-            let value1 = O::mul(&value, &values[end >> p]);
+            let value1 = O::op(&value, &values[end >> p]);
             if !f(&value1) {
                 break;
             }
@@ -169,7 +174,7 @@ impl<O: Op> Segtree<O> {
             if offset + len < end1 {
                 continue;
             }
-            let value1 = O::mul(&value, &values[end >> p]);
+            let value1 = O::op(&value, &values[end >> p]);
             if !f(&value1) {
                 continue;
             }
@@ -198,7 +203,7 @@ impl<O: Op> Segtree<O> {
         loop {
             let p = (start | offset).trailing_zeros();
             let start1 = start - (1 << p);
-            let value1 = O::mul(&value, &values[start1 >> p]);
+            let value1 = O::op(&value, &values[start1 >> p]);
             if !f(&value1) {
                 break;
             }
@@ -210,7 +215,7 @@ impl<O: Op> Segtree<O> {
         }
         for p in (0..(start | offset).trailing_zeros()).rev() {
             let start1 = start - (1 << p);
-            let value1 = O::mul(&value, &values[start1 >> p]);
+            let value1 = O::op(&value, &values[start1 >> p]);
             if !f(&value1) {
                 continue;
             }
@@ -266,7 +271,7 @@ where
     O::Value: Clone,
 {
     fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
-        Self::new(&iter.into_iter().collect::<Vec<_>>())
+        Self::from_slice(&iter.into_iter().collect::<Vec<_>>())
     }
 }
 
@@ -288,7 +293,7 @@ impl<O: Op> Drop for Entry<'_, O> {
         let mut index = self.index;
         while index != 0 {
             index /= 2;
-            self.segtree.values[index] = O::mul(
+            self.segtree.values[index] = O::op(
                 &self.segtree.values[index * 2],
                 &self.segtree.values[index * 2 + 1],
             );
@@ -323,8 +328,8 @@ pub struct SegtreeWithCompression<K, O: Op> {
     keys: Vec<K>,
 }
 impl<K: Ord, O: Op> SegtreeWithCompression<K, O> {
-    /// Constructs with the specified key-value pairs.
-    pub fn new(kv: &[(K, O::Value)]) -> Self
+    /// Constructs from the specified key-value pairs.
+    pub fn from_slice(kv: &[(K, O::Value)]) -> Self
     where
         K: Clone,
         O::Value: Clone,
@@ -333,7 +338,7 @@ impl<K: Ord, O: Op> SegtreeWithCompression<K, O> {
         kv.sort_by(|(a, _), (b, _)| a.cmp(b));
         let (keys, values): (Vec<K>, Vec<O::Value>) = kv.into_iter().unzip();
         Self {
-            inner: Segtree::new(&values),
+            inner: Segtree::from_slice(&values),
             keys,
         }
     }
@@ -394,7 +399,7 @@ where
     O::Value: Clone,
 {
     fn from_iter<I: IntoIterator<Item = (K, O::Value)>>(iter: I) -> Self {
-        Self::new(&iter.into_iter().collect::<Vec<_>>())
+        Self::from_slice(&iter.into_iter().collect::<Vec<_>>())
     }
 }
 
@@ -418,8 +423,8 @@ where
     L: Ord + Clone,
     O::Value: Clone,
 {
-    /// Constructs with the specified key-value pairs.
-    pub fn new(points: &[(K, L, O::Value)]) -> Self {
+    /// Constructs from the specified key-value pairs.
+    pub fn from_slice(points: &[(K, L, O::Value)]) -> Self {
         let mut keys = points.iter().map(|(k, _, _)| k.clone()).collect::<Vec<_>>();
         keys.sort();
         keys.dedup();
@@ -444,9 +449,9 @@ where
                     .collect::<Vec<_>>();
                 for (l, v) in &lvs_ {
                     let i = ls.binary_search(&l).unwrap();
-                    lvs[i].1 = O::mul(&lvs[i].1, v);
+                    lvs[i].1 = O::op(&lvs[i].1, v);
                 }
-                SegtreeWithCompression::new(&lvs)
+                SegtreeWithCompression::from_slice(&lvs)
             })
             .collect::<Vec<_>>();
         Self { segtrees, keys }
@@ -461,17 +466,17 @@ where
         let mut right = O::identity();
         while i0 < i1 {
             if i0 % 2 == 1 {
-                left = O::mul(&left, &self.segtrees[i0].fold(j.clone()));
+                left = O::op(&left, &self.segtrees[i0].fold(j.clone()));
                 i0 += 1;
             }
             if i1 % 2 == 1 {
                 i1 -= 1;
-                right = O::mul(&self.segtrees[i1].fold(j.clone()), &right);
+                right = O::op(&self.segtrees[i1].fold(j.clone()), &right);
             }
             i0 /= 2;
             i1 /= 2;
         }
-        O::mul(&left, &right)
+        O::op(&left, &right)
     }
 
     /// Apply a function to $x_{k, l}$.
@@ -533,7 +538,7 @@ where
     O::Value: Clone,
 {
     fn from_iter<I: IntoIterator<Item = (K, L, O::Value)>>(iter: I) -> Self {
-        Self::new(&iter.into_iter().collect::<Vec<_>>())
+        Self::from_slice(&iter.into_iter().collect::<Vec<_>>())
     }
 }
 
@@ -558,8 +563,8 @@ pub struct Dense2dSegtree<O: Op> {
     values: Vec<Vec<O::Value>>,
 }
 impl<O: Op> Dense2dSegtree<O> {
-    /// Constructs with the specified values.
-    pub fn new(values: &[Vec<O::Value>]) -> Self
+    /// Constructs from the specified values.
+    pub fn from_slice(values: &[Vec<O::Value>]) -> Self
     where
         O::Value: Clone,
     {
@@ -570,12 +575,12 @@ impl<O: Op> Dense2dSegtree<O> {
         for (values, values_) in values[h..].iter_mut().zip(values_) {
             values[w..].clone_from_slice(values_);
             for j in (1..w).rev() {
-                values[j] = O::mul(&values[j * 2], &values[j * 2 + 1]);
+                values[j] = O::op(&values[j * 2], &values[j * 2 + 1]);
             }
         }
         for i in (1..h).rev() {
             for j in 0..2 * w {
-                values[i][j] = O::mul(&values[i * 2][j], &values[i * 2 + 1][j]);
+                values[i][j] = O::op(&values[i * 2][j], &values[i * 2 + 1][j]);
             }
         }
         Self { values }
@@ -601,12 +606,12 @@ impl<O: Op> Dense2dSegtree<O> {
                 let mut j1 = j1;
                 while j0 < j1 {
                     if j0 % 2 == 1 {
-                        left = O::mul(&left, &self.values[i0][j0]);
+                        left = O::op(&left, &self.values[i0][j0]);
                         j0 += 1;
                     }
                     if j1 % 2 == 1 {
                         j1 -= 1;
-                        right = O::mul(&self.values[i0][j1], &right);
+                        right = O::op(&self.values[i0][j1], &right);
                     }
                     j0 /= 2;
                     j1 /= 2;
@@ -619,12 +624,12 @@ impl<O: Op> Dense2dSegtree<O> {
                 let mut j1 = j1;
                 while j0 < j1 {
                     if j0 % 2 == 1 {
-                        left = O::mul(&left, &self.values[i1][j0]);
+                        left = O::op(&left, &self.values[i1][j0]);
                         j0 += 1;
                     }
                     if j1 % 2 == 1 {
                         j1 -= 1;
-                        right = O::mul(&self.values[i1][j1], &right);
+                        right = O::op(&self.values[i1][j1], &right);
                     }
                     j0 /= 2;
                     j1 /= 2;
@@ -633,7 +638,7 @@ impl<O: Op> Dense2dSegtree<O> {
             i0 /= 2;
             i1 /= 2;
         }
-        O::mul(&left, &right)
+        O::op(&left, &right)
     }
 
     /// Returns the entry of $x_{i, j}$.
@@ -693,7 +698,7 @@ impl<O: Op> Drop for Dense2dEntry<'_, O> {
         let mut i = self.i;
         let mut j = self.j / 2;
         while j != 0 {
-            self.segtree.values[i][j] = O::mul(
+            self.segtree.values[i][j] = O::op(
                 &self.segtree.values[i][2 * j],
                 &self.segtree.values[i][2 * j + 1],
             );
@@ -703,7 +708,7 @@ impl<O: Op> Drop for Dense2dEntry<'_, O> {
         while i != 0 {
             let mut j = self.j;
             while j != 0 {
-                self.segtree.values[i][j] = O::mul(
+                self.segtree.values[i][j] = O::op(
                     &self.segtree.values[i * 2][j],
                     &self.segtree.values[i * 2 + 1][j],
                 );
@@ -787,7 +792,7 @@ mod tests {
                 (0, 1)
             }
 
-            fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 ((lhs.0 * rhs.1 + rhs.0) % P, lhs.1 * rhs.1 % P)
             }
         }
@@ -803,7 +808,7 @@ mod tests {
                 0
             }
 
-            fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 lhs ^ rhs
             }
         }
@@ -819,7 +824,7 @@ mod tests {
                 0
             }
 
-            fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 lhs + rhs
             }
         }
@@ -837,7 +842,7 @@ mod tests {
             let mut vec = repeat_with(|| (rng.gen_range(0..BASE), BASE))
                 .take(n)
                 .collect::<Vec<_>>();
-            let mut segtree = Segtree::<O>::new(&vec);
+            let mut segtree = Segtree::<O>::from_slice(&vec);
             for _ in 0..q {
                 match rng.gen_range(0..2) {
                     // fold
@@ -845,7 +850,7 @@ mod tests {
                         let range = random_range(&mut rng, n);
                         let expected = vec[range.clone()]
                             .iter()
-                            .fold(O::identity(), |acc, x| O::mul(&acc, x));
+                            .fold(O::identity(), |acc, x| O::op(&acc, x));
                         let result = segtree.fold(range);
                         assert_eq!(expected, result);
                     }
@@ -874,7 +879,7 @@ mod tests {
             let mut vec = repeat_with(|| rng.gen_range(1..VALUE_LIM))
                 .take(n)
                 .collect::<Vec<_>>();
-            let mut segtree = Segtree::<O>::new(&vec);
+            let mut segtree = Segtree::<O>::from_slice(&vec);
             for _ in 0..q {
                 match rng.gen_range(0..4) {
                     // fold
@@ -882,7 +887,7 @@ mod tests {
                         let range = random_range(&mut rng, n);
                         let expected = vec[range.clone()]
                             .iter()
-                            .fold(O::identity(), |acc, x| O::mul(&acc, x));
+                            .fold(O::identity(), |acc, x| O::op(&acc, x));
                         let result = segtree.fold(range);
                         assert_eq!(expected, result);
                     }
@@ -922,10 +927,10 @@ mod tests {
     #[test]
     fn test_segtree_usability() {
         use rolling_hash::O;
-        let _ = Segtree::<O>::from_len(1);
-        let _ = Segtree::<O>::new(&[(0, 1)]);
+        let _ = Segtree::<O>::new(1);
+        let _ = Segtree::<O>::from_slice(&[(0, 1)]);
         let _ = Segtree::<O>::from_iter(vec![(0, 1)]);
-        let mut segtree = Segtree::<O>::new(&[(0, 1)]);
+        let mut segtree = Segtree::<O>::from_slice(&[(0, 1)]);
         let _ = segtree.fold(0..1);
         let _ = segtree.entry(0);
         assert_eq!(segtree.as_slice()[0], (0, 1));
@@ -964,7 +969,7 @@ mod tests {
                         let expected = vec[start..end]
                             .iter()
                             .map(|(_, x)| x)
-                            .fold(O::identity(), |acc, x| O::mul(&acc, x));
+                            .fold(O::identity(), |acc, x| O::op(&acc, x));
                         let result = segtree.fold(range.clone());
                         assert_eq!(expected, result);
                     }
@@ -986,9 +991,9 @@ mod tests {
     #[test]
     fn test_sparse_segtree_usability() {
         use rolling_hash::O;
-        let _ = SegtreeWithCompression::<usize, O>::new(&[(0, (1, 1))]);
+        let _ = SegtreeWithCompression::<usize, O>::from_slice(&[(0, (1, 1))]);
         let _ = SegtreeWithCompression::<usize, O>::from_iter(vec![(0, (1, 1))]);
-        let mut segtree = SegtreeWithCompression::<usize, O>::new(&[(0, (1, 1))]);
+        let mut segtree = SegtreeWithCompression::<usize, O>::from_slice(&[(0, (1, 1))]);
         let _ = segtree.fold(0..1);
         let _ = segtree.entry(&0);
         assert_eq!(segtree[0], (1, 1));
@@ -1013,7 +1018,7 @@ mod tests {
             })
             .take(n)
             .collect::<Vec<_>>();
-            let mut segtree = Sparse2dSegtree::<usize, usize, O>::new(&vec);
+            let mut segtree = Sparse2dSegtree::<usize, usize, O>::from_slice(&vec);
             for _ in 0..q {
                 match rng.gen_range(0..1) {
                     // fold
@@ -1024,7 +1029,7 @@ mod tests {
                             .iter()
                             .filter(|(x, y, _)| i.contains(x) && j.contains(y))
                             .map(|(_, _, v)| v)
-                            .fold(O::identity(), |acc, x| O::mul(&acc, x));
+                            .fold(O::identity(), |acc, x| O::op(&acc, x));
                         let result = segtree.fold(i.clone(), j.clone());
                         assert_eq!(expected, result);
                     }
@@ -1057,7 +1062,7 @@ mod tests {
             })
             .take(h)
             .collect::<Vec<_>>();
-            let mut segtree = Dense2dSegtree::<O>::new(&vec);
+            let mut segtree = Dense2dSegtree::<O>::from_slice(&vec);
             for _ in 0..q {
                 match rng.gen_range(0..2) {
                     // fold
@@ -1067,7 +1072,7 @@ mod tests {
                         let expected = vec[i.clone()]
                             .iter()
                             .flat_map(|v| v[j.clone()].iter())
-                            .fold(O::identity(), |acc, x| O::mul(&acc, x));
+                            .fold(O::identity(), |acc, x| O::op(&acc, x));
                         let result = segtree.fold(i.clone(), j.clone());
                         assert_eq!(expected, result);
                     }
@@ -1088,8 +1093,8 @@ mod tests {
     #[test]
     fn test_dense_2d_segtree_usability() {
         use xor::O;
-        let _ = Dense2dSegtree::<O>::new(&[vec![0]]);
-        let mut segtree = Dense2dSegtree::<O>::new(&[vec![0]]);
+        let _ = Dense2dSegtree::<O>::from_slice(&[vec![0]]);
+        let mut segtree = Dense2dSegtree::<O>::from_slice(&[vec![0]]);
         let _ = segtree.fold(0..1, 0..1);
         let _ = segtree.entry(0, 0);
         assert_eq!(segtree[0][0], 0);

@@ -9,7 +9,7 @@
 //! # 仕様
 //!
 //! - [`MinCostFlow::new`][]: 頂点数 `n` で初期化
-//! - [`MinCostFlow::add_edge`][]: 辺 `(u, v)` を容量 `cap`・コスト `cost` で追加し、辺番号を返す
+//! - [`MinCostFlow::add_edge`][]: 辺 `(from, to)` を容量 `cap`・コスト `cost` で追加し、辺番号を返す
 //! - [`MinCostFlow::get_edge`][]: 辺番号から現在の流量込みの [`Edge`] を取得
 //! - [`MinCostFlow::flow`][]: `source` から `sink` へ流量 `flow_limit` を上限に最小費用で流し、
 //!   `(流量, 費用)` を返す
@@ -123,24 +123,24 @@ impl MinCostFlow {
         }
     }
 
-    /// 頂点 `u` から `v` へ容量 `cap`・コスト `cost` の辺を追加し、辺番号（[`MinCostFlow::get_edge`] で使う）を返す。
-    pub fn add_edge(&mut self, u: usize, v: usize, cap: i64, cost: i64) -> usize {
+    /// 頂点 `from` から `to` へ容量 `cap`・コスト `cost` の辺を追加し、辺番号（[`MinCostFlow::get_edge`] で使う）を返す。
+    pub fn add_edge(&mut self, from: usize, to: usize, cap: i64, cost: i64) -> usize {
         let res = self.edge_position.len();
-        let su = self.g[u].len();
-        let sv = self.g[v].len();
-        self.g[u].push(__InternalEdge {
-            to: v,
-            rev: sv,
+        let s_from = self.g[from].len();
+        let s_to = self.g[to].len();
+        self.g[from].push(__InternalEdge {
+            to,
+            rev: s_to,
             cap,
             cost,
         });
-        self.g[v].push(__InternalEdge {
-            to: u,
-            rev: su,
+        self.g[to].push(__InternalEdge {
+            to: from,
+            rev: s_from,
             cap: 0,
             cost: -cost,
         });
-        self.edge_position.push([u, su]);
+        self.edge_position.push([from, s_from]);
         res
     }
 

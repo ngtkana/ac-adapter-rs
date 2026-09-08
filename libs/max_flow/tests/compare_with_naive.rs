@@ -5,7 +5,7 @@ use rand::{Rng, SeedableRng, rngs::StdRng};
 /// 最大流の正当性を検証する
 /// 1. フロー保存則：source流出 = sink流入 = 戻り値、その他は流入=流出
 /// 2. 容量制約：各辺で flow ≤ cap
-/// 3. 逆辺の整合性：(src,tar,cap,flow) と (tar,src,cap,cap-flow) がペア
+/// 3. 逆辺の整合性：(from,to,cap,flow) と (to,from,cap,cap-flow) がペア
 /// 4. 最適性（最大流最小カット定理）：sourceから残余グラフで到達可能な集合Sがsinkを含まず、
 ///    カット容量 Σ{cap(u,v) : u∈S, v∉S} = フロー値
 fn verify_max_flow(n: usize, source: usize, sink: usize, inst: &MaxFlow, flow: u64, cut: &[bool]) {
@@ -14,7 +14,7 @@ fn verify_max_flow(n: usize, source: usize, sink: usize, inst: &MaxFlow, flow: u
     // 隣接リストを構築（検証用）
     let mut g = vec![vec![]; n];
     for (i, e) in edges.iter().enumerate() {
-        g[e.src].push(i);
+        g[e.from].push(i);
     }
 
     // 1. フロー保存則の検証
@@ -24,8 +24,8 @@ fn verify_max_flow(n: usize, source: usize, sink: usize, inst: &MaxFlow, flow: u
     for i in (0..edges.len()).step_by(2) {
         let e = &edges[i];
         if e.flow > 0 {
-            excess[e.src] -= e.flow as i128;
-            excess[e.tar] += e.flow as i128;
+            excess[e.from] -= e.flow as i128;
+            excess[e.to] += e.flow as i128;
         }
     }
 
@@ -60,8 +60,8 @@ fn verify_max_flow(n: usize, source: usize, sink: usize, inst: &MaxFlow, flow: u
     for i in (0..edges.len()).step_by(2) {
         let e1 = &edges[i];
         let e2 = &edges[i + 1];
-        assert_eq!(e1.src, e2.tar, "辺{i}と{}でsrc/tar不一致", i + 1);
-        assert_eq!(e1.tar, e2.src, "辺{i}と{}でtar/src不一致", i + 1);
+        assert_eq!(e1.from, e2.to, "辺{i}と{}でfrom/to不一致", i + 1);
+        assert_eq!(e1.to, e2.from, "辺{i}と{}でto/from不一致", i + 1);
         assert_eq!(e1.cap, e2.cap, "辺{i}と{}で容量不一致", i + 1);
         assert_eq!(
             e1.flow + e2.flow,
@@ -82,7 +82,7 @@ fn verify_max_flow(n: usize, source: usize, sink: usize, inst: &MaxFlow, flow: u
     let cut_capacity = edges
         .iter()
         .step_by(2)
-        .filter(|e| cut[e.src] && !cut[e.tar])
+        .filter(|e| cut[e.from] && !cut[e.to])
         .map(|e| e.cap)
         .sum::<u64>();
     assert_eq!(
@@ -101,10 +101,10 @@ fn test_random() {
 
         let mut inst = MaxFlow::new();
         for _ in 0..m {
-            let src = rng.gen_range(0..n);
-            let tar = rng.gen_range(0..n);
+            let from = rng.gen_range(0..n);
+            let to = rng.gen_range(0..n);
             let cap = rng.gen_range(1..1_000);
-            inst.add_edge(src, tar, cap);
+            inst.add_edge(from, to, cap);
         }
 
         let mut source;
@@ -229,7 +229,7 @@ fn test_case_7_requires_multiple_primal_calls_per_bfs() {
         eprintln!("Edges after solve:");
         for (i, e) in inst.edges.iter().enumerate() {
             if i % 2 == 0 {
-                eprintln!("  {}→{}: cap={}, flow={}", e.src, e.tar, e.cap, e.flow);
+                eprintln!("  {}→{}: cap={}, flow={}", e.from, e.to, e.cap, e.flow);
             }
         }
     }

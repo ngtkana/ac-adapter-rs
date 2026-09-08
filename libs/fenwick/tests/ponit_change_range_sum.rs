@@ -13,7 +13,7 @@ impl Op for O {
         0
     }
 
-    fn add(a: &Self::Value, b: &Self::Value) -> Self::Value {
+    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
         a + b
     }
 }

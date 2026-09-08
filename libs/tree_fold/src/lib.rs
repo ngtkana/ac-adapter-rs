@@ -1,18 +1,18 @@
 //! 全方位木DP（rerooting）。各頂点を根としたときの集約値をまとめて計算する。
 //!
-//! 森を頂点集合 $V$、モノイド $(F, \mathrm{mul}, \mathrm{identity})$ の要素とみなし、
+//! 森を頂点集合 $V$、モノイド $(F, \mathrm{op}, \mathrm{identity})$ の要素とみなし、
 //! 「頂点 $v$ をルートとして森 $F$ に接続し木にする」演算 $\mathrm{up}: F \times V \to F$ を追加で与える。
-//! 通常の部分木DP（子の集約値を `mul` で畳み込み `up` でルートに接続する）を根から葉・葉から根の
+//! 通常の部分木DP（子の集約値を `op` で畳み込み `up` でルートに接続する）を根から葉・葉から根の
 //! 両方向に行うことで、「頂点 $v$ を根とする部分木の集約値」だけでなく「$v$ の親側を含めた
-//! 残り全体の集約値」も $O(n)$ 回の演算で求まる。`mul` は可換でなくてよく、各頂点で子を
-//! 元の順序で `mul` した前後の累積（prefix/suffix）を使って「自分を除いた残り」を計算する。
+//! 残り全体の集約値」も $O(n)$ 回の演算で求まる。`op` は可換でなくてよく、各頂点で子を
+//! 元の順序で `op` した前後の累積（prefix/suffix）を使って「自分を除いた残り」を計算する。
 //!
 //! # 仕様
 //!
 //! [`Op`] トレイトで演算を定義する。
 //!
 //! - `Op::up`: $F \times V \to F$。森に頂点 $v$ をルートとして接続する
-//! - `Op::mul`: $F \times F \to F$。森どうしの結合（結合律を満たせばよく、可換律は不要）
+//! - `Op::op`: $F \times F \to F$。森どうしの結合（結合律を満たせばよく、可換律は不要）
 //! - `Op::identity`: 空の森
 //!
 //! [`two_way_tree_fold`] は木（頂点数 $n$）を根から葉への有向グラフとして表す隣接リスト
@@ -20,7 +20,7 @@
 //! 受け取り、[`TwoWayTreeFoldResult`] を返す。
 //!
 //! - `branch[i]`: 頂点 $i$ を根とする部分木の集約値
-//! - `lower[i]`: 頂点 $i$ の子部分木をすべて `mul` で結合した値（`branch[i] = up(lower[i], i)`）
+//! - `lower[i]`: 頂点 $i$ の子部分木をすべて `op` で結合した値（`branch[i] = up(lower[i], i)`）
 //! - `upper[i]`: 頂点 $i$ を除いた残り全体を $i$ に接続した集約値。根では `identity`
 //!
 //! # 例
@@ -35,7 +35,7 @@
 //!     fn up(&self, value: &usize, _root: usize) -> usize {
 //!         value + 1
 //!     }
-//!     fn mul(&self, lhs: &usize, rhs: &usize) -> usize {
+//!     fn op(&self, lhs: &usize, rhs: &usize) -> usize {
 //!         lhs + rhs
 //!     }
 //!     fn identity(&self) -> usize {
@@ -53,9 +53,9 @@
 //!
 //! # 計算量
 //!
-//! - `two_way_tree_fold`: $O(n)$ 回の `up`/`mul` 呼び出し（$n$ は頂点数）
+//! - `two_way_tree_fold`: $O(n)$ 回の `up`/`op` 呼び出し（$n$ は頂点数）
 
-/// 全方位木DPの演算。モノイド $(F, \mathrm{mul}, \mathrm{identity})$ と、
+/// 全方位木DPの演算。モノイド $(F, \mathrm{op}, \mathrm{identity})$ と、
 /// 頂点 $v$ をルートとして森 $F$ に接続する演算 $\mathrm{up}$ を定義する。
 pub trait Op: Sized {
     /// モノイド $F$ の値の型。
@@ -65,7 +65,7 @@ pub trait Op: Sized {
     fn up(&self, value: &Self::Value, root: usize) -> Self::Value;
 
     /// 森どうしを結合する: $F \times F \to F$（結合律を満たせばよく、可換律は不要）。
-    fn mul(&self, lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    fn op(&self, lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 
     /// 空の森を返す: $\mathrm{identity} \in F$。
     fn identity(&self) -> Self::Value;
@@ -84,7 +84,7 @@ pub trait Op: Sized {
 pub struct TwoWayTreeFoldResult<T> {
     /// `upper[i]`: 頂点 $i$ を除いた残り全体を $i$ に接続した集約値。根では `identity`。
     pub upper: Vec<T>,
-    /// `lower[i]`: 頂点 $i$ の子部分木をすべて `mul` で結合した値。
+    /// `lower[i]`: 頂点 $i$ の子部分木をすべて `op` で結合した値。
     pub lower: Vec<T>,
     /// `branch[i]`: 頂点 $i$ を根とする部分木の集約値（`up(lower[i], i)`）。
     pub branch: Vec<T>,
@@ -101,7 +101,7 @@ pub fn two_way_tree_fold<O: Op>(
     let mut branch = vec![o.identity(); n];
     for &i in sorted.iter().rev() {
         for &j in &g[i] {
-            lower[i] = o.mul(&lower[i], &branch[j]);
+            lower[i] = o.op(&lower[i], &branch[j]);
         }
         branch[i] = o.up(&lower[i], i);
     }
@@ -110,12 +110,12 @@ pub fn two_way_tree_fold<O: Op>(
         let mut suffix = upper[i].clone();
         for &j in g[i].iter().rev() {
             upper[j] = suffix.clone();
-            suffix = o.mul(&branch[j], &suffix);
+            suffix = o.op(&branch[j], &suffix);
         }
         let mut prefix = o.identity();
         for &j in &g[i] {
-            upper[j] = o.up(&o.mul(&upper[j], &prefix), i);
-            prefix = o.mul(&prefix, &branch[j]);
+            upper[j] = o.up(&o.op(&upper[j], &prefix), i);
+            prefix = o.op(&prefix, &branch[j]);
         }
     }
     TwoWayTreeFoldResult {
@@ -204,7 +204,7 @@ mod tests {
                 Vec::new()
             }
 
-            fn mul(&self, lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(&self, lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 lhs.iter().cloned().chain(rhs.iter().cloned()).collect()
             }
         }

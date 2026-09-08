@@ -42,12 +42,12 @@ use base::OpBase;
 
 /// 集約演算を定義するトレイト
 ///
-/// モノイド $(Value, \cdot, e)$ を定める。`mul` は結合律を満たす必要がある。可換性は要求しないが、
+/// モノイド $(Value, \cdot, e)$ を定める。`op` は結合律を満たす必要がある。可換性は要求しないが、
 /// 可換なら [`CommutLinkCutTree`]、非可換なら [`NonCommutLinkCutTree`] を使う。
 pub trait Op {
     type Value: Clone;
     fn identity() -> Self::Value;
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
 impl OpBase for () {
@@ -85,7 +85,7 @@ impl<T: Op> OpBase for Commut<T> {
     }
 
     fn mul(lhs: &Self::InternalValue, rhs: &Self::InternalValue) -> Self::InternalValue {
-        T::mul(lhs, rhs)
+        T::op(lhs, rhs)
     }
 
     fn rev(_value: &mut Self::InternalValue) {}
@@ -116,7 +116,7 @@ impl<T: Op> OpBase for NonCommut<T> {
     }
 
     fn mul(lhs: &Self::InternalValue, rhs: &Self::InternalValue) -> Self::InternalValue {
-        (T::mul(&lhs.0, &rhs.0), T::mul(&rhs.1, &lhs.1))
+        (T::op(&lhs.0, &rhs.0), T::op(&rhs.1, &lhs.1))
     }
 
     fn rev(value: &mut Self::InternalValue) {
@@ -392,7 +392,7 @@ mod tests {
                 0
             }
 
-            fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 lhs ^ rhs
             }
         }
@@ -466,7 +466,7 @@ mod tests {
                 RollingHash { base: 1, value: 0 }
             }
 
-            fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+            fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
                 RollingHash {
                     base: lhs.base * rhs.base % P,
                     value: (lhs.value * rhs.base + rhs.value) % P,
@@ -520,7 +520,7 @@ mod tests {
                         let expected = path.map(|path| {
                             path.iter()
                                 .map(|&i| values[i])
-                                .fold(O::identity(), |lhs, rhs| O::mul(&lhs, &rhs))
+                                .fold(O::identity(), |lhs, rhs| O::op(&lhs, &rhs))
                         });
                         assert_eq!(ans, expected);
                     }
