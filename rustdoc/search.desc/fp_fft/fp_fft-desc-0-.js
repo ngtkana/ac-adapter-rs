@@ -1,1 +1,1 @@
-searchState.loadedDescShard("fp_fft", 0, "有限体 $𝔽_P$ …\n<code>fft</code>、<code>ifft</code> で使う回転因子（twiddle …\n…\n回転因子を前計算済みの場合の <code>fft</code>。\n…\n回転因子を前計算済みの場合の <code>ifft</code>。")
+searchState.loadedDescShard("fp_fft", 0, "有限体 $𝔽_P$ …\nTwiddle factors を計算する(FFT用)\nFFT …\nTwiddle factor 前計算済みの場合の、<code>fft</code>。\nIFFT …\nTwiddle factor 前計算済みの場合の、<code>ifft</code>。")

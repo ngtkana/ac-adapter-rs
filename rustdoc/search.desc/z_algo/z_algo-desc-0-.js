@@ -1,1 +1,1 @@
-searchState.loadedDescShard("z_algo", 0, "Z-algorithm")
+searchState.loadedDescShard("z_algo", 0, "…\n長さ $n$ の列 <code>s</code> の Z …")
