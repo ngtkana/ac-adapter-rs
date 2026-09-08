@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="doc-body">${bodyHtml}</div>
     `;
     main.querySelector(".back-to-list").addEventListener("click", () => {
-      app.classList.remove("mobile-detail");
+      history.back();
     });
     main.querySelectorAll(".clickable-tag").forEach(el => {
       const activate = () => {
@@ -144,12 +144,34 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(main);
   }
 
+  // モバイルの一覧⇔詳細切り替えをブラウザの戻る操作（スワイプバック等）に対応させる。
+  // 複数クレートを見た後でも「戻る」は常に一覧へ一直線に戻したいので、
+  // 既に詳細状態のhistory entryがあれば積み増さずreplaceする。
+  function enterDetail() {
+    if (history.state && history.state.view === "detail") {
+      history.replaceState({ view: "detail" }, "");
+    } else {
+      history.pushState({ view: "detail" }, "");
+    }
+    app.classList.add("mobile-detail");
+  }
+
+  function leaveDetail() {
+    app.classList.remove("mobile-detail");
+    sidebar.focus();
+  }
+
+  window.addEventListener("popstate", (e) => {
+    if (!(e.state && e.state.view === "detail")) leaveDetail();
+  });
+
   function selectItem(item) {
     document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
     item.classList.add("selected");
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
-    app.classList.add("mobile-detail");
+    enterDetail();
+    main.focus();
   }
 
   function renderList() {
