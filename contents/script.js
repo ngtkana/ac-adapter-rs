@@ -144,25 +144,38 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(main);
   }
 
-  // モバイルの一覧⇔詳細切り替えをブラウザの戻る操作（スワイプバック等）に対応させる。
+  // 一覧⇔詳細の1画面切り替えはモバイル幅（styles.cssの768pxブレークポイントと同一基準）専用の挙動。
+  // デスクトップでは常に両方表示されるため、履歴やフォーカスを操作しない。
+  function isMobileLayout() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  function showMobileDetailView() {
+    app.classList.add("mobile-detail");
+    main.focus();
+  }
+
+  function hideMobileDetailView() {
+    app.classList.remove("mobile-detail");
+    sidebar.focus();
+  }
+
+  // モバイルの一覧⇔詳細切り替えをブラウザの戻る/進む操作（スワイプ等）に対応させる。
   // 複数クレートを見た後でも「戻る」は常に一覧へ一直線に戻したいので、
   // 既に詳細状態のhistory entryがあれば積み増さずreplaceする。
   function enterDetail() {
+    if (!isMobileLayout()) return;
     if (history.state && history.state.view === "detail") {
       history.replaceState({ view: "detail" }, "");
     } else {
       history.pushState({ view: "detail" }, "");
     }
-    app.classList.add("mobile-detail");
-  }
-
-  function leaveDetail() {
-    app.classList.remove("mobile-detail");
-    sidebar.focus();
+    showMobileDetailView();
   }
 
   window.addEventListener("popstate", (e) => {
-    if (!(e.state && e.state.view === "detail")) leaveDetail();
+    if (e.state && e.state.view === "detail") showMobileDetailView();
+    else hideMobileDetailView();
   });
 
   function selectItem(item) {
@@ -171,7 +184,6 @@ document.addEventListener('DOMContentLoaded', function () {
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
     enterDetail();
-    main.focus();
   }
 
   function renderList() {
