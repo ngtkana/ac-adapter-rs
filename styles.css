@@ -2,7 +2,6 @@
   --color-text-primary: #332b20;
   --color-text-secondary: #6b5d46;
   --color-text-tertiary: #7d6e52;
-  --color-text-quaternary: #807054;
   --color-bg-primary: #fffdf6;
   --color-bg-hover: #fff2ce;
   --color-border: #f0e0b0;
@@ -51,7 +50,9 @@ a {
 
 a:focus-visible,
 .tag-pill:focus-visible,
-.catalog-item:focus-visible {
+.catalog-item:focus-visible,
+#catalog-main:focus-visible,
+#catalog-list:focus-visible {
   outline: 2px solid var(--color-accent-strong);
   outline-offset: 2px;
   border-radius: 4px;
@@ -233,12 +234,6 @@ a:focus-visible,
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: .76rem;
-  color: var(--color-text-quaternary);
-}
-
-/* hover/selected 時は背景が濃くなりコントラストが下がるため、視認性を保つ濃さに戻す */
-.catalog-item:hover .desc,
-.catalog-item.selected .desc {
   color: var(--color-text-tertiary);
 }
 
@@ -247,6 +242,30 @@ a:focus-visible,
   min-height: 0;
   overflow-y: auto;
   padding: 1.25rem 1.5rem;
+}
+
+.back-to-list {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  gap: .3rem;
+  min-height: 44px;
+  margin-bottom: .8rem;
+  padding: .4rem 1.1rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--color-accent-soft);
+  color: var(--color-accent);
+  font-family: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .15s, color .15s;
+}
+
+.back-to-list:hover {
+  background: var(--color-accent-strong);
+  color: var(--color-on-accent-strong);
 }
 
 .catalog-main h2 {
@@ -385,12 +404,70 @@ a:focus-visible,
   background: var(--color-bg-primary);
 }
 
+/* モバイル: サイドバーと本文を上下1画面ずつに切り替える（一覧⇔詳細） */
+@media (max-width: 768px) {
+  #main-layout {
+    flex-direction: column;
+  }
+
+  .catalog-sidebar {
+    width: 100%;
+    min-width: 0;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .catalog-sidebar,
+  .catalog-main {
+    flex: 1 1 auto;
+  }
+
+  /* iOSでinput focus時に自動ズームされるのを防ぐ（16px未満だと発生） */
+  .catalog-search input {
+    font-size: 16px;
+  }
+
+  .catalog-item {
+    padding: .55rem .7rem;
+  }
+
+  .meta-bar .tag-pill {
+    padding: .3rem .8rem;
+  }
+
+  .catalog-main {
+    padding: 1rem;
+  }
+
+  .doc-body table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  /* キーボードショートカットの案内はタッチ操作では意味がない */
+  #shortcuts-bar {
+    display: none;
+  }
+
+  #app.mobile-detail .catalog-sidebar {
+    display: none;
+  }
+
+  #app:not(.mobile-detail) .catalog-main {
+    display: none;
+  }
+
+  #app.mobile-detail .back-to-list {
+    display: inline-flex;
+  }
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --color-text-primary: #f5e6c8;
     --color-text-secondary: #d8c39a;
     --color-text-tertiary: #a98f63;
-    --color-text-quaternary: #9d8357;
     --color-bg-primary: #241a0d;
     --color-bg-hover: #3a2a12;
     --color-border: #4a3820;
