@@ -1,8 +1,8 @@
-#compdef libbundle
+#compdef acbundle
 
-_libbundle() {
+_acbundle() {
     local -a crates
-    crates=(${(f)"$(libbundle --list-crates 2>/dev/null)"})
+    crates=(${(f)"$(acbundle --list-crates 2>/dev/null)"})
 
     _arguments \
         '--keep-docs[Keep doc comments in the bundled output]' \
@@ -10,4 +10,4 @@ _libbundle() {
         '*:crate name:(($crates))'
 }
 
-_libbundle "$@"
+_acbundle "$@"
