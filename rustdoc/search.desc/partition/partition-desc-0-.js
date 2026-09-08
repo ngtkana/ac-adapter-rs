@@ -1,1 +1,1 @@
-searchState.loadedDescShard("partition", 0, "述語で安定的にスライスを2分割する（stable …\n述語 <code>pred</code> に基づき、<code>slice</code> …")
+searchState.loadedDescShard("partition", 0, "Stable partition algorithm\nPartitions a mutable slice in-place, stably.")

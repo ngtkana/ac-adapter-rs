@@ -108,16 +108,11 @@ a:focus-visible,
   margin: 0;
   font-size: 1.6rem;
   font-weight: 700;
-  white-space: nowrap;
 }
 
 #toolbar .subtitle {
   font-size: .78rem;
   color: var(--color-text-secondary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  min-width: 0;
 }
 
 #toolbar .toolbar-link {
@@ -128,18 +123,11 @@ a:focus-visible,
   padding: .2rem .65rem;
   border-radius: 999px;
   transition: background .15s, color .15s;
-  flex-shrink: 0;
 }
 
 #toolbar .toolbar-link:hover {
   color: var(--color-accent);
   background: var(--color-accent-soft);
-}
-
-@media (max-width: 600px) {
-  #toolbar .subtitle {
-    display: none;
-  }
 }
 
 /* メインレイアウト: 残り高さ全部を使い、ページ自体はスクロールしない */
