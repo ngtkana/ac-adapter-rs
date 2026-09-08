@@ -119,6 +119,23 @@ fn multiple_crates_share_deduplicated_dependencies() {
 }
 
 #[test]
+fn skip_from_excludes_already_bundled_crate() {
+    let existing = libbundle(&["fp"]);
+    let dir = tempdir();
+    let existing_path = dir.join("existing.rs");
+    std::fs::write(&existing_path, &existing).unwrap();
+
+    let new_source = libbundle(&["fp_fps", "--skip-from", existing_path.to_str().unwrap()]);
+    assert!(!new_source.contains("mod fp {"));
+    assert!(new_source.contains("mod fp_fps {"));
+    assert!(new_source.contains("mod fp_fft {"));
+    // 除外されたクレートへの参照は書き換え済みのまま残るので、
+    // 既存の展開結果と結合すれば単体でコンパイルできるはず
+    let combined = format!("{existing}\n{new_source}");
+    rustc_compile_lib(&combined);
+}
+
+#[test]
 fn list_crates_includes_known_crate_names() {
     let output = libbundle(&["--list-crates"]);
     let names: Vec<&str> = output.lines().collect();

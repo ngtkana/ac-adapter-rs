@@ -16,7 +16,16 @@ pub struct Options {
 
 /// 指定された全クレート＋その全内部依存をdedupし、それぞれを `mod <name> { .. }`
 /// として1つの `syn::File` にまとめ、`prettyplease` で整形したソースを返す。
-pub fn bundle(ws: &Workspace, requested: &[String], opts: &Options) -> Result<String> {
+///
+/// `exclude` に含まれるクレート名は出力から除く（貼り付け先に既にバンドル済みで
+/// 重複定義になる場合に使う）。ただし内部参照のパス書き換えには含めたまま扱う
+/// （既に貼り付け済みの `mod <name> {}` が同じファイルの兄弟として存在する前提のため）。
+pub fn bundle(
+    ws: &Workspace,
+    requested: &[String],
+    exclude: &BTreeSet<String>,
+    opts: &Options,
+) -> Result<String> {
     for name in requested {
         if !ws.crates.contains_key(name) {
             let mut available: Vec<&str> = ws.crates.keys().map(String::as_str).collect();
@@ -33,9 +42,13 @@ pub fn bundle(ws: &Workspace, requested: &[String], opts: &Options) -> Result<St
     for name in requested {
         collect_transitive(ws, name, &mut seen, &mut order);
     }
+    let included: Vec<String> = order
+        .into_iter()
+        .filter(|name| !exclude.contains(name))
+        .collect();
 
     let mut items = Vec::new();
-    for name in &order {
+    for name in &included {
         let info = &ws.crates[name];
         let mut crate_items = inline::load_crate_items(&info.lib_rs)?;
         crate_items = strip::strip_items(
@@ -55,7 +68,7 @@ pub fn bundle(ws: &Workspace, requested: &[String], opts: &Options) -> Result<St
         items,
     };
     let pretty = prettyplease::unparse(&file);
-    Ok(insert_fold_markers(&pretty, &order))
+    Ok(insert_fold_markers(&pretty, &included))
 }
 
 fn collect_transitive(
