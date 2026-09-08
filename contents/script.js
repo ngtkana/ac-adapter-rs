@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const app = document.getElementById("app");
   const sidebar = document.getElementById("catalog-list");
   const searchInput = document.getElementById("search-input");
   const main = document.getElementById("catalog-main");
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ? linkifyIntraDocRefs(crateMetadata.description_html, crateName)
       : '';
     main.innerHTML = `
+      <button type="button" class="back-to-list">← 一覧に戻る</button>
       <h2>${crateName}</h2>
       ${summaryHtml ? `<p class="summary">${summaryHtml}</p>` : ''}
       <div class="meta-bar">
@@ -123,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <div class="doc-body">${bodyHtml}</div>
     `;
+    main.querySelector(".back-to-list").addEventListener("click", () => {
+      app.classList.remove("mobile-detail");
+    });
     main.querySelectorAll(".clickable-tag").forEach(el => {
       const activate = () => {
         searchInput.value = `tag:${el.dataset.tag}`;
@@ -144,6 +149,7 @@ document.addEventListener('DOMContentLoaded', function () {
     item.classList.add("selected");
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
+    app.classList.add("mobile-detail");
   }
 
   function renderList() {
