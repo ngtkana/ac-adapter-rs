@@ -86,7 +86,7 @@ if not root or root == "" then
 end
 
 local plugin_file = root .. "/nvim/plugin/acbundle.lua"
-if vim.uv.fs_stat(plugin_file) then
+if vim.fn.filereadable(plugin_file) == 1 then
   vim.opt.rtp:append(root .. "/nvim")
   dofile(plugin_file)
 end
