@@ -1,1 +1,1 @@
-searchState.loadedDescShard("binary", 0, "モノイドの作用・積を繰り返し二乗法で …\n…\n$x \\neq 1$\n$x \\neq 0$\n$x$ が奇数か\n$a$ を $x$ に $n$ 回作用させた結果 $a^n(x)$ …\n$x \\mathrel{{/}{=}} 2$（右シフト）\nモノイドの積 $a^n$ を、単位元 <code>identity</code> と積 …")
+searchState.loadedDescShard("binary", 0, "二分法（ダブリング）をします。\n…\n<code>*x != 1</code>\n<code>*x != 0</code>\n<code>x &amp; 1 == 1</code>\naⁿ(x) を計算します。\n<code>self &gt;&gt;= 1</code>\naⁿを計算します。")

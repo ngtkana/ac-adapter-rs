@@ -22,311 +22,290 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gco/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Solve a submodular graph cut optimizaion problem of degree $\le 2$
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">gco/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! 次数 $2$ 以下の劣モジュラなグラフカット最適化問題を解く。
 <a href=#2 id=2 data-nosnippet>2</a>//!
-<a href=#3 id=3 data-nosnippet>3</a>//! As in [Graph cut optimization - Wikipedia](https://en.wikipedia.org/wiki/Graph_cut_optimization),
-<a href=#4 id=4 data-nosnippet>4</a>//! any pseudo-boolean function $f: \lbrace 0, 1 \rbrace ^ n → \mathbb R$ can be written uniquely
-<a href=#5 id=5 data-nosnippet>5</a>//! as a multi-linear polynominal:
-<a href=#6 id=6 data-nosnippet>6</a>//!
-<a href=#7 id=7 data-nosnippet>7</a>//! $$
-<a href=#8 id=8 data-nosnippet>8</a>//! f ( \boldsymbol x ) =
-<a href=#9 id=9 data-nosnippet>9</a>//!     a
-<a href=#10 id=10 data-nosnippet>10</a>//!     + \sum _ { i } a _ i x _ i
-<a href=#11 id=11 data-nosnippet>11</a>//!     + \sum _ { i, j } a _ { i, j } x _ i x _ j
-<a href=#12 id=12 data-nosnippet>12</a>//!     + \dots
-<a href=#13 id=13 data-nosnippet>13</a>//! $$
-<a href=#14 id=14 data-nosnippet>14</a>//!
-<a href=#15 id=15 data-nosnippet>15</a>//! This library can solve the minimum value of $f$ satisfying
-<a href=#16 id=16 data-nosnippet>16</a>//!
-<a href=#17 id=17 data-nosnippet>17</a>//! - $\mathop { \mathrm { deg } } f \le 2$
-<a href=#18 id=18 data-nosnippet>18</a>//! - $f$ is submodular $a _ { i, i } + a _ { j , j } \le a _ { i, j } + a _ { j, i }$
-<a href=#19 id=19 data-nosnippet>19</a>//!
+<a href=#3 id=3 data-nosnippet>3</a>//! 任意の擬似ブール関数 $f: \{0, 1\}^n \to \mathbb{R}$ は、多重線形多項式
+<a href=#4 id=4 data-nosnippet>4</a>//! $f(\boldsymbol{x}) = a + \sum_i a_i x_i + \sum_{i,j} a_{i,j} x_i x_j + \dots$
+<a href=#5 id=5 data-nosnippet>5</a>//! として一意に表せる。次数が $2$ 以下で、各二次項が劣モジュラ条件
+<a href=#6 id=6 data-nosnippet>6</a>//! $a_{i,i} + a_{j,j} \le a_{i,j} + a_{j,i}$ を満たすとき、$f$ の最小化は $s$-$t$ 最小カット問題に
+<a href=#7 id=7 data-nosnippet>7</a>//! 帰着できる。変数ごとに頂点を用意し、一次項をソース・シンクへの辺重みに、二次項を変数間の辺重みに
+<a href=#8 id=8 data-nosnippet>8</a>//! 変換することでこれを実現し、最小カットの計算には [`dinic`] を用いる。
+<a href=#9 id=9 data-nosnippet>9</a>//!
+<a href=#10 id=10 data-nosnippet>10</a>//! # 仕様
+<a href=#11 id=11 data-nosnippet>11</a>//!
+<a href=#12 id=12 data-nosnippet>12</a>//! - [`Gco::unary`] で一次項 $c_0 (1 - x_i) + c_1 x_i$ を、[`Gco::binary`] で二次項
+<a href=#13 id=13 data-nosnippet>13</a>//!   $c_{0,0}(1-x_i)(1-x_j) + c_{0,1}(1-x_i)x_j + c_{1,0}x_i(1-x_j) + c_{1,1}x_ix_j$ を追加する
+<a href=#14 id=14 data-nosnippet>14</a>//! - 二次項は劣モジュラ条件 $c_{0,0} + c_{1,1} \le c_{0,1} + c_{1,0}$ を満たす必要がある（違反時は panic）
+<a href=#15 id=15 data-nosnippet>15</a>//! - コストの型は [`i64`]
+<a href=#16 id=16 data-nosnippet>16</a>//! - [`Gco::solve`] で最小値と、それを達成する $x$（`false` は $0$、`true` は $1$）を得る
+<a href=#17 id=17 data-nosnippet>17</a>//! - 変数の反転（$x_i \mapsto 1 - x_i$）は自動で行われない
+<a href=#18 id=18 data-nosnippet>18</a>//!
+<a href=#19 id=19 data-nosnippet>19</a>//! # 例
 <a href=#20 id=20 data-nosnippet>20</a>//!
-<a href=#21 id=21 data-nosnippet>21</a>//! # Dependencies
+<a href=#21 id=21 data-nosnippet>21</a>//! $f(x, y) = (10 + 10x) + (40 - 30y) + 99(x + y - 2xy)$ は $(x, y) = (1, 1)$ で最小値 $30$ を取る。
 <a href=#22 id=22 data-nosnippet>22</a>//!
-<a href=#23 id=23 data-nosnippet>23</a>//! [`dinic`]
-<a href=#24 id=24 data-nosnippet>24</a>//!
+<a href=#23 id=23 data-nosnippet>23</a>//! ```
+<a href=#24 id=24 data-nosnippet>24</a>//! use gco::Gco;
 <a href=#25 id=25 data-nosnippet>25</a>//!
-<a href=#26 id=26 data-nosnippet>26</a>//! # Usages
-<a href=#27 id=27 data-nosnippet>27</a>//!
-<a href=#28 id=28 data-nosnippet>28</a>//!
-<a href=#29 id=29 data-nosnippet>29</a>//! - Use two methods [`unary`](`Gco::unary), [`binary`](Gco::binary) to add terms.
-<a href=#30 id=30 data-nosnippet>30</a>//! - The cost must has a type [`i64`].
-<a href=#31 id=31 data-nosnippet>31</a>//! - The result has a type [`bool`]. ($0$ is `false`, $1$ is `true`)
-<a href=#32 id=32 data-nosnippet>32</a>//! - We cannot automatically "filp" variables.
-<a href=#33 id=33 data-nosnippet>33</a>//!
-<a href=#34 id=34 data-nosnippet>34</a>//! This example code shows that a function
+<a href=#26 id=26 data-nosnippet>26</a>//! let mut gco = gco::Gco::new(2);
+<a href=#27 id=27 data-nosnippet>27</a>//! gco.unary(0, [10, 20]);
+<a href=#28 id=28 data-nosnippet>28</a>//! gco.unary(1, [40, 10]);
+<a href=#29 id=29 data-nosnippet>29</a>//! gco.binary([0, 1], [[0, 99], [99, 0]]);
+<a href=#30 id=30 data-nosnippet>30</a>//!
+<a href=#31 id=31 data-nosnippet>31</a>//! let result = gco.solve();
+<a href=#32 id=32 data-nosnippet>32</a>//! assert_eq!(result.value, 30);
+<a href=#33 id=33 data-nosnippet>33</a>//! assert_eq!(&amp;result.args, &amp;[true, true]);
+<a href=#34 id=34 data-nosnippet>34</a>//! ```
 <a href=#35 id=35 data-nosnippet>35</a>//!
-<a href=#36 id=36 data-nosnippet>36</a>//! $$
-<a href=#37 id=37 data-nosnippet>37</a>//! f (x, y) = (10 + 10 x) + (40 - 30 y) + 99 (x + y - 2xy)
-<a href=#38 id=38 data-nosnippet>38</a>//! $$
-<a href=#39 id=39 data-nosnippet>39</a>//!
-<a href=#40 id=40 data-nosnippet>40</a>//! takes its minimum $30$ at $(x, y) = (1, 1)$.
-<a href=#41 id=41 data-nosnippet>41</a>//!
-<a href=#42 id=42 data-nosnippet>42</a>//! ```
-<a href=#43 id=43 data-nosnippet>43</a>//! use gco::Gco;
-<a href=#44 id=44 data-nosnippet>44</a>//!
-<a href=#45 id=45 data-nosnippet>45</a>//! let mut gco = gco::Gco::new(2);
-<a href=#46 id=46 data-nosnippet>46</a>//! gco.unary(0, [10, 20]);
-<a href=#47 id=47 data-nosnippet>47</a>//! gco.unary(1, [40, 10]);
-<a href=#48 id=48 data-nosnippet>48</a>//! gco.binary([0, 1], [[0, 99], [99, 0]]);
-<a href=#49 id=49 data-nosnippet>49</a>//!
-<a href=#50 id=50 data-nosnippet>50</a>//! let result = gco.solve();
-<a href=#51 id=51 data-nosnippet>51</a>//! assert_eq!(result.value, 30);
-<a href=#52 id=52 data-nosnippet>52</a>//! assert_eq!(&amp;result.args, &amp;[true, true]);
-<a href=#53 id=53 data-nosnippet>53</a>//! ```
-<a href=#54 id=54 data-nosnippet>54</a>
-<a href=#55 id=55 data-nosnippet>55</a></span><span class="kw">use </span>dinic::Dinic;
-<a href=#56 id=56 data-nosnippet>56</a><span class="kw">use </span>std::cmp::Ordering;
-<a href=#57 id=57 data-nosnippet>57</a>
-<a href=#58 id=58 data-nosnippet>58</a><span class="doccomment">/// A solver of graph cut optimization problems.
-<a href=#59 id=59 data-nosnippet>59</a></span><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq)]
-<a href=#60 id=60 data-nosnippet>60</a></span><span class="kw">pub struct </span>Gco {
-<a href=#61 id=61 data-nosnippet>61</a>    vars: usize,
-<a href=#62 id=62 data-nosnippet>62</a>    unary: Vec&lt;Unary&gt;,
-<a href=#63 id=63 data-nosnippet>63</a>    binary: Vec&lt;Binary&gt;,
-<a href=#64 id=64 data-nosnippet>64</a>}
-<a href=#65 id=65 data-nosnippet>65</a><span class="kw">impl </span>Gco {
-<a href=#66 id=66 data-nosnippet>66</a>    <span class="doccomment">/// Initialize a solver with $n$ terms.
-<a href=#67 id=67 data-nosnippet>67</a>    </span><span class="kw">pub fn </span>new(n: usize) -&gt; <span class="self">Self </span>{
-<a href=#68 id=68 data-nosnippet>68</a>        <span class="self">Self </span>{
-<a href=#69 id=69 data-nosnippet>69</a>            vars: n,
-<a href=#70 id=70 data-nosnippet>70</a>            ..<span class="self">Self</span>::default()
-<a href=#71 id=71 data-nosnippet>71</a>        }
-<a href=#72 id=72 data-nosnippet>72</a>    }
-<a href=#73 id=73 data-nosnippet>73</a>
-<a href=#74 id=74 data-nosnippet>74</a>    <span class="doccomment">/// Add a unary term.
-<a href=#75 id=75 data-nosnippet>75</a>    ///
-<a href=#76 id=76 data-nosnippet>76</a>    /// # Effects
-<a href=#77 id=77 data-nosnippet>77</a>    ///
-<a href=#78 id=78 data-nosnippet>78</a>    /// Add a unary term $c _ 0 ( 1 - x _ i ) + c _ 1 x _ i$ to $f$.
-<a href=#79 id=79 data-nosnippet>79</a>    ///
-<a href=#80 id=80 data-nosnippet>80</a>    /// # Examples
+<a href=#36 id=36 data-nosnippet>36</a>//! # 計算量
+<a href=#37 id=37 data-nosnippet>37</a>//!
+<a href=#38 id=38 data-nosnippet>38</a>//! - [`Gco::solve`][]: $O(n^2 m)$（$n$ は頂点数、$m$ は辺数。[`dinic`] の最大流計算量に従う）
+<a href=#39 id=39 data-nosnippet>39</a>
+<a href=#40 id=40 data-nosnippet>40</a></span><span class="kw">use </span>dinic::Dinic;
+<a href=#41 id=41 data-nosnippet>41</a><span class="kw">use </span>std::cmp::Ordering;
+<a href=#42 id=42 data-nosnippet>42</a>
+<a href=#43 id=43 data-nosnippet>43</a><span class="doccomment">/// グラフカット最適化問題のソルバー。
+<a href=#44 id=44 data-nosnippet>44</a>///
+<a href=#45 id=45 data-nosnippet>45</a>/// [`Gco::new`] で変数の個数を指定して初期化し、[`Gco::unary`], [`Gco::binary`] で
+<a href=#46 id=46 data-nosnippet>46</a>/// $f$ に項を追加してから [`Gco::solve`] で最小値と最小点を求める。
+<a href=#47 id=47 data-nosnippet>47</a></span><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq)]
+<a href=#48 id=48 data-nosnippet>48</a></span><span class="kw">pub struct </span>Gco {
+<a href=#49 id=49 data-nosnippet>49</a>    vars: usize,
+<a href=#50 id=50 data-nosnippet>50</a>    unary: Vec&lt;Unary&gt;,
+<a href=#51 id=51 data-nosnippet>51</a>    binary: Vec&lt;Binary&gt;,
+<a href=#52 id=52 data-nosnippet>52</a>}
+<a href=#53 id=53 data-nosnippet>53</a><span class="kw">impl </span>Gco {
+<a href=#54 id=54 data-nosnippet>54</a>    <span class="doccomment">/// $n$ 個の変数を持つソルバーを初期化する。項は何も追加されていない状態（$f \equiv 0$）から始まる。
+<a href=#55 id=55 data-nosnippet>55</a>    </span><span class="kw">pub fn </span>new(n: usize) -&gt; <span class="self">Self </span>{
+<a href=#56 id=56 data-nosnippet>56</a>        <span class="self">Self </span>{
+<a href=#57 id=57 data-nosnippet>57</a>            vars: n,
+<a href=#58 id=58 data-nosnippet>58</a>            ..<span class="self">Self</span>::default()
+<a href=#59 id=59 data-nosnippet>59</a>        }
+<a href=#60 id=60 data-nosnippet>60</a>    }
+<a href=#61 id=61 data-nosnippet>61</a>
+<a href=#62 id=62 data-nosnippet>62</a>    <span class="doccomment">/// 一次項 $c_0 (1 - x_i) + c_1 x_i$ を $f$ に加える。
+<a href=#63 id=63 data-nosnippet>63</a>    ///
+<a href=#64 id=64 data-nosnippet>64</a>    /// # 例
+<a href=#65 id=65 data-nosnippet>65</a>    ///
+<a href=#66 id=66 data-nosnippet>66</a>    /// ```
+<a href=#67 id=67 data-nosnippet>67</a>    /// # use gco::Gco;
+<a href=#68 id=68 data-nosnippet>68</a>    /// # let mut gco = gco::Gco::new(2);
+<a href=#69 id=69 data-nosnippet>69</a>    /// gco.unary(0, [0, 10]); // 10 x_0
+<a href=#70 id=70 data-nosnippet>70</a>    /// gco.unary(1, [-40, 0]); // -40 (1 - x_1)
+<a href=#71 id=71 data-nosnippet>71</a>    /// ```
+<a href=#72 id=72 data-nosnippet>72</a>    </span><span class="kw">pub fn </span>unary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, cost: [i64; <span class="number">2</span>]) {
+<a href=#73 id=73 data-nosnippet>73</a>        <span class="self">self</span>.unary.push(Unary { i, cost });
+<a href=#74 id=74 data-nosnippet>74</a>    }
+<a href=#75 id=75 data-nosnippet>75</a>
+<a href=#76 id=76 data-nosnippet>76</a>    <span class="doccomment">/// 二次項
+<a href=#77 id=77 data-nosnippet>77</a>    /// $$
+<a href=#78 id=78 data-nosnippet>78</a>    /// c_{0,0}(1-x_i)(1-x_j) + c_{0,1}(1-x_i)x_j + c_{1,0}x_i(1-x_j) + c_{1,1}x_ix_j
+<a href=#79 id=79 data-nosnippet>79</a>    /// $$
+<a href=#80 id=80 data-nosnippet>80</a>    /// を $f$ に加える。
 <a href=#81 id=81 data-nosnippet>81</a>    ///
-<a href=#82 id=82 data-nosnippet>82</a>    /// ```
-<a href=#83 id=83 data-nosnippet>83</a>    /// # use gco::Gco;
-<a href=#84 id=84 data-nosnippet>84</a>    /// # let mut gco = gco::Gco::new(2);
-<a href=#85 id=85 data-nosnippet>85</a>    /// gco.unary(0, [0, 10]);
-<a href=#86 id=86 data-nosnippet>86</a>    /// gco.unary(1, [-40, 0]);
-<a href=#87 id=87 data-nosnippet>87</a>    /// ```
-<a href=#88 id=88 data-nosnippet>88</a>    </span><span class="kw">pub fn </span>unary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, i: usize, cost: [i64; <span class="number">2</span>]) {
-<a href=#89 id=89 data-nosnippet>89</a>        <span class="self">self</span>.unary.push(Unary { i, cost });
-<a href=#90 id=90 data-nosnippet>90</a>    }
-<a href=#91 id=91 data-nosnippet>91</a>
-<a href=#92 id=92 data-nosnippet>92</a>    <span class="doccomment">/// Add a binary term.
-<a href=#93 id=93 data-nosnippet>93</a>    ///
-<a href=#94 id=94 data-nosnippet>94</a>    /// # Effects
-<a href=#95 id=95 data-nosnippet>95</a>    ///
-<a href=#96 id=96 data-nosnippet>96</a>    /// Add the following binary term to $f$:
-<a href=#97 id=97 data-nosnippet>97</a>    ///
-<a href=#98 id=98 data-nosnippet>98</a>    /// $$
-<a href=#99 id=99 data-nosnippet>99</a>    /// c _ { 0, 0 } ( 1 - x _ i) ( 1 - x _ j )
-<a href=#100 id=100 data-nosnippet>100</a>    ///     + c _ { 0, 1 } ( 1 - x _ i ) x _ j
-<a href=#101 id=101 data-nosnippet>101</a>    ///     + c _ { 1, 0 } x _ i ( 1 - x _ j )
-<a href=#102 id=102 data-nosnippet>102</a>    ///     + c _ { 1, 1 } x _ i x _ j
-<a href=#103 id=103 data-nosnippet>103</a>    /// $$
+<a href=#82 id=82 data-nosnippet>82</a>    /// # panics
+<a href=#83 id=83 data-nosnippet>83</a>    ///
+<a href=#84 id=84 data-nosnippet>84</a>    /// 劣モジュラ条件 $c_{0,0} + c_{1,1} \le c_{0,1} + c_{1,0}$ を満たさないとき。
+<a href=#85 id=85 data-nosnippet>85</a>    ///
+<a href=#86 id=86 data-nosnippet>86</a>    /// # 例
+<a href=#87 id=87 data-nosnippet>87</a>    ///
+<a href=#88 id=88 data-nosnippet>88</a>    /// ```
+<a href=#89 id=89 data-nosnippet>89</a>    /// # use gco::Gco;
+<a href=#90 id=90 data-nosnippet>90</a>    /// # let mut gco = gco::Gco::new(2);
+<a href=#91 id=91 data-nosnippet>91</a>    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // x_0 = 0, x_1 = 1 のとき 10
+<a href=#92 id=92 data-nosnippet>92</a>    /// ```
+<a href=#93 id=93 data-nosnippet>93</a>    </span><span class="kw">pub fn </span>binary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ij: [usize; <span class="number">2</span>], cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) {
+<a href=#94 id=94 data-nosnippet>94</a>        <span class="macro">assert!</span>(
+<a href=#95 id=95 data-nosnippet>95</a>            is_submodular(cost),
+<a href=#96 id=96 data-nosnippet>96</a>            <span class="string">"The cost should be submodular. cost = {cost:?}"
+<a href=#97 id=97 data-nosnippet>97</a>        </span>);
+<a href=#98 id=98 data-nosnippet>98</a>        <span class="self">self</span>.binary.push(Binary { ij, cost });
+<a href=#99 id=99 data-nosnippet>99</a>    }
+<a href=#100 id=100 data-nosnippet>100</a>
+<a href=#101 id=101 data-nosnippet>101</a>    <span class="doccomment">/// $f$ の最小値とそれを達成する $x$ を返す。
+<a href=#102 id=102 data-nosnippet>102</a>    ///
+<a href=#103 id=103 data-nosnippet>103</a>    /// # 計算量
 <a href=#104 id=104 data-nosnippet>104</a>    ///
-<a href=#105 id=105 data-nosnippet>105</a>    ///
-<a href=#106 id=106 data-nosnippet>106</a>    /// # Panics
-<a href=#107 id=107 data-nosnippet>107</a>    ///
-<a href=#108 id=108 data-nosnippet>108</a>    /// If this binary term is not submodular.
-<a href=#109 id=109 data-nosnippet>109</a>    ///
-<a href=#110 id=110 data-nosnippet>110</a>    ///
-<a href=#111 id=111 data-nosnippet>111</a>    /// # Examples
-<a href=#112 id=112 data-nosnippet>112</a>    ///
-<a href=#113 id=113 data-nosnippet>113</a>    /// ```
-<a href=#114 id=114 data-nosnippet>114</a>    /// # use gco::Gco;
-<a href=#115 id=115 data-nosnippet>115</a>    /// # let mut gco = gco::Gco::new(2);
-<a href=#116 id=116 data-nosnippet>116</a>    /// gco.binary([0, 1], [[0, 10], [0, 0]]); // Costs 10 when x0 = 0, x1 = 1
-<a href=#117 id=117 data-nosnippet>117</a>    /// ```
-<a href=#118 id=118 data-nosnippet>118</a>    </span><span class="kw">pub fn </span>binary(<span class="kw-2">&amp;mut </span><span class="self">self</span>, ij: [usize; <span class="number">2</span>], cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) {
-<a href=#119 id=119 data-nosnippet>119</a>        <span class="macro">assert!</span>(
-<a href=#120 id=120 data-nosnippet>120</a>            is_submodular(cost),
-<a href=#121 id=121 data-nosnippet>121</a>            <span class="string">"The cost should be submodular. cost = {cost:?}"
-<a href=#122 id=122 data-nosnippet>122</a>        </span>);
-<a href=#123 id=123 data-nosnippet>123</a>        <span class="self">self</span>.binary.push(Binary { ij, cost });
-<a href=#124 id=124 data-nosnippet>124</a>    }
-<a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a>    <span class="doccomment">/// Returns the minimum value and an argmin of $f$.
-<a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>solve(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GcoResult {
-<a href=#128 id=128 data-nosnippet>128</a>        solve(<span class="self">self</span>)
-<a href=#129 id=129 data-nosnippet>129</a>    }
-<a href=#130 id=130 data-nosnippet>130</a>}
-<a href=#131 id=131 data-nosnippet>131</a>
-<a href=#132 id=132 data-nosnippet>132</a><span class="doccomment">/// The minimum value and and an argmin of $f$.
-<a href=#133 id=133 data-nosnippet>133</a>///
-<a href=#134 id=134 data-nosnippet>134</a>/// - $x _ i = 0 \Leftrightarrow \mathtt { args } _ i = \mathtt { false }$
-<a href=#135 id=135 data-nosnippet>135</a>/// - $x _ i = 1 \Leftrightarrow \mathtt { args } _ i = \mathtt { true }$
-<a href=#136 id=136 data-nosnippet>136</a></span><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
-<a href=#137 id=137 data-nosnippet>137</a></span><span class="kw">pub struct </span>GcoResult {
-<a href=#138 id=138 data-nosnippet>138</a>    <span class="doccomment">/// The minimum value
-<a href=#139 id=139 data-nosnippet>139</a>    </span><span class="kw">pub </span>value: i64,
-<a href=#140 id=140 data-nosnippet>140</a>    <span class="doccomment">/// An argmin
-<a href=#141 id=141 data-nosnippet>141</a>    </span><span class="kw">pub </span>args: Vec&lt;bool&gt;,
-<a href=#142 id=142 data-nosnippet>142</a>}
-<a href=#143 id=143 data-nosnippet>143</a>
-<a href=#144 id=144 data-nosnippet>144</a><span class="kw">fn </span>solve(gco: <span class="kw-2">&amp;</span>Gco) -&gt; GcoResult {
-<a href=#145 id=145 data-nosnippet>145</a>    <span class="kw">let </span>Gco {
-<a href=#146 id=146 data-nosnippet>146</a>        vars,
-<a href=#147 id=147 data-nosnippet>147</a>        unary,
-<a href=#148 id=148 data-nosnippet>148</a>        binary,
-<a href=#149 id=149 data-nosnippet>149</a>    } = gco;
-<a href=#150 id=150 data-nosnippet>150</a>    <span class="kw">let </span>s = <span class="kw-2">*</span>vars;
-<a href=#151 id=151 data-nosnippet>151</a>    <span class="kw">let </span>t = s + <span class="number">1</span>;
-<a href=#152 id=152 data-nosnippet>152</a>    <span class="kw">let </span>vertex_count = t + <span class="number">1</span>;
-<a href=#153 id=153 data-nosnippet>153</a>    <span class="kw">let </span><span class="kw-2">mut </span>constant = <span class="number">0</span>;
-<a href=#154 id=154 data-nosnippet>154</a>    <span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::&lt;i64&gt;::new(vertex_count);
-<a href=#155 id=155 data-nosnippet>155</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>binary <span class="kw">in </span>binary {
-<a href=#156 id=156 data-nosnippet>156</a>        <span class="kw">let </span>Binary { ij, <span class="kw-2">mut </span>cost } = binary;
-<a href=#157 id=157 data-nosnippet>157</a>        <span class="kw">let </span>d = cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>] - cost[<span class="number">0</span>][<span class="number">0</span>] - cost[<span class="number">1</span>][<span class="number">1</span>];
-<a href=#158 id=158 data-nosnippet>158</a>        <span class="kw">match </span>d.cmp(<span class="kw-2">&amp;</span><span class="number">0</span>) {
-<a href=#159 id=159 data-nosnippet>159</a>            Ordering::Less =&gt; <span class="macro">unreachable!</span>(),
-<a href=#160 id=160 data-nosnippet>160</a>            Ordering::Greater =&gt; {
-<a href=#161 id=161 data-nosnippet>161</a>                dinic.add_edge(ij[<span class="number">0</span>], ij[<span class="number">1</span>], d);
-<a href=#162 id=162 data-nosnippet>162</a>                cost[<span class="number">0</span>][<span class="number">1</span>] -= d;
-<a href=#163 id=163 data-nosnippet>163</a>            }
-<a href=#164 id=164 data-nosnippet>164</a>            Ordering::Equal =&gt; (),
-<a href=#165 id=165 data-nosnippet>165</a>        }
-<a href=#166 id=166 data-nosnippet>166</a>        <span class="kw">for </span>(p, <span class="kw-2">&amp;</span>ij) <span class="kw">in </span>ij.iter().enumerate() {
-<a href=#167 id=167 data-nosnippet>167</a>            <span class="kw">let </span>d = diff(cost, p);
-<a href=#168 id=168 data-nosnippet>168</a>            <span class="kw">match </span>d.cmp(<span class="kw-2">&amp;</span><span class="number">0</span>) {
-<a href=#169 id=169 data-nosnippet>169</a>                Ordering::Less =&gt; {
-<a href=#170 id=170 data-nosnippet>170</a>                    constant += d;
-<a href=#171 id=171 data-nosnippet>171</a>                    dinic.add_edge(ij, t, -d);
-<a href=#172 id=172 data-nosnippet>172</a>                }
-<a href=#173 id=173 data-nosnippet>173</a>                Ordering::Greater =&gt; {
-<a href=#174 id=174 data-nosnippet>174</a>                    dinic.add_edge(s, ij, d);
-<a href=#175 id=175 data-nosnippet>175</a>                }
-<a href=#176 id=176 data-nosnippet>176</a>                Ordering::Equal =&gt; (),
-<a href=#177 id=177 data-nosnippet>177</a>            }
-<a href=#178 id=178 data-nosnippet>178</a>            <span class="kw">for </span>(i, j) <span class="kw">in </span>(<span class="number">0</span>..<span class="number">2</span>)
-<a href=#179 id=179 data-nosnippet>179</a>                .flat_map(|i| (<span class="number">0</span>..<span class="number">2</span>).map(<span class="kw">move </span>|j| (i, j)))
-<a href=#180 id=180 data-nosnippet>180</a>                .filter(|<span class="kw-2">&amp;</span>(i, j)| [i, j][p] == <span class="number">1</span>)
-<a href=#181 id=181 data-nosnippet>181</a>            {
-<a href=#182 id=182 data-nosnippet>182</a>                cost[i][j] -= d;
-<a href=#183 id=183 data-nosnippet>183</a>            }
-<a href=#184 id=184 data-nosnippet>184</a>        }
-<a href=#185 id=185 data-nosnippet>185</a>        <span class="kw">let </span>d = cost[<span class="number">0</span>][<span class="number">0</span>];
-<a href=#186 id=186 data-nosnippet>186</a>        cost.iter_mut().flatten().for_each(|x| <span class="kw-2">*</span>x -= d);
-<a href=#187 id=187 data-nosnippet>187</a>        constant += d;
-<a href=#188 id=188 data-nosnippet>188</a>        <span class="macro">assert_eq!</span>(cost, [[<span class="number">0</span>; <span class="number">2</span>]; <span class="number">2</span>]);
-<a href=#189 id=189 data-nosnippet>189</a>    }
-<a href=#190 id=190 data-nosnippet>190</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>unary <span class="kw">in </span>unary {
-<a href=#191 id=191 data-nosnippet>191</a>        <span class="kw">let </span>cost = unary.cost;
-<a href=#192 id=192 data-nosnippet>192</a>        <span class="kw">match </span>cost[<span class="number">0</span>].cmp(<span class="kw-2">&amp;</span>cost[<span class="number">1</span>]) {
-<a href=#193 id=193 data-nosnippet>193</a>            Ordering::Less =&gt; {
-<a href=#194 id=194 data-nosnippet>194</a>                dinic.add_edge(s, unary.i, cost[<span class="number">1</span>] - cost[<span class="number">0</span>]);
-<a href=#195 id=195 data-nosnippet>195</a>                constant += cost[<span class="number">0</span>];
-<a href=#196 id=196 data-nosnippet>196</a>            }
-<a href=#197 id=197 data-nosnippet>197</a>            Ordering::Greater =&gt; {
-<a href=#198 id=198 data-nosnippet>198</a>                dinic.add_edge(unary.i, t, cost[<span class="number">0</span>] - cost[<span class="number">1</span>]);
-<a href=#199 id=199 data-nosnippet>199</a>                constant += cost[<span class="number">1</span>];
-<a href=#200 id=200 data-nosnippet>200</a>            }
-<a href=#201 id=201 data-nosnippet>201</a>            Ordering::Equal =&gt; constant += cost[<span class="number">0</span>],
-<a href=#202 id=202 data-nosnippet>202</a>        }
-<a href=#203 id=203 data-nosnippet>203</a>    }
-<a href=#204 id=204 data-nosnippet>204</a>    <span class="kw">let </span>value = constant + dinic.flow(s, t);
-<a href=#205 id=205 data-nosnippet>205</a>    <span class="kw">let </span>args = dinic.min_cut(s)[..<span class="kw-2">*</span>vars]
-<a href=#206 id=206 data-nosnippet>206</a>        .iter()
-<a href=#207 id=207 data-nosnippet>207</a>        .map(|<span class="kw-2">&amp;</span>b| !b)
-<a href=#208 id=208 data-nosnippet>208</a>        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#209 id=209 data-nosnippet>209</a>    GcoResult { value, args }
+<a href=#105 id=105 data-nosnippet>105</a>    /// $O(n^2 m)$（$n$ は頂点数、$m$ は辺数）
+<a href=#106 id=106 data-nosnippet>106</a>    </span><span class="kw">pub fn </span>solve(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; GcoResult {
+<a href=#107 id=107 data-nosnippet>107</a>        solve(<span class="self">self</span>)
+<a href=#108 id=108 data-nosnippet>108</a>    }
+<a href=#109 id=109 data-nosnippet>109</a>}
+<a href=#110 id=110 data-nosnippet>110</a>
+<a href=#111 id=111 data-nosnippet>111</a><span class="doccomment">/// [`Gco::solve`] の結果。$f$ の最小値と、それを達成する $x$ を保持する。
+<a href=#112 id=112 data-nosnippet>112</a>///
+<a href=#113 id=113 data-nosnippet>113</a>/// - $x_i = 0 \Leftrightarrow$ `args[i] == false`
+<a href=#114 id=114 data-nosnippet>114</a>/// - $x_i = 1 \Leftrightarrow$ `args[i] == true`
+<a href=#115 id=115 data-nosnippet>115</a></span><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
+<a href=#116 id=116 data-nosnippet>116</a></span><span class="kw">pub struct </span>GcoResult {
+<a href=#117 id=117 data-nosnippet>117</a>    <span class="doccomment">/// $f$ の最小値。
+<a href=#118 id=118 data-nosnippet>118</a>    </span><span class="kw">pub </span>value: i64,
+<a href=#119 id=119 data-nosnippet>119</a>    <span class="doccomment">/// 最小値を達成する $x$。
+<a href=#120 id=120 data-nosnippet>120</a>    </span><span class="kw">pub </span>args: Vec&lt;bool&gt;,
+<a href=#121 id=121 data-nosnippet>121</a>}
+<a href=#122 id=122 data-nosnippet>122</a>
+<a href=#123 id=123 data-nosnippet>123</a><span class="kw">fn </span>solve(gco: <span class="kw-2">&amp;</span>Gco) -&gt; GcoResult {
+<a href=#124 id=124 data-nosnippet>124</a>    <span class="kw">let </span>Gco {
+<a href=#125 id=125 data-nosnippet>125</a>        vars,
+<a href=#126 id=126 data-nosnippet>126</a>        unary,
+<a href=#127 id=127 data-nosnippet>127</a>        binary,
+<a href=#128 id=128 data-nosnippet>128</a>    } = gco;
+<a href=#129 id=129 data-nosnippet>129</a>    <span class="kw">let </span>s = <span class="kw-2">*</span>vars;
+<a href=#130 id=130 data-nosnippet>130</a>    <span class="kw">let </span>t = s + <span class="number">1</span>;
+<a href=#131 id=131 data-nosnippet>131</a>    <span class="kw">let </span>vertex_count = t + <span class="number">1</span>;
+<a href=#132 id=132 data-nosnippet>132</a>    <span class="kw">let </span><span class="kw-2">mut </span>constant = <span class="number">0</span>;
+<a href=#133 id=133 data-nosnippet>133</a>    <span class="kw">let </span><span class="kw-2">mut </span>dinic = Dinic::&lt;i64&gt;::new(vertex_count);
+<a href=#134 id=134 data-nosnippet>134</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>binary <span class="kw">in </span>binary {
+<a href=#135 id=135 data-nosnippet>135</a>        <span class="kw">let </span>Binary { ij, <span class="kw-2">mut </span>cost } = binary;
+<a href=#136 id=136 data-nosnippet>136</a>        <span class="kw">let </span>d = cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>] - cost[<span class="number">0</span>][<span class="number">0</span>] - cost[<span class="number">1</span>][<span class="number">1</span>];
+<a href=#137 id=137 data-nosnippet>137</a>        <span class="kw">match </span>d.cmp(<span class="kw-2">&amp;</span><span class="number">0</span>) {
+<a href=#138 id=138 data-nosnippet>138</a>            Ordering::Less =&gt; <span class="macro">unreachable!</span>(),
+<a href=#139 id=139 data-nosnippet>139</a>            Ordering::Greater =&gt; {
+<a href=#140 id=140 data-nosnippet>140</a>                dinic.add_edge(ij[<span class="number">0</span>], ij[<span class="number">1</span>], d);
+<a href=#141 id=141 data-nosnippet>141</a>                cost[<span class="number">0</span>][<span class="number">1</span>] -= d;
+<a href=#142 id=142 data-nosnippet>142</a>            }
+<a href=#143 id=143 data-nosnippet>143</a>            Ordering::Equal =&gt; (),
+<a href=#144 id=144 data-nosnippet>144</a>        }
+<a href=#145 id=145 data-nosnippet>145</a>        <span class="kw">for </span>(p, <span class="kw-2">&amp;</span>ij) <span class="kw">in </span>ij.iter().enumerate() {
+<a href=#146 id=146 data-nosnippet>146</a>            <span class="kw">let </span>d = diff(cost, p);
+<a href=#147 id=147 data-nosnippet>147</a>            <span class="kw">match </span>d.cmp(<span class="kw-2">&amp;</span><span class="number">0</span>) {
+<a href=#148 id=148 data-nosnippet>148</a>                Ordering::Less =&gt; {
+<a href=#149 id=149 data-nosnippet>149</a>                    constant += d;
+<a href=#150 id=150 data-nosnippet>150</a>                    dinic.add_edge(ij, t, -d);
+<a href=#151 id=151 data-nosnippet>151</a>                }
+<a href=#152 id=152 data-nosnippet>152</a>                Ordering::Greater =&gt; {
+<a href=#153 id=153 data-nosnippet>153</a>                    dinic.add_edge(s, ij, d);
+<a href=#154 id=154 data-nosnippet>154</a>                }
+<a href=#155 id=155 data-nosnippet>155</a>                Ordering::Equal =&gt; (),
+<a href=#156 id=156 data-nosnippet>156</a>            }
+<a href=#157 id=157 data-nosnippet>157</a>            <span class="kw">for </span>(i, j) <span class="kw">in </span>(<span class="number">0</span>..<span class="number">2</span>)
+<a href=#158 id=158 data-nosnippet>158</a>                .flat_map(|i| (<span class="number">0</span>..<span class="number">2</span>).map(<span class="kw">move </span>|j| (i, j)))
+<a href=#159 id=159 data-nosnippet>159</a>                .filter(|<span class="kw-2">&amp;</span>(i, j)| [i, j][p] == <span class="number">1</span>)
+<a href=#160 id=160 data-nosnippet>160</a>            {
+<a href=#161 id=161 data-nosnippet>161</a>                cost[i][j] -= d;
+<a href=#162 id=162 data-nosnippet>162</a>            }
+<a href=#163 id=163 data-nosnippet>163</a>        }
+<a href=#164 id=164 data-nosnippet>164</a>        <span class="kw">let </span>d = cost[<span class="number">0</span>][<span class="number">0</span>];
+<a href=#165 id=165 data-nosnippet>165</a>        cost.iter_mut().flatten().for_each(|x| <span class="kw-2">*</span>x -= d);
+<a href=#166 id=166 data-nosnippet>166</a>        constant += d;
+<a href=#167 id=167 data-nosnippet>167</a>        <span class="macro">assert_eq!</span>(cost, [[<span class="number">0</span>; <span class="number">2</span>]; <span class="number">2</span>]);
+<a href=#168 id=168 data-nosnippet>168</a>    }
+<a href=#169 id=169 data-nosnippet>169</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>unary <span class="kw">in </span>unary {
+<a href=#170 id=170 data-nosnippet>170</a>        <span class="kw">let </span>cost = unary.cost;
+<a href=#171 id=171 data-nosnippet>171</a>        <span class="kw">match </span>cost[<span class="number">0</span>].cmp(<span class="kw-2">&amp;</span>cost[<span class="number">1</span>]) {
+<a href=#172 id=172 data-nosnippet>172</a>            Ordering::Less =&gt; {
+<a href=#173 id=173 data-nosnippet>173</a>                dinic.add_edge(s, unary.i, cost[<span class="number">1</span>] - cost[<span class="number">0</span>]);
+<a href=#174 id=174 data-nosnippet>174</a>                constant += cost[<span class="number">0</span>];
+<a href=#175 id=175 data-nosnippet>175</a>            }
+<a href=#176 id=176 data-nosnippet>176</a>            Ordering::Greater =&gt; {
+<a href=#177 id=177 data-nosnippet>177</a>                dinic.add_edge(unary.i, t, cost[<span class="number">0</span>] - cost[<span class="number">1</span>]);
+<a href=#178 id=178 data-nosnippet>178</a>                constant += cost[<span class="number">1</span>];
+<a href=#179 id=179 data-nosnippet>179</a>            }
+<a href=#180 id=180 data-nosnippet>180</a>            Ordering::Equal =&gt; constant += cost[<span class="number">0</span>],
+<a href=#181 id=181 data-nosnippet>181</a>        }
+<a href=#182 id=182 data-nosnippet>182</a>    }
+<a href=#183 id=183 data-nosnippet>183</a>    <span class="kw">let </span>value = constant + dinic.flow(s, t);
+<a href=#184 id=184 data-nosnippet>184</a>    <span class="kw">let </span>args = dinic.min_cut(s)[..<span class="kw-2">*</span>vars]
+<a href=#185 id=185 data-nosnippet>185</a>        .iter()
+<a href=#186 id=186 data-nosnippet>186</a>        .map(|<span class="kw-2">&amp;</span>b| !b)
+<a href=#187 id=187 data-nosnippet>187</a>        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#188 id=188 data-nosnippet>188</a>    GcoResult { value, args }
+<a href=#189 id=189 data-nosnippet>189</a>}
+<a href=#190 id=190 data-nosnippet>190</a>
+<a href=#191 id=191 data-nosnippet>191</a><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+<a href=#192 id=192 data-nosnippet>192</a></span><span class="kw">struct </span>Unary {
+<a href=#193 id=193 data-nosnippet>193</a>    i: usize,
+<a href=#194 id=194 data-nosnippet>194</a>    cost: [i64; <span class="number">2</span>],
+<a href=#195 id=195 data-nosnippet>195</a>}
+<a href=#196 id=196 data-nosnippet>196</a><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
+<a href=#197 id=197 data-nosnippet>197</a></span><span class="kw">struct </span>Binary {
+<a href=#198 id=198 data-nosnippet>198</a>    ij: [usize; <span class="number">2</span>],
+<a href=#199 id=199 data-nosnippet>199</a>    cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>],
+<a href=#200 id=200 data-nosnippet>200</a>}
+<a href=#201 id=201 data-nosnippet>201</a>
+<a href=#202 id=202 data-nosnippet>202</a><span class="kw">fn </span>index_by_array2(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], index: [usize; <span class="number">2</span>]) -&gt; i64 {
+<a href=#203 id=203 data-nosnippet>203</a>    cost[index[<span class="number">0</span>]][index[<span class="number">1</span>]]
+<a href=#204 id=204 data-nosnippet>204</a>}
+<a href=#205 id=205 data-nosnippet>205</a><span class="kw">fn </span>diff(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], p: usize) -&gt; i64 {
+<a href=#206 id=206 data-nosnippet>206</a>    <span class="macro">assert!</span>(is_submodular(cost));
+<a href=#207 id=207 data-nosnippet>207</a>    <span class="kw">let </span><span class="kw-2">mut </span>index = [<span class="number">0</span>, <span class="number">0</span>];
+<a href=#208 id=208 data-nosnippet>208</a>    index[p] = <span class="number">1</span>;
+<a href=#209 id=209 data-nosnippet>209</a>    index_by_array2(cost, index) - cost[<span class="number">0</span>][<span class="number">0</span>]
 <a href=#210 id=210 data-nosnippet>210</a>}
-<a href=#211 id=211 data-nosnippet>211</a>
-<a href=#212 id=212 data-nosnippet>212</a><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-<a href=#213 id=213 data-nosnippet>213</a></span><span class="kw">struct </span>Unary {
-<a href=#214 id=214 data-nosnippet>214</a>    i: usize,
-<a href=#215 id=215 data-nosnippet>215</a>    cost: [i64; <span class="number">2</span>],
-<a href=#216 id=216 data-nosnippet>216</a>}
-<a href=#217 id=217 data-nosnippet>217</a><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Copy)]
-<a href=#218 id=218 data-nosnippet>218</a></span><span class="kw">struct </span>Binary {
-<a href=#219 id=219 data-nosnippet>219</a>    ij: [usize; <span class="number">2</span>],
-<a href=#220 id=220 data-nosnippet>220</a>    cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>],
-<a href=#221 id=221 data-nosnippet>221</a>}
-<a href=#222 id=222 data-nosnippet>222</a>
-<a href=#223 id=223 data-nosnippet>223</a><span class="kw">fn </span>index_by_array2(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], index: [usize; <span class="number">2</span>]) -&gt; i64 {
-<a href=#224 id=224 data-nosnippet>224</a>    cost[index[<span class="number">0</span>]][index[<span class="number">1</span>]]
-<a href=#225 id=225 data-nosnippet>225</a>}
-<a href=#226 id=226 data-nosnippet>226</a><span class="kw">fn </span>diff(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>], p: usize) -&gt; i64 {
-<a href=#227 id=227 data-nosnippet>227</a>    <span class="macro">assert!</span>(is_submodular(cost));
-<a href=#228 id=228 data-nosnippet>228</a>    <span class="kw">let </span><span class="kw-2">mut </span>index = [<span class="number">0</span>, <span class="number">0</span>];
-<a href=#229 id=229 data-nosnippet>229</a>    index[p] = <span class="number">1</span>;
-<a href=#230 id=230 data-nosnippet>230</a>    index_by_array2(cost, index) - cost[<span class="number">0</span>][<span class="number">0</span>]
-<a href=#231 id=231 data-nosnippet>231</a>}
-<a href=#232 id=232 data-nosnippet>232</a><span class="kw">fn </span>is_submodular(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) -&gt; bool {
-<a href=#233 id=233 data-nosnippet>233</a>    cost[<span class="number">0</span>][<span class="number">0</span>] + cost[<span class="number">1</span>][<span class="number">1</span>] &lt;= cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>]
-<a href=#234 id=234 data-nosnippet>234</a>}
-<a href=#235 id=235 data-nosnippet>235</a>
-<a href=#236 id=236 data-nosnippet>236</a><span class="attr">#[cfg(test)]
-<a href=#237 id=237 data-nosnippet>237</a></span><span class="kw">mod </span>tests {
-<a href=#238 id=238 data-nosnippet>238</a>    <span class="kw">use </span><span class="kw">super</span>::is_submodular;
-<a href=#239 id=239 data-nosnippet>239</a>    <span class="kw">use </span><span class="kw">super</span>::Binary;
-<a href=#240 id=240 data-nosnippet>240</a>    <span class="kw">use </span><span class="kw">super</span>::Gco;
-<a href=#241 id=241 data-nosnippet>241</a>    <span class="kw">use </span><span class="kw">super</span>::GcoResult;
-<a href=#242 id=242 data-nosnippet>242</a>    <span class="kw">use </span><span class="kw">super</span>::Unary;
-<a href=#243 id=243 data-nosnippet>243</a>    <span class="kw">use </span>rand::prelude::StdRng;
-<a href=#244 id=244 data-nosnippet>244</a>    <span class="kw">use </span>rand::Rng;
-<a href=#245 id=245 data-nosnippet>245</a>    <span class="kw">use </span>rand::SeedableRng;
-<a href=#246 id=246 data-nosnippet>246</a>    <span class="kw">use </span>randtools::DistinctTwo;
-<a href=#247 id=247 data-nosnippet>247</a>
-<a href=#248 id=248 data-nosnippet>248</a>    <span class="kw">fn </span>brute(gco: <span class="kw-2">&amp;</span>Gco) -&gt; i64 {
-<a href=#249 id=249 data-nosnippet>249</a>        (<span class="number">0</span>..<span class="number">1 </span>&lt;&lt; gco.vars)
-<a href=#250 id=250 data-nosnippet>250</a>            .map(|bs| {
-<a href=#251 id=251 data-nosnippet>251</a>                gco.unary
-<a href=#252 id=252 data-nosnippet>252</a>                    .iter()
-<a href=#253 id=253 data-nosnippet>253</a>                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[bs &gt;&gt; i &amp; <span class="number">1</span>])
-<a href=#254 id=254 data-nosnippet>254</a>                    .chain(
-<a href=#255 id=255 data-nosnippet>255</a>                        gco.binary
-<a href=#256 id=256 data-nosnippet>256</a>                            .iter()
-<a href=#257 id=257 data-nosnippet>257</a>                            .map(|<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost[bs &gt;&gt; i &amp; <span class="number">1</span>][bs &gt;&gt; j &amp; <span class="number">1</span>]),
-<a href=#258 id=258 data-nosnippet>258</a>                    )
-<a href=#259 id=259 data-nosnippet>259</a>                    .sum::&lt;i64&gt;()
-<a href=#260 id=260 data-nosnippet>260</a>            })
-<a href=#261 id=261 data-nosnippet>261</a>            .min()
-<a href=#262 id=262 data-nosnippet>262</a>            .unwrap()
-<a href=#263 id=263 data-nosnippet>263</a>    }
-<a href=#264 id=264 data-nosnippet>264</a>
-<a href=#265 id=265 data-nosnippet>265</a>    <span class="attr">#[test]
-<a href=#266 id=266 data-nosnippet>266</a>    </span><span class="kw">fn </span>test_random() {
-<a href=#267 id=267 data-nosnippet>267</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
-<a href=#268 id=268 data-nosnippet>268</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
-<a href=#269 id=269 data-nosnippet>269</a>            <span class="kw">let </span>n = <span class="number">3</span>;
-<a href=#270 id=270 data-nosnippet>270</a>            <span class="kw">let </span><span class="kw-2">mut </span>gco = Gco::new(n);
-<a href=#271 id=271 data-nosnippet>271</a>            <span class="kw">let </span>unary_count = <span class="number">0</span>;
-<a href=#272 id=272 data-nosnippet>272</a>            <span class="kw">let </span>binary_count = <span class="number">1</span>;
-<a href=#273 id=273 data-nosnippet>273</a>            <span class="kw">for _ in </span><span class="number">0</span>..unary_count {
-<a href=#274 id=274 data-nosnippet>274</a>                <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
-<a href=#275 id=275 data-nosnippet>275</a>                <span class="kw">let </span>x = rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>);
-<a href=#276 id=276 data-nosnippet>276</a>                <span class="kw">let </span>y = rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>);
-<a href=#277 id=277 data-nosnippet>277</a>                gco.unary(i, [x, y]);
-<a href=#278 id=278 data-nosnippet>278</a>            }
-<a href=#279 id=279 data-nosnippet>279</a>            <span class="kw">for _ in </span><span class="number">0</span>..binary_count {
-<a href=#280 id=280 data-nosnippet>280</a>                <span class="kw">let </span>(i, j) = rng.sample(DistinctTwo(<span class="number">0</span>..n));
-<a href=#281 id=281 data-nosnippet>281</a>                <span class="kw">let </span>ij = [i, j];
-<a href=#282 id=282 data-nosnippet>282</a>                <span class="kw">let </span>cost = <span class="kw">loop </span>{
-<a href=#283 id=283 data-nosnippet>283</a>                    <span class="kw">let </span>cost = [[rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>), rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>)], [
-<a href=#284 id=284 data-nosnippet>284</a>                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
-<a href=#285 id=285 data-nosnippet>285</a>                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
-<a href=#286 id=286 data-nosnippet>286</a>                    ]];
-<a href=#287 id=287 data-nosnippet>287</a>                    <span class="kw">if </span>is_submodular(cost) {
-<a href=#288 id=288 data-nosnippet>288</a>                        <span class="kw">break </span>cost;
-<a href=#289 id=289 data-nosnippet>289</a>                    }
-<a href=#290 id=290 data-nosnippet>290</a>                };
-<a href=#291 id=291 data-nosnippet>291</a>                gco.binary(ij, cost);
-<a href=#292 id=292 data-nosnippet>292</a>            }
-<a href=#293 id=293 data-nosnippet>293</a>
-<a href=#294 id=294 data-nosnippet>294</a>            <span class="kw">let </span>expected = brute(<span class="kw-2">&amp;</span>gco);
-<a href=#295 id=295 data-nosnippet>295</a>            <span class="kw">let </span>GcoResult { value, args } = gco.clone().solve();
-<a href=#296 id=296 data-nosnippet>296</a>            <span class="macro">assert_eq!</span>(expected, value);
-<a href=#297 id=297 data-nosnippet>297</a>            <span class="macro">assert_eq!</span>(
-<a href=#298 id=298 data-nosnippet>298</a>                value,
-<a href=#299 id=299 data-nosnippet>299</a>                gco.unary
-<a href=#300 id=300 data-nosnippet>300</a>                    .iter()
-<a href=#301 id=301 data-nosnippet>301</a>                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[usize::from(args[i])])
-<a href=#302 id=302 data-nosnippet>302</a>                    .chain(gco.binary.iter().map(|<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost
-<a href=#303 id=303 data-nosnippet>303</a>                        [usize::from(args[i])][usize::from(args[j])]),)
-<a href=#304 id=304 data-nosnippet>304</a>                    .sum::&lt;i64&gt;()
-<a href=#305 id=305 data-nosnippet>305</a>            );
-<a href=#306 id=306 data-nosnippet>306</a>        }
-<a href=#307 id=307 data-nosnippet>307</a>    }
-<a href=#308 id=308 data-nosnippet>308</a>}</code></pre></div></section></main></body></html>
+<a href=#211 id=211 data-nosnippet>211</a><span class="kw">fn </span>is_submodular(cost: [[i64; <span class="number">2</span>]; <span class="number">2</span>]) -&gt; bool {
+<a href=#212 id=212 data-nosnippet>212</a>    cost[<span class="number">0</span>][<span class="number">0</span>] + cost[<span class="number">1</span>][<span class="number">1</span>] &lt;= cost[<span class="number">0</span>][<span class="number">1</span>] + cost[<span class="number">1</span>][<span class="number">0</span>]
+<a href=#213 id=213 data-nosnippet>213</a>}
+<a href=#214 id=214 data-nosnippet>214</a>
+<a href=#215 id=215 data-nosnippet>215</a><span class="attr">#[cfg(test)]
+<a href=#216 id=216 data-nosnippet>216</a></span><span class="kw">mod </span>tests {
+<a href=#217 id=217 data-nosnippet>217</a>    <span class="kw">use </span><span class="kw">super</span>::is_submodular;
+<a href=#218 id=218 data-nosnippet>218</a>    <span class="kw">use </span><span class="kw">super</span>::Binary;
+<a href=#219 id=219 data-nosnippet>219</a>    <span class="kw">use </span><span class="kw">super</span>::Gco;
+<a href=#220 id=220 data-nosnippet>220</a>    <span class="kw">use </span><span class="kw">super</span>::GcoResult;
+<a href=#221 id=221 data-nosnippet>221</a>    <span class="kw">use </span><span class="kw">super</span>::Unary;
+<a href=#222 id=222 data-nosnippet>222</a>    <span class="kw">use </span>rand::prelude::StdRng;
+<a href=#223 id=223 data-nosnippet>223</a>    <span class="kw">use </span>rand::Rng;
+<a href=#224 id=224 data-nosnippet>224</a>    <span class="kw">use </span>rand::SeedableRng;
+<a href=#225 id=225 data-nosnippet>225</a>    <span class="kw">use </span>randtools::DistinctTwo;
+<a href=#226 id=226 data-nosnippet>226</a>
+<a href=#227 id=227 data-nosnippet>227</a>    <span class="kw">fn </span>brute(gco: <span class="kw-2">&amp;</span>Gco) -&gt; i64 {
+<a href=#228 id=228 data-nosnippet>228</a>        (<span class="number">0</span>..<span class="number">1 </span>&lt;&lt; gco.vars)
+<a href=#229 id=229 data-nosnippet>229</a>            .map(|bs| {
+<a href=#230 id=230 data-nosnippet>230</a>                gco.unary
+<a href=#231 id=231 data-nosnippet>231</a>                    .iter()
+<a href=#232 id=232 data-nosnippet>232</a>                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[bs &gt;&gt; i &amp; <span class="number">1</span>])
+<a href=#233 id=233 data-nosnippet>233</a>                    .chain(
+<a href=#234 id=234 data-nosnippet>234</a>                        gco.binary
+<a href=#235 id=235 data-nosnippet>235</a>                            .iter()
+<a href=#236 id=236 data-nosnippet>236</a>                            .map(|<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost[bs &gt;&gt; i &amp; <span class="number">1</span>][bs &gt;&gt; j &amp; <span class="number">1</span>]),
+<a href=#237 id=237 data-nosnippet>237</a>                    )
+<a href=#238 id=238 data-nosnippet>238</a>                    .sum::&lt;i64&gt;()
+<a href=#239 id=239 data-nosnippet>239</a>            })
+<a href=#240 id=240 data-nosnippet>240</a>            .min()
+<a href=#241 id=241 data-nosnippet>241</a>            .unwrap()
+<a href=#242 id=242 data-nosnippet>242</a>    }
+<a href=#243 id=243 data-nosnippet>243</a>
+<a href=#244 id=244 data-nosnippet>244</a>    <span class="attr">#[test]
+<a href=#245 id=245 data-nosnippet>245</a>    </span><span class="kw">fn </span>test_random() {
+<a href=#246 id=246 data-nosnippet>246</a>        <span class="kw">let </span><span class="kw-2">mut </span>rng = StdRng::seed_from_u64(<span class="number">42</span>);
+<a href=#247 id=247 data-nosnippet>247</a>        <span class="kw">for _ in </span><span class="number">0</span>..<span class="number">200 </span>{
+<a href=#248 id=248 data-nosnippet>248</a>            <span class="kw">let </span>n = <span class="number">3</span>;
+<a href=#249 id=249 data-nosnippet>249</a>            <span class="kw">let </span><span class="kw-2">mut </span>gco = Gco::new(n);
+<a href=#250 id=250 data-nosnippet>250</a>            <span class="kw">let </span>unary_count = <span class="number">0</span>;
+<a href=#251 id=251 data-nosnippet>251</a>            <span class="kw">let </span>binary_count = <span class="number">1</span>;
+<a href=#252 id=252 data-nosnippet>252</a>            <span class="kw">for _ in </span><span class="number">0</span>..unary_count {
+<a href=#253 id=253 data-nosnippet>253</a>                <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..n);
+<a href=#254 id=254 data-nosnippet>254</a>                <span class="kw">let </span>x = rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>);
+<a href=#255 id=255 data-nosnippet>255</a>                <span class="kw">let </span>y = rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>);
+<a href=#256 id=256 data-nosnippet>256</a>                gco.unary(i, [x, y]);
+<a href=#257 id=257 data-nosnippet>257</a>            }
+<a href=#258 id=258 data-nosnippet>258</a>            <span class="kw">for _ in </span><span class="number">0</span>..binary_count {
+<a href=#259 id=259 data-nosnippet>259</a>                <span class="kw">let </span>(i, j) = rng.sample(DistinctTwo(<span class="number">0</span>..n));
+<a href=#260 id=260 data-nosnippet>260</a>                <span class="kw">let </span>ij = [i, j];
+<a href=#261 id=261 data-nosnippet>261</a>                <span class="kw">let </span>cost = <span class="kw">loop </span>{
+<a href=#262 id=262 data-nosnippet>262</a>                    <span class="kw">let </span>cost = [[rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>), rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>)], [
+<a href=#263 id=263 data-nosnippet>263</a>                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
+<a href=#264 id=264 data-nosnippet>264</a>                        rng.gen_range(-<span class="number">9</span>..<span class="number">10</span>),
+<a href=#265 id=265 data-nosnippet>265</a>                    ]];
+<a href=#266 id=266 data-nosnippet>266</a>                    <span class="kw">if </span>is_submodular(cost) {
+<a href=#267 id=267 data-nosnippet>267</a>                        <span class="kw">break </span>cost;
+<a href=#268 id=268 data-nosnippet>268</a>                    }
+<a href=#269 id=269 data-nosnippet>269</a>                };
+<a href=#270 id=270 data-nosnippet>270</a>                gco.binary(ij, cost);
+<a href=#271 id=271 data-nosnippet>271</a>            }
+<a href=#272 id=272 data-nosnippet>272</a>
+<a href=#273 id=273 data-nosnippet>273</a>            <span class="kw">let </span>expected = brute(<span class="kw-2">&amp;</span>gco);
+<a href=#274 id=274 data-nosnippet>274</a>            <span class="kw">let </span>GcoResult { value, args } = gco.clone().solve();
+<a href=#275 id=275 data-nosnippet>275</a>            <span class="macro">assert_eq!</span>(expected, value);
+<a href=#276 id=276 data-nosnippet>276</a>            <span class="macro">assert_eq!</span>(
+<a href=#277 id=277 data-nosnippet>277</a>                value,
+<a href=#278 id=278 data-nosnippet>278</a>                gco.unary
+<a href=#279 id=279 data-nosnippet>279</a>                    .iter()
+<a href=#280 id=280 data-nosnippet>280</a>                    .map(|<span class="kw-2">&amp;</span>Unary { i, cost }| cost[usize::from(args[i])])
+<a href=#281 id=281 data-nosnippet>281</a>                    .chain(gco.binary.iter().map(|<span class="kw-2">&amp;</span>Binary { ij: [i, j], cost }| cost
+<a href=#282 id=282 data-nosnippet>282</a>                        [usize::from(args[i])][usize::from(args[j])]),)
+<a href=#283 id=283 data-nosnippet>283</a>                    .sum::&lt;i64&gt;()
+<a href=#284 id=284 data-nosnippet>284</a>            );
+<a href=#285 id=285 data-nosnippet>285</a>        }
+<a href=#286 id=286 data-nosnippet>286</a>    }
+<a href=#287 id=287 data-nosnippet>287</a>}</code></pre></div></section></main></body></html>

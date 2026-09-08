@@ -1,1 +1,1 @@
-searchState.loadedDescShard("cipolla", 0, "素数 $p$ を法とした平方根（modular square …\n$1$\n$2$\n<code>cipolla_sqrt</code> が要求する、<code>p</code> …\n$0$\n$x^2 \\equiv a \\pmod p$ を満たす $x$ を Cipolla …")
+searchState.loadedDescShard("cipolla", 0, "")

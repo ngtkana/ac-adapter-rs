@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="巡回群上の離散対数問題を $O(\sqrt N)$ で解く（Baby-step Giant-step 法）。"><title>bsgs - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bsgs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Baby-step giant-step により、巡回群上の離散対数をします。"><title>bsgs - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="bsgs" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,33 +22,38 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bsgs/index.html">bsgs</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>bsgs</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bsgs/lib.rs.html#1-230">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>巡回群上の離散対数問題を $O(\sqrt N)$ で解く（Baby-step Giant-step 法）。</p>
-<p>生成元 $g$ の冪 $g^0, g^1, \ldots, g^{m-1}$（$m = \lceil \sqrt N \rceil$、baby step）を
-あらかじめ表に持っておく。問い合わせ $x$ に対し $x, xg^{-m}, xg^{-2m}, \ldots$（giant step）を
-順に計算し、表に一致する $g^i$ が見つかった時点で $x = g^{km+i}$ が求まる。
-位数の上界 $N$ を1つずつ探索する代わりに、baby/giant の2段の $O(\sqrt N)$ 個の候補に絞り込む。</p>
-<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
-<p><a href="struct.Bsgs.html#method.new" title="associated function bsgs::Bsgs::new"><code>Bsgs::new</code></a> は生成元 <code>generator</code>、位数の上界 <code>ord_upper_bound</code>、群演算 <code>mul</code>・<code>inv</code>・<code>id</code>
-（<code>(generator, mul, inv, id)</code> が巡回群の演算とその生成元であることが前提）からソルバーを構築する。
-<a href="struct.Bsgs.html#method.log" title="method bsgs::Bsgs::log"><code>Bsgs::log</code></a> は $x = g^k$ を満たす最小の $k \in [0, N)$ を返す（存在しなければ <code>None</code>）。
-群演算は型ではなくクロージャで渡すため、法（モジュラス）が実行時に決まる場合にも使える。</p>
-<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../bsgs/index.html">bsgs</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#使い方" title="使い方">使い方</a></li><li><a href="#仕様検討" title="仕様検討">仕様検討</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>bsgs</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/bsgs/lib.rs.html#1-240">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Baby-step giant-step により、巡回群上の離散対数をします。</p>
+<h2 id="使い方"><a class="doc-anchor" href="#使い方">§</a>使い方</h2>
+<p><a href="struct.Bsgs.html#method.new" title="associated function bsgs::Bsgs::new"><code>Bsgs::new</code></a> を使いましょう。</p>
+
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>bsgs::Bsgs;
 
-<span class="comment">// Z/10Z の乗法群の巡回部分群 {1, 3, 9, 7}（生成元 3, 位数 4）
+<span class="comment">// ℤ / 10 ℤ の乗法群は、巡回群 { 1, 3, 9, 7 }
 </span><span class="kw">let </span>bsgs = Bsgs::new(<span class="number">3</span>, <span class="number">4</span>, |x, y| x * y % <span class="number">10</span>, |x| x * x * x % <span class="number">10</span>, || <span class="number">1</span>);
+
 <span class="macro">assert_eq!</span>(bsgs.log(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
 <span class="macro">assert_eq!</span>(bsgs.log(<span class="number">3</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
 <span class="macro">assert_eq!</span>(bsgs.log(<span class="number">9</span>), <span class="prelude-val">Some</span>(<span class="number">2</span>));
 <span class="macro">assert_eq!</span>(bsgs.log(<span class="number">7</span>), <span class="prelude-val">Some</span>(<span class="number">3</span>));
-<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">2</span>), <span class="prelude-val">None</span>); <span class="comment">// 巡回部分群に属さない値
 
-// 生成元でなくても、位数さえ正しければ動く（9 の位数は 2）
+<span class="comment">// 存在しないものを指定すると、None です。
+</span><span class="macro">assert_eq!</span>(bsgs.log(<span class="number">0</span>), <span class="prelude-val">None</span>);
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">2</span>), <span class="prelude-val">None</span>);
+
+<span class="comment">// 原子根でない場合も、位数さえちゃんとしていればうごきます。
 </span><span class="kw">let </span>bsgs = Bsgs::new(<span class="number">9</span>, <span class="number">2</span>, |x, y| x * y % <span class="number">10</span>, |x| x * x * x % <span class="number">10</span>, || <span class="number">1</span>);
-<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">9</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));</code></pre></div>
-<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">1</span>), <span class="prelude-val">Some</span>(<span class="number">0</span>));
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">9</span>), <span class="prelude-val">Some</span>(<span class="number">1</span>));
+
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">0</span>), <span class="prelude-val">None</span>);
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">2</span>), <span class="prelude-val">None</span>);
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">3</span>), <span class="prelude-val">None</span>);
+<span class="macro">assert_eq!</span>(bsgs.log(<span class="number">7</span>), <span class="prelude-val">None</span>);</code></pre></div>
+<h2 id="仕様検討"><a class="doc-anchor" href="#仕様検討">§</a>仕様検討</h2>
 <ul>
-<li>構築（<a href="struct.Bsgs.html#method.new" title="associated function bsgs::Bsgs::new"><code>Bsgs::new</code></a>）: $O(\sqrt N)$ 回の <code>mul</code> 呼び出しと2回の <code>id</code> 呼び出し</li>
-<li>問い合わせ（<a href="struct.Bsgs.html#method.log" title="method bsgs::Bsgs::log"><code>Bsgs::log</code></a>）: $O(\sqrt N)$ 回の <code>mul</code> 呼び出し</li>
+<li>ちなみに位数の上界は、探索の打ち切りに用いています。</li>
+<li>群の演算は、モジュラス等が動的に与えられる可能性を考えて、型ではなくオブジェクトにしました。</li>
+<li>たいてい ℤ / n ℤ</li>
 </ul>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Bsgs.html" title="struct bsgs::Bsgs">Bsgs</a></dt><dd>Baby-step Giant-step ソルバー。巡回群 $\langle g \rangle$ 上の離散対数を計算する状態を保持する。</dd></dl></section></div></main></body></html>
+<p>の乗法群にしか使わない気がするのですが、それようのユーティルがうまく作れず……</p>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.Bsgs.html" title="struct bsgs::Bsgs">Bsgs</a></dt><dd>Baby-stpp giant-step のソルバーです。</dd></dl></section></div></main></body></html>

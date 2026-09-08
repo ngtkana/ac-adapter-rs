@@ -1,1 +1,1 @@
-searchState.loadedDescShard("bipartite_matching", 0, "Hopcroft-Karp 法による二部マッチング\nHopcroft-Karp …")
+searchState.loadedDescShard("bipartite_matching", 0, "二部マッチング (Hopcroft-Karp)\n二部マッチング (Hopcroft-Karp)")
