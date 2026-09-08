@@ -41,8 +41,8 @@ script = '''
 cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'note: `-W clippy::' | sed -n 's/.*note: `-W clippy::\([a-z|-]*\).*/\1/p' | sort | uniq
 '''
 
-[tasks.install-libbundle]
-description = "Install the `libbundle` binary to ~/.cargo/bin (usable from any directory, e.g. rust-atcoder)"
+[tasks.install-acbundle]
+description = "Install the `acbundle` binary to ~/.cargo/bin (usable from any directory, e.g. rust-atcoder)"
 script = '''
 cargo install --path bundler --locked --force
 echo ""
@@ -61,8 +61,8 @@ echo "    export AC_ADAPTER_RS_ROOT=\"$DIR\""
 echo ""
 '''
 
-[tasks.uninstall-libbundle]
-description = "Uninstall the `libbundle` binary"
+[tasks.uninstall-acbundle]
+description = "Uninstall the `acbundle` binary"
 script = '''
 cargo uninstall bundler
 echo ""

@@ -1,18 +1,18 @@
 use std::fmt::Write as _;
 use std::process::Command;
 
-fn libbundle(args: &[&str]) -> String {
-    let bin = env!("CARGO_BIN_EXE_libbundle");
+fn acbundle(args: &[&str]) -> String {
+    let bin = env!("CARGO_BIN_EXE_acbundle");
     let output = Command::new(bin)
         .args(args)
         .output()
-        .expect("failed to run libbundle");
+        .expect("failed to run acbundle");
     assert!(
         output.status.success(),
-        "libbundle failed: {}",
+        "acbundle failed: {}",
         String::from_utf8_lossy(&output.stderr)
     );
-    String::from_utf8(output.stdout).expect("libbundle output is not valid UTF-8")
+    String::from_utf8(output.stdout).expect("acbundle output is not valid UTF-8")
 }
 
 fn rustc_compile_lib(source: &str) {
@@ -72,7 +72,7 @@ fn tempdir() -> std::path::PathBuf {
 
 #[test]
 fn jagged_vec_is_callable_bare_after_bundling() {
-    let mut source = libbundle(&["jagged_vec"]);
+    let mut source = acbundle(&["jagged_vec"]);
     writeln!(
         source,
         "\nfn main() {{ let v = jagged_vec![0, 3]; assert_eq!(v, vec![0, 0, 0]); println!(\"ok\"); }}"
@@ -84,7 +84,7 @@ fn jagged_vec_is_callable_bare_after_bundling() {
 
 #[test]
 fn diamond_dependency_is_deduplicated() {
-    let source = libbundle(&["fp_fps"]);
+    let source = acbundle(&["fp_fps"]);
     assert_eq!(source.matches("mod fp {").count(), 1);
     assert!(source.contains("mod fp_fft {"));
     assert!(source.contains("mod fp_fps {"));
@@ -93,14 +93,14 @@ fn diamond_dependency_is_deduplicated() {
 
 #[test]
 fn multi_file_crate_self_reference_is_rewritten() {
-    let source = libbundle(&["bit_vec"]);
+    let source = acbundle(&["bit_vec"]);
     assert!(source.contains("crate::bit_vec::"));
     rustc_compile_lib(&source);
 }
 
 #[test]
 fn dollar_crate_in_macro_export_is_rewritten_correctly() {
-    let source = libbundle(&["io_reader"]);
+    let source = acbundle(&["io_reader"]);
     // 非マクロ項目へのセルフ参照はセグメントが挿入される
     assert!(source.contains("$crate::io_reader::stdin_source"));
     // マクロ呼び出し（他の #[macro_export] マクロ）はセグメントを挿入しない
@@ -110,7 +110,7 @@ fn dollar_crate_in_macro_export_is_rewritten_correctly() {
 
 #[test]
 fn multiple_crates_share_deduplicated_dependencies() {
-    let source = libbundle(&["fp_fps", "dinic"]);
+    let source = acbundle(&["fp_fps", "dinic"]);
     assert_eq!(source.matches("mod fp {").count(), 1);
     for name in ["fp_fps", "fp_fft", "dinic"] {
         assert!(source.contains(&format!("mod {name} {{")));
@@ -120,12 +120,12 @@ fn multiple_crates_share_deduplicated_dependencies() {
 
 #[test]
 fn skip_from_excludes_already_bundled_crate() {
-    let existing = libbundle(&["fp"]);
+    let existing = acbundle(&["fp"]);
     let dir = tempdir();
     let existing_path = dir.join("existing.rs");
     std::fs::write(&existing_path, &existing).unwrap();
 
-    let new_source = libbundle(&["fp_fps", "--skip-from", existing_path.to_str().unwrap()]);
+    let new_source = acbundle(&["fp_fps", "--skip-from", existing_path.to_str().unwrap()]);
     assert!(!new_source.contains("mod fp {"));
     assert!(new_source.contains("mod fp_fps {"));
     assert!(new_source.contains("mod fp_fft {"));
@@ -137,7 +137,7 @@ fn skip_from_excludes_already_bundled_crate() {
 
 #[test]
 fn list_crates_includes_known_crate_names() {
-    let output = libbundle(&["--list-crates"]);
+    let output = acbundle(&["--list-crates"]);
     let names: Vec<&str> = output.lines().collect();
     assert!(names.contains(&"jagged_vec"));
     assert!(names.contains(&"fp"));
@@ -150,7 +150,7 @@ fn list_crates_includes_known_crate_names() {
 
 #[test]
 fn unknown_crate_name_is_reported() {
-    let bin = env!("CARGO_BIN_EXE_libbundle");
+    let bin = env!("CARGO_BIN_EXE_acbundle");
     let output = Command::new(bin)
         .arg("this_crate_does_not_exist")
         .output()

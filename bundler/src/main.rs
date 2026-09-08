@@ -40,7 +40,7 @@ fn main() -> Result<()> {
     }
 
     if crate_names.is_empty() {
-        bail!("usage: libbundle <CRATE_NAME>... [--keep-docs] [--keep-tests] [--skip-from <file>]");
+        bail!("usage: acbundle <CRATE_NAME>... [--keep-docs] [--keep-tests] [--skip-from <file>]");
     }
 
     let exclude = match &skip_from {
