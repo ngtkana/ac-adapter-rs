@@ -23,8 +23,6 @@
 
   <!-- Favicon -->
   <link rel="icon" href="logo.png" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" />
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
@@ -34,37 +32,27 @@
 </head>
 
 <body>
-  <header class="bg-primary text-white p-4">
-    <div class="container">
-      <h1 class="header-title">AC Adapter</h1>
-      <p>競技プログラミングのための Rust ライブラリコレクション</p>
-    </div>
-  </header>
+  <div id="app">
+    <header id="toolbar">
+      <h1>AC Adapter</h1>
+      <span class="subtitle">競技プログラミングのための Rust ライブラリコレクション</span>
+      <a class="toolbar-link" href="https://github.com/ngtkana/ac-adapter-rs" target="_blank">GitHub</a>
+    </header>
 
-  <main class="container my-4">
-    <div class="catalog-shell">
-      <div class="catalog-sidebar">
+    <div id="main-layout">
+      <aside class="catalog-sidebar">
         <div class="catalog-search">
-          <input type="text" id="search-input" class="form-control form-control-sm"
-            placeholder="segtree / tag:string ..." />
+          <input type="text" id="search-input" placeholder="segtree / tag:string ..." />
           <div class="hint">名前・説明・アイテム名で全文検索。<code>tag:xxx</code> でタグ絞り込み</div>
         </div>
         <div class="catalog-list" id="catalog-list"></div>
-      </div>
-      <div class="catalog-main" id="catalog-main">
-        <p class="text-muted">左の一覧からクレートを選んでください。</p>
-      </div>
-    </div>
-  </main>
+      </aside>
 
-  <footer class="bg-light p-3 text-center">
-    <div class="container">
-      <p>
-        <a href="https://github.com/ngtkana/ac-adapter-rs" target="_blank">GitHub</a> |
-        <a href="https://creativecommons.org/publicdomain/zero/1.0/deed.ja" target="_blank">CC0 ライセンス</a>
-      </p>
+      <main class="catalog-main" id="catalog-main">
+        <p class="placeholder">左の一覧からクレートを選んでください。</p>
+      </main>
     </div>
-  </footer>
+  </div>
 </body>
 
 </html>
