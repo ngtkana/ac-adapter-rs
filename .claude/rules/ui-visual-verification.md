@@ -1,15 +1,16 @@
 # UI変更の目視確認
 
-**ルール**: 見た目に関わる変更（CSS・配色・レイアウトなど）は、コミット前にheadless browserでスクリーンショットを撮って自己検証する。色味・質感など主観的判断が要る変更は、ローカルサーバーを立てたままURLをユーザーに共有し、確認が完了するまで畳まない。
+**ルール**: 見た目に関わる変更（CSS・配色・レイアウトなど）は、コミット前にheadless browserでスクリーンショットを撮って自己検証する。色味・質感など主観的判断が要る変更は、ローカルサーバーを立てたままURLをユーザーに共有する。
 
 **適用範囲**: docsサイト（`contents/`配下）・その他フロントエンドのスタイル/レイアウト変更全般
 
 **手順**:
 1. worktree内で変更後、プレビュー環境を作る。スタイル確認のみなら `cargo run --bin snippetter` して `contents/*` を `docs/` へコピーすれば足り、`cargo doc --workspace` を含む `cargo make doc` のフル実行は不要
-2. `python3 -m http.server` などでローカル配信し、headless Chrome（`--headless --disable-gpu --screenshot=... --window-size=...`）でスクリーンショットを撮り、Readツールで自己確認する
-3. hover/selectedなど動的状態も確認する場合は、確認用に一時的な `<script>` 注入でクリック等を自動実行させてから撮影する（この一時ファイルはコミットしない）
-4. 色味・質感など主観的判断が要る変更は、自己検証だけで完了とせず、サーバーを立てたままURL（例: `http://localhost:PORT/index.html`）をユーザーに共有し、確認を待つ
-5. ユーザーの確認が完了するまでworktree・サーバーを畳まない。完了後にサーバー停止＋worktree削除する
+2. `python3 -m http.server <port>` などでローカル配信する。ポートは `lsof -i :<port>` などで空きを確認してから選ぶ（衝突時は番号をずらす）
+3. headless Chrome（`--headless --disable-gpu --screenshot=... --window-size=...`）でスクリーンショットを撮り、Readツールで自己確認する。Chromeが無い環境ではインストール済みの他ブラウザ（Playwright/Puppeteer等）で代替する
+4. hover/selectedなど動的状態も確認する場合は、確認用に一時的な `<script>` 注入でクリック等を自動実行させてから撮影し、撮影後は元のファイルに戻す（一時ファイル・注入した`<script>`はコミットに含めない）
+5. 色味・質感など主観的判断が要る変更は、自己検証だけで完了とせず、サーバーを立てたままURL（例: `http://localhost:<port>/index.html`）をユーザーに共有し、確認を待つ
+6. ユーザーの確認が完了したら、サーバー停止（プロセスkill）とworktree削除（`git worktree remove`）を行う。それまでは畳まない
 
 **禁止**:
 - GitHub PRのdiff（テキスト差分）だけを見て「確認済み」と報告すること（レンダリング結果は見えない）
