@@ -1,3 +1,32 @@
+//! 最大公約数・拡張ユークリッドの互除法・中国剰余定理。
+//!
+//! 整数型を [`Int`] トレイトで抽象化し、`usize` から `i128` までの標準整数型すべてに対して
+//! [`gcd`], [`ext_gcd`], [`crt`] を共通コードで提供する。符号なし整数は [`Unsigned`]、符号付き
+//! 整数は [`Signed`] としてさらに区別し、負数や減法を要する [`ext_gcd`], [`crt`] は
+//! [`Signed`] にのみ実装する。
+//!
+//! # 仕様
+//!
+//! - [`gcd`][]: $\gcd(x, y)$（符号は無視）
+//! - [`ext_gcd`][]: $ax + by = \gcd(x, y)$ を満たす $(a, b, \gcd(x, y))$
+//! - [`crt`][]: 中国剰余定理。$2$ つの合同式を $1$ つにまとめる
+//!
+//! # 例
+//!
+//! ```
+//! use euclid::ext_gcd;
+//! use euclid::gcd;
+//! assert_eq!(gcd(42, 48), 6);
+//! let (a, b, g) = ext_gcd(42, 48);
+//! assert_eq!(g, 6);
+//! assert_eq!(a * 42 + b * 48, g);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`gcd`], [`ext_gcd`][]: $O(\log \min(|x|, |y|))$
+//! - [`crt`][]: $O(\log \min(\mathrm{mod0}, \mathrm{mod1}))$
+
 mod crt;
 mod ext_gcd;
 mod gcd;
@@ -18,7 +47,10 @@ use std::ops::RemAssign;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
-/// Abstraction of integers.
+/// 整数型の共通演算を抽象化するトレイト。
+///
+/// 四則演算・剰余・比較に加え、ユークリッド除算（[`Int::div_euclid`], [`Int::rem_euclid`]）を要求する。
+/// [`gcd`] はこのトレイトのみで実装でき、符号を要する [`ext_gcd`], [`crt`] はさらに [`Signed`] を要求する。
 pub trait Int:
     Debug
     + Copy
@@ -34,27 +66,35 @@ pub trait Int:
     + Rem<Output = Self>
     + RemAssign
 {
-    /// Returns `0`.
+    /// 加法単位元 $0$ を返す。
     fn zero() -> Self;
-    /// Returns `1`.
+    /// 乗法単位元 $1$ を返す。
     fn one() -> Self;
-    /// Increment `self`.
+    /// `self` を $1$ だけ増やす。
     fn increment(&mut self);
-    /// Returns the absolute value.
+    /// 絶対値 $|{\rm self}|$ を返す。
     fn abs(self) -> Self;
-    /// Calculates the quotient of Euclidean division of self by `rhs`.
+    /// ユークリッド除算の商を返す。
     fn div_euclid(self, rhs: Self) -> Self;
-    /// Calculates the least nonnegative remainder of `self (mod rhs)`.
+    /// ユークリッド除算の剰余（非負）を返す。
     fn rem_euclid(self, rhs: Self) -> Self;
-    /// Returns `true` if and only if `self` divides `n`.
+    /// `self` が `n` の約数かどうかを判定する。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use euclid::Int;
+    /// assert!(3_i32.divides(9));
+    /// assert!(!3_i32.divides(10));
+    /// ```
     fn divides(self, n: Self) -> bool {
         n.rem_euclid(self) == Self::zero()
     }
 }
 
-/// Abstraction of unsigned integers.
+/// 符号なし整数を表すマーカートレイト。
 pub trait Unsigned: Int {}
-/// Abstraction of signed integers.
+/// 符号付き整数を表すマーカートレイト。[`ext_gcd`], [`crt`] はこのトレイトを要求する。
 pub trait Signed: Int + Neg<Output = Self> {}
 
 macro_rules! impl_unsigned {
