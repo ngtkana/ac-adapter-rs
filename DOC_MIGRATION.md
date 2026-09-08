@@ -4,15 +4,15 @@
 
 Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, `erato`）は移行済み。以下は未移行。`write-doc-comments` スキルで1クレートずつ移行し、完了したらチェックする。
 
-- [ ] `binary`
-- [ ] `bipartite_matching`
-- [ ] `bit_vec`
-- [ ] `bsgs`
-- [ ] `cht`
-- [ ] `cipolla`
-- [ ] `convex_hull`
-- [ ] `dinic`
-- [ ] `dual_segtree`
+- [x] `binary`
+- [x] `bipartite_matching`
+- [x] `bit_vec`
+- [x] `bsgs`
+- [x] `cht`
+- [x] `cipolla`
+- [x] `convex_hull`
+- [x] `dinic`
+- [x] `dual_segtree`
 - [x] `dynamic_modint`
 - [x] `elim`
 - [x] `euclid`
