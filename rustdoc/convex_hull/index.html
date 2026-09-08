@@ -33,9 +33,9 @@
 <ul>
 <li><a href="fn.sqmag.html" title="fn convex_hull::sqmag"><code>sqmag</code></a>: 2点間の距離の2乗 $|p_0 - p_1|^2$</li>
 <li><a href="fn.ccw.html" title="fn convex_hull::ccw"><code>ccw</code></a>: 外積 $\det(p_1 - p_0,\ p_2 - p_0)$（符号で3点の向きを判定）</li>
-<li></li>
+<li><a href="fn.convex_hull.html" title="fn convex_hull::convex_hull"><code>convex_hull</code></a>: 点集合の凸包を、辞書順最小の頂点から時計回りに並べて返す</li>
 <li><a href="fn.caliper.html" title="fn convex_hull::caliper"><code>caliper</code></a>: 点集合の最遠点対とその距離の2乗を返す（<code>a</code> は非空が前提）</li>
-<li></li>
+<li><a href="fn.is_convex.html" title="fn convex_hull::is_convex"><code>is_convex</code></a>: 点列が（時計回りの）凸多角形をなすか判定</li>
 </ul>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>convex_hull::convex_hull;
@@ -44,9 +44,9 @@
 <span class="macro">assert_eq!</span>(hull.len(), <span class="number">4</span>); <span class="comment">// 内部の点 [1, 1] は凸包に含まれない</span></code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
-<li><a href="%E7%82%B9%E9%9B%86%E5%90%88%E3%81%AE%E5%87%B8%E5%8C%85%E3%82%92%E3%80%81%E8%BE%9E%E6%9B%B8%E9%A0%86%E6%9C%80%E5%B0%8F%E3%81%AE%E9%A0%82%E7%82%B9%E3%81%8B%E3%82%89%E6%99%82%E8%A8%88%E5%9B%9E%E3%82%8A%E3%81%AB%E4%B8%A6%E3%81%B9%E3%81%A6%E8%BF%94%E3%81%99"><code>convex_hull</code></a>: $O(n \log n)$（ソートが支配的）</li>
+<li><a href="fn.convex_hull.html" title="fn convex_hull::convex_hull"><code>convex_hull</code></a>: $O(n \log n)$（ソートが支配的）</li>
 <li><a href="fn.caliper.html" title="fn convex_hull::caliper"><code>caliper</code></a>: $O(n \log n)$（内部で凸包を構築するため）</li>
-<li></li>
+<li><a href="fn.is_convex.html" title="fn convex_hull::is_convex"><code>is_convex</code></a>: $O(n)$</li>
 </ul>
 </div></details><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.caliper.html" title="fn convex_hull::caliper">caliper</a></dt><dd>点集合の最遠点対とその距離の2乗を返す（rotating calipers 法）。</dd><dt><a class="fn" href="fn.ccw.html" title="fn convex_hull::ccw">ccw</a></dt><dd>外積 $\det(p_1 - p_0,\ p_2 - p_0)$ を返す。符号で3点 $p_0, p_1, p_2$ の向きが分かる：
 正なら反時計回り、負なら時計回り、0なら一直線上。</dd><dt><a class="fn" href="fn.convex_hull.html" title="fn convex_hull::convex_hull">convex_<wbr>hull</a></dt><dd>点集合の凸包を、辞書順最小の頂点から時計回りに並べて返す。</dd><dt><a class="fn" href="fn.is_convex.html" title="fn convex_hull::is_convex">is_<wbr>convex</a></dt><dd>点列 <code>a</code> が（時計回りの）凸多角形をなすか判定する。</dd><dt><a class="fn" href="fn.sqmag.html" title="fn convex_hull::sqmag">sqmag</a></dt><dd>2点間の距離の2乗 $|p_0 - p_1|^2$ を返す。</dd></dl></section></div></main></body></html>
