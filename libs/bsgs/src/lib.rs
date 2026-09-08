@@ -1,43 +1,39 @@
-//! Baby-step giant-step により、巡回群上の離散対数をします。
+//! 巡回群上の離散対数問題を $O(\sqrt N)$ で解く（Baby-step Giant-step 法）。
 //!
-//! # 使い方
+//! 生成元 $g$ の冪 $g^0, g^1, \ldots, g^{m-1}$（$m = \lceil \sqrt N \rceil$、baby step）を
+//! あらかじめ表に持っておく。問い合わせ $x$ に対し $x, xg^{-m}, xg^{-2m}, \ldots$（giant step）を
+//! 順に計算し、表に一致する $g^i$ が見つかった時点で $x = g^{km+i}$ が求まる。
+//! 位数の上界 $N$ を1つずつ探索する代わりに、baby/giant の2段の $O(\sqrt N)$ 個の候補に絞り込む。
 //!
-//! [`Bsgs::new`] を使いましょう。
+//! # 仕様
+//!
+//! [`Bsgs::new`] は生成元 `generator`、位数の上界 `ord_upper_bound`、群演算 `mul`・`inv`・`id`
+//! （`(generator, mul, inv, id)` が巡回群の演算とその生成元であることが前提）からソルバーを構築する。
+//! [`Bsgs::log`] は $x = g^k$ を満たす最小の $k \in [0, N)$ を返す（存在しなければ `None`）。
+//! 群演算は型ではなくクロージャで渡すため、法（モジュラス）が実行時に決まる場合にも使える。
+//!
+//! # 例
 //!
 //! ```
 //! use bsgs::Bsgs;
 //!
-//! // ℤ / 10 ℤ の乗法群は、巡回群 { 1, 3, 9, 7 }
+//! // Z/10Z の乗法群の巡回部分群 {1, 3, 9, 7}（生成元 3, 位数 4）
 //! let bsgs = Bsgs::new(3, 4, |x, y| x * y % 10, |x| x * x * x % 10, || 1);
-//!
 //! assert_eq!(bsgs.log(1), Some(0));
 //! assert_eq!(bsgs.log(3), Some(1));
 //! assert_eq!(bsgs.log(9), Some(2));
 //! assert_eq!(bsgs.log(7), Some(3));
+//! assert_eq!(bsgs.log(2), None); // 巡回部分群に属さない値
 //!
-//! // 存在しないものを指定すると、None です。
-//! assert_eq!(bsgs.log(0), None);
-//! assert_eq!(bsgs.log(2), None);
-//!
-//! // 原子根でない場合も、位数さえちゃんとしていればうごきます。
+//! // 生成元でなくても、位数さえ正しければ動く（9 の位数は 2）
 //! let bsgs = Bsgs::new(9, 2, |x, y| x * y % 10, |x| x * x * x % 10, || 1);
-//! assert_eq!(bsgs.log(1), Some(0));
 //! assert_eq!(bsgs.log(9), Some(1));
-//!
-//! assert_eq!(bsgs.log(0), None);
-//! assert_eq!(bsgs.log(2), None);
-//! assert_eq!(bsgs.log(3), None);
-//! assert_eq!(bsgs.log(7), None);
 //! ```
 //!
+//! # 計算量
 //!
-//! # 仕様検討
-//!
-//! * ちなみに位数の上界は、探索の打ち切りに用いています。
-//! * 群の演算は、モジュラス等が動的に与えられる可能性を考えて、型ではなくオブジェクトにしました。
-//! * たいてい ℤ / n ℤ
-//!
-//! の乗法群にしか使わない気がするのですが、それようのユーティルがうまく作れず……
+//! - 構築（[`Bsgs::new`]）: $O(\sqrt N)$ 回の `mul` 呼び出しと2回の `id` 呼び出し
+//! - 問い合わせ（[`Bsgs::log`]）: $O(\sqrt N)$ 回の `mul` 呼び出し
 use std::collections::HashMap;
 use std::fmt::Debug;
 use std::fmt::Formatter;
@@ -45,7 +41,7 @@ use std::fmt::Result;
 use std::hash::Hash;
 use std::iter::successors;
 
-/// Baby-stpp giant-step のソルバーです。
+/// Baby-step Giant-step ソルバー。巡回群 $\langle g \rangle$ 上の離散対数を計算する状態を保持する。
 #[derive(Clone)]
 pub struct Bsgs<T, Mul> {
     generator: T,
@@ -60,29 +56,14 @@ where
     T: Copy + Hash + Eq,
     Mul: Fn(T, T) -> T,
 {
-    /// 新しい BSGS ソルバーを構築します。
+    /// 生成元 `generator`・位数上界 `ord_upper_bound`・群演算 `mul`/`inv`/`id` からソルバーを構築する。
     ///
-    /// # Parameters
-    ///
-    /// * `generator`: 生成子
-    /// * `ord_upper_bound`: 生成子の位数の上界
-    /// * `mul`, `inv`, `id`: 群の演算
-    ///
-    /// # 要件
-    ///
-    /// `(generator, mul, inv, id)` が巡回群の演算とその生成子
-    ///
+    /// `(generator, mul, inv, id)` が巡回群の演算とその生成元であることを要求する。
+    /// baby step表 $g^0, \ldots, g^{\lceil\sqrt{N}\rceil - 1}$ と giant step用の $g^{-\lceil\sqrt{N}\rceil}$ を構築する。
     ///
     /// # 計算量
     ///
-    /// Θ ( √ ( `ord_upper_bound` ) ) 回の `mul` の呼び出しと、2 回の `id` の呼び出し
-    ///
-    ///
-    /// # 計算しているもの
-    ///
-    /// * `sqrt`: `ord_upper_bound` の平方根
-    /// * `map`: `generator` の `0..sqrt` 乗
-    /// * `giant_step_inverse`: `generator` の `-sqrt` 乗
+    /// $O(\sqrt N)$ 回の `mul` 呼び出しと2回の `id` 呼び出し（$N$ = `ord_upper_bound`）
     pub fn new<Inv, Id>(generator: T, ord_upper_bound: u64, mul: Mul, inv: Inv, id: Id) -> Self
     where
         Id: Fn() -> T,
@@ -105,11 +86,20 @@ where
         }
     }
 
-    /// `x` の離散対数が存在すれば返し、存在しなければ `None` を返します。
+    /// $x = g^k$ を満たす最小の $k \in [0, N)$ を返す。存在しなければ `None`。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use bsgs::Bsgs;
+    /// let bsgs = Bsgs::new(3, 4, |x, y| x * y % 10, |x| x * x * x % 10, || 1);
+    /// assert_eq!(bsgs.log(9), Some(2));
+    /// assert_eq!(bsgs.log(2), None);
+    /// ```
     ///
     /// # 計算量
     ///
-    /// Θ ( √ ( `ord_upper_bound` ) ) 回の `mul` の呼び出し
+    /// $O(\sqrt N)$ 回の `mul` 呼び出し（$N$ = `ord_upper_bound`）
     pub fn log(&self, mut x: T) -> Option<u64> {
         let mut ans = 0;
         while ans < self.ord_upper_bound {

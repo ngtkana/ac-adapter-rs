@@ -1,38 +1,26 @@
-//! CHT です。
+//! 区分的に同一の2次係数を持つ凸/凹関数を管理し、任意の点での最大値・最小値クエリに答えるConvex Hull Trick。
 //!
-//! # TODO
+//! 追加する2次式の2次係数をすべて等しく固定すると、任意の2式の差が1次式（直線）になる。
+//! これにより通常のConvex Hull Trick（直線集合の上側/下側包絡線）と同じ考え方がそのまま使え、
+//! 傾き順に並べたときに不要になった直線を捨てていくことで追加・評価が効率的に行える。
+//! ログ付き（[`BTreeCht`]、`BTreeSet` で管理）とログなし（[`VecCht`]、`Vec` とカーソルで管理）
+//! の2種類を提供する。
 //!
-//! - 浮動小数点数
-//!   - ないと困ります
-//! - 各アイテムのドキュメントを書く
-//! - [`VecCht`] のカーソル管理もう少し上手にできないですかね
+//! # 仕様
 //!
+//! 2次式は [`Quadratic`] で表す。[`X`] を使って `1 + X + X * X` のように構築する。
+//! [`ConvexOrConcave`] マーカー（[`Convex`] / [`Concave`]）で最大値・最小値どちらを
+//! 管理するかを型で指定する。
 //!
-//! # WON'T DO
+//! - `add(quadratic)`: 2次式を追加。1回目の追加で2次の係数が固定され、以降異なる
+//!   係数を追加するとパニックする
+//! - `eval(x)`: 追加済みの2次式 $f_1, \ldots, f_k$ のうち、$\max_i f_i(x)$（[`Convex`]）
+//!   または $\min_i f_i(x)$（[`Concave`]）を返す。何も追加していない状態で呼ぶとパニックする
+//! - `multieval(xs)`: `xs` の各点で `eval` する
+//! - [`VecCht`] はカーソルを1つだけ持つため、`eval`/`multieval` に渡す $x$ が単調非減少
+//!   であることを前提に償却 $O(1)$ で応答する（非単調だと最悪 $O(n)$ かかる）
 //!
-//! - 凸探索付き平衡二分木を自作して、直線の式だけ管理すれば良いようにする
-//!   - 理由: 大変そう
-//!
-//!
-//! # できること
-//!
-//! ２次の係数のすべて等しいような、区分的に２次関数であるような、凸/凹関数を管理します。
-//!
-//! - 本体
-//!   - ログ付き: [`BTreeCht`]
-//!   - ログなし: [`VecCht`]
-//!     - 前挿入は、いらないですか…
-//!     - カーソルを１つだけ持っています。２つ以上はいらないですかね……どうしてもならオブジェクトごと２つ作ればできなくはないです。
-//! - マーカー
-//!   - トレイト（ユーザーが実装する必要なし）: [`ConvexOrConcave`]
-//!   - 凸: [`Convex`]
-//!   - 凹: [`Concave`]
-//! - 二次式
-//!   - 式: [`Quadratic`]
-//!   - 変数: [`X`]
-//!
-//!
-//! # Examples
+//! # 例
 //!
 //! ```
 //! use cht::BTreeCht;
@@ -52,6 +40,13 @@
 //! assert_eq!(cht.multieval(0..5), vec![1, -3, -5, -5, -3]);
 //! assert_eq!(cht.eval(-1), 1);
 //! ```
+//!
+//! # 計算量
+//!
+//! - `BTreeCht::add`: 償却 $O(\log n)$
+//! - `BTreeCht::eval`: $O(\log n)$
+//! - `VecCht::add`: 償却 $O(1)$
+//! - `VecCht::eval`: $x$ が単調非減少なら償却 $O(1)$、そうでなければ最悪 $O(n)$
 
 use std::borrow::Borrow;
 use std::collections::BTreeSet;
@@ -62,15 +57,15 @@ use std::ops::Mul;
 use std::ops::Neg;
 use std::ops::Sub;
 
-/// [`BTreeCht`], [`VecCht`] が凸関数を管理するか、凹関数を管理するかを表すマーカーのトレイト
+/// [`BTreeCht`], [`VecCht`] が最大値（凸）と最小値（凹）のどちらを管理するかを表すマーカートレイト。ユーザーが実装する必要はない。
 pub trait ConvexOrConcave: Copy {
     fn negate_if_concave(x: i64) -> i64;
 }
-/// 凸関数を管理する方であるというマーカー
+/// 最大値（上側包絡線）を管理することを表すマーカー型。
 #[derive(Clone, Debug, Hash, Copy)]
 pub enum Convex {}
 #[derive(Clone, Debug, Hash, Copy)]
-/// 凹関数を管理する方であるというマーカー
+/// 最小値（下側包絡線）を管理することを表すマーカー型。
 pub enum Concave {}
 impl ConvexOrConcave for Convex {
     fn negate_if_concave(x: i64) -> i64 {
@@ -83,7 +78,7 @@ impl ConvexOrConcave for Concave {
     }
 }
 
-/// ログがつかない方
+/// ログ（追加履歴）を持たない CHT。カーソルを1つ持ち、$x$ の単調性を前提に評価する。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct VecCht<C> {
     vec: Vec<Segment>,
@@ -92,6 +87,7 @@ pub struct VecCht<C> {
     __marker: PhantomData<fn() -> C>,
 }
 impl<C: ConvexOrConcave> VecCht<C> {
+    /// 空の [`VecCht`] を作る。
     pub fn new() -> Self {
         Self {
             vec: Vec::new(),
@@ -101,6 +97,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
         }
     }
 
+    /// `xs` の各点で [`eval`](Self::eval) する。呼び出し前後でカーソル位置は変わらない。
     pub fn multieval(&mut self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         let orig_current = self.current;
         self.current = 0;
@@ -109,6 +106,12 @@ impl<C: ConvexOrConcave> VecCht<C> {
         res
     }
 
+    /// 追加済みの2次式のうち $x$ での最大値（[`Convex`]）・最小値（[`Concave`]）を返す。
+    /// カーソルを $x$ の位置へ動かすため、呼び出しごとの $x$ が単調非減少なら償却 $O(1)$。
+    ///
+    /// # パニック
+    ///
+    /// 何も追加していない状態で呼ぶとパニックする。
     pub fn eval(&mut self, x: i64) -> i64 {
         assert!(!self.vec.is_empty(), "cannot eval an empty cht");
         if self.current >= self.vec.len() {
@@ -128,6 +131,11 @@ impl<C: ConvexOrConcave> VecCht<C> {
         C::negate_if_concave(self.vec[self.current].line.eval(x)) + self.coeff_at_two * x * x
     }
 
+    /// 2次式を追加する。償却 $O(1)$。
+    ///
+    /// # パニック
+    ///
+    /// これまでに追加した式と2次の係数が異なるとパニックする。
     pub fn add(&mut self, quadratic: Quadratic) {
         let Quadratic([zeroth, first, second]) = quadratic;
         if self.vec.is_empty() {
@@ -181,7 +189,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
     }
 }
 
-/// ログがつく方
+/// ログ（追加履歴）付きの CHT。`BTreeSet` で管理し、$x$ の順序によらず $O(\log n)$ で評価できる。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct BTreeCht<C> {
     set: BTreeSet<Segment>,
@@ -189,6 +197,7 @@ pub struct BTreeCht<C> {
     __marker: PhantomData<fn() -> C>,
 }
 impl<C: ConvexOrConcave> BTreeCht<C> {
+    /// 空の [`BTreeCht`] を作る。
     pub fn new() -> Self {
         Self {
             set: BTreeSet::new(),
@@ -197,16 +206,27 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
         }
     }
 
+    /// `xs` の各点で [`eval`](Self::eval) する。
     pub fn multieval(&self, xs: impl Iterator<Item = i64>) -> Vec<i64> {
         xs.map(|x| self.eval(x)).collect()
     }
 
+    /// 追加済みの2次式のうち $x$ での最大値（[`Convex`]）・最小値（[`Concave`]）を、$O(\log n)$ で返す。
+    ///
+    /// # パニック
+    ///
+    /// 何も追加していない状態で呼ぶとパニックする。
     pub fn eval(&self, x: i64) -> i64 {
         assert!(!self.set.is_empty(), "cannot eval an empty cht");
         C::negate_if_concave(self.set.range(Max(x)..).next().unwrap().line.eval(x))
             + self.coeff_at_two * x * x
     }
 
+    /// 2次式を追加する。償却 $O(\log n)$。
+    ///
+    /// # パニック
+    ///
+    /// これまでに追加した式と2次の係数が異なるとパニックする。
     pub fn add(&mut self, quadratic: Quadratic) {
         let Quadratic([zeroth, first, second]) = quadratic;
         if self.set.is_empty() {
@@ -288,16 +308,22 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
     }
 }
 
-/// 変数
+/// 変数 $x$ を表す [`Quadratic`]。`1 + X + X * X` のように2次式を組み立てるのに使う。
 pub const X: Quadratic = Quadratic([0, 1, 0]);
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
-/// 二次式
+/// 2次式 $c_0 + c_1 x + c_2 x^2$。
 pub struct Quadratic([i64; 3]);
 impl Quadratic {
+    /// $x$ における値 $c_0 + c_1 x + c_2 x^2$ を計算する。
     pub fn eval(self, x: i64) -> i64 {
         self.0[0] + (self.0[1] + self.0[2] * x) * x
     }
 
+    /// 2乗する。
+    ///
+    /// # パニック
+    ///
+    /// 積が2次式に収まらない場合（`self` が1次以上の項を持つ場合）パニックする。
     pub fn square(self) -> Self {
         self * self
     }
@@ -357,6 +383,11 @@ impl Sub<Quadratic> for i64 {
         ])
     }
 }
+/// 積が2次式に収まる場合（少なくとも一方が定数、または両方が1次以下で積が2次以下）にのみ使える乗算。
+///
+/// # パニック
+///
+/// 積が3次以上の項を持つ場合パニックする。
 impl<T: Into<Self>> Mul<T> for Quadratic {
     type Output = Self;
 

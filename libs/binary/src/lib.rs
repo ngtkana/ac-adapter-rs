@@ -1,37 +1,47 @@
-//! 二分法（ダブリング）をします。
+//! モノイドの作用・積を繰り返し二乗法で $O(\log n)$ 回の演算に落とす二分累乗法。
 //!
-//! # このライブラリを使える問題
+//! 指数 $n$ を二進展開し、上位ビットから「二乗して、そのビットが $1$ なら合成する」
+//! ことを繰り返すと、$n$ 回分の合成が $O(\log n)$ 回の二乗・合成で計算できる。
+//! 型 `T` の演算（二乗 `square` / 積 `mul`）と型 `U` への作用 `apply` を
+//! クロージャで渡すことで、行列累乗やモノイド作用など任意の演算に流用できる。
 //!
-//! - AtCoder 競プロ典型 90 問 058 - Original Calculator（★4）
-//!   - 問題: <https://atcoder.jp/contests/typical90/tasks/typical90_bf>
-//!   - 提出 (31 ms): <https://atcoder.jp/contests/typical90/submissions/28333297>
-//!   - 出題日: 2021-06-05
-//!   - 難易度: 易しめ。
-//!   - コメント: 周期性でも解けます。
-//!   - 使う関数: [`operator_binary`]
+//! # 仕様
+//!
+//! - [`Pow`]: 指数として使える型（符号なし整数）を表すトレイト
+//! - [`operator_binary`]: $a$ を $n$ 回 $x$ に作用させた結果 $a^n(x)$ を返す
+//! - [`value_binary`]: モノイドの積 $a^n$ を返す（単位元 `identity` 込み）
+//!
+//! # 例
+//!
+//! ```
+//! use binary::value_binary;
+//!
+//! // 3^5 = 243 を素朴な乗算の繰り返し二乗法で計算する
+//! let result = value_binary(3, 5_u32, 1, |&a, &b| a * b);
+//! assert_eq!(result, 243);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`operator_binary`], [`value_binary`]: `square`/`mul` の呼び出し $O(\log n)$ 回
 
-/// 指数部分に使うためのトレイトです。すべての符号なし整数型に実装されています。
+/// 二分累乗法の指数として使える符号なし整数型を表すトレイト。
 pub trait Pow {
-    /// `*x != 0`
+    /// $x \neq 0$
     fn is_nonzero(&self) -> bool;
-    /// `*x != 1`
+    /// $x \neq 1$
     fn is_nonone(&self) -> bool;
-    /// `x & 1 == 1`
+    /// $x$ が奇数か
     fn is_odd(&self) -> bool;
-    /// `self >>= 1`
+    /// $x \mathrel{{/}{=}} 2$（右シフト）
     fn shr1(&mut self);
 }
 
-/// aⁿ(x) を計算します。
+/// $a$ を $x$ に $n$ 回作用させた結果 $a^n(x)$ を、$O(\log n)$ 回の `square`/`apply` で計算する。
 ///
-/// # Requirements
+/// `square` は $T$ 上の二乗、`apply` は $T$ の $U$ への作用（$a$ を $x$ に $1$ 回作用させる操作）。
 ///
-/// - `T` が積と `U` への作用を持つ
-/// - `square` が `T` における２乗
-/// - `apply` が `T` の `U` への作用
-///
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use binary::operator_binary;
@@ -40,7 +50,7 @@ pub trait Pow {
 /// let n = 5_u32; // `i32` はコンパイルエラー
 /// let x = 42;
 /// let result = operator_binary(a, n, x, |&i| i * i, |&i, j| i * j);
-/// assert_eq!(result, 32 * x);
+/// assert_eq!(result, 32 * x); // 2^5 = 32 を x = 42 に作用（乗算）
 /// ```
 pub fn operator_binary<T, U>(
     mut a: T,
@@ -62,16 +72,9 @@ pub fn operator_binary<T, U>(
     x
 }
 
-/// aⁿを計算します。
+/// モノイドの積 $a^n$ を、単位元 `identity` と積 `mul` から $O(\log n)$ 回の `mul` で計算する。
 ///
-/// # Requirements
-///
-/// - `T` が積と単位元を持つ
-/// - `identity` が `T` の単位元
-/// - `mul` が `T` の積
-///
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// use binary::value_binary;
@@ -79,7 +82,7 @@ pub fn operator_binary<T, U>(
 /// let a = 3;
 /// let n = 5_u32; // `i32` はコンパイルエラー
 /// let result = value_binary(a, n, 1, |&i, &j| i * j);
-/// assert_eq!(result, 243);
+/// assert_eq!(result, 243); // 3^5 = 243
 /// ```
 pub fn value_binary<T>(
     mut a: T,
