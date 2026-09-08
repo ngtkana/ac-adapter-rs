@@ -1,1 +1,1 @@
-searchState.loadedDescShard("snippetter", 0, "Returns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.\nCalls <code>U::from(self)</code>.")
+searchState.loadedDescShard("snippetter", 0, "Returns the argument unchanged.\ncrate root doc comment …\nCalls <code>U::from(self)</code>.\ncrate ルートの <code>//!</code> doc comment …")

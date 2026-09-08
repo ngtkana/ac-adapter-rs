@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Use the two types of sieve of eratosthenes to query."><title>erato - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="erato" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="エラトステネスの篩により、素数判定・素数列挙・素因数分解を行う。"><title>erato - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="erato" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,52 +22,45 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../erato/index.html">erato</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#difference-between-sieve-and-lpdsieve" title="Difference between `Sieve` and `LpdSieve`">Difference between <code>Sieve</code> and <code>LpdSieve</code></a></li><li><a href="#common-usage" title="Common usage">Common usage</a></li><li><a href="#prime-factorization" title="Prime factorization">Prime factorization</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>erato</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/erato/lib.rs.html#1-87">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Use the two types of sieve of eratosthenes to query.</p>
-<h2 id="difference-between-sieve-and-lpdsieve"><a class="doc-anchor" href="#difference-between-sieve-and-lpdsieve">§</a>Difference between <a href="struct.Sieve.html" title="struct erato::Sieve"><code>Sieve</code></a> and <a href="struct.LpdSieve.html" title="struct erato::LpdSieve"><code>LpdSieve</code></a></h2>
-<p><a href="struct.Sieve.html" title="struct erato::Sieve"><code>Sieve</code></a> is an ordinary sieve of eratosthenes, which is constructed in O ( n lg lg n ) time,
-while <a href="struct.LpdSieve.html" title="struct erato::LpdSieve"><code>LpdSieve</code></a> is a table of “least prime divisors’.</p>
-<p>Least prime divisors will accelerate prime factorization, but it takes O ( n lg n ) time to
-construct it. Furthermore, it requires a sieve to constructed to the length n + 1, while the
-trial division algorithm requires a sieve to constructed to the length √n + 1.</p>
-<h2 id="common-usage"><a class="doc-anchor" href="#common-usage">§</a>Common usage</h2>
-<p>It can be used to check if an integer is a prime number.</p>
-
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../erato/index.html">erato</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>erato</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/erato/lib.rs.html#1-67">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>エラトステネスの篩により、素数判定・素数列挙・素因数分解を行う。</p>
+<p>篩は $2$ から順に合成数を篩い落とすことで素数を求める。本クレートは 2 種類の篩を提供する。
+<a href="struct.Sieve.html" title="struct erato::Sieve"><code>Sieve</code></a> は篩全体を bool 配列として持つ素朴な実装で、素因数分解は試し割りで行う。
+<a href="struct.LpdSieve.html" title="struct erato::LpdSieve"><code>LpdSieve</code></a> は各数について最小素因数（least prime divisor）を記録する実装で、
+テーブル引きにより素因数分解を高速化できるが、構築コストと必要な篩の長さが大きくなる。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p>長さ $n$ の篩を構築すると、$2 \le i \le n$ を満たす各 $i$ の素数性・最小素因数を判定できる。</p>
+<ul>
+<li><a href="struct.Sieve.html#method.is_prime" title="method erato::Sieve::is_prime"><code>Sieve::is_prime</code></a> / <a href="struct.LpdSieve.html#method.is_prime" title="method erato::LpdSieve::is_prime"><code>LpdSieve::is_prime</code></a>: $i$ が素数かどうかを判定</li>
+<li><a href="struct.Sieve.html#method.prime_numbers" title="method erato::Sieve::prime_numbers"><code>Sieve::prime_numbers</code></a> / <a href="struct.LpdSieve.html#method.prime_numbers" title="method erato::LpdSieve::prime_numbers"><code>LpdSieve::prime_numbers</code></a>: 素数を昇順に列挙するイテレータ</li>
+<li><a href="struct.Sieve.html#method.prime_factors" title="method erato::Sieve::prime_factors"><code>Sieve::prime_factors</code></a> は試し割り（$\sqrt{i} + 1$ までの篩が必要）、
+<a href="struct.LpdSieve.html#method.prime_factors" title="method erato::LpdSieve::prime_factors"><code>LpdSieve::prime_factors</code></a> はテーブル引き（$i + 1$ までの篩が必要）で、
+$i$ を素因数の昇順の列に分解する</li>
+</ul>
+<p>いずれの篩も必要な長さを超えたクエリを受けると自動的に伸長される。</p>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>erato::LpdSieve;
 <span class="kw">use </span>erato::Sieve;
 
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = Sieve::new();
+<span class="comment">// 素数判定
+</span><span class="kw">let </span><span class="kw-2">mut </span>sieve = Sieve::new();
 <span class="macro">assert!</span>(sieve.is_prime(<span class="number">2</span>));
 <span class="macro">assert!</span>(!sieve.is_prime(<span class="number">20</span>));
 
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = LpdSieve::new();
-<span class="macro">assert!</span>(sieve.is_prime(<span class="number">2</span>));
-<span class="macro">assert!</span>(!sieve.is_prime(<span class="number">20</span>));</code></pre></div>
-<p>And it can enumerate all the prime numbers.</p>
-
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>erato::LpdSieve;
-<span class="kw">use </span>erato::Sieve;
-
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = Sieve::new();
-<span class="kw">let </span><span class="kw-2">mut </span>prime_numbers = sieve.prime_numbers();
+<span class="comment">// 素数列挙
+</span><span class="kw">let </span><span class="kw-2">mut </span>prime_numbers = sieve.prime_numbers();
 <span class="macro">assert_eq!</span>(prime_numbers.next(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
 <span class="macro">assert_eq!</span>(prime_numbers.next(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
 
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = LpdSieve::new();
-<span class="kw">let </span><span class="kw-2">mut </span>prime_numbers = sieve.prime_numbers();
-<span class="macro">assert_eq!</span>(prime_numbers.next(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
-<span class="macro">assert_eq!</span>(prime_numbers.next(), <span class="prelude-val">Some</span>(<span class="number">3</span>));</code></pre></div>
-<h2 id="prime-factorization"><a class="doc-anchor" href="#prime-factorization">§</a>Prime factorization</h2>
-<p><code>Sieve</code> provides a trial-division algorithm,</p>
+<span class="comment">// 素因数分解（試し割り）
+</span>itertools::assert_equal(sieve.prime_factors(<span class="number">84</span>), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">7</span>]);
 
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>erato::Sieve;
-
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = Sieve::new();
-itertools::assert_equal(sieve.prime_factors(<span class="number">84</span>), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">7</span>]);</code></pre></div>
-<p>while <code>LpdSieve</code> provides a table-lookup algorithm.</p>
-
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>erato::LpdSieve;
-
-<span class="kw">let </span><span class="kw-2">mut </span>sieve = LpdSieve::new();
-itertools::assert_equal(sieve.prime_factors(<span class="number">84</span>), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">7</span>]);</code></pre></div>
-<p>See <a href="trait.PrimeFactors.html" title="trait erato::PrimeFactors"><code>PrimeFactors</code></a> to make unique or run-length encode them.</p>
+<span class="comment">// 素因数分解（テーブル引き）
+</span><span class="kw">let </span><span class="kw-2">mut </span>lpd_sieve = LpdSieve::new();
+itertools::assert_equal(lpd_sieve.prime_factors(<span class="number">84</span>), <span class="macro">vec!</span>[<span class="number">2</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">7</span>]);</code></pre></div>
+<p><a href="trait.PrimeFactors.html" title="trait erato::PrimeFactors"><code>PrimeFactors</code></a> を使うと、素因数列を重複除去したり連長圧縮したりできる。</p>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<ul>
+<li><a href="struct.Sieve.html" title="struct erato::Sieve"><code>Sieve</code></a> 構築: $\Theta(n \log \log n)$、素因数分解: $\Theta(\pi(\sqrt{n}))$</li>
+<li><a href="struct.LpdSieve.html" title="struct erato::LpdSieve"><code>LpdSieve</code></a> 構築: $O(n \log n)$、素因数分解: $O(\omega(n))$（重複込みの素因数の個数）</li>
+</ul>
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.LpdSieve.html" title="struct erato::LpdSieve">LpdSieve</a></dt><dd>Least-prime-divisor table.</dd><dt><a class="struct" href="struct.PrimeFactorsByLookup.html" title="struct erato::PrimeFactorsByLookup">Prime<wbr>Factors<wbr>ByLookup</a></dt><dd>See the document of <a href="struct.LpdSieve.html#method.prime_factors" title="method erato::LpdSieve::prime_factors"><code>crate::LpdSieve::prime_factors</code></a></dd><dt><a class="struct" href="struct.PrimeFactorsByTrialDivision.html" title="struct erato::PrimeFactorsByTrialDivision">Prime<wbr>Factors<wbr>ByTrial<wbr>Division</a></dt><dd>See the document of <a href="struct.Sieve.html#method.prime_factors" title="method erato::Sieve::prime_factors"><code>crate::Sieve::prime_factors</code></a></dd><dt><a class="struct" href="struct.PrimeNumbers.html" title="struct erato::PrimeNumbers">Prime<wbr>Numbers</a></dt><dd>An iterator to generate all the prime numbers, constructed by <a href="struct.Sieve.html#method.prime_numbers" title="method erato::Sieve::prime_numbers"><code>crate::Sieve::prime_numbers</code></a>.</dd><dt><a class="struct" href="struct.Rle.html" title="struct erato::Rle">Rle</a></dt><dd>An iterator returned by <a href="trait.PrimeFactors.html#method.rle" title="method erato::PrimeFactors::rle"><code>PrimeFactors::rle</code></a></dd><dt><a class="struct" href="struct.Sieve.html" title="struct erato::Sieve">Sieve</a></dt><dd>Is-prime table.</dd><dt><a class="struct" href="struct.Unique.html" title="struct erato::Unique">Unique</a></dt><dd>An iterator returned by <a href="trait.PrimeFactors.html#method.unique" title="method erato::PrimeFactors::unique"><code>PrimeFactors::unique</code></a></dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Int.html" title="trait erato::Int">Int</a></dt><dd>Abstraction of integers.</dd><dt><a class="trait" href="trait.PrimeFactors.html" title="trait erato::PrimeFactors">Prime<wbr>Factors</a></dt><dd>An abstraction of prime factor generator.</dd></dl></section></div></main></body></html>

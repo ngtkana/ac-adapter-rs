@@ -8,18 +8,6 @@ body {
     font-weight: 700;
 }
 
-/* クレートカード */
-.crate-card {
-    transition: transform 0.2s, box-shadow 0.2s;
-    height: 100%;
-    border-radius: 8px;
-}
-
-.crate-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
-}
-
 /* 検索ハイライト */
 .highlight {
     background-color: yellow;
@@ -28,41 +16,128 @@ body {
     border-radius: 2px;
 }
 
-/* マッチしたアイテム */
-.matched-items {
-    background-color: rgba(0, 123, 255, 0.05);
-    padding: 8px;
+/* カタログ（左に狭いサイドバー一覧 + 右にメインペイン） */
+.catalog-shell {
+    display: flex;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    overflow: hidden;
+    background: white;
+    height: 75vh;
+    min-height: 480px;
+}
+
+.catalog-sidebar {
+    width: 300px;
+    min-width: 300px;
+    border-right: 1px solid #dee2e6;
+    display: flex;
+    flex-direction: column;
+}
+
+.catalog-search {
+    padding: .5rem;
+}
+
+.catalog-search input {
+    font-size: .8rem;
+}
+
+.catalog-search .hint {
+    font-size: .65rem;
+    color: #adb5bd;
+    margin-top: .25rem;
+}
+
+.catalog-list {
+    overflow-y: auto;
+    flex: 1;
+}
+
+.catalog-item {
+    display: block;
+    padding: .22rem .7rem;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    line-height: 1.25;
+}
+
+.catalog-item:hover,
+.catalog-item.selected {
+    background: #eef4ff;
+}
+
+.catalog-item .name {
+    font-size: .8rem;
+    font-weight: 600;
+    color: #0d6efd;
+}
+
+.catalog-item .desc {
+    font-size: .68rem;
+    color: #adb5bd;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-left: .5rem;
+}
+
+.catalog-main {
+    flex: 1;
+    padding: 1.5rem;
+    overflow-y: auto;
+}
+
+.catalog-main .meta-bar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .5rem;
+    font-size: .72rem;
+    color: #adb5bd;
+    margin-bottom: .8rem;
+}
+
+.catalog-main .meta-bar .tag-pill {
+    font-size: .7rem;
+    color: #868e96;
+    cursor: pointer;
+}
+
+.catalog-main .meta-bar .tag-pill:hover {
+    color: #0d6efd;
+}
+
+.catalog-main .meta-bar a {
+    font-size: .72rem;
+}
+
+.catalog-main .doc-body h1 {
+    font-size: 1rem;
+    margin-top: 1.2rem;
+    border-bottom: 1px solid #eee;
+    padding-bottom: .25rem;
+}
+
+.catalog-main .doc-body pre {
+    background: #f6f8fa;
+    padding: .6rem;
     border-radius: 4px;
-    border-left: 3px solid #007bff;
-    margin-bottom: 10px;
+    font-size: .8rem;
+    white-space: pre-wrap;
 }
 
-.matched-items ul {
-    margin-bottom: 0;
-}
-
-.matched-items li {
-    margin-bottom: 4px;
-}
-
-.matched-items li:last-child {
-    margin-bottom: 0;
+.catalog-main .doc-body code {
+    background: #f6f8fa;
+    padding: 0 .2rem;
+    border-radius: 3px;
 }
 
 /* ダークモード対応 */
 @media (prefers-color-scheme: dark) {
     body {
         background-color: #121212;
-        color: #e0e0e0;
-    }
-
-    .card {
-        background-color: #1e1e1e;
-        border-color: #333;
-    }
-
-    .card-header {
-        background-color: #2a2a2a;
         color: #e0e0e0;
     }
 
@@ -76,12 +151,22 @@ body {
         color: #000;
     }
 
-    .matched-items {
-        background-color: rgba(0, 123, 255, 0.1);
-        border-left: 3px solid #0d6efd;
+    .catalog-shell {
+        background: #1e1e1e;
+        border-color: #333;
     }
 
-    .matched-items .text-muted {
-        color: #adb5bd !important;
+    .catalog-sidebar {
+        border-color: #333;
+    }
+
+    .catalog-item:hover,
+    .catalog-item.selected {
+        background: #2a2a2a;
+    }
+
+    .catalog-main .doc-body pre,
+    .catalog-main .doc-body code {
+        background: #2a2a2a;
     }
 }
