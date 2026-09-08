@@ -1,13 +1,36 @@
-//! 整数の増加列を一様ランダムに生成する
+//! 非減少な整数列を一様ランダムに生成する。
 //!
-//! 本体は [`gen_range_many`](RngRange::gen_range_many)
+//! 範囲から $K$ 個の値を独立に一様サンプリングしてから昇順に並べ替えるだけでは、
+//! 値が衝突した箇所に分布が偏ってしまう。ソート中に同順位が生じるたびに後ろの要素を
+//! $1$ 減らす（内部の `skew_sort`）ことでこの偏りを補正し、非減少数列
+//! $\min(I) \le x_0 \le x_1 \le \dots \le x_{K-1} \le \max(I)$ が一様分布になるようにする。
+//!
+//! # 仕様
+//!
+//! - [`RngRange::gen_range_many`][]: [`Rng`] の拡張メソッド。範囲 `range`（$I$）から長さ $K$ の
+//!   非減少数列を一様ランダムに生成する
+//!
+//! # 例
+//!
+//! ```
+//! use rand_range::RngRange;
+//! use rand::{Rng, SeedableRng, rngs::StdRng};
+//!
+//! let mut rng = StdRng::seed_from_u64(42);
+//! let [a, b, c] = rng.gen_range_many(0..=10);
+//! assert!(0 <= a && a <= b && b <= c && c <= 10);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`RngRange::gen_range_many`][]: $O(K^2)$（$K$ は生成する数列の長さ。内部のソートがボトルネック）
 
 use rand::{
     Rng,
     distributions::uniform::{SampleRange, SampleUniform},
 };
 
-/// Helper trait
+/// [`RngRange::gen_range_many`] が内部で使う整数型の抽象化（加算・1減算ができる型）。
 pub trait Int: Ord + SampleUniform + Sized + Copy {
     fn add_usize(self, other: usize) -> Self;
     fn sub_one(&mut self);
@@ -33,7 +56,7 @@ impl_int! {
     i8, i16, i32, i64, i128, isize,
 }
 
-/// Helper trait
+/// `Range`・`RangeInclusive` を統一的に扱うためのトレイト（右端を `usize` 分拡張できる）。
 pub trait RangeTrait {
     type Item: Int;
     fn add_usize(&self, extra: usize) -> Self;
@@ -59,15 +82,15 @@ impl<T: Int> RangeTrait for std::ops::RangeInclusive<T> {
     }
 }
 
-/// [`gen_range_many`](RngRange::gen_range_many) を実装している、[`Rng`] の拡張トレイト
+/// [`gen_range_many`](RngRange::gen_range_many) を実装している、[`Rng`] の拡張トレイト。
 pub trait RngRange: Rng {
-    /// 範囲が `range` ($I$) に収まる長さ $K$ の数列を一様ランダムに生成する
+    /// 範囲 `range`（$I$）に収まる、長さ $K$ の非減少数列を一様ランダムに生成する。
     ///
     /// $$
     /// \min(I) \le x_0 \le x_1 \le \dots \le x_{K-1} \le \max(I)
     /// $$
     ///
-    /// ## Example
+    /// # 例
     ///
     /// ```
     /// use rand_range::RngRange;
