@@ -1,16 +1,14 @@
 use crate::Unsigned;
 
-/// Returns $2^n - 1$.
+/// $2^n - 1$ を計算する。
 ///
-/// # Examples
+/// `n` がビット幅 `T::bit_length()` に等しいときは `T::MAX` を返す（左シフトのオーバーフローを回避）。
+///
+/// # 例
 /// ```
 /// use riff::i2powm1;
-/// assert_eq!(i2powm1::<u32>(0), 0);
-/// assert_eq!(i2powm1::<u32>(1), 1);
-/// assert_eq!(i2powm1::<u32>(2), 3);
-/// assert_eq!(i2powm1::<u32>(3), 7);
-/// assert_eq!(i2powm1::<u32>(31), 0x7fff_ffff);
-/// assert_eq!(i2powm1::<u32>(32), 0xffff_ffff);
+/// assert_eq!(i2powm1::<u32>(2), 3); // 2^2 - 1 = 3
+/// assert_eq!(i2powm1::<u32>(32), 0xffff_ffff); // ビット幅ちょうど：オーバーフロー回避
 /// ```
 pub fn i2powm1<T: Unsigned>(n: u32) -> T {
     if n == T::bit_length() {

@@ -1,3 +1,4 @@
+/// [`Op`](crate::Op) を splay 木の内部表現へアダプトするための内部トレイト（非公開）
 #[doc(hidden)]
 pub trait OpBase {
     type Value: Clone;
@@ -14,12 +15,38 @@ pub trait OpBase {
     fn rev(value: &mut Self::InternalValue);
 }
 
-/// Common implementation of Link-Cut Tree. Please do not use this directly.
+/// Link-Cut Tree の実体
+///
+/// `crate` 直下に再エクスポートされている [`LinkCutTree`](crate::LinkCutTree),
+/// [`CommutLinkCutTree`](crate::CommutLinkCutTree), [`NonCommutLinkCutTree`](crate::NonCommutLinkCutTree)
+/// を通して使う。直接構築するには `O: OpBase` を満たす型が必要になるため、通常は使わない。
+///
+/// # 解説
+///
+/// 各節点は自分の親へのポインタ `parent` と、splay 木上の左右の子 `left`, `right` を持つ。
+/// 森を構成する各根付き木は「優先パス」（根から葉方向へ続く 1 本道）に分解され、優先パス 1 本が
+/// splay 木 1 本に対応する。splay 木内では節点は深さ順（根に近いほど左）に並ぶ。優先パス同士は、
+/// パス下端の節点の `parent` が「パスの繋ぎ目の親（path-parent）」を指すことでつながる
+/// （このときその親から見て自分は splay 木上の子ではないため、`is_splay_root` が真になる）。
+///
+/// `expose(x)` は根から `x` までを 1 本の優先パスに再編する中心操作で、`x` から `parent` を辿って
+/// 根に向かいながら経路上の各 splay 木を `splay` して連結していく。他の操作（`link`, `cut`,
+/// `evert`, `parent`, `fold` など）はすべて `expose` を軸に実装され、splay 木の償却解析により
+/// 1 回あたり償却 $O(\log n)$ で動作する。
 pub struct LinkCutTreeBase<O: OpBase> {
     nodes: Vec<Node<O>>,
 }
 impl<O: OpBase> LinkCutTreeBase<O> {
-    /// Constructs a new Link-Cut Tree with `n` nodes.
+    /// 節点数 $n$ の互いに素な森を構築する
+    ///
+    /// 節点は $0, \dots, n-1$ の ID を持ち、初期状態では辺を持たない（各節点が孤立した根）。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let lct = LinkCutTree::new(3);
+    /// ```
     pub fn new(n: usize) -> Self {
         Self {
             nodes: (0..n)
@@ -36,7 +63,29 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Constructs a new Link-Cut Tree with `n` nodes, where the values are given by `values`.
+    /// 各節点に初期値 `values` を割り当てた森を構築する
+    ///
+    /// 節点数はイテレータの長さに等しい。各節点は孤立した根として初期化される。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::CommutLinkCutTree;
+    /// use link_cut_tree::Op;
+    ///
+    /// enum Add {}
+    /// impl Op for Add {
+    ///     type Value = i64;
+    ///     fn identity() -> i64 {
+    ///         0
+    ///     }
+    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///         lhs + rhs
+    ///     }
+    /// }
+    ///
+    /// let lct = CommutLinkCutTree::<Add>::from_values([1, 2, 3]);
+    /// ```
     pub fn from_values(values: impl IntoIterator<Item = O::Value>) -> Self {
         Self {
             nodes: values
@@ -56,12 +105,25 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Connects `p` and `c` with an edge, preserving the direction.
+    /// `p` を `c` の親とする有向辺を張る
+    ///
+    /// # 仕様
+    ///
+    /// `c` が属する木の根であること、かつ `p` と `c` が非連結であることを要求する。
     ///
     /// # Panics
     ///
-    /// * If `c` is not a root.
-    /// * If `c` and `p` are already connected.
+    /// - `c` が根でないとき
+    /// - `p` と `c` がすでに連結なとき
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.link(0, 1);
+    /// assert_eq!(lct.parent(1), Some(0));
+    /// ```
     pub fn link(&mut self, p: usize, c: usize) {
         unsafe {
             let base = self.nodes.as_mut_ptr();
@@ -82,10 +144,18 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Connects `i` and `j` with an edge, not preserving the direction.
+    /// `i` と `j` を無向辺で結ぶ
     ///
-    /// # Returns
-    /// * `true` if the edge is added.
+    /// すでに連結なら何もせず `false` を返す。そうでなければ `j` を根に付け替えてから `link(i, j)` する。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// assert!(lct.undirected_link(0, 1));
+    /// assert!(!lct.undirected_link(0, 1)); // すでに連結
+    /// ```
     pub fn undirected_link(&mut self, i: usize, j: usize) -> bool {
         if self.undirected_is_connected(i, j) {
             return false;
@@ -95,10 +165,19 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         true
     }
 
-    /// Cuts the edge between `x` and its parent.
+    /// `x` とその親を結ぶ辺を切断する
     ///
-    /// # Returns
-    /// The id of the parent of `x` before the cut.
+    /// `x` が根なら何もせず `None` を返す。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.link(0, 1);
+    /// assert_eq!(lct.cut(1), Some(0));
+    /// assert_eq!(lct.cut(1), None); // すでに根
+    /// ```
     pub fn cut(&mut self, x: usize) -> Option<usize> {
         unsafe {
             let x = self.nodes.as_mut_ptr().add(x);
@@ -114,10 +193,19 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Cuts the edge between `i` and `j`, not preserving the direction.
+    /// `i` と `j` の間の無向辺を切断する
     ///
-    /// # Returns
-    /// `true` if the edge is cut.
+    /// `i`, `j` 間に辺がなければ何もせず `false` を返す。あれば `i` を根に付け替えてから `cut(j)` する。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.undirected_link(0, 1);
+    /// assert!(lct.undirected_cut(0, 1));
+    /// assert!(!lct.undirected_cut(0, 1)); // すでに非連結
+    /// ```
     pub fn undirected_cut(&mut self, i: usize, j: usize) -> bool {
         if !self.undirected_has_edge(i, j) {
             return false;
@@ -127,7 +215,19 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         true
     }
 
-    /// Makes `x` the root of the tree.
+    /// `x` を根に付け替える
+    ///
+    /// `x` の属する木全体で、根から各節点への辺の向きを反転する。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.link(0, 1);
+    /// lct.evert(1);
+    /// assert_eq!(lct.parent(0), Some(1));
+    /// ```
     pub fn evert(&mut self, x: usize) {
         unsafe {
             let x = self.nodes.as_mut_ptr().add(x);
@@ -137,12 +237,32 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Returns `true` if there is an edge between `x` and `y`.
+    /// `x` と `y` の間に辺があるかを判定する
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.link(0, 1);
+    /// assert!(lct.undirected_has_edge(0, 1));
+    /// assert!(lct.undirected_has_edge(1, 0));
+    /// ```
     pub fn undirected_has_edge(&mut self, x: usize, y: usize) -> bool {
         self.parent(x) == Some(y) || self.parent(y) == Some(x)
     }
 
-    /// Returns `true` if `x` and `y` are connected.
+    /// `x` と `y` が同じ木に属するかを判定する
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(3);
+    /// lct.link(0, 1);
+    /// assert!(lct.undirected_is_connected(0, 1));
+    /// assert!(!lct.undirected_is_connected(0, 2));
+    /// ```
     pub fn undirected_is_connected(&mut self, x: usize, y: usize) -> bool {
         if x == y {
             return true;
@@ -157,7 +277,19 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Returns the id of the lowest common ancestor of `x` and `y`.
+    /// `x` と `y` の最小共通祖先を返す
+    ///
+    /// `x` と `y` が非連結なら `None`。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(3);
+    /// lct.link(0, 1);
+    /// lct.link(1, 2);
+    /// assert_eq!(lct.lca(0, 2), Some(0));
+    /// ```
     pub fn lca(&mut self, x: usize, y: usize) -> Option<usize> {
         if x == y {
             return Some(x);
@@ -176,7 +308,31 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Sets the value of `x` to `f(x)`.
+    /// `x` の値を `f` で更新する
+    ///
+    /// 更新後の値は `f(現在の値)`。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::CommutLinkCutTree;
+    /// use link_cut_tree::Op;
+    ///
+    /// enum Add {}
+    /// impl Op for Add {
+    ///     type Value = i64;
+    ///     fn identity() -> i64 {
+    ///         0
+    ///     }
+    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///         lhs + rhs
+    ///     }
+    /// }
+    ///
+    /// let mut lct = CommutLinkCutTree::<Add>::from_values([1, 2, 3]);
+    /// lct.set(0, |v| v + 10);
+    /// assert_eq!(lct.fold(0), 11);
+    /// ```
     pub fn set(&mut self, x: usize, mut f: impl FnMut(O::Value) -> O::Value) {
         unsafe {
             let x = self.nodes.as_mut_ptr().add(x);
@@ -186,7 +342,30 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Folds the path from the root to `x`.
+    /// `x` の属する木の根から `x` までのパスの集約値を返す
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::CommutLinkCutTree;
+    /// use link_cut_tree::Op;
+    ///
+    /// enum Add {}
+    /// impl Op for Add {
+    ///     type Value = i64;
+    ///     fn identity() -> i64 {
+    ///         0
+    ///     }
+    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///         lhs + rhs
+    ///     }
+    /// }
+    ///
+    /// let mut lct = CommutLinkCutTree::<Add>::from_values([1, 2, 3]);
+    /// lct.link(0, 1);
+    /// lct.link(1, 2);
+    /// assert_eq!(lct.fold(2), 1 + 2 + 3);
+    /// ```
     pub fn fold(&mut self, x: usize) -> O::Value {
         unsafe {
             let x = self.nodes.as_mut_ptr().add(x);
@@ -195,7 +374,32 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         }
     }
 
-    /// Folds the path from `i` to `j`, not preserving the direction.
+    /// `i` から `j` までのパスの集約値を返す
+    ///
+    /// `i` と `j` が非連結なら `None`。`i` を根に付け替えてから `j` への `fold` を行う。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::CommutLinkCutTree;
+    /// use link_cut_tree::Op;
+    ///
+    /// enum Add {}
+    /// impl Op for Add {
+    ///     type Value = i64;
+    ///     fn identity() -> i64 {
+    ///         0
+    ///     }
+    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///         lhs + rhs
+    ///     }
+    /// }
+    ///
+    /// let mut lct = CommutLinkCutTree::<Add>::from_values([1, 2, 3]);
+    /// lct.undirected_link(0, 1);
+    /// lct.undirected_link(1, 2);
+    /// assert_eq!(lct.undirected_fold(0, 2), Some(1 + 2 + 3));
+    /// ```
     pub fn undirected_fold(&mut self, i: usize, j: usize) -> Option<O::Value> {
         if !self.undirected_is_connected(i, j) {
             return None;
@@ -204,7 +408,19 @@ impl<O: OpBase> LinkCutTreeBase<O> {
         Some(self.fold(j))
     }
 
-    /// Returns the id of the parent of `x`.
+    /// `x` の親の ID を返す
+    ///
+    /// `x` が根なら `None`。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use link_cut_tree::LinkCutTree;
+    /// let mut lct = LinkCutTree::new(2);
+    /// lct.link(0, 1);
+    /// assert_eq!(lct.parent(1), Some(0));
+    /// assert_eq!(lct.parent(0), None);
+    /// ```
     pub fn parent(&mut self, x: usize) -> Option<usize> {
         unsafe {
             let x = self.nodes.as_mut_ptr().add(x);

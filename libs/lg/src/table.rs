@@ -3,18 +3,29 @@ use core::fmt;
 const GRAY: &str = "\x1b[48;2;127;127;127;37m";
 const RESET: &str = "\x1b[0m";
 
+/// 罫線付きの表。`Display` でヘッダー行をグレー背景にして整形出力する。
+///
+/// 各行は同じ列数を持つ必要がある（`Display` の実装内で `assert!` する）。
 pub struct Table {
+    /// 行の集まり。各行は `Cell` の列。
     pub table: Vec<Vec<Cell>>,
 }
 
+/// `Table` の 1 セル。表示テキストと寄せ方向を持つ。
 pub struct Cell {
+    /// 表示テキスト。
     pub text: String,
+    /// 寄せ方向。
     pub align: Align,
 }
 
+/// セルの寄せ方向。
 pub enum Align {
+    /// 左寄せ。
     Left,
+    /// 中央寄せ。
     Center,
+    /// 右寄せ（数値のセルに使う）。
     Right,
 }
 
