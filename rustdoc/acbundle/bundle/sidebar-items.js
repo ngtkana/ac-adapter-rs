@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["bundle","collect_transitive","insert_fold_markers","wrap_mod"],"struct":["Options"]};

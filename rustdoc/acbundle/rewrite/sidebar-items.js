@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["insert_segment","recurse_into_groups","rewrite_dollar_crate_tokens","rewrite_items","rewrite_path_head","rewrite_use_tree","take_colon"],"struct":["Rewriter"]};

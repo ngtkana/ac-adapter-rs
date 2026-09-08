@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["already_bundled_crate_names","main"],"mod":["bundle","inline","metadata","rewrite","strip"]};

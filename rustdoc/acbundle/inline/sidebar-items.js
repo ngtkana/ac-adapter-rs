@@ -1,0 +1,1 @@
+window.SIDEBAR_ITEMS = {"fn":["inline_item","inline_items","load_crate_items","parse_file"]};
