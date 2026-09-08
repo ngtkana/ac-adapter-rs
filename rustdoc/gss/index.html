@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="黄金分割探索をします。"><title>gss - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="gss" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="単峰関数の最小点を黄金分割探索で求める。"><title>gss - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="gss" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,40 +22,47 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../gss/index.html">gss</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#共通仕様" title="共通仕様">共通仕様</a><ul><li><a href="#requirements" title="Requirements">Requirements</a></li><li><a href="#returns" title="Returns">Returns</a></li></ul></li></ul><h3><a href="#traits">Crate Items</a></h3><ul class="block"><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>gss</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/gss/lib.rs.html#1-453">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>黄金分割探索をします。</p>
-<p>次の 2 つの関数のお好きな方をどうぞです。</p>
-<h2 id="共通仕様"><a class="doc-anchor" href="#共通仕様">§</a>共通仕様</h2>
-<p>引数名 <code>lower</code>, <code>upper</code>
-は、お名前に反して、別に逆でも動きます。ただ、このセクションでは説明のため <code>lower &lt;= upper</code>
-であるとします。</p>
-<h3 id="requirements"><a class="doc-anchor" href="#requirements">§</a>Requirements</h3>
-<p>入力 <code>lower</code>, <code>upper</code>, <code>f</code> は次の要件を満たす必要があります。</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../gss/index.html">gss</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#traits">Crate Items</a></h3><ul class="block"><li><a href="#traits" title="Traits">Traits</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>gss</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/gss/lib.rs.html#1-512">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>単峰関数の最小点を黄金分割探索で求める。</p>
+<p>関数 $f$ が区間内である点 $x$ を境に狭義単調減少→広義単調増加（単峰）であれば、
+黄金比 $\phi = (1+\sqrt5)/2$ で区間を分割しながら評価点を使い回すことで、
+呼び出し 1 回あたり <code>f</code> を高々 1 回しか呼ばずに探索区間を $1/\phi$ 倍へ縮小できる。
+引数 <code>lower</code>, <code>upper</code> は名前に反して大小どちらの順でも動くが、
+以下では説明のため <code>lower &lt;= upper</code> とする。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p>入力 <code>lower</code>, <code>upper</code>, <code>f</code> は次を満たす必要がある。</p>
 <ul>
-<li>（浮動小数点数のときのみ）<code>lower.is_finite() &amp;&amp; upper.is_finite()</code></li>
-<li>関数 <code>f</code> が区間 [<code>lower</code>, <code>upper</code>] 内のすべての値でパニックしないこと</li>
-<li>関数 <code>f</code> は凸である必要はなく、次を満たす <code>x</code> が存在すること
+<li>（浮動小数点数のときのみ）<code>lower</code>, <code>upper</code> はともに有限</li>
+<li><code>f</code> は区間 $[lower, upper]$ 内のすべての値でパニックしない</li>
+<li><code>f</code> は凸である必要はなく、ある $x$ が存在して
 <ul>
-<li><code>f</code> は区間 [<code>lower</code>, <code>x</code>] で狭義単調減少</li>
-<li><code>f</code> は区間 [<code>x</code>, <code>upper</code>] で広義単調増加</li>
+<li><code>f</code> は区間 $[lower, x]$ で狭義単調減少</li>
+<li><code>f</code> は区間 $[x, upper]$ で広義単調増加</li>
 </ul>
 </li>
 </ul>
-<h3 id="returns"><a class="doc-anchor" href="#returns">§</a>Returns</h3>
-<p>Requirements 内の <code>x</code>
-は唯一なので、それに「そこそこ近いもの」を返します。探索の打ち切りの仕方のバリエーションでいくつかの関数があります。</p>
+<p>上記 $x$ は一意なので、それに「そこそこ近い」値を返す。打ち切り方の違いで次の 4 関数を提供する。</p>
 <ul>
-<li>浮動小数点数
-<ul>
-<li>回数指定バージョン: <a href="fn.gss_by_count.html" title="fn gss::gss_by_count"><code>gss_by_count</code></a></li>
-<li>絶対誤差指定バージョン: <a href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps"><code>gss_by_absolute_eps</code></a></li>
-</ul>
-</li>
 <li>整数
 <ul>
-<li>普通バージョン: <a href="fn.gss_integer.html" title="fn gss::gss_integer"><code>gss_integer</code></a></li>
-<li>スライス添字バージョン: <a href="fn.gss_on_slice.html" title="fn gss::gss_on_slice"><code>gss_on_slice</code></a></li>
+<li>通常版: <a href="fn.gss_integer.html" title="fn gss::gss_integer"><code>gss_integer</code></a></li>
+<li>スライス添字版: <a href="fn.gss_on_slice.html" title="fn gss::gss_on_slice"><code>gss_on_slice</code></a></li>
+</ul>
+</li>
+<li>浮動小数点数
+<ul>
+<li>回数指定版: <a href="fn.gss_by_count.html" title="fn gss::gss_by_count"><code>gss_by_count</code></a></li>
+<li>絶対誤差指定版: <a href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps"><code>gss_by_absolute_eps</code></a></li>
 </ul>
 </li>
 </ul>
-</div></details><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Float.html" title="trait gss::Float">Float</a></dt><dd><a href="fn.gss_by_count.html" title="fn gss::gss_by_count"><code>gss_by_count</code></a> の引数型のためのトレイトです。全ての整数型に実装されています。</dd><dt><a class="trait" href="trait.Golden.html" title="trait gss::Golden">Golden</a></dt><dd>黄金分割をする関数 <a href="trait.Golden.html#tymethod.golden_sect"><code>golden_sect</code></a>
-を提供します。すべての整数型、浮動小数点型に実装されています。</dd><dt><a class="trait" href="trait.Int.html" title="trait gss::Int">Int</a></dt><dd><a href="fn.gss_integer.html" title="fn gss::gss_integer"><code>gss_integer</code></a> の引数型のためのトレイトです。全ての整数型に実装されています。</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps">gss_<wbr>by_<wbr>absolute_<wbr>eps</a></dt><dd>絶対誤差指定バージョン。真の答えとの差が <code>eps</code> 以内になる保証ができるまでイテレートします。</dd><dt><a class="fn" href="fn.gss_by_count.html" title="fn gss::gss_by_count">gss_<wbr>by_<wbr>count</a></dt><dd>回数指定バージョン。<code>count</code> 回イテレートします。</dd><dt><a class="fn" href="fn.gss_integer.html" title="fn gss::gss_integer">gss_<wbr>integer</a></dt><dd>整数バージョン。正確な値を返します。</dd><dt><a class="fn" href="fn.gss_on_slice.html" title="fn gss::gss_on_slice">gss_<wbr>on_<wbr>slice</a></dt><dd>スライスの添字バージョン。正確な値を返します。</dd></dl></section></div></main></body></html>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>gss::gss_integer;
+<span class="kw">let </span>f = |x: i32| (x - <span class="number">3</span>) * (x - <span class="number">3</span>); <span class="comment">// x = 3 で最小
+</span><span class="macro">assert_eq!</span>(gss_integer(<span class="number">0</span>, <span class="number">10</span>, f), <span class="number">3</span>);</code></pre></div>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<ul>
+<li><a href="fn.gss_integer.html" title="fn gss::gss_integer"><code>gss_integer</code></a>, <a href="fn.gss_on_slice.html" title="fn gss::gss_on_slice"><code>gss_on_slice</code></a>: $O(\log(upper - lower))$ 回の <code>f</code> 呼び出し</li>
+<li><a href="fn.gss_by_count.html" title="fn gss::gss_by_count"><code>gss_by_count</code></a>: <code>count</code> 回の <code>f</code> 呼び出し</li>
+<li><a href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps"><code>gss_by_absolute_eps</code></a>: $O\left(\log \dfrac{upper - lower}{eps}\right)$ 回の <code>f</code> 呼び出し</li>
+</ul>
+</div></details><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Float.html" title="trait gss::Float">Float</a></dt><dd><a href="fn.gss_by_count.html" title="fn gss::gss_by_count"><code>gss_by_count</code></a>, <a href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps"><code>gss_by_absolute_eps</code></a> の引数型が満たすべきトレイト。<code>f32</code>, <code>f64</code> に実装済み。</dd><dt><a class="trait" href="trait.Golden.html" title="trait gss::Golden">Golden</a></dt><dd>黄金分割点 <a href="trait.Golden.html#tymethod.golden_sect"><code>golden_sect</code></a> を提供するトレイト。すべての組み込み整数型・浮動小数点型に実装済み。</dd><dt><a class="trait" href="trait.Int.html" title="trait gss::Int">Int</a></dt><dd><a href="fn.gss_integer.html" title="fn gss::gss_integer"><code>gss_integer</code></a> の引数型が満たすべきトレイト。すべての組み込み整数型に実装済み。</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.gss_by_absolute_eps.html" title="fn gss::gss_by_absolute_eps">gss_<wbr>by_<wbr>absolute_<wbr>eps</a></dt><dd>浮動小数点数版（絶対誤差指定）。真の最小点との差が <code>eps</code> 以内になる保証ができるまでイテレートする。</dd><dt><a class="fn" href="fn.gss_by_count.html" title="fn gss::gss_by_count">gss_<wbr>by_<wbr>count</a></dt><dd>浮動小数点数版（回数指定）。<code>count</code> 回イテレートしたら打ち切る。</dd><dt><a class="fn" href="fn.gss_integer.html" title="fn gss::gss_integer">gss_<wbr>integer</a></dt><dd>整数版。区間 $[lower, upper]$ の端点まで厳密に絞り込み、最小点を返す。</dd><dt><a class="fn" href="fn.gss_on_slice.html" title="fn gss::gss_on_slice">gss_<wbr>on_<wbr>slice</a></dt><dd>スライスの添字版。<code>a[i]</code> を <code>f(i)</code> とみなして黄金分割探索し、最小値の添字を厳密に返す。</dd></dl></section></div></main></body></html>
