@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="skew な多次元インデックス列を、多重 for 文の代わりに列挙します。"><title>jagged_iproduct in jagged_iproduct - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="jagged_iproduct" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="skew な多次元インデックスの列を、多重 for 文の代わりに列挙する。"><title>jagged_iproduct in jagged_iproduct - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="jagged_iproduct" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="sidebar-items.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,18 +22,13 @@
   });
 </script>
 
-</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../jagged_iproduct/index.html">jagged_<wbr>iproduct</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">jagged_<wbr>iproduct</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#構文" title="構文">構文</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate jagged_<wbr>iproduct</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">jagged_iproduct</a></div><h1>Macro <span class="macro">jagged_iproduct</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/jagged_iproduct/lib.rs.html#87-96">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! jagged_iproduct {
+</head><body class="rustdoc macro"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../jagged_iproduct/index.html">jagged_<wbr>iproduct</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><section id="rustdoc-toc"><h2 class="location"><a href="#">jagged_<wbr>iproduct</a></h2><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul></section><div id="rustdoc-modnav"><h2 class="in-crate"><a href="index.html">In crate jagged_<wbr>iproduct</a></h2></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><div class="rustdoc-breadcrumbs"><a href="index.html">jagged_iproduct</a></div><h1>Macro <span class="macro">jagged_iproduct</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/jagged_iproduct/lib.rs.html#102-111">Source</a> </span></div><pre class="rust item-decl"><code>macro_rules! jagged_iproduct {
     ($len0:expr $(, $f:expr)* $(,)?) =&gt; { ... };
-}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>skew な多次元インデックス列を、多重 for 文の代わりに列挙します。</p>
-<h2 id="構文"><a class="doc-anchor" href="#構文">§</a>構文</h2>
-<p><code>jagged_iproduct![len0, f1, ..., fk]</code></p>
-<ul>
-<li><code>len0</code>: 最外次元（0 次元目）の長さ</li>
-<li><code>f1, ..., fk</code>: 各次元の長さを決めるクロージャ。<code>fj</code> は外側 <code>j</code> 個のインデックス
-<code>(i0, ..., i_{j-1})</code> を引数に取り、<code>j</code> 次元目の長さを <code>usize</code> で返す</li>
-</ul>
-<p>返り値は <code>[usize; D]</code>（<code>D</code> はマクロの引数の個数）を生成する遅延イテレータで、
-次のネストした for 文と同じ列を、生成分だけ $O(1)$ ならし時間で列挙します。</p>
+}</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>skew な多次元インデックスの列を、多重 for 文の代わりに列挙する。</p>
+<p>各次元の長さを決めるクロージャ $f_1, \ldots, f_k$ をそのまま引数に並べる。
+<code>fj</code> は外側 $j$ 個のインデックス $(i_0, \ldots, i_{j-1})$ を引数に取り、$j$ 次元目の
+長さを返す。展開後は <code>flat_map</code> の $k$ 重の入れ子になり、次のネストした for 文と
+同じ順序で同じ列を、生成した要素 1 個あたり $O(1)$ ならし時間で列挙する。</p>
 <div class="example-wrap"><pre class="language-text"><code>for i0 in 0..len0 {
     for i1 in 0..f1(i0) {
         ...
@@ -41,22 +36,28 @@
                 yield [i0, i1, ..., ik];
             }
     }
-}</code></pre></div>
-<p>クロージャを省略すると、<code>0..len0</code> と同じ 1 次元のイテレータになります。</p>
-<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
-<p>1 次元（<code>0..len0</code> と同じ）:</p>
+}</code></pre></div><h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p><code>jagged_iproduct![len0, f1, ..., fk]</code></p>
+<ul>
+<li><code>len0</code>：最外次元（0 次元目）の長さ</li>
+<li><code>f1, ..., fk</code>：各次元の長さを決めるクロージャ。省略すると <code>0..len0</code> と同じ
+1 次元のイテレータになる</li>
+<li>返り値：<code>[usize; D]</code>（<code>D</code> はマクロの引数の個数）を生成する遅延イテレータ</li>
+</ul>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
+<p>1 次元（<code>0..len0</code> と同じ）：</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>jagged_iproduct::jagged_iproduct;
 
 <span class="kw">let </span>v = <span class="macro">jagged_iproduct!</span>[<span class="number">3</span>].collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 <span class="macro">assert_eq!</span>(v, <span class="macro">vec!</span>[[<span class="number">0</span>], [<span class="number">1</span>], [<span class="number">2</span>]]);</code></pre></div>
-<p>2 次元（三角形）:</p>
+<p>2 次元（三角形、$0 \le i_1 \le i_0$）：</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>jagged_iproduct::jagged_iproduct;
 
 <span class="kw">let </span>v = <span class="macro">jagged_iproduct!</span>[<span class="number">3</span>, |i| i + <span class="number">1</span>].collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
 <span class="macro">assert_eq!</span>(v, <span class="macro">vec!</span>[[<span class="number">0</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">0</span>], [<span class="number">1</span>, <span class="number">1</span>], [<span class="number">2</span>, <span class="number">0</span>], [<span class="number">2</span>, <span class="number">1</span>], [<span class="number">2</span>, <span class="number">2</span>]]);</code></pre></div>
-<p>3 次元（<code>i + j + k &lt; n</code> を満たす形の skew なインデックス列。三重 for 文の代わりに使えます）:</p>
+<p>3 次元（$i_0 + i_1 + i_2 &lt; n$ を満たす skew な列。三重 for 文の代わりに使える）：</p>
 
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>jagged_iproduct::jagged_iproduct;
 
@@ -70,4 +71,6 @@
     [<span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>],
     [<span class="number">2</span>, <span class="number">0</span>, <span class="number">0</span>],
 ]);</code></pre></div>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<p>要素の生成：1 要素あたり $O(1)$ ならし</p>
 </div></details></section></div></main></body></html>
