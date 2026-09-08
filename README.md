@@ -26,7 +26,7 @@ Requires `cargo-make` and `cargo-nextest` (see `.github/actions/setup-rust/actio
 cargo make install-libbundle
 ```
 
-実行後、シェルの rc ファイルに追記すべき `export AC_ADAPTER_RS_ROOT=...` 行が実際のパス入りで表示されるので、それをコピーして `~/.zshrc` 等に追記してください。
+実行後、`$SHELL` から判定した rc ファイル名（zshなら `~/.zshrc`、bashなら `~/.bashrc`）と、実際のパス入りの `export AC_ADAPTER_RS_ROOT=...` 行が表示されるので、それをそのままコピーして追記してください。
 
 追記後はどこからでも（例えば競プロ用の別リポジトリから）実行できます:
 
@@ -40,7 +40,7 @@ libbundle fp_fps dinic > bundled.rs   # 複数クレートを一度に、dedup�
 libbundle fp_fps --skip-from src/main.rs > new_snippet.rs
 ```
 
-クレート名のシェル補完（`bundler/completions/`）:
+クレート名のシェル補完（`bundler/completions/`）。自分のシェルに合う方だけを設定してください（`echo $SHELL` で確認できます）:
 
 ```sh
 # zsh
