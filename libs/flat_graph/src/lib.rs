@@ -1,66 +1,75 @@
-//! メモリの局所性に気を遣った隣接リスト表現
+//! メモリの局所性に配慮した隣接リスト表現。
 //!
-//! [`Graph`] に説明があります。
+//! CSR（Compressed Sparse Row）形式で隣接リストを保持する。頂点 $i$ の隣接リストは
+//! 連続領域 `edges[start[i]..start[i+1]]` に格納されるため、`Vec<Vec<_>>` のように
+//! 頂点ごとに別々のヒープ領域を確保することがない。構築は counting sort による 1 パスで行い、
+//! 最終的に保持する `start`・`edges` の 2 つの `Vec` 以外に動的メモリ確保は発生しない。
 //!
+//! # 仕様
+//!
+//! - 型: `Graph<E>`（`E` は辺重み。重みなしの場合は `E = usize` で隣接先の頂点番号を表す）
+//! - 構築:
+//!     - [`Graph::from_directed_edges`] — 有向グラフ
+//!     - [`Graph::from_undirected_edges`] — 無向グラフ（逆辺も自動挿入）
+//!     - [`Graph::from_parents`] — 親配列 $p_1, \ldots, p_{n-1}$ から外向き有向木を構築
+//!     - [`Graph::from_directed_edges_with_weight`], [`Graph::from_undirected_edges_with_weight`] — 辺重み付き版
+//! - アクセス: `&g[i]: &[E]` でインデックスアクセス、`g.iter()` で頂点 $0, 1, \ldots, n-1$ の隣接リストを順に走査
+//! - 木の整列: [`Graph::sort_undirected_tree`], [`Graph::sort_undirected_tree_with_weight`] で無向木を、親方向の辺を取り除いた外向き有向木に変換
+//!
+//! # 例
+//!
+//! ```
+//! use flat_graph::Graph;
+//!
+//! let g = Graph::from_undirected_edges(5, &[(0, 1), (0, 2), (2, 4)]);
+//! assert_eq!(g[0], [1, 2]);
+//! assert_eq!(g[1], [0]);
+//! assert_eq!(g[2], [0, 4]);
+//! assert_eq!(g[3], []);
+//! assert_eq!(g[4], [2]);
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築: $O(n + m)$（$n$: 頂点数、$m$: 辺数）
+//! - インデックスアクセス（`g[i]`）: $O(1)$
+//! - 木の整列（[`Graph::sort_undirected_tree`] 等）: $O(n)$
 
 use std::ops::Index;
 
-/// Flat graph です。
+/// CSR 形式で隣接リストを保持するグラフ。
 ///
-/// なるべく `Vec<Vec<_>>` に比べて使いづらくないよう、次のインターフェースを備えています。
+/// 頂点数を $n$ とすると、`start`（長さ $n + 1$）に各頂点の辺区間の開始位置を、
+/// `edges` に辺の実体を保持する。頂点 $i$ の隣接リストは `edges[start[i]..start[i+1]]`。
 ///
-/// * Index access: `&g[i]: &[E]`
-/// * Iterator: `g.iter()`, `for _ in &g`
-///
-///
-/// # Example
+/// # 例
 ///
 /// ```
 /// use flat_graph::Graph;
 ///
-/// let g = Graph::from_undirected_edges(
-///     5,
-///     &[(0, 1), (0, 2), (2, 4)],
-/// );
-///
+/// let g = Graph::from_undirected_edges(5, &[(0, 1), (0, 2), (2, 4)]);
 /// assert_eq!(g[0], [1, 2]);
 /// assert_eq!(g[1], [0]);
 /// assert_eq!(g[2], [0, 4]);
 /// assert_eq!(g[3], []);
 /// assert_eq!(g[4], [2]);
 /// ```
-///
-/// # 構築アルゴリズム
-///
-/// Counting sort で構築する。
-/// 最終的に [`Graph`] に store される $2$ つの [`Vec`] 以外には、動的メモリ確保を行わない。
-///
-/// | 名前 | 長さ | 意味 |
-/// | - | - | - |
-/// | `start` | $n + 1$ | `tar` における offset |
-/// | `tar` | 有向辺の本数 | 辺の実体 |
-///
-/// # 構築インターフェース
-///
-/// * [`from_undirected_edges`](Graph::from_undirected_edges): 逆辺も挿入する
 #[derive(Clone, Debug)]
 pub struct Graph<E> {
     start: Vec<usize>,
     edges: Vec<E>,
 }
 impl Graph<usize> {
-    /// $p_1, p_2, \dots, p_{n-1}$ を受け取って、外向き有向木を構築する
+    /// 親配列 $p_1, p_2, \ldots, p_{n-1}$（頂点 $i$ の親が $p_i$）から外向き有向木を構築する。
     ///
-    /// 各隣接リストはソート済みになります。
+    /// 各隣接リストはソート済みになる。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
     ///
-    /// let g = Graph::from_parents(
-    ///     &[0, 0, 1],
-    /// );
+    /// let g = Graph::from_parents(&[0, 0, 1]);
     ///
     /// assert_eq!(g[0], [1, 2]);
     /// assert_eq!(g[1], [3]);
@@ -76,11 +85,11 @@ impl Graph<usize> {
             parents.iter().copied().zip(1..),
         )
     }
-    /// 有向グラフを構築する
+    /// 有向グラフを構築する。
     ///
-    /// 各隣接リストは入力の順番通りになります。
+    /// 各隣接リストは入力の辺の順番通りになる。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -105,15 +114,11 @@ impl Graph<usize> {
         )
     }
 
-    /// 無向グラフを、片方の辺だけを入力として構築する
+    /// 無向グラフを、片方向の辺のみを入力として構築する。
     ///
-    /// 各隣接リストは次のような順番になります。
+    /// 各隣接リストは、入力そのままの辺を順番通りに並べた後、逆辺を順番通りに続けたものになる。
     ///
-    /// * まず、入力そのままの辺を順番通りに
-    /// * その後で、逆辺を順番通りに
-    ///
-    ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -138,9 +143,21 @@ impl Graph<usize> {
         )
     }
 
-    /// 無向グラフ表現された木を外向き有向木表現にして、`(sorted, parent)` を返す
+    /// 無向木を根 `root` からの外向き有向木に変換し、`(sorted, parent)` を返す。
     ///
-    /// # Example
+    /// 根からの深さ優先探索の訪問順を `sorted` に、各頂点の親を `parent` に格納する。
+    /// `self` の各隣接リストからは、親方向への辺が取り除かれる。
+    ///
+    /// # 仕様
+    ///
+    /// - `sorted`: 深さ優先探索の訪問順の頂点列（`sorted[0] == root`）
+    /// - `parent[i]`: 頂点 $i$ の親（`parent[root] == root`）
+    ///
+    /// # 計算量
+    ///
+    /// $O(n)$
+    ///
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -169,11 +186,11 @@ impl Graph<usize> {
 }
 
 impl<T: Copy + Default> Graph<(usize, T)> {
-    /// 重み付き有向グラフを構築する
+    /// 辺重み付き有向グラフを構築する。
     ///
-    /// 各隣接リストは入力の順番通りになります。
+    /// 各要素は `(隣接先の頂点番号, 辺重み)` のペア。各隣接リストは入力の辺の順番通りになる。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -198,15 +215,12 @@ impl<T: Copy + Default> Graph<(usize, T)> {
         )
     }
 
-    /// 無向グラフを、片方の辺だけを入力として構築する
+    /// 辺重み付き無向グラフを、片方向の辺のみを入力として構築する。
     ///
-    /// 各隣接リストは次のような順番になります。
+    /// 各要素は `(隣接先の頂点番号, 辺重み)` のペア。逆辺には元の辺と同じ重みが割り当てられる。
+    /// 各隣接リストは、入力そのままの辺を順番通りに並べた後、逆辺を順番通りに続けたものになる。
     ///
-    /// * まず、入力そのままの辺を順番通りに
-    /// * その後で、逆辺を順番通りに
-    ///
-    ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -233,9 +247,11 @@ impl<T: Copy + Default> Graph<(usize, T)> {
         )
     }
 
-    /// 無向グラフ表現された木を外向き有向木表現にして、`(sorted, parent)` を返す
+    /// 辺重み付き無向木を根 `root` からの外向き有向木に変換し、`(sorted, parent)` を返す。
     ///
-    /// # Example
+    /// [`Graph::sort_undirected_tree`] の辺重み付き版。仕様・計算量は同様。
+    ///
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -288,6 +304,14 @@ impl<E: Default + Clone> Graph<E> {
         Self { start, edges: tar }
     }
 
+    /// [`Graph::sort_undirected_tree`] / [`Graph::sort_undirected_tree_with_weight`] の一般化版。
+    ///
+    /// 辺 `E` から隣接先の頂点番号を取り出す関数 `tar` を受け取る。仕様は
+    /// [`Graph::sort_undirected_tree`] を参照。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n)$
     pub fn sort_undirected_tree_generic(
         &mut self,
         root: usize,
@@ -332,9 +356,9 @@ impl<E: Default + Clone> Graph<E> {
 }
 
 impl<E> Graph<E> {
-    /// 各頂点の隣接リストを訪問するイテレータを構築する
+    /// 頂点 $0, 1, \ldots, n-1$ の隣接リストを順に返すイテレータを構築する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use flat_graph::Graph;
@@ -378,7 +402,7 @@ impl<'a, E> IntoIterator for &'a Graph<E> {
     }
 }
 
-/// [`Graph::iter`] の戻り値
+/// [`Graph::iter`] の戻り値の型。
 pub struct Iter<'a, E> {
     index: usize,
     graph: &'a Graph<E>,

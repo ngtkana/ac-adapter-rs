@@ -13,33 +13,33 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [x] `convex_hull`
 - [x] `dinic`
 - [x] `dual_segtree`
-- [ ] `dynamic_modint`
-- [ ] `elim`
-- [ ] `euclid`
-- [ ] `fenwick`
-- [ ] `flat_graph`
-- [ ] `fp_fft`
-- [ ] `fp_fps`
-- [ ] `fp_precalc`
-- [ ] `gco`
-- [ ] `gss`
-- [ ] `heap_slope_trick`
-- [ ] `heap_tricks`
-- [ ] `hungarian`
-- [ ] `interval_heap`
-- [ ] `intrusive_splay_tree`
-- [ ] `io_reader`
-- [ ] `io_writer`
-- [ ] `jagged_iproduct`
-- [ ] `jagged_iterator`
-- [ ] `jagged_vec`
-- [ ] `jolt`
-- [ ] `lazy_segbeats`
-- [ ] `lg`
-- [ ] `link_cut_tree`
-- [ ] `low_link`
-- [ ] `manacher`
-- [ ] `matrix`
+- [x] `dynamic_modint`
+- [x] `elim`
+- [x] `euclid`
+- [x] `fenwick`
+- [x] `flat_graph`
+- [x] `fp_fft`
+- [x] `fp_fps`
+- [x] `fp_precalc`
+- [x] `gco`
+- [x] `gss`
+- [x] `heap_slope_trick`
+- [x] `heap_tricks`
+- [x] `hungarian`
+- [x] `interval_heap`
+- [x] `intrusive_splay_tree`
+- [x] `io_reader`
+- [x] `io_writer`
+- [x] `jagged_iproduct`
+- [x] `jagged_iterator`
+- [x] `jagged_vec`
+- [x] `jolt`
+- [x] `lazy_segbeats`
+- [x] `lg`
+- [x] `link_cut_tree`
+- [x] `low_link`
+- [x] `manacher`
+- [x] `matrix`
 - [x] `max_flow`
 - [x] `mincost_flow`
 - [x] `monotone_minima`

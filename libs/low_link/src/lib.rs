@@ -1,12 +1,53 @@
-//! Low-link を計算します。
+//! 無向グラフの low-link を計算し、関節点・橋・(2-)連結成分分解を求める。
 //!
-//! [詳しくは `LowLink` 構造体をご覧ください。](LowLink)
+//! DFS 木を構築し、各頂点に pre-order 番号 $\mathrm{ord}(v)$ を振ったうえで、
+//! $v$ の部分木から木辺を任意回・後退辺を高々 1 回辿って到達できる頂点の
+//! $\mathrm{ord}$ の最小値 $\mathrm{low}(v)$ を帰りがけ順に計算する。
+//! 関節点・橋はこの $\mathrm{ord}$ と $\mathrm{low}$ の大小比較だけで判定でき、
+//! さらに DFS の帰りがけ順に辺・頂点をスタックへ積んで条件成立ごとに区切ることで
+//! 2-連結成分・2-辺連結成分の分解も得られる。
+//!
+//! # 仕様
+//!
+//! - 型: [`LowLink`]（グラフは無向・多重辺・自己ループを許容）
+//! - 構築: [`LowLink::new`] で頂点数 $n$ の空グラフを作り、[`LowLink::add_edge`] で辺を
+//!   追加し、[`LowLink::build`] でビルドする
+//! - 頂点が関節点か判定: [`LowLink::is_articulation_point`]
+//! - 辺が橋か判定（辺が存在しないときの戻り値は未定義）: [`LowLink::is_bridge_unchecked`]
+//! - 2-連結成分分解（辺の分割）: [`LowLink::biconnected_components`]
+//! - 2-辺連結成分分解（頂点の分割）: [`LowLink::two_edge_components`]
+//!
+//! # 例
+//!
+//! ```
+//! use low_link::LowLink;
+//!
+//! let mut low_link = LowLink::new(4);
+//! low_link.add_edge(0, 1);
+//! low_link.add_edge(0, 2);
+//! low_link.add_edge(1, 2);
+//! low_link.add_edge(2, 3);
+//! low_link.build();
+//!
+//! assert!(low_link.is_articulation_point(2)); // 頂点 2 を除くと頂点 3 が孤立
+//! assert!(low_link.is_bridge_unchecked(2, 3)); // 辺 (2, 3) は橋
+//! ```
+//!
+//! # 計算量
+//!
+//! - ビルド（[`LowLink::build`]）: $O(n + m)$（$n$: 頂点数、$m$: 辺数）
+//! - 関節点判定（[`LowLink::is_articulation_point`]）: $O(\deg x)$
+//! - 橋判定（[`LowLink::is_bridge_unchecked`]）: $O(1)$
+//! - 各種成分分解（[`LowLink::biconnected_components`], [`LowLink::two_edge_components`]）: $O(n + m)$
 
 use std::mem::replace;
 use std::mem::swap;
 use std::mem::take;
 
-/// Low-link を計算する構造体です。
+/// 無向グラフの low-link を管理する構造体。
+///
+/// [`add_edge`](Self::add_edge) で辺を追加してから [`build`](Self::build) を呼ぶと、
+/// 関節点・橋・(2-)連結成分分解のクエリに答えられるようになる。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq)]
 pub struct LowLink {
     g: Vec<Vec<usize>>, /* 隣接リストです。未ビルドならば無向グラフ、ビルド済みならば木辺と後退辺のみが入っています。 */
@@ -17,9 +58,9 @@ pub struct LowLink {
     built: bool,     // ビルド済みなら `true`
 }
 impl LowLink {
-    /// 未ビルドの空グラフを構築します。
+    /// 頂点数 $n$、辺なしの未ビルドグラフを構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -32,9 +73,9 @@ impl LowLink {
         }
     }
 
-    /// 未ビルドのグラフに（無向）辺を追加します。
+    /// 未ビルドのグラフに無向辺 $\{i, j\}$ を追加する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -48,9 +89,17 @@ impl LowLink {
         self.g[j].push(i);
     }
 
-    /// ビルドします。
+    /// グラフをビルドし、各種クエリに答えられるようにする。
     ///
-    /// # Examples
+    /// DFS で各頂点に pre-order 番号 $\mathrm{ord}(v)$ を振り、木辺を任意回・後退辺を
+    /// 高々 1 回辿って到達できる頂点の $\mathrm{ord}$ の最小値 $\mathrm{low}(v)$ を
+    /// 帰りがけ順に計算する。連結成分ごとに最初に訪れた頂点が、その成分の DFS 木の根になる。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n + m)$（$n$: 頂点数、$m$: 辺数）
+    ///
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -97,9 +146,16 @@ impl LowLink {
         }
     }
 
-    /// 頂点 `x` が関節点なら `true` を返します。
+    /// 頂点 `x` が関節点（取り除くとグラフが非連結になる頂点）なら `true` を返す。
     ///
-    /// # Examples
+    /// 根なら子が 2 つ以上あるとき、根でなければある子 $y$ が
+    /// $\mathrm{ord}(x) \le \mathrm{low}(y)$ を満たすとき関節点となる。
+    ///
+    /// # 計算量
+    ///
+    /// $O(\deg x)$
+    ///
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -124,10 +180,17 @@ impl LowLink {
         }
     }
 
-    /// 頂点 `x`, `y` を結ぶ（無向）辺があれば、それが橋であるときに `ture` を返します。
-    /// 辺がないときの戻り値は未定義です。
+    /// 頂点 `x`, `y` を結ぶ辺が橋（取り除くとグラフが非連結になる辺）なら `true` を返す。
     ///
-    /// # Examples
+    /// 辺 $\{x, y\}$ が存在しない場合の戻り値は未定義。DFS 木で `x`, `y` のうち
+    /// 子側を $c$、親側を $p$ とすると、$\mathrm{ord}(p) < \mathrm{low}(c)$ が橋の条件
+    /// （等号だと $c$ の部分木から $p$ 自身へ戻る後退辺がある）。
+    ///
+    /// # 計算量
+    ///
+    /// $O(1)$
+    ///
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -149,9 +212,18 @@ impl LowLink {
         self.parent[y] == x && self.ord[x] < self.low[y]
     }
 
-    /// 2-連結成分分解をして、各成分に属する辺のリストのリストを返します。
+    /// 2-連結成分分解をし、各成分に属する辺のリストのリストを返す。
     ///
-    /// # Examples
+    /// 2-連結成分とは、任意の 2 頂点間に関節点を共有しない経路が存在する極大な部分グラフ。
+    /// DFS の帰りがけ順に辺をスタックへ積み、関節点の条件
+    /// $\mathrm{ord}(x) \le \mathrm{low}(y)$ が成り立つたびに、スタックの該当区間を
+    /// 1 つの成分として取り出す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n + m)$（$n$: 頂点数、$m$: 辺数）
+    ///
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;
@@ -204,9 +276,17 @@ impl LowLink {
         }
     }
 
-    /// 2-辺連結成分分解をして、各成分に属する頂点のリストのリストを返します。
+    /// 2-辺連結成分分解をし、各成分に属する頂点のリストのリストを返す。
     ///
-    /// # Examples
+    /// 2-辺連結成分とは、グラフから橋をすべて取り除いた後にできる各連結成分のこと。
+    /// DFS の帰りがけ順に頂点をスタックへ積み、橋の条件 $\mathrm{ord}(x) < \mathrm{low}(y)$
+    /// が成り立つたびに、スタックの該当区間を 1 つの成分として取り出す。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n + m)$（$n$: 頂点数、$m$: 辺数）
+    ///
+    /// # 例
     ///
     /// ```
     /// # use low_link::LowLink;

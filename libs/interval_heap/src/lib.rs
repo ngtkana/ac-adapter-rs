@@ -1,32 +1,67 @@
-//! # Interval Heaps
+//! 両端優先度キュー（interval heap）
+//!
+//! 要素を 2 個ずつ組にしてノードとし、各ノードが区間 $[\min, \max]$ を表す完全二分木として実装する。
+//! 偶数位置の列全体は最小値についての二分ヒープ、奇数位置の列全体は最大値についての二分ヒープをなし、
+//! さらに同じノード内では偶数位置の値が奇数位置の値以下に保たれる。この 3 つの不変量により、
+//! 最小値・最大値の両方を根の近くに保ったまま $O(\log n)$ で挿入・削除できる。
+//!
+//! # 仕様
+//!
+//! 多重集合 $S$ を管理する。
+//!
+//! - [`IntervalHeap::new`][]: 空の $S$ を構築
+//! - [`IntervalHeap::push`][]: $x$ を挿入（$S \leftarrow S \uplus \{x\}$）
+//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`][]: $\min(S)$, $\max(S)$ を参照
+//! - [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`][]: $\min(S)$, $\max(S)$ を削除して返す
+//! - `From<Vec<T>>`: 任意の列から $S$ を構築
+//! - `Extend`, `FromIterator`, `IntoIterator` も実装する
+//!
+//! # 例
+//!
+//! ```
+//! use interval_heap::IntervalHeap;
+//!
+//! let mut heap = IntervalHeap::from(vec![3, 1, 4, 1, 5]);
+//! assert_eq!(heap.peek_min(), Some(&1));
+//! assert_eq!(heap.peek_max(), Some(&5));
+//! assert_eq!(heap.pop_min(), Some(1));
+//! assert_eq!(heap.pop_max(), Some(5));
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築（`From<Vec<T>>`）: $O(n)$
+//! - [`IntervalHeap::push`], [`IntervalHeap::pop_min`], [`IntervalHeap::pop_max`][]: $O(\log n)$
+//! - [`IntervalHeap::peek_min`], [`IntervalHeap::peek_max`][]: $O(1)$
+//!
+//! # 出典
 //!
 //! van Leeuwen, Jan, and Derick Wood. "Interval heaps." The Computer Journal 36.3 (1993): 209-216.
-//!
-//!
-//! * Double-ended priority queue: [`IntervalHeap`]
 
-/// Interval heap (double-ended priority queue)
+/// 両端優先度キュー（interval heap）。多重集合 $S$ を管理する。
+///
+/// 要素を 2 個ずつ組にしたノードからなる完全二分木として内部に保持する。詳細はモジュールの説明を参照。
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct IntervalHeap<T: Ord> {
     values: Vec<T>,
 }
 impl<T: Ord> IntervalHeap<T> {
-    /// Constructs a new, empty interval heap.
+    /// 空の $S$ を構築する。
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// Returns $\min(S)$.
+    /// $\min(S)$ を返す。$S$ が空なら `None`。
     pub fn peek_min(&self) -> Option<&T> {
         self.values.first()
     }
 
-    /// Returns $\max(S)$.
+    /// $\max(S)$ を返す。$S$ が空なら `None`。
     pub fn peek_max(&self) -> Option<&T> {
         self.values.get(1).or_else(|| self.values.first())
     }
 
-    /// Removes and returns $\min(S)$.
+    /// $\min(S)$ を削除して返す。$S$ が空なら `None`。
     pub fn pop_min(&mut self) -> Option<T> {
         (!self.values.is_empty()).then_some(())?;
         let ret = self.values.swap_remove(0);
@@ -34,7 +69,7 @@ impl<T: Ord> IntervalHeap<T> {
         Some(ret)
     }
 
-    /// Removes and returns $\max(S)$.
+    /// $\max(S)$ を削除して返す。$S$ が空なら `None`。
     pub fn pop_max(&mut self) -> Option<T> {
         if self.values.len() <= 2 {
             return self.values.pop();
@@ -44,7 +79,7 @@ impl<T: Ord> IntervalHeap<T> {
         Some(ret)
     }
 
-    /// $S \leftarrow S \cup \\{\\!\\{x\\}\\!\\}$.
+    /// $x$ を挿入する（$S \leftarrow S \uplus \{x\}$）。
     pub fn push(&mut self, x: T) {
         self.values.push(x);
         let n = self.values.len();
@@ -73,11 +108,13 @@ impl<T: Ord> IntervalHeap<T> {
         }
     }
 }
+/// 空の $S$ を構築する。[`IntervalHeap::new`] と同じ。
 impl<T: Ord> Default for IntervalHeap<T> {
     fn default() -> Self {
         Self { values: Vec::new() }
     }
 }
+/// `values` の要素からなる $S$ を $O(n)$ で構築する（ボトムアップに heapify）。
 impl<T: Ord> From<Vec<T>> for IntervalHeap<T> {
     fn from(mut values: Vec<T>) -> Self {
         for i in (0..values.len()).rev() {
@@ -90,6 +127,7 @@ impl<T: Ord> From<Vec<T>> for IntervalHeap<T> {
         Self { values }
     }
 }
+/// `iter` の要素を順に [`IntervalHeap::push`] する。
 impl<T: Ord> Extend<T> for IntervalHeap<T> {
     fn extend<I: IntoIterator<Item = T>>(&mut self, iter: I) {
         for x in iter {
@@ -97,6 +135,7 @@ impl<T: Ord> Extend<T> for IntervalHeap<T> {
         }
     }
 }
+/// $S$ の要素を（順序を保証せず）走査するイテレータを返す。
 impl<T: Ord> IntoIterator for IntervalHeap<T> {
     type IntoIter = std::vec::IntoIter<T>;
     type Item = T;
@@ -105,6 +144,7 @@ impl<T: Ord> IntoIterator for IntervalHeap<T> {
         self.values.into_iter()
     }
 }
+/// `iter` の要素からなる $S$ を構築する。
 impl<T: Ord> std::iter::FromIterator<T> for IntervalHeap<T> {
     fn from_iter<I: IntoIterator<Item = T>>(iter: I) -> Self {
         let mut ret = Self::new();

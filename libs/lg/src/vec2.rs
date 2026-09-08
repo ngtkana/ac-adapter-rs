@@ -6,6 +6,9 @@ use crate::table::Table;
 use std::fmt;
 use std::iter;
 
+/// 2 次元配列を `Table` に変換する。1 行目に列番号、1 列目に行番号を振り、各セルは値を `format` で整形した文字列にする。`table!` マクロの実体。
+///
+/// 行ごとの長さが揃っていなくてもよい。足りないセルは空文字で埋める。
 pub fn vec2<'a, T, R, S>(title: &str, vec2: &'a S) -> Table
 where
     T: fmt::Debug + 'a,

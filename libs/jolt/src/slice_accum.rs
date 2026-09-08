@@ -1,19 +1,30 @@
 use std::ops::AddAssign;
 use std::ops::SubAssign;
 
-/// Prefix sum, suffix sum, etc.
+/// スライス $A$ の累積和・その逆変換をまとめたトレイト。全て破壊的（in-place）に書き換える。
+///
+/// # 例
+///
+/// ```
+/// use riff::SliceAccum;
+/// let mut a = [1, 2, 3, 4, 5];
+/// a.prefix_sum();
+/// assert_eq!(a, [1, 3, 6, 10, 15]);
+/// a.prefix_sum_inv();
+/// assert_eq!(a, [1, 2, 3, 4, 5]);
+/// ```
 pub trait SliceAccum<T> {
-    /// Apply $f$ to each adjacent pair from left to right.
+    /// 隣接する要素対 $(A_{i-1}, A_i)$ に、$i = 1, \ldots, n-1$ の順に $f$ を適用する。
     fn for_each_forward<F>(&mut self, f: F)
     where
         F: FnMut(&mut T, &mut T);
 
-    /// Apply $f$ to each adjacent pair from right to left.
+    /// 隣接する要素対 $(A_{i-1}, A_i)$ に、$i = n-1, \ldots, 1$ の順に $f$ を適用する。
     fn for_each_backward<F>(&mut self, f: F)
     where
         F: FnMut(&mut T, &mut T);
 
-    /// Replace $A_i$ with $\sum_{j=0}^{i} A_j$.
+    /// 累積和に変換する：$A_i \gets \sum_{j=0}^{i} A_j$。
     fn prefix_sum(&mut self)
     where
         for<'a> T: AddAssign<&'a T>,
@@ -21,7 +32,7 @@ pub trait SliceAccum<T> {
         self.for_each_forward(|x, y| *x += y);
     }
 
-    /// Replace $A_i$ with $A_i - A_{i-1}$.
+    /// [`prefix_sum`](Self::prefix_sum) の逆変換：$A_i \gets A_i - A_{i-1}$（$A_{-1} = 0$）。
     fn prefix_sum_inv(&mut self)
     where
         for<'a> T: SubAssign<&'a T>,
@@ -29,7 +40,7 @@ pub trait SliceAccum<T> {
         self.for_each_backward(|x, y| *y -= x);
     }
 
-    /// Replace $A_i$ with $\sum_{j=i}^{n-1} A_j$.
+    /// 逆順の累積和に変換する：$A_i \gets \sum_{j=i}^{n-1} A_j$。
     fn suffix_sum(&mut self)
     where
         for<'a> T: AddAssign<&'a T>,
@@ -37,7 +48,7 @@ pub trait SliceAccum<T> {
         self.for_each_backward(|x, y| *x += y);
     }
 
-    /// Replace $A_i$ with $A_i - A_{i+1}$.
+    /// [`suffix_sum`](Self::suffix_sum) の逆変換：$A_i \gets A_i - A_{i+1}$（$A_n = 0$）。
     fn suffix_sum_inv(&mut self)
     where
         for<'a> T: SubAssign<&'a T>,

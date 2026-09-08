@@ -4,6 +4,9 @@ use crate::align_of;
 use crate::table::Align;
 use std::iter;
 
+/// 名前付きの文字列列 `(名前, 値の列)` を、各列を 1 行とする横向きの `Table` に変換する。`hvec!` マクロの実体。
+///
+/// 列ごとに長さが異なってもよい。足りないセルは空文字で埋める。
 pub fn hvec(vecs: &[(String, Vec<String>)]) -> Table {
     let w = vecs.iter().map(|(_, row)| row.len()).max().unwrap();
     Table {
@@ -38,6 +41,9 @@ pub fn hvec(vecs: &[(String, Vec<String>)]) -> Table {
     }
 }
 
+/// 名前付きの文字列列 `(名前, 値の列)` を、各列を 1 列とする縦向きの `Table` に変換する。`vvec!` マクロの実体。
+///
+/// 列ごとに長さが異なってもよい。足りないセルは空文字で埋める。
 pub fn vvec(vecs: &[(String, Vec<String>)]) -> Table {
     let h = vecs.iter().map(|(_, col)| col.len()).max().unwrap();
     Table {

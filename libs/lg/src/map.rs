@@ -11,6 +11,7 @@ use std::iter;
 use std::slice;
 use std::vec;
 
+/// マップを縦向きの表に変換する。1 行目に見出し、以降 1 行ずつ `キー | 値` を並べる。`vmap!` マクロの実体。
 pub fn vmap<'a, K, V, M>(title: &str, map: M) -> Table
 where
     M: Copy + Map<'a, K = K, V = V>,
@@ -45,6 +46,7 @@ where
     }
 }
 
+/// マップを横向きの表に変換する。1 行目にキーを、2 行目に値を並べる。`hmap!` マクロの実体。
 pub fn hmap<'a, K, V, M>(title: &str, map: M) -> Table
 where
     M: Copy + Map<'a, K = K, V = V>,
@@ -78,14 +80,22 @@ where
     }
 }
 
+/// `&(K, V)` を `(&K, &V)` に分解する。スライスや `Vec` に対する `Map::map_iter` の実装で使う。
 pub fn deconstruct_ref_tuple<K, V>((k, v): &(K, V)) -> (&K, &V) {
     (k, v)
 }
 
+/// `vmap`/`hmap` がマップ的なコンテナを一様に走査するためのトレイト。
+///
+/// `HashMap`, `BTreeMap`, `&[(K, V)]`, `Vec<(K, V)>`, `[(K, V); N]` への参照に実装する。
 pub trait Map<'a>: 'a {
+    /// キーの型。
     type K;
+    /// 値の型。
     type V;
+    /// `(&K, &V)` を返すイテレータの型。
     type I: Iterator<Item = (&'a Self::K, &'a Self::V)>;
+    /// キーと値のペアを走査するイテレータを返す。
     fn map_iter(self) -> Self::I;
 }
 
