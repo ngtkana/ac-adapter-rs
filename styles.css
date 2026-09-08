@@ -2,6 +2,7 @@
   --color-text-primary: #332b20;
   --color-text-secondary: #6b5d46;
   --color-text-tertiary: #7d6e52;
+  --color-text-quaternary: #807054;
   --color-bg-primary: #fffdf6;
   --color-bg-hover: #fff2ce;
   --color-border: #f0e0b0;
@@ -232,6 +233,12 @@ a:focus-visible,
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: .76rem;
+  color: var(--color-text-quaternary);
+}
+
+/* hover/selected 時は背景が濃くなりコントラストが下がるため、視認性を保つ濃さに戻す */
+.catalog-item:hover .desc,
+.catalog-item.selected .desc {
   color: var(--color-text-tertiary);
 }
 
@@ -383,6 +390,7 @@ a:focus-visible,
     --color-text-primary: #f5e6c8;
     --color-text-secondary: #d8c39a;
     --color-text-tertiary: #a98f63;
+    --color-text-quaternary: #9d8357;
     --color-bg-primary: #241a0d;
     --color-bg-hover: #3a2a12;
     --color-border: #4a3820;
