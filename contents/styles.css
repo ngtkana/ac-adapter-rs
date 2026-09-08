@@ -20,7 +20,10 @@ body,
 }
 
 body {
-  font-family: -apple-system, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
+    "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Segoe UI", sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
   color: var(--color-text-primary);
 }
 
@@ -94,7 +97,7 @@ body {
 }
 
 .catalog-search .hint {
-  font-size: .65rem;
+  font-size: .72rem;
   color: var(--color-text-tertiary);
   margin-top: .25rem;
 }
@@ -106,10 +109,13 @@ body {
 }
 
 .catalog-item {
-  display: block;
-  padding: .22rem .7rem;
+  display: flex;
+  align-items: baseline;
+  gap: .5rem;
+  padding: .3rem .7rem;
   cursor: pointer;
-  line-height: 1.25;
+  white-space: nowrap;
+  overflow: hidden;
 }
 
 .catalog-item:hover,
@@ -118,15 +124,19 @@ body {
 }
 
 .catalog-item .name {
-  font-size: .8rem;
+  flex: 0 0 auto;
+  font-size: .85rem;
   font-weight: 600;
   color: var(--color-accent);
 }
 
 .catalog-item .desc {
-  font-size: .68rem;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: .76rem;
   color: var(--color-text-tertiary);
-  margin-left: .5rem;
 }
 
 .catalog-main {
@@ -159,7 +169,7 @@ body {
   flex-wrap: wrap;
   align-items: center;
   gap: .5rem;
-  font-size: .72rem;
+  font-size: .8rem;
   color: var(--color-text-tertiary);
   margin-bottom: .8rem;
   padding-bottom: .6rem;
@@ -179,11 +189,19 @@ body {
   color: var(--color-accent);
 }
 
+.doc-body {
+  line-height: 1.7;
+}
+
 .doc-body h1 {
   font-size: 1rem;
   margin-top: 1.2rem;
   border-bottom: 1px solid var(--color-border-light);
   padding-bottom: .25rem;
+}
+
+.doc-body a {
+  color: var(--color-accent);
 }
 
 .doc-body pre {
@@ -199,6 +217,28 @@ body {
   background: var(--code-bg);
   padding: 0 .2rem;
   border-radius: 3px;
+}
+
+/* ショートカットバー */
+#shortcuts-bar {
+  flex: 0 0 auto;
+  display: flex;
+  gap: 1rem;
+  padding: .35rem 1.25rem;
+  border-top: 1px solid var(--color-border);
+  font-size: .72rem;
+  color: var(--color-text-secondary);
+}
+
+#shortcuts-bar kbd {
+  display: inline-block;
+  padding: .05rem .35rem;
+  border: 1px solid var(--color-border);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  font-family: inherit;
+  font-size: .9em;
+  background: var(--color-header-bg);
 }
 
 @media (prefers-color-scheme: dark) {
