@@ -22,44 +22,44 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">riff/</div>iterator_successors.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// `successors` for `Iterator`
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">riff/</div>iterator_successors.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">/// `Iterator` に `successors` 風の逐次計算を追加するトレイト。
 <a href=#2 id=2 data-nosnippet>2</a></span><span class="kw">pub trait </span>IteratorSuccessors: Iterator {
-<a href=#3 id=3 data-nosnippet>3</a>    <span class="doccomment">/// Creates an iterator like [`std::iter::successors`], but unlike it, uses an iterator to
-<a href=#4 id=4 data-nosnippet>4</a>    /// calculate the next element.
-<a href=#5 id=5 data-nosnippet>5</a>    ///
-<a href=#6 id=6 data-nosnippet>6</a>    /// # Specification
+<a href=#3 id=3 data-nosnippet>3</a>    <span class="doccomment">/// `self` の要素を使って次の値を計算する、[`std::iter::successors`] 風のイテレータを作る。
+<a href=#4 id=4 data-nosnippet>4</a>    ///
+<a href=#5 id=5 data-nosnippet>5</a>    /// `std::iter::successors` は直前の値だけから次の値を計算するが、こちらは加えて
+<a href=#6 id=6 data-nosnippet>6</a>    /// `self` から 1 つずつ要素を取り出して計算に使う。
 <a href=#7 id=7 data-nosnippet>7</a>    ///
-<a href=#8 id=8 data-nosnippet>8</a>    /// Returns an iterator that generates the sequence $b_0, b_1, \ldots$ where:
+<a href=#8 id=8 data-nosnippet>8</a>    /// # 仕様
 <a href=#9 id=9 data-nosnippet>9</a>    ///
-<a href=#10 id=10 data-nosnippet>10</a>    /// * `self`: $a_0, a_1, \ldots, a_{n - 1}$
-<a href=#11 id=11 data-nosnippet>11</a>    /// * `first`: $b_0$
-<a href=#12 id=12 data-nosnippet>12</a>    /// * `succ`: $f(a_i, b_i) = b_{i + 1}$
+<a href=#10 id=10 data-nosnippet>10</a>    /// `self` を $a_0, a_1, \ldots, a_{n-1}$、`first` を $b_0$ とし、
+<a href=#11 id=11 data-nosnippet>11</a>    /// $b_{i+1} = \mathrm{succ}(a_i, b_i)$ で定まる列 $b_0, b_1, \ldots$ を返す
+<a href=#12 id=12 data-nosnippet>12</a>    /// （`succ` が `None` を返すか `self` が尽きたら終了）。
 <a href=#13 id=13 data-nosnippet>13</a>    ///
-<a href=#14 id=14 data-nosnippet>14</a>    ///
-<a href=#15 id=15 data-nosnippet>15</a>    /// # Example
-<a href=#16 id=16 data-nosnippet>16</a>    ///
-<a href=#17 id=17 data-nosnippet>17</a>    /// ```
-<a href=#18 id=18 data-nosnippet>18</a>    /// # use riff::IteratorSuccessors;
-<a href=#19 id=19 data-nosnippet>19</a>    /// let a = (1..=3)
-<a href=#20 id=20 data-nosnippet>20</a>    ///     .successors(Some([0]), |x, &amp;[y]| Some([x + y]))
-<a href=#21 id=21 data-nosnippet>21</a>    ///     .collect::&lt;Vec&lt;_&gt;&gt;();
-<a href=#22 id=22 data-nosnippet>22</a>    /// assert_eq!(a.as_slice(), &amp;[[0], [1], [3], [6]]);
-<a href=#23 id=23 data-nosnippet>23</a>    /// ```
-<a href=#24 id=24 data-nosnippet>24</a>    </span><span class="kw">fn </span>successors&lt;T, F&gt;(<span class="self">self</span>, first: <span class="prelude-ty">Option</span>&lt;T&gt;, succ: F) -&gt; IterSuccessors&lt;<span class="self">Self</span>, T, F&gt;
-<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">where
-<a href=#26 id=26 data-nosnippet>26</a>        </span><span class="self">Self</span>: Sized,
-<a href=#27 id=27 data-nosnippet>27</a>        F: FnMut(<span class="self">Self</span>::Item, <span class="kw-2">&amp;</span>T) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;,
-<a href=#28 id=28 data-nosnippet>28</a>    {
-<a href=#29 id=29 data-nosnippet>29</a>        IterSuccessors {
-<a href=#30 id=30 data-nosnippet>30</a>            iter: <span class="self">self</span>,
-<a href=#31 id=31 data-nosnippet>31</a>            next: first,
-<a href=#32 id=32 data-nosnippet>32</a>            succ,
-<a href=#33 id=33 data-nosnippet>33</a>        }
-<a href=#34 id=34 data-nosnippet>34</a>    }
-<a href=#35 id=35 data-nosnippet>35</a>}
-<a href=#36 id=36 data-nosnippet>36</a><span class="kw">impl</span>&lt;I: Iterator&gt; IteratorSuccessors <span class="kw">for </span>I {}
-<a href=#37 id=37 data-nosnippet>37</a>
-<a href=#38 id=38 data-nosnippet>38</a><span class="kw">pub struct </span>IterSuccessors&lt;I, T, F&gt; {
+<a href=#14 id=14 data-nosnippet>14</a>    /// # 例
+<a href=#15 id=15 data-nosnippet>15</a>    ///
+<a href=#16 id=16 data-nosnippet>16</a>    /// ```
+<a href=#17 id=17 data-nosnippet>17</a>    /// # use riff::IteratorSuccessors;
+<a href=#18 id=18 data-nosnippet>18</a>    /// let a = (1..=3)
+<a href=#19 id=19 data-nosnippet>19</a>    ///     .successors(Some([0]), |x, &amp;[y]| Some([x + y]))
+<a href=#20 id=20 data-nosnippet>20</a>    ///     .collect::&lt;Vec&lt;_&gt;&gt;();
+<a href=#21 id=21 data-nosnippet>21</a>    /// assert_eq!(a.as_slice(), &amp;[[0], [1], [3], [6]]);
+<a href=#22 id=22 data-nosnippet>22</a>    /// ```
+<a href=#23 id=23 data-nosnippet>23</a>    </span><span class="kw">fn </span>successors&lt;T, F&gt;(<span class="self">self</span>, first: <span class="prelude-ty">Option</span>&lt;T&gt;, succ: F) -&gt; IterSuccessors&lt;<span class="self">Self</span>, T, F&gt;
+<a href=#24 id=24 data-nosnippet>24</a>    <span class="kw">where
+<a href=#25 id=25 data-nosnippet>25</a>        </span><span class="self">Self</span>: Sized,
+<a href=#26 id=26 data-nosnippet>26</a>        F: FnMut(<span class="self">Self</span>::Item, <span class="kw-2">&amp;</span>T) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt;,
+<a href=#27 id=27 data-nosnippet>27</a>    {
+<a href=#28 id=28 data-nosnippet>28</a>        IterSuccessors {
+<a href=#29 id=29 data-nosnippet>29</a>            iter: <span class="self">self</span>,
+<a href=#30 id=30 data-nosnippet>30</a>            next: first,
+<a href=#31 id=31 data-nosnippet>31</a>            succ,
+<a href=#32 id=32 data-nosnippet>32</a>        }
+<a href=#33 id=33 data-nosnippet>33</a>    }
+<a href=#34 id=34 data-nosnippet>34</a>}
+<a href=#35 id=35 data-nosnippet>35</a><span class="kw">impl</span>&lt;I: Iterator&gt; IteratorSuccessors <span class="kw">for </span>I {}
+<a href=#36 id=36 data-nosnippet>36</a>
+<a href=#37 id=37 data-nosnippet>37</a><span class="doccomment">/// [`IteratorSuccessors::successors`] が返すイテレータ。
+<a href=#38 id=38 data-nosnippet>38</a></span><span class="kw">pub struct </span>IterSuccessors&lt;I, T, F&gt; {
 <a href=#39 id=39 data-nosnippet>39</a>    iter: I,
 <a href=#40 id=40 data-nosnippet>40</a>    next: <span class="prelude-ty">Option</span>&lt;T&gt;,
 <a href=#41 id=41 data-nosnippet>41</a>    succ: F,
