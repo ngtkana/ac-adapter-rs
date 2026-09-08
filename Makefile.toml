@@ -42,9 +42,15 @@ cargo clippy --all-targets --all-features -- -W clippy::pedantic 2>&1 | grep 'no
 '''
 
 [tasks.install-libbundle]
-command = "cargo"
-args = ["install", "--path", "bundler", "--locked", "--force"]
 description = "Install the `libbundle` binary to ~/.cargo/bin (usable from any directory, e.g. rust-atcoder)"
+script = '''
+cargo install --path bundler --locked --force
+echo ""
+echo "Add this to your shell rc (~/.zshrc or ~/.bashrc) if not already present:"
+echo ""
+echo "    export AC_ADAPTER_RS_ROOT=\"$(pwd)\""
+echo ""
+'''
 
 [tasks.dev]
 script = '''

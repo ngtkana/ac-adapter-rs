@@ -16,39 +16,40 @@ cargo make hooks-install
 
 Requires `cargo-make` and `cargo-nextest` (see `.github/actions/setup-rust/action.yml` for the versions CI uses). Runs `cargo fmt --check`, `clippy`, doctests, the full test suite, and doc generation before each commit — all confirmed lightweight (sub-second on an incrementally-built tree).
 
-## Bundling for submission
+## 提出用バンドル
 
-`libbundle` inlines a crate (and its internal dependencies) into a single AtCoder-submittable snippet.
+`libbundle` は指定したクレート（とその内部依存）を1つの AtCoder 提出用スニペットに展開します。
 
-Install once:
+初回のみインストール:
 
 ```sh
 cargo make install-libbundle
 ```
 
-Then run from anywhere (e.g. your competitive-programming repo), pointing `AC_ADAPTER_RS_ROOT` at this repo:
+実行後、シェルの rc ファイルに追記すべき `export AC_ADAPTER_RS_ROOT=...` 行が実際のパス入りで表示されるので、それをコピーして `~/.zshrc` 等に追記してください。
+
+追記後はどこからでも（例えば競プロ用の別リポジトリから）実行できます:
 
 ```sh
-export AC_ADAPTER_RS_ROOT="/path/to/ac-adapter-rs"  # add to your shell rc; use this repo's root
-libbundle fp_fps dinic > bundled.rs                    # multiple crates, deduped
+libbundle fp_fps dinic > bundled.rs   # 複数クレートを一度に、dedup付きで
 ```
 
-If some crates are already bundled into an existing file (recognizable by the `// <name> {{{` fold markers this tool emits), pass `--skip-from` to avoid re-declaring them:
+既に別のファイルにバンドル済みのクレートがある場合（このツールが出力する `// <name> {{{` の fold マーカーで判別）、`--skip-from` で再展開を防げます:
 
 ```sh
 libbundle fp_fps --skip-from src/main.rs > new_snippet.rs
 ```
 
-Shell completion for crate names (`bundler/completions/`):
+クレート名のシェル補完（`bundler/completions/`）:
 
 ```sh
 # zsh
 mkdir -p ~/.zsh/completions
 cp bundler/completions/_libbundle ~/.zsh/completions/
-# add once to ~/.zshrc: fpath=(~/.zsh/completions $fpath); autoload -Uz compinit && compinit
+# ~/.zshrc に一度だけ追記: fpath=(~/.zsh/completions $fpath); autoload -Uz compinit && compinit
 
-# bash
-echo 'source /path/to/ac-adapter-rs/bundler/completions/libbundle.bash' >> ~/.bashrc
+# bash（$AC_ADAPTER_RS_ROOT が先に export 済みである前提）
+echo 'source "$AC_ADAPTER_RS_ROOT/bundler/completions/libbundle.bash"' >> ~/.bashrc
 ```
 
 
