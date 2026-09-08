@@ -8,9 +8,9 @@
 1. worktree内で変更後、プレビュー環境を作る。スタイル確認のみなら `cargo run --bin snippetter` して `contents/*` を `docs/` へコピーすれば足り、`cargo doc --workspace` を含む `cargo make doc` のフル実行は不要
 2. `python3 -m http.server <port>` などでローカル配信する。ポートは `lsof -i :<port>` などで空きを確認してから選ぶ（衝突時は番号をずらす）
 3. headless Chrome（`--headless --disable-gpu --screenshot=... --window-size=...`）でスクリーンショットを撮り、Readツールで自己確認する。Chromeが無い環境ではインストール済みの他ブラウザ（Playwright/Puppeteer等）で代替する
-4. hover/selectedなど動的状態も確認する場合は、確認用に一時的な `<script>` 注入でクリック等を自動実行させてから撮影し、撮影後は元のファイルに戻す（一時ファイル・注入した`<script>`はコミットに含めない）
-5. 色味・質感など主観的判断が要る変更は、自己検証だけで完了とせず、サーバーを立てたままURL（例: `http://localhost:<port>/index.html`）をユーザーに共有し、確認を待つ
-6. ユーザーの確認が完了したら、サーバー停止（プロセスkill）とworktree削除（`git worktree remove`）を行う。それまでは畳まない
+4. hover/selectedなど動的状態も確認する場合は、確認用に一時的な `<script>` 注入でクリック等を自動実行させてから撮影する。撮影後は `git checkout -- <file>` などで機械的に戻し、`git diff` で差分ゼロを確認する（一時ファイル・注入した`<script>`をコミットに含めない徹底のため）
+5. 色味・質感など主観的判断が要る変更は、自己検証だけで完了とせず、サーバーを立てたままURL（例: `http://localhost:<port>/index.html`）をユーザーに共有し、確認を待つ。同一セッション内で確認が得られないままセッションが終了した場合は、次回セッションでworktree・サーバーの生存を確認してから再開する
+6. ユーザーの確認が完了したら、サーバー停止（プロセスkill）とworktree削除（`git worktree remove`）を行う。それまでは `git-workflow:pr-and-cleanup` 等の自動片付けフローより本手順を優先し、畳まない
 
 **禁止**:
 - GitHub PRのdiff（テキスト差分）だけを見て「確認済み」と報告すること（レンダリング結果は見えない）
