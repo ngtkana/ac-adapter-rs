@@ -26,53 +26,39 @@
 <a href=#2 id=2 data-nosnippet>2</a><span class="kw">use </span>std::collections::BinaryHeap;
 <a href=#3 id=3 data-nosnippet>3</a><span class="kw">use </span>std::iter;
 <a href=#4 id=4 data-nosnippet>4</a>
-<a href=#5 id=5 data-nosnippet>5</a><span class="doccomment">/// Prüfer 列 `prufer` から $n = |{\tt prufer}| + 2$ 頂点の木を復元する（隣接リスト形式）。
-<a href=#6 id=6 data-nosnippet>6</a>///
-<a href=#7 id=7 data-nosnippet>7</a>/// 末尾に $n - 1$ を加えた列の各頂点の出現回数から次数を求め、次数 1（葉）になった頂点を
-<a href=#8 id=8 data-nosnippet>8</a>/// 番号の小さい順に取り出しながら列の要素と結んでいく標準的な復元アルゴリズム。取り出した
-<a href=#9 id=9 data-nosnippet>9</a>/// 頂点の次数が 0 になれば、その頂点も新たな葉として扱う。
-<a href=#10 id=10 data-nosnippet>10</a>///
-<a href=#11 id=11 data-nosnippet>11</a>/// # 仕様
-<a href=#12 id=12 data-nosnippet>12</a>///
-<a href=#13 id=13 data-nosnippet>13</a>/// - 入力: 長さ $n - 2$ の列 `prufer`（各要素は $[0, n)$）
-<a href=#14 id=14 data-nosnippet>14</a>/// - 出力: $n$ 頂点・辺数 $n - 1$ の木を表す隣接リスト
-<a href=#15 id=15 data-nosnippet>15</a>///
-<a href=#16 id=16 data-nosnippet>16</a>/// # 計算量
-<a href=#17 id=17 data-nosnippet>17</a>///
-<a href=#18 id=18 data-nosnippet>18</a>/// $O(n \log n)$
-<a href=#19 id=19 data-nosnippet>19</a></span><span class="kw">pub fn </span>prufer2tree(prufer: <span class="kw-2">&amp;</span>[usize]) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
-<a href=#20 id=20 data-nosnippet>20</a>    <span class="kw">let </span>n = prufer.len() + <span class="number">2</span>;
-<a href=#21 id=21 data-nosnippet>21</a>    <span class="macro">assert!</span>(prufer.iter().all(|<span class="kw-2">&amp;</span>x| x &lt; n));
-<a href=#22 id=22 data-nosnippet>22</a>
-<a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">let </span>prufer_y = prufer
-<a href=#24 id=24 data-nosnippet>24</a>        .iter()
-<a href=#25 id=25 data-nosnippet>25</a>        .copied()
-<a href=#26 id=26 data-nosnippet>26</a>        .chain(iter::once(n - <span class="number">1</span>))
-<a href=#27 id=27 data-nosnippet>27</a>        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#28 id=28 data-nosnippet>28</a>    <span class="kw">let </span><span class="kw-2">mut </span>m = <span class="macro">vec!</span>[<span class="number">0</span>; n];
-<a href=#29 id=29 data-nosnippet>29</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>prufer_y {
-<a href=#30 id=30 data-nosnippet>30</a>        m[y] += <span class="number">1</span>;
-<a href=#31 id=31 data-nosnippet>31</a>    }
-<a href=#32 id=32 data-nosnippet>32</a>
-<a href=#33 id=33 data-nosnippet>33</a>    <span class="kw">let </span><span class="kw-2">mut </span>heap = m
-<a href=#34 id=34 data-nosnippet>34</a>        .iter()
-<a href=#35 id=35 data-nosnippet>35</a>        .enumerate()
-<a href=#36 id=36 data-nosnippet>36</a>        .filter(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="kw-2">&amp;</span>x)| x == <span class="number">0</span>)
-<a href=#37 id=37 data-nosnippet>37</a>        .map(|(i, <span class="kw">_</span>)| Reverse(i))
-<a href=#38 id=38 data-nosnippet>38</a>        .collect::&lt;BinaryHeap&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#39 id=39 data-nosnippet>39</a>    <span class="kw">let </span><span class="kw-2">mut </span>prufer_x = Vec::new();
-<a href=#40 id=40 data-nosnippet>40</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>prufer_y {
-<a href=#41 id=41 data-nosnippet>41</a>        prufer_x.push(heap.pop().unwrap().<span class="number">0</span>);
-<a href=#42 id=42 data-nosnippet>42</a>        m[y] -= <span class="number">1</span>;
-<a href=#43 id=43 data-nosnippet>43</a>        <span class="kw">if </span>m[y] == <span class="number">0 </span>{
-<a href=#44 id=44 data-nosnippet>44</a>            heap.push(Reverse(y));
-<a href=#45 id=45 data-nosnippet>45</a>        }
-<a href=#46 id=46 data-nosnippet>46</a>    }
-<a href=#47 id=47 data-nosnippet>47</a>
-<a href=#48 id=48 data-nosnippet>48</a>    <span class="kw">let </span><span class="kw-2">mut </span>g = <span class="macro">vec!</span>[Vec::new(); n];
-<a href=#49 id=49 data-nosnippet>49</a>    prufer_x.iter().zip(prufer_y.iter()).for_each(|(<span class="kw-2">&amp;</span>x, <span class="kw-2">&amp;</span>y)| {
-<a href=#50 id=50 data-nosnippet>50</a>        g[x].push(y);
-<a href=#51 id=51 data-nosnippet>51</a>        g[y].push(x);
-<a href=#52 id=52 data-nosnippet>52</a>    });
-<a href=#53 id=53 data-nosnippet>53</a>    g
-<a href=#54 id=54 data-nosnippet>54</a>}</code></pre></div></section></main></body></html>
+<a href=#5 id=5 data-nosnippet>5</a><span class="kw">pub fn </span>prufer2tree(prufer: <span class="kw-2">&amp;</span>[usize]) -&gt; Vec&lt;Vec&lt;usize&gt;&gt; {
+<a href=#6 id=6 data-nosnippet>6</a>    <span class="kw">let </span>n = prufer.len() + <span class="number">2</span>;
+<a href=#7 id=7 data-nosnippet>7</a>    <span class="macro">assert!</span>(prufer.iter().all(|<span class="kw-2">&amp;</span>x| x &lt; n));
+<a href=#8 id=8 data-nosnippet>8</a>
+<a href=#9 id=9 data-nosnippet>9</a>    <span class="kw">let </span>prufer_y = prufer
+<a href=#10 id=10 data-nosnippet>10</a>        .iter()
+<a href=#11 id=11 data-nosnippet>11</a>        .copied()
+<a href=#12 id=12 data-nosnippet>12</a>        .chain(iter::once(n - <span class="number">1</span>))
+<a href=#13 id=13 data-nosnippet>13</a>        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#14 id=14 data-nosnippet>14</a>    <span class="kw">let </span><span class="kw-2">mut </span>m = <span class="macro">vec!</span>[<span class="number">0</span>; n];
+<a href=#15 id=15 data-nosnippet>15</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>prufer_y {
+<a href=#16 id=16 data-nosnippet>16</a>        m[y] += <span class="number">1</span>;
+<a href=#17 id=17 data-nosnippet>17</a>    }
+<a href=#18 id=18 data-nosnippet>18</a>
+<a href=#19 id=19 data-nosnippet>19</a>    <span class="kw">let </span><span class="kw-2">mut </span>heap = m
+<a href=#20 id=20 data-nosnippet>20</a>        .iter()
+<a href=#21 id=21 data-nosnippet>21</a>        .enumerate()
+<a href=#22 id=22 data-nosnippet>22</a>        .filter(|<span class="kw-2">&amp;</span>(<span class="kw">_</span>, <span class="kw-2">&amp;</span>x)| x == <span class="number">0</span>)
+<a href=#23 id=23 data-nosnippet>23</a>        .map(|(i, <span class="kw">_</span>)| Reverse(i))
+<a href=#24 id=24 data-nosnippet>24</a>        .collect::&lt;BinaryHeap&lt;<span class="kw">_</span>&gt;&gt;();
+<a href=#25 id=25 data-nosnippet>25</a>    <span class="kw">let </span><span class="kw-2">mut </span>prufer_x = Vec::new();
+<a href=#26 id=26 data-nosnippet>26</a>    <span class="kw">for </span><span class="kw-2">&amp;</span>y <span class="kw">in </span><span class="kw-2">&amp;</span>prufer_y {
+<a href=#27 id=27 data-nosnippet>27</a>        prufer_x.push(heap.pop().unwrap().<span class="number">0</span>);
+<a href=#28 id=28 data-nosnippet>28</a>        m[y] -= <span class="number">1</span>;
+<a href=#29 id=29 data-nosnippet>29</a>        <span class="kw">if </span>m[y] == <span class="number">0 </span>{
+<a href=#30 id=30 data-nosnippet>30</a>            heap.push(Reverse(y));
+<a href=#31 id=31 data-nosnippet>31</a>        }
+<a href=#32 id=32 data-nosnippet>32</a>    }
+<a href=#33 id=33 data-nosnippet>33</a>
+<a href=#34 id=34 data-nosnippet>34</a>    <span class="kw">let </span><span class="kw-2">mut </span>g = <span class="macro">vec!</span>[Vec::new(); n];
+<a href=#35 id=35 data-nosnippet>35</a>    prufer_x.iter().zip(prufer_y.iter()).for_each(|(<span class="kw-2">&amp;</span>x, <span class="kw-2">&amp;</span>y)| {
+<a href=#36 id=36 data-nosnippet>36</a>        g[x].push(y);
+<a href=#37 id=37 data-nosnippet>37</a>        g[y].push(x);
+<a href=#38 id=38 data-nosnippet>38</a>    });
+<a href=#39 id=39 data-nosnippet>39</a>    g
+<a href=#40 id=40 data-nosnippet>40</a>}</code></pre></div></section></main></body></html>
