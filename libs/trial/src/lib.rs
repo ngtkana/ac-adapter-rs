@@ -1,9 +1,31 @@
-//! Execute the trial-division algorithm.
+//! 整数の約数・素因数を試し割りで列挙する。
 //!
-//! # Items
+//! 約数は $d^2 \le n$ の範囲で $d$ を $1$ から順に試し割りし、見つかった約数 $d$ と
+//! その相方 $n / d$ を両側から積んでいくことで $O(\sqrt n)$ で求める。素因数分解も同様に、
+//! 候補 $p$ を $p^2 > n$ になるまで増やしながら割り切れるかを試し、割り切れる限り
+//! $n$ から取り除いていく。
 //!
-//! - [`fn@divisors`]: enumerate all the divisor of an integer.
-//! - [`fn@prime_factors`]: enumerate all the prime divisor of an integer and the multiplicity of it.
+//! # 仕様
+//!
+//! - [`divisors`] 関数は約数を昇順に列挙した `Vec` を返す
+//! - [`divisors_unordered`] 関数は約数を「小さい方・大きい方」交互の順で列挙するイテレータを返す
+//! - [`prime_factors`] 関数は相異なる素因数を昇順に列挙するイテレータを返す
+//! - [`prime_factors_rle`] 関数は素因数とその重複度の組 $(p, e)$ を昇順に列挙するイテレータを返す
+//!
+//! # 例
+//!
+//! ```
+//! use trial::divisors;
+//! use trial::prime_factors_rle;
+//!
+//! assert_eq!(divisors(12u32), vec![1, 2, 3, 4, 6, 12]);
+//! assert_eq!(prime_factors_rle(12u32).collect::<Vec<_>>(), vec![(2, 2), (3, 1)]);
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`divisors`] と [`divisors_unordered`] は $O(\sqrt n)$
+//! - [`prime_factors`] と [`prime_factors_rle`] は $O(\sqrt n)$
 
 mod divisors;
 mod prime_factors;
@@ -27,7 +49,7 @@ use std::ops::RemAssign;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
-/// Abstraction of unsigned integers.
+/// 試し割りの対象となる符号なし整数が実装するトレイト。
 pub trait Value:
     Debug
     + Copy
@@ -43,13 +65,13 @@ pub trait Value:
     + Rem<Output = Self>
     + RemAssign
 {
-    /// Returns `0`.
+    /// 加法の単位元 $0$ を返す。
     fn zero() -> Self;
-    /// Returns `1`.
+    /// 乗法の単位元 $1$ を返す。
     fn one() -> Self;
-    /// Increment `self`.
+    /// `self` を $1$ だけ増加させる。
     fn increment(&mut self);
-    /// Returns `true` if and only if `self` divides `n`.
+    /// `self` が `n` の約数なら `true` を返す。
     fn divides(self, n: Self) -> bool {
         n % self == Self::zero()
     }

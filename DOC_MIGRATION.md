@@ -58,12 +58,12 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [x] `sparse_table`
 - [x] `splay_tree`
 - [x] `suffix_array`
-- [ ] `swag`
-- [ ] `tree_fold`
-- [ ] `trial`
-- [ ] `trie`
-- [ ] `veb`
-- [ ] `vec_lines`
-- [ ] `w_ary_tree`
-- [ ] `z_algo`
-- [ ] `zeta`
+- [x] `swag`
+- [x] `tree_fold`
+- [x] `trial`
+- [x] `trie`
+- [x] `veb`
+- [x] `vec_lines`
+- [x] `w_ary_tree`
+- [x] `z_algo`
+- [x] `zeta`

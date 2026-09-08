@@ -1,13 +1,18 @@
 use super::Value;
 use std::mem::replace;
 
-/// Takes an unsigned integer and returns an iterator to yield all the pairs of a prime factor of
-/// it and the multiplicity of it, in ascending order.
+/// `n` の素因数とその重複度の組 $(p, e)$ を昇順に列挙するイテレータを返す。
 ///
+/// 候補 $p$ を $1$ から増やしながら試し割りし、割り切れたら割り切れなくなるまで
+/// $n$ から取り除いてその回数を重複度とする。候補を増やす前に $p^2 > n$ になったら、
+/// 残った $n$ 自身を重複度 $1$ の最後の素因数として返す。
 ///
-/// # Example
+/// # 仕様
 ///
-/// Basic usage:
+/// $n \ge 1$ が前提。$n = 0$ はパニックする。
+///
+/// # 例
+///
 /// ```
 /// use trial::prime_factors_rle;
 ///
@@ -17,12 +22,16 @@ use std::mem::replace;
 /// assert_eq!(iter.next(), Some((5, 1)));
 /// assert_eq!(iter.next(), None);
 /// ```
+///
+/// # 計算量
+///
+/// $O(\sqrt n)$
 pub fn prime_factors_rle<T: Value>(n: T) -> PrimeFactorsRle<T> {
     assert_ne!(n, T::zero(), "Cannot call `prime_factors_rle` by `0`.");
     PrimeFactorsRle { n, p: T::one() }
 }
 
-/// [See the document of a function `prime_factors_rle`](`prime_factors_rle`)
+/// [`prime_factors_rle`] が返すイテレータ。
 pub struct PrimeFactorsRle<T> {
     n: T,
     p: T,
@@ -54,11 +63,16 @@ impl<T: Value> Iterator for PrimeFactorsRle<T> {
     }
 }
 
-/// Takes an unsigned integer and returns an iterator to yield all the distinct prime factors.
+/// `n` の相異なる素因数を昇順に列挙するイテレータを返す。
 ///
-/// # Example
+/// 手順は [`prime_factors_rle`] と同様で、重複度を捨てて素因数のみ返す。
 ///
-/// Basic usage:
+/// # 仕様
+///
+/// $n \ge 1$ が前提。$n = 0$ はパニックする。
+///
+/// # 例
+///
 /// ```
 /// use trial::prime_factors;
 ///
@@ -68,12 +82,16 @@ impl<T: Value> Iterator for PrimeFactorsRle<T> {
 /// assert_eq!(iter.next(), Some(5));
 /// assert_eq!(iter.next(), None);
 /// ```
+///
+/// # 計算量
+///
+/// $O(\sqrt n)$
 pub fn prime_factors<T: Value>(n: T) -> PrimeFactors<T> {
     assert_ne!(n, T::zero(), "Cannot call `prime_factors` by `0`.");
     PrimeFactors { n, p: T::one() }
 }
 
-/// [See the document of a function `prime_factors`](`prime_factors`)
+/// [`prime_factors`] が返すイテレータ。
 pub struct PrimeFactors<T> {
     n: T,
     p: T,

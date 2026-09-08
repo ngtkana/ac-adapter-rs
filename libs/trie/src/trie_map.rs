@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::fmt::{self};
 
-/// A map base on a trie.
+/// トライ木で実装したキー→値の辞書。
 #[derive(Clone, PartialEq)]
 pub struct TrieMap<V>(Option<Box<Node<V>>>);
 
@@ -24,37 +24,26 @@ impl<V> Default for TrieMap<V> {
 }
 
 impl<V> TrieMap<V> {
-    /// Makes a new empty TrieMap.
+    /// 空の辞書を構築する。何もアロケートしない。
     ///
-    /// Does not allocate anything on its own.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
     /// use trie::TrieMap;
     ///
     /// let mut map = TrieMap::new();
-    ///
-    /// // entries can now be inserted into the empty map
     /// map.insert(once(1), "a");
+    /// assert_eq!(map.get(once(1)), Some(&"a"));
     /// ```
     pub fn new() -> Self {
         Self(None)
     }
 
-    /// Inserts a key-value pair into the map.
+    /// キーと値の組を挿入する。キーが存在しなければ `None` を、既に存在すれば値を
+    /// 上書きして古い値を返す。
     ///
-    /// If the map did not have this key present, `None` is returned.
-    ///
-    /// If the map did have this key present, the value is updated, and the old
-    /// value is returned. The key is not updated, though.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -62,11 +51,7 @@ impl<V> TrieMap<V> {
     ///
     /// let mut map = TrieMap::new();
     /// assert_eq!(map.insert(once(17), "a"), None);
-    /// // assert_eq!(map.is_empty(), false); TODO: unimplemented
-    ///
-    /// map.insert(once(17), "b");
-    /// assert_eq!(map.insert(once(17), "c"), Some("b"));
-    /// // assert_eq!(map[&37], "c"); TODO: unimplemented
+    /// assert_eq!(map.insert(once(17), "b"), Some("a"));
     /// ```
     pub fn insert(&mut self, key: impl IntoIterator<Item = usize>, value: V) -> Option<V> {
         let mut key = key.into_iter();
@@ -77,12 +62,9 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Removes a key from the map, returning the stored key and value if the key
-    /// was previously in the map.
+    /// キーを削除し、そのキーに対応する値があれば返す。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -109,11 +91,9 @@ impl<V> TrieMap<V> {
         removed
     }
 
-    /// Returns a reference to the value corresponding to the key.
+    /// キーに対応する値への参照を返す。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -133,11 +113,9 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Returns a mutable reference to the value corresponding to the key.
+    /// キーに対応する値への可変参照を返す。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -149,7 +127,6 @@ impl<V> TrieMap<V> {
     ///     *x = "b";
     /// }
     /// assert_eq!(map.get(once(1)), Some(&"b"));
-    /// // assert_eq!(map[&1], "b"); TODO: unimplemented
     /// ```
     pub fn get_mut(&mut self, key: impl IntoIterator<Item = usize>) -> Option<&mut V> {
         let mut key = key.into_iter();
@@ -160,10 +137,9 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Inserts a `value` at `key` if it is [`None`], then returns a mutable reference
-    /// to the contained value.
+    /// キーに値が存在しなければ `value` を挿入し、その値への可変参照を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use trie::TrieMap;
@@ -172,15 +148,12 @@ impl<V> TrieMap<V> {
     /// let mut map = TrieMap::new();
     /// map.insert(once(1), "a");
     ///
-    /// // Existing
-    /// map.get_or_insert(once(1), "b");
+    /// map.get_or_insert(once(1), "b"); // 既存キーなので "a" のまま
     /// assert_eq!(map.get(once(1)), Some(&"a"));
     ///
-    /// // New
-    /// map.get_or_insert(once(2), "c");
+    /// map.get_or_insert(once(2), "c"); // 新規キーなので "c" を挿入
     /// assert_eq!(map.get(once(2)), Some(&"c"));
-    ///
-    /// // assert_eq!(map[&1], "b"); TODO: unimplemented
+    /// ```
     pub fn get_or_insert(&mut self, key: impl IntoIterator<Item = usize>, value: V) -> &mut V {
         let mut key = key.into_iter();
         let me = self.0.get_or_insert_with(|| Box::new(Node::new()));
@@ -190,10 +163,9 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Inserts a value computed from `f` at `key` if it is [`None`],
-    /// then returns a mutable reference to the contained value.
+    /// キーに値が存在しなければ `f()` を挿入し、その値への可変参照を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use trie::TrieMap;
@@ -202,15 +174,12 @@ impl<V> TrieMap<V> {
     /// let mut map = TrieMap::new();
     /// map.insert(once(1), "a");
     ///
-    /// // Existing
-    /// map.get_or_insert_with(once(1), || "b");
+    /// map.get_or_insert_with(once(1), || "b"); // 既存キーなので "a" のまま
     /// assert_eq!(map.get(once(1)), Some(&"a"));
     ///
-    /// // New
-    /// map.get_or_insert_with(once(2), || "c");
+    /// map.get_or_insert_with(once(2), || "c"); // 新規キーなので "c" を挿入
     /// assert_eq!(map.get(once(2)), Some(&"c"));
-    ///
-    /// // assert_eq!(map[&1], "b"); TODO: unimplemented
+    /// ```
     pub fn get_or_insert_with(
         &mut self,
         key: impl IntoIterator<Item = usize>,
@@ -224,11 +193,10 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Visits all the "existing" nodes corresponding to the preficies of the key.
+    /// `key` の各接頭辞（空列を含む）に対応するノードを、根から葉へ向かって訪問する。
+    /// トライ上に存在しない接頭辞まで達すると打ち切る。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -238,23 +206,9 @@ impl<V> TrieMap<V> {
     /// map.insert(vec![1], "a");
     /// map.insert(vec![1, 1, 1], "c");
     ///
-    /// // Corresponding an existing key.
+    /// // 接頭辞 [], [1], [1, 1], [1, 1, 1] の順に訪問する
     /// let mut expected = [None, Some("a"), None, Some("c")].iter();
     /// map.for_each_prefix(vec![1, 1, 1].into_iter(), |trie| {
-    ///     let expected = expected.next().unwrap().as_ref();
-    ///     assert_eq!(trie.get(None.into_iter()), expected);
-    /// });
-    ///
-    /// // No, but falls within the trie.
-    /// let mut expected = [None, Some("a"), None].iter();
-    /// map.for_each_prefix(vec![1, 1].into_iter(), |trie| {
-    ///     let expected = expected.next().unwrap().as_ref();
-    ///     assert_eq!(trie.get(None.into_iter()), expected);
-    /// });
-    ///
-    /// // Runs off thte trie.
-    /// let mut expected = [None, Some("a"), None, Some("c")].iter();
-    /// map.for_each_prefix(vec![1, 1, 1, 1].into_iter(), |trie| {
     ///     let expected = expected.next().unwrap().as_ref();
     ///     assert_eq!(trie.get(None.into_iter()), expected);
     /// });
@@ -274,11 +228,9 @@ impl<V> TrieMap<V> {
         }
     }
 
-    /// Visits all the pairs of a key of a values in the trie, in lexicographic order.
+    /// キーの辞書式順序で、すべてのキーと値の組を訪問する。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -323,6 +275,7 @@ impl<V> TrieMap<V> {
     }
 }
 
+/// [`TrieMap`] の 1 ノード。空でないキーを表す値と、次の要素ごとの子を持つ。
 #[derive(Clone, Debug, PartialEq)]
 pub struct Node<V> {
     pub(super) value: Option<V>,

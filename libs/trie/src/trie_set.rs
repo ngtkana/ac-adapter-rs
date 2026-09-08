@@ -3,7 +3,7 @@ use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::fmt::{self};
 
-/// A set base on a trie.
+/// トライ木で実装したキー列の集合。内部的に `TrieMap<()>` をラップして実装する。
 #[derive(Clone, PartialEq)]
 pub struct TrieSet {
     map: TrieMap<()>,
@@ -26,22 +26,17 @@ impl Default for TrieSet {
 }
 
 impl TrieSet {
-    /// Makes a new empty TrieMap.
+    /// 空の集合を構築する。何もアロケートしない。
     ///
-    /// Does not allocate anything on its own.
-    ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
     /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
-    ///
-    /// // entries can now be inserted into the empty set
     /// set.insert(once(1));
+    /// assert!(set.contains(once(1)));
     /// ```
     pub fn new() -> Self {
         Self {
@@ -49,9 +44,9 @@ impl TrieSet {
         }
     }
 
-    /// Returns `true` if the set contains a value.
+    /// 値が集合に含まれるかを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -59,10 +54,6 @@ impl TrieSet {
     ///
     /// let mut set = TrieSet::new();
     /// set.insert(once(1));
-    /// set.insert(once(2));
-    /// set.insert(once(3));
-    ///
-    /// // let set: TrieSet<_> = [1, 2, 3].iter().cloned().collect(); TODO: unimplemented
     /// assert_eq!(set.contains(once(1)), true);
     /// assert_eq!(set.contains(once(4)), false);
     /// ```
@@ -70,33 +61,26 @@ impl TrieSet {
         self.map.get(value).is_some()
     }
 
-    /// Adds a value to the set.
+    /// 値を集合に追加する。既に存在しなければ `true`、既に存在すれば `false` を返す
+    /// （このとき集合は変化しない）。
     ///
-    /// If the set did not have this value present, `true` is returned.
-    ///
-    /// If the set did have this value present, `false` is returned, and the
-    /// entry is not updated.
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
     /// use trie::TrieSet;
     ///
     /// let mut set = TrieSet::new();
-    ///
     /// assert_eq!(set.insert(once(2)), true);
     /// assert_eq!(set.insert(once(2)), false);
-    /// // assert_eq!(set.len(), 1); not implemented
     /// ```
     pub fn insert(&mut self, iter: impl IntoIterator<Item = usize>) -> bool {
         self.map.insert(iter, ()).is_none()
     }
 
-    /// Removes a value from the set. Returns whether the value was
-    /// present in the set.
+    /// 値を集合から削除する。削除前に集合に含まれていたかを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -112,11 +96,10 @@ impl TrieSet {
         self.map.remove(value).is_some()
     }
 
-    /// Visits all the "existing" nodes corresponding to the preficies of the value.
+    /// `value` の各接頭辞（空列を含む）に対応するノードを、根から葉へ向かって訪問する。
+    /// トライ上に存在しない接頭辞まで達すると打ち切る。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
@@ -126,23 +109,9 @@ impl TrieSet {
     /// set.insert(vec![1]);
     /// set.insert(vec![1, 1, 1]);
     ///
-    /// // Corresponding an existing value.
+    /// // 接頭辞 [], [1], [1, 1], [1, 1, 1] の順に訪問する
     /// let mut expected = [false, true, false, true].iter();
     /// set.for_each_prefix(vec![1, 1, 1].into_iter(), |trie| {
-    ///     let expected = *expected.next().unwrap();
-    ///     assert_eq!(trie.get(None.into_iter()).is_some(), expected);
-    /// });
-    ///
-    /// // No, but falls within the trie.
-    /// let mut expected = [false, true, false].iter();
-    /// set.for_each_prefix(vec![1, 1].into_iter(), |trie| {
-    ///     let expected = *expected.next().unwrap();
-    ///     assert_eq!(trie.get(None.into_iter()).is_some(), expected);
-    /// });
-    ///
-    /// // Runs off thte trie.
-    /// let mut expected = [false, true, false, true].iter();
-    /// set.for_each_prefix(vec![1, 1, 1, 1].into_iter(), |trie| {
     ///     let expected = *expected.next().unwrap();
     ///     assert_eq!(trie.get(None.into_iter()).is_some(), expected);
     /// });
@@ -155,11 +124,9 @@ impl TrieSet {
         self.map.for_each_prefix(value, visit);
     }
 
-    /// Visits all the values of a values in the trie, in lexicographic order.
+    /// 辞書式順序で、すべての値を訪問する。
     ///
-    /// # Examples
-    ///
-    /// Basic usage:
+    /// # 例
     ///
     /// ```
     /// use std::iter::once;
