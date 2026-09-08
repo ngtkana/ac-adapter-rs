@@ -1,12 +1,44 @@
-//! [`remove_unchecked`](RemovableHeap::remove_unchecked) のできるヒープです。
+//! 二分ヒープを用いた要素の遅延削除と、順序統計量（中央値等）の管理。
 //!
-//! 本体は [`RemovableHeap`] です。
+//! [`RemovableHeap`] は本体用・削除予定用の二本の二分ヒープを持ち、要素の削除を
+//! $O(\log n)$ で行う。削除は要素を削除予定ヒープに積むだけで、本体ヒープの
+//! 最大値と削除予定ヒープの最大値が一致する間はその場で両方から取り除く
+//! （settle）ことで、実際の削除を遅延させる。
 //!
-//! # ⚠️ 注意点
+//! [`DoubleHeap`] は [`RemovableHeap`] を左右2本組み合わせ、「左側の最大値 $\le$
+//! 右側の最小値」という不変条件を保ったまま要素を管理する。
+//! [`DoubleHeap::balance_left`] で左側の要素数をちょうど $k$ 個に揃えれば、
+//! 右側の最小値が $(k+1)$ 番目に小さい要素になるので、中央値やより一般の
+//! 順序統計量を追跡できる。要素が左右間を移動するたびに [`Handler`] のコール
+//! バックが呼ばれるので、総和などの集約値も移動と同時に $O(1)$ で更新できる。
 //!
-//! [`RemovableHeap`] は、ヒープに入っていない要素を削除すると
-//! **たとえその要素をすぐに挿入し直したとしても、
-//! その後の挙動がすべて未定義になります。**
+//! # 仕様
+//!
+//! - [`RemovableHeap::push`][]: 要素を挿入する
+//! - [`RemovableHeap::remove_unchecked`][]: ヒープに入っている要素を1つ削除する — ヒープに入っていない要素を指定すると以降の結果が不正になる
+//! - [`RemovableHeap::pop`] / [`RemovableHeap::peek`][]: 最大要素の削除・参照
+//! - [`DoubleHeap::push_left`] / [`DoubleHeap::push_right`][]: 左右いずれかへ要素を挿入する
+//! - [`DoubleHeap::move_left`] / [`DoubleHeap::move_right`][]: 反対側の境界の要素を1つ移動する
+//! - [`DoubleHeap::balance_left`] / [`DoubleHeap::balance_right`][]: 左（右）側の要素数をちょうど $k$ 個に揃える
+//! - [`Handler`][]: `push_left` / `pop_left` / `push_right` / `pop_right` の4つのコールバックを持つトレイト — [`Nop`]（何もしない）と [`Sum`]（総和を集計）を用意
+//!
+//! # 例
+//!
+//! ```
+//! use heap_tricks::DoubleHeap;
+//!
+//! let mut heap = DoubleHeap::new();
+//! heap.push_left(3);
+//! heap.push_left(1);
+//! heap.push_left(4);
+//! heap.balance_left(1); // 左側を要素数1に揃える
+//! assert_eq!(heap.peek_right(), Some(3)); // ソート列 [1, 3, 4] の中央値
+//! ```
+//!
+//! # 計算量
+//!
+//! - [`RemovableHeap`] の各操作: $O(\log n)$
+//! - [`DoubleHeap`] の各操作: $O(\log n)$
 
 use std::cmp::Reverse;
 use std::collections::BinaryHeap;
@@ -16,26 +48,25 @@ use std::iter::FromIterator;
 use std::ops::AddAssign;
 use std::ops::SubAssign;
 
-/// 集約操作を指定するためのトレイトです。
-/// 単なるマーカートレイトではなく、集約結果を管理するための
-/// オブジェクトとして使用されます
+/// 要素の挿入・削除に応じて集約値を更新するためのコールバック。
 ///
-/// [`Nop`] か [`Sum`] を使っておけばだいたい大丈夫ですが、
-/// 必要なら自分で定義することができます。
+/// [`DoubleHeap`] が要素を左右へ挿入・削除・移動するたびに対応するメソッドを
+/// 呼び出す。何もしない実装として [`Nop`]、総和を集計する実装として [`Sum`]
+/// を用意しているので、通常はどちらかを使えば十分。必要なら自分で実装もできる。
 pub trait Handler<T> {
-    /// 左側に挿入するときのコールバック関数
+    /// 左側への挿入時に呼ばれる。
     fn push_left(&mut self, value: T);
-    /// 左側から削除するときのコールバック関数
+    /// 左側からの削除時に呼ばれる。
     fn pop_left(&mut self, value: T);
-    /// 右側に挿入するときのコールバック関数
+    /// 右側への挿入時に呼ばれる。
     fn push_right(&mut self, value: T);
-    /// 右側から削除するときのコールバック関数
+    /// 右側からの削除時に呼ばれる。
     fn pop_right(&mut self, value: T);
 }
-/// 何も集約しないことを表す型です。
-/// [`Handler`] の一種です。
-/// [`DoubleHeap::new()`] で構築すると自動的に採用されます。
-/// Unit-like struct なので、同名の定数が自動定義されています。
+/// 何も集約しない [`Handler`]。
+///
+/// [`DoubleHeap::new`] で構築すると自動的に採用される。Unit-like struct なので、
+/// 同名の定数 `Nop` がそのまま値として使える。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Nop;
 impl<T> Handler<T> for Nop {
@@ -47,12 +78,15 @@ impl<T> Handler<T> for Nop {
 
     fn pop_right(&mut self, _value: T) {}
 }
-/// 総和を集約するための型です。
-/// [`Handler`] の一種です。
-/// [`Sum::default()`] でデフォルト構築できます。
+/// 左右それぞれの要素の総和を集約する [`Handler`]。
+///
+/// `left` に左側ヒープの要素の総和、`right` に右側ヒープの要素の総和を保つ。
+/// [`Sum::default()`] で総和 0 の状態から構築できる。
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Sum<T> {
+    /// 左側ヒープの要素の総和
     pub left: T,
+    /// 右側ヒープの要素の総和
     pub right: T,
 }
 impl<T> Handler<T> for Sum<T>
@@ -76,9 +110,11 @@ where
     }
 }
 
-/// ヒープを４本使って中央値などを管理するデータ構造です。
-/// [`Handler`] が必要ないときには [`DoubleHeap::new()`] で構築すると
-/// 勝手に [`Nop`] が採用されます。
+/// 二本の [`RemovableHeap`] で要素を左右に分割して管理し、順序統計量を取得できるヒープ。
+///
+/// 「左側の最大値 $\le$ 右側の最小値」という不変条件を常に保つ。
+/// [`Handler`] が不要なときは [`DoubleHeap::new`] で構築すると自動的に
+/// [`Nop`] が採用される。
 #[derive(Clone)]
 pub struct DoubleHeap<T, H> {
     left: RemovableHeap<T>,
@@ -117,6 +153,16 @@ impl<T> DoubleHeap<T, Nop>
 where
     T: Copy + Ord + Hash,
 {
+    /// 空のヒープを構築する。[`Handler`] には [`Nop`] が採用される。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use heap_tricks::DoubleHeap;
+    /// let mut heap = DoubleHeap::new();
+    /// heap.push_left(1);
+    /// assert_eq!(heap.collect_sorted_vec(), vec![1]);
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
@@ -126,9 +172,9 @@ where
     T: Copy + Ord + Hash,
     H: Handler<T>,
 {
-    /// [`Handler`] を指定して構築します。
+    /// [`Handler`] を指定して空のヒープを構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -144,24 +190,24 @@ where
         }
     }
 
-    /// ヒープが空ならば `true` を返します。
+    /// ヒープが空なら `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// assert_eq!(heap.is_empty(), true);
+    /// assert!(heap.is_empty());
     /// heap.push_left(42);
-    /// assert_eq!(heap.is_empty(), false);
+    /// assert!(!heap.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
         self.left.is_empty() && self.right.is_empty()
     }
 
-    /// 全体の要素数を返します。
+    /// 全体の要素数を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -174,9 +220,9 @@ where
         self.left.len() + self.right.len()
     }
 
-    /// 左側ヒープの要素数を返します。
+    /// 左側ヒープの要素数を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -191,9 +237,9 @@ where
         self.left.len()
     }
 
-    /// 右側ヒープの要素数を返します。
+    /// 右側ヒープの要素数を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -208,9 +254,12 @@ where
         self.right.len()
     }
 
-    /// 左側ヒープの要素数が１増加するように、要素を挿入します。
+    /// 左側ヒープの要素数が1増加するように要素を挿入する。$O(\log n)$。
     ///
-    /// # Examples
+    /// 不変条件（左側の最大値 $\le$ 右側の最小値）を保つため、必要なら
+    /// 右側との間で最大1要素を入れ替える。
+    ///
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -228,9 +277,12 @@ where
         self.settle();
     }
 
-    /// 右側ヒープの要素数が１増加するように、要素を挿入します。
+    /// 右側ヒープの要素数が1増加するように要素を挿入する。$O(\log n)$。
     ///
-    /// # Examples
+    /// 不変条件（左側の最大値 $\le$ 右側の最小値）を保つため、必要なら
+    /// 左側との間で最大1要素を入れ替える。
+    ///
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -248,9 +300,9 @@ where
         self.settle();
     }
 
-    /// 左側ヒープの最大要素があれば返します。
+    /// 左側ヒープの最大要素があれば返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -264,9 +316,9 @@ where
         self.left.peek()
     }
 
-    /// 右側ヒープの最大要素があれば返します。
+    /// 右側ヒープの最小要素があれば返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -274,17 +326,16 @@ where
     /// heap.push_left(42);
     /// heap.push_right(45);
     /// heap.push_right(13);
-    /// assert_eq!(heap.peek_left(), Some(13));
-    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
+    /// assert_eq!(heap.peek_right(), Some(42));
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
     pub fn peek_right(&self) -> Option<T> {
         self.right.peek().map(|rev| rev.0)
     }
 
-    /// 左側ヒープの最大要素があれば削除して返します。
+    /// 左側ヒープの最大要素があれば削除して返す。$O(\log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -302,9 +353,9 @@ where
         ans
     }
 
-    /// 右側ヒープの最大要素があれば削除して返します。
+    /// 右側ヒープの最小要素があれば削除して返す。$O(\log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -322,14 +373,13 @@ where
         ans
     }
 
-    /// 左側ヒープの要素数が１増加するように、右側ヒープから要素を移動します
+    /// 右側ヒープの最小要素を左側へ移動する。左側の要素数が1増加する。$O(\log n)$。
     ///
     /// # Panics
     ///
     /// 右側ヒープが空のとき。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -349,14 +399,13 @@ where
         self.settle();
     }
 
-    /// 右側ヒープの要素数が１増加するように、左側ヒープから要素を移動します
+    /// 左側ヒープの最大要素を右側へ移動する。右側の要素数が1増加する。$O(\log n)$。
     ///
     /// # Panics
     ///
     /// 左側ヒープが空のとき。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -376,16 +425,16 @@ where
         self.settle();
     }
 
-    /// ヒープに入っている要素を１つ指定して、左側ヒープの要素数が
-    /// １減少するように削除します。
+    /// 左側ヒープの要素数が1減少するように、ヒープ中の要素 `elm` を1つ削除する。$O(\log n)$。
     ///
-    /// # ⚠️  Undefined Behavior
+    /// `elm` がどちら側にあるかは問わない（右側にあれば削除後に
+    /// [`move_right`](Self::move_right) 相当の移動を行い、左側の要素数の
+    /// 減少だけを保証する）。
     ///
-    /// 指定された要素がヒープに入っていないとき、
-    /// 以降の挙動すべてが未定義になります。
+    /// `elm` と等しい要素がヒープに入っていない場合、以降のすべての操作の
+    /// 結果が不正になる。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -410,16 +459,16 @@ where
         }
     }
 
-    /// ヒープに入っている要素を１つ指定して、右側ヒープの要素数が
-    /// １減少するように削除します。
+    /// 右側ヒープの要素数が1減少するように、ヒープ中の要素 `elm` を1つ削除する。$O(\log n)$。
     ///
-    /// # ⚠️  Undefined Behavior
+    /// `elm` がどちら側にあるかは問わない（左側にあれば削除後に
+    /// [`move_left`](Self::move_left) 相当の移動を行い、右側の要素数の
+    /// 減少だけを保証する）。
     ///
-    /// 指定された要素がヒープに入っていないとき、
-    /// 以降の挙動すべてが未定義になります。
+    /// `elm` と等しい要素がヒープに入っていない場合、以降のすべての操作の
+    /// 結果が不正になる。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -444,14 +493,17 @@ where
         }
     }
 
-    /// 左側ヒープの要素が `k` 個になるように動かします。
+    /// 左側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
+    ///
+    /// 左側は小さい方から $k$ 個の要素を持つことになるので、
+    /// [`peek_right`](Self::peek_right) で $(k+1)$ 番目に小さい要素（順序統計量）
+    /// が得られる。$O(|k - \text{左側の要素数}| \log n)$。
     ///
     /// # Panics
     ///
     /// `k` が総要素数よりも大きいとき。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -477,14 +529,17 @@ where
         }
     }
 
-    /// 右側ヒープの要素が `k` 個になるように動かします。
+    /// 右側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
+    ///
+    /// 右側は大きい方から $k$ 個の要素を持つことになるので、
+    /// [`peek_left`](Self::peek_left) で $(n-k)$ 番目に小さい要素（順序統計量）
+    /// が得られる。$O(|k - \text{右側の要素数}| \log n)$。
     ///
     /// # Panics
     ///
     /// `k` が総要素数よりも大きいとき。
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -510,14 +565,9 @@ where
         }
     }
 
-    /// ハンドラへの参照を返します。
+    /// [`Handler`] への参照を返す。
     ///
-    /// # Panics
-    ///
-    /// `k` が総要素数よりも大きいとき。
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -538,9 +588,9 @@ where
         &self.handler
     }
 
-    /// 左側ヒープの要素を昇順に格納したベクターを構築して返します。
+    /// 左側ヒープの要素を昇順に並べたベクターを構築する。$O(k \log k)$（$k$ は左側の要素数）。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -555,9 +605,9 @@ where
         self.left.collect_sorted_vec()
     }
 
-    /// 右側ヒープの要素を昇順に格納したベクターを構築して返します。
+    /// 右側ヒープの要素を昇順に並べたベクターを構築する。$O(k \log k)$（$k$ は右側の要素数）。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -577,9 +627,9 @@ where
             .collect()
     }
 
-    /// すべての要素を昇順に格納したベクターを構築して返します。
+    /// すべての要素を昇順に並べたベクターを構築する。$O(n \log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::DoubleHeap;
@@ -614,13 +664,16 @@ where
     }
 }
 
-/// 論理削除のできるヒープです。
+/// 遅延削除のできる二分ヒープ。
 ///
-/// # ⚠️  注意点
+/// 本体用・削除予定用の2本の [`BinaryHeap`] を持つ。削除は要素を削除予定
+/// ヒープへ積むだけで完了し（$O(\log n)$）、本体ヒープの最大値と削除予定
+/// ヒープの最大値が一致する間はその場で両方から取り除く（settle）ことで、
+/// 実際の削除操作を先延ばしにする。
 ///
-/// ヒープに入っていない要素を削除すると
-/// **たとえその要素をすぐに挿入し直したとしても、
-/// その後の挙動がすべて未定義になります。**
+/// [`remove_unchecked`](Self::remove_unchecked) にヒープへ入っていない要素を
+/// 指定すると、たとえ直後に同じ要素を挿入し直しても、本体・削除予定の対応
+/// 関係が崩れたままになり、以降のすべての操作の結果が不正になる。
 #[derive(Clone)]
 pub struct RemovableHeap<T> {
     heap: BinaryHeap<T>,
@@ -652,36 +705,36 @@ impl<T: Copy + Ord + Hash> Default for RemovableHeap<T> {
     }
 }
 impl<T: Copy + Ord + Hash> RemovableHeap<T> {
-    /// 空のヒープを構築します。
+    /// 空のヒープを構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use heap_tricks::RemovableHeap;
-    /// let heap = RemovableHeap::<()>::new();
-    /// assert_eq!(heap.collect_sorted_vec(), Vec::new());
+    /// let heap = RemovableHeap::<i32>::new();
+    /// assert!(heap.is_empty());
     /// ```
     pub fn new() -> Self {
         Self::default()
     }
 
-    /// ヒープが空ならば `true` を返します。
+    /// ヒープが空なら `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
     /// # use std::iter::FromIterator;
-    /// assert_eq!(RemovableHeap::from_iter(Vec::<u32>::new()).is_empty(), true);
-    /// assert_eq!(RemovableHeap::from_iter(vec![42]).is_empty(), false);
+    /// assert!(RemovableHeap::from_iter(Vec::<u32>::new()).is_empty());
+    /// assert!(!RemovableHeap::from_iter(vec![42]).is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
         self.len() == 0
     }
 
-    /// ヒープの長さを返します。
+    /// ヒープの要素数を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
@@ -693,9 +746,9 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.len
     }
 
-    /// ヒープに新しい要素 `x` を追加します。
+    /// 要素 `x` を挿入する。$O(\log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
@@ -709,11 +762,12 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.heap.push(x);
     }
 
-    /// ヒープに含まれる要素 `x` を削除します。
-    /// ただし、ヒープに含まれない要素を指定した場合、このメソッドの呼び出し
-    /// 及びその後の挙動は全て未定義になります。
+    /// ヒープに入っている要素 `x` を1つ削除する。$O(\log n)$。
     ///
-    /// # Examples
+    /// `x` と等しい要素がヒープに入っていない場合、たとえ直後に同じ要素を
+    /// 挿入し直しても、以降のすべての操作の結果が不正になる。
+    ///
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
@@ -721,7 +775,7 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
     /// let mut heap = RemovableHeap::from_iter(vec![42, 45, 56]);
     /// heap.remove_unchecked(45);
     /// assert_eq!(heap.collect_sorted_vec().as_slice(), &[42, 56]);
-    /// // heap.remove_unchecked(44); やってはいけません。
+    /// // heap.remove_unchecked(44); のように入っていない要素を指定してはいけない。
     /// ```
     pub fn remove_unchecked(&mut self, x: T) {
         self.len -= 1;
@@ -729,9 +783,9 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.settle();
     }
 
-    /// ヒープの最大要素が存在すれば、削除して返します。
+    /// ヒープの最大要素があれば削除して返す。$O(\log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
@@ -747,9 +801,9 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         Some(ans)
     }
 
-    /// ヒープの最大要素が存在すれば、返します。
+    /// ヒープの最大要素があれば返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
@@ -762,9 +816,9 @@ impl<T: Copy + Ord + Hash> RemovableHeap<T> {
         self.heap.peek().copied()
     }
 
-    /// ヒープの要素を昇順に格納したベクターを構築します。
+    /// ヒープの要素を昇順に並べたベクターを構築する。$O(n \log n)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use heap_tricks::RemovableHeap;
