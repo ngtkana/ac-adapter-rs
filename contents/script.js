@@ -63,15 +63,46 @@ document.addEventListener('DOMContentLoaded', function () {
       (item.doc && item.doc.toLowerCase().includes(query)));
   }
 
-  // rustdocのintra-doc link記法（[`Item`]や[`Item`][]）をクレートのrustdocトップへのリンクにする。
+  // std/core/alloc の既知アイテム名。intra-doc linkがこれらを指す場合はstdの公式ドキュメントへ飛ばす。
+  const STD_KNOWN_IDENTS = new Set([
+    'Vec', 'VecDeque', 'HashMap', 'HashSet', 'BTreeMap', 'BTreeSet', 'BinaryHeap', 'LinkedList',
+    'String', 'str', 'Option', 'Result', 'Box', 'Rc', 'Arc', 'Cow', 'RefCell', 'Cell', 'Mutex',
+    'RwLock', 'Ordering', 'Duration', 'Instant', 'PhantomData', 'Iterator', 'IntoIterator',
+    'Default', 'Clone', 'Copy', 'Debug', 'Display', 'Hash', 'PartialEq', 'Eq', 'PartialOrd', 'Ord',
+    'From', 'Into', 'TryFrom', 'TryInto', 'usize', 'isize', 'u8', 'u16', 'u32', 'u64', 'u128',
+    'i8', 'i16', 'i32', 'i64', 'i128', 'f32', 'f64', 'bool', 'char',
+  ]);
+
+  // intra-doc linkの参照先テキスト（`Vec<u64>`, `std::cmp::Ordering`, `access`等）から、
+  // std/core/allocのアイテムだと判定できればstd公式ドキュメントの検索結果へのURLを返す。
+  function stdDocLinkFor(refText) {
+    // refTextはHTMLエスケープ済み（<code>の中身）なので "<" は "&lt;" になっている
+    const base = refText.split(/[<(]|&lt;/)[0].trim();
+    if (/^(std|core|alloc)::/.test(base)) {
+      return `https://doc.rust-lang.org/std/index.html?search=${encodeURIComponent(base.split('::').pop())}`;
+    }
+    const lastSegment = base.split('::').pop();
+    if (STD_KNOWN_IDENTS.has(lastSegment)) {
+      return `https://doc.rust-lang.org/std/index.html?search=${encodeURIComponent(lastSegment)}`;
+    }
+    return null;
+  }
+
+  // rustdocのintra-doc link記法（[`Item`]や[`Item`][]）をリンクにする。
+  // std/core/allocのアイテムはdoc.rust-lang.orgの検索結果へ、それ以外はクレートのrustdocトップへ飛ばす。
   // 正確なアイテムのページ（struct.Foo.html等）はrustdocのsearch-indexが持つ型コードが
-  // 非公開・不安定な内部フォーマットなので解読せず、確実に存在するクレートトップに留める。
+  // 非公開・不安定な内部フォーマットなので解読せず、確実に存在するページに留める。
   // <pre>...</pre>（コード例）の中身は対象外にする。
   function linkifyIntraDocRefs(html, crateName) {
-    const target = `rustdoc/${crateName}/index.html`;
+    const localTarget = `rustdoc/${crateName}/index.html`;
     return html.split(/(<pre>[\s\S]*?<\/pre>)/).map((chunk, i) => {
       if (i % 2 === 1) return chunk;
-      return chunk.replace(/\[(<code>[^<]*<\/code>)\](\[\])?/g, (_, codeSpan) => `<a href="${target}">${codeSpan}</a>`);
+      return chunk.replace(/\[(<code>([^<]*)<\/code>)\](\[\])?/g, (_, codeSpan, refText) => {
+        const stdTarget = stdDocLinkFor(refText);
+        const target = stdTarget || localTarget;
+        const attrs = stdTarget ? ' target="_blank" rel="noopener"' : '';
+        return `<a href="${target}"${attrs}>${codeSpan}</a>`;
+      });
     }).join('');
   }
 
@@ -79,9 +110,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const bodyHtml = crateMetadata.full
       ? linkifyIntraDocRefs(crateMetadata.full, crateName)
       : '<p class="placeholder">(doc comment 未整備。一覧の要約のみ)</p>';
+    const summaryHtml = crateMetadata.description_html
+      ? linkifyIntraDocRefs(crateMetadata.description_html, crateName)
+      : '';
     main.innerHTML = `
-      <h4>${crateName}</h4>
-      ${crateMetadata.description ? `<p class="summary">${crateMetadata.description}</p>` : ''}
+      <h2>${crateName}</h2>
+      ${summaryHtml ? `<p class="summary">${summaryHtml}</p>` : ''}
       <div class="meta-bar">
         ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}">#${t}</span>`).join("")}
         <span>依存: ${crateMetadata.dependencies.length ? crateMetadata.dependencies.join(", ") : "なし"}</span>
@@ -121,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const item = document.createElement("div");
         item.className = "catalog-item";
         item.dataset.crate = crateName;
-        item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description || ''}</span>`;
+        item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description_html || ''}</span>`;
         item.addEventListener("click", () => selectItem(item));
         sidebar.appendChild(item);
       });
