@@ -1,18 +1,21 @@
-//! A Fenwick tree (Binary Indexed Tree) for efficient range queries.
+//! 結合的な演算を載せたFenwick木（Binary Indexed Tree）。
 //!
-//! This crate provides a generic implementation of Fenwick trees,
-//! which support point updates and prefix/range queries in O(log n) time.
+//! 長さ$n$の配列を添字の最下位ビットで木構造化し、添字$i$のノードに区間
+//! $[i - (i \mathbin{\&} (-i)), i)$（1-indexed）の総積を持たせる。この構造により、
+//! 1点更新も前計算和の取得も、木の根から葉までの経路上高々$O(\log n)$個の
+//! ノードを辿るだけで完了する。
 //!
-//! # When to use
+//! # 仕様
 //!
-//! A Fenwick tree is useful when you need to:
-//! - Quickly update individual elements
-//! - Query aggregate values over ranges (sum, XOR, min, etc.)
-//! - Process online queries where the dataset changes dynamically
+//! [`Op`]トレイトで結合律を満たす二項演算 $(S, \oplus, e)$ を定義する。
 //!
-//! It's particularly common in competitive programming for range sum queries.
+//! * [`Op::identity`][]: 単位元 $e$
+//! * [`Op::add`][]: 演算 $a \oplus b$（結合律を満たすこと）
 //!
-//! # Examples
+//! 逆演算 $\ominus$ を持つ場合は[`OpSub`]も実装すると、任意区間 $[l, r)$ の
+//! 畳み込みを $\mathrm{fold\_to}(r) \ominus \mathrm{fold\_to}(l)$ で計算できる。
+//!
+//! # 例
 //!
 //! ```
 //! use fenwick::Fenwick;
@@ -40,51 +43,26 @@
 //! let mut tree = Fenwick::<Sum>::new(5);
 //! tree.add(1, &10);
 //! tree.add(3, &20);
-//!
-//! // Sum of elements in [1, 4)
-//! assert_eq!(tree.fold(1..4), 30);
+//! assert_eq!(tree.fold(1..4), 30); // 10 + 0 + 20
 //! ```
 //!
-//! # How it works
+//! # 計算量
 //!
-//! This crate uses a generic [`Op`] trait to define the aggregation operation.
-//! Your type must implement:
-//! - An identity element (via [`Op::identity`])
-//! - An associative binary operation (via [`Op::add`])
-//!
-//! For range queries over arbitrary intervals, additionally implement [`OpSub`]
-//! to support subtraction. This enables the formula:
-//! `range_sum(start..end) = prefix_sum(end) - prefix_sum(start)`.
-//!
-//! # Core Items
-//!
-//! - [`Fenwick<O>`]: The main data structure for efficient range queries
-//! - [`Op`]: Trait defining associative operations (identity + add)
-//! - [`OpSub`]: Extension of [`Op`] that also supports subtraction
-//!
-//! # Complexity
-//!
-//! - `new(n)`: O(n)
-//! - `add()`, `sub()`: O(log n)
-//! - `fold_to()`, `fold()`: O(log n)
+//! - 構築（[`Fenwick::new`]）: $O(n)$
+//! - 1点更新（[`Fenwick::add`], [`Fenwick::sub`]）: $O(\log n)$
+//! - 畳み込み（[`Fenwick::fold_to`], [`Fenwick::fold`]）: $O(\log n)$
 
 use std::fmt::Debug;
 use std::marker::PhantomData;
 use std::ops::Range;
 use std::ops::RangeTo;
 
-/// A trait for defining associative operations on values.
+/// 結合律を満たす二項演算 $(S, \oplus, e)$。
 ///
-/// This trait encapsulates the core operations needed for a Fenwick tree
-/// to perform efficient range queries and updates. Implementations must
-/// provide an identity element and an associative binary operation.
+/// Fenwick木が正しく動作するには、任意の $a, b, c$ に対し
+/// $(a \oplus b) \oplus c = a \oplus (b \oplus c)$ を満たす必要がある。
 ///
-/// # Safety and Correctness
-///
-/// For the Fenwick tree to work correctly, `add` must be associative:
-/// for all values `a`, `b`, `c`, the operation must satisfy associativity.
-///
-/// # Examples
+/// # 例
 ///
 /// ```
 /// # use fenwick::Op;
@@ -102,84 +80,65 @@ use std::ops::RangeTo;
 /// }
 /// ```
 pub trait Op {
-    /// The type of values this operation works with.
+    /// 演算の値の型。
     type Value;
 
-    /// Returns the identity element for this operation.
-    ///
-    /// This is the element that, when combined with any value `v` via
-    /// `add`, leaves `v` unchanged.
+    /// 単位元 $e$ を返す。
     fn identity() -> Self::Value;
 
-    /// Computes the result of the associative operation: `a ⊕ b`.
+    /// 演算 $a \oplus b$ を計算する。
     fn add(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
-/// An extension of [`Op`] that also supports subtraction.
+/// 逆演算 $\ominus$ を追加する[`Op`]の拡張。
 ///
-/// This trait is needed to compute range queries over an arbitrary range
-/// `[start, end)`. With only addition, you can only compute prefix sums.
-/// With subtraction, you can compute range sums via the formula:
-/// `range_sum(start..end) = prefix_sum(end) - prefix_sum(start)`.
+/// `add`だけでは前計算 $[0, i)$ の畳み込みしか求まらない。`sub`を実装すると、
+/// 任意区間 $[l, r)$ の畳み込みを $\mathrm{fold\_to}(r) \ominus \mathrm{fold\_to}(l)$
+/// で計算できるようになる。
 ///
-/// # Examples
+/// # 例
 ///
 /// ```
-/// # use fenwick::OpSub;
+/// # use fenwick::Op;
+/// use fenwick::OpSub;
 /// struct AddOp;
 /// impl OpSub for AddOp {
 ///     fn sub(a: &i64, b: &i64) -> i64 {
 ///         a - b
 ///     }
 /// }
-/// # impl fenwick::Op for AddOp {
+/// # impl Op for AddOp {
 /// #     type Value = i64;
 /// #     fn identity() -> i64 { 0 }
 /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
 /// # }
 /// ```
 pub trait OpSub: Op {
-    /// Computes the result of the inverse operation: `a ⊖ b`.
+    /// 逆演算 $a \ominus b$ を計算する。
     fn sub(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
-/// A Fenwick tree (also known as a Binary Indexed Tree).
+/// Fenwick木（Binary Indexed Tree）。
 ///
-/// A Fenwick tree is a data structure that efficiently supports:
-/// - **Point updates**: Update a single element in O(log n) time
-/// - **Prefix queries**: Compute the fold of elements in [0, i) in O(log n) time
-/// - **Range queries**: (with [`OpSub`]) Compute the fold of elements in [i, j) in O(log n) time
+/// 長さ$n$の配列 $x_0, \ldots, x_{n-1}$ を管理し、1点更新と前計算和
+/// $x_0 \oplus \cdots \oplus x_{i-1}$ の取得をともに $O(\log n)$ で行う。
+/// 内部では長さ$n+1$の配列を持ち、添字$i$のノードが区間
+/// $[i - (i \mathbin{\&} (-i)), i)$ の総積を保持する。
 ///
-/// The tree uses a generic operation [`Op`] to define the aggregation function.
-///
-/// # Memory
-///
-/// A `Fenwick<O>` uses O(n) space where n is the length of the tree.
-///
-/// # Examples
-///
-/// Creating and updating a tree with addition:
+/// # 例
 ///
 /// ```
 /// # use fenwick::{Fenwick, Op};
-/// struct AddOp;
-/// impl Op for AddOp {
-///     type Value = i64;
-///
-///     fn identity() -> i64 {
-///         0
-///     }
-///
-///     fn add(a: &i64, b: &i64) -> i64 {
-///         a + b
-///     }
-/// }
-///
+/// # struct AddOp;
+/// # impl Op for AddOp {
+/// #     type Value = i64;
+/// #     fn identity() -> i64 { 0 }
+/// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+/// # }
 /// let mut tree = Fenwick::<AddOp>::new(5);
-/// tree.add(2, &10); // Add 10 at index 2
-/// tree.add(4, &5); // Add 5 at index 4
-/// let sum = tree.fold_to(..5); // Sum of [0, 5)
-/// assert_eq!(sum, 15);
+/// tree.add(2, &10);
+/// tree.add(4, &5);
+/// assert_eq!(tree.fold_to(..5), 15);
 /// ```
 pub struct Fenwick<O: Op> {
     items: Vec<O::Value>,
@@ -196,9 +155,9 @@ impl<T: Debug, O: Op<Value = T>> Debug for Fenwick<O> {
 }
 
 impl<O: Op> Default for Fenwick<O> {
-    /// Creates a new empty Fenwick tree.
+    /// 長さ$0$の空のFenwick木を生成する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::Fenwick;
@@ -218,15 +177,9 @@ impl<O: Op> Default for Fenwick<O> {
     }
 }
 impl<T, O: Op<Value = T>> Fenwick<O> {
-    /// Creates a new Fenwick tree with the given length.
+    /// 長さ$n$のFenwick木を生成する。全要素は単位元 $e$ に初期化される。$O(n)$。
     ///
-    /// All elements are initialized to the identity element of the operation.
-    ///
-    /// # Arguments
-    ///
-    /// * `len` - The number of logical elements in the tree
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::{Fenwick, Op};
@@ -248,14 +201,11 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
         }
     }
 
-    /// Adds a value to the element at the given index.
+    /// $x_i \mathrel{\oplus}= v$、$O(\log n)$。
     ///
-    /// # Arguments
+    /// 前提：$i < n$。
     ///
-    /// * `index` - The index to update (must be < length)
-    /// * `value` - The value to add
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::{Fenwick, Op};
@@ -267,6 +217,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(2, &10);
+    /// assert_eq!(tree.fold_to(..3), 10);
     /// ```
     pub fn add(&mut self, mut index: usize, value: &T) {
         assert!(index + 1 < self.items.len(), "index out of bounds");
@@ -277,13 +228,9 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
         }
     }
 
-    /// Computes the fold of all elements in the range `[0, end)`.
+    /// $x_0 \oplus x_1 \oplus \cdots \oplus x_{\mathrm{end} - 1}$ を返す。$O(\log n)$。
     ///
-    /// # Arguments
-    ///
-    /// * `range` - A range `..end` specifying the prefix
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::{Fenwick, Op};
@@ -311,16 +258,11 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
 }
 
 impl<T, O: OpSub<Value = T>> Fenwick<O> {
-    /// Subtracts a value from the element at the given index.
+    /// $x_i \mathrel{\ominus}= v$、$O(\log n)$。[`OpSub`]を要求する。
     ///
-    /// This requires the operation to support subtraction (i.e., implement [`OpSub`]).
+    /// 前提：$i < n$。
     ///
-    /// # Arguments
-    ///
-    /// * `index` - The index to update (must be < length)
-    /// * `value` - The value to subtract
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::{Fenwick, Op, OpSub};
@@ -336,6 +278,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(2, &10);
     /// tree.sub(2, &3);
+    /// assert_eq!(tree.fold_to(..3), 7);
     /// ```
     pub fn sub(&mut self, mut index: usize, value: &T) {
         assert!(index + 1 < self.items.len(), "index out of bounds");
@@ -346,15 +289,11 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
         }
     }
 
-    /// Computes the fold of all elements in the range `[start, end)`.
+    /// $x_{\mathrm{start}} \oplus \cdots \oplus x_{\mathrm{end} - 1}$ を
+    /// $\mathrm{fold\_to}(\mathrm{end}) \ominus \mathrm{fold\_to}(\mathrm{start})$ で計算する。
+    /// $O(\log n)$。[`OpSub`]を要求する。
     ///
-    /// This requires the operation to support subtraction (i.e., implement [`OpSub`]).
-    ///
-    /// # Arguments
-    ///
-    /// * `range` - A range `[start, end)` specifying the interval
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// # use fenwick::{Fenwick, Op, OpSub};
