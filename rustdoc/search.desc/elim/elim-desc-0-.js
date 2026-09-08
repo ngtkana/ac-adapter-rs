@@ -1,1 +1,1 @@
-searchState.loadedDescShard("elim", 0, "GF(2) 上の 0-1 …\n0-1 行列を列基本変形し、ランクを返す。")
+searchState.loadedDescShard("elim", 0, "…")
