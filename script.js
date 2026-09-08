@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
+  const app = document.getElementById("app");
   const sidebar = document.getElementById("catalog-list");
   const searchInput = document.getElementById("search-input");
   const main = document.getElementById("catalog-main");
@@ -114,6 +115,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ? linkifyIntraDocRefs(crateMetadata.description_html, crateName)
       : '';
     main.innerHTML = `
+      <button type="button" class="back-to-list">← 一覧に戻る</button>
       <h2>${crateName}</h2>
       ${summaryHtml ? `<p class="summary">${summaryHtml}</p>` : ''}
       <div class="meta-bar">
@@ -123,6 +125,9 @@ document.addEventListener('DOMContentLoaded', function () {
       </div>
       <div class="doc-body">${bodyHtml}</div>
     `;
+    main.querySelector(".back-to-list").addEventListener("click", () => {
+      history.back();
+    });
     main.querySelectorAll(".clickable-tag").forEach(el => {
       const activate = () => {
         searchInput.value = `tag:${el.dataset.tag}`;
@@ -139,11 +144,47 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(main);
   }
 
+  // 一覧⇔詳細の1画面切り替えはモバイル幅（styles.cssの768pxブレークポイントと同一基準）専用の挙動。
+  // デスクトップでは常に両方表示されるため、履歴やフォーカスを操作しない。
+  function isMobileLayout() {
+    return window.matchMedia("(max-width: 768px)").matches;
+  }
+
+  function showMobileDetailView() {
+    app.classList.add("mobile-detail");
+    main.focus();
+  }
+
+  function hideMobileDetailView() {
+    app.classList.remove("mobile-detail");
+    sidebar.focus();
+  }
+
+  // モバイルの一覧⇔詳細切り替えをブラウザの戻る/進む操作（スワイプ等）に対応させる。
+  // 複数クレートを見た後でも「戻る」は常に一覧へ一直線に戻したいので、
+  // 既に詳細状態のhistory entryがあれば積み増さずreplaceする。
+  function enterDetail() {
+    if (!isMobileLayout()) return;
+    if (history.state && history.state.view === "detail") {
+      history.replaceState({ view: "detail" }, "");
+    } else {
+      history.pushState({ view: "detail" }, "");
+    }
+    showMobileDetailView();
+  }
+
+  window.addEventListener("popstate", (e) => {
+    if (!isMobileLayout()) return;
+    if (e.state && e.state.view === "detail") showMobileDetailView();
+    else hideMobileDetailView();
+  });
+
   function selectItem(item) {
     document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
     item.classList.add("selected");
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
+    enterDetail();
   }
 
   function renderList() {
