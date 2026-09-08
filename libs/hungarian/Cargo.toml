@@ -3,6 +3,7 @@ name = "hungarian"
 version = "0.1.0"
 authors = ["ngtkana <ngtkana@gmail.com>"]
 edition.workspace = true
+keywords = ["graph", "optimization"]
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

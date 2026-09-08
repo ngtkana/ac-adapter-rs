@@ -27,7 +27,7 @@ cp contents/* docs/
 if [ ! -e "docs/rustdoc" ]; then
     mkdir -p "docs/rustdoc"
 fi
-RUSTDOCFLAGS="--html-in-header contents/header.html" \
+RUSTDOCFLAGS="--html-in-header contents/header.html -D rustdoc::broken_intra_doc_links" \
     cargo doc --workspace --no-deps
 cp -r target/doc/* docs/rustdoc/
 '''

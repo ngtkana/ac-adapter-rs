@@ -1,6 +1,39 @@
-//! ウェーブレット行列
+//! 数列を静的に保持し、区間内の順位・K 番目・値域内の探索を対数時間で行うウェーブレット行列
 //!
-//! 本体は [`WaveletMatrix`] です。
+//! # 解説
+//!
+//! 各要素を二進数とみなし、最上位ビットから順に「ビットが 0 の要素」「1 の要素」で
+//! 安定パーティションする。段ごとに得られる 0/1 列を [`StaticBitVec`] として積み重ねると、
+//! ある段のある区間が次の段のどの区間へ移るかを rank 演算だけで求まる。
+//! この移動を繰り返して値の範囲を上位ビットから絞り込みつつ区間を分割していくことで、
+//! 区間内の順位・K 番目・値域内の出現個数などがまとめて求まる。
+//!
+//! # 仕様
+//!
+//! 数列 $a_0, \dots, a_{n-1}$（$0 \le a_i < \sigma$）を管理する。本体は [`WaveletMatrix`] で、次のクエリを提供する。
+//!
+//! - `access(i)`: $a_i$
+//! - `range_freq(l..r, lo..hi)`: $\# \{\, i \in [l, r) \mid a_i \in [lo, hi) \,\}$
+//! - `next_value(l..r, lo..hi)` / `prev_value(l..r, lo..hi)`: 上記条件を満たす最小・最大の値
+//! - `quantile(k, l..r, lo..hi)`: 上記条件を満たす要素を昇順に並べたときの $k$ 番目（0-indexed）
+//!
+//! # 例
+//!
+//! ```
+//! use wavelet_matrix::WaveletMatrix;
+//!
+//! let wm = WaveletMatrix::from_iter(vec![2, 1, 3, 0]);
+//! assert_eq!(wm.access(2), 3);
+//! assert_eq!(wm.range_freq(1.., 0..2), 2); // [1, 3, 0] のうち [0, 2) は 1, 0 の2個
+//! assert_eq!(wm.quantile(1, .., ..), Some(1)); // 昇順1番目(0-indexed)は1
+//! ```
+//!
+//! # 計算量
+//!
+//! $n$: 数列の長さ、$\sigma$: 値の上限（$a_i < \sigma$）とする。
+//!
+//! - 構築: $O(n \log \sigma)$
+//! - `access`, `range_freq`, `next_value`, `prev_value`, `quantile`: $O(\log \sigma)$
 #![allow(clippy::len_zero)]
 
 use std::fmt::Debug;
