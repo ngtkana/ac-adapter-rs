@@ -1,11 +1,32 @@
 use super::Signed;
 use std::mem::swap;
 
-/// Takes two integers `x, y` and returns `a, b, g` satisfying `ax + by = g, 0 < g`
+/// 拡張ユークリッドの互除法。$ax + by = \gcd(x, y)$ を満たす $(a, b, g)$（$g = \gcd(x, y) > 0$）を返す。
+///
+/// 通常のユークリッドの互除法で商を求めながら、その商で係数 $a, b$ を同時に更新することで、
+/// $\gcd$ とベズー係数を同じ $O(\log \min(|x|, |y|))$ 回のループで求める。
+///
+/// # 仕様
+///
+/// - 前提: $x \neq 0$ かつ $y \neq 0$
+/// - 戻り値: $ax + by = g$, $g > 0$ を満たす $(a, b, g)$
+///
+/// # 例
+///
+/// ```
+/// use euclid::ext_gcd;
+/// let (a, b, g) = ext_gcd(42, 48);
+/// assert_eq!(g, 6); // gcd(42, 48) = 6
+/// assert_eq!(a * 42 + b * 48, g);
+/// ```
+///
+/// # 計算量
+///
+/// $O(\log \min(|x|, |y|))$
 ///
 /// # Panics
 ///
-/// Panics if `x == 0 || y == 0`
+/// `x == 0` または `y == 0` のとき
 pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
     assert_ne!(x, T::zero());
     assert_ne!(y, T::zero());
