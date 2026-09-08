@@ -1,1 +1,1 @@
-searchState.loadedDescShard("convex_hull", 0, "凸包を求めます。 …\ndet(p1 - p0, p2 - p0) を求めます。\n凸包を求めます。 …\n凸であれば true を返します。\n|p0 - p1| ^ 2 を求めます。")
+searchState.loadedDescShard("convex_hull", 0, "…\n…\n外積 $\\det(p_1 - p_0,\\ p_2 - p_0)$ …\n…\n点列 <code>a</code> …\n2点間の距離の2乗 $|p_0 - p_1|^2$ を返す。")
