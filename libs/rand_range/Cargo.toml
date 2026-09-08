@@ -2,6 +2,7 @@
 name = "rand_range"
 version = "0.1.0"
 edition.workspace = true
+keywords = ["utility"]
 
 [dependencies]
 rand.workspace = true

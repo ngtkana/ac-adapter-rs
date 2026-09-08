@@ -1,12 +1,23 @@
-//! # LazySegtree
+//! 作用素モノイドの遅延伝播により区間更新・区間取得を行うセグメント木。
 //!
-//! Defines a struct [`LazySegtree`] and a trait [`Op`] for a lazy segment tree.
+//! 各頂点に未反映の作用素を持たせておき、子へアクセスするとき（`fold`, `range_apply` でその部分木をたどるとき）にはじめて子へ伝播させる（遅延伝播）。
+//! これにより区間更新・区間取得のどちらも、実際にたどる頂点数のみで済み $O(\log n)$ で処理できる。
+//! 作用素の合成 `compose` と値の結合 `op` はいずれもモノイドをなし、`apply` はこの2つに対して分配法則を満たす必要がある。
+//! 二分探索（`fold` した値が条件を満たす境界を探す操作）には対応しない。
 //!
-//! # Note
+//! # 仕様
 //!
-//! It does not support binary searches.
+//! [`Op`] トレイトを実装して要素の型 `Value` と作用素の型 `Operator` を指定する。
 //!
-//! # Example
+//! - `identity`, `op`: `Value` のモノイド（結合律・単位元）
+//! - `identity_op`, `compose`: `Operator` のモノイド。`compose(f, g)` は「`g` を適用してから `f` を適用する」に相当
+//! - `apply(f, x)`: 次の整合性条件を満たす必要がある
+//!   - $\mathrm{apply}(\mathrm{compose}(f, g), x) = \mathrm{apply}(f, \mathrm{apply}(g, x))$
+//!   - $\mathrm{apply}(f, \mathrm{op}(x, y)) = \mathrm{op}(\mathrm{apply}(f, x), \mathrm{apply}(f, y))$
+//!
+//! [`LazySegtree::new`] で構築し、[`LazySegtree::range_apply`] で区間 `[l, r)` に作用素を適用、[`LazySegtree::fold`] で区間 `[l, r)` を `op` で畳み込んで取得する。
+//!
+//! # 例
 //!
 //! ```
 //! use lazy_segtree::LazySegtree;
@@ -38,11 +49,22 @@
 //!     }
 //! }
 //!
+//! // [3, 1, 4, 1, 5, 9, 2, 6]
 //! let mut seg = LazySegtree::<O>::new(&[3, 1, 4, 1, 5, 9, 2, 6]);
-//! assert_eq!(seg.fold(0..8), 9);
-//! seg.range_apply(3..6, &2);
-//! assert_eq!(seg.fold(0..8), 11);
+//! assert_eq!(seg.fold(0..8), 9); // max(3, 1, 4, 1, 5, 9, 2, 6) = 9
+//!
+//! seg.range_apply(3..6, &2); // [3, 1, 4, 3, 7, 11, 2, 6]
+//! assert_eq!(seg.fold(0..8), 11); // max(3, 1, 4, 3, 7, 11, 2, 6) = 11
+//! assert_eq!(seg.fold(0..3), 4); // max(3, 1, 4) = 4
 //! ```
+//!
+//! # 計算量
+//!
+//! - [`LazySegtree::new`][]: $O(n)$
+//! - [`LazySegtree::range_apply`][]: $O(\log n)$
+//! - [`LazySegtree::fold`][]: $O(\log n)$
+//! - [`LazySegtree::get`][]: $O(\log n)$
+//! - [`LazySegtree::collect`][]: $O(n \log n)$
 use std::iter::FromIterator;
 use std::mem::replace;
 use std::ops::RangeBounds;
@@ -68,6 +90,7 @@ pub trait Op {
 }
 
 /// A lazy segment tree.
+#[doc(alias = "RURQ")]
 #[derive(Debug, Clone)]
 pub struct LazySegtree<O: Op> {
     values: Vec<O::Value>,

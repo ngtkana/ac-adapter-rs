@@ -1,61 +1,49 @@
-//! Union Find です。
+//! 素集合データ構造（Union-Find）。頂点を非交差な集合に分け、併合・同一判定を高速に行う
 //!
-//! # 使い方
+//! 各集合を根付き木で表現し、経路圧縮と union by size を組み合わせることで、
+//! 木の高さを低く抑える。これにより find・union は償却 $O(\alpha(n))$
+//! （$\alpha$ はアッカーマン関数の逆関数）で完了し、$m$ 回の操作全体では
+//! $O(m \alpha(n))$ に収まる。
 //!
+//! # 仕様
+//! - [`UnionFind::new`]: 頂点数 $n$ の、すべて孤立した状態を構築する
+//! - [`UnionFind::union`]: 頂点 $x, y$ を含む集合を併合する。既に同じ集合なら `false`
+//! - [`UnionFind::same`]: 頂点 $x, y$ が同じ集合に属するか判定する
+//! - [`UnionFind::find`] / [`find_mut`](UnionFind::find_mut): 頂点 $x$ が属する集合の代表元を返す
+//! - 頂点重み: [`Op`] を実装した型 `O` を指定すると、`UnionFind<O>` は
+//!   各集合に重み（[`Op::Value`]）を持てる。既製品として
+//!   [`EdgeCount`], [`VertexCount`], [`HasCycle`] を用意している。
+//!   複数の重みを同時に持たせたいときはタプル `(T, U, ..)` を使う
 //!
-//! ## 頂点重みを持たない場合
-//!
+//! # 例
+//! 頂点重みなし（デフォルトは `()`）
 //! ```
 //! # use union_find::UnionFind;
-//! // 型引数 `()` の defaulting の `UnionFind` に `<_>` が必要です。
+//! // 型引数 `()` の defaulting のため `<_>` が必要
 //! let mut uf = <UnionFind>::new(3);
-//!
-//! // `Debug` トレイトを実装しています。
-//! // 頂点重みを持つ場合と実装を分岐できないため、`()` がついて悲しいです。
-//! assert_eq!(&format!("{:?}", &uf), "[((), [0]), ((), [1]), ((), [2])]");
-//!
-//! // union-find 操作です。
 //! assert_eq!(uf.same(0, 1), false);
 //! assert_eq!(uf.union(0, 1), true);
 //! assert_eq!(uf.same(0, 1), true);
 //! assert_eq!(uf.same(0, 2), false);
-//! assert_eq!(uf.union(0, 1), false);
+//! assert_eq!(uf.union(0, 1), false); // 既に同じ集合
 //! ```
 //!
-//! ## 頂点重みを持つ場合
-//!
-//! 用意されているもの
-//! - `()` (nop)
-//! - [`EdgeCount`]
-//! - [`VertexCount`]
-//! - [`HasCycle`]
-//!
-//! 自作したいとき
-//! - [`Op`]
-//!
+//! 頂点重みあり（辺数・サイクル判定）
 //! ```
-//! # use union_find::{UnionFind, EdgeCount, HasCycle};
-//! // 用意されているもので OK ならそれを使いましょう。
-//! // 複数使いたいときには、タプルがつかます。
+//! # use union_find::{EdgeCount, HasCycle, UnionFind};
 //! let mut uf = UnionFind::<(EdgeCount, HasCycle)>::new(3);
+//! assert_eq!(uf.value(0), (0, false));
 //!
-//! // `Debug` トレイトを実装しています。
-//! // (重み, メンバー) の形でプリントします。
-//! assert_eq!(
-//!     &format!("{:?}", &uf),
-//!     "[((0, false), [0]), ((0, false), [1]), ((0, false), [2])]"
-//! );
-//!
-//! // union-find 操作と、頂点重みの取得です。
 //! assert_eq!(uf.union(0, 1), true);
-//! assert_eq!(uf.value(0), (1, false));
-//! assert_eq!(uf.union(0, 1), false);
-//! assert_eq!(uf.value(0), (2, true));
+//! assert_eq!(uf.value(0), (1, false)); // 辺 1 本、サイクルなし
 //!
-//! // [`value_mut`] で無理やり書き換えることもできます。
-//! *uf.value_mut(0) = (100, false);
-//! assert_eq!(uf.value(0), (100, false));
+//! assert_eq!(uf.union(0, 1), false); // 既に同じ集合 → 辺を 1 本追加
+//! assert_eq!(uf.value(0), (2, true)); // 辺 2 本、サイクルあり
 //! ```
+//!
+//! # 計算量
+//! - [`new`](UnionFind::new) / [`from_values`](UnionFind::from_values): $O(n)$
+//! - [`find`](UnionFind::find) / [`find_mut`](UnionFind::find_mut) / [`same`](UnionFind::same) / [`union`](UnionFind::union): 償却 $O(\alpha(n))$
 use std::fmt::Debug;
 use std::fmt::Formatter;
 use std::fmt::Result;
@@ -172,6 +160,7 @@ impl Op for HasCycle {
 }
 
 #[derive(Clone, Default, Hash, PartialEq)]
+#[doc(alias = "DSU")]
 pub struct UnionFind<O: Op = ()> {
     parent_or_size: Vec<isize>,
     values: Vec<O::Value>,
