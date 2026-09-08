@@ -22,38 +22,16 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trie/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! キー列（$0, \ldots, 25$ の値の列）を接頭辞で共有するトライ木による集合・辞書。
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">trie/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-2"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! A set and map data structure on trie.
 <a href=#2 id=2 data-nosnippet>2</a>//!
-<a href=#3 id=3 data-nosnippet>3</a>//! 各ノードが $26$ 分木の子を持ち、キーの各要素を添字として子を辿ることでキーを表現する。
-<a href=#4 id=4 data-nosnippet>4</a>//! 共通の接頭辞を持つキーはノードを共有するため、途中のノードそのものが「その接頭辞を持つ
-<a href=#5 id=5 data-nosnippet>5</a>//! 部分集合」を表すトライとなる。[`TrieMap::for_each_prefix`] はこれを利用して、
-<a href=#6 id=6 data-nosnippet>6</a>//! あるキーのすべての接頭辞に対応するノードを根から順に訪問する。
-<a href=#7 id=7 data-nosnippet>7</a>//!
-<a href=#8 id=8 data-nosnippet>8</a>//! # 仕様
-<a href=#9 id=9 data-nosnippet>9</a>//!
-<a href=#10 id=10 data-nosnippet>10</a>//! - [`TrieMap`][]: キー（`impl IntoIterator&lt;Item = usize&gt;`、各要素は $[0, 26)$）から値への辞書
-<a href=#11 id=11 data-nosnippet>11</a>//! - [`TrieSet`][]: `TrieMap&lt;()&gt;` を包んだ集合
-<a href=#12 id=12 data-nosnippet>12</a>//!
-<a href=#13 id=13 data-nosnippet>13</a>//! # 例
-<a href=#14 id=14 data-nosnippet>14</a>//!
-<a href=#15 id=15 data-nosnippet>15</a>//! ```
-<a href=#16 id=16 data-nosnippet>16</a>//! use trie::TrieMap;
-<a href=#17 id=17 data-nosnippet>17</a>//!
-<a href=#18 id=18 data-nosnippet>18</a>//! let mut map = TrieMap::new();
-<a href=#19 id=19 data-nosnippet>19</a>//! map.insert([1, 2, 3], "a");
-<a href=#20 id=20 data-nosnippet>20</a>//! assert_eq!(map.get([1, 2, 3]), Some(&amp;"a"));
-<a href=#21 id=21 data-nosnippet>21</a>//! assert_eq!(map.get([1, 2]), None);
-<a href=#22 id=22 data-nosnippet>22</a>//! ```
-<a href=#23 id=23 data-nosnippet>23</a>//!
-<a href=#24 id=24 data-nosnippet>24</a>//! # 計算量
-<a href=#25 id=25 data-nosnippet>25</a>//!
-<a href=#26 id=26 data-nosnippet>26</a>//! キー長を $k$ として、挿入・削除・取得はいずれも $O(k)$
-<a href=#27 id=27 data-nosnippet>27</a>
-<a href=#28 id=28 data-nosnippet>28</a>/// トライの分岐数（キーの各要素が取り得る値の範囲は $[0, \text{DEGREE})$）。
-<a href=#29 id=29 data-nosnippet>29</a></span><span class="kw">pub const </span>DEGREE: usize = <span class="number">26</span>;
-<a href=#30 id=30 data-nosnippet>30</a>
-<a href=#31 id=31 data-nosnippet>31</a><span class="kw">mod </span>trie_map;
-<a href=#32 id=32 data-nosnippet>32</a><span class="kw">mod </span>trie_set;
-<a href=#33 id=33 data-nosnippet>33</a>
-<a href=#34 id=34 data-nosnippet>34</a><span class="kw">pub use </span>trie_map::TrieMap;
-<a href=#35 id=35 data-nosnippet>35</a><span class="kw">pub use </span>trie_set::TrieSet;</code></pre></div></section></main></body></html>
+<a href=#3 id=3 data-nosnippet>3</a>//! They are set and map datastructure with an extra operation `for_each_prefix`. We can visit all
+<a href=#4 id=4 data-nosnippet>4</a>//! the preficies of a key, receiving the corresponding node again as a trie.
+<a href=#5 id=5 data-nosnippet>5</a>
+<a href=#6 id=6 data-nosnippet>6</a>/// Tries here have the fixed branching number 26.
+<a href=#7 id=7 data-nosnippet>7</a></span><span class="kw">pub const </span>DEGREE: usize = <span class="number">26</span>;
+<a href=#8 id=8 data-nosnippet>8</a>
+<a href=#9 id=9 data-nosnippet>9</a><span class="kw">mod </span>trie_map;
+<a href=#10 id=10 data-nosnippet>10</a><span class="kw">mod </span>trie_set;
+<a href=#11 id=11 data-nosnippet>11</a>
+<a href=#12 id=12 data-nosnippet>12</a><span class="kw">pub use </span>trie_map::TrieMap;
+<a href=#13 id=13 data-nosnippet>13</a><span class="kw">pub use </span>trie_set::TrieSet;</code></pre></div></section></main></body></html>

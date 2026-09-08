@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Meld 可能な二分ヒープ（skew heap）"><title>skew_heap - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="skew_heap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="Meld のできるヒープ"><title>skew_heap - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="skew_heap" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,39 +22,41 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../skew_heap/index.html">skew_<wbr>heap</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>skew_heap</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/skew_heap/lib.rs.html#1-341">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Meld 可能な二分ヒープ（skew heap）</p>
-<p>各ノードは高々 2 つの子を持つ二分木で、親の値が両方の子の値以上というヒープ性質を保つ。
-2 つのヒープの合併 <code>meld</code> は、値の大きい方を根として残し、その右部分木ともう一方を
-再帰的に合併したうえで左右の子を入れ替える。明示的な平衡条件は持たないが、
-この左右反転により長い経路への合併が繰り返されるのを防ぎ、
-償却 $O(\log n)$ の合併を達成する。<code>push</code>, <code>pop</code> はいずれも <code>meld</code> を用いて実装する。</p>
-<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
-<ul>
-<li>型: <code>SkewHeap&lt;T&gt;</code>（<code>T: Ord</code>）</li>
-<li>構築: <code>SkewHeap::new()</code>（空）, <code>SkewHeap::singleton(value)</code>（要素 1 つ）</li>
-<li>合併: <code>SkewHeap::meld(&amp;mut self, rhs)</code>、フリー関数 <code>meld(a, b)</code></li>
-<li>挿入: <code>push(value)</code></li>
-<li>参照・取り出し: <code>peek()</code> は最大要素への参照、<code>pop()</code> は最大要素を取り除いて返す</li>
-<li>変換: <code>into_sorted_vec()</code> はすべての要素を昇順に並べた <code>Vec</code></li>
-</ul>
-<p>親ポインタを持たないため、<code>iter</code>, <code>len</code>, <code>is_empty</code>, <code>peek_mut</code> などは提供しない。</p>
-<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>skew_heap::SkewHeap;
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../skew_heap/index.html">skew_<wbr>heap</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#使い方" title="使い方">使い方</a><ul><li><a href="#ヒープ" title="ヒープ">ヒープ</a></li><li><a href="#meld" title="Meld">Meld</a></li></ul></li><li><a href="#ありそうでないもの" title="ありそうでないもの">ありそうでないもの</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#functions" title="Functions">Functions</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>skew_heap</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/skew_heap/lib.rs.html#1-270">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>Meld のできるヒープ</p>
+<h2 id="使い方"><a class="doc-anchor" href="#使い方">§</a>使い方</h2><h3 id="ヒープ"><a class="doc-anchor" href="#ヒープ">§</a>ヒープ</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>skew_heap::meld;
+<span class="kw">use </span>skew_heap::SkewHeap;
 
-<span class="kw">let </span><span class="kw-2">mut </span>heap = SkewHeap::new();
-heap.push(<span class="number">3</span>);
-heap.push(<span class="number">4</span>);
+<span class="kw">let </span><span class="kw-2">mut </span>heap = SkewHeap::new(); <span class="comment">// new で構築
+</span>heap.push(<span class="number">3</span>); <span class="comment">// push で挿入
+</span>heap.push(<span class="number">4</span>);
 heap.push(<span class="number">2</span>);
-<span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">Some</span>(<span class="number">4</span>));
-<span class="macro">assert_eq!</span>(heap.peek(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3</span>));
-<span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
+
+<span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">Some</span>(<span class="number">4</span>)); <span class="comment">// pop で最大がでてきます。
+
+</span><span class="macro">assert_eq!</span>(heap.peek(), <span class="prelude-val">Some</span>(<span class="kw-2">&amp;</span><span class="number">3</span>)); <span class="comment">// peek で次が見られます。
+</span><span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">Some</span>(<span class="number">3</span>));
 <span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">Some</span>(<span class="number">2</span>));
 <span class="macro">assert_eq!</span>(heap.pop(), <span class="prelude-val">None</span>);</code></pre></div>
-<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<h3 id="meld"><a class="doc-anchor" href="#meld">§</a>Meld</h3>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>skew_heap::meld;
+<span class="kw">use </span>skew_heap::SkewHeap;
+
+<span class="comment">// フリー関数 `meld` を使う方法
+</span><span class="kw">let </span>heap_a = [<span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>].iter().copied().collect::&lt;SkewHeap&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span>heap_b = [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>].iter().copied().collect::&lt;SkewHeap&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span><span class="kw-2">mut </span>heap = meld(heap_a, heap_b);
+<span class="macro">assert_eq!</span>(heap.into_sorted_vec(), <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);
+
+<span class="comment">// メソッド `SkewHeap::meld` を使う方法
+</span><span class="kw">let </span><span class="kw-2">mut </span>heap_a = [<span class="number">0</span>, <span class="number">2</span>, <span class="number">4</span>, <span class="number">6</span>].iter().copied().collect::&lt;SkewHeap&lt;<span class="kw">_</span>&gt;&gt;();
+<span class="kw">let </span><span class="kw-2">mut </span>heap_b = [<span class="number">1</span>, <span class="number">3</span>, <span class="number">5</span>, <span class="number">7</span>].iter().copied().collect::&lt;SkewHeap&lt;<span class="kw">_</span>&gt;&gt;();
+heap_a.meld(heap_b);
+<span class="macro">assert_eq!</span>(heap_a.into_sorted_vec(), <span class="macro">vec!</span>[<span class="number">0</span>, <span class="number">1</span>, <span class="number">2</span>, <span class="number">3</span>, <span class="number">4</span>, <span class="number">5</span>, <span class="number">6</span>, <span class="number">7</span>]);</code></pre></div>
+<h2 id="ありそうでないもの"><a class="doc-anchor" href="#ありそうでないもの">§</a>ありそうでないもの</h2>
 <ul>
-<li><code>meld</code>: 償却 $O(\log(n + m))$（$n, m$ は合併前の要素数）</li>
-<li><code>push</code>, <code>pop</code>: 償却 $O(\log n)$</li>
-<li><code>peek</code>: $O(1)$</li>
-<li><code>into_sorted_vec</code>: $O(n \log n)$</li>
+<li><code>iter()</code>, <code>into_iter()</code>, <code>into_iter_sorted()</code>, <code>drain()</code>, <code>drain_sorted()</code>: 親ポインタないので面倒です。</li>
+<li><code>len(), is_empty()</code>: 長さ保持するの面倒です。</li>
+<li><code>peek_mut()</code>: 再挿入面倒です。</li>
 </ul>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.SkewHeap.html" title="struct skew_heap::SkewHeap">Skew<wbr>Heap</a></dt><dd>Meld 可能な二分ヒープ。</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.meld.html" title="fn skew_heap::meld">meld</a></dt><dd>2 つのヒープから、その合併を構築する（<a href="struct.SkewHeap.html#method.meld" title="method skew_heap::SkewHeap::meld"><code>SkewHeap::meld</code></a> のフリー関数版）。</dd></dl></section></div></main></body></html>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.SkewHeap.html" title="struct skew_heap::SkewHeap">Skew<wbr>Heap</a></dt><dd>Meld のできるヒープ</dd></dl><h2 id="functions" class="section-header">Functions<a href="#functions" class="anchor">§</a></h2><dl class="item-table"><dt><a class="fn" href="fn.meld.html" title="fn skew_heap::meld">meld</a></dt><dd>2 つの <code>SkewHeap</code> から、その合併を構築します。</dd></dl></section></div></main></body></html>
