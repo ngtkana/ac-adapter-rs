@@ -1,0 +1,11 @@
+{
+  "name": "ac-adapter-rs-cover",
+  "private": true,
+  "description": "Regenerates contents/logo.png (README / GitHub social preview image)",
+  "scripts": {
+    "generate": "node generate.js"
+  },
+  "devDependencies": {
+    "playwright": "1.63.0"
+  }
+}
