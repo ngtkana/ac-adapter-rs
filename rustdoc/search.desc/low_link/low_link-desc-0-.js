@@ -1,1 +1,1 @@
-searchState.loadedDescShard("low_link", 0, "Low-link を計算します。\nLow-link を計算する構造体です。\n…\n…\nビルドします。\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n頂点 <code>x</code> が関節点なら <code>true</code> を返します。\n頂点 <code>x</code>, <code>y</code> …\n未ビルドの空グラフを構築します。\n…")
+searchState.loadedDescShard("low_link", 0, "無向グラフの low-link …\n無向グラフの low-link を管理する構造体。\n未ビルドのグラフに無向辺 ${i, j}$ …\n…\n…\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n頂点 <code>x</code> …\n頂点 <code>x</code>, <code>y</code> …\n頂点数 …\n…")
