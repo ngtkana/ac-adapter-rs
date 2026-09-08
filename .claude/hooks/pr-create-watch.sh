@@ -4,10 +4,11 @@ set -euo pipefail
 
 input=$(cat)
 
-command=$(echo "$input" | jq -r '.tool_input.command // empty')
-stdout=$(echo "$input" | jq -r '.tool_response.stdout // empty')
+command=$(echo "$input" | jq -r '.tool_input.command // empty' 2>/dev/null || true)
+stdout=$(echo "$input" | jq -r '.tool_response.stdout // empty' 2>/dev/null || true)
 
-if [[ "$command" != *"gh pr create"* ]]; then
+# gh pr create の他、PR本文にコードを含む場合の代替手段（gh api .../pulls）もカバーする
+if ! echo "$command" | grep -qE '(^|[;&|[:space:]])gh[[:space:]]+(pr[[:space:]]+create|api[[:space:]]+[^ ]*pulls)'; then
   exit 0
 fi
 
