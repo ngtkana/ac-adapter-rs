@@ -1,0 +1,146 @@
+use std::{marker::PhantomData, ops::RangeBounds};
+
+use crate::{Marker, Tree};
+
+pub struct RevSegtree<O: RevSegtreeOp> {
+    tree: Tree<RevSegtreeMarker<O>>,
+}
+
+struct RevSegtreeMarker<O> {
+    __marker: PhantomData<O>,
+}
+
+pub trait RevSegtreeOp {
+    type Value: Clone;
+
+    fn identity() -> Self::Value;
+
+    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+}
+
+impl<O: RevSegtreeOp> Marker for RevSegtreeMarker<O> {
+    type Value = O::Value;
+
+    type Prod = O::Value;
+
+    type Op = ();
+
+    type Rev = bool;
+
+    fn identity() -> Self::Prod {
+        O::identity()
+    }
+
+    fn to_prod(value: &Self::Value) -> Self::Prod {
+        value.clone()
+    }
+
+    fn mul_assign_from_left(lhs: &Self::Prod, rhs: &mut Self::Prod) {
+        *rhs = O::mul(lhs, rhs);
+    }
+
+    fn mul_assign_from_right(lhs: &mut Self::Prod, rhs: &Self::Prod) {
+        *lhs = O::mul(lhs, rhs);
+    }
+
+    fn act_on_value(_op: &Self::Op, _value: &mut Self::Value) {}
+
+    fn act_on_prod(_op: &Self::Op, _prod: &mut Self::Prod) {}
+
+    fn act_on_op(_lhs: &Self::Op, _rhs: &mut Self::Op) {}
+
+    fn nop() -> Self::Op {}
+
+    fn is_nop(_op: &Self::Op) -> bool {
+        true
+    }
+
+    fn rev(rev: &Self::Rev) -> bool {
+        *rev
+    }
+
+    fn rev_false() -> Self::Rev {
+        false
+    }
+
+    fn flip_rev(rev: &mut Self::Rev) {
+        *rev ^= true;
+    }
+}
+
+impl<O: RevSegtreeOp> RevSegtree<O> {
+    /// Creates a new, empty RevSegtree.
+    pub fn new() -> Self {
+        Tree::new().into()
+    }
+
+    /// Returns true if the segtree is empty.
+    pub fn is_empty(&self) -> bool {
+        self.tree.is_empty()
+    }
+
+    /// Returns the number of elements in the segtree.
+    pub fn len(&self) -> usize {
+        self.tree.len()
+    }
+
+    /// Inserts a value at the given index.
+    pub fn insert(&mut self, index: usize, value: O::Value) {
+        self.tree.insert(index, value);
+    }
+
+    /// Removes and returns the value at the given index.
+    pub fn remove(&mut self, index: usize) -> O::Value {
+        self.tree.remove(index)
+    }
+
+    /// Appends another RevSegtree to this one.
+    pub fn append(&mut self, other: Self) {
+        self.tree.append(other.tree);
+    }
+
+    /// Splits off the segtree at the given index.
+    pub fn split_off(&mut self, index: usize) -> Self {
+        self.tree.split_off(index).into()
+    }
+
+    pub fn reverse(&mut self, range: impl RangeBounds<usize>) {
+        self.tree.reverse(range);
+    }
+
+    pub fn collect_vec(&self) -> Vec<O::Value> {
+        self.tree.collect_vec()
+    }
+
+    /// Returns the product of the values in the given range.
+    pub fn prod(&mut self, range: impl RangeBounds<usize>) -> O::Value {
+        self.tree.prod(range)
+    }
+
+    /// Returns the maximum left index for which the predicate holds.
+    pub fn max_left(&mut self, start: usize, pred: impl FnMut(&O::Value) -> bool) -> usize {
+        self.tree.max_left(start, pred)
+    }
+
+    /// Returns the minimum right index for which the predicate holds.
+    pub fn min_right(&mut self, end: usize, pred: impl FnMut(&O::Value) -> bool) -> usize {
+        self.tree.min_right(end, pred)
+    }
+}
+
+impl<O: RevSegtreeOp> Default for RevSegtree<O> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+impl<O: RevSegtreeOp> From<Tree<RevSegtreeMarker<O>>> for RevSegtree<O> {
+    fn from(tree: Tree<RevSegtreeMarker<O>>) -> Self {
+        Self { tree }
+    }
+}
+
+impl<O: RevSegtreeOp> FromIterator<O::Value> for RevSegtree<O> {
+    fn from_iter<I: IntoIterator<Item = O::Value>>(iter: I) -> Self {
+        iter.into_iter().collect::<Tree<_>>().into()
+    }
+}
