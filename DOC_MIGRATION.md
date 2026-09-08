@@ -31,15 +31,15 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [ ] `io_reader`
 - [ ] `io_writer`
 - [ ] `jagged_iproduct`
-- [ ] `jagged_iterator`
-- [ ] `jagged_vec`
-- [ ] `jolt`
-- [ ] `lazy_segbeats`
-- [ ] `lg`
-- [ ] `link_cut_tree`
-- [ ] `low_link`
-- [ ] `manacher`
-- [ ] `matrix`
+- [x] `jagged_iterator`
+- [x] `jagged_vec`
+- [x] `jolt`
+- [x] `lazy_segbeats`
+- [x] `lg`
+- [x] `link_cut_tree`
+- [x] `low_link`
+- [x] `manacher`
+- [x] `matrix`
 - [ ] `max_flow`
 - [ ] `mincost_flow`
 - [ ] `monotone_minima`

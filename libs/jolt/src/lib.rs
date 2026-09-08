@@ -1,4 +1,16 @@
-//! Future and otherworldly Rust features.
+//! 競技プログラミング向けの雑多な拡張トレイト・関数を寄せ集めたクレート。
+//!
+//! 各機能は独立していて相互依存はほぼなく、必要なものだけを個別に使える。
+//!
+//! # 仕様
+//!
+//! - ビットマスク列挙: [`bitmask_combinations`], [`bitmask_subsets`], [`i2powm1`]
+//! - min/max 更新: [`ChangeMinMax`]
+//! - イテレータ拡張: [`IteratorSuccessors`]
+//! - 遅延初期化: [`LazyLock`]
+//! - 符号なし整数の抽象化: [`Unsigned`]
+//! - スライス拡張: [`SliceAccum`]（累積和）, [`SliceBinarySearch`]（二分探索）,
+//!   [`SliceChunks`]（chunk 化）
 
 mod bitmask_iterators;
 mod bitmask_operations;

@@ -1,28 +1,49 @@
-//! Link-Cut Tree
+//! 森（複数の根付き木の集まり）を管理し、パスの集約値を対数時間で更新・取得する Link-Cut Tree
 //!
-//! # Summary
+//! 各根付き木を「優先パス」に分解し、パスごとに 1 本の splay 木（節点が根に近い順に並ぶ二分探索木）を構築する。
+//! パス同士は「パス親」ポインタでつなぎ、根から任意の節点までを `expose` 操作で 1 本の優先パスへ再編する。
+//! この再編は splay 木の償却解析により償却 $O(\log n)$ で行え、結果として `link`・`cut`・`evert`（根の付け替え）・
+//! パスの集約取得などの操作がすべて償却 $O(\log n)$ で実現する。
 //!
-//! Provided data structures are as follows:
+//! # 仕様
 //!
-//! - [`LinkCutTree`]: a rooted forest
-//! - [`CommutLinkCutTree`]: a rooted forest with commutative operation
-//! - [`NonCommutLinkCutTree`]: a rooted forest with non-commutative operation
+//! - [`LinkCutTree`] は集約値を持たない森
+//! - [`CommutLinkCutTree<T>`](CommutLinkCutTree) は可換なモノイド `T`（[`Op`] トレイトで定義）を載せた森
+//! - [`NonCommutLinkCutTree<T>`](NonCommutLinkCutTree) は非可換なモノイド `T` を載せた森
 //!
-//! Operations are specified by the trait [`Op`].
+//! いずれも実体は [`LinkCutTreeBase`]。根を付け替えるには [`evert`](LinkCutTreeBase::evert) を呼ぶ。
+//! 有向の根付き森として扱う操作（`link`, `cut`, `parent`, `lca` など）に加え、根を意識しない
+//! 無向グラフとしての操作（`undirected_link`, `undirected_cut`, `undirected_is_connected`,
+//! `undirected_fold` など）も提供する。
 //!
-//! # About the root
+//! # 例
 //!
-//! If you want to change the root of the tree, you can use [`evert`](LinkCutTreeBase::evert) method.
+//! ```
+//! use link_cut_tree::LinkCutTree;
 //!
-//! These also support some **unrooted** operations (`undirected_*`).
-//! It does not preserve the root of the tree.
+//! let mut lct = LinkCutTree::new(3);
+//! lct.link(0, 1); // 0 -> 1
+//! lct.link(1, 2); // 1 -> 2
+//! assert_eq!(lct.parent(2), Some(1));
+//! assert_eq!(lct.lca(0, 2), Some(0));
+//!
+//! lct.cut(2);
+//! assert_eq!(lct.parent(2), None);
+//! ```
+//!
+//! # 計算量
+//!
+//! すべての操作: 償却 $O(\log n)$（$n$ は節点数）
 
 mod base;
 
 pub use base::LinkCutTreeBase;
 use base::OpBase;
 
-/// Aggregation operation for link-cut tree
+/// 集約演算を定義するトレイト
+///
+/// モノイド $(Value, \cdot, e)$ を定める。`mul` は結合律を満たす必要がある。可換性は要求しないが、
+/// 可換なら [`CommutLinkCutTree`]、非可換なら [`NonCommutLinkCutTree`] を使う。
 pub trait Op {
     type Value: Clone;
     fn identity() -> Self::Value;
@@ -43,10 +64,14 @@ impl OpBase for () {
 
     fn from_front(_value: Self::Value) -> Self::InternalValue {}
 }
-/// Link-Cut Tree without aggregation operation
+/// 集約値を持たない Link-Cut Tree
+///
+/// 連結性・親子関係・LCA など、木構造そのものの操作のみを提供する。
 pub type LinkCutTree = LinkCutTreeBase<()>;
 
-/// Link-Cut Tree with commutative operation
+/// 可換なモノイドを載せた Link-Cut Tree
+///
+/// パスの集約値が根からの向きに依存しない（$x \cdot y = y \cdot x$）ことを前提とする。
 pub type CommutLinkCutTree<T> = LinkCutTreeBase<Commut<T>>;
 #[doc(hidden)]
 pub struct Commut<T: Op>(T);
@@ -76,7 +101,10 @@ impl<T: Op> OpBase for Commut<T> {
 
 #[doc(hidden)]
 pub struct NonCommut<T: Op>(T);
-/// Link-Cut Tree with non-commutative operation
+/// 非可換なモノイドを載せた Link-Cut Tree
+///
+/// 各節点で正順・逆順両方の積を保持し、根の付け替え（[`evert`](LinkCutTreeBase::evert)）に
+/// よる向きの反転を $O(1)$ で追従させる。
 pub type NonCommutLinkCutTree<T> = LinkCutTreeBase<NonCommut<T>>;
 
 impl<T: Op> OpBase for NonCommut<T> {
