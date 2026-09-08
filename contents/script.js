@@ -66,9 +66,10 @@ document.addEventListener('DOMContentLoaded', function () {
   function showDetail(crateName, crateMetadata) {
     const bodyHtml = crateMetadata.full
       ? crateMetadata.full
-      : '<p class="text-muted">(doc comment 未整備。一覧の要約のみ)</p>';
+      : '<p class="placeholder">(doc comment 未整備。一覧の要約のみ)</p>';
     main.innerHTML = `
       <h4>${crateName}</h4>
+      ${crateMetadata.description ? `<p class="summary">${crateMetadata.description}</p>` : ''}
       <div class="meta-bar">
         ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}">#${t}</span>`).join("")}
         <span>依存: ${crateMetadata.dependencies.length ? crateMetadata.dependencies.join(", ") : "なし"}</span>
@@ -110,7 +111,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
 
     if (!sidebar.children.length) {
-      sidebar.innerHTML = '<p class="text-muted small p-2">該当するライブラリが見つかりません。</p>';
+      sidebar.innerHTML = '<p class="placeholder">該当するライブラリが見つかりません。</p>';
     }
     renderMath(sidebar);
   }
@@ -119,7 +120,9 @@ document.addEventListener('DOMContentLoaded', function () {
     loadSearchIndex();
     renderList();
     searchInput.addEventListener('input', renderList);
+    // KaTeX CDN の読み込みが遅延した場合の保険として、初回表示後にもう一度だけ再レンダリングする
+    setTimeout(() => renderMath(sidebar), 1500);
   } else {
-    sidebar.innerHTML = '<p class="text-danger small p-2">ライブラリ情報の読み込みに失敗しました。</p>';
+    sidebar.innerHTML = '<p class="error-text">ライブラリ情報の読み込みに失敗しました。</p>';
   }
 });
