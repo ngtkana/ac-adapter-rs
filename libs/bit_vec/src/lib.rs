@@ -26,7 +26,7 @@
 //!
 //! $n$: 要素数、$w = 64$ をword幅とする。
 //!
-//! - [`BitVec::get`], [`BitVec::entry`], [`BitVec::range`], [`BitVec::range_mut`]: $O(1)$
+//! - [`BitVec::get`], [`BitVec::entry`], [`BitVec::range`], [`BitVec::range_mut`][]: $O(1)$
 //! - [`Range::count_ones`], [`Range::first_one`], [`RangeMut::flip`] などの範囲操作: $O(n / w)$
 //! - [`BitVec::or_shift_convolution_with_zero`]（shift数 $K$）: $O(nK / w)$
 

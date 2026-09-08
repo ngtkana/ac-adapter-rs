@@ -21,7 +21,7 @@
 //!
 //! # 計算量
 //!
-//! - [`cipolla_sqrt`]: 期待 $O(\log p)$（非剰余の $b$ を見つける試行回数は期待 $O(1)$ 回）
+//! - [`cipolla_sqrt`][]: 期待 $O(\log p)$（非剰余の $b$ を見つける試行回数は期待 $O(1)$ 回）
 
 use std::ops::Add;
 use std::ops::Div;

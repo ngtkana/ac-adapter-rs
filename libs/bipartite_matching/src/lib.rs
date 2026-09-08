@@ -10,12 +10,12 @@
 //! $L = \mathrm{src}(E)$、$R = \mathrm{tar}(E)$ とすると辺は $L \to R$ の向き。
 //! $L$、$R$ の分解は明示せず、番号空間を共有する形式で入力する（番号の重複不可）。
 //!
-//! - [`bipartite_matching`]: 隣接リスト $g: R \to \mathcal{P}(L)$ を受け取り、
+//! - [`bipartite_matching`][]: 隣接リスト $g: R \to \mathcal{P}(L)$ を受け取り、
 //!   最大濃度マッチングに対応する $f: R \to L$（マッチしない場合は [`usize::MAX`]）を返す
 //!
 //! # 計算量
 //!
-//! - [`bipartite_matching`]: $O(E \sqrt{V})$（$V = |L| + |R|$、$E$: 辺数）
+//! - [`bipartite_matching`][]: $O(E \sqrt{V})$（$V = |L| + |R|$、$E$: 辺数）
 
 use std::{collections::VecDeque, mem::replace};
 

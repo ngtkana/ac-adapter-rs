@@ -7,9 +7,9 @@
 //!
 //! # 仕様
 //!
-//! - [`Pow`]: 指数として使える型（符号なし整数）を表すトレイト
-//! - [`operator_binary`]: $a$ を $n$ 回 $x$ に作用させた結果 $a^n(x)$ を返す
-//! - [`value_binary`]: モノイドの積 $a^n$ を返す（単位元 `identity` 込み）
+//! - [`Pow`][]: 指数として使える型（符号なし整数）を表すトレイト
+//! - [`operator_binary`][]: $a$ を $n$ 回 $x$ に作用させた結果 $a^n(x)$ を返す
+//! - [`value_binary`][]: モノイドの積 $a^n$ を返す（単位元 `identity` 込み）
 //!
 //! # 例
 //!
@@ -23,7 +23,7 @@
 //!
 //! # 計算量
 //!
-//! - [`operator_binary`], [`value_binary`]: `square`/`mul` の呼び出し $O(\log n)$ 回
+//! - [`operator_binary`], [`value_binary`][]: `square`/`mul` の呼び出し $O(\log n)$ 回
 
 /// 二分累乗法の指数として使える符号なし整数型を表すトレイト。
 pub trait Pow {
