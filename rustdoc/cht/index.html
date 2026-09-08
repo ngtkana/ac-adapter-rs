@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="CHT です。"><title>cht - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="cht" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="区分的に同一の2次係数を持つ凸/凹関数を管理し、任意の点での最大値・最小値クエリに答えるConvex Hull Trick。"><title>cht - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="cht" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,54 +22,26 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../cht/index.html">cht</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#todo" title="TODO">TODO</a></li><li><a href="#wont-do" title="WON’T DO">WON’T DO</a></li><li><a href="#できること" title="できること">できること</a></li><li><a href="#examples" title="Examples">Examples</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>cht</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/cht/lib.rs.html#1-610">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>CHT です。</p>
-<h2 id="todo"><a class="doc-anchor" href="#todo">§</a>TODO</h2>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../cht/index.html">cht</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li><li><a href="#constants" title="Constants">Constants</a></li><li><a href="#traits" title="Traits">Traits</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>cht</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/cht/lib.rs.html#1-641">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>区分的に同一の2次係数を持つ凸/凹関数を管理し、任意の点での最大値・最小値クエリに答えるConvex Hull Trick。</p>
+<p>追加する2次式の2次係数をすべて等しく固定すると、任意の2式の差が1次式（直線）になる。
+これにより通常のConvex Hull Trick（直線集合の上側/下側包絡線）と同じ考え方がそのまま使え、
+傾き順に並べたときに不要になった直線を捨てていくことで追加・評価が効率的に行える。
+ログ付き（<a href="struct.BTreeCht.html" title="struct cht::BTreeCht"><code>BTreeCht</code></a>、<code>BTreeSet</code> で管理）とログなし（<a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a>、<code>Vec</code> とカーソルで管理）
+の2種類を提供する。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<p>2次式は <a href="struct.Quadratic.html" title="struct cht::Quadratic"><code>Quadratic</code></a> で表す。<a href="constant.X.html" title="constant cht::X"><code>X</code></a> を使って <code>1 + X + X * X</code> のように構築する。
+<a href="trait.ConvexOrConcave.html" title="trait cht::ConvexOrConcave"><code>ConvexOrConcave</code></a> マーカー（<a href="enum.Convex.html" title="enum cht::Convex"><code>Convex</code></a> / <a href="enum.Concave.html" title="enum cht::Concave"><code>Concave</code></a>）で最大値・最小値どちらを
+管理するかを型で指定する。</p>
 <ul>
-<li>浮動小数点数
-<ul>
-<li>ないと困ります</li>
+<li><code>add(quadratic)</code>: 2次式を追加。1回目の追加で2次の係数が固定され、以降異なる
+係数を追加するとパニックする</li>
+<li><code>eval(x)</code>: 追加済みの2次式 $f_1, \ldots, f_k$ のうち、$\max_i f_i(x)$（<a href="enum.Convex.html" title="enum cht::Convex"><code>Convex</code></a>）
+または $\min_i f_i(x)$（<a href="enum.Concave.html" title="enum cht::Concave"><code>Concave</code></a>）を返す。何も追加していない状態で呼ぶとパニックする</li>
+<li><code>multieval(xs)</code>: <code>xs</code> の各点で <code>eval</code> する</li>
+<li><a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a> はカーソルを1つだけ持つため、<code>eval</code>/<code>multieval</code> に渡す $x$ が単調非減少
+であることを前提に償却 $O(1)$ で応答する（非単調だと最悪 $O(n)$ かかる）</li>
 </ul>
-</li>
-<li>各アイテムのドキュメントを書く</li>
-<li><a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a> のカーソル管理もう少し上手にできないですかね</li>
-</ul>
-<h2 id="wont-do"><a class="doc-anchor" href="#wont-do">§</a>WON’T DO</h2>
-<ul>
-<li>凸探索付き平衡二分木を自作して、直線の式だけ管理すれば良いようにする
-<ul>
-<li>理由: 大変そう</li>
-</ul>
-</li>
-</ul>
-<h2 id="できること"><a class="doc-anchor" href="#できること">§</a>できること</h2>
-<p>２次の係数のすべて等しいような、区分的に２次関数であるような、凸/凹関数を管理します。</p>
-<ul>
-<li>本体
-<ul>
-<li>ログ付き: <a href="struct.BTreeCht.html" title="struct cht::BTreeCht"><code>BTreeCht</code></a></li>
-<li>ログなし: <a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a>
-<ul>
-<li>前挿入は、いらないですか…</li>
-<li>カーソルを１つだけ持っています。２つ以上はいらないですかね……どうしてもならオブジェクトごと２つ作ればできなくはないです。</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>マーカー
-<ul>
-<li>トレイト（ユーザーが実装する必要なし）: <a href="trait.ConvexOrConcave.html" title="trait cht::ConvexOrConcave"><code>ConvexOrConcave</code></a></li>
-<li>凸: <a href="enum.Convex.html" title="enum cht::Convex"><code>Convex</code></a></li>
-<li>凹: <a href="enum.Concave.html" title="enum cht::Concave"><code>Concave</code></a></li>
-</ul>
-</li>
-<li>二次式
-<ul>
-<li>式: <a href="struct.Quadratic.html" title="struct cht::Quadratic"><code>Quadratic</code></a></li>
-<li>変数: <a href="constant.X.html" title="constant cht::X"><code>X</code></a></li>
-</ul>
-</li>
-</ul>
-<h2 id="examples"><a class="doc-anchor" href="#examples">§</a>Examples</h2>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>cht::BTreeCht;
 <span class="kw">use </span>cht::Concave;
 <span class="kw">use </span>cht::X;
@@ -86,4 +58,11 @@
 </span>cht.add((<span class="number">1 </span>- <span class="number">2 </span>* X) * (<span class="number">1 </span>- <span class="number">3 </span>* X) - <span class="number">5 </span>* X * X);
 <span class="macro">assert_eq!</span>(cht.multieval(<span class="number">0</span>..<span class="number">5</span>), <span class="macro">vec!</span>[<span class="number">1</span>, -<span class="number">3</span>, -<span class="number">5</span>, -<span class="number">5</span>, -<span class="number">3</span>]);
 <span class="macro">assert_eq!</span>(cht.eval(-<span class="number">1</span>), <span class="number">1</span>);</code></pre></div>
-</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.BTreeCht.html" title="struct cht::BTreeCht">BTree<wbr>Cht</a></dt><dd>ログがつく方</dd><dt><a class="struct" href="struct.Quadratic.html" title="struct cht::Quadratic">Quadratic</a></dt><dd>二次式</dd><dt><a class="struct" href="struct.VecCht.html" title="struct cht::VecCht">VecCht</a></dt><dd>ログがつかない方</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Concave.html" title="enum cht::Concave">Concave</a></dt><dd>凹関数を管理する方であるというマーカー</dd><dt><a class="enum" href="enum.Convex.html" title="enum cht::Convex">Convex</a></dt><dd>凸関数を管理する方であるというマーカー</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.X.html" title="constant cht::X">X</a></dt><dd>変数</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.ConvexOrConcave.html" title="trait cht::ConvexOrConcave">Convex<wbr>OrConcave</a></dt><dd><a href="struct.BTreeCht.html" title="struct cht::BTreeCht"><code>BTreeCht</code></a>, <a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a> が凸関数を管理するか、凹関数を管理するかを表すマーカーのトレイト</dd></dl></section></div></main></body></html>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<ul>
+<li><code>BTreeCht::add</code>: 償却 $O(\log n)$</li>
+<li><code>BTreeCht::eval</code>: $O(\log n)$</li>
+<li><code>VecCht::add</code>: 償却 $O(1)$</li>
+<li><code>VecCht::eval</code>: $x$ が単調非減少なら償却 $O(1)$、そうでなければ最悪 $O(n)$</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.BTreeCht.html" title="struct cht::BTreeCht">BTree<wbr>Cht</a></dt><dd>ログ（追加履歴）付きの CHT。<code>BTreeSet</code> で管理し、$x$ の順序によらず $O(\log n)$ で評価できる。</dd><dt><a class="struct" href="struct.Quadratic.html" title="struct cht::Quadratic">Quadratic</a></dt><dd>2次式 $c_0 + c_1 x + c_2 x^2$。</dd><dt><a class="struct" href="struct.VecCht.html" title="struct cht::VecCht">VecCht</a></dt><dd>ログ（追加履歴）を持たない CHT。カーソルを1つ持ち、$x$ の単調性を前提に評価する。</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.Concave.html" title="enum cht::Concave">Concave</a></dt><dd>最小値（下側包絡線）を管理することを表すマーカー型。</dd><dt><a class="enum" href="enum.Convex.html" title="enum cht::Convex">Convex</a></dt><dd>最大値（上側包絡線）を管理することを表すマーカー型。</dd></dl><h2 id="constants" class="section-header">Constants<a href="#constants" class="anchor">§</a></h2><dl class="item-table"><dt><a class="constant" href="constant.X.html" title="constant cht::X">X</a></dt><dd>変数 $x$ を表す <a href="struct.Quadratic.html" title="struct cht::Quadratic"><code>Quadratic</code></a>。<code>1 + X + X * X</code> のように2次式を組み立てるのに使う。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.ConvexOrConcave.html" title="trait cht::ConvexOrConcave">Convex<wbr>OrConcave</a></dt><dd><a href="struct.BTreeCht.html" title="struct cht::BTreeCht"><code>BTreeCht</code></a>, <a href="struct.VecCht.html" title="struct cht::VecCht"><code>VecCht</code></a> が最大値（凸）と最小値（凹）のどちらを管理するかを表すマーカートレイト。ユーザーが実装する必要はない。</dd></dl></section></div></main></body></html>

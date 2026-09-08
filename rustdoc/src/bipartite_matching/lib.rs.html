@@ -22,31 +22,31 @@
   });
 </script>
 
-</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bipartite_matching/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! 二部マッチング (Hopcroft-Karp)
+</head><body class="rustdoc src"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="sidebar"><div class="src-sidebar-title"><h2>Files</h2></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1><div class="sub-heading">bipartite_matching/</div>lib.rs</h1><rustdoc-toolbar></rustdoc-toolbar></div><div class="example-wrap digits-3"><pre class="rust"><code><a href=#1 id=1 data-nosnippet>1</a><span class="doccomment">//! Hopcroft-Karp 法による二部マッチング
 <a href=#2 id=2 data-nosnippet>2</a>//!
-<a href=#3 id=3 data-nosnippet>3</a>//! # 使い方
-<a href=#4 id=4 data-nosnippet>4</a>//!
-<a href=#5 id=5 data-nosnippet>5</a>//! 関数 [`bipartite_matching`] の doc を読んでください。
-<a href=#6 id=6 data-nosnippet>6</a>
-<a href=#7 id=7 data-nosnippet>7</a></span><span class="kw">use </span>std::{collections::VecDeque, mem::replace};
-<a href=#8 id=8 data-nosnippet>8</a>
-<a href=#9 id=9 data-nosnippet>9</a><span class="doccomment">/// 二部マッチング (Hopcroft-Karp)
-<a href=#10 id=10 data-nosnippet>10</a>///
-<a href=#11 id=11 data-nosnippet>11</a>/// # 入力
-<a href=#12 id=12 data-nosnippet>12</a>///
-<a href=#13 id=13 data-nosnippet>13</a>/// 入力は有向二部グラフ $G = (V, E)$ (i.e. $\mathrm{src}(E) \cap \mathrm{tar}(E) = \empty$ な二部グラフ) つまり
-<a href=#14 id=14 data-nosnippet>14</a>///
-<a href=#15 id=15 data-nosnippet>15</a>/// * $L = \mathrm{src}(E), \\ R = \mathrm{tar}(E)$ と捉えるとよいです
-<a href=#16 id=16 data-nosnippet>16</a>/// * 分解 $V = L \sqcup R$ が明示的に与えられていない &amp; 番号空間が共有 (i.e. 番号が被ったらダメ) な入力形式です。
-<a href=#17 id=17 data-nosnippet>17</a>/// * そう捉えると辺は $L → R$ の向きです。(まあ全部逆と捉えてもいいんですけどね)
-<a href=#18 id=18 data-nosnippet>18</a>///
-<a href=#19 id=19 data-nosnippet>19</a>/// このとき、入力の `g` は隣接リスト $g: R → \mathcal{P}(L)$ です。
-<a href=#20 id=20 data-nosnippet>20</a>///
-<a href=#21 id=21 data-nosnippet>21</a>///
-<a href=#22 id=22 data-nosnippet>22</a>/// # 出力
+<a href=#3 id=3 data-nosnippet>3</a>//! BFS で全頂点から最短増加パス長を求め、その長さちょうどのパスだけを DFS でまとめて
+<a href=#4 id=4 data-nosnippet>4</a>//! マッチングに繰り込む。1 フェーズで最短増加パスを使い切るため、フェーズ数が
+<a href=#5 id=5 data-nosnippet>5</a>//! $O(\sqrt{V})$ に抑えられ、全体で $O(E \sqrt{V})$ を達成する。
+<a href=#6 id=6 data-nosnippet>6</a>//!
+<a href=#7 id=7 data-nosnippet>7</a>//! # 仕様
+<a href=#8 id=8 data-nosnippet>8</a>//!
+<a href=#9 id=9 data-nosnippet>9</a>//! 有向二部グラフ $G = (V, E)$（$\mathrm{src}(E) \cap \mathrm{tar}(E) = \emptyset$）を扱う。
+<a href=#10 id=10 data-nosnippet>10</a>//! $L = \mathrm{src}(E)$、$R = \mathrm{tar}(E)$ とすると辺は $L \to R$ の向き。
+<a href=#11 id=11 data-nosnippet>11</a>//! $L$、$R$ の分解は明示せず、番号空間を共有する形式で入力する（番号の重複不可）。
+<a href=#12 id=12 data-nosnippet>12</a>//!
+<a href=#13 id=13 data-nosnippet>13</a>//! - [`bipartite_matching`]: 隣接リスト $g: R \to \mathcal{P}(L)$ を受け取り、
+<a href=#14 id=14 data-nosnippet>14</a>//!   最大濃度マッチングに対応する $f: R \to L$（マッチしない場合は [`usize::MAX`]）を返す
+<a href=#15 id=15 data-nosnippet>15</a>//!
+<a href=#16 id=16 data-nosnippet>16</a>//! # 計算量
+<a href=#17 id=17 data-nosnippet>17</a>//!
+<a href=#18 id=18 data-nosnippet>18</a>//! - [`bipartite_matching`]: $O(E \sqrt{V})$（$V = |L| + |R|$、$E$: 辺数）
+<a href=#19 id=19 data-nosnippet>19</a>
+<a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">use </span>std::{collections::VecDeque, mem::replace};
+<a href=#21 id=21 data-nosnippet>21</a>
+<a href=#22 id=22 data-nosnippet>22</a><span class="doccomment">/// Hopcroft-Karp 法で二部グラフの最大濃度マッチングを求める。
 <a href=#23 id=23 data-nosnippet>23</a>///
-<a href=#24 id=24 data-nosnippet>24</a>/// 出力の `f` は、(`g` と逆向きの)マッチング関数 $L: R → L$ (ただし存在しない場合は [`usize::MAX`])
-<a href=#25 id=25 data-nosnippet>25</a>///
+<a href=#24 id=24 data-nosnippet>24</a>/// 入力 `g` は隣接リスト $g: R \to \mathcal{P}(L)$。出力 `f` は `g` と逆向きの
+<a href=#25 id=25 data-nosnippet>25</a>/// マッチング関数 $f: R \to L$（マッチしない添字は [`usize::MAX`]）。
 <a href=#26 id=26 data-nosnippet>26</a>///
 <a href=#27 id=27 data-nosnippet>27</a>/// # 例
 <a href=#28 id=28 data-nosnippet>28</a>///

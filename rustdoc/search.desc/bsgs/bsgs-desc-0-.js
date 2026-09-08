@@ -1,1 +1,1 @@
-searchState.loadedDescShard("bsgs", 0, "Baby-step giant-step …\nBaby-stpp giant-step のソルバーです。\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n<code>x</code> …\n新しい BSGS ソルバーを構築します。")
+searchState.loadedDescShard("bsgs", 0, "巡回群上の離散対数問題を $O(\\sqrt N)$ …\nBaby-step Giant-step ソルバー。巡回群 $\\langle g …\nReturns the argument unchanged.\nCalls <code>U::from(self)</code>.\n$x = g^k$ を満たす最小の $k \\in [0, N)$ …\n生成元 <code>generator</code>・位数上界 <code>ord_upper_bound</code>…")
