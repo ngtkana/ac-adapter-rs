@@ -1,1 +1,1 @@
-searchState.loadedDescShard("matrix", 0, "Returns the argument unchanged.\nCalls <code>U::from(self)</code>.")
+searchState.loadedDescShard("matrix", 0, "…\n零元 $0$（加算の単位元）。\n単位元 …\n行優先（row-major）で格納した行列。\n…\n…\n積和代入 $a \\leftarrow a + bc$ を行う。\nReturns the argument unchanged.\n行数 $h$ を返す（$h = $ <code>items.len() / width</code>）。\n$n \\times n$ の単位行列 $I_n$ …\nCalls <code>U::from(self)</code>.\n成分（行優先）。長さは <code>width</code> の倍数。\n$\\mathit{self} \\leftarrow \\mathit{self} \\times …\n行列のべき乗 $A^n$ …\n列数 $w$。\n零行列 $O_{h \\times w}$（全成分が <code>Scalar::CONST_0</code>…")

@@ -1,4 +1,4 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="A predecessor data structure based on van Emde Boas trees."><title>veb - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="veb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta name="generator" content="rustdoc"><meta name="description" content="van Emde Boas 木による整数集合の述語（predecessor/successor）データ構造。"><title>veb - Rust</title><script>if(window.location.protocol!=="file:")document.head.insertAdjacentHTML("beforeend","SourceSerif4-Regular-6b053e98.ttf.woff2,FiraSans-Italic-81dc35de.woff2,FiraSans-Regular-0fe48ade.woff2,FiraSans-MediumItalic-ccf7e434.woff2,FiraSans-Medium-e1aa3f0a.woff2,SourceCodePro-Regular-8badfe75.ttf.woff2,SourceCodePro-Semibold-aa29a496.ttf.woff2".split(",").map(f=>`<link rel="preload" as="font" type="font/woff2" crossorigin href="../static.files/${f}">`).join(""))</script><link rel="stylesheet" href="../static.files/normalize-9960930a.css"><link rel="stylesheet" href="../static.files/rustdoc-84e720fa.css"><meta name="rustdoc-vars" data-root-path="../" data-static-root-path="../static.files/" data-current-crate="veb" data-themes="" data-resource-suffix="" data-rustdoc-version="1.89.0 (29483883e 2025-08-04)" data-channel="1.89.0" data-search-js="search-92309212.js" data-settings-js="settings-5514c975.js" ><script src="../static.files/storage-4e99c027.js"></script><script defer src="../crates.js"></script><script defer src="../static.files/main-fd3af306.js"></script><noscript><link rel="stylesheet" href="../static.files/noscript-32bb7600.css"></noscript><link rel="alternate icon" type="image/png" href="../static.files/favicon-32x32-6580c154.png"><link rel="icon" type="image/svg+xml" href="../static.files/favicon-044be391.svg"><!-- Noto Sans JP for Japanese text rendering -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 
@@ -22,10 +22,38 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../veb/index.html">veb</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#example" title="Example">Example</a></li><li><a href="#operations" title="Operations">Operations</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>veb</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/veb/lib.rs.html#1-965">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>A predecessor data structure based on van Emde Boas trees.</p>
-<p>This is implemented with hash maps, so <code>new()</code> is $O(\log\log n)$.</p>
-<h2 id="example"><a class="doc-anchor" href="#example">§</a>Example</h2>
-<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span><span class="kw-2">mut </span>veb = VebSet::new(<span class="number">1000</span>); <span class="comment">// capacity
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../veb/index.html">veb</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>veb</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/veb/lib.rs.html#1-964">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>van Emde Boas 木による整数集合の述語（predecessor/successor）データ構造。</p>
+<p>全体を $\sqrt n$ 個ずつの塊（チャンク）に分割し、各チャンクを容量 $\sqrt n$ の
+van Emde Boas 木として再帰的に管理する。どのチャンクが空でないかは
+別の van Emde Boas 木（summary）で管理し、目的の値が属するチャンク内に
+答えがなければ summary を辿って次の非空チャンクへ飛ぶ。この再帰により
+容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、<code>succ</code>/<code>pred</code>/<code>insert</code>/<code>remove</code>
+もすべて同じ計算量で行える。最小値・最大値は各ノードにキャッシュしておくことで
+<code>min</code>/<code>max</code> を $O(1)$ で返す。ハッシュマップ実装のため、事前に確保するのは
+容量 $n$ の数値のみで、実メモリは要素数に応じて増える。</p>
+<h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
+<ul>
+<li><a href="enum.VebSet.html" title="enum veb::VebSet"><code>VebSet</code></a>: 整数集合 $S \subseteq {0, \ldots, n-1}$
+<ul>
+<li><code>new(n)</code>: 容量 $n$ で空集合を構築</li>
+<li><code>insert(x)</code>: $S \leftarrow S \cup {x}$、新規追加なら <code>true</code></li>
+<li><code>remove(x)</code>: $S \leftarrow S \setminus {x}$、存在したら <code>true</code></li>
+<li><code>contains(x)</code>: $x \in S$</li>
+<li><code>min()</code>, <code>max()</code>: $\min(S)$, $\max(S)$（空なら <code>None</code>）</li>
+<li><code>succ(x)</code>: $x$ より大きい最小要素、<code>pred(x)</code>: $x$ より小さい最大要素</li>
+<li><code>pred_eq(x)</code>: $x$ 以下の最大要素</li>
+<li><code>len()</code>, <code>is_empty()</code>, <code>collect()</code>: 要素数、空判定、昇順の <a href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec"><code>Vec</code></a> 化</li>
+</ul>
+</li>
+<li><a href="struct.VebMap.html" title="struct veb::VebMap"><code>VebMap</code></a><code>&lt;V&gt;</code>: <a href="enum.VebSet.html" title="enum veb::VebSet"><code>VebSet</code></a> にキーごとの値 <code>V</code> を付加したマップ
+<ul>
+<li>各操作はキー用の <code>VebSet</code> と値の <code>HashMap</code> を同期して更新する</li>
+<li><code>_key</code>/<code>_value</code> 接尾辞のメソッドでキーのみ・値のみを取得できる</li>
+</ul>
+</li>
+</ul>
+<h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
+<div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">let </span><span class="kw-2">mut </span>veb = VebSet::new(<span class="number">1000</span>); <span class="comment">// 容量
 </span>veb.insert(<span class="number">42</span>);
 <span class="macro">assert!</span>(veb.contains(<span class="number">42</span>));
 veb.remove(<span class="number">42</span>);
@@ -39,24 +67,12 @@ veb.remove(<span class="number">42</span>);
 <span class="macro">assert_eq!</span>(veb.pred(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">12</span>));
 <span class="macro">assert_eq!</span>(veb.contains(<span class="number">34</span>), <span class="bool-val">true</span>);
 <span class="macro">assert_eq!</span>(veb.contains(<span class="number">35</span>), <span class="bool-val">false</span>);
-<span class="macro">assert_eq!</span>(veb.len(), <span class="number">4</span>);
-
-<span class="macro">assert_eq!</span>(veb.collect(), <span class="macro">vec!</span>[<span class="number">12</span>, <span class="number">34</span>, <span class="number">56</span>, <span class="number">78</span>]); <span class="comment">// Useful for debugging</span></code></pre></div>
-<h2 id="operations"><a class="doc-anchor" href="#operations">§</a>Operations</h2>
-<p>NOTE: <code>min</code>, <code>max</code>, <code>succ</code>, and <code>pred</code> return <code>None</code> if the set is empty.</p>
-<div><table><thead><tr><th>Operation</th><th>Time Complexity</th><th>Explanation</th></tr></thead><tbody>
-<tr><td><code>insert(x)</code></td><td>$O(\log\log n)$</td><td>$S \leftarrow S \cup {x}$</td></tr>
-<tr><td><code>remove(x)</code></td><td>$O(\log\log n)$</td><td>$S \leftarrow S \setminus {x}$</td></tr>
-<tr><td><code>contains(x)</code></td><td>$O(\log\log n)$</td><td>$x \in S$</td></tr>
-<tr><td><code>min()</code></td><td>$O(1)$</td><td>$\min\left( S \right)$</td></tr>
-<tr><td><code>max()</code></td><td>$O(1)$</td><td>$\max\left( S \right)$</td></tr>
-<tr><td><code>succ(x)</code></td><td>$O(\log\log n)$</td><td>$\min\left( x^△ \right)$</td></tr>
-<tr><td><code>succ_eq(x)</code></td><td>$O(\log\log n)$</td><td>$\min\left( x^▲ \right)$</td></tr>
-<tr><td><code>pred(x)</code></td><td>$O(\log\log n)$</td><td>$\max\left( x^▽ \right)$</td></tr>
-<tr><td><code>pred_eq(x)</code></td><td>$O(\log\log n)$</td><td>$\max\left( x^▲ \right)$</td></tr>
-<tr><td><code>len()</code></td><td>$O(1)$</td><td>$|S|$</td></tr>
-<tr><td><code>is_empty()</code></td><td>$O(1)$</td><td>$S = \emptyset$</td></tr>
-<tr><td><code>collect()</code></td><td>$O(|S|\log\log n)$</td><td>Convert to a <a href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec"><code>Vec</code></a></td></tr>
-</tbody></table>
-</div></div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.VebMap.html" title="struct veb::VebMap">VebMap</a></dt><dd>A van Emde Boas tree-based map.
-The map is implemented as a van Emde Boas tree with a hash map.</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.VebSet.html" title="enum veb::VebSet">VebSet</a></dt><dd>A van Emde Boas tree.</dd></dl></section></div></main></body></html>
+<span class="macro">assert_eq!</span>(veb.len(), <span class="number">4</span>);</code></pre></div>
+<h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
+<p>$n$ を容量とする。</p>
+<ul>
+<li><code>insert</code>, <code>remove</code>, <code>contains</code>, <code>succ</code>, <code>pred</code>, <code>pred_eq</code>: $O(\log \log n)$</li>
+<li><code>min</code>, <code>max</code>, <code>len</code>, <code>is_empty</code>: $O(1)$</li>
+<li><code>collect</code>: $O(|S| \log \log n)$</li>
+</ul>
+</div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.VebMap.html" title="struct veb::VebMap">VebMap</a></dt><dd><a href="enum.VebSet.html" title="enum veb::VebSet"><code>VebSet</code></a> にハッシュマップで値を対応付けたマップ。</dd></dl><h2 id="enums" class="section-header">Enums<a href="#enums" class="anchor">§</a></h2><dl class="item-table"><dt><a class="enum" href="enum.VebSet.html" title="enum veb::VebSet">VebSet</a></dt><dd>van Emde Boas 木で実装した整数集合。</dd></dl></section></div></main></body></html>

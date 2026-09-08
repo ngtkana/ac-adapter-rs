@@ -1,1 +1,1 @@
-searchState.loadedDescShard("parse_int", 0, "")
+searchState.loadedDescShard("parse_int", 0, "…\nバイト列 $s_0 s_1 \\ldots s_{n-1}$（各 $s_i$ は …")
