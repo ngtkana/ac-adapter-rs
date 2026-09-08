@@ -1,27 +1,23 @@
-//! Solves maximum flow problem.
+//! Dinic 法による最大流アルゴリズム。
 //!
-//! # Basic usage
+//! BFS で各頂点に始点からの距離（レベル）を付け、レベルが単調増加する経路だけを辿って
+//! DFS でブロッキングフロー（そのレベルグラフでは増やせなくなるまでの流量）を1フェーズで
+//! まとめて求める。レベル付けができなくなるまでフェーズを繰り返すことで最大流に到達する。
 //!
-//! 1. First, initialize [`Dinic`] with the number of vertices.
-//! 1. Insert edges with a method [`add_edge`](Dinic::add_edge).
-//! 1. Execute the algorithm by calling a method [`flow`](Dinic::flow) with the source `s` and sink `t`.
+//! # 仕様
 //!
-//! ```
-//! use dinic::Dinic;
+//! [`Dinic`] にグラフを構築し、次の操作を提供する。
 //!
-//! let mut dinic = Dinic::new(3);
-//! dinic.add_edge(0, 1, 10);
-//! dinic.add_edge(1, 2, 15);
-//! dinic.add_edge(0, 2, 20);
+//! - [`Dinic::new(n)`](Dinic::new): 頂点数 `n` で初期化
+//! - [`add_edge(from, to, cap)`](Dinic::add_edge): 辺を追加し [`EdgeKey`] を返す
+//! - [`flow(s, t)`](Dinic::flow): `s` から `t` への最大流を求める。複数回呼び出し可能
+//! - [`flow_with_limit(s, t, limit)`](Dinic::flow_with_limit): 流量の上限付き版
+//! - [`min_cut(s)`](Dinic::min_cut): 直前の `flow(s, t)` に対応する最小カット
+//! - [`get_edge`](Dinic::get_edge) / [`get_edges`](Dinic::get_edges) / [`get_network`](Dinic::get_network): 辺の状態の取得
+//! - [`get_excess`](Dinic::get_excess): 各頂点の余剰流量（符号付き整数型が必要）
+//! - [`change_edge`](Dinic::change_edge): 辺の容量・流量を直接書き換える危険な操作（下限付き最大流などに使う）
 //!
-//! let flow = dinic.flow(0, 2);
-//! assert_eq!(flow, 30);
-//! ```
-//!
-//! # Restore the minimum cut
-//!
-//! If [`flow`](Dinic::flow) has called exactly once before, [`min_cut`](Dinic::min_cut) will
-//! return the minimum cut. [See the API document to detailed specs.](Dinic::min_cut)
+//! # 例
 //!
 //! ```
 //! use dinic::Dinic;
@@ -30,135 +26,19 @@
 //! dinic.add_edge(0, 1, 10);
 //! dinic.add_edge(1, 2, 15);
 //! dinic.add_edge(0, 2, 20);
-//! dinic.flow(0, 2);
 //!
+//! assert_eq!(dinic.flow(0, 2), 30);
 //! assert_eq!(dinic.min_cut(0).as_slice(), &[true, false, false]);
 //! ```
 //!
+//! # 計算量
 //!
-//! # Get the state of an edge or a vertex
+//! $n$: 頂点数、$m$: 辺数とする。
 //!
-//! You can query the state of an edge via [`get_edge`](`Dinic::get_edge`). An [`EdgeKey`] object returned
-//! by [`add_edge`](Dinic::add_edge`) is necessary to query it.
-//!
-//! ```
-//! use dinic::Dinic;
-//! use dinic::Edge;
-//!
-//! let mut dinic = Dinic::new(3);
-//! dinic.add_edge(0, 1, 10);
-//! let key = dinic.add_edge(1, 2, 15);
-//! dinic.add_edge(0, 2, 20);
-//! dinic.flow(0, 2);
-//!
-//! assert_eq!(dinic.get_edge(key), Edge {
-//!     from: 1,
-//!     to: 2,
-//!     cap: 15,
-//!     flow: 10
-//! });
-//! ```
-//!
-//! Moreover [`get_edges`](Dinic::get_edges), [`get_network`](Dinic::get_network) will summarize the
-//! whole network.
-//!
-//! ```
-//! use dinic::Dinic;
-//! use dinic::Edge;
-//!
-//! let mut dinic = Dinic::new(3);
-//! dinic.add_edge(0, 1, 10);
-//! let key = dinic.add_edge(1, 2, 15);
-//! dinic.add_edge(0, 2, 20);
-//! dinic.flow(0, 2);
-//!
-//! let edges = dinic.get_edges();
-//! let network = dinic.get_network();
-//!
-//! // 0th edge
-//! assert_eq!(network[0][0], edges[0]);
-//! assert_eq!(edges[0], Edge {
-//!     from: 0,
-//!     to: 1,
-//!     cap: 10,
-//!     flow: 10
-//! });
-//!
-//! // 1st edge
-//! assert_eq!(network[1][0], edges[1]);
-//! assert_eq!(edges[1], Edge {
-//!     from: 1,
-//!     to: 2,
-//!     cap: 15,
-//!     flow: 10
-//! });
-//!
-//! // 2nd edge
-//! assert_eq!(network[0][1], edges[2]);
-//! assert_eq!(edges[2], Edge {
-//!     from: 0,
-//!     to: 2,
-//!     cap: 20,
-//!     flow: 20
-//! });
-//! ```
-//!
-//! You also can get the excess of vertices, but we do not provide an interface to get the excess of *a vertex* because
-//! it will take O ( m ) time.
-//!
-//! ```
-//! use dinic::Dinic;
-//! use dinic::Edge;
-//!
-//! let mut dinic = Dinic::new(3);
-//! dinic.add_edge(0, 1, 10);
-//! let key = dinic.add_edge(1, 2, 15);
-//! dinic.add_edge(0, 2, 20);
-//! dinic.flow(0, 2);
-//!
-//! assert_eq!(dinic.get_excess().as_slice(), &[-30, 0, 30]);
-//! ```
-//!
-//! If you use an unsigned type, [`get_excess`](Dinic::get_excess) will surely overflow because the
-//! excess of the source is almost always negative.
-//!
-//! ```should_panic
-//! use dinic::Dinic;
-//! use dinic::Edge;
-//!
-//! let mut dinic = Dinic::<u32>::new(2); // Force to use `u32` instead of `i32`.
-//! dinic.add_edge(0, 1, 10);
-//! dinic.flow(0, 1);
-//!
-//! dinic.get_excess(); // panics
-//! ```
-//!
-//! # Call `flow` more than once
-//!
-//! You can call [`flow`](Dinic::flow) more than once. `flow(s, t)` will augment the flow from `s`
-//! to `t` as much as possible. If [`flow`](Dinic::flow) is called with different `s` or `t` from
-//! the previous ones, it may yield non-zero excess at more than two points.
-//!
-//! ```
-//! use dinic::Dinic;
-//!
-//! let mut dinic = Dinic::new(3);
-//! dinic.add_edge(0, 1, 10);
-//! dinic.add_edge(1, 2, 15);
-//! dinic.add_edge(0, 2, 20);
-//!
-//! dinic.flow(0, 2);
-//! let aug = dinic.flow(1, 2);
-//! assert_eq!(aug, 5);
-//! assert_eq!(dinic.get_excess().as_slice(), &[-30, -5, 35]);
-//! ```
-//!
-//! # Change the capacity or the amount of flow. (dangerous operation)
-//!
-//! [`change_edge`](Dinic::change_edge) changes the capacity and the amount of flow of an edge.
-//! While it is so dangerous operation (safe variant wanted!), it is sometimes useful, for example,
-//! when solve a *maximum flow problem with lower limit*. [See the API document for detailed
-//! specs.](Dinic::change_edge)
+//! - [`flow`](Dinic::flow): $O(n^2 m)$（単位容量グラフなら $O(\min(n^{2/3} m, m^{3/2}))$）
+//! - [`get_edge`](Dinic::get_edge), [`change_edge`](Dinic::change_edge), [`add_edge`](Dinic::add_edge): $O(1)$ 償却
+//! - [`get_edges`](Dinic::get_edges), [`get_excess`](Dinic::get_excess): $O(m)$
+//! - [`get_network`](Dinic::get_network): $O(n + m)$
 
 use std::collections::VecDeque;
 use std::fmt::Debug;
@@ -170,21 +50,17 @@ use std::ops::AddAssign;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
-/// An adapter trait of the capacity.
-///
-/// This trait is implemented for all the integer types.
+/// [`Dinic`] の容量として使える整数型が実装するトレイト。全整数型に実装済み。
 pub trait Value:
     Copy + Ord + Debug + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum
 {
-    /// Returns the zero.
+    /// 加法単位元 `0`。
     fn zero() -> Self;
-    /// Returns the max value of `Self`.
+    /// `Self` の最大値。Dinic 法の内部で無限大として使う。
     fn infinity() -> Self;
 }
 
-/// A struct to execute Dinic's algorithm.
-///
-/// [See the module level documentation.](self)
+/// Dinic 法の状態を保持するグラフ本体。[モジュールレベルの説明を参照](self)。
 #[derive(Clone, PartialEq)]
 pub struct Dinic<T> {
     res: Vec<Vec<__ResidualEdge<T>>>,
@@ -195,9 +71,9 @@ impl<T> Dinic<T>
 where
     T: Value,
 {
-    /// Creates a new instance of [`Dinic`]
+    /// 頂点数 `n` のグラフで [`Dinic`] を初期化する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
@@ -206,9 +82,7 @@ where
     /// dinic.add_edge(0, 1, 10);
     /// dinic.add_edge(1, 2, 15);
     /// dinic.add_edge(0, 2, 20);
-    ///
-    /// let flow = dinic.flow(0, 2);
-    /// assert_eq!(flow, 30);
+    /// assert_eq!(dinic.flow(0, 2), 30);
     /// ```
     pub fn new(n: usize) -> Self {
         Self {
@@ -217,29 +91,24 @@ where
         }
     }
 
-    /// Inserts a new edge to the network.
+    /// 辺 `(from, to)` を容量 `cap` で追加し、後で参照するための [`EdgeKey`] を返す。
     ///
-    /// # Constraints
+    /// # 仕様
     ///
-    /// - `from, to < n`
-    /// - `T::zero() <= cap`
+    /// `from, to < n`、`cap >= 0` が前提。
     ///
-    /// # Complexity
+    /// # 計算量
     ///
-    /// O ( 1 ) amortized.
+    /// $O(1)$ 償却。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
     ///
     /// let mut dinic = Dinic::new(3);
-    /// dinic.add_edge(0, 1, 10);
-    /// dinic.add_edge(1, 2, 15);
-    /// dinic.add_edge(0, 2, 20);
-    ///
-    /// let flow = dinic.flow(0, 2);
-    /// assert_eq!(flow, 30);
+    /// let key = dinic.add_edge(0, 1, 10);
+    /// assert_eq!(dinic.get_edge(key).cap, 10);
     /// ```
     pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeKey {
         assert!(
@@ -274,24 +143,20 @@ where
         EdgeKey(edge_key)
     }
 
-    /// Auguments the flow from `s` to `t` as much as possible. It returns the amount of the
-    /// flow augmented.
+    /// `s` から `t` へ流せるだけ流し、増加した流量を返す。複数回呼び出し可能。
     ///
-    /// You may call it multiple times. [See the module level documentation.](self)
+    /// 同じ `(s, t)` で複数回呼んだ場合、増加量の合計は1回で呼んだ場合と一致する。
+    /// 異なる `(s, t)` で呼ぶと、2点以外にも余剰が生じ得る。
     ///
+    /// # 仕様
     ///
-    /// # Constraints
+    /// `s != t` が前提。戻り値は `T` で表現できる範囲に収まる必要がある。
     ///
-    /// - `s != t`,
-    /// - The answer should be in `T`.
+    /// # 計算量
     ///
+    /// $O(n^2 m)$。全ての容量が1なら $O(\min(n^{2/3} m, m^{3/2}))$。
     ///
-    /// # Complexity
-    ///
-    /// - O ( min ( n^{2/3} m, m^{3/2} ) ) if all the capacities are 1
-    /// - O ( n^2 m )
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
@@ -300,9 +165,7 @@ where
     /// dinic.add_edge(0, 1, 10);
     /// dinic.add_edge(1, 2, 15);
     /// dinic.add_edge(0, 2, 20);
-    ///
-    /// let flow = dinic.flow(0, 2);
-    /// assert_eq!(flow, 30);
+    /// assert_eq!(dinic.flow(0, 2), 30);
     /// ```
     pub fn flow(&mut self, s: usize, t: usize) -> T {
         assert!(
@@ -315,24 +178,17 @@ where
         dinic_impl(&mut self.res, s, t, T::infinity())
     }
 
-    /// Auguments the flow from `s` to `t` as much as possible as long as not exceeding
-    /// `flow_limit`. It returns the amount of the flow augmented.
+    /// `s` から `t` へ、流量が `flow_with_limit` を超えない範囲で流せるだけ流す。増加した流量を返す。
     ///
-    /// You may call it multiple times. [See the module level documentation.](self)
+    /// # 仕様
     ///
+    /// `s != t` が前提。
     ///
-    /// # Constraints
+    /// # 計算量
     ///
-    /// - `s != t`,
-    /// - The answer should be in `T`.
+    /// [`flow`](Dinic::flow) と同じ。
     ///
-    ///
-    /// # Complexity
-    ///
-    /// - O ( min ( n^{2/3} m, m^{3/2} ) ) if all the capacities are 1
-    /// - O ( n^2 m )
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
@@ -341,9 +197,7 @@ where
     /// dinic.add_edge(0, 1, 10);
     /// dinic.add_edge(1, 2, 15);
     /// dinic.add_edge(0, 2, 20);
-    ///
-    /// let flow = dinic.flow_with_limit(0, 2, 28);
-    /// assert_eq!(flow, 28);
+    /// assert_eq!(dinic.flow_with_limit(0, 2, 28), 28);
     /// ```
     pub fn flow_with_limit(&mut self, s: usize, t: usize, flow_with_limit: T) -> T {
         assert!(
@@ -357,11 +211,11 @@ where
         dinic_impl(&mut self.res, s, t, flow_with_limit)
     }
 
-    /// Returns a vector of length `n`, such that the `i`-th element is `true` if and only if there
-    /// is a directed path from `s` to `i` in the residual network. The returned vector correponds
-    /// to a `s -- t` minimum cut after calling `self.flow(s, t)` exactly once.
+    /// 残余ネットワークで `s` から到達可能な頂点集合を返す（`i` 番目が `true` なら到達可能）。
     ///
-    /// # Examples
+    /// 直前に `flow(s, t)` を1回だけ呼んでいれば、これは `s`–`t` 最小カットに対応する。
+    ///
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
@@ -392,28 +246,22 @@ where
         visited
     }
 
-    /// Returns the current internal state of the edges.
+    /// `edge_key` に対応する辺の現在の状態（[`Edge`]）を返す。
     ///
-    /// # Complexity
+    /// # 計算量
     ///
-    /// O ( 1 )
+    /// $O(1)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
     ///
     /// let mut dinic = Dinic::new(3);
     /// let edge_0 = dinic.add_edge(0, 1, 10);
-    /// let edge_1 = dinic.add_edge(1, 2, 15);
-    /// let edge_2 = dinic.add_edge(0, 2, 20);
-    ///
-    /// let flow = dinic.flow(0, 2);
-    ///
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.flow(0, 2);
     /// assert_eq!(dinic.get_edge(edge_0).flow, 10);
-    /// assert_eq!(dinic.get_edge(edge_1).flow, 10);
-    /// assert_eq!(dinic.get_edge(edge_2).flow, 20);
-    /// assert_eq!(flow, 30);
     /// ```
     pub fn get_edge(&self, edge_key: EdgeKey) -> Edge<T> {
         let EdgeKey(edge_key) = edge_key;
@@ -426,45 +274,22 @@ where
         self.restore_edge(self.pos[edge_key])
     }
 
-    /// Collects all the edges.
+    /// 全ての辺を追加順に [`Edge`] として集める。
     ///
-    /// Edges are sorted in order of addition.
+    /// # 計算量
     ///
-    /// # Complexity
+    /// $O(m)$。
     ///
-    /// O ( m )
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
-    /// use dinic::Edge;
     ///
     /// let mut dinic = Dinic::new(3);
     /// dinic.add_edge(0, 1, 10);
     /// dinic.add_edge(1, 2, 15);
-    /// dinic.add_edge(0, 2, 20);
     /// dinic.flow(0, 2);
-    ///
-    /// let edges = dinic.get_edges();
-    /// assert_eq!(edges[0], Edge {
-    ///     from: 0,
-    ///     to: 1,
-    ///     cap: 10,
-    ///     flow: 10
-    /// });
-    /// assert_eq!(edges[1], Edge {
-    ///     from: 1,
-    ///     to: 2,
-    ///     cap: 15,
-    ///     flow: 10
-    /// });
-    /// assert_eq!(edges[2], Edge {
-    ///     from: 0,
-    ///     to: 2,
-    ///     cap: 20,
-    ///     flow: 20
-    /// });
+    /// assert_eq!(dinic.get_edges().len(), 2);
     /// ```
     pub fn get_edges(&self) -> Vec<Edge<T>> {
         self.pos
@@ -473,45 +298,23 @@ where
             .collect::<Vec<_>>()
     }
 
-    /// Collects all the edges and arrange it in adjacent-list style.
+    /// 全ての辺を隣接リスト形式（`network[from]` に始点が `from` の辺一覧）で集める。各行は追加順。
     ///
-    /// In each row, edges are sorted in order of addition.
+    /// # 計算量
     ///
-    /// # Complexity
+    /// $O(n + m)$。
     ///
-    /// O ( n + m )
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
-    /// use dinic::Edge;
     ///
     /// let mut dinic = Dinic::new(3);
     /// dinic.add_edge(0, 1, 10);
     /// dinic.add_edge(1, 2, 15);
-    /// dinic.add_edge(0, 2, 20);
-    /// dinic.flow(0, 2);
-    ///
+    /// dinic.flow(0, 1);
     /// let network = dinic.get_network();
-    /// assert_eq!(network[0][0], Edge {
-    ///     from: 0,
-    ///     to: 1,
-    ///     cap: 10,
-    ///     flow: 10
-    /// });
-    /// assert_eq!(network[0][1], Edge {
-    ///     from: 0,
-    ///     to: 2,
-    ///     cap: 20,
-    ///     flow: 20
-    /// });
-    /// assert_eq!(network[1][0], Edge {
-    ///     from: 1,
-    ///     to: 2,
-    ///     cap: 15,
-    ///     flow: 10
-    /// });
+    /// assert_eq!(network[0][0].to, 1);
     /// ```
     pub fn get_network(&self) -> Vec<Vec<Edge<T>>> {
         let mut network = vec![Vec::new(); self.res.len()];
@@ -522,15 +325,15 @@ where
         network
     }
 
-    /// Returens the `Vec` of excess of all the vertices.
+    /// 各頂点の余剰流量（流入 − 流出）を `Vec` で返す。`i` 番目が頂点 `i` の値。
     ///
-    /// `i`-th entry is the excess of vertex `i`.
+    /// 始点の余剰はほぼ常に負になるため、符号なし整数型では実行時に必ずオーバーフローする。
     ///
-    /// # Complexity
+    /// # 計算量
     ///
-    /// O ( n + m )
+    /// $O(n + m)$。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
@@ -540,9 +343,7 @@ where
     /// dinic.add_edge(1, 2, 15);
     /// dinic.add_edge(0, 2, 20);
     /// dinic.flow(0, 2);
-    ///
-    /// let excess = dinic.get_excess();
-    /// assert_eq!(excess.as_slice(), &[-30, 0, 30]);
+    /// assert_eq!(dinic.get_excess().as_slice(), &[-30, 0, 30]);
     /// ```
     pub fn get_excess(&self) -> Vec<T> {
         let mut excess = vec![T::zero(); self.res.len()];
@@ -557,11 +358,7 @@ where
         excess
     }
 
-    /// For internal use.
-    ///
-    /// # Constraints
-    ///
-    /// `edge_indexer` is taken from `self.pos`
+    /// 内部用。`edge_indexer` は `self.pos` から取得したものが前提。
     fn restore_edge(&self, edge_indexer: __EdgeIndexer) -> Edge<T> {
         let __EdgeIndexer { from, index } = edge_indexer;
         let __ResidualEdge { to, cap, rev } = self.res[from][index];
@@ -574,88 +371,31 @@ where
         }
     }
 
-    /// Changes the capacity and the amount of the edge corresponding to `edge_key` to `new_cap` and
-    /// `new_flow`, respectively. It does not change the capacity or the flow amount of other
-    /// edges. [See the module level documentation.](self)
+    /// 辺 `edge_key` の容量・流量を `new_cap`, `new_flow` に直接書き換える。他の辺は変わらない。
     ///
-    /// # Constraints
+    /// 下限付き最大流や、特定の辺の使用を禁止した上で最大流を求め直す用途に使う危険な操作。
     ///
-    /// - `T::zero() <= new_flow <= new_cap`
+    /// # 仕様
     ///
-    /// # Complexity
+    /// `T::zero() <= new_flow <= new_cap` が前提。
     ///
-    /// O ( 1 )
+    /// # 計算量
     ///
-    /// # Examples
+    /// $O(1)$。
     ///
-    /// Let us consider a bipartite matching problem on the graph `K _ 2`.
-    /// It can be solved as a maximum flow problem.
+    /// # 例
     ///
     /// ```
     /// use dinic::Dinic;
     ///
-    /// let mut dinic = Dinic::new(6);
-    /// let edge_0 = dinic.add_edge(0, 1, 1);
-    /// let edge_1 = dinic.add_edge(0, 2, 1);
-    /// let edge_2 = dinic.add_edge(1, 3, 1);
-    /// let edge_3 = dinic.add_edge(1, 4, 1);
-    /// let edge_4 = dinic.add_edge(2, 3, 1);
-    /// let edge_5 = dinic.add_edge(2, 4, 1);
-    /// let edge_6 = dinic.add_edge(3, 5, 1);
-    /// let edge_7 = dinic.add_edge(4, 5, 1);
+    /// let mut dinic = Dinic::new(3);
+    /// let e = dinic.add_edge(0, 1, 10);
+    /// dinic.add_edge(1, 2, 15);
+    /// dinic.flow(0, 2);
     ///
-    /// let flow = dinic.flow(0, 5);
-    /// assert_eq!(flow, 2);
-    ///
-    /// # // Actually, the "parallel" ones are the matching edges.
-    /// # assert_eq!(dinic.get_edge(edge_2).flow, 1);
-    /// # assert_eq!(dinic.get_edge(edge_3).flow, 0);
-    /// # assert_eq!(dinic.get_edge(edge_4).flow, 0);
-    /// # assert_eq!(dinic.get_edge(edge_5).flow, 1);
-    /// ```
-    ///
-    /// Now, let us add another constraint. Forbid to match the top ones.
-    /// In order to do this, we deminish the flow by `1` from the source to the sink, along this matching edge,
-    /// and diminish the capacity of this matching edge to `0`, so that the maching is of size `1`
-    /// and the `dinic` is also a feasible flow of value `1`.
-    ///
-    /// Now call [`Dinic::flow`] again with the same source and the same sink. So new matching will be of size `2` shaping like "X". So [`Dinic::flow`] will return the delta `1 = 2 - 1` of the flow.
-    ///
-    /// ```
-    /// # use dinic::Dinic;
-    /// #
-    /// # let mut dinic = Dinic::new(6);
-    /// # let edge_0 = dinic.add_edge(0, 1, 1);
-    /// # let edge_1 = dinic.add_edge(0, 2, 1);
-    /// # let edge_2 = dinic.add_edge(1, 3, 1);
-    /// # let edge_3 = dinic.add_edge(1, 4, 1);
-    /// # let edge_4 = dinic.add_edge(2, 3, 1);
-    /// # let edge_5 = dinic.add_edge(2, 4, 1);
-    /// # let edge_6 = dinic.add_edge(3, 5, 1);
-    /// # let edge_7 = dinic.add_edge(4, 5, 1);
-    ///
-    /// # let flow = dinic.flow(0, 5);
-    /// # assert_eq!(flow, 2);
-    /// #
-    /// # // Actually, the "parallel" ones are the matching edges.
-    /// # assert_eq!(dinic.get_edge(edge_2).flow, 1);
-    /// # assert_eq!(dinic.get_edge(edge_3).flow, 0);
-    /// # assert_eq!(dinic.get_edge(edge_4).flow, 0);
-    /// # assert_eq!(dinic.get_edge(edge_5).flow, 1);
-    /// #
-    /// dinic.change_edge(edge_0, 1, 0); // the edge from the source
-    /// dinic.change_edge(edge_2, 0, 0); // the matching edge
-    /// dinic.change_edge(edge_6, 1, 0); // the edge to the sink
-    ///
-    /// // now, `dinic` has a feasible flow of value `1`
-    ///
-    /// let augment = dinic.flow(0, 5);
-    /// assert_eq!(augment, 1); // and augmented by `1` and became `2`.
-    /// #
-    /// # assert_eq!(dinic.get_edge(edge_2).flow, 0);
-    /// # assert_eq!(dinic.get_edge(edge_3).flow, 1);
-    /// # assert_eq!(dinic.get_edge(edge_4).flow, 1);
-    /// # assert_eq!(dinic.get_edge(edge_5).flow, 0);
+    /// dinic.change_edge(e, 5, 5); // 容量を10→5に減らす（既に流れている5はそのまま）
+    /// assert_eq!(dinic.get_edge(e).cap, 5);
+    /// assert_eq!(dinic.get_edge(e).flow, 5);
     /// ```
     pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         let EdgeKey(edge_key) = edge_key;
@@ -683,16 +423,16 @@ impl<T: Value> Debug for Dinic<T> {
     }
 }
 
-/// A summary of the state of an edge, which is returned by [`Dinic::get_edge`].
+/// [`Dinic::get_edge`] 等が返す、辺の状態のスナップショット。
 #[derive(Clone, PartialEq, Copy, Eq)]
 pub struct Edge<T> {
-    /// The vertex-index of the source of an edge.
+    /// 辺の始点。
     pub from: usize,
-    /// The vertex-index of the target of an edge.
+    /// 辺の終点。
     pub to: usize,
-    /// The capacity of an edge.
+    /// 辺の容量。
     pub cap: T,
-    /// The value of the flow of the network at this edge.
+    /// 辺に流れている流量。
     pub flow: T,
 }
 impl<T: Debug> Debug for Edge<T> {
@@ -711,11 +451,7 @@ impl<T: Debug> Debug for Edge<T> {
     }
 }
 
-/// A key object to query an edge.
-///
-/// Factually, this is a simple wrapper of `usize`.
-/// This is returned by [`Dinic::add_edge`] and be used in
-/// [`Dinic::get_edge`]
+/// 辺を指す不透明なキー。[`Dinic::add_edge`] が返し、[`Dinic::get_edge`] 等に渡す。
 #[derive(Debug, Clone, PartialEq, Copy, Eq)]
 pub struct EdgeKey(usize);
 

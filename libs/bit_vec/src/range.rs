@@ -2,7 +2,7 @@ use std::fmt::Display;
 
 use crate::{div_rem, BitVec, Iter, B};
 
-/// [`BitVec`] の immutable な部分列。[`BitVec::range`] で構築できます。
+/// [`BitVec`] のimmutableな部分列。[`BitVec::range`] で構築する。
 #[derive(Clone, Copy)]
 pub struct Range<'a> {
     pub items: &'a [u64],
@@ -11,9 +11,13 @@ pub struct Range<'a> {
 }
 
 impl<'a> Range<'a> {
-    /// 範囲内の $1$ の bit の個数を返します。
+    /// 範囲内の $1$ のビットの個数を返す。
     ///
-    /// # Example
+    /// # 計算量
+    ///
+    /// 範囲の要素数を $n$、$w = 64$ として $O(n / w)$
+    ///
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -42,6 +46,18 @@ impl<'a> Range<'a> {
         }
         result
     }
+    /// 範囲内で最初に $1$ が立つインデックスを返す。無ければ `None`。
+    ///
+    /// # 例
+    ///
+    /// ```
+    /// use bit_vec::BitVec;
+    ///
+    /// let bv: BitVec = "00110101".parse().unwrap();
+    ///
+    /// assert_eq!(bv.range(2..).first_one(), Some(2));
+    /// assert_eq!(bv.range(8..).first_one(), None);
+    /// ```
     pub fn first_one(self) -> Option<usize> {
         let (q0, r0) = div_rem(self.start);
         let (q1, r1) = div_rem(self.end);
@@ -64,9 +80,9 @@ impl<'a> Range<'a> {
         }
         None
     }
-    /// 範囲内の bit を順に返す iterator を構築します
+    /// 範囲内のビットを順に返すイテレータを構築する。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
@@ -85,9 +101,9 @@ impl<'a> Range<'a> {
             end: self.end,
         }
     }
-    /// 範囲内の bit 全体からなる [`Vec<bool>`] に変換します。これは `.iter().collect()` の短絡メソッドです。
+    /// 範囲内のビット全体を `Vec<bool>` に変換する。`.iter().collect()` の短絡メソッド。
     ///
-    /// # Example
+    /// # 例
     ///
     /// ```
     /// use bit_vec::BitVec;
