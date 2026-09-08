@@ -1,1 +1,1 @@
-window.SIDEBAR_ITEMS = {"fn":["main","parse_crate_docs"],"struct":["CrateMetadata"]};
+window.SIDEBAR_ITEMS = {"constant":["MARKDOWN_OPTIONS"],"fn":["escape_html_minimal","main","math_placeholder","parse_crate_docs","protect_math","render_markdown","strip_outer_block_tag"],"struct":["CrateMetadata"]};

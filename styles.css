@@ -19,12 +19,24 @@ body,
   height: 100%;
 }
 
+html,
 body {
-  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Kaku Gothic ProN",
-    "Hiragino Sans", "Yu Gothic", "Noto Sans JP", "Segoe UI", sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+}
+
+body {
+  font-family: "Zen Kaku Gothic New", -apple-system, BlinkMacSystemFont,
+    "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;
   font-size: 15px;
   line-height: 1.5;
   color: var(--color-text-primary);
+}
+
+code,
+kbd,
+pre {
+  font-family: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 }
 
 #app {
@@ -45,8 +57,8 @@ body {
 
 #toolbar h1 {
   margin: 0;
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-size: 1.6rem;
+  font-weight: 700;
 }
 
 #toolbar .subtitle {
@@ -146,8 +158,10 @@ body {
   padding: 1.25rem 1.5rem;
 }
 
-.catalog-main h4 {
+.catalog-main h2 {
   margin: 0 0 .3rem;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
 .catalog-main .summary {
@@ -217,6 +231,24 @@ body {
   background: var(--code-bg);
   padding: 0 .2rem;
   border-radius: 3px;
+}
+
+.doc-body table {
+  border-collapse: collapse;
+  margin: .8rem 0;
+  font-size: .85rem;
+}
+
+.doc-body th,
+.doc-body td {
+  border: 1px solid var(--color-border);
+  padding: .35rem .7rem;
+  text-align: left;
+}
+
+.doc-body th {
+  background: var(--color-header-bg);
+  font-weight: 600;
 }
 
 /* ショートカットバー */

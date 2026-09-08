@@ -1,1 +1,1 @@
-searchState.loadedDescShard("snippetter", 0, "Returns the argument unchanged.\ncrate root doc comment …\nCalls <code>U::from(self)</code>.\ncrate ルートの <code>//!</code> doc comment …")
+searchState.loadedDescShard("snippetter", 0, "crate root doc comment …\n要約行を HTML …\nReturns the argument unchanged.\ncrate root doc comment …\nCalls <code>U::from(self)</code>.\ncrate ルートの <code>//!</code> doc comment …\n<code>$...$</code>（インライン）・<code>$$...$$</code>…\nMarkdown を HTML にレンダリングする。<code>$...$</code> / …\n…")
