@@ -1,13 +1,13 @@
 :root {
   --color-text-primary: #332b20;
   --color-text-secondary: #6b5d46;
-  --color-text-tertiary: #9c8f76;
+  --color-text-tertiary: #7d6e52;
   --color-bg-primary: #fffdf6;
   --color-bg-hover: #fff2ce;
   --color-border: #f0e0b0;
   --color-border-light: #f7edd2;
   --color-header-bg: #fff7e0;
-  --color-accent: #975f07;
+  --color-accent: #8a5706;
   --color-accent-strong: #ffbf00;
   --color-accent-soft: #ffe599;
   --color-on-accent-strong: #332b20;
@@ -48,12 +48,26 @@ a {
   color: var(--color-accent);
 }
 
+a:focus-visible,
+.tag-pill:focus-visible,
+.catalog-item:focus-visible {
+  outline: 2px solid var(--color-accent-strong);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 ::selection {
   background: var(--color-accent-soft);
   color: var(--color-text-primary);
 }
 
-/* Webkit スクロールバー: まるく、あまいろに */
+/* スクロールバー: まるく、あまいろに（Firefox） */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-accent-soft) transparent;
+}
+
+/* スクロールバー: まるく、あまいろに（Webkit系） */
 ::-webkit-scrollbar {
   width: 10px;
   height: 10px;
@@ -190,6 +204,7 @@ a {
 
 .catalog-item.selected {
   background: var(--color-accent-soft);
+  box-shadow: inset 3px 0 0 var(--color-accent-strong);
 }
 
 .catalog-item .name {
