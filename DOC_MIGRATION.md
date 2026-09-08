@@ -49,15 +49,15 @@ Tier1（`fp`, `segtree`, `union_find`, `lazy_segtree`, `hld`, `wavelet_matrix`, 
 - [ ] `partially_persistent_union_find`
 - [ ] `partition`
 - [ ] `rand_range`
-- [ ] `randtools`
-- [ ] `rational`
-- [ ] `segbeats`
-- [ ] `segbeats_task3`
-- [ ] `skew-heap`
-- [ ] `sparse_segtree`
-- [ ] `sparse_table`
-- [ ] `splay_tree`
-- [ ] `suffix_array`
+- [x] `randtools`
+- [x] `rational`
+- [x] `segbeats`
+- [x] `segbeats_task3`
+- [x] `skew-heap`
+- [x] `sparse_segtree`
+- [x] `sparse_table`
+- [x] `splay_tree`
+- [x] `suffix_array`
 - [ ] `swag`
 - [ ] `tree_fold`
 - [ ] `trial`

@@ -1,3 +1,45 @@
+//! 区間 chmin・chmax・区間加算と、min・max・sum 取得を載せた Segment Tree Beats
+//!
+//! 各ノードに最大値とその個数・2 番目に大きい値、最小値とその個数・2 番目に小さい値、
+//! 総和を持たせた完全二分木として実装する。区間 chmin（$x_i \gets \min(x_i, x)$）は、
+//! ノードの最大値が $x$ 以下ならなにもせず、2 番目の値 $< x <$ 最大値のときだけ
+//! 最大値のみを $x$ に張り替える（区間 chmax も対称に動く）。この操作は
+//! ノード内の異なる値の種類数を単調に減らすため、区間加算を挟んでも
+//! 償却 $O((n + q) \log^2 n)$ で動作することが保証される
+//! （chmin と chmax を同時にサポートする、いわゆる Segment Tree Beats の
+//! "Task 3" 相当）。
+//!
+//! # 仕様
+//!
+//! - 型: `Segbeats<T>`（`T: Elm`。符号付き・符号なし整数型に実装済み）
+//! - 構築: [`Segbeats::new`]`(&[T])`
+//! - 更新（半開区間 `[l, r)`）
+//!     - [`Segbeats::change_min`][]: $x_i \gets \min(x_i, x)$
+//!     - [`Segbeats::change_max`][]: $x_i \gets \max(x_i, x)$
+//!     - [`Segbeats::range_add`][]: $x_i \gets x_i + x$
+//! - 取得（半開区間 `[l, r)`）
+//!     - [`Segbeats::query_min`][]: $\min_i x_i$
+//!     - [`Segbeats::query_max`][]: $\max_i x_i$
+//!     - [`Segbeats::query_sum`][]: $\sum_i x_i$
+//!     - [`Segbeats::count_changes`][]: 区間内で値が実際に書き換わった延べ回数
+//!
+//! # 例
+//!
+//! ```
+//! use segbeats_task3::Segbeats;
+//!
+//! let mut segbeats = Segbeats::new(&[1, 4, 2, 8, 5]);
+//! segbeats.change_min(1..4, 3); // [1, 3, 2, 3, 5]
+//! assert_eq!(segbeats.query_max(..), 5);
+//! assert_eq!(segbeats.query_sum(..), 1 + 3 + 2 + 3 + 5);
+//! assert_eq!(segbeats.count_changes(..), 2); // 4→3, 8→3 の 2 件が書き換わった
+//! ```
+//!
+//! # 計算量
+//!
+//! - 構築: $O(n)$
+//! - 各更新・取得: 償却 $O(\log^2 n)$（chmin・chmax は最悪ではなく償却計算量）
+
 use std::cell::RefCell;
 use std::fmt::Debug;
 use std::mem::replace;
@@ -9,6 +51,15 @@ use std::ops::RangeBounds;
 use std::ops::Sub;
 use std::ops::SubAssign;
 
+/// `range` を長さ `len` の半開区間 `Range<usize>` に変換する。
+///
+/// # 例
+///
+/// ```
+/// use segbeats_task3::open;
+/// assert_eq!(open(5, ..3), 0..3);
+/// assert_eq!(open(5, 2..), 2..5);
+/// ```
 pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     use Bound::Excluded;
     use Bound::Included;
@@ -24,6 +75,11 @@ pub fn open(len: usize, range: impl RangeBounds<usize>) -> Range<usize> {
     })
 }
 
+/// 区間 chmin・chmax・加算・min/max/sum 取得を載せたセグメント木。
+///
+/// 内部状態は [`RefCell`] に包んであり、取得系メソッド（`query_*`,
+/// `count_changes`）も `&self` から遅延評価（push）と統計値の更新を行う。
+#[doc(alias = "Segment Tree Beats")]
 #[derive(Clone, PartialEq, Eq)]
 pub struct Segbeats<T> {
     len: usize,
@@ -42,6 +98,14 @@ impl<T: Elm> Debug for Segbeats<T> {
 }
 
 impl<T: Elm> Segbeats<T> {
+    /// 初期配列から構築する。
+    ///
+    /// 内部長は `src.len()` 以上最小の 2 冪に拡張し、余った要素は
+    /// 演算結果に影響しない値で埋める。
+    ///
+    /// # 計算量
+    ///
+    /// $O(n)$
     pub fn new(src: &[T]) -> Self {
         let len = src.len().next_power_of_two();
         let lg = len.trailing_zeros();
@@ -61,36 +125,76 @@ impl<T: Elm> Segbeats<T> {
         }
     }
 
+    /// 区間 $[l, r)$ を chmin で更新する：$x_i \gets \min(x_i, x)$。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn change_min(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMin<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ を chmax で更新する：$x_i \gets \max(x_i, x)$。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn change_max(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<ChangeMax<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ に $x$ を加算する：$x_i \gets x_i + x$。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn range_add(&mut self, range: impl Clone + RangeBounds<usize>, x: T) {
         let range = open(self.len, range);
         self.dfs::<RangeAdd<T>>(range, x);
     }
 
+    /// 区間 $[l, r)$ の最小値 $\min_i x_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn query_min(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMin<T>>(range, ())
     }
 
+    /// 区間 $[l, r)$ の最大値 $\max_i x_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn query_max(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QueryMax<T>>(range, ())
     }
 
+    /// 区間 $[l, r)$ の総和 $\sum_i x_i$ を返す。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn query_sum(&self, range: impl RangeBounds<usize>) -> T {
         let range = open(self.len, range);
         self.dfs::<QuerySum<T>>(range, ())
     }
 
+    /// 区間 $[l, r)$ 内で、chmin・chmax・非ゼロ加算により値が実際に
+    /// 書き換わった延べ回数を返す。
+    ///
+    /// 各要素について、構築後に値が変化した回数（chmin・chmax は値が
+    /// 変わらなければ数えない。加算は $x \neq 0$ のときのみ 1 回と数える）を
+    /// 区間内で合計する。
+    ///
+    /// # 計算量
+    ///
+    /// 償却 $O(\log^2 n)$
     pub fn count_changes(&self, range: impl RangeBounds<usize>) -> u64 {
         let range = open(self.len, range);
         self.dfs::<CountChanges<T>>(range, ())
@@ -470,6 +574,9 @@ fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
     i.end <= j.start || j.end <= i.start
 }
 
+/// [`Segbeats`] が扱える要素型が実装するトレイト。
+///
+/// 符号付き・符号なし整数型（`u8`〜`u128`, `usize`, `i8`〜`i128`, `isize`）に実装済み。
 pub trait Elm:
     Sized
     + std::fmt::Debug
@@ -480,9 +587,13 @@ pub trait Elm:
     + Sub<Output = Self>
     + SubAssign
 {
+    /// 最大値。`query_min` の空区間に対する単位元として使う。
     fn max_value() -> Self;
+    /// 最小値。`query_max` の空区間に対する単位元として使う。
     fn min_value() -> Self;
+    /// 加法の単位元 $0$。
     fn zero() -> Self;
+    /// $u32$ 倍：$\text{self} \times x$。区間長分をまとめて加算する際に使う。
     fn mul_u32(&self, x: u32) -> Self;
 }
 macro_rules! impl_elm {
