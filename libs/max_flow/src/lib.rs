@@ -8,7 +8,7 @@
 //! # 仕様
 //!
 //! - [`MaxFlow::new`][]: 空のネットワークを構築
-//! - [`MaxFlow::add_edge`][]: 容量 `cap` の有向辺 `src -> tar` を追加（逆辺も内部で管理）
+//! - [`MaxFlow::add_edge`][]: 容量 `cap` の有向辺 `from -> to` を追加（逆辺も内部で管理）
 //! - [`MaxFlow::solve`][]: 頂点数 `n`、始点 `source`、終点 `sink` を指定し、最大流量と
 //!   最小カット（各頂点が始点側に残るか）を返す
 //! - [`MaxFlow::original_edges`][]: `add_edge` で追加した辺（逆辺を除く）を現在の流量込みで取得
@@ -49,7 +49,7 @@ impl MaxFlow {
         Self::default()
     }
 
-    /// 容量 `cap` の有向辺 `src -> tar` を追加する。
+    /// 容量 `cap` の有向辺 `from -> to` を追加する。
     ///
     /// 内部では容量 `cap`・初期流量 `cap`（残余容量 0）の逆辺も同時に追加し、
     /// [`solve`](Self::solve) はこの逆辺を通じて流量を押し戻す。
@@ -62,16 +62,16 @@ impl MaxFlow {
     /// g.add_edge(0, 1, 5);
     /// assert_eq!(g.original_edges()[0].cap, 5);
     /// ```
-    pub fn add_edge(&mut self, src: usize, tar: usize, cap: u64) {
+    pub fn add_edge(&mut self, from: usize, to: usize, cap: u64) {
         self.edges.push(Edge {
-            src,
-            tar,
+            from,
+            to,
             cap,
             flow: 0,
         });
         self.edges.push(Edge {
-            src: tar,
-            tar: src,
+            from: to,
+            to: from,
             cap,
             flow: cap,
         });
@@ -112,12 +112,12 @@ impl MaxFlow {
 
         let mut g = vec![vec![]; n];
         for (i, &e) in edges.iter().enumerate() {
-            g[e.src].push(i);
+            g[e.from].push(i);
         }
 
         let mut excess = vec![0; n];
         for &i in &g[source] {
-            let y = edges[i].tar;
+            let y = edges[i].to;
             let f = edges[i].cap - edges[i].flow;
             if y == source || f == 0 {
                 continue;
@@ -134,7 +134,7 @@ impl MaxFlow {
         queue.push_back(sink);
         while let Some(x) = queue.pop_front() {
             for &i in &g[x] {
-                let y = edges[i].tar;
+                let y = edges[i].to;
                 if y != sink && height[y] == n + 1 && edges[i].flow != 0 {
                     height[y] = height[x] + 1;
                     queue.push_back(y);
@@ -148,7 +148,7 @@ impl MaxFlow {
             .collect::<BinaryHeap<_>>();
         'pop: while let Some((_, x)) = heap.pop() {
             for &i in &g[x] {
-                let y = edges[i].tar;
+                let y = edges[i].to;
                 if edges[i].flow == edges[i].cap || height[x] <= height[y] {
                     continue;
                 }
@@ -168,7 +168,7 @@ impl MaxFlow {
             height[x] = g[x]
                 .iter()
                 .filter(|&&i| edges[i].flow < edges[i].cap)
-                .map(|&i| height[edges[i].tar])
+                .map(|&i| height[edges[i].to])
                 .min()
                 .unwrap()
                 + 1;
@@ -184,8 +184,8 @@ impl MaxFlow {
 /// [`MaxFlow`] が管理する有向辺（残余グラフ上の辺、逆辺を含む）。
 #[derive(Debug, Default, Clone, Copy, PartialEq)]
 pub struct Edge {
-    pub src: usize,
-    pub tar: usize,
+    pub from: usize,
+    pub to: usize,
     pub cap: u64,
     pub flow: u64,
 }

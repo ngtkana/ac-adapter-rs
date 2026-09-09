@@ -10,10 +10,10 @@
 //! [`Op`] トレイトでモノイド $(S, \cdot, e)$ を定義する。
 //!
 //! - [`Op::identity`][]: 単位元 $e$
-//! - [`Op::mul`][]: 積 $x \cdot y$（結合律を満たすこと）
+//! - [`Op::op`][]: 積 $x \cdot y$（結合律を満たすこと）
 //!
 //! [`SparseSegtree::from_range`] で定義域 $[0, n)$ を指定して構築し、
-//! [`SparseSegtree::update`] で 1 点更新、[`SparseSegtree::fold`] で区間畳み込みを行う。
+//! [`SparseSegtree::apply`] で 1 点更新、[`SparseSegtree::fold`] で区間畳み込みを行う。
 //!
 //! # 例
 //!
@@ -27,14 +27,14 @@
 //!     fn identity() -> i64 {
 //!         0
 //!     }
-//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!     fn op(lhs: &i64, rhs: &i64) -> i64 {
 //!         lhs + rhs
 //!     }
 //! }
 //!
 //! let mut seg = SparseSegtree::<Add>::from_range(0..10);
-//! seg.update(2, |x| *x += 5);
-//! seg.update(5, |x| *x += 3);
+//! seg.apply(2, |x| *x += 5);
+//! seg.apply(5, |x| *x += 3);
 //! assert_eq!(seg.fold(0..10), 8);
 //! ```
 //!
@@ -43,7 +43,7 @@
 //! 定義域の大きさを $n$ とする。
 //!
 //! - 構築（[`SparseSegtree::from_range`]）: $O(1)$
-//! - 1 点更新（[`SparseSegtree::update`]）: $O(\log n)$（未確保ノードの新規確保を含む）
+//! - 1 点更新（[`SparseSegtree::apply`]）: $O(\log n)$（未確保ノードの新規確保を含む）
 //! - 畳み込み（[`SparseSegtree::fold`]）: $O(\log n)$
 //! - 走査（[`SparseSegtree::visit_items`], [`SparseSegtree::visit_ranges`]）: $O(\log n)$ に加え、実際に確保済みのノード数に比例
 use std::ops::Range;
@@ -56,7 +56,7 @@ pub trait Op {
     /// 単位元 $e$。
     fn identity() -> Self::Value;
     /// 積 $x \cdot y$。結合律を満たすこと。
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
 /// 動的確保によるセグメント木。定義域 $[0, n)$ を固定し、触れた添字への経路上のノードだけを確保する。
@@ -76,17 +76,17 @@ pub trait Op {
 ///         0
 ///     }
 ///
-///     fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+///     fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
 ///         lhs + rhs
 ///     }
 /// }
 ///
 /// let mut seg = SparseSegtree::<SumOp>::from_range(0..10);
 ///
-/// seg.update(2, |x| *x += 5);
+/// seg.apply(2, |x| *x += 5);
 /// assert_eq!(seg.fold(0..10), 5);
 ///
-/// seg.update(5, |x| *x += 3);
+/// seg.apply(5, |x| *x += 3);
 /// assert_eq!(seg.fold(0..10), 8);
 /// ```
 pub struct SparseSegtree<O: Op> {
@@ -106,7 +106,7 @@ impl<O: Op> SparseSegtree<O> {
     /// # Panics
     ///
     /// 木が空、または $i$ が定義域外のとき panic する。
-    pub fn update(&mut self, i: usize, f: impl FnMut(&mut O::Value)) {
+    pub fn apply(&mut self, i: usize, f: impl FnMut(&mut O::Value)) {
         let Some(root) = self.root.as_mut() else {
             panic!("Cannot update an empty segment tree");
         };
@@ -118,17 +118,17 @@ impl<O: Op> SparseSegtree<O> {
     }
 
     /// 総積 $x_l \cdot x_{l+1} \cdots x_{r-1}$ を返す。未確保の部分木は単位元 $e$ とみなす。
-    pub fn fold(&self, range: Range<usize>) -> O::Value {
+    pub fn fold(&self, range: impl RangeBounds<usize>) -> O::Value {
         let mut result = O::identity();
         self.visit_ranges(range, |_, value| {
-            result = O::mul(&result, value);
+            result = O::op(&result, value);
         });
         result
     }
 
     /// 確保済みの添字 $i \in [l, r)$ について、左から右へ $f(i, x_i)$ を呼ぶ。
     ///
-    /// 一度も [`update`](Self::update) されていない添字はノードごと未確保のため呼ばれない。
+    /// 一度も [`apply`](Self::apply) されていない添字はノードごと未確保のため呼ばれない。
     /// ただし確保済みでも値が単位元 $e$ のままのノードは呼ばれることがある
     /// （フィルタが必要なら呼び出し側で $x_i = e$ を判定する）。
     ///
@@ -149,13 +149,13 @@ impl<O: Op> SparseSegtree<O> {
     /// #    fn identity() -> Self::Value {
     /// #        0
     /// #    }
-    /// #    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+    /// #    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
     /// #        lhs + rhs
     /// #    }
     /// # }
     /// let mut seg = SparseSegtree::<SumOp>::from_range(0..10);
-    /// seg.update(2, |x| *x += 5);
-    /// seg.update(5, |x| *x += 3);
+    /// seg.apply(2, |x| *x += 5);
+    /// seg.apply(5, |x| *x += 3);
     /// assert_eq!(seg.fold(0..10), 8);
     /// ```
     pub fn visit_items(&self, range: impl RangeBounds<usize>, mut f: impl FnMut(usize, &O::Value)) {
@@ -328,10 +328,10 @@ impl<O: Op> Node<O> {
     fn recalculate_value(&mut self) {
         self.value = O::identity();
         if let Some(left) = &self.left {
-            self.value = O::mul(&self.value, &left.value);
+            self.value = O::op(&self.value, &left.value);
         }
         if let Some(right) = &self.right {
-            self.value = O::mul(&self.value, &right.value);
+            self.value = O::op(&self.value, &right.value);
         }
     }
 }
@@ -389,7 +389,7 @@ mod tests {
             Value { a: 1, b: 0 }
         }
 
-        fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+        fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
             Value {
                 a: (lhs.a * rhs.a) % P,
                 b: (lhs.b * rhs.a + rhs.b) % P,
@@ -417,7 +417,7 @@ mod tests {
             let mut result = O::identity();
             for i in range {
                 if let Some(value) = self.map.get(&i) {
-                    result = O::mul(&result, value);
+                    result = O::op(&result, value);
                 }
             }
             result
@@ -439,7 +439,7 @@ mod tests {
                         let a = rng.gen_range(1..P);
                         let b = rng.gen_range(0..P);
                         let value = Value { a, b };
-                        seg.update(i, |v| *v = value);
+                        seg.apply(i, |v| *v = value);
                         mock.update(i, |v| *v = Value { a, b });
                     }
                     // print fold(l..r)
@@ -458,11 +458,11 @@ mod tests {
                         let i = rng.gen_range(0..n);
                         let a = rng.gen_range(1..P);
                         let b = rng.gen_range(0..P);
-                        seg.update(i, |v| {
-                            *v = O::mul(v, &Value { a, b });
+                        seg.apply(i, |v| {
+                            *v = O::op(v, &Value { a, b });
                         });
                         mock.update(i, |v| {
-                            *v = O::mul(v, &Value { a, b });
+                            *v = O::op(v, &Value { a, b });
                         });
                     }
                     // Visit [l..r[

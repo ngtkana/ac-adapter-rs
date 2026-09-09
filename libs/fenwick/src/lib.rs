@@ -10,7 +10,7 @@
 //! [`Op`]トレイトで結合律を満たす二項演算 $(S, \oplus, e)$ を定義する。
 //!
 //! * [`Op::identity`][]: 単位元 $e$
-//! * [`Op::add`][]: 演算 $a \oplus b$（結合律を満たすこと）
+//! * [`Op::op`][]: 演算 $a \oplus b$（結合律を満たすこと）
 //!
 //! 逆演算 $\ominus$ を持つ場合は[`OpSub`]も実装すると、任意区間 $[l, r)$ の
 //! 畳み込みを $\mathrm{fold\_to}(r) \ominus \mathrm{fold\_to}(l)$ で計算できる。
@@ -30,7 +30,7 @@
 //!         0
 //!     }
 //!
-//!     fn add(a: &i64, b: &i64) -> i64 {
+//!     fn op(a: &i64, b: &i64) -> i64 {
 //!         a + b
 //!     }
 //! }
@@ -74,7 +74,7 @@ use std::ops::RangeTo;
 ///         0
 ///     }
 ///
-///     fn add(a: &Self::Value, b: &Self::Value) -> Self::Value {
+///     fn op(a: &Self::Value, b: &Self::Value) -> Self::Value {
 ///         a + b
 ///     }
 /// }
@@ -87,12 +87,12 @@ pub trait Op {
     fn identity() -> Self::Value;
 
     /// 演算 $a \oplus b$ を計算する。
-    fn add(a: &Self::Value, b: &Self::Value) -> Self::Value;
+    fn op(a: &Self::Value, b: &Self::Value) -> Self::Value;
 }
 
 /// 逆演算 $\ominus$ を追加する[`Op`]の拡張。
 ///
-/// `add`だけでは前計算 $[0, i)$ の畳み込みしか求まらない。`sub`を実装すると、
+/// `op`だけでは前計算 $[0, i)$ の畳み込みしか求まらない。`sub`を実装すると、
 /// 任意区間 $[l, r)$ の畳み込みを $\mathrm{fold\_to}(r) \ominus \mathrm{fold\_to}(l)$
 /// で計算できるようになる。
 ///
@@ -110,7 +110,7 @@ pub trait Op {
 /// # impl Op for AddOp {
 /// #     type Value = i64;
 /// #     fn identity() -> i64 { 0 }
-/// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+/// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
 /// # }
 /// ```
 pub trait OpSub: Op {
@@ -133,7 +133,7 @@ pub trait OpSub: Op {
 /// # impl Op for AddOp {
 /// #     type Value = i64;
 /// #     fn identity() -> i64 { 0 }
-/// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+/// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
 /// # }
 /// let mut tree = Fenwick::<AddOp>::new(5);
 /// tree.add(2, &10);
@@ -165,7 +165,7 @@ impl<O: Op> Default for Fenwick<O> {
     /// # impl fenwick::Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let tree: Fenwick<AddOp> = Default::default();
     /// ```
@@ -187,7 +187,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let tree = Fenwick::<AddOp>::new(10);
     /// ```
@@ -213,7 +213,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(2, &10);
@@ -223,7 +223,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
         assert!(index + 1 < self.items.len(), "index out of bounds");
         index += 1;
         while index < self.items.len() {
-            self.items[index] = O::add(&self.items[index], value);
+            self.items[index] = O::op(&self.items[index], value);
             index += index & index.wrapping_neg();
         }
     }
@@ -238,7 +238,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// let mut tree = Fenwick::<AddOp>::new(5);
     /// tree.add(0, &1);
@@ -250,7 +250,7 @@ impl<T, O: Op<Value = T>> Fenwick<O> {
         let mut end = range.end;
         let mut result = O::identity();
         while end != 0 {
-            result = O::add(&result, &self.items[end]);
+            result = O::op(&result, &self.items[end]);
             end -= end & end.wrapping_neg();
         }
         result
@@ -270,7 +270,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// # impl OpSub for AddOp {
     /// #     fn sub(a: &i64, b: &i64) -> i64 { a - b }
@@ -301,7 +301,7 @@ impl<T, O: OpSub<Value = T>> Fenwick<O> {
     /// # impl Op for AddOp {
     /// #     type Value = i64;
     /// #     fn identity() -> i64 { 0 }
-    /// #     fn add(a: &i64, b: &i64) -> i64 { a + b }
+    /// #     fn op(a: &i64, b: &i64) -> i64 { a + b }
     /// # }
     /// # impl OpSub for AddOp {
     /// #     fn sub(a: &i64, b: &i64) -> i64 { a - b }

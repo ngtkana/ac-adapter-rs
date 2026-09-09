@@ -79,7 +79,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     ///     fn identity() -> i64 {
     ///         0
     ///     }
-    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///     fn op(lhs: &i64, rhs: &i64) -> i64 {
     ///         lhs + rhs
     ///     }
     /// }
@@ -324,7 +324,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     ///     fn identity() -> i64 {
     ///         0
     ///     }
-    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///     fn op(lhs: &i64, rhs: &i64) -> i64 {
     ///         lhs + rhs
     ///     }
     /// }
@@ -356,7 +356,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     ///     fn identity() -> i64 {
     ///         0
     ///     }
-    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///     fn op(lhs: &i64, rhs: &i64) -> i64 {
     ///         lhs + rhs
     ///     }
     /// }
@@ -390,7 +390,7 @@ impl<O: OpBase> LinkCutTreeBase<O> {
     ///     fn identity() -> i64 {
     ///         0
     ///     }
-    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///     fn op(lhs: &i64, rhs: &i64) -> i64 {
     ///         lhs + rhs
     ///     }
     /// }
