@@ -89,33 +89,29 @@
 <a href=#65 id=65 data-nosnippet>65</a>    + Rem&lt;Output = <span class="self">Self</span>&gt;
 <a href=#66 id=66 data-nosnippet>66</a>    + RemAssign
 <a href=#67 id=67 data-nosnippet>67</a>{
-<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// 加法の単位元 $0$ を返す。
-<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">fn </span>zero() -&gt; <span class="self">Self</span>;
-<a href=#70 id=70 data-nosnippet>70</a>    <span class="doccomment">/// 乗法の単位元 $1$ を返す。
-<a href=#71 id=71 data-nosnippet>71</a>    </span><span class="kw">fn </span>one() -&gt; <span class="self">Self</span>;
+<a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// 加法の単位元 $0$。
+<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">const </span>ZERO: <span class="self">Self</span>;
+<a href=#70 id=70 data-nosnippet>70</a>    <span class="doccomment">/// 乗法の単位元 $1$。
+<a href=#71 id=71 data-nosnippet>71</a>    </span><span class="kw">const </span>ONE: <span class="self">Self</span>;
 <a href=#72 id=72 data-nosnippet>72</a>    <span class="doccomment">/// `self` を $1$ だけ増加させる。
 <a href=#73 id=73 data-nosnippet>73</a>    </span><span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
 <a href=#74 id=74 data-nosnippet>74</a>    <span class="doccomment">/// `self` が `n` の約数なら `true` を返す。
 <a href=#75 id=75 data-nosnippet>75</a>    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool {
-<a href=#76 id=76 data-nosnippet>76</a>        n % <span class="self">self </span>== <span class="self">Self</span>::zero()
+<a href=#76 id=76 data-nosnippet>76</a>        n % <span class="self">self </span>== <span class="self">Self</span>::ZERO
 <a href=#77 id=77 data-nosnippet>77</a>    }
 <a href=#78 id=78 data-nosnippet>78</a>}
 <a href=#79 id=79 data-nosnippet>79</a>
 <a href=#80 id=80 data-nosnippet>80</a><span class="macro">macro_rules!</span> impl_value {
 <a href=#81 id=81 data-nosnippet>81</a>    ($(<span class="macro-nonterminal">$t</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {$(
 <a href=#82 id=82 data-nosnippet>82</a>        <span class="kw">impl </span>Value <span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-<a href=#83 id=83 data-nosnippet>83</a>            <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
-<a href=#84 id=84 data-nosnippet>84</a>                <span class="number">0
-<a href=#85 id=85 data-nosnippet>85</a>            </span>}
-<a href=#86 id=86 data-nosnippet>86</a>            <span class="kw">fn </span>one() -&gt; <span class="self">Self </span>{
-<a href=#87 id=87 data-nosnippet>87</a>                <span class="number">1
-<a href=#88 id=88 data-nosnippet>88</a>            </span>}
-<a href=#89 id=89 data-nosnippet>89</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#90 id=90 data-nosnippet>90</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
-<a href=#91 id=91 data-nosnippet>91</a>            }
-<a href=#92 id=92 data-nosnippet>92</a>        }
-<a href=#93 id=93 data-nosnippet>93</a>    )<span class="kw-2">*</span>}
-<a href=#94 id=94 data-nosnippet>94</a>}
-<a href=#95 id=95 data-nosnippet>95</a><span class="macro">impl_value!</span> {
-<a href=#96 id=96 data-nosnippet>96</a>    usize, u8, u16, u32, u64, u128,
-<a href=#97 id=97 data-nosnippet>97</a>}</code></pre></div></section></main></body></html>
+<a href=#83 id=83 data-nosnippet>83</a>            <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
+<a href=#84 id=84 data-nosnippet>84</a>            <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
+<a href=#85 id=85 data-nosnippet>85</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#86 id=86 data-nosnippet>86</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
+<a href=#87 id=87 data-nosnippet>87</a>            }
+<a href=#88 id=88 data-nosnippet>88</a>        }
+<a href=#89 id=89 data-nosnippet>89</a>    )<span class="kw-2">*</span>}
+<a href=#90 id=90 data-nosnippet>90</a>}
+<a href=#91 id=91 data-nosnippet>91</a><span class="macro">impl_value!</span> {
+<a href=#92 id=92 data-nosnippet>92</a>    usize, u8, u16, u32, u64, u128,
+<a href=#93 id=93 data-nosnippet>93</a>}</code></pre></div></section></main></body></html>

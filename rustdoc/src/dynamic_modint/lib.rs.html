@@ -163,17 +163,17 @@
 <a href=#139 id=139 data-nosnippet>139</a>    + RemAssign
 <a href=#140 id=140 data-nosnippet>140</a>{
 <a href=#141 id=141 data-nosnippet>141</a>    <span class="doccomment">/// 加法単位元 $0$。
-<a href=#142 id=142 data-nosnippet>142</a>    </span><span class="kw">const </span>CONST_0: <span class="self">Self</span>;
+<a href=#142 id=142 data-nosnippet>142</a>    </span><span class="kw">const </span>ZERO: <span class="self">Self</span>;
 <a href=#143 id=143 data-nosnippet>143</a>    <span class="doccomment">/// 乗法単位元 $1$。
-<a href=#144 id=144 data-nosnippet>144</a>    </span><span class="kw">const </span>CONST_1: <span class="self">Self</span>;
+<a href=#144 id=144 data-nosnippet>144</a>    </span><span class="kw">const </span>ONE: <span class="self">Self</span>;
 <a href=#145 id=145 data-nosnippet>145</a>}
 <a href=#146 id=146 data-nosnippet>146</a>
 <a href=#147 id=147 data-nosnippet>147</a><span class="macro">macro_rules!</span> impl_scalar {
 <a href=#148 id=148 data-nosnippet>148</a>    ($(<span class="macro-nonterminal">$</span><span class="kw">type</span>:<span class="macro-nonterminal">ty</span>),+ $(,)<span class="question-mark">?</span>) =&gt; {
 <a href=#149 id=149 data-nosnippet>149</a>        $(
 <a href=#150 id=150 data-nosnippet>150</a>            <span class="kw">impl </span>Scalar <span class="kw">for </span><span class="macro-nonterminal">$</span><span class="kw">type </span>{
-<a href=#151 id=151 data-nosnippet>151</a>                <span class="kw">const </span><span class="macro-nonterminal">CONST_0</span>: <span class="self">Self </span>= <span class="number">0</span>;
-<a href=#152 id=152 data-nosnippet>152</a>                <span class="kw">const </span>CONST_1: <span class="self">Self </span>= <span class="number">1</span>;
+<a href=#151 id=151 data-nosnippet>151</a>                <span class="kw">const </span><span class="macro-nonterminal">ZERO</span>: <span class="self">Self </span>= <span class="number">0</span>;
+<a href=#152 id=152 data-nosnippet>152</a>                <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
 <a href=#153 id=153 data-nosnippet>153</a>            }
 <a href=#154 id=154 data-nosnippet>154</a>        )+
 <a href=#155 id=155 data-nosnippet>155</a>    };
@@ -307,8 +307,8 @@
 <a href=#283 id=283 data-nosnippet>283</a>    <span class="kw">type </span>Output = <span class="self">Self</span>;
 <a href=#284 id=284 data-nosnippet>284</a>
 <a href=#285 id=285 data-nosnippet>285</a>    <span class="kw">fn </span>neg(<span class="self">self</span>) -&gt; <span class="self">Self</span>::Output {
-<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">if </span><span class="self">self</span>.value == M::Value::CONST_0 {
-<a href=#287 id=287 data-nosnippet>287</a>            mint(M::Value::CONST_0)
+<a href=#286 id=286 data-nosnippet>286</a>        <span class="kw">if </span><span class="self">self</span>.value == M::Value::ZERO {
+<a href=#287 id=287 data-nosnippet>287</a>            mint(M::Value::ZERO)
 <a href=#288 id=288 data-nosnippet>288</a>        } <span class="kw">else </span>{
 <a href=#289 id=289 data-nosnippet>289</a>            mint(M::get() - <span class="self">self</span>.value)
 <a href=#290 id=290 data-nosnippet>290</a>        }
@@ -317,13 +317,13 @@
 <a href=#293 id=293 data-nosnippet>293</a>
 <a href=#294 id=294 data-nosnippet>294</a><span class="kw">impl</span>&lt;M: Mod&gt; std::iter::Sum <span class="kw">for </span>Mint&lt;M&gt; {
 <a href=#295 id=295 data-nosnippet>295</a>    <span class="kw">fn </span>sum&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#296 id=296 data-nosnippet>296</a>        iter.fold(Mint::new(M::Value::CONST_0), Add::add)
+<a href=#296 id=296 data-nosnippet>296</a>        iter.fold(Mint::new(M::Value::ZERO), Add::add)
 <a href=#297 id=297 data-nosnippet>297</a>    }
 <a href=#298 id=298 data-nosnippet>298</a>}
 <a href=#299 id=299 data-nosnippet>299</a>
 <a href=#300 id=300 data-nosnippet>300</a><span class="kw">impl</span>&lt;M: Mod&gt; std::iter::Product <span class="kw">for </span>Mint&lt;M&gt; {
 <a href=#301 id=301 data-nosnippet>301</a>    <span class="kw">fn </span>product&lt;I: Iterator&lt;Item = <span class="self">Self</span>&gt;&gt;(iter: I) -&gt; <span class="self">Self </span>{
-<a href=#302 id=302 data-nosnippet>302</a>        iter.fold(Mint::new(M::Value::CONST_1), Mul::mul)
+<a href=#302 id=302 data-nosnippet>302</a>        iter.fold(Mint::new(M::Value::ONE), Mul::mul)
 <a href=#303 id=303 data-nosnippet>303</a>    }
 <a href=#304 id=304 data-nosnippet>304</a>}
 <a href=#305 id=305 data-nosnippet>305</a>

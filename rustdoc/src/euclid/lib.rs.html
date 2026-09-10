@@ -90,10 +90,10 @@
 <a href=#66 id=66 data-nosnippet>66</a>    + Rem&lt;Output = <span class="self">Self</span>&gt;
 <a href=#67 id=67 data-nosnippet>67</a>    + RemAssign
 <a href=#68 id=68 data-nosnippet>68</a>{
-<a href=#69 id=69 data-nosnippet>69</a>    <span class="doccomment">/// 加法単位元 $0$ を返す。
-<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">fn </span>zero() -&gt; <span class="self">Self</span>;
-<a href=#71 id=71 data-nosnippet>71</a>    <span class="doccomment">/// 乗法単位元 $1$ を返す。
-<a href=#72 id=72 data-nosnippet>72</a>    </span><span class="kw">fn </span>one() -&gt; <span class="self">Self</span>;
+<a href=#69 id=69 data-nosnippet>69</a>    <span class="doccomment">/// 加法単位元 $0$。
+<a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">const </span>ZERO: <span class="self">Self</span>;
+<a href=#71 id=71 data-nosnippet>71</a>    <span class="doccomment">/// 乗法単位元 $1$。
+<a href=#72 id=72 data-nosnippet>72</a>    </span><span class="kw">const </span>ONE: <span class="self">Self</span>;
 <a href=#73 id=73 data-nosnippet>73</a>    <span class="doccomment">/// `self` を $1$ だけ増やす。
 <a href=#74 id=74 data-nosnippet>74</a>    </span><span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>);
 <a href=#75 id=75 data-nosnippet>75</a>    <span class="doccomment">/// 絶対値 $|{\rm self}|$ を返す。
@@ -112,7 +112,7 @@
 <a href=#88 id=88 data-nosnippet>88</a>    /// assert!(!3_i32.divides(10));
 <a href=#89 id=89 data-nosnippet>89</a>    /// ```
 <a href=#90 id=90 data-nosnippet>90</a>    </span><span class="kw">fn </span>divides(<span class="self">self</span>, n: <span class="self">Self</span>) -&gt; bool {
-<a href=#91 id=91 data-nosnippet>91</a>        n.rem_euclid(<span class="self">self</span>) == <span class="self">Self</span>::zero()
+<a href=#91 id=91 data-nosnippet>91</a>        n.rem_euclid(<span class="self">self</span>) == <span class="self">Self</span>::ZERO
 <a href=#92 id=92 data-nosnippet>92</a>    }
 <a href=#93 id=93 data-nosnippet>93</a>}
 <a href=#94 id=94 data-nosnippet>94</a>
@@ -124,56 +124,48 @@
 <a href=#100 id=100 data-nosnippet>100</a><span class="macro">macro_rules!</span> impl_unsigned {
 <a href=#101 id=101 data-nosnippet>101</a>    ($(<span class="macro-nonterminal">$t</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {$(
 <a href=#102 id=102 data-nosnippet>102</a>        <span class="kw">impl </span>Int <span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-<a href=#103 id=103 data-nosnippet>103</a>            <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
-<a href=#104 id=104 data-nosnippet>104</a>                <span class="number">0
-<a href=#105 id=105 data-nosnippet>105</a>            </span>}
-<a href=#106 id=106 data-nosnippet>106</a>            <span class="kw">fn </span>one() -&gt; <span class="self">Self </span>{
-<a href=#107 id=107 data-nosnippet>107</a>                <span class="number">1
-<a href=#108 id=108 data-nosnippet>108</a>            </span>}
-<a href=#109 id=109 data-nosnippet>109</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#110 id=110 data-nosnippet>110</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
-<a href=#111 id=111 data-nosnippet>111</a>            }
-<a href=#112 id=112 data-nosnippet>112</a>            <span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-<a href=#113 id=113 data-nosnippet>113</a>                <span class="self">self
-<a href=#114 id=114 data-nosnippet>114</a>            </span>}
-<a href=#115 id=115 data-nosnippet>115</a>            <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-<a href=#116 id=116 data-nosnippet>116</a>                <span class="self">self</span>.div_euclid(rhs)
-<a href=#117 id=117 data-nosnippet>117</a>            }
-<a href=#118 id=118 data-nosnippet>118</a>            <span class="kw">fn </span>rem_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-<a href=#119 id=119 data-nosnippet>119</a>                <span class="self">self</span>.rem_euclid(rhs)
-<a href=#120 id=120 data-nosnippet>120</a>            }
-<a href=#121 id=121 data-nosnippet>121</a>        }
-<a href=#122 id=122 data-nosnippet>122</a>        <span class="kw">impl </span>Unsigned <span class="kw">for </span><span class="macro-nonterminal">$t </span>{}
-<a href=#123 id=123 data-nosnippet>123</a>    )<span class="kw-2">*</span>}
-<a href=#124 id=124 data-nosnippet>124</a>}
-<a href=#125 id=125 data-nosnippet>125</a><span class="macro">impl_unsigned!</span> {
-<a href=#126 id=126 data-nosnippet>126</a>    usize, u8, u16, u32, u64, u128,
-<a href=#127 id=127 data-nosnippet>127</a>}
-<a href=#128 id=128 data-nosnippet>128</a><span class="macro">macro_rules!</span> impl_signed {
-<a href=#129 id=129 data-nosnippet>129</a>    ($(<span class="macro-nonterminal">$t</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {$(
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">impl </span>Int <span class="kw">for </span><span class="macro-nonterminal">$t </span>{
-<a href=#131 id=131 data-nosnippet>131</a>            <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
-<a href=#132 id=132 data-nosnippet>132</a>                <span class="number">0
-<a href=#133 id=133 data-nosnippet>133</a>            </span>}
-<a href=#134 id=134 data-nosnippet>134</a>            <span class="kw">fn </span>one() -&gt; <span class="self">Self </span>{
-<a href=#135 id=135 data-nosnippet>135</a>                <span class="number">1
-<a href=#136 id=136 data-nosnippet>136</a>            </span>}
-<a href=#137 id=137 data-nosnippet>137</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
-<a href=#138 id=138 data-nosnippet>138</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
-<a href=#139 id=139 data-nosnippet>139</a>            }
-<a href=#140 id=140 data-nosnippet>140</a>            <span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
-<a href=#141 id=141 data-nosnippet>141</a>                <span class="self">self</span>.abs()
-<a href=#142 id=142 data-nosnippet>142</a>            }
-<a href=#143 id=143 data-nosnippet>143</a>            <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-<a href=#144 id=144 data-nosnippet>144</a>                <span class="self">self</span>.div_euclid(rhs)
-<a href=#145 id=145 data-nosnippet>145</a>            }
-<a href=#146 id=146 data-nosnippet>146</a>            <span class="kw">fn </span>rem_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
-<a href=#147 id=147 data-nosnippet>147</a>                <span class="self">self</span>.rem_euclid(rhs)
-<a href=#148 id=148 data-nosnippet>148</a>            }
-<a href=#149 id=149 data-nosnippet>149</a>        }
-<a href=#150 id=150 data-nosnippet>150</a>        <span class="kw">impl </span>Signed <span class="kw">for </span><span class="macro-nonterminal">$t </span>{}
-<a href=#151 id=151 data-nosnippet>151</a>    )<span class="kw-2">*</span>}
-<a href=#152 id=152 data-nosnippet>152</a>}
-<a href=#153 id=153 data-nosnippet>153</a><span class="macro">impl_signed!</span> {
-<a href=#154 id=154 data-nosnippet>154</a>    isize, i8, i16, i32, i64, i128,
-<a href=#155 id=155 data-nosnippet>155</a>}</code></pre></div></section></main></body></html>
+<a href=#103 id=103 data-nosnippet>103</a>            <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
+<a href=#104 id=104 data-nosnippet>104</a>            <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
+<a href=#105 id=105 data-nosnippet>105</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#106 id=106 data-nosnippet>106</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
+<a href=#107 id=107 data-nosnippet>107</a>            }
+<a href=#108 id=108 data-nosnippet>108</a>            <span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#109 id=109 data-nosnippet>109</a>                <span class="self">self
+<a href=#110 id=110 data-nosnippet>110</a>            </span>}
+<a href=#111 id=111 data-nosnippet>111</a>            <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+<a href=#112 id=112 data-nosnippet>112</a>                <span class="self">self</span>.div_euclid(rhs)
+<a href=#113 id=113 data-nosnippet>113</a>            }
+<a href=#114 id=114 data-nosnippet>114</a>            <span class="kw">fn </span>rem_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+<a href=#115 id=115 data-nosnippet>115</a>                <span class="self">self</span>.rem_euclid(rhs)
+<a href=#116 id=116 data-nosnippet>116</a>            }
+<a href=#117 id=117 data-nosnippet>117</a>        }
+<a href=#118 id=118 data-nosnippet>118</a>        <span class="kw">impl </span>Unsigned <span class="kw">for </span><span class="macro-nonterminal">$t </span>{}
+<a href=#119 id=119 data-nosnippet>119</a>    )<span class="kw-2">*</span>}
+<a href=#120 id=120 data-nosnippet>120</a>}
+<a href=#121 id=121 data-nosnippet>121</a><span class="macro">impl_unsigned!</span> {
+<a href=#122 id=122 data-nosnippet>122</a>    usize, u8, u16, u32, u64, u128,
+<a href=#123 id=123 data-nosnippet>123</a>}
+<a href=#124 id=124 data-nosnippet>124</a><span class="macro">macro_rules!</span> impl_signed {
+<a href=#125 id=125 data-nosnippet>125</a>    ($(<span class="macro-nonterminal">$t</span>:ty),* $(,)<span class="question-mark">?</span>) =&gt; {$(
+<a href=#126 id=126 data-nosnippet>126</a>        <span class="kw">impl </span>Int <span class="kw">for </span><span class="macro-nonterminal">$t </span>{
+<a href=#127 id=127 data-nosnippet>127</a>            <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
+<a href=#128 id=128 data-nosnippet>128</a>            <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="number">1</span>;
+<a href=#129 id=129 data-nosnippet>129</a>            <span class="kw">fn </span>increment(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
+<a href=#130 id=130 data-nosnippet>130</a>                <span class="kw-2">*</span><span class="self">self </span>+= <span class="number">1</span>;
+<a href=#131 id=131 data-nosnippet>131</a>            }
+<a href=#132 id=132 data-nosnippet>132</a>            <span class="kw">fn </span>abs(<span class="self">self</span>) -&gt; <span class="self">Self </span>{
+<a href=#133 id=133 data-nosnippet>133</a>                <span class="self">self</span>.abs()
+<a href=#134 id=134 data-nosnippet>134</a>            }
+<a href=#135 id=135 data-nosnippet>135</a>            <span class="kw">fn </span>div_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+<a href=#136 id=136 data-nosnippet>136</a>                <span class="self">self</span>.div_euclid(rhs)
+<a href=#137 id=137 data-nosnippet>137</a>            }
+<a href=#138 id=138 data-nosnippet>138</a>            <span class="kw">fn </span>rem_euclid(<span class="self">self</span>, rhs: <span class="self">Self</span>) -&gt; <span class="self">Self </span>{
+<a href=#139 id=139 data-nosnippet>139</a>                <span class="self">self</span>.rem_euclid(rhs)
+<a href=#140 id=140 data-nosnippet>140</a>            }
+<a href=#141 id=141 data-nosnippet>141</a>        }
+<a href=#142 id=142 data-nosnippet>142</a>        <span class="kw">impl </span>Signed <span class="kw">for </span><span class="macro-nonterminal">$t </span>{}
+<a href=#143 id=143 data-nosnippet>143</a>    )<span class="kw-2">*</span>}
+<a href=#144 id=144 data-nosnippet>144</a>}
+<a href=#145 id=145 data-nosnippet>145</a><span class="macro">impl_signed!</span> {
+<a href=#146 id=146 data-nosnippet>146</a>    isize, i8, i16, i32, i64, i128,
+<a href=#147 id=147 data-nosnippet>147</a>}</code></pre></div></section></main></body></html>

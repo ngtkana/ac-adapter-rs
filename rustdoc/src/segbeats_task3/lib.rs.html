@@ -35,7 +35,7 @@
 <a href=#11 id=11 data-nosnippet>11</a>//!
 <a href=#12 id=12 data-nosnippet>12</a>//! # 仕様
 <a href=#13 id=13 data-nosnippet>13</a>//!
-<a href=#14 id=14 data-nosnippet>14</a>//! - 型: `Segbeats&lt;T&gt;`（`T: Elm`。符号付き・符号なし整数型に実装済み）
+<a href=#14 id=14 data-nosnippet>14</a>//! - 型: `Segbeats&lt;T&gt;`（`T: Value`。符号付き・符号なし整数型に実装済み）
 <a href=#15 id=15 data-nosnippet>15</a>//! - 構築: [`Segbeats::new`]`(&amp;[T])`
 <a href=#16 id=16 data-nosnippet>16</a>//! - 更新（半開区間 `[l, r)`）
 <a href=#17 id=17 data-nosnippet>17</a>//!     - [`Segbeats::change_min`][]: $x_i \gets \min(x_i, x)$
@@ -111,7 +111,7 @@
 <a href=#87 id=87 data-nosnippet>87</a>    table: RefCell&lt;Vec&lt;Node&lt;T&gt;&gt;&gt;,
 <a href=#88 id=88 data-nosnippet>88</a>}
 <a href=#89 id=89 data-nosnippet>89</a>
-<a href=#90 id=90 data-nosnippet>90</a><span class="kw">impl</span>&lt;T: Elm&gt; Debug <span class="kw">for </span>Segbeats&lt;T&gt; {
+<a href=#90 id=90 data-nosnippet>90</a><span class="kw">impl</span>&lt;T: Value&gt; Debug <span class="kw">for </span>Segbeats&lt;T&gt; {
 <a href=#91 id=91 data-nosnippet>91</a>    <span class="kw">fn </span>fmt(<span class="kw-2">&amp;</span><span class="self">self</span>, f: <span class="kw-2">&amp;mut </span>std::fmt::Formatter&lt;<span class="lifetime">'_</span>&gt;) -&gt; std::fmt::Result {
 <a href=#92 id=92 data-nosnippet>92</a>        <span class="macro">writeln!</span>(f, <span class="string">"Segbeats"</span>)<span class="question-mark">?</span>;
 <a href=#93 id=93 data-nosnippet>93</a>        <span class="self">self</span>.table
@@ -121,7 +121,7 @@
 <a href=#97 id=97 data-nosnippet>97</a>    }
 <a href=#98 id=98 data-nosnippet>98</a>}
 <a href=#99 id=99 data-nosnippet>99</a>
-<a href=#100 id=100 data-nosnippet>100</a><span class="kw">impl</span>&lt;T: Elm&gt; Segbeats&lt;T&gt; {
+<a href=#100 id=100 data-nosnippet>100</a><span class="kw">impl</span>&lt;T: Value&gt; Segbeats&lt;T&gt; {
 <a href=#101 id=101 data-nosnippet>101</a>    <span class="doccomment">/// 初期配列から構築する。
 <a href=#102 id=102 data-nosnippet>102</a>    ///
 <a href=#103 id=103 data-nosnippet>103</a>    /// 内部長は `src.len()` 以上最小の 2 冪に拡張し、余った要素は
@@ -228,7 +228,7 @@
 <a href=#204 id=204 data-nosnippet>204</a>        <span class="kw">let </span>node = <span class="self">self</span>.table.borrow()[i];
 <a href=#205 id=205 data-nosnippet>205</a>        <span class="kw">let </span>max = node.max[<span class="number">0</span>];
 <a href=#206 id=206 data-nosnippet>206</a>        <span class="kw">let </span>min = node.min[<span class="number">0</span>];
-<a href=#207 id=207 data-nosnippet>207</a>        <span class="kw">let </span>lazy_add = replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i].lazy_add, T::zero());
+<a href=#207 id=207 data-nosnippet>207</a>        <span class="kw">let </span>lazy_add = replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i].lazy_add, T::ZERO);
 <a href=#208 id=208 data-nosnippet>208</a>        <span class="kw">let </span>lazy_add_count = replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i].lazy_add_count, <span class="number">0</span>);
 <a href=#209 id=209 data-nosnippet>209</a>        <span class="kw">let </span>lazy_change_min_count =
 <a href=#210 id=210 data-nosnippet>210</a>            replace(<span class="kw-2">&amp;mut </span><span class="self">self</span>.table.borrow_mut()[i].lazy_change_min_count, <span class="number">0</span>);
@@ -297,7 +297,7 @@
 <a href=#273 id=273 data-nosnippet>273</a>}
 <a href=#274 id=274 data-nosnippet>274</a>
 <a href=#275 id=275 data-nosnippet>275</a><span class="kw">trait </span>Dfs {
-<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">type </span>Value: Elm;
+<a href=#276 id=276 data-nosnippet>276</a>    <span class="kw">type </span>Value: Value;
 <a href=#277 id=277 data-nosnippet>277</a>    <span class="kw">type </span>Param: Copy + Debug;
 <a href=#278 id=278 data-nosnippet>278</a>    <span class="kw">type </span>Output: Debug;
 <a href=#279 id=279 data-nosnippet>279</a>    <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Output;
@@ -312,7 +312,7 @@
 <a href=#288 id=288 data-nosnippet>288</a>    <span class="kw">fn </span>extract(node: Node&lt;<span class="self">Self</span>::Value&gt;) -&gt; <span class="self">Self</span>::Output;
 <a href=#289 id=289 data-nosnippet>289</a>}
 <a href=#290 id=290 data-nosnippet>290</a><span class="kw">struct </span>ChangeMin&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#291 id=291 data-nosnippet>291</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>ChangeMin&lt;T&gt; {
+<a href=#291 id=291 data-nosnippet>291</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>ChangeMin&lt;T&gt; {
 <a href=#292 id=292 data-nosnippet>292</a>    <span class="kw">type </span>Output = ();
 <a href=#293 id=293 data-nosnippet>293</a>    <span class="kw">type </span>Param = T;
 <a href=#294 id=294 data-nosnippet>294</a>    <span class="kw">type </span>Value = T;
@@ -336,7 +336,7 @@
 <a href=#312 id=312 data-nosnippet>312</a>    <span class="kw">fn </span>extract(_node: Node&lt;T&gt;) {}
 <a href=#313 id=313 data-nosnippet>313</a>}
 <a href=#314 id=314 data-nosnippet>314</a><span class="kw">struct </span>ChangeMax&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#315 id=315 data-nosnippet>315</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>ChangeMax&lt;T&gt; {
+<a href=#315 id=315 data-nosnippet>315</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>ChangeMax&lt;T&gt; {
 <a href=#316 id=316 data-nosnippet>316</a>    <span class="kw">type </span>Output = ();
 <a href=#317 id=317 data-nosnippet>317</a>    <span class="kw">type </span>Param = T;
 <a href=#318 id=318 data-nosnippet>318</a>    <span class="kw">type </span>Value = T;
@@ -360,7 +360,7 @@
 <a href=#336 id=336 data-nosnippet>336</a>    <span class="kw">fn </span>extract(_node: Node&lt;T&gt;) {}
 <a href=#337 id=337 data-nosnippet>337</a>}
 <a href=#338 id=338 data-nosnippet>338</a><span class="kw">struct </span>RangeAdd&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#339 id=339 data-nosnippet>339</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>RangeAdd&lt;T&gt; {
+<a href=#339 id=339 data-nosnippet>339</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>RangeAdd&lt;T&gt; {
 <a href=#340 id=340 data-nosnippet>340</a>    <span class="kw">type </span>Output = ();
 <a href=#341 id=341 data-nosnippet>341</a>    <span class="kw">type </span>Param = T;
 <a href=#342 id=342 data-nosnippet>342</a>    <span class="kw">type </span>Value = T;
@@ -368,7 +368,7 @@
 <a href=#344 id=344 data-nosnippet>344</a>    <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Output {}
 <a href=#345 id=345 data-nosnippet>345</a>
 <a href=#346 id=346 data-nosnippet>346</a>    <span class="kw">fn </span>tag(node: <span class="kw-2">&amp;mut </span>Node&lt;<span class="self">Self</span>::Value&gt;, x: <span class="self">Self</span>::Param) {
-<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">if </span>x == T::zero() {
+<a href=#347 id=347 data-nosnippet>347</a>        <span class="kw">if </span>x == T::ZERO {
 <a href=#348 id=348 data-nosnippet>348</a>            node.add(x, <span class="number">0</span>);
 <a href=#349 id=349 data-nosnippet>349</a>        } <span class="kw">else </span>{
 <a href=#350 id=350 data-nosnippet>350</a>            node.add(x, <span class="number">1</span>);
@@ -380,7 +380,7 @@
 <a href=#356 id=356 data-nosnippet>356</a>    <span class="kw">fn </span>extract(_node: Node&lt;T&gt;) {}
 <a href=#357 id=357 data-nosnippet>357</a>}
 <a href=#358 id=358 data-nosnippet>358</a><span class="kw">struct </span>QueryMin&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#359 id=359 data-nosnippet>359</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>QueryMin&lt;T&gt; {
+<a href=#359 id=359 data-nosnippet>359</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>QueryMin&lt;T&gt; {
 <a href=#360 id=360 data-nosnippet>360</a>    <span class="kw">type </span>Output = T;
 <a href=#361 id=361 data-nosnippet>361</a>    <span class="kw">type </span>Param = ();
 <a href=#362 id=362 data-nosnippet>362</a>    <span class="kw">type </span>Value = T;
@@ -398,7 +398,7 @@
 <a href=#374 id=374 data-nosnippet>374</a>    }
 <a href=#375 id=375 data-nosnippet>375</a>}
 <a href=#376 id=376 data-nosnippet>376</a><span class="kw">struct </span>QueryMax&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#377 id=377 data-nosnippet>377</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>QueryMax&lt;T&gt; {
+<a href=#377 id=377 data-nosnippet>377</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>QueryMax&lt;T&gt; {
 <a href=#378 id=378 data-nosnippet>378</a>    <span class="kw">type </span>Output = T;
 <a href=#379 id=379 data-nosnippet>379</a>    <span class="kw">type </span>Param = ();
 <a href=#380 id=380 data-nosnippet>380</a>    <span class="kw">type </span>Value = T;
@@ -416,13 +416,13 @@
 <a href=#392 id=392 data-nosnippet>392</a>    }
 <a href=#393 id=393 data-nosnippet>393</a>}
 <a href=#394 id=394 data-nosnippet>394</a><span class="kw">struct </span>QuerySum&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#395 id=395 data-nosnippet>395</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>QuerySum&lt;T&gt; {
+<a href=#395 id=395 data-nosnippet>395</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>QuerySum&lt;T&gt; {
 <a href=#396 id=396 data-nosnippet>396</a>    <span class="kw">type </span>Output = T;
 <a href=#397 id=397 data-nosnippet>397</a>    <span class="kw">type </span>Param = ();
 <a href=#398 id=398 data-nosnippet>398</a>    <span class="kw">type </span>Value = T;
 <a href=#399 id=399 data-nosnippet>399</a>
 <a href=#400 id=400 data-nosnippet>400</a>    <span class="kw">fn </span>identity() -&gt; <span class="self">Self</span>::Output {
-<a href=#401 id=401 data-nosnippet>401</a>        T::zero()
+<a href=#401 id=401 data-nosnippet>401</a>        T::ZERO
 <a href=#402 id=402 data-nosnippet>402</a>    }
 <a href=#403 id=403 data-nosnippet>403</a>
 <a href=#404 id=404 data-nosnippet>404</a>    <span class="kw">fn </span>merge(left: T, right: T) -&gt; T {
@@ -434,7 +434,7 @@
 <a href=#410 id=410 data-nosnippet>410</a>    }
 <a href=#411 id=411 data-nosnippet>411</a>}
 <a href=#412 id=412 data-nosnippet>412</a><span class="kw">struct </span>CountChanges&lt;T&gt;(std::marker::PhantomData&lt;T&gt;);
-<a href=#413 id=413 data-nosnippet>413</a><span class="kw">impl</span>&lt;T: Elm&gt; Dfs <span class="kw">for </span>CountChanges&lt;T&gt; {
+<a href=#413 id=413 data-nosnippet>413</a><span class="kw">impl</span>&lt;T: Value&gt; Dfs <span class="kw">for </span>CountChanges&lt;T&gt; {
 <a href=#414 id=414 data-nosnippet>414</a>    <span class="kw">type </span>Output = u64;
 <a href=#415 id=415 data-nosnippet>415</a>    <span class="kw">type </span>Param = ();
 <a href=#416 id=416 data-nosnippet>416</a>    <span class="kw">type </span>Value = T;
@@ -466,16 +466,16 @@
 <a href=#442 id=442 data-nosnippet>442</a>    lazy_change_min_count: u32,
 <a href=#443 id=443 data-nosnippet>443</a>    lazy_change_max_count: u32,
 <a href=#444 id=444 data-nosnippet>444</a>}
-<a href=#445 id=445 data-nosnippet>445</a><span class="kw">impl</span>&lt;T: Elm&gt; Node&lt;T&gt; {
+<a href=#445 id=445 data-nosnippet>445</a><span class="kw">impl</span>&lt;T: Value&gt; Node&lt;T&gt; {
 <a href=#446 id=446 data-nosnippet>446</a>    <span class="kw">fn </span>new() -&gt; <span class="self">Self </span>{
 <a href=#447 id=447 data-nosnippet>447</a>        <span class="self">Self </span>{
 <a href=#448 id=448 data-nosnippet>448</a>            max: [T::min_value(); <span class="number">2</span>],
 <a href=#449 id=449 data-nosnippet>449</a>            c_max: <span class="number">0</span>,
 <a href=#450 id=450 data-nosnippet>450</a>            min: [T::max_value(); <span class="number">2</span>],
 <a href=#451 id=451 data-nosnippet>451</a>            c_min: <span class="number">0</span>,
-<a href=#452 id=452 data-nosnippet>452</a>            sum: T::zero(),
+<a href=#452 id=452 data-nosnippet>452</a>            sum: T::ZERO,
 <a href=#453 id=453 data-nosnippet>453</a>            len: <span class="number">0</span>,
-<a href=#454 id=454 data-nosnippet>454</a>            lazy_add: T::zero(),
+<a href=#454 id=454 data-nosnippet>454</a>            lazy_add: T::ZERO,
 <a href=#455 id=455 data-nosnippet>455</a>            change_count: <span class="number">0</span>,
 <a href=#456 id=456 data-nosnippet>456</a>            lazy_add_count: <span class="number">0</span>,
 <a href=#457 id=457 data-nosnippet>457</a>            lazy_change_min_count: <span class="number">0</span>,
@@ -491,7 +491,7 @@
 <a href=#467 id=467 data-nosnippet>467</a>            c_min: <span class="number">1</span>,
 <a href=#468 id=468 data-nosnippet>468</a>            sum: x,
 <a href=#469 id=469 data-nosnippet>469</a>            len: <span class="number">1</span>,
-<a href=#470 id=470 data-nosnippet>470</a>            lazy_add: T::zero(),
+<a href=#470 id=470 data-nosnippet>470</a>            lazy_add: T::ZERO,
 <a href=#471 id=471 data-nosnippet>471</a>            change_count: <span class="number">0</span>,
 <a href=#472 id=472 data-nosnippet>472</a>            lazy_add_count: <span class="number">0</span>,
 <a href=#473 id=473 data-nosnippet>473</a>            lazy_change_min_count: <span class="number">0</span>,
@@ -556,7 +556,7 @@
 <a href=#532 id=532 data-nosnippet>532</a>        <span class="macro">assert_eq!</span>(node.lazy_change_min_count, <span class="number">0</span>);
 <a href=#533 id=533 data-nosnippet>533</a>        <span class="macro">assert_eq!</span>(node.lazy_change_max_count, <span class="number">0</span>);
 <a href=#534 id=534 data-nosnippet>534</a>        <span class="macro">assert_eq!</span>(node.lazy_add_count, <span class="number">0</span>);
-<a href=#535 id=535 data-nosnippet>535</a>        <span class="macro">assert_eq!</span>(node.lazy_add, T::zero());
+<a href=#535 id=535 data-nosnippet>535</a>        <span class="macro">assert_eq!</span>(node.lazy_add, T::ZERO);
 <a href=#536 id=536 data-nosnippet>536</a>        <span class="kw">let </span>(max, c_max) = {
 <a href=#537 id=537 data-nosnippet>537</a>            <span class="kw">let </span>[a, b] = left.max;
 <a href=#538 id=538 data-nosnippet>538</a>            <span class="kw">let </span>[c, d] = right.max;
@@ -583,7 +583,7 @@
 <a href=#559 id=559 data-nosnippet>559</a>            change_count: left.change_count + right.change_count,
 <a href=#560 id=560 data-nosnippet>560</a>            len: left.len + right.len,
 <a href=#561 id=561 data-nosnippet>561</a>            sum: left.sum + right.sum,
-<a href=#562 id=562 data-nosnippet>562</a>            lazy_add: T::zero(),
+<a href=#562 id=562 data-nosnippet>562</a>            lazy_add: T::ZERO,
 <a href=#563 id=563 data-nosnippet>563</a>            lazy_add_count: <span class="number">0</span>,
 <a href=#564 id=564 data-nosnippet>564</a>            lazy_change_min_count: <span class="number">0</span>,
 <a href=#565 id=565 data-nosnippet>565</a>            lazy_change_max_count: <span class="number">0</span>,
@@ -601,7 +601,7 @@
 <a href=#577 id=577 data-nosnippet>577</a><span class="doccomment">/// [`Segbeats`] が扱える要素型が実装するトレイト。
 <a href=#578 id=578 data-nosnippet>578</a>///
 <a href=#579 id=579 data-nosnippet>579</a>/// 符号付き・符号なし整数型（`u8`〜`u128`, `usize`, `i8`〜`i128`, `isize`）に実装済み。
-<a href=#580 id=580 data-nosnippet>580</a></span><span class="kw">pub trait </span>Elm:
+<a href=#580 id=580 data-nosnippet>580</a></span><span class="kw">pub trait </span>Value:
 <a href=#581 id=581 data-nosnippet>581</a>    Sized
 <a href=#582 id=582 data-nosnippet>582</a>    + std::fmt::Debug
 <a href=#583 id=583 data-nosnippet>583</a>    + Copy
@@ -616,72 +616,70 @@
 <a href=#592 id=592 data-nosnippet>592</a>    <span class="doccomment">/// 最小値。`query_max` の空区間に対する単位元として使う。
 <a href=#593 id=593 data-nosnippet>593</a>    </span><span class="kw">fn </span>min_value() -&gt; <span class="self">Self</span>;
 <a href=#594 id=594 data-nosnippet>594</a>    <span class="doccomment">/// 加法の単位元 $0$。
-<a href=#595 id=595 data-nosnippet>595</a>    </span><span class="kw">fn </span>zero() -&gt; <span class="self">Self</span>;
+<a href=#595 id=595 data-nosnippet>595</a>    </span><span class="kw">const </span>ZERO: <span class="self">Self</span>;
 <a href=#596 id=596 data-nosnippet>596</a>    <span class="doccomment">/// $u32$ 倍：$\text{self} \times x$。区間長分をまとめて加算する際に使う。
 <a href=#597 id=597 data-nosnippet>597</a>    </span><span class="kw">fn </span>mul_u32(<span class="kw-2">&amp;</span><span class="self">self</span>, x: u32) -&gt; <span class="self">Self</span>;
 <a href=#598 id=598 data-nosnippet>598</a>}
-<a href=#599 id=599 data-nosnippet>599</a><span class="macro">macro_rules!</span> impl_elm {
+<a href=#599 id=599 data-nosnippet>599</a><span class="macro">macro_rules!</span> impl_value {
 <a href=#600 id=600 data-nosnippet>600</a>    {$(<span class="macro-nonterminal">$ty</span>:ident;)<span class="kw-2">*</span>} =&gt; {
 <a href=#601 id=601 data-nosnippet>601</a>        $(
-<a href=#602 id=602 data-nosnippet>602</a>            <span class="kw">impl </span>Elm <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
+<a href=#602 id=602 data-nosnippet>602</a>            <span class="kw">impl </span>Value <span class="kw">for </span><span class="macro-nonterminal">$ty </span>{
 <a href=#603 id=603 data-nosnippet>603</a>                <span class="kw">fn </span>min_value() -&gt; <span class="self">Self </span>{
 <a href=#604 id=604 data-nosnippet>604</a>                    <span class="macro-nonterminal">$ty::MIN
 <a href=#605 id=605 data-nosnippet>605</a>                </span>}
 <a href=#606 id=606 data-nosnippet>606</a>                <span class="kw">fn </span>max_value() -&gt; <span class="self">Self </span>{
 <a href=#607 id=607 data-nosnippet>607</a>                    <span class="macro-nonterminal">$ty::MAX
 <a href=#608 id=608 data-nosnippet>608</a>                </span>}
-<a href=#609 id=609 data-nosnippet>609</a>                <span class="kw">fn </span>zero() -&gt; <span class="self">Self </span>{
-<a href=#610 id=610 data-nosnippet>610</a>                    <span class="number">0
-<a href=#611 id=611 data-nosnippet>611</a>                </span>}
-<a href=#612 id=612 data-nosnippet>612</a>                <span class="kw">fn </span>mul_u32(<span class="kw-2">&amp;</span><span class="self">self</span>, x: u32) -&gt; <span class="self">Self </span>{
-<a href=#613 id=613 data-nosnippet>613</a>                    <span class="self">self </span>* (x <span class="kw">as </span><span class="macro-nonterminal">$ty</span>)
-<a href=#614 id=614 data-nosnippet>614</a>                }
-<a href=#615 id=615 data-nosnippet>615</a>            }
-<a href=#616 id=616 data-nosnippet>616</a>        )*
-<a href=#617 id=617 data-nosnippet>617</a>    }
-<a href=#618 id=618 data-nosnippet>618</a>}
-<a href=#619 id=619 data-nosnippet>619</a><span class="macro">impl_elm!</span> {
-<a href=#620 id=620 data-nosnippet>620</a>    u8; u16; u32; u64; u128; usize;
-<a href=#621 id=621 data-nosnippet>621</a>    i8; i16; i32; i64; i128; isize;
-<a href=#622 id=622 data-nosnippet>622</a>}
-<a href=#623 id=623 data-nosnippet>623</a>
-<a href=#624 id=624 data-nosnippet>624</a><span class="comment">// #[cfg(test)]
-<a href=#625 id=625 data-nosnippet>625</a>// mod tests {
-<a href=#626 id=626 data-nosnippet>626</a>//     mod impl_query;
-<a href=#627 id=627 data-nosnippet>627</a>//     mod queries;
-<a href=#628 id=628 data-nosnippet>628</a>//     mod vector;
-<a href=#629 id=629 data-nosnippet>629</a>//
-<a href=#630 id=630 data-nosnippet>630</a>//     use super::Segbeats;
-<a href=#631 id=631 data-nosnippet>631</a>//     use queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, QuerySum, RangeAdd};
-<a href=#632 id=632 data-nosnippet>632</a>//     use query_test::{impl_help, Config};
-<a href=#633 id=633 data-nosnippet>633</a>//     use rand::prelude::*;
-<a href=#634 id=634 data-nosnippet>634</a>//     use vector::{Len, Value, Vector};
+<a href=#609 id=609 data-nosnippet>609</a>                <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="number">0</span>;
+<a href=#610 id=610 data-nosnippet>610</a>                <span class="kw">fn </span>mul_u32(<span class="kw-2">&amp;</span><span class="self">self</span>, x: u32) -&gt; <span class="self">Self </span>{
+<a href=#611 id=611 data-nosnippet>611</a>                    <span class="self">self </span>* (x <span class="kw">as </span><span class="macro-nonterminal">$ty</span>)
+<a href=#612 id=612 data-nosnippet>612</a>                }
+<a href=#613 id=613 data-nosnippet>613</a>            }
+<a href=#614 id=614 data-nosnippet>614</a>        )*
+<a href=#615 id=615 data-nosnippet>615</a>    }
+<a href=#616 id=616 data-nosnippet>616</a>}
+<a href=#617 id=617 data-nosnippet>617</a><span class="macro">impl_value!</span> {
+<a href=#618 id=618 data-nosnippet>618</a>    u8; u16; u32; u64; u128; usize;
+<a href=#619 id=619 data-nosnippet>619</a>    i8; i16; i32; i64; i128; isize;
+<a href=#620 id=620 data-nosnippet>620</a>}
+<a href=#621 id=621 data-nosnippet>621</a>
+<a href=#622 id=622 data-nosnippet>622</a><span class="comment">// #[cfg(test)]
+<a href=#623 id=623 data-nosnippet>623</a>// mod tests {
+<a href=#624 id=624 data-nosnippet>624</a>//     mod impl_query;
+<a href=#625 id=625 data-nosnippet>625</a>//     mod queries;
+<a href=#626 id=626 data-nosnippet>626</a>//     mod vector;
+<a href=#627 id=627 data-nosnippet>627</a>//
+<a href=#628 id=628 data-nosnippet>628</a>//     use super::Segbeats;
+<a href=#629 id=629 data-nosnippet>629</a>//     use queries::{ChangeMax, ChangeMin, CountChanges, QueryMax, QueryMin, QuerySum, RangeAdd};
+<a href=#630 id=630 data-nosnippet>630</a>//     use query_test::{impl_help, Config};
+<a href=#631 id=631 data-nosnippet>631</a>//     use rand::prelude::*;
+<a href=#632 id=632 data-nosnippet>632</a>//     use vector::{Len, Value, Vector};
+<a href=#633 id=633 data-nosnippet>633</a>//
+<a href=#634 id=634 data-nosnippet>634</a>//     type Tester&lt;T, G&gt; = query_test::Tester&lt;StdRng, Vector&lt;(T, u64)&gt;, Segbeats&lt;T&gt;, G&gt;;
 <a href=#635 id=635 data-nosnippet>635</a>//
-<a href=#636 id=636 data-nosnippet>636</a>//     type Tester&lt;T, G&gt; = query_test::Tester&lt;StdRng, Vector&lt;(T, u64)&gt;, Segbeats&lt;T&gt;, G&gt;;
-<a href=#637 id=637 data-nosnippet>637</a>//
-<a href=#638 id=638 data-nosnippet>638</a>//     #[test]
-<a href=#639 id=639 data-nosnippet>639</a>//     fn test_i64() {
-<a href=#640 id=640 data-nosnippet>640</a>//         #[derive(Debug, Clone, PartialEq, Copy, Eq)]
-<a href=#641 id=641 data-nosnippet>641</a>//         struct G {}
-<a href=#642 id=642 data-nosnippet>642</a>//         impl_help! {Len, |rng| rng.gen_range(1..1000); }
-<a href=#643 id=643 data-nosnippet>643</a>//         impl_help! {Value&lt;i64&gt;, |rng| rng.gen_range(-1_000_000, 1_000_000); }
-<a href=#644 id=644 data-nosnippet>644</a>//
-<a href=#645 id=645 data-nosnippet>645</a>//         let mut tester = Tester::&lt;i64, G&gt;::new(StdRng::seed_from_u64(42), Config::Short);
-<a href=#646 id=646 data-nosnippet>646</a>//         for _ in 0..20 {
-<a href=#647 id=647 data-nosnippet>647</a>//             tester.initialize();
-<a href=#648 id=648 data-nosnippet>648</a>//             for _ in 0..1000 {
-<a href=#649 id=649 data-nosnippet>649</a>//                 let command = tester.rng_mut().gen_range(0..7);
-<a href=#650 id=650 data-nosnippet>650</a>//                 match command {
-<a href=#651 id=651 data-nosnippet>651</a>//                     0 =&gt; tester.mutate::&lt;ChangeMin&lt;_&gt;&gt;(),
-<a href=#652 id=652 data-nosnippet>652</a>//                     1 =&gt; tester.mutate::&lt;ChangeMax&lt;_&gt;&gt;(),
-<a href=#653 id=653 data-nosnippet>653</a>//                     2 =&gt; tester.mutate::&lt;RangeAdd&lt;_&gt;&gt;(),
-<a href=#654 id=654 data-nosnippet>654</a>//                     3 =&gt; tester.compare::&lt;QueryMin&lt;_&gt;&gt;(),
-<a href=#655 id=655 data-nosnippet>655</a>//                     4 =&gt; tester.compare::&lt;QueryMax&lt;_&gt;&gt;(),
-<a href=#656 id=656 data-nosnippet>656</a>//                     5 =&gt; tester.compare::&lt;QuerySum&lt;_&gt;&gt;(),
-<a href=#657 id=657 data-nosnippet>657</a>//                     6 =&gt; tester.compare::&lt;CountChanges&gt;(),
-<a href=#658 id=658 data-nosnippet>658</a>//                     _ =&gt; unreachable!(),
-<a href=#659 id=659 data-nosnippet>659</a>//                 }
-<a href=#660 id=660 data-nosnippet>660</a>//             }
-<a href=#661 id=661 data-nosnippet>661</a>//         }
-<a href=#662 id=662 data-nosnippet>662</a>//     }
-<a href=#663 id=663 data-nosnippet>663</a>// }</span></code></pre></div></section></main></body></html>
+<a href=#636 id=636 data-nosnippet>636</a>//     #[test]
+<a href=#637 id=637 data-nosnippet>637</a>//     fn test_i64() {
+<a href=#638 id=638 data-nosnippet>638</a>//         #[derive(Debug, Clone, PartialEq, Copy, Eq)]
+<a href=#639 id=639 data-nosnippet>639</a>//         struct G {}
+<a href=#640 id=640 data-nosnippet>640</a>//         impl_help! {Len, |rng| rng.gen_range(1..1000); }
+<a href=#641 id=641 data-nosnippet>641</a>//         impl_help! {Value&lt;i64&gt;, |rng| rng.gen_range(-1_000_000, 1_000_000); }
+<a href=#642 id=642 data-nosnippet>642</a>//
+<a href=#643 id=643 data-nosnippet>643</a>//         let mut tester = Tester::&lt;i64, G&gt;::new(StdRng::seed_from_u64(42), Config::Short);
+<a href=#644 id=644 data-nosnippet>644</a>//         for _ in 0..20 {
+<a href=#645 id=645 data-nosnippet>645</a>//             tester.initialize();
+<a href=#646 id=646 data-nosnippet>646</a>//             for _ in 0..1000 {
+<a href=#647 id=647 data-nosnippet>647</a>//                 let command = tester.rng_mut().gen_range(0..7);
+<a href=#648 id=648 data-nosnippet>648</a>//                 match command {
+<a href=#649 id=649 data-nosnippet>649</a>//                     0 =&gt; tester.mutate::&lt;ChangeMin&lt;_&gt;&gt;(),
+<a href=#650 id=650 data-nosnippet>650</a>//                     1 =&gt; tester.mutate::&lt;ChangeMax&lt;_&gt;&gt;(),
+<a href=#651 id=651 data-nosnippet>651</a>//                     2 =&gt; tester.mutate::&lt;RangeAdd&lt;_&gt;&gt;(),
+<a href=#652 id=652 data-nosnippet>652</a>//                     3 =&gt; tester.compare::&lt;QueryMin&lt;_&gt;&gt;(),
+<a href=#653 id=653 data-nosnippet>653</a>//                     4 =&gt; tester.compare::&lt;QueryMax&lt;_&gt;&gt;(),
+<a href=#654 id=654 data-nosnippet>654</a>//                     5 =&gt; tester.compare::&lt;QuerySum&lt;_&gt;&gt;(),
+<a href=#655 id=655 data-nosnippet>655</a>//                     6 =&gt; tester.compare::&lt;CountChanges&gt;(),
+<a href=#656 id=656 data-nosnippet>656</a>//                     _ =&gt; unreachable!(),
+<a href=#657 id=657 data-nosnippet>657</a>//                 }
+<a href=#658 id=658 data-nosnippet>658</a>//             }
+<a href=#659 id=659 data-nosnippet>659</a>//         }
+<a href=#660 id=660 data-nosnippet>660</a>//     }
+<a href=#661 id=661 data-nosnippet>661</a>// }</span></code></pre></div></section></main></body></html>
