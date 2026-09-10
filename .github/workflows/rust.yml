@@ -85,6 +85,9 @@ jobs:
     timeout-minutes: 20
     needs: changes
     if: needs.changes.outputs.trigger == 'true' || github.event_name == 'workflow_dispatch'
+    concurrency:
+      group: gh-pages-deploy
+      cancel-in-progress: false
     steps:
       - name: Clone Project
         uses: actions/checkout@v4
