@@ -22,12 +22,12 @@
   });
 </script>
 
-</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../veb/index.html">veb</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>veb</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/veb/lib.rs.html#1-964">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>van Emde Boas 木による整数集合の述語（predecessor/successor）データ構造。</p>
+</head><body class="rustdoc mod crate"><!--[if lte IE 11]><div class="warning">This old browser is unsupported and will most likely display funky things.</div><![endif]--><nav class="mobile-topbar"><button class="sidebar-menu-toggle" title="show sidebar"></button></nav><nav class="sidebar"><div class="sidebar-crate"><h2><a href="../veb/index.html">veb</a><span class="version">0.1.0</span></h2></div><div class="sidebar-elems"><ul class="block"><li><a id="all-types" href="all.html">All Items</a></li></ul><section id="rustdoc-toc"><h3><a href="#">Sections</a></h3><ul class="block top-toc"><li><a href="#仕様" title="仕様">仕様</a></li><li><a href="#例" title="例">例</a></li><li><a href="#計算量" title="計算量">計算量</a></li></ul><h3><a href="#structs">Crate Items</a></h3><ul class="block"><li><a href="#structs" title="Structs">Structs</a></li><li><a href="#enums" title="Enums">Enums</a></li></ul></section><div id="rustdoc-modnav"></div></div></nav><div class="sidebar-resizer" title="Drag to resize sidebar"></div><main><div class="width-limiter"><rustdoc-search></rustdoc-search><section id="main-content" class="content"><div class="main-heading"><h1>Crate <span>veb</span><button id="copy-path" title="Copy item path to clipboard">Copy item path</button></h1><rustdoc-toolbar></rustdoc-toolbar><span class="sub-heading"><a class="src" href="../src/veb/lib.rs.html#1-972">Source</a> </span></div><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>van Emde Boas 木による整数集合の述語（predecessor/successor）データ構造。</p>
 <p>全体を $\sqrt n$ 個ずつの塊（チャンク）に分割し、各チャンクを容量 $\sqrt n$ の
 van Emde Boas 木として再帰的に管理する。どのチャンクが空でないかは
 別の van Emde Boas 木（summary）で管理し、目的の値が属するチャンク内に
 答えがなければ summary を辿って次の非空チャンクへ飛ぶ。この再帰により
-容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、<code>succ</code>/<code>pred</code>/<code>insert</code>/<code>remove</code>
+容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、<code>successor_excluding</code>/<code>predecessor_excluding</code>/<code>insert</code>/<code>remove</code>
 もすべて同じ計算量で行える。最小値・最大値は各ノードにキャッシュしておくことで
 <code>min</code>/<code>max</code> を $O(1)$ で返す。ハッシュマップ実装のため、事前に確保するのは
 容量 $n$ の数値のみで、実メモリは要素数に応じて増える。</p>
@@ -40,8 +40,8 @@ van Emde Boas 木として再帰的に管理する。どのチャンクが空で
 <li><code>remove(x)</code>: $S \leftarrow S \setminus {x}$、存在したら <code>true</code></li>
 <li><code>contains(x)</code>: $x \in S$</li>
 <li><code>min()</code>, <code>max()</code>: $\min(S)$, $\max(S)$（空なら <code>None</code>）</li>
-<li><code>succ(x)</code>: $x$ より大きい最小要素、<code>pred(x)</code>: $x$ より小さい最大要素</li>
-<li><code>pred_eq(x)</code>: $x$ 以下の最大要素</li>
+<li><code>successor_excluding(x)</code>: $x$ より大きい最小要素、<code>predecessor_excluding(x)</code>: $x$ より小さい最大要素</li>
+<li><code>predecessor_including(x)</code>: $x$ 以下の最大要素</li>
 <li><code>len()</code>, <code>is_empty()</code>, <code>collect()</code>: 要素数、空判定、昇順の <a href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec"><code>Vec</code></a> 化</li>
 </ul>
 </li>
@@ -63,15 +63,15 @@ veb.remove(<span class="number">42</span>);
 <span class="macro">assert_eq!</span>(veb.collect(), <span class="macro">vec!</span>[<span class="number">12</span>, <span class="number">34</span>, <span class="number">56</span>, <span class="number">78</span>]);
 <span class="macro">assert_eq!</span>(veb.min(), <span class="prelude-val">Some</span>(<span class="number">12</span>));
 <span class="macro">assert_eq!</span>(veb.max(), <span class="prelude-val">Some</span>(<span class="number">78</span>));
-<span class="macro">assert_eq!</span>(veb.succ(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">56</span>));
-<span class="macro">assert_eq!</span>(veb.pred(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">12</span>));
+<span class="macro">assert_eq!</span>(veb.successor_excluding(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">56</span>));
+<span class="macro">assert_eq!</span>(veb.predecessor_excluding(<span class="number">34</span>), <span class="prelude-val">Some</span>(<span class="number">12</span>));
 <span class="macro">assert_eq!</span>(veb.contains(<span class="number">34</span>), <span class="bool-val">true</span>);
 <span class="macro">assert_eq!</span>(veb.contains(<span class="number">35</span>), <span class="bool-val">false</span>);
 <span class="macro">assert_eq!</span>(veb.len(), <span class="number">4</span>);</code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <p>$n$ を容量とする。</p>
 <ul>
-<li><code>insert</code>, <code>remove</code>, <code>contains</code>, <code>succ</code>, <code>pred</code>, <code>pred_eq</code>: $O(\log \log n)$</li>
+<li><code>insert</code>, <code>remove</code>, <code>contains</code>, <code>successor_excluding</code>, <code>predecessor_excluding</code>, <code>predecessor_including</code>: $O(\log \log n)$</li>
 <li><code>min</code>, <code>max</code>, <code>len</code>, <code>is_empty</code>: $O(1)$</li>
 <li><code>collect</code>: $O(|S| \log \log n)$</li>
 </ul>

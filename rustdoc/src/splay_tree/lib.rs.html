@@ -41,7 +41,7 @@
 <a href=#17 id=17 data-nosnippet>17</a>//!
 <a href=#18 id=18 data-nosnippet>18</a>//! 主な操作：
 <a href=#19 id=19 data-nosnippet>19</a>//!
-<a href=#20 id=20 data-nosnippet>20</a>//! - [`insert`](SplayTree::insert), [`remove`](SplayTree::remove): 添字を指定した挿入・削除
+<a href=#20 id=20 data-nosnippet>20</a>//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete): 添字を指定した挿入・削除
 <a href=#21 id=21 data-nosnippet>21</a>//! - [`reverse`](SplayTree::reverse): 区間 $[l, r)$ の反転
 <a href=#22 id=22 data-nosnippet>22</a>//! - [`act`](SplayTree::act): 区間 $[l, r)$ への作用の適用
 <a href=#23 id=23 data-nosnippet>23</a>//! - [`fold`](SplayTree::fold): 区間 $[l, r)$ の集約値の取得
@@ -77,7 +77,7 @@
 <a href=#53 id=53 data-nosnippet>53</a>//!
 <a href=#54 id=54 data-nosnippet>54</a>//! # 計算量
 <a href=#55 id=55 data-nosnippet>55</a>//!
-<a href=#56 id=56 data-nosnippet>56</a>//! - [`insert`](SplayTree::insert), [`remove`](SplayTree::remove), [`get`](SplayTree::get), [`entry`](SplayTree::entry): ならし $O(\log n)$
+<a href=#56 id=56 data-nosnippet>56</a>//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete), [`get`](SplayTree::get), [`entry`](SplayTree::entry): ならし $O(\log n)$
 <a href=#57 id=57 data-nosnippet>57</a>//! - [`reverse`](SplayTree::reverse), [`act`](SplayTree::act), [`fold`](SplayTree::fold): ならし $O(\log n)$
 <a href=#58 id=58 data-nosnippet>58</a>//! - [`split_off`](SplayTree::split_off), [`append`](SplayTree::append): ならし $O(\log n)$
 <a href=#59 id=59 data-nosnippet>59</a>
@@ -95,7 +95,7 @@
 <a href=#71 id=71 data-nosnippet>71</a>///
 <a href=#72 id=72 data-nosnippet>72</a>/// # APIs
 <a href=#73 id=73 data-nosnippet>73</a>///
-<a href=#74 id=74 data-nosnippet>74</a>/// insert, remove, reverse, act, fold
+<a href=#74 id=74 data-nosnippet>74</a>/// insert, delete, reverse, act, fold
 <a href=#75 id=75 data-nosnippet>75</a>///
 <a href=#76 id=76 data-nosnippet>76</a>/// # 提出 (3051 ms)
 <a href=#77 id=77 data-nosnippet>77</a>///
@@ -344,10 +344,10 @@
 <a href=#320 id=320 data-nosnippet>320</a>    ///     .collect::&lt;SplayTree&lt;Nop&lt;i32&gt;&gt;&gt;();
 <a href=#321 id=321 data-nosnippet>321</a>    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 11, 12]);
 <a href=#322 id=322 data-nosnippet>322</a>    ///
-<a href=#323 id=323 data-nosnippet>323</a>    /// splay.remove(1);
+<a href=#323 id=323 data-nosnippet>323</a>    /// splay.delete(1);
 <a href=#324 id=324 data-nosnippet>324</a>    /// assert_eq!(splay.iter().copied().collect::&lt;Vec&lt;_&gt;&gt;(), vec![10, 12]);
 <a href=#325 id=325 data-nosnippet>325</a>    /// ```
-<a href=#326 id=326 data-nosnippet>326</a>    </span><span class="kw">pub fn </span>remove(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) -&gt; O::Value {
+<a href=#326 id=326 data-nosnippet>326</a>    </span><span class="kw">pub fn </span>delete(<span class="kw-2">&amp;mut </span><span class="self">self</span>, at: usize) -&gt; O::Value {
 <a href=#327 id=327 data-nosnippet>327</a>        <span class="kw">if </span><span class="self">self</span>.len() &lt;= at {
 <a href=#328 id=328 data-nosnippet>328</a>            splay_tree_index_out_of_range_fail(at, <span class="self">self</span>.len());
 <a href=#329 id=329 data-nosnippet>329</a>        }
