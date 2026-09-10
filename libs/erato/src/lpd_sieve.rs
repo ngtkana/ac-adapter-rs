@@ -4,25 +4,23 @@ use super::sieve_kind;
 use super::Int;
 use super::SieveBase;
 
-/// Least-prime-divisor table.
+/// 最小素因数（least prime divisor）テーブル。
 ///
-/// # Complexity
+/// # 計算量
 ///
-/// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
+/// 篩は必要に応じて暗黙に伸長されるため、その分の追加時間がかかる。
 ///
-/// - Construction: O ( n lg n )
-/// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
-///
-/// multiple divisors counted repeatedly.
+/// - 構築: $O(n \log n)$
+/// - 素因数分解: $O(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
 }
 
 impl LpdSieve {
-    /// Construct a new empty sieve. No heap allocations is run via this method.
+    /// 空の篩を構築する。この呼び出し自体ではヒープ確保を行わない。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -36,9 +34,9 @@ impl LpdSieve {
         }
     }
 
-    /// Returns `true` if a sieve is empty.
+    /// 篩が空のとき `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -49,9 +47,9 @@ impl LpdSieve {
         self.base.is_empty()
     }
 
-    /// Returns the length of a sieve.
+    /// 篩の長さを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -62,9 +60,9 @@ impl LpdSieve {
         self.base.len()
     }
 
-    /// Construct a sieve of given length.
+    /// 指定した長さの篩を構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -78,19 +76,15 @@ impl LpdSieve {
         }
     }
 
-    /// Returns `true` if `x` is a prime number.
+    /// `x` が素数のとき `true` を返す。
+    ///
+    /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
     /// # Panics
     ///
-    /// if `x <= 0`.
+    /// `x <= 0` のとき panic する。
     ///
-    ///
-    /// # Note
-    ///
-    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -103,19 +97,15 @@ impl LpdSieve {
         self.base.is_prime(x)
     }
 
-    /// Returns the least prime divisor of `x`.
+    /// `x` の最小素因数を返す。
+    ///
+    /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
     /// # Panics
     ///
-    /// if `x <= 1`.
+    /// `x <= 1` のとき panic する。
     ///
-    ///
-    /// # Note
-    ///
-    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -128,17 +118,13 @@ impl LpdSieve {
         self.base.lpd(x)
     }
 
-    /// Returns an iterator to generate all the prime numbers in ascending order, extending
-    /// itself repeatedly.
+    /// 素数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
+    /// # 計算量
     ///
-    /// # Complexity
+    /// 伸長分を除き $\Theta(\pi(n))$（$\pi(n)$ は $n$ 未満の素数の個数）
     ///
-    /// Beside the incremental building, it takes Θ ( π ( n ) ), where π ( n ) is the number of
-    /// prime numbers less than n.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -154,14 +140,13 @@ impl LpdSieve {
         self.base.prime_numbers()
     }
 
-    /// Use trial-division algorithm to iterate over all the prime divisors of `x`, extending itself repeatedly.
+    /// テーブル引きにより、`x` の素因数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
-    /// # Complexity
+    /// # 計算量
     ///
-    /// Beside the incremental building, it takes Θ ( ω ( n ) ),  where ω ( n ) is the number of prime numbers less than n.
+    /// 伸長分を除き $O(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
     ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
