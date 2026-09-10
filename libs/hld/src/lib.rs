@@ -63,7 +63,7 @@ impl Hld {
         (build_hld(root, &mut g, parent), g)
     }
 
-    /// 辺集合をイテレータで受け取る版の [`from_edges`](Self::from_edges)
+    /// 根 `root` と辺集合 `edges`（頂点数 $n$ の木を成す $n - 1$ 本）から構築する。
     pub fn from_edges(
         root: usize,
         edges: impl ExactSizeIterator<Item = (usize, usize)>,
