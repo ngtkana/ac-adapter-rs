@@ -248,10 +248,6 @@ where
 
     /// `edge_key` に対応する辺の現在の状態（[`Edge`]）を返す。
     ///
-    /// # 計算量
-    ///
-    /// $O(1)$。
-    ///
     /// # 例
     ///
     /// ```
@@ -263,6 +259,10 @@ where
     /// dinic.flow(0, 2);
     /// assert_eq!(dinic.get_edge(edge_0).flow, 10);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(1)$。
     pub fn get_edge(&self, edge_key: EdgeKey) -> Edge<T> {
         let EdgeKey(edge_key) = edge_key;
         assert!(
@@ -276,10 +276,6 @@ where
 
     /// 全ての辺を追加順に [`Edge`] として集める。
     ///
-    /// # 計算量
-    ///
-    /// $O(m)$。
-    ///
     /// # 例
     ///
     /// ```
@@ -291,6 +287,10 @@ where
     /// dinic.flow(0, 2);
     /// assert_eq!(dinic.get_edges().len(), 2);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(m)$。
     pub fn get_edges(&self) -> Vec<Edge<T>> {
         self.pos
             .iter()
@@ -299,10 +299,6 @@ where
     }
 
     /// 全ての辺を隣接リスト形式（`network[from]` に始点が `from` の辺一覧）で集める。各行は追加順。
-    ///
-    /// # 計算量
-    ///
-    /// $O(n + m)$。
     ///
     /// # 例
     ///
@@ -316,6 +312,10 @@ where
     /// let network = dinic.get_network();
     /// assert_eq!(network[0][0].to, 1);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(n + m)$。
     pub fn get_network(&self) -> Vec<Vec<Edge<T>>> {
         let mut network = vec![Vec::new(); self.res.len()];
         self.pos
@@ -329,10 +329,6 @@ where
     ///
     /// 始点の余剰はほぼ常に負になるため、符号なし整数型では実行時に必ずオーバーフローする。
     ///
-    /// # 計算量
-    ///
-    /// $O(n + m)$。
-    ///
     /// # 例
     ///
     /// ```
@@ -345,6 +341,10 @@ where
     /// dinic.flow(0, 2);
     /// assert_eq!(dinic.get_excess().as_slice(), &[-30, 0, 30]);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(n + m)$。
     pub fn get_excess(&self) -> Vec<T> {
         let mut excess = vec![T::ZERO; self.res.len()];
         self.pos
