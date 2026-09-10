@@ -44,7 +44,7 @@
 </span><span class="kw">let </span>splay = repeat(()).take(<span class="number">3</span>).collect::&lt;SplayTree&lt;Nop&lt;()&gt;&gt;&gt;();
 <span class="macro">assert_eq!</span>(splay.len(), <span class="number">3</span>);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.insert" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#294-301">Source</a><h4 class="code-header">pub fn <a href="#method.insert" class="fn">insert</a>(&amp;mut self, at: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>, value: O::<a class="associatedtype" href="trait.LazyOps.html#associatedtype.Value" title="type splay_tree::LazyOps::Value">Value</a>)</h4></section></summary><div class="docblock"><p>添字 <code>at</code> の位置に <code>value</code> を挿入し、以降の要素を後ろへずらす。</p>
-<h5 id="panics"><a class="doc-anchor" href="#panics">§</a>Panics</h5>
+<h5 id="パニック"><a class="doc-anchor" href="#パニック">§</a>パニック</h5>
 <p><code>at &gt; self.len()</code> のときパニックする。</p>
 <h5 id="計算量-1"><a class="doc-anchor" href="#計算量-1">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
@@ -59,7 +59,7 @@ splay.insert(<span class="number">1</span>, <span class="number">20</span>);
     <span class="number">10</span>, <span class="number">20</span>, <span class="number">11</span>, <span class="number">12
 </span>]);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.remove" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#326-335">Source</a><h4 class="code-header">pub fn <a href="#method.remove" class="fn">remove</a>(&amp;mut self, at: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>) -&gt; O::<a class="associatedtype" href="trait.LazyOps.html#associatedtype.Value" title="type splay_tree::LazyOps::Value">Value</a></h4></section></summary><div class="docblock"><p>添字 <code>at</code> の要素を削除して返し、以降の要素を前へずらす。</p>
-<h5 id="panics-1"><a class="doc-anchor" href="#panics-1">§</a>Panics</h5>
+<h5 id="パニック-1"><a class="doc-anchor" href="#パニック-1">§</a>パニック</h5>
 <p><code>at &gt;= self.len()</code> のときパニックする。</p>
 <h5 id="計算量-2"><a class="doc-anchor" href="#計算量-2">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
@@ -72,7 +72,7 @@ splay.insert(<span class="number">1</span>, <span class="number">20</span>);
 splay.remove(<span class="number">1</span>);
 <span class="macro">assert_eq!</span>(splay.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">10</span>, <span class="number">12</span>]);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.reverse" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#362-371">Source</a><h4 class="code-header">pub fn <a href="#method.reverse" class="fn">reverse</a>(&amp;mut self, range: impl <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/ops/range/trait.RangeBounds.html" title="trait core::ops::range::RangeBounds">RangeBounds</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;)</h4></section></summary><div class="docblock"><p>区間 <code>range</code>（添字）の要素を反転する。遅延伝播で行うため、木全体を書き換えない。</p>
-<h5 id="panics-2"><a class="doc-anchor" href="#panics-2">§</a>Panics</h5>
+<h5 id="パニック-2"><a class="doc-anchor" href="#パニック-2">§</a>パニック</h5>
 <p><code>range</code> が範囲外のときパニックする。</p>
 <h5 id="計算量-3"><a class="doc-anchor" href="#計算量-3">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
@@ -87,7 +87,7 @@ splay.reverse(<span class="number">1</span>..<span class="number">4</span>);
     <span class="number">10</span>, <span class="number">13</span>, <span class="number">12</span>, <span class="number">11</span>, <span class="number">14
 </span>]);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.fold" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#405-415">Source</a><h4 class="code-header">pub fn <a href="#method.fold" class="fn">fold</a>(&amp;self, range: impl <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/ops/range/trait.RangeBounds.html" title="trait core::ops::range::RangeBounds">RangeBounds</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;) -&gt; <a class="enum" href="https://doc.rust-lang.org/1.89.0/core/option/enum.Option.html" title="enum core::option::Option">Option</a>&lt;O::<a class="associatedtype" href="trait.LazyOps.html#associatedtype.Acc" title="type splay_tree::LazyOps::Acc">Acc</a>&gt;</h4></section></summary><div class="docblock"><p>区間 <code>range</code> の要素を <a href="trait.LazyOps.html#tymethod.op" title="associated function splay_tree::LazyOps::op"><code>LazyOps::op</code></a> で畳み込んだ集約値を返す。区間が空なら <code>None</code>。</p>
-<h5 id="panics-3"><a class="doc-anchor" href="#panics-3">§</a>Panics</h5>
+<h5 id="パニック-3"><a class="doc-anchor" href="#パニック-3">§</a>パニック</h5>
 <p><code>range</code> が範囲外のときパニックする。</p>
 <h5 id="計算量-4"><a class="doc-anchor" href="#計算量-4">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
@@ -109,7 +109,7 @@ splay.reverse(<span class="number">1</span>..<span class="number">4</span>);
 <span class="macro">assert_eq!</span>(splay.fold(<span class="number">2</span>..), <span class="prelude-val">Some</span>(<span class="number">12 </span>+ <span class="number">13 </span>+ <span class="number">14</span>));
 <span class="macro">assert_eq!</span>(splay.fold(<span class="number">2</span>..<span class="number">2</span>), <span class="prelude-val">None</span>);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.act" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#459-468">Source</a><h4 class="code-header">pub fn <a href="#method.act" class="fn">act</a>(&amp;mut self, range: impl <a class="trait" href="https://doc.rust-lang.org/1.89.0/core/ops/range/trait.RangeBounds.html" title="trait core::ops::range::RangeBounds">RangeBounds</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>&gt;, lazy: O::<a class="associatedtype" href="trait.LazyOps.html#associatedtype.Lazy" title="type splay_tree::LazyOps::Lazy">Lazy</a>)</h4></section></summary><div class="docblock"><p>区間 <code>range</code> の要素すべてに作用 <code>lazy</code> を <a href="trait.LazyOps.html#tymethod.act_value" title="associated function splay_tree::LazyOps::act_value"><code>LazyOps::act_value</code></a> で適用する。</p>
-<h5 id="panics-4"><a class="doc-anchor" href="#panics-4">§</a>Panics</h5>
+<h5 id="パニック-4"><a class="doc-anchor" href="#パニック-4">§</a>パニック</h5>
 <p><code>range</code> が範囲外のときパニックする。</p>
 <h5 id="計算量-5"><a class="doc-anchor" href="#計算量-5">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
@@ -159,7 +159,7 @@ splay.act(<span class="number">2</span>..<span class="number">4</span>, <span cl
 <span class="kw-2">*</span>splay.entry(<span class="number">0</span>).unwrap() += <span class="number">10</span>;
 <span class="macro">assert_eq!</span>(splay.iter().copied().collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;(), <span class="macro">vec!</span>[<span class="number">20</span>, <span class="number">11</span>, <span class="number">12</span>]);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.split_off" class="method"><a class="src rightside" href="../src/splay_tree/lib.rs.html#543-550">Source</a><h4 class="code-header">pub fn <a href="#method.split_off" class="fn">split_off</a>(&amp;mut self, at: <a class="primitive" href="https://doc.rust-lang.org/1.89.0/std/primitive.usize.html">usize</a>) -&gt; Self</h4></section></summary><div class="docblock"><p>添字 <code>at</code> 以降を切り離し、新しい木として返す。<code>self</code> には <code>[0, at)</code> が残る。</p>
-<h5 id="panics-5"><a class="doc-anchor" href="#panics-5">§</a>Panics</h5>
+<h5 id="パニック-5"><a class="doc-anchor" href="#パニック-5">§</a>パニック</h5>
 <p><code>at &gt; self.len()</code> のときパニックする。</p>
 <h5 id="計算量-8"><a class="doc-anchor" href="#計算量-8">§</a>計算量</h5>
 <p>ならし $O(\log n)$。</p>
