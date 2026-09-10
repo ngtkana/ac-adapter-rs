@@ -85,6 +85,8 @@ dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <sp
 dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 <span class="macro">assert_eq!</span>(dinic.min_cut(<span class="number">0</span>).as_slice(), <span class="kw-2">&amp;</span>[<span class="bool-val">true</span>, <span class="bool-val">false</span>, <span class="bool-val">false</span>]);</code></pre></div>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.get_edge" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#266-275">Source</a><h4 class="code-header">pub fn <a href="#method.get_edge" class="fn">get_edge</a>(&amp;self, edge_key: <a class="struct" href="struct.EdgeKey.html" title="struct dinic::EdgeKey">EdgeKey</a>) -&gt; <a class="struct" href="struct.Edge.html" title="struct dinic::Edge">Edge</a>&lt;T&gt;</h4></section></summary><div class="docblock"><p><code>edge_key</code> に対応する辺の現在の状態（<a href="struct.Edge.html" title="struct dinic::Edge"><code>Edge</code></a>）を返す。</p>
+<h5 id="計算量-3"><a class="doc-anchor" href="#計算量-3">§</a>計算量</h5>
+<p>$O(1)$。</p>
 <h5 id="例-5"><a class="doc-anchor" href="#例-5">§</a>例</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
 
@@ -93,9 +95,9 @@ dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
 dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 <span class="macro">assert_eq!</span>(dinic.get_edge(edge_0).flow, <span class="number">10</span>);</code></pre></div>
-<h5 id="計算量-3"><a class="doc-anchor" href="#計算量-3">§</a>計算量</h5>
-<p>$O(1)$。</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.get_edges" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#294-299">Source</a><h4 class="code-header">pub fn <a href="#method.get_edges" class="fn">get_edges</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="struct.Edge.html" title="struct dinic::Edge">Edge</a>&lt;T&gt;&gt;</h4></section></summary><div class="docblock"><p>全ての辺を追加順に <a href="struct.Edge.html" title="struct dinic::Edge"><code>Edge</code></a> として集める。</p>
+<h5 id="計算量-4"><a class="doc-anchor" href="#計算量-4">§</a>計算量</h5>
+<p>$O(m)$。</p>
 <h5 id="例-6"><a class="doc-anchor" href="#例-6">§</a>例</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
 
@@ -104,9 +106,9 @@ dinic.add_edge(<span class="number">0</span>, <span class="number">1</span>, <sp
 dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <span class="number">15</span>);
 dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 <span class="macro">assert_eq!</span>(dinic.get_edges().len(), <span class="number">2</span>);</code></pre></div>
-<h5 id="計算量-4"><a class="doc-anchor" href="#計算量-4">§</a>計算量</h5>
-<p>$O(m)$。</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.get_network" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#319-326">Source</a><h4 class="code-header">pub fn <a href="#method.get_network" class="fn">get_network</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="struct" href="struct.Edge.html" title="struct dinic::Edge">Edge</a>&lt;T&gt;&gt;&gt;</h4></section></summary><div class="docblock"><p>全ての辺を隣接リスト形式（<code>network[from]</code> に始点が <code>from</code> の辺一覧）で集める。各行は追加順。</p>
+<h5 id="計算量-5"><a class="doc-anchor" href="#計算量-5">§</a>計算量</h5>
+<p>$O(n + m)$。</p>
 <h5 id="例-7"><a class="doc-anchor" href="#例-7">§</a>例</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
 
@@ -116,10 +118,10 @@ dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <sp
 dinic.flow(<span class="number">0</span>, <span class="number">1</span>);
 <span class="kw">let </span>network = dinic.get_network();
 <span class="macro">assert_eq!</span>(network[<span class="number">0</span>][<span class="number">0</span>].to, <span class="number">1</span>);</code></pre></div>
-<h5 id="計算量-5"><a class="doc-anchor" href="#計算量-5">§</a>計算量</h5>
-<p>$O(n + m)$。</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.get_excess" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#348-359">Source</a><h4 class="code-header">pub fn <a href="#method.get_excess" class="fn">get_excess</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/1.89.0/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;T&gt;</h4></section></summary><div class="docblock"><p>各頂点の余剰流量（流入 − 流出）を <code>Vec</code> で返す。<code>i</code> 番目が頂点 <code>i</code> の値。</p>
 <p>始点の余剰はほぼ常に負になるため、符号なし整数型では実行時に必ずオーバーフローする。</p>
+<h5 id="計算量-6"><a class="doc-anchor" href="#計算量-6">§</a>計算量</h5>
+<p>$O(n + m)$。</p>
 <h5 id="例-8"><a class="doc-anchor" href="#例-8">§</a>例</h5>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>dinic::Dinic;
 
@@ -129,8 +131,6 @@ dinic.add_edge(<span class="number">1</span>, <span class="number">2</span>, <sp
 dinic.add_edge(<span class="number">0</span>, <span class="number">2</span>, <span class="number">20</span>);
 dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 <span class="macro">assert_eq!</span>(dinic.get_excess().as_slice(), <span class="kw-2">&amp;</span>[-<span class="number">30</span>, <span class="number">0</span>, <span class="number">30</span>]);</code></pre></div>
-<h5 id="計算量-6"><a class="doc-anchor" href="#計算量-6">§</a>計算量</h5>
-<p>$O(n + m)$。</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.change_edge" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#400-418">Source</a><h4 class="code-header">pub fn <a href="#method.change_edge" class="fn">change_edge</a>(&amp;mut self, edge_key: <a class="struct" href="struct.EdgeKey.html" title="struct dinic::EdgeKey">EdgeKey</a>, new_cap: T, new_flow: T)</h4></section></summary><div class="docblock"><p>辺 <code>edge_key</code> の容量・流量を <code>new_cap</code>, <code>new_flow</code> に直接書き換える。他の辺は変わらない。</p>
 <p>下限付き最大流や、特定の辺の使用を禁止した上で最大流を求め直す用途に使う危険な操作。</p>
 <h5 id="仕様-3"><a class="doc-anchor" href="#仕様-3">§</a>仕様</h5>

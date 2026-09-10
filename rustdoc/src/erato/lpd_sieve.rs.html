@@ -145,8 +145,8 @@
 <a href=#121 id=121 data-nosnippet>121</a>    /// use erato::LpdSieve;
 <a href=#122 id=122 data-nosnippet>122</a>    ///
 <a href=#123 id=123 data-nosnippet>123</a>    /// let mut sieve = LpdSieve::new();
-<a href=#124 id=124 data-nosnippet>124</a>    /// assert!(sieve.is_prime(2));
-<a href=#125 id=125 data-nosnippet>125</a>    /// assert!(!sieve.is_prime(6));
+<a href=#124 id=124 data-nosnippet>124</a>    /// assert_eq!(sieve.lpd(2), 2);
+<a href=#125 id=125 data-nosnippet>125</a>    /// assert_eq!(sieve.lpd(15), 3);
 <a href=#126 id=126 data-nosnippet>126</a>    /// ```
 <a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>lpd&lt;T: Int&gt;(<span class="kw-2">&amp;mut </span><span class="self">self</span>, x: T) -&gt; T {
 <a href=#128 id=128 data-nosnippet>128</a>        <span class="self">self</span>.base.lpd(x)
