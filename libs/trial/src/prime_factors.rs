@@ -27,8 +27,8 @@ use std::mem::replace;
 ///
 /// $O(\sqrt n)$
 pub fn prime_factors_rle<T: Value>(n: T) -> PrimeFactorsRle<T> {
-    assert_ne!(n, T::zero(), "Cannot call `prime_factors_rle` by `0`.");
-    PrimeFactorsRle { n, p: T::one() }
+    assert_ne!(n, T::ZERO, "Cannot call `prime_factors_rle` by `0`.");
+    PrimeFactorsRle { n, p: T::ONE }
 }
 
 /// [`prime_factors_rle`] が返すイテレータ。
@@ -41,12 +41,12 @@ impl<T: Value> Iterator for PrimeFactorsRle<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let Self { n, p } = self;
-        if *n == T::one() {
+        if *n == T::ONE {
             None
         } else {
             Some(loop {
                 if *n < *p * *p {
-                    *p = replace(n, T::one());
+                    *p = replace(n, T::ONE);
                     break (*p, 1);
                 }
                 (*p).increment();
@@ -87,8 +87,8 @@ impl<T: Value> Iterator for PrimeFactorsRle<T> {
 ///
 /// $O(\sqrt n)$
 pub fn prime_factors<T: Value>(n: T) -> PrimeFactors<T> {
-    assert_ne!(n, T::zero(), "Cannot call `prime_factors` by `0`.");
-    PrimeFactors { n, p: T::one() }
+    assert_ne!(n, T::ZERO, "Cannot call `prime_factors` by `0`.");
+    PrimeFactors { n, p: T::ONE }
 }
 
 /// [`prime_factors`] が返すイテレータ。
@@ -101,12 +101,12 @@ impl<T: Value> Iterator for PrimeFactors<T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let Self { n, p } = self;
-        if *n == T::one() {
+        if *n == T::ONE {
             None
         } else {
             Some(loop {
                 if *n < *p * *p {
-                    *p = replace(n, T::one());
+                    *p = replace(n, T::ONE);
                     break *p;
                 }
                 (*p).increment();

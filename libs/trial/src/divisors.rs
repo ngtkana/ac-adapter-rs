@@ -19,7 +19,7 @@ use super::Value;
 pub fn divisors<T: Value>(n: T) -> Vec<T> {
     let mut former = Vec::new();
     let mut latter = Vec::new();
-    let mut d = T::one();
+    let mut d = T::ONE;
     while d * d <= n {
         if d.divides(n) {
             former.push(d);
@@ -60,7 +60,7 @@ pub fn divisors<T: Value>(n: T) -> Vec<T> {
 pub fn divisors_unordered<T: Value>(n: T) -> Divisors<T> {
     Divisors {
         n,
-        d: T::zero(),
+        d: T::ZERO,
         rev: false,
     }
 }

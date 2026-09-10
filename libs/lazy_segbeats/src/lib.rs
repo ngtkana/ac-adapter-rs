@@ -16,7 +16,7 @@
 //! - `range_add`: $a_i \gets a_i + x$（区間加算）
 //! - `query_min`, `query_max`, `query_sum`: 区間の最小値・最大値・総和の取得
 //!
-//! 要素の型は [`Elm`] トレイトを実装すること（符号付き・符号なし整数型に実装済み）。
+//! 要素の型は [`Value`] トレイトを実装すること（符号付き・符号なし整数型に実装済み）。
 //!
 //! # 例
 //!
@@ -82,7 +82,7 @@ pub struct Segbeats<T> {
     table: RefCell<Vec<Node<T>>>,
 }
 
-impl<T: Elm> Segbeats<T> {
+impl<T: Value> Segbeats<T> {
     /// 配列から構築する。
     ///
     /// # 計算量
@@ -225,8 +225,8 @@ impl<T: Elm> Segbeats<T> {
     }
 
     fn push(&self, i: usize) {
-        let lz = std::mem::replace(&mut self.table.borrow_mut()[i].lazy_add, T::zero());
-        if lz != T::zero() {
+        let lz = std::mem::replace(&mut self.table.borrow_mut()[i].lazy_add, T::ZERO);
+        if lz != T::ZERO {
             (2 * i..2 * i + 2).for_each(|j| self.table.borrow_mut()[j].add(lz));
         }
 
@@ -280,7 +280,7 @@ impl<T: Elm> Segbeats<T> {
 }
 
 trait Dfs {
-    type Value: Elm;
+    type Value: Value;
     type Param: Copy + Debug;
     type Output: Debug;
     fn identity() -> Self::Output;
@@ -295,7 +295,7 @@ trait Dfs {
     fn extract(node: Node<Self::Value>) -> Self::Output;
 }
 struct ChangeMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMin<T> {
+impl<T: Value> Dfs for ChangeMin<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -319,7 +319,7 @@ impl<T: Elm> Dfs for ChangeMin<T> {
     fn extract(_node: Node<T>) {}
 }
 struct ChangeMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMax<T> {
+impl<T: Value> Dfs for ChangeMax<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -343,7 +343,7 @@ impl<T: Elm> Dfs for ChangeMax<T> {
     fn extract(_node: Node<T>) {}
 }
 struct RangeAdd<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for RangeAdd<T> {
+impl<T: Value> Dfs for RangeAdd<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -359,7 +359,7 @@ impl<T: Elm> Dfs for RangeAdd<T> {
     fn extract(_node: Node<T>) {}
 }
 struct QueryMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMin<T> {
+impl<T: Value> Dfs for QueryMin<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -377,7 +377,7 @@ impl<T: Elm> Dfs for QueryMin<T> {
     }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMax<T> {
+impl<T: Value> Dfs for QueryMax<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -395,13 +395,13 @@ impl<T: Elm> Dfs for QueryMax<T> {
     }
 }
 struct QuerySum<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QuerySum<T> {
+impl<T: Value> Dfs for QuerySum<T> {
     type Output = T;
     type Param = ();
     type Value = T;
 
     fn identity() -> Self::Output {
-        T::zero()
+        T::ZERO
     }
 
     fn merge(left: T, right: T) -> T {
@@ -423,15 +423,15 @@ struct Node<T> {
     lazy_add: T,
     len: u32,
 }
-impl<T: Elm> Node<T> {
+impl<T: Value> Node<T> {
     fn new() -> Self {
         Self {
             max: [T::min_value(), T::min_value()],
             c_max: 0,
             min: [T::max_value(), T::max_value()],
             c_min: 0,
-            sum: T::zero(),
-            lazy_add: T::zero(),
+            sum: T::ZERO,
+            lazy_add: T::ZERO,
             len: 0,
         }
     }
@@ -443,7 +443,7 @@ impl<T: Elm> Node<T> {
             min: [x, T::max_value()],
             c_min: 1,
             sum: x,
-            lazy_add: T::zero(),
+            lazy_add: T::ZERO,
             len: 1,
         }
     }
@@ -510,7 +510,7 @@ impl<T: Elm> Node<T> {
             c_min,
             sum: left.sum + right.sum,
             len: left.len + right.len,
-            lazy_add: T::zero(),
+            lazy_add: T::ZERO,
         }
     }
 }
@@ -527,7 +527,7 @@ fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
 /// 全順序（`Ord`）と加減算（`Add`/`Sub` とその代入版）を持つことに加え、
 /// 番兵として使う最大値・最小値、加法の単位元、`u32` 倍を提供する。
 /// 符号付き・符号なし整数型（`u8` から `u128`, `usize`, `i8` から `i128`, `isize`）に実装済み。
-pub trait Elm:
+pub trait Value:
     Sized
     + std::fmt::Debug
     + Copy
@@ -542,23 +542,21 @@ pub trait Elm:
     /// 番兵として使う最小値（`max` 配列の空きスロットや chmax の初期打ち切り値に使用）。
     fn min_value() -> Self;
     /// 加法の単位元 $0$。
-    fn zero() -> Self;
+    const ZERO: Self;
     /// $u32$ 倍を返す: $\mathrm{self} \times x$（区間和の差分更新に使用）。
     fn mul_u32(&self, x: u32) -> Self;
 }
-macro_rules! impl_elm {
+macro_rules! impl_value {
     {$($ty:ident;)*} => {
         $(
-            impl Elm for $ty {
+            impl Value for $ty {
                 fn min_value() -> Self {
                     $ty::MIN
                 }
                 fn max_value() -> Self {
                     $ty::MAX
                 }
-                fn zero() -> Self {
-                    0
-                }
+                const ZERO: Self = 0;
                 fn mul_u32(&self, x: u32) -> Self {
                     self * (x as $ty)
                 }
@@ -566,7 +564,7 @@ macro_rules! impl_elm {
         )*
     }
 }
-impl_elm! {
+impl_value! {
     u8; u16; u32; u64; u128; usize;
     i8; i16; i32; i64; i128; isize;
 }

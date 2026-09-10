@@ -139,17 +139,17 @@ pub trait Scalar:
     + RemAssign
 {
     /// 加法単位元 $0$。
-    const CONST_0: Self;
+    const ZERO: Self;
     /// 乗法単位元 $1$。
-    const CONST_1: Self;
+    const ONE: Self;
 }
 
 macro_rules! impl_scalar {
     ($($type:ty),+ $(,)?) => {
         $(
             impl Scalar for $type {
-                const CONST_0: Self = 0;
-                const CONST_1: Self = 1;
+                const ZERO: Self = 0;
+                const ONE: Self = 1;
             }
         )+
     };
@@ -283,8 +283,8 @@ impl<M: Mod> Neg for Mint<M> {
     type Output = Self;
 
     fn neg(self) -> Self::Output {
-        if self.value == M::Value::CONST_0 {
-            mint(M::Value::CONST_0)
+        if self.value == M::Value::ZERO {
+            mint(M::Value::ZERO)
         } else {
             mint(M::get() - self.value)
         }
@@ -293,13 +293,13 @@ impl<M: Mod> Neg for Mint<M> {
 
 impl<M: Mod> std::iter::Sum for Mint<M> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Mint::new(M::Value::CONST_0), Add::add)
+        iter.fold(Mint::new(M::Value::ZERO), Add::add)
     }
 }
 
 impl<M: Mod> std::iter::Product for Mint<M> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Mint::new(M::Value::CONST_1), Mul::mul)
+        iter.fold(Mint::new(M::Value::ONE), Mul::mul)
     }
 }
 

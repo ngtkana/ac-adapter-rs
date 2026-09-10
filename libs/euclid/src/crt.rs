@@ -25,14 +25,14 @@ use super::Signed;
 ///
 /// $O(\log \min(m_0, m_1))$
 pub fn crt<T: Signed>(res0: T, mod0: T, res1: T, mod1: T) -> Option<(T, T)> {
-    assert!(T::zero() < mod0);
-    assert!(T::zero() < mod1);
+    assert!(T::ZERO < mod0);
+    assert!(T::ZERO < mod1);
     let (a, _b, g) = super::ext_gcd(mod0, mod1);
     if g.divides(res1 - res0) {
         let quot = mod1 / g;
         let a = ((res1 - res0) / g * a) % quot;
-        let a = if a < T::zero() { a + quot } else { a };
-        assert!(T::zero() <= a && a < quot);
+        let a = if a < T::ZERO { a + quot } else { a };
+        assert!(T::ZERO <= a && a < quot);
         Some((res0 + a * mod0, mod0 * quot))
     } else {
         None

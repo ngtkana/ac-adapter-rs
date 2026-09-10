@@ -18,7 +18,7 @@ use std::mem::swap;
 ///
 /// $O(\log \min(|x|, |y|))$
 pub fn gcd<T: Int>(mut x: T, mut y: T) -> T {
-    while x != T::zero() {
+    while x != T::ZERO {
         y = y.rem_euclid(x);
         swap(&mut x, &mut y);
     }

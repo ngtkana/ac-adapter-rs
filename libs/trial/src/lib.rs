@@ -65,27 +65,23 @@ pub trait Value:
     + Rem<Output = Self>
     + RemAssign
 {
-    /// 加法の単位元 $0$ を返す。
-    fn zero() -> Self;
-    /// 乗法の単位元 $1$ を返す。
-    fn one() -> Self;
+    /// 加法の単位元 $0$。
+    const ZERO: Self;
+    /// 乗法の単位元 $1$。
+    const ONE: Self;
     /// `self` を $1$ だけ増加させる。
     fn increment(&mut self);
     /// `self` が `n` の約数なら `true` を返す。
     fn divides(self, n: Self) -> bool {
-        n % self == Self::zero()
+        n % self == Self::ZERO
     }
 }
 
 macro_rules! impl_value {
     ($($t:ty),* $(,)?) => {$(
         impl Value for $t {
-            fn zero() -> Self {
-                0
-            }
-            fn one() -> Self {
-                1
-            }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
             fn increment(&mut self) {
                 *self += 1;
             }

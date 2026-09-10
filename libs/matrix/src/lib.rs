@@ -8,7 +8,7 @@
 //! # 仕様
 //!
 //! - 型: `Matrix<T>`（`items: Vec<T>` を行優先（row-major）で格納、`width: usize` は列数）
-//! - [`Scalar`][]: 零元 `CONST_0`、単位元 `CONST_1`、積和代入 `fma_assign(a, b, c)`（$a \leftarrow a + bc$）
+//! - [`Scalar`][]: 零元 `ZERO`、単位元 `ONE`、積和代入 `fma_assign(a, b, c)`（$a \leftarrow a + bc$）
 //! - 生成: [`Matrix::zeros`]、[`Matrix::identity`]、[`Matrix::companion`]
 //! - 演算: `&Matrix * &Matrix`（行列積）、[`Matrix::pow`]、[`Matrix::mul_pow_assign`]
 //! - 添字アクセス: `matrix[i]`（$i$ 行目のスライス）、`matrix[(i, j)]`（成分）
@@ -22,8 +22,8 @@
 //! #[derive(Clone)]
 //! struct Int(i64);
 //! impl Scalar for Int {
-//!     const CONST_0: Self = Self(0);
-//!     const CONST_1: Self = Self(1);
+//!     const ZERO: Self = Self(0);
+//!     const ONE: Self = Self(1);
 //!     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
 //!         a.0 += b.0 * c.0;
 //!     }
@@ -53,9 +53,9 @@ use std::ops::Mul;
 /// 要求する。これにより通常の数値環だけでなく、（最小, +）などの半環にも適用できる。
 pub trait Scalar {
     /// 零元 $0$（加算の単位元）。
-    const CONST_0: Self;
+    const ZERO: Self;
     /// 単位元 $1$（乗算の単位元）。単位行列の対角成分に使う。
-    const CONST_1: Self;
+    const ONE: Self;
 
     /// 積和代入 $a \leftarrow a + bc$ を行う。
     fn fma_assign(a: &mut Self, b: &Self, c: &Self);
@@ -103,7 +103,7 @@ impl<T> Matrix<T> {
 }
 
 impl<T: Scalar> Matrix<T> {
-    /// 零行列 $O_{h \times w}$（全成分が [`Scalar::CONST_0`]）を生成する。
+    /// 零行列 $O_{h \times w}$（全成分が [`Scalar::ZERO`]）を生成する。
     ///
     /// # 例
     ///
@@ -112,8 +112,8 @@ impl<T: Scalar> Matrix<T> {
     /// # #[derive(Clone, Debug, PartialEq)]
     /// # struct N(i64);
     /// # impl Scalar for N {
-    /// #     const CONST_0: Self = Self(0);
-    /// #     const CONST_1: Self = Self(1);
+    /// #     const ZERO: Self = Self(0);
+    /// #     const ONE: Self = Self(1);
     /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
     /// #         a.0 += b.0 * c.0;
     /// #     }
@@ -125,13 +125,13 @@ impl<T: Scalar> Matrix<T> {
     /// ```
     pub fn zeros(height: usize, width: usize) -> Self {
         Self {
-            items: (0..height * width).map(|_| T::CONST_0).collect::<Vec<_>>(),
+            items: (0..height * width).map(|_| T::ZERO).collect::<Vec<_>>(),
             width,
         }
     }
 
-    /// $n \times n$ の単位行列 $I_n$ を生成する。対角成分が [`Scalar::CONST_1`]、それ以外が
-    /// [`Scalar::CONST_0`]。
+    /// $n \times n$ の単位行列 $I_n$ を生成する。対角成分が [`Scalar::ONE`]、それ以外が
+    /// [`Scalar::ZERO`]。
     ///
     /// # 例
     ///
@@ -140,8 +140,8 @@ impl<T: Scalar> Matrix<T> {
     /// # #[derive(Clone, Debug, PartialEq)]
     /// # struct N(i64);
     /// # impl Scalar for N {
-    /// #     const CONST_0: Self = Self(0);
-    /// #     const CONST_1: Self = Self(1);
+    /// #     const ZERO: Self = Self(0);
+    /// #     const ONE: Self = Self(1);
     /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
     /// #         a.0 += b.0 * c.0;
     /// #     }
@@ -153,7 +153,7 @@ impl<T: Scalar> Matrix<T> {
     pub fn identity(size: usize) -> Self {
         let mut result = Self::zeros(size, size);
         for i in 0..size {
-            result[(i, i)] = T::CONST_1;
+            result[(i, i)] = T::ONE;
         }
         result
     }
@@ -169,8 +169,8 @@ impl<T: Scalar> Matrix<T> {
     /// # #[derive(Clone, Debug, PartialEq)]
     /// # struct N(i64);
     /// # impl Scalar for N {
-    /// #     const CONST_0: Self = Self(0);
-    /// #     const CONST_1: Self = Self(1);
+    /// #     const ZERO: Self = Self(0);
+    /// #     const ONE: Self = Self(1);
     /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
     /// #         a.0 += b.0 * c.0;
     /// #     }
@@ -206,8 +206,8 @@ impl<T: Scalar> Matrix<T> {
     /// # #[derive(Clone, Debug, PartialEq)]
     /// # struct N(i64);
     /// # impl Scalar for N {
-    /// #     const CONST_0: Self = Self(0);
-    /// #     const CONST_1: Self = Self(1);
+    /// #     const ZERO: Self = Self(0);
+    /// #     const ONE: Self = Self(1);
     /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
     /// #         a.0 += b.0 * c.0;
     /// #     }
@@ -250,8 +250,8 @@ impl<T: Scalar> Matrix<T> {
     /// # #[derive(Clone, Debug, PartialEq)]
     /// # struct N(i64);
     /// # impl Scalar for N {
-    /// #     const CONST_0: Self = Self(0);
-    /// #     const CONST_1: Self = Self(1);
+    /// #     const ZERO: Self = Self(0);
+    /// #     const ONE: Self = Self(1);
     /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
     /// #         a.0 += b.0 * c.0;
     /// #     }
@@ -275,7 +275,7 @@ impl<T: Scalar> Matrix<T> {
         assert!(size > 0);
         let mut result = Self::zeros(size, size);
         for i in 1..size {
-            result[(i, i - 1)] = T::CONST_1;
+            result[(i, i - 1)] = T::ONE;
         }
         for i in 0..size {
             result[(i, size - 1)] = iter.next().unwrap();
@@ -324,8 +324,8 @@ impl<T> std::ops::IndexMut<(usize, usize)> for Matrix<T> {
 /// # #[derive(Clone, Debug, PartialEq)]
 /// # struct N(i64);
 /// # impl Scalar for N {
-/// #     const CONST_0: Self = Self(0);
-/// #     const CONST_1: Self = Self(1);
+/// #     const ZERO: Self = Self(0);
+/// #     const ONE: Self = Self(1);
 /// #     fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
 /// #         a.0 += b.0 * c.0;
 /// #     }
@@ -370,8 +370,8 @@ mod test {
     #[derive(Clone, Debug)]
     struct Int(i32);
     impl Scalar for Int {
-        const CONST_0: Self = Self(0);
-        const CONST_1: Self = Self(1);
+        const ZERO: Self = Self(0);
+        const ONE: Self = Self(1);
 
         fn fma_assign(a: &mut Self, b: &Self, c: &Self) {
             a.0 += b.0 * c.0;

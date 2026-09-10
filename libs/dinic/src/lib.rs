@@ -55,7 +55,7 @@ pub trait Value:
     Copy + Ord + Debug + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum
 {
     /// 加法単位元 `0`。
-    fn zero() -> Self;
+    const ZERO: Self;
     /// `Self` の最大値。Dinic 法の内部で無限大として使う。
     fn infinity() -> Self;
 }
@@ -120,7 +120,7 @@ where
             self.res.len()
         );
         assert!(
-            T::zero() <= cap,
+            T::ZERO <= cap,
             "`Dinic::add_edge` is called with a negative `cap`"
         );
         let size_from = self.res[from].len();
@@ -137,7 +137,7 @@ where
         });
         self.res[to].push(__ResidualEdge {
             to: from,
-            cap: T::zero(),
+            cap: T::ZERO,
             rev: size_from,
         });
         EdgeKey(edge_key)
@@ -238,7 +238,7 @@ where
                     .iter()
                     .copied()
                     .filter(|&__ResidualEdge { to, cap, .. }| {
-                        cap != T::zero() && !std::mem::replace(&mut visited[to], true)
+                        cap != T::ZERO && !std::mem::replace(&mut visited[to], true)
                     })
                     .map(|__ResidualEdge { to, .. }| to),
             );
@@ -346,7 +346,7 @@ where
     /// assert_eq!(dinic.get_excess().as_slice(), &[-30, 0, 30]);
     /// ```
     pub fn get_excess(&self) -> Vec<T> {
-        let mut excess = vec![T::zero(); self.res.len()];
+        let mut excess = vec![T::ZERO; self.res.len()];
         self.pos
             .iter()
             .map(|&edge_indexer| self.restore_edge(edge_indexer))
@@ -377,7 +377,7 @@ where
     ///
     /// # 仕様
     ///
-    /// `T::zero() <= new_flow <= new_cap` が前提。
+    /// `T::ZERO <= new_flow <= new_cap` が前提。
     ///
     /// # 計算量
     ///
@@ -406,7 +406,7 @@ where
             self.pos.len()
         );
         assert!(
-            T::zero() <= new_flow && new_flow <= new_cap,
+            T::ZERO <= new_flow && new_flow <= new_cap,
             "Called `Dinic::change_edge` by new_flow = {new_flow:?}, new_cap = {new_cap:?}"
         );
         let __EdgeIndexer { from, index } = self.pos[edge_key];
@@ -461,7 +461,7 @@ where
 {
     assert_ne!(s, t);
 
-    let mut flow = T::zero();
+    let mut flow = T::ZERO;
 
     loop {
         // calculate labels
@@ -470,7 +470,7 @@ where
         let mut queue = VecDeque::from(vec![s]);
         while let Some(from) = queue.pop_front() {
             for &__ResidualEdge { to, cap, .. } in &res[from] {
-                if cap == T::zero() || label[to] != u32::MAX {
+                if cap == T::ZERO || label[to] != u32::MAX {
                     continue;
                 }
                 label[to] = label[from] + 1;
@@ -495,7 +495,7 @@ where
                 let from = path.last().map_or(s, |&(x, i)| res[x][i].to);
                 loop {
                     if let Some(&__ResidualEdge { to, cap, .. }) = res[from].get(cur[from]) {
-                        if cap == T::zero() || label[from] + 1 != label[to] {
+                        if cap == T::ZERO || label[from] + 1 != label[to] {
                             cur[from] += 1;
                         } else {
                             path.push((from, cur[from]));
@@ -521,7 +521,7 @@ where
                 .min()
                 .unwrap()
                 .min(flow_limit - flow);
-            if aug == T::zero() {
+            if aug == T::ZERO {
                 return flow;
             }
             flow += aug;
@@ -537,9 +537,7 @@ where
 macro_rules! impl_value {
     ($($T:ident),* $(,)?) => {$(
         impl Value for $T {
-            fn zero() -> Self {
-                0
-            }
+            const ZERO: Self = 0;
             fn infinity() -> Self {
                 $T::MAX
             }

@@ -86,15 +86,15 @@ pub fn gss_integer<T: Int + Golden, U: PartialOrd + Debug>(
     if lower == upper {
         return lower;
     }
-    if lower + T::one() == upper {
+    if lower + T::ONE == upper {
         let value_left = f(lower);
         let value_right = f(upper);
         return if value_left <= value_right { lower } else { upper };
     }
     let kv = gss_base(lower, upper, f, |x, y| x != y);
-    debug_assert_eq!(kv[0].0 + T::one(), kv[1].0);
-    debug_assert_eq!(kv[0].0 + T::one(), kv[2].0);
-    debug_assert_eq!(kv[0].0 + T::one() + T::one(), kv[3].0);
+    debug_assert_eq!(kv[0].0 + T::ONE, kv[1].0);
+    debug_assert_eq!(kv[0].0 + T::ONE, kv[2].0);
+    debug_assert_eq!(kv[0].0 + T::ONE + T::ONE, kv[3].0);
     if kv[0].1 <= kv[1].1 {
         kv[0].0
     } else if kv[1].1 <= kv[3].1 {
@@ -160,7 +160,7 @@ pub fn gss_by_absolute_eps<T: Float + Golden, U: PartialOrd + Debug>(
 ) -> T {
     debug_assert!(lower.is_finite());
     debug_assert!(upper.is_finite());
-    debug_assert!(T::zero() < eps && eps / lower.abs().max(upper.abs()) != T::zero());
+    debug_assert!(T::ZERO < eps && eps / lower.abs().max(upper.abs()) != T::ZERO);
     let eps = eps * T::INVPHI * T::INVPHI;
     gss_base(lower, upper, f, |x, y| eps < (y - x).abs())[1].0
 }
@@ -209,7 +209,7 @@ pub trait Int: Add<Output = Self> + Debug + PartialOrd + Copy {
     /// $\lfloor (self + upper) / 2 \rfloor$ を厳密に計算する（`self <= upper` を仮定）。
     fn midpoint_sorted(self, upper: Self) -> Self;
     /// $1$
-    fn one() -> Self;
+    const ONE: Self;
     /// `self` を `f64` に変換する。
     fn as_f64(self) -> f64;
     /// `x` を `Self` に変換する（`as` キャストと同じ丸め）。
@@ -222,9 +222,7 @@ macro_rules! impl_int {
             fn midpoint_sorted(self, upper: Self) -> Self {
                 self + (upper - self) / 2
             }
-            fn one() -> Self {
-                1
-            }
+            const ONE: Self = 1;
             fn as_f64(self) -> f64 {
                 self as f64
             }
@@ -236,9 +234,7 @@ macro_rules! impl_int {
             fn midpoint_sorted(self, upper: Self) -> Self {
                 self + ((upper.wrapping_sub(self) as $Unsigned) / 2) as $Signed
             }
-            fn one() -> Self {
-                1
-            }
+            const ONE: Self = 1;
             fn as_f64(self) -> f64 {
                 self as f64
             }
@@ -281,9 +277,9 @@ pub trait Float:
     /// $1/\phi = 0.6180339887498949\ldots$
     const INVPHI: Self;
     /// $0$
-    fn zero() -> Self;
+    const ZERO: Self;
     /// $2$
-    fn two() -> Self;
+    const TWO: Self;
     /// `Self` の同名メソッドに委譲する。
     fn max(self, other: Self) -> Self;
     /// `Self` の同名メソッドに委譲する。
@@ -297,12 +293,8 @@ macro_rules! impl_float {
         impl Float for $T {
             #[allow(clippy::excessive_precision)]
             const INVPHI: Self = 0.618_033_988_749_894_9;
-            fn zero() -> Self {
-                0.0
-            }
-            fn two() -> Self {
-                2.0
-            }
+            const ZERO: Self = 0.0;
+            const TWO: Self = 2.0;
             fn max(self, other: Self) -> Self {
                 self.max(other)
             }
@@ -425,9 +417,9 @@ mod tests {
     ) {
         assert!(lower_upper_minus_one.into_iter().all(|i| {
             if i < result {
-                f(i) > f(i + T::one())
+                f(i) > f(i + T::ONE)
             } else {
-                f(i) <= f(i + T::one())
+                f(i) <= f(i + T::ONE)
             }
         }));
     }
@@ -439,9 +431,9 @@ mod tests {
     ) {
         assert!(lower_upper_minus_one.into_iter().all(|i| {
             if i < result {
-                f(i) > f(i + T::one())
+                f(i) > f(i + T::ONE)
             } else {
-                f(i) <= f(i + T::one())
+                f(i) <= f(i + T::ONE)
             }
         }));
     }
