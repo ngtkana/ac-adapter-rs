@@ -8,8 +8,9 @@
 1. worktree作成（手動コマンドを使う。理由は下記Why参照）:
    ```
    REPO=$(basename "$(git rev-parse --show-toplevel)")
-   git worktree add -b <branch-name> ~/worktrees/${REPO}/<branch-name> main
+   git worktree add -b <branch-name> ~/worktrees/${REPO}/<branch-name> <base-branch>
    ```
+   `<base-branch>` は通常 `main`。同一ファイルを複数バッチで編集する場合（PRスタック運用）は、`main` ではなく前バッチのブランチを指定する
 2. worktree 内で変更
 3. `gh pr create` で PR 作成。マージ後は `git worktree remove ~/worktrees/${REPO}/<branch-name>` で cleanup
    （UI目視確認待ちの場合は [[ui-visual-verification]] 手順6が優先、cleanupを保留する）
