@@ -30,7 +30,7 @@
 <h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
 <ul>
 <li><a href="struct.MaxFlow.html#method.new" title="associated function max_flow::MaxFlow::new"><code>MaxFlow::new</code></a>: 空のネットワークを構築</li>
-<li><a href="struct.MaxFlow.html#method.add_edge" title="method max_flow::MaxFlow::add_edge"><code>MaxFlow::add_edge</code></a>: 容量 <code>cap</code> の有向辺 <code>from -&gt; to</code> を追加（逆辺も内部で管理）</li>
+<li><a href="struct.MaxFlow.html#method.add_edge" title="method max_flow::MaxFlow::add_edge"><code>MaxFlow::add_edge</code></a>: 容量 <code>cap</code> の有向辺 <code>src -&gt; tar</code> を追加（逆辺も内部で管理）</li>
 <li><a href="struct.MaxFlow.html#method.solve" title="method max_flow::MaxFlow::solve"><code>MaxFlow::solve</code></a>: 頂点数 <code>n</code>、始点 <code>source</code>、終点 <code>sink</code> を指定し、最大流量と
 最小カット（各頂点が始点側に残るか）を返す</li>
 <li><a href="struct.MaxFlow.html#method.original_edges" title="method max_flow::MaxFlow::original_edges"><code>MaxFlow::original_edges</code></a>: <code>add_edge</code> で追加した辺（逆辺を除く）を現在の流量込みで取得</li>

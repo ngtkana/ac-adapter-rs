@@ -31,7 +31,7 @@ reduced cost $\mathrm{cost}(u, v) + \mathrm{dual}(u) - \mathrm{dual}(v) \ge 0$ �
 <h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
 <ul>
 <li><a href="struct.MinCostFlow.html#method.new" title="associated function mincost_flow::MinCostFlow::new"><code>MinCostFlow::new</code></a>: 頂点数 <code>n</code> で初期化</li>
-<li><a href="struct.MinCostFlow.html#method.add_edge" title="method mincost_flow::MinCostFlow::add_edge"><code>MinCostFlow::add_edge</code></a>: 辺 <code>(from, to)</code> を容量 <code>cap</code>・コスト <code>cost</code> で追加し、辺番号を返す</li>
+<li><a href="struct.MinCostFlow.html#method.add_edge" title="method mincost_flow::MinCostFlow::add_edge"><code>MinCostFlow::add_edge</code></a>: 辺 <code>(u, v)</code> を容量 <code>cap</code>・コスト <code>cost</code> で追加し、辺番号を返す</li>
 <li><a href="struct.MinCostFlow.html#method.get_edge" title="method mincost_flow::MinCostFlow::get_edge"><code>MinCostFlow::get_edge</code></a>: 辺番号から現在の流量込みの <a href="struct.Edge.html" title="struct mincost_flow::Edge"><code>Edge</code></a> を取得</li>
 <li><a href="struct.MinCostFlow.html#method.flow" title="method mincost_flow::MinCostFlow::flow"><code>MinCostFlow::flow</code></a>: <code>source</code> から <code>sink</code> へ流量 <code>flow_limit</code> を上限に最小費用で流し、
 <code>(流量, 費用)</code> を返す</li>

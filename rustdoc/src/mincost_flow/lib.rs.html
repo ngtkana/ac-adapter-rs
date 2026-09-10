@@ -33,7 +33,7 @@
 <a href=#9 id=9 data-nosnippet>9</a>//! # 仕様
 <a href=#10 id=10 data-nosnippet>10</a>//!
 <a href=#11 id=11 data-nosnippet>11</a>//! - [`MinCostFlow::new`][]: 頂点数 `n` で初期化
-<a href=#12 id=12 data-nosnippet>12</a>//! - [`MinCostFlow::add_edge`][]: 辺 `(from, to)` を容量 `cap`・コスト `cost` で追加し、辺番号を返す
+<a href=#12 id=12 data-nosnippet>12</a>//! - [`MinCostFlow::add_edge`][]: 辺 `(u, v)` を容量 `cap`・コスト `cost` で追加し、辺番号を返す
 <a href=#13 id=13 data-nosnippet>13</a>//! - [`MinCostFlow::get_edge`][]: 辺番号から現在の流量込みの [`Edge`] を取得
 <a href=#14 id=14 data-nosnippet>14</a>//! - [`MinCostFlow::flow`][]: `source` から `sink` へ流量 `flow_limit` を上限に最小費用で流し、
 <a href=#15 id=15 data-nosnippet>15</a>//!   `(流量, 費用)` を返す
@@ -147,24 +147,24 @@
 <a href=#123 id=123 data-nosnippet>123</a>        }
 <a href=#124 id=124 data-nosnippet>124</a>    }
 <a href=#125 id=125 data-nosnippet>125</a>
-<a href=#126 id=126 data-nosnippet>126</a>    <span class="doccomment">/// 頂点 `from` から `to` へ容量 `cap`・コスト `cost` の辺を追加し、辺番号（[`MinCostFlow::get_edge`] で使う）を返す。
-<a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>add_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize, cap: i64, cost: i64) -&gt; usize {
+<a href=#126 id=126 data-nosnippet>126</a>    <span class="doccomment">/// 頂点 `u` から `v` へ容量 `cap`・コスト `cost` の辺を追加し、辺番号（[`MinCostFlow::get_edge`] で使う）を返す。
+<a href=#127 id=127 data-nosnippet>127</a>    </span><span class="kw">pub fn </span>add_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, u: usize, v: usize, cap: i64, cost: i64) -&gt; usize {
 <a href=#128 id=128 data-nosnippet>128</a>        <span class="kw">let </span>res = <span class="self">self</span>.edge_position.len();
-<a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">let </span>s_from = <span class="self">self</span>.g[from].len();
-<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span>s_to = <span class="self">self</span>.g[to].len();
-<a href=#131 id=131 data-nosnippet>131</a>        <span class="self">self</span>.g[from].push(__InternalEdge {
-<a href=#132 id=132 data-nosnippet>132</a>            to,
-<a href=#133 id=133 data-nosnippet>133</a>            rev: s_to,
+<a href=#129 id=129 data-nosnippet>129</a>        <span class="kw">let </span>su = <span class="self">self</span>.g[u].len();
+<a href=#130 id=130 data-nosnippet>130</a>        <span class="kw">let </span>sv = <span class="self">self</span>.g[v].len();
+<a href=#131 id=131 data-nosnippet>131</a>        <span class="self">self</span>.g[u].push(__InternalEdge {
+<a href=#132 id=132 data-nosnippet>132</a>            to: v,
+<a href=#133 id=133 data-nosnippet>133</a>            rev: sv,
 <a href=#134 id=134 data-nosnippet>134</a>            cap,
 <a href=#135 id=135 data-nosnippet>135</a>            cost,
 <a href=#136 id=136 data-nosnippet>136</a>        });
-<a href=#137 id=137 data-nosnippet>137</a>        <span class="self">self</span>.g[to].push(__InternalEdge {
-<a href=#138 id=138 data-nosnippet>138</a>            to: from,
-<a href=#139 id=139 data-nosnippet>139</a>            rev: s_from,
+<a href=#137 id=137 data-nosnippet>137</a>        <span class="self">self</span>.g[v].push(__InternalEdge {
+<a href=#138 id=138 data-nosnippet>138</a>            to: u,
+<a href=#139 id=139 data-nosnippet>139</a>            rev: su,
 <a href=#140 id=140 data-nosnippet>140</a>            cap: <span class="number">0</span>,
 <a href=#141 id=141 data-nosnippet>141</a>            cost: -cost,
 <a href=#142 id=142 data-nosnippet>142</a>        });
-<a href=#143 id=143 data-nosnippet>143</a>        <span class="self">self</span>.edge_position.push([from, s_from]);
+<a href=#143 id=143 data-nosnippet>143</a>        <span class="self">self</span>.edge_position.push([u, su]);
 <a href=#144 id=144 data-nosnippet>144</a>        res
 <a href=#145 id=145 data-nosnippet>145</a>    }
 <a href=#146 id=146 data-nosnippet>146</a>

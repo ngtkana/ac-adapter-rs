@@ -31,7 +31,7 @@ $[i - (i \mathbin{&amp;} (-i)), i)$（1-indexed）の総積を持たせる。こ
 <p><a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a>トレイトで結合律を満たす二項演算 $(S, \oplus, e)$ を定義する。</p>
 <ul>
 <li><a href="trait.Op.html#tymethod.identity" title="associated function fenwick::Op::identity"><code>Op::identity</code></a>: 単位元 $e$</li>
-<li><a href="trait.Op.html#tymethod.op" title="associated function fenwick::Op::op"><code>Op::op</code></a>: 演算 $a \oplus b$（結合律を満たすこと）</li>
+<li><a href="trait.Op.html#tymethod.add" title="associated function fenwick::Op::add"><code>Op::add</code></a>: 演算 $a \oplus b$（結合律を満たすこと）</li>
 </ul>
 <p>逆演算 $\ominus$ を持つ場合は<a href="trait.OpSub.html" title="trait fenwick::OpSub"><code>OpSub</code></a>も実装すると、任意区間 $[l, r)$ の
 畳み込みを $\mathrm{fold_to}(r) \ominus \mathrm{fold_to}(l)$ で計算できる。</p>
@@ -48,7 +48,7 @@ $[i - (i \mathbin{&amp;} (-i)), i)$（1-indexed）の総積を持たせる。こ
         <span class="number">0
     </span>}
 
-    <span class="kw">fn </span>op(a: <span class="kw-2">&amp;</span>i64, b: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
+    <span class="kw">fn </span>add(a: <span class="kw-2">&amp;</span>i64, b: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
         a + b
     }
 }
