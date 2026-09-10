@@ -268,7 +268,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 添字 `at` の位置に `value` を挿入し、以降の要素を後ろへずらす。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `at > self.len()` のときパニックする。
     ///
@@ -302,7 +302,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 添字 `at` の要素を削除して返し、以降の要素を前へずらす。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `at >= self.len()` のときパニックする。
     ///
@@ -336,7 +336,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 区間 `range`（添字）の要素を反転する。遅延伝播で行うため、木全体を書き換えない。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `range` が範囲外のときパニックする。
     ///
@@ -372,7 +372,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 区間 `range` の要素を [`LazyOps::op`] で畳み込んだ集約値を返す。区間が空なら `None`。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `range` が範囲外のときパニックする。
     ///
@@ -416,7 +416,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 区間 `range` の要素すべてに作用 `lazy` を [`LazyOps::act_value`] で適用する。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `range` が範囲外のときパニックする。
     ///
@@ -521,7 +521,7 @@ impl<O: LazyOps> SplayTree<O> {
 
     /// 添字 `at` 以降を切り離し、新しい木として返す。`self` には `[0, at)` が残る。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `at > self.len()` のときパニックする。
     ///
