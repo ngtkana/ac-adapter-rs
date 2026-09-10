@@ -4,25 +4,23 @@ use super::sieve_kind;
 use super::Int;
 use super::SieveBase;
 
-/// Is-prime table.
+/// 素数判定テーブル。
 ///
-/// # Complexity
+/// # 計算量
 ///
-/// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
+/// 篩は必要に応じて暗黙に伸長されるため、その分の追加時間がかかる。
 ///
-/// - Construction: Θ ( n / lg lg n )
-/// - Prime factorization: Θ ( π ( √n ) ), where π ( n ) is the number of prime numbers less than
-///
-/// n.
+/// - 構築: $\Theta(n / \log \log n)$
+/// - 素因数分解: $\Theta(\pi(\sqrt{n}))$（$\pi(n)$ は $n$ 未満の素数の個数）
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct Sieve {
     base: SieveBase<sieve_kind::Boolean>,
 }
 
 impl Sieve {
-    /// Construct a new empty sieve. No heap allocations is run via this method.
+    /// 空の篩を構築する。この呼び出し自体ではヒープ確保を行わない。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -36,9 +34,9 @@ impl Sieve {
         }
     }
 
-    /// Returns `true` if a sieve is empty.
+    /// 篩が空のとき `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -49,9 +47,9 @@ impl Sieve {
         self.base.is_empty()
     }
 
-    /// Returns the length of a sieve.
+    /// 篩の長さを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -62,15 +60,9 @@ impl Sieve {
         self.base.len()
     }
 
-    /// Construct a sieve of given length.
+    /// 指定した長さの篩を構築する。
     ///
-    ///
-    /// # Complexity
-    ///
-    /// Θ ( n / lg lg n )
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -78,25 +70,21 @@ impl Sieve {
     /// let sieve = Sieve::with_len(10);
     /// assert_eq!(sieve.len(), 10);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $\Theta(n / \log \log n)$
     pub fn with_len(n: usize) -> Self {
         Self {
             base: SieveBase::with_len(n),
         }
     }
 
-    /// Returns `true` if `x` is a prime number.
+    /// `x` が素数のとき `true` を返す。
     ///
-    /// # Panics
+    /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
-    /// if `x <= 0`.
-    ///
-    ///
-    /// # Note
-    ///
-    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -105,21 +93,17 @@ impl Sieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `x <= 0` のとき panic する。
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
         self.base.is_prime(x)
     }
 
-    /// Returns an iterator to generate all the prime numbers in ascending order, extending
-    /// itself repeatedly.
+    /// 素数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
-    ///
-    /// # Complexity
-    ///
-    /// Beside the incremental building, it takes Θ ( π ( n ) ), where π ( n ) is the number of
-    /// prime numbers less than n.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -131,18 +115,17 @@ impl Sieve {
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\pi(n))$（$\pi(n)$ は $n$ 未満の素数の個数）
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, sieve_kind::Boolean, T> {
         self.base.prime_numbers()
     }
 
-    /// Use trial-division algorithm to iterate over all the prime divisors of `x`, extending itself repeatedly.
+    /// 試し割り法により、`x` の素因数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
-    /// # Complexity
-    ///
-    /// Beside the incremental building, it takes Θ ( π ( √n ) ),  where π ( n ) is the number of prime numbers less than n.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::Sieve;
@@ -150,6 +133,10 @@ impl Sieve {
     /// let mut sieve = Sieve::new();
     /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\pi(\sqrt{n}))$（$\pi(n)$ は $n$ 未満の素数の個数）
     pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByTrialDivision<'_, T> {
         self.base.prime_factors_by_trial_division(n)
     }

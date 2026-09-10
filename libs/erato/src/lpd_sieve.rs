@@ -4,25 +4,23 @@ use super::sieve_kind;
 use super::Int;
 use super::SieveBase;
 
-/// Least-prime-divisor table.
+/// 最小素因数（least prime divisor）テーブル。
 ///
-/// # Complexity
+/// # 計算量
 ///
-/// The complexity of algorithms are like this, but it takes extra time to grow itself implicitly.
+/// 篩は必要に応じて暗黙に伸長されるため、その分の追加時間がかかる。
 ///
-/// - Construction: O ( n lg n )
-/// - Prime factorization: O ( ω( n ) ), where ω( n ) is the number of prime divisors, with
-///
-/// multiple divisors counted repeatedly.
+/// - 構築: $O(n \log n)$
+/// - 素因数分解: $\Theta(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
 }
 
 impl LpdSieve {
-    /// Construct a new empty sieve. No heap allocations is run via this method.
+    /// 空の篩を構築する。この呼び出し自体ではヒープ確保を行わない。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -36,9 +34,9 @@ impl LpdSieve {
         }
     }
 
-    /// Returns `true` if a sieve is empty.
+    /// 篩が空のとき `true` を返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -49,9 +47,9 @@ impl LpdSieve {
         self.base.is_empty()
     }
 
-    /// Returns the length of a sieve.
+    /// 篩の長さを返す。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -62,9 +60,9 @@ impl LpdSieve {
         self.base.len()
     }
 
-    /// Construct a sieve of given length.
+    /// 指定した長さの篩を構築する。
     ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -78,19 +76,11 @@ impl LpdSieve {
         }
     }
 
-    /// Returns `true` if `x` is a prime number.
+    /// `x` が素数のとき `true` を返す。
     ///
-    /// # Panics
+    /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
-    /// if `x <= 0`.
-    ///
-    ///
-    /// # Note
-    ///
-    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -99,23 +89,19 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `x <= 0` のとき panic する。
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
         self.base.is_prime(x)
     }
 
-    /// Returns the least prime divisor of `x`.
+    /// `x` の最小素因数を返す。
     ///
-    /// # Panics
+    /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
-    /// if `x <= 1`.
-    ///
-    ///
-    /// # Note
-    ///
-    /// If `self.len() <= x` sieve will extended the size to the next power of two of `x`.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -124,21 +110,17 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `x <= 1` のとき panic する。
     pub fn lpd<T: Int>(&mut self, x: T) -> T {
         self.base.lpd(x)
     }
 
-    /// Returns an iterator to generate all the prime numbers in ascending order, extending
-    /// itself repeatedly.
+    /// 素数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
-    ///
-    /// # Complexity
-    ///
-    /// Beside the incremental building, it takes Θ ( π ( n ) ), where π ( n ) is the number of
-    /// prime numbers less than n.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -150,18 +132,17 @@ impl LpdSieve {
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\pi(n))$（$\pi(n)$ は $n$ 未満の素数の個数）
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, sieve_kind::Usize, T> {
         self.base.prime_numbers()
     }
 
-    /// Use trial-division algorithm to iterate over all the prime divisors of `x`, extending itself repeatedly.
+    /// テーブル引きにより、`x` の素因数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
     ///
-    /// # Complexity
-    ///
-    /// Beside the incremental building, it takes Θ ( ω ( n ) ),  where ω ( n ) is the number of prime numbers less than n.
-    ///
-    ///
-    /// # Examples
+    /// # 例
     ///
     /// ```
     /// use erato::LpdSieve;
@@ -169,6 +150,10 @@ impl LpdSieve {
     /// let mut sieve = LpdSieve::new();
     /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
     pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<'_, T> {
         self.base.prime_factors_by_lookup(n)
     }
