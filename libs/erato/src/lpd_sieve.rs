@@ -121,8 +121,8 @@ impl LpdSieve {
     /// use erato::LpdSieve;
     ///
     /// let mut sieve = LpdSieve::new();
-    /// assert!(sieve.is_prime(2));
-    /// assert!(!sieve.is_prime(6));
+    /// assert_eq!(sieve.lpd(2), 2);
+    /// assert_eq!(sieve.lpd(15), 3);
     /// ```
     pub fn lpd<T: Int>(&mut self, x: T) -> T {
         self.base.lpd(x)
