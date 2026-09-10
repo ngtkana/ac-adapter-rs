@@ -38,7 +38,7 @@
 </ul>
 <p>主な操作：</p>
 <ul>
-<li><a href="struct.SplayTree.html#method.insert" title="method splay_tree::SplayTree::insert"><code>insert</code></a>, <a href="struct.SplayTree.html#method.delete" title="method splay_tree::SplayTree::delete"><code>delete</code></a>: 添字を指定した挿入・削除</li>
+<li><a href="struct.SplayTree.html#method.insert" title="method splay_tree::SplayTree::insert"><code>insert</code></a>, <a href="struct.SplayTree.html#method.remove" title="method splay_tree::SplayTree::remove"><code>remove</code></a>: 添字を指定した挿入・削除</li>
 <li><a href="struct.SplayTree.html#method.reverse" title="method splay_tree::SplayTree::reverse"><code>reverse</code></a>: 区間 $[l, r)$ の反転</li>
 <li><a href="struct.SplayTree.html#method.act" title="method splay_tree::SplayTree::act"><code>act</code></a>: 区間 $[l, r)$ への作用の適用</li>
 <li><a href="struct.SplayTree.html#method.fold" title="method splay_tree::SplayTree::fold"><code>fold</code></a>: 区間 $[l, r)$ の集約値の取得</li>
@@ -70,7 +70,7 @@ splay.insert(<span class="number">2</span>, <span class="number">100</span>);
 <span class="macro">assert_eq!</span>(splay.fold(..), <span class="prelude-val">Some</span>(<span class="number">0 </span>+ <span class="number">1 </span>+ <span class="number">100 </span>+ <span class="number">2 </span>+ <span class="number">3 </span>+ <span class="number">4</span>));</code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
-<li><a href="struct.SplayTree.html#method.insert" title="method splay_tree::SplayTree::insert"><code>insert</code></a>, <a href="struct.SplayTree.html#method.delete" title="method splay_tree::SplayTree::delete"><code>delete</code></a>, <a href="struct.SplayTree.html#method.get" title="method splay_tree::SplayTree::get"><code>get</code></a>, <a href="struct.SplayTree.html#method.entry" title="method splay_tree::SplayTree::entry"><code>entry</code></a>: ならし $O(\log n)$</li>
+<li><a href="struct.SplayTree.html#method.insert" title="method splay_tree::SplayTree::insert"><code>insert</code></a>, <a href="struct.SplayTree.html#method.remove" title="method splay_tree::SplayTree::remove"><code>remove</code></a>, <a href="struct.SplayTree.html#method.get" title="method splay_tree::SplayTree::get"><code>get</code></a>, <a href="struct.SplayTree.html#method.entry" title="method splay_tree::SplayTree::entry"><code>entry</code></a>: ならし $O(\log n)$</li>
 <li><a href="struct.SplayTree.html#method.reverse" title="method splay_tree::SplayTree::reverse"><code>reverse</code></a>, <a href="struct.SplayTree.html#method.act" title="method splay_tree::SplayTree::act"><code>act</code></a>, <a href="struct.SplayTree.html#method.fold" title="method splay_tree::SplayTree::fold"><code>fold</code></a>: ならし $O(\log n)$</li>
 <li><a href="struct.SplayTree.html#method.split_off" title="method splay_tree::SplayTree::split_off"><code>split_off</code></a>, <a href="struct.SplayTree.html#method.append" title="method splay_tree::SplayTree::append"><code>append</code></a>: ならし $O(\log n)$</li>
 </ul>
