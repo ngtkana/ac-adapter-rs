@@ -262,7 +262,7 @@ impl<T: Scalar> Matrix<T> {
     /// assert_eq!(m.items, vec![N(0), N(1), N(1), N(1)]); // [[0,1],[1,1]]
     /// ```
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// `bottom` が空のとき panic する。
     pub fn companion<I>(bottom: I) -> Self
