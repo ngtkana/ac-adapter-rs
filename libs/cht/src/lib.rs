@@ -109,7 +109,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
     /// 追加済みの2次式のうち $x$ での最大値（[`Convex`]）・最小値（[`Concave`]）を返す。
     /// カーソルを $x$ の位置へ動かすため、呼び出しごとの $x$ が単調非減少なら償却 $O(1)$。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// 何も追加していない状態で呼ぶとパニックする。
     pub fn eval(&mut self, x: i64) -> i64 {
@@ -133,7 +133,7 @@ impl<C: ConvexOrConcave> VecCht<C> {
 
     /// 2次式を追加する。償却 $O(1)$。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// これまでに追加した式と2次の係数が異なるとパニックする。
     pub fn add(&mut self, quadratic: Quadratic) {
@@ -213,7 +213,7 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
 
     /// 追加済みの2次式のうち $x$ での最大値（[`Convex`]）・最小値（[`Concave`]）を、$O(\log n)$ で返す。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// 何も追加していない状態で呼ぶとパニックする。
     pub fn eval(&self, x: i64) -> i64 {
@@ -224,7 +224,7 @@ impl<C: ConvexOrConcave> BTreeCht<C> {
 
     /// 2次式を追加する。償却 $O(\log n)$。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// これまでに追加した式と2次の係数が異なるとパニックする。
     pub fn add(&mut self, quadratic: Quadratic) {
@@ -321,7 +321,7 @@ impl Quadratic {
 
     /// 2乗する。
     ///
-    /// # パニック
+    /// # Panics
     ///
     /// 積が2次式に収まらない場合（`self` が1次以上の項を持つ場合）パニックする。
     pub fn square(self) -> Self {
@@ -385,7 +385,7 @@ impl Sub<Quadratic> for i64 {
 }
 /// 積が2次式に収まる場合（少なくとも一方が定数、または両方が1次以下で積が2次以下）にのみ使える乗算。
 ///
-/// # パニック
+/// # Panics
 ///
 /// 積が3次以上の項を持つ場合パニックする。
 impl<T: Into<Self>> Mul<T> for Quadratic {
