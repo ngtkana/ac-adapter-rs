@@ -46,6 +46,26 @@
 - 要素の存在があらかじめ保証されている構造（固定長配列バックエンドなど）では、
   RAIIガードを返す `entry(index) -> Entry` を使う（`Deref`/`DerefMut`/`Drop`で経路再計算する形）
 
+## 6. panic と Option/Result の使い分け
+
+- 利用者のバグ（契約違反、例: 範囲外アクセス）は panic する
+- 正当な入力に対する結果なし（例: 空区間の `fold` で `identity` が定義できない）は `Option`/`Result` を返す
+- `get`/`get_mut` のような checked accessor は、標準ライブラリの `slice::get` に倣い `Option` を返す。
+  範囲外指定を契約違反として扱う `insert`/`remove`/`fold`（range指定）などとは異なる
+
+**根拠**: クレートによって同じ「空/範囲外」状況でもpanicするものとOptionを返すものが混在していた
+（issue #269）。契約違反は呼び出し側のバグとして早期に気付かせ、正当な結果なしは呼び出し側に
+ハンドリングさせるという役割分担にする。
+
+## 7. panic メッセージの書式
+
+- 範囲外アクセス等のpanicは、標準ライブラリのslice index panicに倣い、専用のプライベート関数
+  `<crate>_<state>_fail(..) -> !` を用意して呼び出す（例: `dual_segtree_index_out_of_range_fail`）
+- 単純な前提条件チェック（型パラメータの制約など）は `assert!` 直書きで構わない
+
+**根拠**: `assert!`直書きだとメッセージがクレートごとにばらつく。専用関数に切り出すことで
+メッセージの一貫性と可読性を保てる（issue #269）。参考実装: `libs/dual_segtree`, `libs/splay_tree`
+
 ## 適用例
 
 このルールに沿って以下のクレートを改修した（詳細は関連PR参照）:
