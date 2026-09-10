@@ -6,7 +6,7 @@ use std::ops::SubAssign;
 /// # 例
 ///
 /// ```
-/// use riff::SliceAccum;
+/// use jolt::SliceAccum;
 /// let mut a = [1, 2, 3, 4, 5];
 /// a.prefix_sum();
 /// assert_eq!(a, [1, 3, 6, 10, 15]);

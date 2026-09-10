@@ -6,7 +6,7 @@ use crate::Unsigned;
 ///
 /// # 例
 /// ```
-/// use riff::i2powm1;
+/// use jolt::i2powm1;
 /// assert_eq!(i2powm1::<u32>(2), 3); // 2^2 - 1 = 3
 /// assert_eq!(i2powm1::<u32>(32), 0xffff_ffff); // ビット幅ちょうど：オーバーフロー回避
 /// ```

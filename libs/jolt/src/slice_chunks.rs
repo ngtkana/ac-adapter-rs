@@ -9,7 +9,7 @@ pub trait SliceChunks {
     /// # 例
     ///
     /// ```
-    /// use riff::SliceChunks;
+    /// use jolt::SliceChunks;
     /// let a = [1, 1, 2, 2, 2, 3];
     /// let chunks: Vec<&[i32]> = a.chunk_by(|x, y| x == y).collect();
     /// assert_eq!(chunks, vec![&[1, 1][..], &[2, 2, 2][..], &[3][..]]);

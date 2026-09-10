@@ -14,7 +14,7 @@ use super::numeric_traits::Unsigned;
 /// # 例
 ///
 /// ```
-/// use riff::bitmask_combinations;
+/// use jolt::bitmask_combinations;
 ///
 /// assert_eq!(bitmask_combinations::<u32>(3, 2).collect::<Vec<_>>(), vec![
 ///     3, 5, 6
@@ -78,7 +78,7 @@ impl<T: Unsigned> Iterator for BitmaskCombinations<T> {
 /// # 例
 ///
 /// ```
-/// use riff::bitmask_subsets;
+/// use jolt::bitmask_subsets;
 ///
 /// assert_eq!(bitmask_subsets(10u32).collect::<Vec<_>>(), vec![
 ///     0, 2, 8, 10
