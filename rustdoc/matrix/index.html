@@ -30,7 +30,7 @@
 <h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
 <ul>
 <li>型: <code>Matrix&lt;T&gt;</code>（<code>items: Vec&lt;T&gt;</code> を行優先（row-major）で格納、<code>width: usize</code> は列数）</li>
-<li><a href="trait.Scalar.html" title="trait matrix::Scalar"><code>Scalar</code></a>: 零元 <code>ZERO</code>、単位元 <code>ONE</code>、積和代入 <code>fma_assign(a, b, c)</code>（$a \leftarrow a + bc$）</li>
+<li><a href="trait.Scalar.html" title="trait matrix::Scalar"><code>Scalar</code></a>: 零元 <code>CONST_0</code>、単位元 <code>CONST_1</code>、積和代入 <code>fma_assign(a, b, c)</code>（$a \leftarrow a + bc$）</li>
 <li>生成: <a href="struct.Matrix.html#method.zeros" title="associated function matrix::Matrix::zeros"><code>Matrix::zeros</code></a>、<a href="struct.Matrix.html#method.identity" title="associated function matrix::Matrix::identity"><code>Matrix::identity</code></a>、<a href="struct.Matrix.html#method.companion" title="associated function matrix::Matrix::companion"><code>Matrix::companion</code></a></li>
 <li>演算: <code>&amp;Matrix * &amp;Matrix</code>（行列積）、<a href="struct.Matrix.html#method.pow" title="method matrix::Matrix::pow"><code>Matrix::pow</code></a>、<a href="struct.Matrix.html#method.mul_pow_assign" title="method matrix::Matrix::mul_pow_assign"><code>Matrix::mul_pow_assign</code></a></li>
 <li>添字アクセス: <code>matrix[i]</code>（$i$ 行目のスライス）、<code>matrix[(i, j)]</code>（成分）</li>
@@ -42,8 +42,8 @@
 <span class="attr">#[derive(Clone)]
 </span><span class="kw">struct </span>Int(i64);
 <span class="kw">impl </span>Scalar <span class="kw">for </span>Int {
-    <span class="kw">const </span>ZERO: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">0</span>);
-    <span class="kw">const </span>ONE: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">1</span>);
+    <span class="kw">const </span>CONST_0: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">0</span>);
+    <span class="kw">const </span>CONST_1: <span class="self">Self </span>= <span class="self">Self</span>(<span class="number">1</span>);
     <span class="kw">fn </span>fma_assign(a: <span class="kw-2">&amp;mut </span><span class="self">Self</span>, b: <span class="kw-2">&amp;</span><span class="self">Self</span>, c: <span class="kw-2">&amp;</span><span class="self">Self</span>) {
         a.<span class="number">0 </span>+= b.<span class="number">0 </span>* c.<span class="number">0</span>;
     }

@@ -42,7 +42,7 @@
 <a href=#18 id=18 data-nosnippet>18</a>///
 <a href=#19 id=19 data-nosnippet>19</a>/// $O(\log \min(|x|, |y|))$
 <a href=#20 id=20 data-nosnippet>20</a></span><span class="kw">pub fn </span>gcd&lt;T: Int&gt;(<span class="kw-2">mut </span>x: T, <span class="kw-2">mut </span>y: T) -&gt; T {
-<a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">while </span>x != T::ZERO {
+<a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">while </span>x != T::zero() {
 <a href=#22 id=22 data-nosnippet>22</a>        y = y.rem_euclid(x);
 <a href=#23 id=23 data-nosnippet>23</a>        swap(<span class="kw-2">&amp;mut </span>x, <span class="kw-2">&amp;mut </span>y);
 <a href=#24 id=24 data-nosnippet>24</a>    }

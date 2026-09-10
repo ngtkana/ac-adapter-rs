@@ -34,12 +34,12 @@
 <a href=#10 id=10 data-nosnippet>10</a>//!
 <a href=#11 id=11 data-nosnippet>11</a>//! [`Op`] トレイトで冪等半群を定義する。
 <a href=#12 id=12 data-nosnippet>12</a>//!
-<a href=#13 id=13 data-nosnippet>13</a>//! - [`Op::mul`][]: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）
+<a href=#13 id=13 data-nosnippet>13</a>//! - [`Op::op`][]: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）
 <a href=#14 id=14 data-nosnippet>14</a>//!
 <a href=#15 id=15 data-nosnippet>15</a>//! 構造体は次の $2$ 種類。
 <a href=#16 id=16 data-nosnippet>16</a>//!
 <a href=#17 id=17 data-nosnippet>17</a>//! - [`SparseTable`]（1 次元）
-<a href=#18 id=18 data-nosnippet>18</a>//! - [`SparseTable2d`]（2 次元。[`Op::mul`] にさらに可換律も要求する）
+<a href=#18 id=18 data-nosnippet>18</a>//! - [`SparseTable2d`]（2 次元。[`Op::op`] にさらに可換律も要求する）
 <a href=#19 id=19 data-nosnippet>19</a>//!
 <a href=#20 id=20 data-nosnippet>20</a>//! # 例
 <a href=#21 id=21 data-nosnippet>21</a>//!
@@ -50,19 +50,19 @@
 <a href=#26 id=26 data-nosnippet>26</a>//! enum Max {}
 <a href=#27 id=27 data-nosnippet>27</a>//! impl Op for Max {
 <a href=#28 id=28 data-nosnippet>28</a>//!     type Value = i64;
-<a href=#29 id=29 data-nosnippet>29</a>//!     fn mul(lhs: &amp;i64, rhs: &amp;i64) -&gt; i64 {
+<a href=#29 id=29 data-nosnippet>29</a>//!     fn op(lhs: &amp;i64, rhs: &amp;i64) -&gt; i64 {
 <a href=#30 id=30 data-nosnippet>30</a>//!         (*lhs).max(*rhs)
 <a href=#31 id=31 data-nosnippet>31</a>//!     }
 <a href=#32 id=32 data-nosnippet>32</a>//! }
 <a href=#33 id=33 data-nosnippet>33</a>//!
-<a href=#34 id=34 data-nosnippet>34</a>//! let st = SparseTable::&lt;Max&gt;::clone_from_slice(&amp;[3, 1, 4, 1, 5]);
+<a href=#34 id=34 data-nosnippet>34</a>//! let st = SparseTable::&lt;Max&gt;::from_slice(&amp;[3, 1, 4, 1, 5]);
 <a href=#35 id=35 data-nosnippet>35</a>//! assert_eq!(st.fold(1..4), Some(4)); // max(1, 4, 1)
 <a href=#36 id=36 data-nosnippet>36</a>//! assert_eq!(st.fold(2..2), None); // 空区間
 <a href=#37 id=37 data-nosnippet>37</a>//! ```
 <a href=#38 id=38 data-nosnippet>38</a>//!
 <a href=#39 id=39 data-nosnippet>39</a>//! # 計算量
 <a href=#40 id=40 data-nosnippet>40</a>//!
-<a href=#41 id=41 data-nosnippet>41</a>//! - 構築（[`SparseTable::new`]）: $O(n \log n)$
+<a href=#41 id=41 data-nosnippet>41</a>//! - 構築（[`SparseTable::from_vec`], [`SparseTable::from_slice`]）: $O(n \log n)$
 <a href=#42 id=42 data-nosnippet>42</a>//! - 畳み込み（[`SparseTable::fold`]）: $O(1)$
 <a href=#43 id=43 data-nosnippet>43</a>
 <a href=#44 id=44 data-nosnippet>44</a></span><span class="kw">use </span>std::fmt::Debug;
@@ -76,7 +76,7 @@
 <a href=#52 id=52 data-nosnippet>52</a>    </span><span class="kw">type </span>Value;
 <a href=#53 id=53 data-nosnippet>53</a>
 <a href=#54 id=54 data-nosnippet>54</a>    <span class="doccomment">/// 積 $x \cdot y$ を計算する。
-<a href=#55 id=55 data-nosnippet>55</a>    </span><span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
+<a href=#55 id=55 data-nosnippet>55</a>    </span><span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value;
 <a href=#56 id=56 data-nosnippet>56</a>}
 <a href=#57 id=57 data-nosnippet>57</a>
 <a href=#58 id=58 data-nosnippet>58</a><span class="doccomment">/// 1 次元のスパーステーブル。区間 $[l, r)$ の畳み込みを $O(1)$ で答える。
@@ -85,12 +85,12 @@
 <a href=#61 id=61 data-nosnippet>61</a>}
 <a href=#62 id=62 data-nosnippet>62</a><span class="kw">impl</span>&lt;O: Op&gt; SparseTable&lt;O&gt; {
 <a href=#63 id=63 data-nosnippet>63</a>    <span class="doccomment">/// 値の列からスパーステーブルを構築する。$O(n \log n)$。
-<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">pub fn </span>new(values: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">pub fn </span>from_vec(values: Vec&lt;O::Value&gt;) -&gt; <span class="self">Self </span>{
 <a href=#65 id=65 data-nosnippet>65</a>        values.into()
 <a href=#66 id=66 data-nosnippet>66</a>    }
 <a href=#67 id=67 data-nosnippet>67</a>
 <a href=#68 id=68 data-nosnippet>68</a>    <span class="doccomment">/// 値のスライスを複製してスパーステーブルを構築する。$O(n \log n)$。
-<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">pub fn </span>clone_from_slice(values: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
+<a href=#69 id=69 data-nosnippet>69</a>    </span><span class="kw">pub fn </span>from_slice(values: <span class="kw-2">&amp;</span>[O::Value]) -&gt; <span class="self">Self
 <a href=#70 id=70 data-nosnippet>70</a>    </span><span class="kw">where
 <a href=#71 id=71 data-nosnippet>71</a>        </span>O::Value: Clone,
 <a href=#72 id=72 data-nosnippet>72</a>    {
@@ -113,12 +113,12 @@
 <a href=#89 id=89 data-nosnippet>89</a>    /// enum Max {}
 <a href=#90 id=90 data-nosnippet>90</a>    /// impl Op for Max {
 <a href=#91 id=91 data-nosnippet>91</a>    ///     type Value = i64;
-<a href=#92 id=92 data-nosnippet>92</a>    ///     fn mul(lhs: &amp;i64, rhs: &amp;i64) -&gt; i64 {
+<a href=#92 id=92 data-nosnippet>92</a>    ///     fn op(lhs: &amp;i64, rhs: &amp;i64) -&gt; i64 {
 <a href=#93 id=93 data-nosnippet>93</a>    ///         (*lhs).max(*rhs)
 <a href=#94 id=94 data-nosnippet>94</a>    ///     }
 <a href=#95 id=95 data-nosnippet>95</a>    /// }
 <a href=#96 id=96 data-nosnippet>96</a>    ///
-<a href=#97 id=97 data-nosnippet>97</a>    /// let st = SparseTable::&lt;Max&gt;::clone_from_slice(&amp;[3, 1, 4, 1, 5]);
+<a href=#97 id=97 data-nosnippet>97</a>    /// let st = SparseTable::&lt;Max&gt;::from_slice(&amp;[3, 1, 4, 1, 5]);
 <a href=#98 id=98 data-nosnippet>98</a>    /// assert_eq!(st.fold(1..4), Some(4));
 <a href=#99 id=99 data-nosnippet>99</a>    /// assert_eq!(st.fold(2..2), None);
 <a href=#100 id=100 data-nosnippet>100</a>    /// ```
@@ -128,7 +128,7 @@
 <a href=#104 id=104 data-nosnippet>104</a>        (start &lt; end).then_some(())<span class="question-mark">?</span>;
 <a href=#105 id=105 data-nosnippet>105</a>        <span class="kw">let </span>p = (end - start).ilog2() <span class="kw">as </span>usize;
 <a href=#106 id=106 data-nosnippet>106</a>        <span class="kw">let </span>row = <span class="kw-2">&amp;</span><span class="self">self</span>.table[p];
-<a href=#107 id=107 data-nosnippet>107</a>        <span class="prelude-val">Some</span>(O::mul(<span class="kw-2">&amp;</span>row[start], <span class="kw-2">&amp;</span>row[end - (<span class="number">1 </span>&lt;&lt; p)]))
+<a href=#107 id=107 data-nosnippet>107</a>        <span class="prelude-val">Some</span>(O::op(<span class="kw-2">&amp;</span>row[start], <span class="kw-2">&amp;</span>row[end - (<span class="number">1 </span>&lt;&lt; p)]))
 <a href=#108 id=108 data-nosnippet>108</a>    }
 <a href=#109 id=109 data-nosnippet>109</a>
 <a href=#110 id=110 data-nosnippet>110</a>    <span class="doccomment">/// $x_0, x_1, \ldots, x_{n-1}$ を順に返すイテレータ。
@@ -176,7 +176,7 @@
 <a href=#152 id=152 data-nosnippet>152</a>            <span class="kw">let </span>current = last
 <a href=#153 id=153 data-nosnippet>153</a>                .iter()
 <a href=#154 id=154 data-nosnippet>154</a>                .zip(<span class="kw-2">&amp;</span>last[i..])
-<a href=#155 id=155 data-nosnippet>155</a>                .map(|(a, b)| O::mul(a, b))
+<a href=#155 id=155 data-nosnippet>155</a>                .map(|(a, b)| O::op(a, b))
 <a href=#156 id=156 data-nosnippet>156</a>                .collect();
 <a href=#157 id=157 data-nosnippet>157</a>            table.push(current);
 <a href=#158 id=158 data-nosnippet>158</a>            i <span class="kw-2">*</span>= <span class="number">2</span>;
@@ -210,19 +210,19 @@
 <a href=#186 id=186 data-nosnippet>186</a>
 <a href=#187 id=187 data-nosnippet>187</a><span class="doccomment">/// 2 次元のスパーステーブル。矩形領域の畳み込みを $O(1)$ で答える。
 <a href=#188 id=188 data-nosnippet>188</a>///
-<a href=#189 id=189 data-nosnippet>189</a>/// 矩形を高々 4 個の角ブロックに分解して積を取るため、[`Op::mul`] は可換律も満たす必要がある。
+<a href=#189 id=189 data-nosnippet>189</a>/// 矩形を高々 4 個の角ブロックに分解して積を取るため、[`Op::op`] は可換律も満たす必要がある。
 <a href=#190 id=190 data-nosnippet>190</a></span><span class="kw">pub struct </span>SparseTable2d&lt;O: Op&gt; {
 <a href=#191 id=191 data-nosnippet>191</a>    table: Vec&lt;Vec&lt;Vec&lt;Vec&lt;O::Value&gt;&gt;&gt;&gt;,
 <a href=#192 id=192 data-nosnippet>192</a>}
 <a href=#193 id=193 data-nosnippet>193</a>
 <a href=#194 id=194 data-nosnippet>194</a><span class="kw">impl</span>&lt;O: Op&gt; SparseTable2d&lt;O&gt; {
 <a href=#195 id=195 data-nosnippet>195</a>    <span class="doccomment">/// 値の 2 次元配列からスパーステーブルを構築する。$O(hw \log h \log w)$。
-<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub fn </span>new(values: Vec&lt;Vec&lt;O::Value&gt;&gt;) -&gt; <span class="self">Self </span>{
+<a href=#196 id=196 data-nosnippet>196</a>    </span><span class="kw">pub fn </span>from_vec(values: Vec&lt;Vec&lt;O::Value&gt;&gt;) -&gt; <span class="self">Self </span>{
 <a href=#197 id=197 data-nosnippet>197</a>        values.into()
 <a href=#198 id=198 data-nosnippet>198</a>    }
 <a href=#199 id=199 data-nosnippet>199</a>
 <a href=#200 id=200 data-nosnippet>200</a>    <span class="doccomment">/// 値の 2 次元スライスを複製してスパーステーブルを構築する。$O(hw \log h \log w)$。
-<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="kw">pub fn </span>clone_from_slice(values: <span class="kw-2">&amp;</span>[Vec&lt;O::Value&gt;]) -&gt; <span class="self">Self
+<a href=#201 id=201 data-nosnippet>201</a>    </span><span class="kw">pub fn </span>from_slice(values: <span class="kw-2">&amp;</span>[Vec&lt;O::Value&gt;]) -&gt; <span class="self">Self
 <a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">where
 <a href=#203 id=203 data-nosnippet>203</a>        </span>O::Value: Clone,
 <a href=#204 id=204 data-nosnippet>204</a>    {
@@ -243,9 +243,9 @@
 <a href=#219 id=219 data-nosnippet>219</a>        <span class="kw">let </span>grid = <span class="kw-2">&amp;</span><span class="self">self</span>.table[p][q];
 <a href=#220 id=220 data-nosnippet>220</a>        i1 -= <span class="number">1 </span>&lt;&lt; p;
 <a href=#221 id=221 data-nosnippet>221</a>        j1 -= <span class="number">1 </span>&lt;&lt; q;
-<a href=#222 id=222 data-nosnippet>222</a>        <span class="prelude-val">Some</span>(O::mul(
-<a href=#223 id=223 data-nosnippet>223</a>            <span class="kw-2">&amp;</span>O::mul(<span class="kw-2">&amp;</span>grid[i0][j0], <span class="kw-2">&amp;</span>grid[i1][j0]),
-<a href=#224 id=224 data-nosnippet>224</a>            <span class="kw-2">&amp;</span>O::mul(<span class="kw-2">&amp;</span>grid[i0][j1], <span class="kw-2">&amp;</span>grid[i1][j1]),
+<a href=#222 id=222 data-nosnippet>222</a>        <span class="prelude-val">Some</span>(O::op(
+<a href=#223 id=223 data-nosnippet>223</a>            <span class="kw-2">&amp;</span>O::op(<span class="kw-2">&amp;</span>grid[i0][j0], <span class="kw-2">&amp;</span>grid[i1][j0]),
+<a href=#224 id=224 data-nosnippet>224</a>            <span class="kw-2">&amp;</span>O::op(<span class="kw-2">&amp;</span>grid[i0][j1], <span class="kw-2">&amp;</span>grid[i1][j1]),
 <a href=#225 id=225 data-nosnippet>225</a>        ))
 <a href=#226 id=226 data-nosnippet>226</a>    }
 <a href=#227 id=227 data-nosnippet>227</a>
@@ -298,7 +298,7 @@
 <a href=#274 id=274 data-nosnippet>274</a>                .map(|row| {
 <a href=#275 id=275 data-nosnippet>275</a>                    row.iter()
 <a href=#276 id=276 data-nosnippet>276</a>                        .zip(<span class="kw-2">&amp;</span>row[j..])
-<a href=#277 id=277 data-nosnippet>277</a>                        .map(|(a, b)| O::mul(a, b))
+<a href=#277 id=277 data-nosnippet>277</a>                        .map(|(a, b)| O::op(a, b))
 <a href=#278 id=278 data-nosnippet>278</a>                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 <a href=#279 id=279 data-nosnippet>279</a>                })
 <a href=#280 id=280 data-nosnippet>280</a>                .collect();
@@ -316,7 +316,7 @@
 <a href=#292 id=292 data-nosnippet>292</a>                        .map(|(a, b)| {
 <a href=#293 id=293 data-nosnippet>293</a>                            a.iter()
 <a href=#294 id=294 data-nosnippet>294</a>                                .zip(b)
-<a href=#295 id=295 data-nosnippet>295</a>                                .map(|(a, b)| O::mul(a, b))
+<a href=#295 id=295 data-nosnippet>295</a>                                .map(|(a, b)| O::op(a, b))
 <a href=#296 id=296 data-nosnippet>296</a>                                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 <a href=#297 id=297 data-nosnippet>297</a>                        })
 <a href=#298 id=298 data-nosnippet>298</a>                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
@@ -365,7 +365,7 @@
 <a href=#341 id=341 data-nosnippet>341</a>    <span class="kw">impl </span>Op <span class="kw">for </span>O {
 <a href=#342 id=342 data-nosnippet>342</a>        <span class="kw">type </span>Value = u64;
 <a href=#343 id=343 data-nosnippet>343</a>
-<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
+<a href=#344 id=344 data-nosnippet>344</a>        <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value, rhs: <span class="kw-2">&amp;</span><span class="self">Self</span>::Value) -&gt; <span class="self">Self</span>::Value {
 <a href=#345 id=345 data-nosnippet>345</a>            (<span class="kw-2">*</span>lhs).max(<span class="kw-2">*</span>rhs)
 <a href=#346 id=346 data-nosnippet>346</a>        }
 <a href=#347 id=347 data-nosnippet>347</a>    }
@@ -379,7 +379,7 @@
 <a href=#355 id=355 data-nosnippet>355</a>            <span class="kw">let </span>vec = (<span class="number">0</span>..n)
 <a href=#356 id=356 data-nosnippet>356</a>                .map(|<span class="kw">_</span>| rng.gen_range(<span class="number">0</span>..u64::MAX))
 <a href=#357 id=357 data-nosnippet>357</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#358 id=358 data-nosnippet>358</a>            <span class="kw">let </span>st = SparseTable::&lt;O&gt;::clone_from_slice(<span class="kw-2">&amp;</span>vec);
+<a href=#358 id=358 data-nosnippet>358</a>            <span class="kw">let </span>st = SparseTable::&lt;O&gt;::from_slice(<span class="kw-2">&amp;</span>vec);
 <a href=#359 id=359 data-nosnippet>359</a>            <span class="kw">for _ in </span><span class="number">0</span>..q {
 <a href=#360 id=360 data-nosnippet>360</a>                <span class="kw">let </span>range = random_range(<span class="kw-2">&amp;mut </span>rng, n);
 <a href=#361 id=361 data-nosnippet>361</a>                <span class="kw">let </span>expected = vec[range.clone()].iter().copied().max();
@@ -403,7 +403,7 @@
 <a href=#379 id=379 data-nosnippet>379</a>                        .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;()
 <a href=#380 id=380 data-nosnippet>380</a>                })
 <a href=#381 id=381 data-nosnippet>381</a>                .collect::&lt;Vec&lt;<span class="kw">_</span>&gt;&gt;();
-<a href=#382 id=382 data-nosnippet>382</a>            <span class="kw">let </span>st = SparseTable2d::&lt;O&gt;::clone_from_slice(<span class="kw-2">&amp;</span>vec);
+<a href=#382 id=382 data-nosnippet>382</a>            <span class="kw">let </span>st = SparseTable2d::&lt;O&gt;::from_slice(<span class="kw-2">&amp;</span>vec);
 <a href=#383 id=383 data-nosnippet>383</a>            <span class="kw">for _ in </span><span class="number">0</span>..q {
 <a href=#384 id=384 data-nosnippet>384</a>                <span class="kw">let </span>i = random_range(<span class="kw-2">&amp;mut </span>rng, h);
 <a href=#385 id=385 data-nosnippet>385</a>                <span class="kw">let </span>j = random_range(<span class="kw-2">&amp;mut </span>rng, w);

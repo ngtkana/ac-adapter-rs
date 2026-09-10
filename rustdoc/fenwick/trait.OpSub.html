@@ -26,7 +26,7 @@
     // Required method
     fn <a href="#tymethod.sub" class="fn">sub</a>(a: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>, b: &amp;Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>) -&gt; Self::<a class="associatedtype" href="trait.Op.html#associatedtype.Value" title="type fenwick::Op::Value">Value</a>;
 }</code></pre><details class="toggle top-doc" open><summary class="hideme"><span>Expand description</span></summary><div class="docblock"><p>逆演算 $\ominus$ を追加する<a href="trait.Op.html" title="trait fenwick::Op"><code>Op</code></a>の拡張。</p>
-<p><code>add</code>だけでは前計算 $[0, i)$ の畳み込みしか求まらない。<code>sub</code>を実装すると、
+<p><code>op</code>だけでは前計算 $[0, i)$ の畳み込みしか求まらない。<code>sub</code>を実装すると、
 任意区間 $[l, r)$ の畳み込みを $\mathrm{fold_to}(r) \ominus \mathrm{fold_to}(l)$
 で計算できるようになる。</p>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>

@@ -31,10 +31,10 @@
 <p><a href="trait.Op.html" title="trait sparse_segtree::Op"><code>Op</code></a> トレイトでモノイド $(S, \cdot, e)$ を定義する。</p>
 <ul>
 <li><a href="trait.Op.html#tymethod.identity" title="associated function sparse_segtree::Op::identity"><code>Op::identity</code></a>: 単位元 $e$</li>
-<li><a href="trait.Op.html#tymethod.mul" title="associated function sparse_segtree::Op::mul"><code>Op::mul</code></a>: 積 $x \cdot y$（結合律を満たすこと）</li>
+<li><a href="trait.Op.html#tymethod.op" title="associated function sparse_segtree::Op::op"><code>Op::op</code></a>: 積 $x \cdot y$（結合律を満たすこと）</li>
 </ul>
 <p><a href="struct.SparseSegtree.html#method.from_range" title="associated function sparse_segtree::SparseSegtree::from_range"><code>SparseSegtree::from_range</code></a> で定義域 $[0, n)$ を指定して構築し、
-<a href="struct.SparseSegtree.html#method.update" title="method sparse_segtree::SparseSegtree::update"><code>SparseSegtree::update</code></a> で 1 点更新、<a href="struct.SparseSegtree.html#method.fold" title="method sparse_segtree::SparseSegtree::fold"><code>SparseSegtree::fold</code></a> で区間畳み込みを行う。</p>
+<a href="struct.SparseSegtree.html#method.apply" title="method sparse_segtree::SparseSegtree::apply"><code>SparseSegtree::apply</code></a> で 1 点更新、<a href="struct.SparseSegtree.html#method.fold" title="method sparse_segtree::SparseSegtree::fold"><code>SparseSegtree::fold</code></a> で区間畳み込みを行う。</p>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>sparse_segtree::Op;
 <span class="kw">use </span>sparse_segtree::SparseSegtree;
@@ -45,20 +45,20 @@
     <span class="kw">fn </span>identity() -&gt; i64 {
         <span class="number">0
     </span>}
-    <span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
+    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
         lhs + rhs
     }
 }
 
 <span class="kw">let </span><span class="kw-2">mut </span>seg = SparseSegtree::&lt;Add&gt;::from_range(<span class="number">0</span>..<span class="number">10</span>);
-seg.update(<span class="number">2</span>, |x| <span class="kw-2">*</span>x += <span class="number">5</span>);
-seg.update(<span class="number">5</span>, |x| <span class="kw-2">*</span>x += <span class="number">3</span>);
+seg.apply(<span class="number">2</span>, |x| <span class="kw-2">*</span>x += <span class="number">5</span>);
+seg.apply(<span class="number">5</span>, |x| <span class="kw-2">*</span>x += <span class="number">3</span>);
 <span class="macro">assert_eq!</span>(seg.fold(<span class="number">0</span>..<span class="number">10</span>), <span class="number">8</span>);</code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <p>定義域の大きさを $n$ とする。</p>
 <ul>
 <li>構築（<a href="struct.SparseSegtree.html#method.from_range" title="associated function sparse_segtree::SparseSegtree::from_range"><code>SparseSegtree::from_range</code></a>）: $O(1)$</li>
-<li>1 点更新（<a href="struct.SparseSegtree.html#method.update" title="method sparse_segtree::SparseSegtree::update"><code>SparseSegtree::update</code></a>）: $O(\log n)$（未確保ノードの新規確保を含む）</li>
+<li>1 点更新（<a href="struct.SparseSegtree.html#method.apply" title="method sparse_segtree::SparseSegtree::apply"><code>SparseSegtree::apply</code></a>）: $O(\log n)$（未確保ノードの新規確保を含む）</li>
 <li>畳み込み（<a href="struct.SparseSegtree.html#method.fold" title="method sparse_segtree::SparseSegtree::fold"><code>SparseSegtree::fold</code></a>）: $O(\log n)$</li>
 <li>走査（<a href="struct.SparseSegtree.html#method.visit_items" title="method sparse_segtree::SparseSegtree::visit_items"><code>SparseSegtree::visit_items</code></a>, <a href="struct.SparseSegtree.html#method.visit_ranges" title="method sparse_segtree::SparseSegtree::visit_ranges"><code>SparseSegtree::visit_ranges</code></a>）: $O(\log n)$ に加え、実際に確保済みのノード数に比例</li>
 </ul>

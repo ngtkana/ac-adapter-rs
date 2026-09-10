@@ -31,12 +31,12 @@
 <h2 id="仕様"><a class="doc-anchor" href="#仕様">§</a>仕様</h2>
 <p><a href="trait.Op.html" title="trait sparse_table::Op"><code>Op</code></a> トレイトで冪等半群を定義する。</p>
 <ul>
-<li><a href="trait.Op.html#tymethod.mul" title="associated function sparse_table::Op::mul"><code>Op::mul</code></a>: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）</li>
+<li><a href="trait.Op.html#tymethod.op" title="associated function sparse_table::Op::op"><code>Op::op</code></a>: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）</li>
 </ul>
 <p>構造体は次の $2$ 種類。</p>
 <ul>
 <li><a href="struct.SparseTable.html" title="struct sparse_table::SparseTable"><code>SparseTable</code></a>（1 次元）</li>
-<li><a href="struct.SparseTable2d.html" title="struct sparse_table::SparseTable2d"><code>SparseTable2d</code></a>（2 次元。<a href="trait.Op.html#tymethod.mul" title="associated function sparse_table::Op::mul"><code>Op::mul</code></a> にさらに可換律も要求する）</li>
+<li><a href="struct.SparseTable2d.html" title="struct sparse_table::SparseTable2d"><code>SparseTable2d</code></a>（2 次元。<a href="trait.Op.html#tymethod.op" title="associated function sparse_table::Op::op"><code>Op::op</code></a> にさらに可換律も要求する）</li>
 </ul>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>sparse_table::Op;
@@ -45,17 +45,17 @@
 <span class="kw">enum </span>Max {}
 <span class="kw">impl </span>Op <span class="kw">for </span>Max {
     <span class="kw">type </span>Value = i64;
-    <span class="kw">fn </span>mul(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
+    <span class="kw">fn </span>op(lhs: <span class="kw-2">&amp;</span>i64, rhs: <span class="kw-2">&amp;</span>i64) -&gt; i64 {
         (<span class="kw-2">*</span>lhs).max(<span class="kw-2">*</span>rhs)
     }
 }
 
-<span class="kw">let </span>st = SparseTable::&lt;Max&gt;::clone_from_slice(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">5</span>]);
+<span class="kw">let </span>st = SparseTable::&lt;Max&gt;::from_slice(<span class="kw-2">&amp;</span>[<span class="number">3</span>, <span class="number">1</span>, <span class="number">4</span>, <span class="number">1</span>, <span class="number">5</span>]);
 <span class="macro">assert_eq!</span>(st.fold(<span class="number">1</span>..<span class="number">4</span>), <span class="prelude-val">Some</span>(<span class="number">4</span>)); <span class="comment">// max(1, 4, 1)
 </span><span class="macro">assert_eq!</span>(st.fold(<span class="number">2</span>..<span class="number">2</span>), <span class="prelude-val">None</span>); <span class="comment">// 空区間</span></code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
-<li>構築（<a href="struct.SparseTable.html#method.new" title="associated function sparse_table::SparseTable::new"><code>SparseTable::new</code></a>）: $O(n \log n)$</li>
+<li>構築（<a href="struct.SparseTable.html#method.from_vec" title="associated function sparse_table::SparseTable::from_vec"><code>SparseTable::from_vec</code></a>, <a href="struct.SparseTable.html#method.from_slice" title="associated function sparse_table::SparseTable::from_slice"><code>SparseTable::from_slice</code></a>）: $O(n \log n)$</li>
 <li>畳み込み（<a href="struct.SparseTable.html#method.fold" title="method sparse_table::SparseTable::fold"><code>SparseTable::fold</code></a>）: $O(1)$</li>
 </ul>
 </div></details><h2 id="structs" class="section-header">Structs<a href="#structs" class="anchor">§</a></h2><dl class="item-table"><dt><a class="struct" href="struct.SparseTable.html" title="struct sparse_table::SparseTable">Sparse<wbr>Table</a></dt><dd>1 次元のスパーステーブル。区間 $[l, r)$ の畳み込みを $O(1)$ で答える。</dd><dt><a class="struct" href="struct.SparseTable2d.html" title="struct sparse_table::SparseTable2d">Sparse<wbr>Table2d</a></dt><dd>2 次元のスパーステーブル。矩形領域の畳み込みを $O(1)$ で答える。</dd></dl><h2 id="traits" class="section-header">Traits<a href="#traits" class="anchor">§</a></h2><dl class="item-table"><dt><a class="trait" href="trait.Op.html" title="trait sparse_table::Op">Op</a></dt><dd>区間畳み込みに使う二項演算。結合律・冪等律 $x \cdot x = x$ を満たすこと。</dd></dl></section></div></main></body></html>
