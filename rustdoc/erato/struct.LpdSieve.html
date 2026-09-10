@@ -67,8 +67,8 @@
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>erato::LpdSieve;
 
 <span class="kw">let </span><span class="kw-2">mut </span>sieve = LpdSieve::new();
-<span class="macro">assert!</span>(sieve.is_prime(<span class="number">2</span>));
-<span class="macro">assert!</span>(!sieve.is_prime(<span class="number">6</span>));</code></pre></div>
+<span class="macro">assert_eq!</span>(sieve.lpd(<span class="number">2</span>), <span class="number">2</span>);
+<span class="macro">assert_eq!</span>(sieve.lpd(<span class="number">15</span>), <span class="number">3</span>);</code></pre></div>
 <h5 id="panics-1"><a class="doc-anchor" href="#panics-1">§</a>Panics</h5>
 <p><code>x &lt;= 1</code> のとき panic する。</p>
 </div></details><details class="toggle method-toggle" open><summary><section id="method.prime_numbers" class="method"><a class="src rightside" href="../src/erato/lpd_sieve.rs.html#139-141">Source</a><h4 class="code-header">pub fn <a href="#method.prime_numbers" class="fn">prime_numbers</a>&lt;T: <a class="trait" href="trait.Int.html" title="trait erato::Int">Int</a>&gt;(&amp;mut self) -&gt; <a class="struct" href="struct.PrimeNumbers.html" title="struct erato::PrimeNumbers">PrimeNumbers</a>&lt;'_, Usize, T&gt; <a href="#" class="tooltip" data-notable-ty="PrimeNumbers&lt;&#39;_, Usize, T&gt;">ⓘ</a></h4></section></summary><div class="docblock"><p>素数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。</p>
