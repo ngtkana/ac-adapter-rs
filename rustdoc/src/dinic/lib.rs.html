@@ -121,19 +121,19 @@
 <a href=#97 id=97 data-nosnippet>97</a>    ///
 <a href=#98 id=98 data-nosnippet>98</a>    /// `from, to &lt; n`、`cap &gt;= 0` が前提。
 <a href=#99 id=99 data-nosnippet>99</a>    ///
-<a href=#100 id=100 data-nosnippet>100</a>    /// # 計算量
+<a href=#100 id=100 data-nosnippet>100</a>    /// # 例
 <a href=#101 id=101 data-nosnippet>101</a>    ///
-<a href=#102 id=102 data-nosnippet>102</a>    /// $O(1)$ 償却。
-<a href=#103 id=103 data-nosnippet>103</a>    ///
-<a href=#104 id=104 data-nosnippet>104</a>    /// # 例
-<a href=#105 id=105 data-nosnippet>105</a>    ///
-<a href=#106 id=106 data-nosnippet>106</a>    /// ```
-<a href=#107 id=107 data-nosnippet>107</a>    /// use dinic::Dinic;
-<a href=#108 id=108 data-nosnippet>108</a>    ///
-<a href=#109 id=109 data-nosnippet>109</a>    /// let mut dinic = Dinic::new(3);
-<a href=#110 id=110 data-nosnippet>110</a>    /// let key = dinic.add_edge(0, 1, 10);
-<a href=#111 id=111 data-nosnippet>111</a>    /// assert_eq!(dinic.get_edge(key).cap, 10);
-<a href=#112 id=112 data-nosnippet>112</a>    /// ```
+<a href=#102 id=102 data-nosnippet>102</a>    /// ```
+<a href=#103 id=103 data-nosnippet>103</a>    /// use dinic::Dinic;
+<a href=#104 id=104 data-nosnippet>104</a>    ///
+<a href=#105 id=105 data-nosnippet>105</a>    /// let mut dinic = Dinic::new(3);
+<a href=#106 id=106 data-nosnippet>106</a>    /// let key = dinic.add_edge(0, 1, 10);
+<a href=#107 id=107 data-nosnippet>107</a>    /// assert_eq!(dinic.get_edge(key).cap, 10);
+<a href=#108 id=108 data-nosnippet>108</a>    /// ```
+<a href=#109 id=109 data-nosnippet>109</a>    ///
+<a href=#110 id=110 data-nosnippet>110</a>    /// # 計算量
+<a href=#111 id=111 data-nosnippet>111</a>    ///
+<a href=#112 id=112 data-nosnippet>112</a>    /// $O(1)$ 償却。
 <a href=#113 id=113 data-nosnippet>113</a>    </span><span class="kw">pub fn </span>add_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, from: usize, to: usize, cap: T) -&gt; EdgeKey {
 <a href=#114 id=114 data-nosnippet>114</a>        <span class="macro">assert!</span>(
 <a href=#115 id=115 data-nosnippet>115</a>            from &lt; <span class="self">self</span>.res.len() &amp;&amp; to &lt; <span class="self">self</span>.res.len(),
@@ -176,21 +176,21 @@
 <a href=#152 id=152 data-nosnippet>152</a>    ///
 <a href=#153 id=153 data-nosnippet>153</a>    /// `s != t` が前提。戻り値は `T` で表現できる範囲に収まる必要がある。
 <a href=#154 id=154 data-nosnippet>154</a>    ///
-<a href=#155 id=155 data-nosnippet>155</a>    /// # 計算量
+<a href=#155 id=155 data-nosnippet>155</a>    /// # 例
 <a href=#156 id=156 data-nosnippet>156</a>    ///
-<a href=#157 id=157 data-nosnippet>157</a>    /// $O(n^2 m)$。全ての容量が1なら $O(\min(n^{2/3} m, m^{3/2}))$。
-<a href=#158 id=158 data-nosnippet>158</a>    ///
-<a href=#159 id=159 data-nosnippet>159</a>    /// # 例
-<a href=#160 id=160 data-nosnippet>160</a>    ///
-<a href=#161 id=161 data-nosnippet>161</a>    /// ```
-<a href=#162 id=162 data-nosnippet>162</a>    /// use dinic::Dinic;
-<a href=#163 id=163 data-nosnippet>163</a>    ///
-<a href=#164 id=164 data-nosnippet>164</a>    /// let mut dinic = Dinic::new(3);
-<a href=#165 id=165 data-nosnippet>165</a>    /// dinic.add_edge(0, 1, 10);
-<a href=#166 id=166 data-nosnippet>166</a>    /// dinic.add_edge(1, 2, 15);
-<a href=#167 id=167 data-nosnippet>167</a>    /// dinic.add_edge(0, 2, 20);
-<a href=#168 id=168 data-nosnippet>168</a>    /// assert_eq!(dinic.flow(0, 2), 30);
-<a href=#169 id=169 data-nosnippet>169</a>    /// ```
+<a href=#157 id=157 data-nosnippet>157</a>    /// ```
+<a href=#158 id=158 data-nosnippet>158</a>    /// use dinic::Dinic;
+<a href=#159 id=159 data-nosnippet>159</a>    ///
+<a href=#160 id=160 data-nosnippet>160</a>    /// let mut dinic = Dinic::new(3);
+<a href=#161 id=161 data-nosnippet>161</a>    /// dinic.add_edge(0, 1, 10);
+<a href=#162 id=162 data-nosnippet>162</a>    /// dinic.add_edge(1, 2, 15);
+<a href=#163 id=163 data-nosnippet>163</a>    /// dinic.add_edge(0, 2, 20);
+<a href=#164 id=164 data-nosnippet>164</a>    /// assert_eq!(dinic.flow(0, 2), 30);
+<a href=#165 id=165 data-nosnippet>165</a>    /// ```
+<a href=#166 id=166 data-nosnippet>166</a>    ///
+<a href=#167 id=167 data-nosnippet>167</a>    /// # 計算量
+<a href=#168 id=168 data-nosnippet>168</a>    ///
+<a href=#169 id=169 data-nosnippet>169</a>    /// $O(n^2 m)$。全ての容量が1なら $O(\min(n^{2/3} m, m^{3/2}))$。
 <a href=#170 id=170 data-nosnippet>170</a>    </span><span class="kw">pub fn </span>flow(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: usize, t: usize) -&gt; T {
 <a href=#171 id=171 data-nosnippet>171</a>        <span class="macro">assert!</span>(
 <a href=#172 id=172 data-nosnippet>172</a>            s &lt; <span class="self">self</span>.res.len() &amp;&amp; t &lt; <span class="self">self</span>.res.len(),
@@ -208,21 +208,21 @@
 <a href=#184 id=184 data-nosnippet>184</a>    ///
 <a href=#185 id=185 data-nosnippet>185</a>    /// `s != t` が前提。
 <a href=#186 id=186 data-nosnippet>186</a>    ///
-<a href=#187 id=187 data-nosnippet>187</a>    /// # 計算量
+<a href=#187 id=187 data-nosnippet>187</a>    /// # 例
 <a href=#188 id=188 data-nosnippet>188</a>    ///
-<a href=#189 id=189 data-nosnippet>189</a>    /// [`flow`](Dinic::flow) と同じ。
-<a href=#190 id=190 data-nosnippet>190</a>    ///
-<a href=#191 id=191 data-nosnippet>191</a>    /// # 例
-<a href=#192 id=192 data-nosnippet>192</a>    ///
-<a href=#193 id=193 data-nosnippet>193</a>    /// ```
-<a href=#194 id=194 data-nosnippet>194</a>    /// use dinic::Dinic;
-<a href=#195 id=195 data-nosnippet>195</a>    ///
-<a href=#196 id=196 data-nosnippet>196</a>    /// let mut dinic = Dinic::new(3);
-<a href=#197 id=197 data-nosnippet>197</a>    /// dinic.add_edge(0, 1, 10);
-<a href=#198 id=198 data-nosnippet>198</a>    /// dinic.add_edge(1, 2, 15);
-<a href=#199 id=199 data-nosnippet>199</a>    /// dinic.add_edge(0, 2, 20);
-<a href=#200 id=200 data-nosnippet>200</a>    /// assert_eq!(dinic.flow_with_limit(0, 2, 28), 28);
-<a href=#201 id=201 data-nosnippet>201</a>    /// ```
+<a href=#189 id=189 data-nosnippet>189</a>    /// ```
+<a href=#190 id=190 data-nosnippet>190</a>    /// use dinic::Dinic;
+<a href=#191 id=191 data-nosnippet>191</a>    ///
+<a href=#192 id=192 data-nosnippet>192</a>    /// let mut dinic = Dinic::new(3);
+<a href=#193 id=193 data-nosnippet>193</a>    /// dinic.add_edge(0, 1, 10);
+<a href=#194 id=194 data-nosnippet>194</a>    /// dinic.add_edge(1, 2, 15);
+<a href=#195 id=195 data-nosnippet>195</a>    /// dinic.add_edge(0, 2, 20);
+<a href=#196 id=196 data-nosnippet>196</a>    /// assert_eq!(dinic.flow_with_limit(0, 2, 28), 28);
+<a href=#197 id=197 data-nosnippet>197</a>    /// ```
+<a href=#198 id=198 data-nosnippet>198</a>    ///
+<a href=#199 id=199 data-nosnippet>199</a>    /// # 計算量
+<a href=#200 id=200 data-nosnippet>200</a>    ///
+<a href=#201 id=201 data-nosnippet>201</a>    /// [`flow`](Dinic::flow) と同じ。
 <a href=#202 id=202 data-nosnippet>202</a>    </span><span class="kw">pub fn </span>flow_with_limit(<span class="kw-2">&amp;mut </span><span class="self">self</span>, s: usize, t: usize, flow_with_limit: T) -&gt; T {
 <a href=#203 id=203 data-nosnippet>203</a>        <span class="macro">assert!</span>(
 <a href=#204 id=204 data-nosnippet>204</a>            s &lt; <span class="self">self</span>.res.len() &amp;&amp; t &lt; <span class="self">self</span>.res.len(),
@@ -403,24 +403,24 @@
 <a href=#379 id=379 data-nosnippet>379</a>    ///
 <a href=#380 id=380 data-nosnippet>380</a>    /// `T::ZERO &lt;= new_flow &lt;= new_cap` が前提。
 <a href=#381 id=381 data-nosnippet>381</a>    ///
-<a href=#382 id=382 data-nosnippet>382</a>    /// # 計算量
+<a href=#382 id=382 data-nosnippet>382</a>    /// # 例
 <a href=#383 id=383 data-nosnippet>383</a>    ///
-<a href=#384 id=384 data-nosnippet>384</a>    /// $O(1)$。
-<a href=#385 id=385 data-nosnippet>385</a>    ///
-<a href=#386 id=386 data-nosnippet>386</a>    /// # 例
-<a href=#387 id=387 data-nosnippet>387</a>    ///
-<a href=#388 id=388 data-nosnippet>388</a>    /// ```
-<a href=#389 id=389 data-nosnippet>389</a>    /// use dinic::Dinic;
-<a href=#390 id=390 data-nosnippet>390</a>    ///
-<a href=#391 id=391 data-nosnippet>391</a>    /// let mut dinic = Dinic::new(3);
-<a href=#392 id=392 data-nosnippet>392</a>    /// let e = dinic.add_edge(0, 1, 10);
-<a href=#393 id=393 data-nosnippet>393</a>    /// dinic.add_edge(1, 2, 15);
-<a href=#394 id=394 data-nosnippet>394</a>    /// dinic.flow(0, 2);
-<a href=#395 id=395 data-nosnippet>395</a>    ///
-<a href=#396 id=396 data-nosnippet>396</a>    /// dinic.change_edge(e, 5, 5); // 容量を10→5に減らす（既に流れている5はそのまま）
-<a href=#397 id=397 data-nosnippet>397</a>    /// assert_eq!(dinic.get_edge(e).cap, 5);
-<a href=#398 id=398 data-nosnippet>398</a>    /// assert_eq!(dinic.get_edge(e).flow, 5);
-<a href=#399 id=399 data-nosnippet>399</a>    /// ```
+<a href=#384 id=384 data-nosnippet>384</a>    /// ```
+<a href=#385 id=385 data-nosnippet>385</a>    /// use dinic::Dinic;
+<a href=#386 id=386 data-nosnippet>386</a>    ///
+<a href=#387 id=387 data-nosnippet>387</a>    /// let mut dinic = Dinic::new(3);
+<a href=#388 id=388 data-nosnippet>388</a>    /// let e = dinic.add_edge(0, 1, 10);
+<a href=#389 id=389 data-nosnippet>389</a>    /// dinic.add_edge(1, 2, 15);
+<a href=#390 id=390 data-nosnippet>390</a>    /// dinic.flow(0, 2);
+<a href=#391 id=391 data-nosnippet>391</a>    ///
+<a href=#392 id=392 data-nosnippet>392</a>    /// dinic.change_edge(e, 5, 5); // 容量を10→5に減らす（既に流れている5はそのまま）
+<a href=#393 id=393 data-nosnippet>393</a>    /// assert_eq!(dinic.get_edge(e).cap, 5);
+<a href=#394 id=394 data-nosnippet>394</a>    /// assert_eq!(dinic.get_edge(e).flow, 5);
+<a href=#395 id=395 data-nosnippet>395</a>    /// ```
+<a href=#396 id=396 data-nosnippet>396</a>    ///
+<a href=#397 id=397 data-nosnippet>397</a>    /// # 計算量
+<a href=#398 id=398 data-nosnippet>398</a>    ///
+<a href=#399 id=399 data-nosnippet>399</a>    /// $O(1)$。
 <a href=#400 id=400 data-nosnippet>400</a>    </span><span class="kw">pub fn </span>change_edge(<span class="kw-2">&amp;mut </span><span class="self">self</span>, edge_key: EdgeKey, new_cap: T, new_flow: T) {
 <a href=#401 id=401 data-nosnippet>401</a>        <span class="kw">let </span>EdgeKey(edge_key) = edge_key;
 <a href=#402 id=402 data-nosnippet>402</a>        <span class="macro">assert!</span>(
