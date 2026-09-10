@@ -80,7 +80,7 @@ pub struct Segbeats<T> {
     table: RefCell<Vec<Node<T>>>,
 }
 
-impl<T: Elm> Segbeats<T> {
+impl<T: Value> Segbeats<T> {
     /// 数列 $a_0, \ldots, a_{n-1}$ から構築する。$O(n)$。
     ///
     /// # 例
@@ -230,7 +230,7 @@ impl<T: Elm> Segbeats<T> {
 }
 
 trait Dfs {
-    type Value: Elm;
+    type Value: Value;
     type Param: Copy + Debug;
     type Output: Debug;
     fn identity() -> Self::Output;
@@ -245,7 +245,7 @@ trait Dfs {
     fn extract(node: Node<Self::Value>) -> Self::Output;
 }
 struct ChangeMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMin<T> {
+impl<T: Value> Dfs for ChangeMin<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -269,7 +269,7 @@ impl<T: Elm> Dfs for ChangeMin<T> {
     fn extract(_node: Node<T>) {}
 }
 struct ChangeMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMax<T> {
+impl<T: Value> Dfs for ChangeMax<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -293,7 +293,7 @@ impl<T: Elm> Dfs for ChangeMax<T> {
     fn extract(_node: Node<T>) {}
 }
 struct QueryMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMin<T> {
+impl<T: Value> Dfs for QueryMin<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -311,7 +311,7 @@ impl<T: Elm> Dfs for QueryMin<T> {
     }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMax<T> {
+impl<T: Value> Dfs for QueryMax<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -329,13 +329,13 @@ impl<T: Elm> Dfs for QueryMax<T> {
     }
 }
 struct QuerySum<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QuerySum<T> {
+impl<T: Value> Dfs for QuerySum<T> {
     type Output = T;
     type Param = ();
     type Value = T;
 
     fn identity() -> Self::Output {
-        T::zero()
+        T::ZERO
     }
 
     fn merge(left: T, right: T) -> T {
@@ -355,14 +355,14 @@ struct Node<T> {
     c_min: u32,
     sum: T,
 }
-impl<T: Elm> Node<T> {
+impl<T: Value> Node<T> {
     fn new() -> Self {
         Self {
             max: [T::min_value(), T::min_value()],
             c_max: 0,
             min: [T::max_value(), T::max_value()],
             c_min: 0,
-            sum: T::zero(),
+            sum: T::ZERO,
         }
     }
 
@@ -440,9 +440,9 @@ fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
 /// # 仕様
 ///
 /// - `max_value()`, `min_value()`: 型の最大値・最小値
-/// - `zero()`: 加法の単位元 $0$
+/// - `ZERO`: 加法の単位元 $0$
 /// - `mul_u32(x)`: $\text{self} \times x$（`u32` との積、総和の更新に使用）
-pub trait Elm:
+pub trait Value:
     Sized
     + std::fmt::Debug
     + Copy
@@ -457,23 +457,21 @@ pub trait Elm:
     /// 型の最小値。
     fn min_value() -> Self;
     /// 加法の単位元 $0$。
-    fn zero() -> Self;
+    const ZERO: Self;
     /// $\text{self} \times x$ を返す（`u32` との積）。
     fn mul_u32(&self, x: u32) -> Self;
 }
-macro_rules! impl_elm {
+macro_rules! impl_value {
     {$($ty:ident;)*} => {
         $(
-            impl Elm for $ty {
+            impl Value for $ty {
                 fn min_value() -> Self {
                     $ty::MIN
                 }
                 fn max_value() -> Self {
                     $ty::MAX
                 }
-                fn zero() -> Self {
-                    0
-                }
+                const ZERO: Self = 0;
                 fn mul_u32(&self, x: u32) -> Self {
                     self * (x as $ty)
                 }
@@ -481,7 +479,7 @@ macro_rules! impl_elm {
         )*
     }
 }
-impl_elm! {
+impl_value! {
     u8; u16; u32; u64; u128; usize;
     i8; i16; i32; i64; i128; isize;
 }

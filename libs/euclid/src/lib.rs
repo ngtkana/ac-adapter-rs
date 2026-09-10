@@ -66,10 +66,10 @@ pub trait Int:
     + Rem<Output = Self>
     + RemAssign
 {
-    /// 加法単位元 $0$ を返す。
-    fn zero() -> Self;
-    /// 乗法単位元 $1$ を返す。
-    fn one() -> Self;
+    /// 加法単位元 $0$。
+    const ZERO: Self;
+    /// 乗法単位元 $1$。
+    const ONE: Self;
     /// `self` を $1$ だけ増やす。
     fn increment(&mut self);
     /// 絶対値 $|{\rm self}|$ を返す。
@@ -88,7 +88,7 @@ pub trait Int:
     /// assert!(!3_i32.divides(10));
     /// ```
     fn divides(self, n: Self) -> bool {
-        n.rem_euclid(self) == Self::zero()
+        n.rem_euclid(self) == Self::ZERO
     }
 }
 
@@ -100,12 +100,8 @@ pub trait Signed: Int + Neg<Output = Self> {}
 macro_rules! impl_unsigned {
     ($($t:ty),* $(,)?) => {$(
         impl Int for $t {
-            fn zero() -> Self {
-                0
-            }
-            fn one() -> Self {
-                1
-            }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
             fn increment(&mut self) {
                 *self += 1;
             }
@@ -128,12 +124,8 @@ impl_unsigned! {
 macro_rules! impl_signed {
     ($($t:ty),* $(,)?) => {$(
         impl Int for $t {
-            fn zero() -> Self {
-                0
-            }
-            fn one() -> Self {
-                1
-            }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
             fn increment(&mut self) {
                 *self += 1;
             }

@@ -11,7 +11,7 @@
 //!
 //! # 仕様
 //!
-//! - 型: `Segbeats<T>`（`T: Elm`。符号付き・符号なし整数型に実装済み）
+//! - 型: `Segbeats<T>`（`T: Value`。符号付き・符号なし整数型に実装済み）
 //! - 構築: [`Segbeats::new`]`(&[T])`
 //! - 更新（半開区間 `[l, r)`）
 //!     - [`Segbeats::change_min`][]: $x_i \gets \min(x_i, x)$
@@ -87,7 +87,7 @@ pub struct Segbeats<T> {
     table: RefCell<Vec<Node<T>>>,
 }
 
-impl<T: Elm> Debug for Segbeats<T> {
+impl<T: Value> Debug for Segbeats<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         writeln!(f, "Segbeats")?;
         self.table
@@ -97,7 +97,7 @@ impl<T: Elm> Debug for Segbeats<T> {
     }
 }
 
-impl<T: Elm> Segbeats<T> {
+impl<T: Value> Segbeats<T> {
     /// 初期配列から構築する。
     ///
     /// 内部長は `src.len()` 以上最小の 2 冪に拡張し、余った要素は
@@ -204,7 +204,7 @@ impl<T: Elm> Segbeats<T> {
         let node = self.table.borrow()[i];
         let max = node.max[0];
         let min = node.min[0];
-        let lazy_add = replace(&mut self.table.borrow_mut()[i].lazy_add, T::zero());
+        let lazy_add = replace(&mut self.table.borrow_mut()[i].lazy_add, T::ZERO);
         let lazy_add_count = replace(&mut self.table.borrow_mut()[i].lazy_add_count, 0);
         let lazy_change_min_count =
             replace(&mut self.table.borrow_mut()[i].lazy_change_min_count, 0);
@@ -273,7 +273,7 @@ impl<T: Elm> Segbeats<T> {
 }
 
 trait Dfs {
-    type Value: Elm;
+    type Value: Value;
     type Param: Copy + Debug;
     type Output: Debug;
     fn identity() -> Self::Output;
@@ -288,7 +288,7 @@ trait Dfs {
     fn extract(node: Node<Self::Value>) -> Self::Output;
 }
 struct ChangeMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMin<T> {
+impl<T: Value> Dfs for ChangeMin<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -312,7 +312,7 @@ impl<T: Elm> Dfs for ChangeMin<T> {
     fn extract(_node: Node<T>) {}
 }
 struct ChangeMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for ChangeMax<T> {
+impl<T: Value> Dfs for ChangeMax<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -336,7 +336,7 @@ impl<T: Elm> Dfs for ChangeMax<T> {
     fn extract(_node: Node<T>) {}
 }
 struct RangeAdd<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for RangeAdd<T> {
+impl<T: Value> Dfs for RangeAdd<T> {
     type Output = ();
     type Param = T;
     type Value = T;
@@ -344,7 +344,7 @@ impl<T: Elm> Dfs for RangeAdd<T> {
     fn identity() -> Self::Output {}
 
     fn tag(node: &mut Node<Self::Value>, x: Self::Param) {
-        if x == T::zero() {
+        if x == T::ZERO {
             node.add(x, 0);
         } else {
             node.add(x, 1);
@@ -356,7 +356,7 @@ impl<T: Elm> Dfs for RangeAdd<T> {
     fn extract(_node: Node<T>) {}
 }
 struct QueryMin<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMin<T> {
+impl<T: Value> Dfs for QueryMin<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -374,7 +374,7 @@ impl<T: Elm> Dfs for QueryMin<T> {
     }
 }
 struct QueryMax<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QueryMax<T> {
+impl<T: Value> Dfs for QueryMax<T> {
     type Output = T;
     type Param = ();
     type Value = T;
@@ -392,13 +392,13 @@ impl<T: Elm> Dfs for QueryMax<T> {
     }
 }
 struct QuerySum<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for QuerySum<T> {
+impl<T: Value> Dfs for QuerySum<T> {
     type Output = T;
     type Param = ();
     type Value = T;
 
     fn identity() -> Self::Output {
-        T::zero()
+        T::ZERO
     }
 
     fn merge(left: T, right: T) -> T {
@@ -410,7 +410,7 @@ impl<T: Elm> Dfs for QuerySum<T> {
     }
 }
 struct CountChanges<T>(std::marker::PhantomData<T>);
-impl<T: Elm> Dfs for CountChanges<T> {
+impl<T: Value> Dfs for CountChanges<T> {
     type Output = u64;
     type Param = ();
     type Value = T;
@@ -442,16 +442,16 @@ struct Node<T> {
     lazy_change_min_count: u32,
     lazy_change_max_count: u32,
 }
-impl<T: Elm> Node<T> {
+impl<T: Value> Node<T> {
     fn new() -> Self {
         Self {
             max: [T::min_value(); 2],
             c_max: 0,
             min: [T::max_value(); 2],
             c_min: 0,
-            sum: T::zero(),
+            sum: T::ZERO,
             len: 0,
-            lazy_add: T::zero(),
+            lazy_add: T::ZERO,
             change_count: 0,
             lazy_add_count: 0,
             lazy_change_min_count: 0,
@@ -467,7 +467,7 @@ impl<T: Elm> Node<T> {
             c_min: 1,
             sum: x,
             len: 1,
-            lazy_add: T::zero(),
+            lazy_add: T::ZERO,
             change_count: 0,
             lazy_add_count: 0,
             lazy_change_min_count: 0,
@@ -532,7 +532,7 @@ impl<T: Elm> Node<T> {
         assert_eq!(node.lazy_change_min_count, 0);
         assert_eq!(node.lazy_change_max_count, 0);
         assert_eq!(node.lazy_add_count, 0);
-        assert_eq!(node.lazy_add, T::zero());
+        assert_eq!(node.lazy_add, T::ZERO);
         let (max, c_max) = {
             let [a, b] = left.max;
             let [c, d] = right.max;
@@ -559,7 +559,7 @@ impl<T: Elm> Node<T> {
             change_count: left.change_count + right.change_count,
             len: left.len + right.len,
             sum: left.sum + right.sum,
-            lazy_add: T::zero(),
+            lazy_add: T::ZERO,
             lazy_add_count: 0,
             lazy_change_min_count: 0,
             lazy_change_max_count: 0,
@@ -577,7 +577,7 @@ fn disjoint(i: &Range<usize>, j: &Range<usize>) -> bool {
 /// [`Segbeats`] が扱える要素型が実装するトレイト。
 ///
 /// 符号付き・符号なし整数型（`u8`〜`u128`, `usize`, `i8`〜`i128`, `isize`）に実装済み。
-pub trait Elm:
+pub trait Value:
     Sized
     + std::fmt::Debug
     + Copy
@@ -592,23 +592,21 @@ pub trait Elm:
     /// 最小値。`query_max` の空区間に対する単位元として使う。
     fn min_value() -> Self;
     /// 加法の単位元 $0$。
-    fn zero() -> Self;
+    const ZERO: Self;
     /// $u32$ 倍：$\text{self} \times x$。区間長分をまとめて加算する際に使う。
     fn mul_u32(&self, x: u32) -> Self;
 }
-macro_rules! impl_elm {
+macro_rules! impl_value {
     {$($ty:ident;)*} => {
         $(
-            impl Elm for $ty {
+            impl Value for $ty {
                 fn min_value() -> Self {
                     $ty::MIN
                 }
                 fn max_value() -> Self {
                     $ty::MAX
                 }
-                fn zero() -> Self {
-                    0
-                }
+                const ZERO: Self = 0;
                 fn mul_u32(&self, x: u32) -> Self {
                     self * (x as $ty)
                 }
@@ -616,7 +614,7 @@ macro_rules! impl_elm {
         )*
     }
 }
-impl_elm! {
+impl_value! {
     u8; u16; u32; u64; u128; usize;
     i8; i16; i32; i64; i128; isize;
 }

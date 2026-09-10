@@ -28,27 +28,27 @@ use std::mem::swap;
 ///
 /// `x == 0` または `y == 0` のとき
 pub fn ext_gcd<T: Signed>(x: T, y: T) -> (T, T, T) {
-    assert_ne!(x, T::zero());
-    assert_ne!(y, T::zero());
+    assert_ne!(x, T::ZERO);
+    assert_ne!(y, T::ZERO);
     let (a, g) = {
         let mut x = x;
         let mut y = y;
-        let mut u = T::one();
-        let mut v = T::zero();
-        while x != T::zero() {
+        let mut u = T::ONE;
+        let mut v = T::ZERO;
+        while x != T::ZERO {
             let q = y / x;
             y -= q * x;
             v -= q * u;
             swap(&mut x, &mut y);
             swap(&mut u, &mut v);
         }
-        if y < T::zero() {
+        if y < T::ZERO {
             (-v, -y)
         } else {
             (v, y)
         }
     };
-    assert_eq!((g - a * x) % y, T::zero());
+    assert_eq!((g - a * x) % y, T::ZERO);
     let b = (g - a * x) / y;
     (a, b, g)
 }

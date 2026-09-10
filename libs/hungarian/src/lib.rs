@@ -62,7 +62,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
         }
     }
     left.iter_mut().for_each(|x| *x -= all_min);
-    let mut right = vec![T::zero(); w].into_boxed_slice();
+    let mut right = vec![T::ZERO; w].into_boxed_slice();
 
     for s in 0..h {
         // dijkstra
@@ -120,7 +120,7 @@ pub fn hungarian<T: Value>(cost_matrix: &[Vec<T>]) -> HungarianResult<T> {
 
     let backward = m;
     let mut forward = vec![usize::MAX; h].into_boxed_slice();
-    let mut value = T::zero();
+    let mut value = T::ZERO;
     for (y, &x) in backward.iter().enumerate() {
         if x != usize::MAX {
             forward[x] = y;
@@ -165,21 +165,19 @@ pub struct HungarianResult<T: Value> {
 ///
 /// # 仕様
 ///
-/// - `zero()`: 加法単位元 $0$
+/// - `ZERO`: 加法単位元 $0$
 /// - `infinity()`: 任意の値以上となる番兵（整数型は `MAX`、浮動小数点型は `INFINITY`）
 pub trait Value:
     Sized + Copy + Add<Output = Self> + AddAssign + Sub<Output = Self> + SubAssign + Sum + PartialOrd
 {
-    fn zero() -> Self;
+    const ZERO: Self;
     fn infinity() -> Self;
 }
 
 macro_rules! impl_value_int {
     ($($T:ident),* $(,)?) => {$(
         impl Value for $T {
-            fn zero() -> Self {
-                0
-            }
+            const ZERO: Self = 0;
             fn infinity() -> Self {
                 $T::MAX
             }
@@ -194,9 +192,7 @@ impl_value_int! {
 macro_rules! impl_value_float {
     ($($T:ident),* $(,)?) => {$(
         impl Value for $T {
-            fn zero() -> Self {
-                0.
-            }
+            const ZERO: Self = 0.;
             fn infinity() -> Self {
                 $T::INFINITY
             }
