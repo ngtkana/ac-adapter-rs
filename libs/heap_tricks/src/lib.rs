@@ -17,10 +17,10 @@
 //! - [`RemovableHeap::push`][]: 要素を挿入する
 //! - [`RemovableHeap::remove_unchecked`][]: ヒープに入っている要素を1つ削除する — ヒープに入っていない要素を指定すると以降の結果が不正になる
 //! - [`RemovableHeap::pop`] / [`RemovableHeap::peek`][]: 最大要素の削除・参照
-//! - [`DoubleHeap::push_left`] / [`DoubleHeap::push_right`][]: 左右いずれかへ要素を挿入する
+//! - [`DoubleHeap::push_front`] / [`DoubleHeap::push_back`][]: 左右いずれかへ要素を挿入する
 //! - [`DoubleHeap::move_left`] / [`DoubleHeap::move_right`][]: 反対側の境界の要素を1つ移動する
 //! - [`DoubleHeap::balance_left`] / [`DoubleHeap::balance_right`][]: 左（右）側の要素数をちょうど $k$ 個に揃える
-//! - [`Handler`][]: `push_left` / `pop_left` / `push_right` / `pop_right` の4つのコールバックを持つトレイト — [`Nop`]（何もしない）と [`Sum`]（総和を集計）を用意
+//! - [`Handler`][]: `push_front` / `pop_front` / `push_back` / `pop_back` の4つのコールバックを持つトレイト — [`Nop`]（何もしない）と [`Sum`]（総和を集計）を用意
 //!
 //! # 例
 //!
@@ -28,11 +28,11 @@
 //! use heap_tricks::DoubleHeap;
 //!
 //! let mut heap = DoubleHeap::new();
-//! heap.push_left(3);
-//! heap.push_left(1);
-//! heap.push_left(4);
+//! heap.push_front(3);
+//! heap.push_front(1);
+//! heap.push_front(4);
 //! heap.balance_left(1); // 左側を要素数1に揃える
-//! assert_eq!(heap.peek_right(), Some(3)); // ソート列 [1, 3, 4] の中央値
+//! assert_eq!(heap.peek_back(), Some(3)); // ソート列 [1, 3, 4] の中央値
 //! ```
 //!
 //! # 計算量
@@ -55,13 +55,13 @@ use std::ops::SubAssign;
 /// を用意しているので、通常はどちらかを使えば十分。必要なら自分で実装もできる。
 pub trait Handler<T> {
     /// 左側への挿入時に呼ばれる。
-    fn push_left(&mut self, value: T);
+    fn push_front(&mut self, value: T);
     /// 左側からの削除時に呼ばれる。
-    fn pop_left(&mut self, value: T);
+    fn pop_front(&mut self, value: T);
     /// 右側への挿入時に呼ばれる。
-    fn push_right(&mut self, value: T);
+    fn push_back(&mut self, value: T);
     /// 右側からの削除時に呼ばれる。
-    fn pop_right(&mut self, value: T);
+    fn pop_back(&mut self, value: T);
 }
 /// 何も集約しない [`Handler`]。
 ///
@@ -70,13 +70,13 @@ pub trait Handler<T> {
 #[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 pub struct Nop;
 impl<T> Handler<T> for Nop {
-    fn push_left(&mut self, _value: T) {}
+    fn push_front(&mut self, _value: T) {}
 
-    fn pop_left(&mut self, _value: T) {}
+    fn pop_front(&mut self, _value: T) {}
 
-    fn push_right(&mut self, _value: T) {}
+    fn push_back(&mut self, _value: T) {}
 
-    fn pop_right(&mut self, _value: T) {}
+    fn pop_back(&mut self, _value: T) {}
 }
 /// 左右それぞれの要素の総和を集約する [`Handler`]。
 ///
@@ -93,19 +93,19 @@ impl<T> Handler<T> for Sum<T>
 where
     T: AddAssign<T> + SubAssign<T>,
 {
-    fn push_left(&mut self, value: T) {
+    fn push_front(&mut self, value: T) {
         self.left += value;
     }
 
-    fn pop_left(&mut self, value: T) {
+    fn pop_front(&mut self, value: T) {
         self.left -= value;
     }
 
-    fn push_right(&mut self, value: T) {
+    fn push_back(&mut self, value: T) {
         self.right += value;
     }
 
-    fn pop_right(&mut self, value: T) {
+    fn pop_back(&mut self, value: T) {
         self.right -= value;
     }
 }
@@ -160,7 +160,7 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(1);
+    /// heap.push_front(1);
     /// assert_eq!(heap.collect_sorted_vec(), vec![1]);
     /// ```
     pub fn new() -> Self {
@@ -179,7 +179,7 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
+    /// heap.push_front(42);
     /// assert_eq!(heap.collect_sorted_vec(), vec![42]);
     /// ```
     pub fn with_handler(handler: H) -> Self {
@@ -198,7 +198,7 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     /// assert!(heap.is_empty());
-    /// heap.push_left(42);
+    /// heap.push_front(42);
     /// assert!(!heap.is_empty());
     /// ```
     pub fn is_empty(&self) -> bool {
@@ -213,7 +213,7 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     /// assert_eq!(heap.len(), 0);
-    /// heap.push_left(42);
+    /// heap.push_front(42);
     /// assert_eq!(heap.len(), 1);
     /// ```
     pub fn len(&self) -> usize {
@@ -228,9 +228,9 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     /// assert_eq!(heap.left_len(), 0);
-    /// heap.push_left(42);
-    /// heap.push_right(42);
-    /// heap.push_right(42);
+    /// heap.push_front(42);
+    /// heap.push_back(42);
+    /// heap.push_back(42);
     /// assert_eq!(heap.left_len(), 1);
     /// ```
     pub fn left_len(&self) -> usize {
@@ -245,9 +245,9 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     /// assert_eq!(heap.right_len(), 0);
-    /// heap.push_left(42);
-    /// heap.push_right(42);
-    /// heap.push_right(42);
+    /// heap.push_front(42);
+    /// heap.push_back(42);
+    /// heap.push_back(42);
     /// assert_eq!(heap.right_len(), 2);
     /// ```
     pub fn right_len(&self) -> usize {
@@ -265,14 +265,14 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     ///
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    pub fn push_left(&mut self, elm: T) {
-        self.handler.push_left(elm);
+    pub fn push_front(&mut self, elm: T) {
+        self.handler.push_front(elm);
         self.left.push(elm);
         self.settle();
     }
@@ -288,14 +288,14 @@ where
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
     ///
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    pub fn push_right(&mut self, elm: T) {
-        self.handler.push_right(elm);
+    pub fn push_back(&mut self, elm: T) {
+        self.handler.push_back(elm);
         self.right.push(Reverse(elm));
         self.settle();
     }
@@ -307,12 +307,12 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
-    /// assert_eq!(heap.peek_left(), Some(13));
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
+    /// assert_eq!(heap.peek_front(), Some(13));
     /// ```
-    pub fn peek_left(&self) -> Option<T> {
+    pub fn peek_front(&self) -> Option<T> {
         self.left.peek()
     }
 
@@ -323,13 +323,13 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
-    /// assert_eq!(heap.peek_right(), Some(42));
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
+    /// assert_eq!(heap.peek_back(), Some(42));
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    pub fn peek_right(&self) -> Option<T> {
+    pub fn peek_back(&self) -> Option<T> {
         self.right.peek().map(|rev| rev.0)
     }
 
@@ -340,14 +340,14 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
-    /// assert_eq!(heap.pop_left(), Some(13));
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
+    /// assert_eq!(heap.pop_front(), Some(13));
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
     /// ```
-    pub fn pop_left(&mut self) -> Option<T> {
+    pub fn pop_front(&mut self) -> Option<T> {
         let ans = self.left.pop();
         self.settle();
         ans
@@ -360,14 +360,14 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
-    /// assert_eq!(heap.pop_right(), Some(42));
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
+    /// assert_eq!(heap.pop_back(), Some(42));
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
     /// ```
-    pub fn pop_right(&mut self) -> Option<T> {
+    pub fn pop_back(&mut self) -> Option<T> {
         let ans = self.right.pop().map(|rev| rev.0);
         self.settle();
         ans
@@ -384,17 +384,17 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// heap.move_left();
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13, 42]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
     /// ```
     pub fn move_left(&mut self) {
         let elm = self.right.pop().expect("右側ヒープは空です。").0;
-        self.handler.pop_right(elm);
-        self.handler.push_left(elm);
+        self.handler.pop_back(elm);
+        self.handler.push_front(elm);
         self.left.push(elm);
         self.settle();
     }
@@ -410,17 +410,17 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// heap.move_right();
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 42, 45]);
     /// ```
     pub fn move_right(&mut self) {
         let elm = self.left.pop().expect("左側ヒープは空です。");
-        self.handler.pop_left(elm);
-        self.handler.push_right(elm);
+        self.handler.pop_front(elm);
+        self.handler.push_back(elm);
         self.right.push(Reverse(elm));
         self.settle();
     }
@@ -439,20 +439,20 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// heap.remove_left_unchecked(42);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 45]);
     /// ```
     pub fn remove_left_unchecked(&mut self, elm: T) {
         if self.left.peek().is_some_and(|lmax| elm <= lmax) {
-            self.handler.pop_left(elm);
+            self.handler.pop_front(elm);
             self.left.remove_unchecked(elm);
             self.settle();
         } else {
-            self.handler.pop_right(elm);
+            self.handler.pop_back(elm);
             self.right.remove_unchecked(Reverse(elm));
             self.settle();
             self.move_right();
@@ -473,21 +473,21 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(42);
-    /// heap.push_right(45);
-    /// heap.push_right(13);
+    /// heap.push_front(42);
+    /// heap.push_back(45);
+    /// heap.push_back(13);
     /// heap.remove_right_unchecked(42);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
     /// ```
     pub fn remove_right_unchecked(&mut self, elm: T) {
         if self.left.peek().is_some_and(|lmax| elm <= lmax) {
-            self.handler.pop_left(elm);
+            self.handler.pop_front(elm);
             self.left.remove_unchecked(elm);
             self.settle();
             self.move_left();
         } else {
-            self.handler.pop_right(elm);
+            self.handler.pop_back(elm);
             self.right.remove_unchecked(Reverse(elm));
             self.settle();
         }
@@ -496,7 +496,7 @@ where
     /// 左側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
     ///
     /// 左側は小さい方から $k$ 個の要素を持つことになるので、
-    /// [`peek_right`](Self::peek_right) で $(k+1)$ 番目に小さい要素（順序統計量）
+    /// [`peek_back`](Self::peek_back) で $(k+1)$ 番目に小さい要素（順序統計量）
     /// が得られる。$O(|k - \text{左側の要素数}| \log n)$。
     ///
     /// # Panics
@@ -508,10 +508,10 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
     ///
@@ -532,7 +532,7 @@ where
     /// 右側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
     ///
     /// 右側は大きい方から $k$ 個の要素を持つことになるので、
-    /// [`peek_left`](Self::peek_left) で $(n-k)$ 番目に小さい要素（順序統計量）
+    /// [`peek_front`](Self::peek_front) で $(n-k)$ 番目に小さい要素（順序統計量）
     /// が得られる。$O(|k - \text{右側の要素数}| \log n)$。
     ///
     /// # Panics
@@ -544,10 +544,10 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
     ///
@@ -573,10 +573,10 @@ where
     /// use heap_tricks::DoubleHeap;
     /// use heap_tricks::Sum;
     /// let mut heap = DoubleHeap::with_handler(Sum::default());
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.handler().left, 33);
     /// assert_eq!(heap.handler().right, 13);
     ///
@@ -595,10 +595,10 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
     /// ```
     pub fn collect_left_sorted_vec(&self) -> Vec<T> {
@@ -612,10 +612,10 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
     /// ```
     pub fn collect_right_sorted_vec(&self) -> Vec<T> {
@@ -634,10 +634,10 @@ where
     /// ```
     /// use heap_tricks::DoubleHeap;
     /// let mut heap = DoubleHeap::new();
-    /// heap.push_left(10);
-    /// heap.push_left(11);
-    /// heap.push_left(12);
-    /// heap.push_right(13);
+    /// heap.push_front(10);
+    /// heap.push_front(11);
+    /// heap.push_front(12);
+    /// heap.push_back(13);
     /// assert_eq!(heap.collect_sorted_vec(), vec![10, 11, 12, 13]);
     /// ```
     pub fn collect_sorted_vec(&self) -> Vec<T> {
@@ -653,12 +653,12 @@ where
             && self.left.peek().unwrap() > self.right.peek().unwrap().0
         {
             let elm = self.right.pop().unwrap().0;
-            self.handler.pop_right(elm);
-            self.handler.push_left(elm);
+            self.handler.pop_back(elm);
+            self.handler.push_front(elm);
             self.left.push(elm);
             let elm = self.left.pop().unwrap();
-            self.handler.pop_left(elm);
-            self.handler.push_right(elm);
+            self.handler.pop_front(elm);
+            self.handler.push_back(elm);
             self.right.push(Reverse(elm));
         }
     }
@@ -893,7 +893,7 @@ mod tests {
                 0 => {
                     sorted.push(x);
                     sorted.sort_unstable();
-                    heap.push_left(x);
+                    heap.push_front(x);
                 }
                 1 => {
                     if let Ok(i) = sorted.binary_search(&x) {
@@ -910,7 +910,7 @@ mod tests {
                 let i = rng.gen_range(0..sorted.len());
                 let expected = sorted[i];
                 heap.balance_left(i);
-                assert_eq!(heap.peek_right().unwrap(), expected);
+                assert_eq!(heap.peek_back().unwrap(), expected);
             }
         }
     }
