@@ -60,7 +60,7 @@ fn test_dynamic_sequence_range_affine_range() {
                     }
                     let i = rng.gen_range(0..brute.len());
                     brute.remove(i);
-                    splay.delete(i);
+                    splay.remove(i);
                 }
                 2 => {
                     if brute.len() < 2 {
