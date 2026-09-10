@@ -38,20 +38,20 @@ $O(\log n)$ で行う。削除は要素を削除予定ヒープに積むだけ�
 <li><a href="struct.RemovableHeap.html#method.push" title="method heap_tricks::RemovableHeap::push"><code>RemovableHeap::push</code></a>: 要素を挿入する</li>
 <li><a href="struct.RemovableHeap.html#method.remove_unchecked" title="method heap_tricks::RemovableHeap::remove_unchecked"><code>RemovableHeap::remove_unchecked</code></a>: ヒープに入っている要素を1つ削除する — ヒープに入っていない要素を指定すると以降の結果が不正になる</li>
 <li><a href="struct.RemovableHeap.html#method.pop" title="method heap_tricks::RemovableHeap::pop"><code>RemovableHeap::pop</code></a> / <a href="struct.RemovableHeap.html#method.peek" title="method heap_tricks::RemovableHeap::peek"><code>RemovableHeap::peek</code></a>: 最大要素の削除・参照</li>
-<li><a href="struct.DoubleHeap.html#method.push_front" title="method heap_tricks::DoubleHeap::push_front"><code>DoubleHeap::push_front</code></a> / <a href="struct.DoubleHeap.html#method.push_back" title="method heap_tricks::DoubleHeap::push_back"><code>DoubleHeap::push_back</code></a>: 左右いずれかへ要素を挿入する</li>
+<li><a href="struct.DoubleHeap.html#method.push_left" title="method heap_tricks::DoubleHeap::push_left"><code>DoubleHeap::push_left</code></a> / <a href="struct.DoubleHeap.html#method.push_right" title="method heap_tricks::DoubleHeap::push_right"><code>DoubleHeap::push_right</code></a>: 左右いずれかへ要素を挿入する</li>
 <li><a href="struct.DoubleHeap.html#method.move_left" title="method heap_tricks::DoubleHeap::move_left"><code>DoubleHeap::move_left</code></a> / <a href="struct.DoubleHeap.html#method.move_right" title="method heap_tricks::DoubleHeap::move_right"><code>DoubleHeap::move_right</code></a>: 反対側の境界の要素を1つ移動する</li>
 <li><a href="struct.DoubleHeap.html#method.balance_left" title="method heap_tricks::DoubleHeap::balance_left"><code>DoubleHeap::balance_left</code></a> / <a href="struct.DoubleHeap.html#method.balance_right" title="method heap_tricks::DoubleHeap::balance_right"><code>DoubleHeap::balance_right</code></a>: 左（右）側の要素数をちょうど $k$ 個に揃える</li>
-<li><a href="trait.Handler.html" title="trait heap_tricks::Handler"><code>Handler</code></a>: <code>push_front</code> / <code>pop_front</code> / <code>push_back</code> / <code>pop_back</code> の4つのコールバックを持つトレイト — <a href="struct.Nop.html" title="struct heap_tricks::Nop"><code>Nop</code></a>（何もしない）と <a href="struct.Sum.html" title="struct heap_tricks::Sum"><code>Sum</code></a>（総和を集計）を用意</li>
+<li><a href="trait.Handler.html" title="trait heap_tricks::Handler"><code>Handler</code></a>: <code>push_left</code> / <code>pop_left</code> / <code>push_right</code> / <code>pop_right</code> の4つのコールバックを持つトレイト — <a href="struct.Nop.html" title="struct heap_tricks::Nop"><code>Nop</code></a>（何もしない）と <a href="struct.Sum.html" title="struct heap_tricks::Sum"><code>Sum</code></a>（総和を集計）を用意</li>
 </ul>
 <h2 id="例"><a class="doc-anchor" href="#例">§</a>例</h2>
 <div class="example-wrap"><pre class="rust rust-example-rendered"><code><span class="kw">use </span>heap_tricks::DoubleHeap;
 
 <span class="kw">let </span><span class="kw-2">mut </span>heap = DoubleHeap::new();
-heap.push_front(<span class="number">3</span>);
-heap.push_front(<span class="number">1</span>);
-heap.push_front(<span class="number">4</span>);
+heap.push_left(<span class="number">3</span>);
+heap.push_left(<span class="number">1</span>);
+heap.push_left(<span class="number">4</span>);
 heap.balance_left(<span class="number">1</span>); <span class="comment">// 左側を要素数1に揃える
-</span><span class="macro">assert_eq!</span>(heap.peek_back(), <span class="prelude-val">Some</span>(<span class="number">3</span>)); <span class="comment">// ソート列 [1, 3, 4] の中央値</span></code></pre></div>
+</span><span class="macro">assert_eq!</span>(heap.peek_right(), <span class="prelude-val">Some</span>(<span class="number">3</span>)); <span class="comment">// ソート列 [1, 3, 4] の中央値</span></code></pre></div>
 <h2 id="計算量"><a class="doc-anchor" href="#計算量">§</a>計算量</h2>
 <ul>
 <li><a href="struct.RemovableHeap.html" title="struct heap_tricks::RemovableHeap"><code>RemovableHeap</code></a> の各操作: $O(\log n)$</li>

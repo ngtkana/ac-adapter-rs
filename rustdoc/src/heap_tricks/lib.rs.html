@@ -41,10 +41,10 @@
 <a href=#17 id=17 data-nosnippet>17</a>//! - [`RemovableHeap::push`][]: 要素を挿入する
 <a href=#18 id=18 data-nosnippet>18</a>//! - [`RemovableHeap::remove_unchecked`][]: ヒープに入っている要素を1つ削除する — ヒープに入っていない要素を指定すると以降の結果が不正になる
 <a href=#19 id=19 data-nosnippet>19</a>//! - [`RemovableHeap::pop`] / [`RemovableHeap::peek`][]: 最大要素の削除・参照
-<a href=#20 id=20 data-nosnippet>20</a>//! - [`DoubleHeap::push_front`] / [`DoubleHeap::push_back`][]: 左右いずれかへ要素を挿入する
+<a href=#20 id=20 data-nosnippet>20</a>//! - [`DoubleHeap::push_left`] / [`DoubleHeap::push_right`][]: 左右いずれかへ要素を挿入する
 <a href=#21 id=21 data-nosnippet>21</a>//! - [`DoubleHeap::move_left`] / [`DoubleHeap::move_right`][]: 反対側の境界の要素を1つ移動する
 <a href=#22 id=22 data-nosnippet>22</a>//! - [`DoubleHeap::balance_left`] / [`DoubleHeap::balance_right`][]: 左（右）側の要素数をちょうど $k$ 個に揃える
-<a href=#23 id=23 data-nosnippet>23</a>//! - [`Handler`][]: `push_front` / `pop_front` / `push_back` / `pop_back` の4つのコールバックを持つトレイト — [`Nop`]（何もしない）と [`Sum`]（総和を集計）を用意
+<a href=#23 id=23 data-nosnippet>23</a>//! - [`Handler`][]: `push_left` / `pop_left` / `push_right` / `pop_right` の4つのコールバックを持つトレイト — [`Nop`]（何もしない）と [`Sum`]（総和を集計）を用意
 <a href=#24 id=24 data-nosnippet>24</a>//!
 <a href=#25 id=25 data-nosnippet>25</a>//! # 例
 <a href=#26 id=26 data-nosnippet>26</a>//!
@@ -52,11 +52,11 @@
 <a href=#28 id=28 data-nosnippet>28</a>//! use heap_tricks::DoubleHeap;
 <a href=#29 id=29 data-nosnippet>29</a>//!
 <a href=#30 id=30 data-nosnippet>30</a>//! let mut heap = DoubleHeap::new();
-<a href=#31 id=31 data-nosnippet>31</a>//! heap.push_front(3);
-<a href=#32 id=32 data-nosnippet>32</a>//! heap.push_front(1);
-<a href=#33 id=33 data-nosnippet>33</a>//! heap.push_front(4);
+<a href=#31 id=31 data-nosnippet>31</a>//! heap.push_left(3);
+<a href=#32 id=32 data-nosnippet>32</a>//! heap.push_left(1);
+<a href=#33 id=33 data-nosnippet>33</a>//! heap.push_left(4);
 <a href=#34 id=34 data-nosnippet>34</a>//! heap.balance_left(1); // 左側を要素数1に揃える
-<a href=#35 id=35 data-nosnippet>35</a>//! assert_eq!(heap.peek_back(), Some(3)); // ソート列 [1, 3, 4] の中央値
+<a href=#35 id=35 data-nosnippet>35</a>//! assert_eq!(heap.peek_right(), Some(3)); // ソート列 [1, 3, 4] の中央値
 <a href=#36 id=36 data-nosnippet>36</a>//! ```
 <a href=#37 id=37 data-nosnippet>37</a>//!
 <a href=#38 id=38 data-nosnippet>38</a>//! # 計算量
@@ -79,13 +79,13 @@
 <a href=#55 id=55 data-nosnippet>55</a>/// を用意しているので、通常はどちらかを使えば十分。必要なら自分で実装もできる。
 <a href=#56 id=56 data-nosnippet>56</a></span><span class="kw">pub trait </span>Handler&lt;T&gt; {
 <a href=#57 id=57 data-nosnippet>57</a>    <span class="doccomment">/// 左側への挿入時に呼ばれる。
-<a href=#58 id=58 data-nosnippet>58</a>    </span><span class="kw">fn </span>push_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
+<a href=#58 id=58 data-nosnippet>58</a>    </span><span class="kw">fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
 <a href=#59 id=59 data-nosnippet>59</a>    <span class="doccomment">/// 左側からの削除時に呼ばれる。
-<a href=#60 id=60 data-nosnippet>60</a>    </span><span class="kw">fn </span>pop_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
+<a href=#60 id=60 data-nosnippet>60</a>    </span><span class="kw">fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
 <a href=#61 id=61 data-nosnippet>61</a>    <span class="doccomment">/// 右側への挿入時に呼ばれる。
-<a href=#62 id=62 data-nosnippet>62</a>    </span><span class="kw">fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
+<a href=#62 id=62 data-nosnippet>62</a>    </span><span class="kw">fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
 <a href=#63 id=63 data-nosnippet>63</a>    <span class="doccomment">/// 右側からの削除時に呼ばれる。
-<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">fn </span>pop_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
+<a href=#64 id=64 data-nosnippet>64</a>    </span><span class="kw">fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T);
 <a href=#65 id=65 data-nosnippet>65</a>}
 <a href=#66 id=66 data-nosnippet>66</a><span class="doccomment">/// 何も集約しない [`Handler`]。
 <a href=#67 id=67 data-nosnippet>67</a>///
@@ -94,13 +94,13 @@
 <a href=#70 id=70 data-nosnippet>70</a></span><span class="attr">#[derive(Clone, Debug, Default, Hash, PartialEq, Eq, Copy)]
 <a href=#71 id=71 data-nosnippet>71</a></span><span class="kw">pub struct </span>Nop;
 <a href=#72 id=72 data-nosnippet>72</a><span class="kw">impl</span>&lt;T&gt; Handler&lt;T&gt; <span class="kw">for </span>Nop {
-<a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">fn </span>push_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
+<a href=#73 id=73 data-nosnippet>73</a>    <span class="kw">fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
 <a href=#74 id=74 data-nosnippet>74</a>
-<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">fn </span>pop_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
+<a href=#75 id=75 data-nosnippet>75</a>    <span class="kw">fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
 <a href=#76 id=76 data-nosnippet>76</a>
-<a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
+<a href=#77 id=77 data-nosnippet>77</a>    <span class="kw">fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
 <a href=#78 id=78 data-nosnippet>78</a>
-<a href=#79 id=79 data-nosnippet>79</a>    <span class="kw">fn </span>pop_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
+<a href=#79 id=79 data-nosnippet>79</a>    <span class="kw">fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, _value: T) {}
 <a href=#80 id=80 data-nosnippet>80</a>}
 <a href=#81 id=81 data-nosnippet>81</a><span class="doccomment">/// 左右それぞれの要素の総和を集約する [`Handler`]。
 <a href=#82 id=82 data-nosnippet>82</a>///
@@ -117,19 +117,19 @@
 <a href=#93 id=93 data-nosnippet>93</a><span class="kw">where
 <a href=#94 id=94 data-nosnippet>94</a>    </span>T: AddAssign&lt;T&gt; + SubAssign&lt;T&gt;,
 <a href=#95 id=95 data-nosnippet>95</a>{
-<a href=#96 id=96 data-nosnippet>96</a>    <span class="kw">fn </span>push_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+<a href=#96 id=96 data-nosnippet>96</a>    <span class="kw">fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
 <a href=#97 id=97 data-nosnippet>97</a>        <span class="self">self</span>.left += value;
 <a href=#98 id=98 data-nosnippet>98</a>    }
 <a href=#99 id=99 data-nosnippet>99</a>
-<a href=#100 id=100 data-nosnippet>100</a>    <span class="kw">fn </span>pop_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+<a href=#100 id=100 data-nosnippet>100</a>    <span class="kw">fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
 <a href=#101 id=101 data-nosnippet>101</a>        <span class="self">self</span>.left -= value;
 <a href=#102 id=102 data-nosnippet>102</a>    }
 <a href=#103 id=103 data-nosnippet>103</a>
-<a href=#104 id=104 data-nosnippet>104</a>    <span class="kw">fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+<a href=#104 id=104 data-nosnippet>104</a>    <span class="kw">fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
 <a href=#105 id=105 data-nosnippet>105</a>        <span class="self">self</span>.right += value;
 <a href=#106 id=106 data-nosnippet>106</a>    }
 <a href=#107 id=107 data-nosnippet>107</a>
-<a href=#108 id=108 data-nosnippet>108</a>    <span class="kw">fn </span>pop_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
+<a href=#108 id=108 data-nosnippet>108</a>    <span class="kw">fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, value: T) {
 <a href=#109 id=109 data-nosnippet>109</a>        <span class="self">self</span>.right -= value;
 <a href=#110 id=110 data-nosnippet>110</a>    }
 <a href=#111 id=111 data-nosnippet>111</a>}
@@ -184,7 +184,7 @@
 <a href=#160 id=160 data-nosnippet>160</a>    /// ```
 <a href=#161 id=161 data-nosnippet>161</a>    /// use heap_tricks::DoubleHeap;
 <a href=#162 id=162 data-nosnippet>162</a>    /// let mut heap = DoubleHeap::new();
-<a href=#163 id=163 data-nosnippet>163</a>    /// heap.push_front(1);
+<a href=#163 id=163 data-nosnippet>163</a>    /// heap.push_left(1);
 <a href=#164 id=164 data-nosnippet>164</a>    /// assert_eq!(heap.collect_sorted_vec(), vec![1]);
 <a href=#165 id=165 data-nosnippet>165</a>    /// ```
 <a href=#166 id=166 data-nosnippet>166</a>    </span><span class="kw">pub fn </span>new() -&gt; <span class="self">Self </span>{
@@ -203,7 +203,7 @@
 <a href=#179 id=179 data-nosnippet>179</a>    /// ```
 <a href=#180 id=180 data-nosnippet>180</a>    /// use heap_tricks::DoubleHeap;
 <a href=#181 id=181 data-nosnippet>181</a>    /// let mut heap = DoubleHeap::new();
-<a href=#182 id=182 data-nosnippet>182</a>    /// heap.push_front(42);
+<a href=#182 id=182 data-nosnippet>182</a>    /// heap.push_left(42);
 <a href=#183 id=183 data-nosnippet>183</a>    /// assert_eq!(heap.collect_sorted_vec(), vec![42]);
 <a href=#184 id=184 data-nosnippet>184</a>    /// ```
 <a href=#185 id=185 data-nosnippet>185</a>    </span><span class="kw">pub fn </span>with_handler(handler: H) -&gt; <span class="self">Self </span>{
@@ -222,7 +222,7 @@
 <a href=#198 id=198 data-nosnippet>198</a>    /// use heap_tricks::DoubleHeap;
 <a href=#199 id=199 data-nosnippet>199</a>    /// let mut heap = DoubleHeap::new();
 <a href=#200 id=200 data-nosnippet>200</a>    /// assert!(heap.is_empty());
-<a href=#201 id=201 data-nosnippet>201</a>    /// heap.push_front(42);
+<a href=#201 id=201 data-nosnippet>201</a>    /// heap.push_left(42);
 <a href=#202 id=202 data-nosnippet>202</a>    /// assert!(!heap.is_empty());
 <a href=#203 id=203 data-nosnippet>203</a>    /// ```
 <a href=#204 id=204 data-nosnippet>204</a>    </span><span class="kw">pub fn </span>is_empty(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; bool {
@@ -237,7 +237,7 @@
 <a href=#213 id=213 data-nosnippet>213</a>    /// use heap_tricks::DoubleHeap;
 <a href=#214 id=214 data-nosnippet>214</a>    /// let mut heap = DoubleHeap::new();
 <a href=#215 id=215 data-nosnippet>215</a>    /// assert_eq!(heap.len(), 0);
-<a href=#216 id=216 data-nosnippet>216</a>    /// heap.push_front(42);
+<a href=#216 id=216 data-nosnippet>216</a>    /// heap.push_left(42);
 <a href=#217 id=217 data-nosnippet>217</a>    /// assert_eq!(heap.len(), 1);
 <a href=#218 id=218 data-nosnippet>218</a>    /// ```
 <a href=#219 id=219 data-nosnippet>219</a>    </span><span class="kw">pub fn </span>len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -252,9 +252,9 @@
 <a href=#228 id=228 data-nosnippet>228</a>    /// use heap_tricks::DoubleHeap;
 <a href=#229 id=229 data-nosnippet>229</a>    /// let mut heap = DoubleHeap::new();
 <a href=#230 id=230 data-nosnippet>230</a>    /// assert_eq!(heap.left_len(), 0);
-<a href=#231 id=231 data-nosnippet>231</a>    /// heap.push_front(42);
-<a href=#232 id=232 data-nosnippet>232</a>    /// heap.push_back(42);
-<a href=#233 id=233 data-nosnippet>233</a>    /// heap.push_back(42);
+<a href=#231 id=231 data-nosnippet>231</a>    /// heap.push_left(42);
+<a href=#232 id=232 data-nosnippet>232</a>    /// heap.push_right(42);
+<a href=#233 id=233 data-nosnippet>233</a>    /// heap.push_right(42);
 <a href=#234 id=234 data-nosnippet>234</a>    /// assert_eq!(heap.left_len(), 1);
 <a href=#235 id=235 data-nosnippet>235</a>    /// ```
 <a href=#236 id=236 data-nosnippet>236</a>    </span><span class="kw">pub fn </span>left_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -269,9 +269,9 @@
 <a href=#245 id=245 data-nosnippet>245</a>    /// use heap_tricks::DoubleHeap;
 <a href=#246 id=246 data-nosnippet>246</a>    /// let mut heap = DoubleHeap::new();
 <a href=#247 id=247 data-nosnippet>247</a>    /// assert_eq!(heap.right_len(), 0);
-<a href=#248 id=248 data-nosnippet>248</a>    /// heap.push_front(42);
-<a href=#249 id=249 data-nosnippet>249</a>    /// heap.push_back(42);
-<a href=#250 id=250 data-nosnippet>250</a>    /// heap.push_back(42);
+<a href=#248 id=248 data-nosnippet>248</a>    /// heap.push_left(42);
+<a href=#249 id=249 data-nosnippet>249</a>    /// heap.push_right(42);
+<a href=#250 id=250 data-nosnippet>250</a>    /// heap.push_right(42);
 <a href=#251 id=251 data-nosnippet>251</a>    /// assert_eq!(heap.right_len(), 2);
 <a href=#252 id=252 data-nosnippet>252</a>    /// ```
 <a href=#253 id=253 data-nosnippet>253</a>    </span><span class="kw">pub fn </span>right_len(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; usize {
@@ -289,14 +289,14 @@
 <a href=#265 id=265 data-nosnippet>265</a>    /// use heap_tricks::DoubleHeap;
 <a href=#266 id=266 data-nosnippet>266</a>    /// let mut heap = DoubleHeap::new();
 <a href=#267 id=267 data-nosnippet>267</a>    ///
-<a href=#268 id=268 data-nosnippet>268</a>    /// heap.push_front(42);
-<a href=#269 id=269 data-nosnippet>269</a>    /// heap.push_back(45);
-<a href=#270 id=270 data-nosnippet>270</a>    /// heap.push_back(13);
+<a href=#268 id=268 data-nosnippet>268</a>    /// heap.push_left(42);
+<a href=#269 id=269 data-nosnippet>269</a>    /// heap.push_right(45);
+<a href=#270 id=270 data-nosnippet>270</a>    /// heap.push_right(13);
 <a href=#271 id=271 data-nosnippet>271</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
 <a href=#272 id=272 data-nosnippet>272</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
 <a href=#273 id=273 data-nosnippet>273</a>    /// ```
-<a href=#274 id=274 data-nosnippet>274</a>    </span><span class="kw">pub fn </span>push_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
-<a href=#275 id=275 data-nosnippet>275</a>        <span class="self">self</span>.handler.push_front(elm);
+<a href=#274 id=274 data-nosnippet>274</a>    </span><span class="kw">pub fn </span>push_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
+<a href=#275 id=275 data-nosnippet>275</a>        <span class="self">self</span>.handler.push_left(elm);
 <a href=#276 id=276 data-nosnippet>276</a>        <span class="self">self</span>.left.push(elm);
 <a href=#277 id=277 data-nosnippet>277</a>        <span class="self">self</span>.settle();
 <a href=#278 id=278 data-nosnippet>278</a>    }
@@ -312,14 +312,14 @@
 <a href=#288 id=288 data-nosnippet>288</a>    /// use heap_tricks::DoubleHeap;
 <a href=#289 id=289 data-nosnippet>289</a>    /// let mut heap = DoubleHeap::new();
 <a href=#290 id=290 data-nosnippet>290</a>    ///
-<a href=#291 id=291 data-nosnippet>291</a>    /// heap.push_front(42);
-<a href=#292 id=292 data-nosnippet>292</a>    /// heap.push_back(45);
-<a href=#293 id=293 data-nosnippet>293</a>    /// heap.push_back(13);
+<a href=#291 id=291 data-nosnippet>291</a>    /// heap.push_left(42);
+<a href=#292 id=292 data-nosnippet>292</a>    /// heap.push_right(45);
+<a href=#293 id=293 data-nosnippet>293</a>    /// heap.push_right(13);
 <a href=#294 id=294 data-nosnippet>294</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
 <a href=#295 id=295 data-nosnippet>295</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
 <a href=#296 id=296 data-nosnippet>296</a>    /// ```
-<a href=#297 id=297 data-nosnippet>297</a>    </span><span class="kw">pub fn </span>push_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
-<a href=#298 id=298 data-nosnippet>298</a>        <span class="self">self</span>.handler.push_back(elm);
+<a href=#297 id=297 data-nosnippet>297</a>    </span><span class="kw">pub fn </span>push_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
+<a href=#298 id=298 data-nosnippet>298</a>        <span class="self">self</span>.handler.push_right(elm);
 <a href=#299 id=299 data-nosnippet>299</a>        <span class="self">self</span>.right.push(Reverse(elm));
 <a href=#300 id=300 data-nosnippet>300</a>        <span class="self">self</span>.settle();
 <a href=#301 id=301 data-nosnippet>301</a>    }
@@ -331,12 +331,12 @@
 <a href=#307 id=307 data-nosnippet>307</a>    /// ```
 <a href=#308 id=308 data-nosnippet>308</a>    /// use heap_tricks::DoubleHeap;
 <a href=#309 id=309 data-nosnippet>309</a>    /// let mut heap = DoubleHeap::new();
-<a href=#310 id=310 data-nosnippet>310</a>    /// heap.push_front(42);
-<a href=#311 id=311 data-nosnippet>311</a>    /// heap.push_back(45);
-<a href=#312 id=312 data-nosnippet>312</a>    /// heap.push_back(13);
-<a href=#313 id=313 data-nosnippet>313</a>    /// assert_eq!(heap.peek_front(), Some(13));
+<a href=#310 id=310 data-nosnippet>310</a>    /// heap.push_left(42);
+<a href=#311 id=311 data-nosnippet>311</a>    /// heap.push_right(45);
+<a href=#312 id=312 data-nosnippet>312</a>    /// heap.push_right(13);
+<a href=#313 id=313 data-nosnippet>313</a>    /// assert_eq!(heap.peek_left(), Some(13));
 <a href=#314 id=314 data-nosnippet>314</a>    /// ```
-<a href=#315 id=315 data-nosnippet>315</a>    </span><span class="kw">pub fn </span>peek_front(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+<a href=#315 id=315 data-nosnippet>315</a>    </span><span class="kw">pub fn </span>peek_left(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
 <a href=#316 id=316 data-nosnippet>316</a>        <span class="self">self</span>.left.peek()
 <a href=#317 id=317 data-nosnippet>317</a>    }
 <a href=#318 id=318 data-nosnippet>318</a>
@@ -347,13 +347,13 @@
 <a href=#323 id=323 data-nosnippet>323</a>    /// ```
 <a href=#324 id=324 data-nosnippet>324</a>    /// use heap_tricks::DoubleHeap;
 <a href=#325 id=325 data-nosnippet>325</a>    /// let mut heap = DoubleHeap::new();
-<a href=#326 id=326 data-nosnippet>326</a>    /// heap.push_front(42);
-<a href=#327 id=327 data-nosnippet>327</a>    /// heap.push_back(45);
-<a href=#328 id=328 data-nosnippet>328</a>    /// heap.push_back(13);
-<a href=#329 id=329 data-nosnippet>329</a>    /// assert_eq!(heap.peek_back(), Some(42));
+<a href=#326 id=326 data-nosnippet>326</a>    /// heap.push_left(42);
+<a href=#327 id=327 data-nosnippet>327</a>    /// heap.push_right(45);
+<a href=#328 id=328 data-nosnippet>328</a>    /// heap.push_right(13);
+<a href=#329 id=329 data-nosnippet>329</a>    /// assert_eq!(heap.peek_right(), Some(42));
 <a href=#330 id=330 data-nosnippet>330</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
 <a href=#331 id=331 data-nosnippet>331</a>    /// ```
-<a href=#332 id=332 data-nosnippet>332</a>    </span><span class="kw">pub fn </span>peek_back(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+<a href=#332 id=332 data-nosnippet>332</a>    </span><span class="kw">pub fn </span>peek_right(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
 <a href=#333 id=333 data-nosnippet>333</a>        <span class="self">self</span>.right.peek().map(|rev| rev.<span class="number">0</span>)
 <a href=#334 id=334 data-nosnippet>334</a>    }
 <a href=#335 id=335 data-nosnippet>335</a>
@@ -364,14 +364,14 @@
 <a href=#340 id=340 data-nosnippet>340</a>    /// ```
 <a href=#341 id=341 data-nosnippet>341</a>    /// use heap_tricks::DoubleHeap;
 <a href=#342 id=342 data-nosnippet>342</a>    /// let mut heap = DoubleHeap::new();
-<a href=#343 id=343 data-nosnippet>343</a>    /// heap.push_front(42);
-<a href=#344 id=344 data-nosnippet>344</a>    /// heap.push_back(45);
-<a href=#345 id=345 data-nosnippet>345</a>    /// heap.push_back(13);
-<a href=#346 id=346 data-nosnippet>346</a>    /// assert_eq!(heap.pop_front(), Some(13));
+<a href=#343 id=343 data-nosnippet>343</a>    /// heap.push_left(42);
+<a href=#344 id=344 data-nosnippet>344</a>    /// heap.push_right(45);
+<a href=#345 id=345 data-nosnippet>345</a>    /// heap.push_right(13);
+<a href=#346 id=346 data-nosnippet>346</a>    /// assert_eq!(heap.pop_left(), Some(13));
 <a href=#347 id=347 data-nosnippet>347</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
 <a href=#348 id=348 data-nosnippet>348</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![42, 45]);
 <a href=#349 id=349 data-nosnippet>349</a>    /// ```
-<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">pub fn </span>pop_front(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+<a href=#350 id=350 data-nosnippet>350</a>    </span><span class="kw">pub fn </span>pop_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
 <a href=#351 id=351 data-nosnippet>351</a>        <span class="kw">let </span>ans = <span class="self">self</span>.left.pop();
 <a href=#352 id=352 data-nosnippet>352</a>        <span class="self">self</span>.settle();
 <a href=#353 id=353 data-nosnippet>353</a>        ans
@@ -384,14 +384,14 @@
 <a href=#360 id=360 data-nosnippet>360</a>    /// ```
 <a href=#361 id=361 data-nosnippet>361</a>    /// use heap_tricks::DoubleHeap;
 <a href=#362 id=362 data-nosnippet>362</a>    /// let mut heap = DoubleHeap::new();
-<a href=#363 id=363 data-nosnippet>363</a>    /// heap.push_front(42);
-<a href=#364 id=364 data-nosnippet>364</a>    /// heap.push_back(45);
-<a href=#365 id=365 data-nosnippet>365</a>    /// heap.push_back(13);
-<a href=#366 id=366 data-nosnippet>366</a>    /// assert_eq!(heap.pop_back(), Some(42));
+<a href=#363 id=363 data-nosnippet>363</a>    /// heap.push_left(42);
+<a href=#364 id=364 data-nosnippet>364</a>    /// heap.push_right(45);
+<a href=#365 id=365 data-nosnippet>365</a>    /// heap.push_right(13);
+<a href=#366 id=366 data-nosnippet>366</a>    /// assert_eq!(heap.pop_right(), Some(42));
 <a href=#367 id=367 data-nosnippet>367</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
 <a href=#368 id=368 data-nosnippet>368</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
 <a href=#369 id=369 data-nosnippet>369</a>    /// ```
-<a href=#370 id=370 data-nosnippet>370</a>    </span><span class="kw">pub fn </span>pop_back(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
+<a href=#370 id=370 data-nosnippet>370</a>    </span><span class="kw">pub fn </span>pop_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>) -&gt; <span class="prelude-ty">Option</span>&lt;T&gt; {
 <a href=#371 id=371 data-nosnippet>371</a>        <span class="kw">let </span>ans = <span class="self">self</span>.right.pop().map(|rev| rev.<span class="number">0</span>);
 <a href=#372 id=372 data-nosnippet>372</a>        <span class="self">self</span>.settle();
 <a href=#373 id=373 data-nosnippet>373</a>        ans
@@ -408,17 +408,17 @@
 <a href=#384 id=384 data-nosnippet>384</a>    /// ```
 <a href=#385 id=385 data-nosnippet>385</a>    /// use heap_tricks::DoubleHeap;
 <a href=#386 id=386 data-nosnippet>386</a>    /// let mut heap = DoubleHeap::new();
-<a href=#387 id=387 data-nosnippet>387</a>    /// heap.push_front(42);
-<a href=#388 id=388 data-nosnippet>388</a>    /// heap.push_back(45);
-<a href=#389 id=389 data-nosnippet>389</a>    /// heap.push_back(13);
+<a href=#387 id=387 data-nosnippet>387</a>    /// heap.push_left(42);
+<a href=#388 id=388 data-nosnippet>388</a>    /// heap.push_right(45);
+<a href=#389 id=389 data-nosnippet>389</a>    /// heap.push_right(13);
 <a href=#390 id=390 data-nosnippet>390</a>    /// heap.move_left();
 <a href=#391 id=391 data-nosnippet>391</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13, 42]);
 <a href=#392 id=392 data-nosnippet>392</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
 <a href=#393 id=393 data-nosnippet>393</a>    /// ```
 <a href=#394 id=394 data-nosnippet>394</a>    </span><span class="kw">pub fn </span>move_left(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 <a href=#395 id=395 data-nosnippet>395</a>        <span class="kw">let </span>elm = <span class="self">self</span>.right.pop().expect(<span class="string">"右側ヒープは空です。"</span>).<span class="number">0</span>;
-<a href=#396 id=396 data-nosnippet>396</a>        <span class="self">self</span>.handler.pop_back(elm);
-<a href=#397 id=397 data-nosnippet>397</a>        <span class="self">self</span>.handler.push_front(elm);
+<a href=#396 id=396 data-nosnippet>396</a>        <span class="self">self</span>.handler.pop_right(elm);
+<a href=#397 id=397 data-nosnippet>397</a>        <span class="self">self</span>.handler.push_left(elm);
 <a href=#398 id=398 data-nosnippet>398</a>        <span class="self">self</span>.left.push(elm);
 <a href=#399 id=399 data-nosnippet>399</a>        <span class="self">self</span>.settle();
 <a href=#400 id=400 data-nosnippet>400</a>    }
@@ -434,17 +434,17 @@
 <a href=#410 id=410 data-nosnippet>410</a>    /// ```
 <a href=#411 id=411 data-nosnippet>411</a>    /// use heap_tricks::DoubleHeap;
 <a href=#412 id=412 data-nosnippet>412</a>    /// let mut heap = DoubleHeap::new();
-<a href=#413 id=413 data-nosnippet>413</a>    /// heap.push_front(42);
-<a href=#414 id=414 data-nosnippet>414</a>    /// heap.push_back(45);
-<a href=#415 id=415 data-nosnippet>415</a>    /// heap.push_back(13);
+<a href=#413 id=413 data-nosnippet>413</a>    /// heap.push_left(42);
+<a href=#414 id=414 data-nosnippet>414</a>    /// heap.push_right(45);
+<a href=#415 id=415 data-nosnippet>415</a>    /// heap.push_right(13);
 <a href=#416 id=416 data-nosnippet>416</a>    /// heap.move_right();
 <a href=#417 id=417 data-nosnippet>417</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
 <a href=#418 id=418 data-nosnippet>418</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 42, 45]);
 <a href=#419 id=419 data-nosnippet>419</a>    /// ```
 <a href=#420 id=420 data-nosnippet>420</a>    </span><span class="kw">pub fn </span>move_right(<span class="kw-2">&amp;mut </span><span class="self">self</span>) {
 <a href=#421 id=421 data-nosnippet>421</a>        <span class="kw">let </span>elm = <span class="self">self</span>.left.pop().expect(<span class="string">"左側ヒープは空です。"</span>);
-<a href=#422 id=422 data-nosnippet>422</a>        <span class="self">self</span>.handler.pop_front(elm);
-<a href=#423 id=423 data-nosnippet>423</a>        <span class="self">self</span>.handler.push_back(elm);
+<a href=#422 id=422 data-nosnippet>422</a>        <span class="self">self</span>.handler.pop_left(elm);
+<a href=#423 id=423 data-nosnippet>423</a>        <span class="self">self</span>.handler.push_right(elm);
 <a href=#424 id=424 data-nosnippet>424</a>        <span class="self">self</span>.right.push(Reverse(elm));
 <a href=#425 id=425 data-nosnippet>425</a>        <span class="self">self</span>.settle();
 <a href=#426 id=426 data-nosnippet>426</a>    }
@@ -463,20 +463,20 @@
 <a href=#439 id=439 data-nosnippet>439</a>    /// ```
 <a href=#440 id=440 data-nosnippet>440</a>    /// use heap_tricks::DoubleHeap;
 <a href=#441 id=441 data-nosnippet>441</a>    /// let mut heap = DoubleHeap::new();
-<a href=#442 id=442 data-nosnippet>442</a>    /// heap.push_front(42);
-<a href=#443 id=443 data-nosnippet>443</a>    /// heap.push_back(45);
-<a href=#444 id=444 data-nosnippet>444</a>    /// heap.push_back(13);
+<a href=#442 id=442 data-nosnippet>442</a>    /// heap.push_left(42);
+<a href=#443 id=443 data-nosnippet>443</a>    /// heap.push_right(45);
+<a href=#444 id=444 data-nosnippet>444</a>    /// heap.push_right(13);
 <a href=#445 id=445 data-nosnippet>445</a>    /// heap.remove_left_unchecked(42);
 <a href=#446 id=446 data-nosnippet>446</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![]);
 <a href=#447 id=447 data-nosnippet>447</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13, 45]);
 <a href=#448 id=448 data-nosnippet>448</a>    /// ```
 <a href=#449 id=449 data-nosnippet>449</a>    </span><span class="kw">pub fn </span>remove_left_unchecked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
 <a href=#450 id=450 data-nosnippet>450</a>        <span class="kw">if </span><span class="self">self</span>.left.peek().is_some_and(|lmax| elm &lt;= lmax) {
-<a href=#451 id=451 data-nosnippet>451</a>            <span class="self">self</span>.handler.pop_front(elm);
+<a href=#451 id=451 data-nosnippet>451</a>            <span class="self">self</span>.handler.pop_left(elm);
 <a href=#452 id=452 data-nosnippet>452</a>            <span class="self">self</span>.left.remove_unchecked(elm);
 <a href=#453 id=453 data-nosnippet>453</a>            <span class="self">self</span>.settle();
 <a href=#454 id=454 data-nosnippet>454</a>        } <span class="kw">else </span>{
-<a href=#455 id=455 data-nosnippet>455</a>            <span class="self">self</span>.handler.pop_back(elm);
+<a href=#455 id=455 data-nosnippet>455</a>            <span class="self">self</span>.handler.pop_right(elm);
 <a href=#456 id=456 data-nosnippet>456</a>            <span class="self">self</span>.right.remove_unchecked(Reverse(elm));
 <a href=#457 id=457 data-nosnippet>457</a>            <span class="self">self</span>.settle();
 <a href=#458 id=458 data-nosnippet>458</a>            <span class="self">self</span>.move_right();
@@ -497,21 +497,21 @@
 <a href=#473 id=473 data-nosnippet>473</a>    /// ```
 <a href=#474 id=474 data-nosnippet>474</a>    /// use heap_tricks::DoubleHeap;
 <a href=#475 id=475 data-nosnippet>475</a>    /// let mut heap = DoubleHeap::new();
-<a href=#476 id=476 data-nosnippet>476</a>    /// heap.push_front(42);
-<a href=#477 id=477 data-nosnippet>477</a>    /// heap.push_back(45);
-<a href=#478 id=478 data-nosnippet>478</a>    /// heap.push_back(13);
+<a href=#476 id=476 data-nosnippet>476</a>    /// heap.push_left(42);
+<a href=#477 id=477 data-nosnippet>477</a>    /// heap.push_right(45);
+<a href=#478 id=478 data-nosnippet>478</a>    /// heap.push_right(13);
 <a href=#479 id=479 data-nosnippet>479</a>    /// heap.remove_right_unchecked(42);
 <a href=#480 id=480 data-nosnippet>480</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![13]);
 <a href=#481 id=481 data-nosnippet>481</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![45]);
 <a href=#482 id=482 data-nosnippet>482</a>    /// ```
 <a href=#483 id=483 data-nosnippet>483</a>    </span><span class="kw">pub fn </span>remove_right_unchecked(<span class="kw-2">&amp;mut </span><span class="self">self</span>, elm: T) {
 <a href=#484 id=484 data-nosnippet>484</a>        <span class="kw">if </span><span class="self">self</span>.left.peek().is_some_and(|lmax| elm &lt;= lmax) {
-<a href=#485 id=485 data-nosnippet>485</a>            <span class="self">self</span>.handler.pop_front(elm);
+<a href=#485 id=485 data-nosnippet>485</a>            <span class="self">self</span>.handler.pop_left(elm);
 <a href=#486 id=486 data-nosnippet>486</a>            <span class="self">self</span>.left.remove_unchecked(elm);
 <a href=#487 id=487 data-nosnippet>487</a>            <span class="self">self</span>.settle();
 <a href=#488 id=488 data-nosnippet>488</a>            <span class="self">self</span>.move_left();
 <a href=#489 id=489 data-nosnippet>489</a>        } <span class="kw">else </span>{
-<a href=#490 id=490 data-nosnippet>490</a>            <span class="self">self</span>.handler.pop_back(elm);
+<a href=#490 id=490 data-nosnippet>490</a>            <span class="self">self</span>.handler.pop_right(elm);
 <a href=#491 id=491 data-nosnippet>491</a>            <span class="self">self</span>.right.remove_unchecked(Reverse(elm));
 <a href=#492 id=492 data-nosnippet>492</a>            <span class="self">self</span>.settle();
 <a href=#493 id=493 data-nosnippet>493</a>        }
@@ -520,7 +520,7 @@
 <a href=#496 id=496 data-nosnippet>496</a>    <span class="doccomment">/// 左側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
 <a href=#497 id=497 data-nosnippet>497</a>    ///
 <a href=#498 id=498 data-nosnippet>498</a>    /// 左側は小さい方から $k$ 個の要素を持つことになるので、
-<a href=#499 id=499 data-nosnippet>499</a>    /// [`peek_back`](Self::peek_back) で $(k+1)$ 番目に小さい要素（順序統計量）
+<a href=#499 id=499 data-nosnippet>499</a>    /// [`peek_right`](Self::peek_right) で $(k+1)$ 番目に小さい要素（順序統計量）
 <a href=#500 id=500 data-nosnippet>500</a>    /// が得られる。$O(|k - \text{左側の要素数}| \log n)$。
 <a href=#501 id=501 data-nosnippet>501</a>    ///
 <a href=#502 id=502 data-nosnippet>502</a>    /// # Panics
@@ -532,10 +532,10 @@
 <a href=#508 id=508 data-nosnippet>508</a>    /// ```
 <a href=#509 id=509 data-nosnippet>509</a>    /// use heap_tricks::DoubleHeap;
 <a href=#510 id=510 data-nosnippet>510</a>    /// let mut heap = DoubleHeap::new();
-<a href=#511 id=511 data-nosnippet>511</a>    /// heap.push_front(10);
-<a href=#512 id=512 data-nosnippet>512</a>    /// heap.push_front(11);
-<a href=#513 id=513 data-nosnippet>513</a>    /// heap.push_front(12);
-<a href=#514 id=514 data-nosnippet>514</a>    /// heap.push_back(13);
+<a href=#511 id=511 data-nosnippet>511</a>    /// heap.push_left(10);
+<a href=#512 id=512 data-nosnippet>512</a>    /// heap.push_left(11);
+<a href=#513 id=513 data-nosnippet>513</a>    /// heap.push_left(12);
+<a href=#514 id=514 data-nosnippet>514</a>    /// heap.push_right(13);
 <a href=#515 id=515 data-nosnippet>515</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
 <a href=#516 id=516 data-nosnippet>516</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
 <a href=#517 id=517 data-nosnippet>517</a>    ///
@@ -556,7 +556,7 @@
 <a href=#532 id=532 data-nosnippet>532</a>    <span class="doccomment">/// 右側ヒープの要素数がちょうど `k` 個になるまで、左右間で要素を移動する。
 <a href=#533 id=533 data-nosnippet>533</a>    ///
 <a href=#534 id=534 data-nosnippet>534</a>    /// 右側は大きい方から $k$ 個の要素を持つことになるので、
-<a href=#535 id=535 data-nosnippet>535</a>    /// [`peek_front`](Self::peek_front) で $(n-k)$ 番目に小さい要素（順序統計量）
+<a href=#535 id=535 data-nosnippet>535</a>    /// [`peek_left`](Self::peek_left) で $(n-k)$ 番目に小さい要素（順序統計量）
 <a href=#536 id=536 data-nosnippet>536</a>    /// が得られる。$O(|k - \text{右側の要素数}| \log n)$。
 <a href=#537 id=537 data-nosnippet>537</a>    ///
 <a href=#538 id=538 data-nosnippet>538</a>    /// # Panics
@@ -568,10 +568,10 @@
 <a href=#544 id=544 data-nosnippet>544</a>    /// ```
 <a href=#545 id=545 data-nosnippet>545</a>    /// use heap_tricks::DoubleHeap;
 <a href=#546 id=546 data-nosnippet>546</a>    /// let mut heap = DoubleHeap::new();
-<a href=#547 id=547 data-nosnippet>547</a>    /// heap.push_front(10);
-<a href=#548 id=548 data-nosnippet>548</a>    /// heap.push_front(11);
-<a href=#549 id=549 data-nosnippet>549</a>    /// heap.push_front(12);
-<a href=#550 id=550 data-nosnippet>550</a>    /// heap.push_back(13);
+<a href=#547 id=547 data-nosnippet>547</a>    /// heap.push_left(10);
+<a href=#548 id=548 data-nosnippet>548</a>    /// heap.push_left(11);
+<a href=#549 id=549 data-nosnippet>549</a>    /// heap.push_left(12);
+<a href=#550 id=550 data-nosnippet>550</a>    /// heap.push_right(13);
 <a href=#551 id=551 data-nosnippet>551</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
 <a href=#552 id=552 data-nosnippet>552</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
 <a href=#553 id=553 data-nosnippet>553</a>    ///
@@ -597,10 +597,10 @@
 <a href=#573 id=573 data-nosnippet>573</a>    /// use heap_tricks::DoubleHeap;
 <a href=#574 id=574 data-nosnippet>574</a>    /// use heap_tricks::Sum;
 <a href=#575 id=575 data-nosnippet>575</a>    /// let mut heap = DoubleHeap::with_handler(Sum::default());
-<a href=#576 id=576 data-nosnippet>576</a>    /// heap.push_front(10);
-<a href=#577 id=577 data-nosnippet>577</a>    /// heap.push_front(11);
-<a href=#578 id=578 data-nosnippet>578</a>    /// heap.push_front(12);
-<a href=#579 id=579 data-nosnippet>579</a>    /// heap.push_back(13);
+<a href=#576 id=576 data-nosnippet>576</a>    /// heap.push_left(10);
+<a href=#577 id=577 data-nosnippet>577</a>    /// heap.push_left(11);
+<a href=#578 id=578 data-nosnippet>578</a>    /// heap.push_left(12);
+<a href=#579 id=579 data-nosnippet>579</a>    /// heap.push_right(13);
 <a href=#580 id=580 data-nosnippet>580</a>    /// assert_eq!(heap.handler().left, 33);
 <a href=#581 id=581 data-nosnippet>581</a>    /// assert_eq!(heap.handler().right, 13);
 <a href=#582 id=582 data-nosnippet>582</a>    ///
@@ -619,10 +619,10 @@
 <a href=#595 id=595 data-nosnippet>595</a>    /// ```
 <a href=#596 id=596 data-nosnippet>596</a>    /// use heap_tricks::DoubleHeap;
 <a href=#597 id=597 data-nosnippet>597</a>    /// let mut heap = DoubleHeap::new();
-<a href=#598 id=598 data-nosnippet>598</a>    /// heap.push_front(10);
-<a href=#599 id=599 data-nosnippet>599</a>    /// heap.push_front(11);
-<a href=#600 id=600 data-nosnippet>600</a>    /// heap.push_front(12);
-<a href=#601 id=601 data-nosnippet>601</a>    /// heap.push_back(13);
+<a href=#598 id=598 data-nosnippet>598</a>    /// heap.push_left(10);
+<a href=#599 id=599 data-nosnippet>599</a>    /// heap.push_left(11);
+<a href=#600 id=600 data-nosnippet>600</a>    /// heap.push_left(12);
+<a href=#601 id=601 data-nosnippet>601</a>    /// heap.push_right(13);
 <a href=#602 id=602 data-nosnippet>602</a>    /// assert_eq!(heap.collect_left_sorted_vec(), vec![10, 11, 12]);
 <a href=#603 id=603 data-nosnippet>603</a>    /// ```
 <a href=#604 id=604 data-nosnippet>604</a>    </span><span class="kw">pub fn </span>collect_left_sorted_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt; {
@@ -636,10 +636,10 @@
 <a href=#612 id=612 data-nosnippet>612</a>    /// ```
 <a href=#613 id=613 data-nosnippet>613</a>    /// use heap_tricks::DoubleHeap;
 <a href=#614 id=614 data-nosnippet>614</a>    /// let mut heap = DoubleHeap::new();
-<a href=#615 id=615 data-nosnippet>615</a>    /// heap.push_front(10);
-<a href=#616 id=616 data-nosnippet>616</a>    /// heap.push_front(11);
-<a href=#617 id=617 data-nosnippet>617</a>    /// heap.push_front(12);
-<a href=#618 id=618 data-nosnippet>618</a>    /// heap.push_back(13);
+<a href=#615 id=615 data-nosnippet>615</a>    /// heap.push_left(10);
+<a href=#616 id=616 data-nosnippet>616</a>    /// heap.push_left(11);
+<a href=#617 id=617 data-nosnippet>617</a>    /// heap.push_left(12);
+<a href=#618 id=618 data-nosnippet>618</a>    /// heap.push_right(13);
 <a href=#619 id=619 data-nosnippet>619</a>    /// assert_eq!(heap.collect_right_sorted_vec(), vec![13]);
 <a href=#620 id=620 data-nosnippet>620</a>    /// ```
 <a href=#621 id=621 data-nosnippet>621</a>    </span><span class="kw">pub fn </span>collect_right_sorted_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt; {
@@ -658,10 +658,10 @@
 <a href=#634 id=634 data-nosnippet>634</a>    /// ```
 <a href=#635 id=635 data-nosnippet>635</a>    /// use heap_tricks::DoubleHeap;
 <a href=#636 id=636 data-nosnippet>636</a>    /// let mut heap = DoubleHeap::new();
-<a href=#637 id=637 data-nosnippet>637</a>    /// heap.push_front(10);
-<a href=#638 id=638 data-nosnippet>638</a>    /// heap.push_front(11);
-<a href=#639 id=639 data-nosnippet>639</a>    /// heap.push_front(12);
-<a href=#640 id=640 data-nosnippet>640</a>    /// heap.push_back(13);
+<a href=#637 id=637 data-nosnippet>637</a>    /// heap.push_left(10);
+<a href=#638 id=638 data-nosnippet>638</a>    /// heap.push_left(11);
+<a href=#639 id=639 data-nosnippet>639</a>    /// heap.push_left(12);
+<a href=#640 id=640 data-nosnippet>640</a>    /// heap.push_right(13);
 <a href=#641 id=641 data-nosnippet>641</a>    /// assert_eq!(heap.collect_sorted_vec(), vec![10, 11, 12, 13]);
 <a href=#642 id=642 data-nosnippet>642</a>    /// ```
 <a href=#643 id=643 data-nosnippet>643</a>    </span><span class="kw">pub fn </span>collect_sorted_vec(<span class="kw-2">&amp;</span><span class="self">self</span>) -&gt; Vec&lt;T&gt; {
@@ -677,12 +677,12 @@
 <a href=#653 id=653 data-nosnippet>653</a>            &amp;&amp; <span class="self">self</span>.left.peek().unwrap() &gt; <span class="self">self</span>.right.peek().unwrap().<span class="number">0
 <a href=#654 id=654 data-nosnippet>654</a>        </span>{
 <a href=#655 id=655 data-nosnippet>655</a>            <span class="kw">let </span>elm = <span class="self">self</span>.right.pop().unwrap().<span class="number">0</span>;
-<a href=#656 id=656 data-nosnippet>656</a>            <span class="self">self</span>.handler.pop_back(elm);
-<a href=#657 id=657 data-nosnippet>657</a>            <span class="self">self</span>.handler.push_front(elm);
+<a href=#656 id=656 data-nosnippet>656</a>            <span class="self">self</span>.handler.pop_right(elm);
+<a href=#657 id=657 data-nosnippet>657</a>            <span class="self">self</span>.handler.push_left(elm);
 <a href=#658 id=658 data-nosnippet>658</a>            <span class="self">self</span>.left.push(elm);
 <a href=#659 id=659 data-nosnippet>659</a>            <span class="kw">let </span>elm = <span class="self">self</span>.left.pop().unwrap();
-<a href=#660 id=660 data-nosnippet>660</a>            <span class="self">self</span>.handler.pop_front(elm);
-<a href=#661 id=661 data-nosnippet>661</a>            <span class="self">self</span>.handler.push_back(elm);
+<a href=#660 id=660 data-nosnippet>660</a>            <span class="self">self</span>.handler.pop_left(elm);
+<a href=#661 id=661 data-nosnippet>661</a>            <span class="self">self</span>.handler.push_right(elm);
 <a href=#662 id=662 data-nosnippet>662</a>            <span class="self">self</span>.right.push(Reverse(elm));
 <a href=#663 id=663 data-nosnippet>663</a>        }
 <a href=#664 id=664 data-nosnippet>664</a>    }
@@ -917,7 +917,7 @@
 <a href=#893 id=893 data-nosnippet>893</a>                <span class="number">0 </span>=&gt; {
 <a href=#894 id=894 data-nosnippet>894</a>                    sorted.push(x);
 <a href=#895 id=895 data-nosnippet>895</a>                    sorted.sort_unstable();
-<a href=#896 id=896 data-nosnippet>896</a>                    heap.push_front(x);
+<a href=#896 id=896 data-nosnippet>896</a>                    heap.push_left(x);
 <a href=#897 id=897 data-nosnippet>897</a>                }
 <a href=#898 id=898 data-nosnippet>898</a>                <span class="number">1 </span>=&gt; {
 <a href=#899 id=899 data-nosnippet>899</a>                    <span class="kw">if let </span><span class="prelude-val">Ok</span>(i) = sorted.binary_search(<span class="kw-2">&amp;</span>x) {
@@ -934,7 +934,7 @@
 <a href=#910 id=910 data-nosnippet>910</a>                <span class="kw">let </span>i = rng.gen_range(<span class="number">0</span>..sorted.len());
 <a href=#911 id=911 data-nosnippet>911</a>                <span class="kw">let </span>expected = sorted[i];
 <a href=#912 id=912 data-nosnippet>912</a>                heap.balance_left(i);
-<a href=#913 id=913 data-nosnippet>913</a>                <span class="macro">assert_eq!</span>(heap.peek_back().unwrap(), expected);
+<a href=#913 id=913 data-nosnippet>913</a>                <span class="macro">assert_eq!</span>(heap.peek_right().unwrap(), expected);
 <a href=#914 id=914 data-nosnippet>914</a>            }
 <a href=#915 id=915 data-nosnippet>915</a>        }
 <a href=#916 id=916 data-nosnippet>916</a>    }
