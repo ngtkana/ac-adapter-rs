@@ -32,23 +32,23 @@
 
 use std::iter::FusedIterator;
 
-/// The result of the heavy-light decomposition.
+/// 重軽分解の結果。
 #[doc(alias = "Heavy-Light Decomposition")]
 pub struct Hld {
-    /// original id -> parent original id
+    /// 元の頂点番号 -> 親の元の頂点番号
     parent: Vec<usize>,
-    /// original id -> serial id
+    /// 元の頂点番号 -> シリアル番号
     index: Vec<usize>,
-    /// original id -> head original id
+    /// 元の頂点番号 -> 連結パスの先頭（根側）の元の頂点番号
     head: Vec<usize>,
 }
 impl Hld {
-    /// Returns the serial id of the given vertex.
+    /// 指定した頂点のシリアル番号を返す。
     pub fn serial_id(&self, i: usize) -> usize {
         self.index[i]
     }
 
-    /// From $p _ 0, \dots, p _ { n - 1 }$. The parent of the root **must be itself**.
+    /// $p _ 0, \dots, p _ { n - 1 }$ から構築する。根の親は**自分自身でなければならない**。
     pub fn from_parents(parent: Vec<usize>) -> (Self, Vec<Vec<usize>>) {
         let mut g = vec![Vec::new(); parent.len()];
         let mut root = usize::MAX;
@@ -63,7 +63,7 @@ impl Hld {
         (build_hld(root, &mut g, parent), g)
     }
 
-    /// Iterator version of [`from_edges`](Self::from_edges)
+    /// 辺集合をイテレータで受け取る版の [`from_edges`](Self::from_edges)
     pub fn from_edges(
         root: usize,
         edges: impl ExactSizeIterator<Item = (usize, usize)>,
@@ -86,9 +86,9 @@ impl Hld {
         (build_hld(root, &mut g, parent), g)
     }
 
-    /// Decompose the (directed) path `from --> to` to the path segments.
+    /// 有向パス `from --> to` をパスセグメント列に分解する。
     ///
-    /// The item type is [`PathSegment`].
+    /// 要素の型は [`PathSegment`]。
     pub fn path_segments(&self, from: usize, to: usize) -> PathSegments<'_> {
         PathSegments {
             hld: self,
@@ -98,7 +98,7 @@ impl Hld {
         }
     }
 
-    /// Returns the lca
+    /// 最小共通祖先（LCA）を返す。
     pub fn lca(&self, i: usize, j: usize) -> usize {
         self.path_segments(i, j)
             .find(|s| s.contains_lca)
@@ -106,7 +106,7 @@ impl Hld {
             .unwrap()
     }
 
-    /// Returns the distance between two vertices
+    /// 2頂点間の距離を返す。
     pub fn dist(&self, i: usize, j: usize) -> usize {
         self.path_segments(i, j)
             .map(|s| s.vertex_count(self))
@@ -114,7 +114,7 @@ impl Hld {
             - 1
     }
 
-    /// `i`, `j`, and `k` appear in this order
+    /// `i`, `j`, `k` がこの順に並んでいるかを判定する。
     pub fn in_this_order(&self, i: usize, j: usize, k: usize) -> bool {
         let m = self.index[j];
         self.path_segments(i, k)
@@ -122,36 +122,36 @@ impl Hld {
     }
 }
 
-/// An item of [`Hld::path_segments()`].
+/// [`Hld::path_segments()`] の要素。
 #[derive(Clone, Copy)]
 pub struct PathSegment {
-    /// the original id on the root side
+    /// 根側の端点の元の頂点番号
     pub higher: usize,
-    /// the original id on the leaf side
+    /// 葉側の端点の元の頂点番号
     pub deeper: usize,
-    /// true contains the lca
+    /// LCA を含む区間なら true
     pub contains_lca: bool,
-    /// true if from --> to and i --> j are in the opposite direction
+    /// `from --> to` と `i --> j` の向きが逆なら true
     pub oppsite: bool,
 }
 impl PathSegment {
-    /// Returns the serial id on the root side
+    /// 根側の端点のシリアル番号を返す。
     pub fn higher_serial_id(&self, hld: &Hld) -> usize {
         hld.index[self.higher]
     }
 
-    /// Returns the serial id on the leaf side
+    /// 葉側の端点のシリアル番号を返す。
     pub fn deeper_serial_id(&self, hld: &Hld) -> usize {
         hld.index[self.deeper]
     }
 
-    /// Returns the number of vertices in the path segment.
+    /// パスセグメントに含まれる頂点数を返す。
     pub fn vertex_count(&self, hld: &Hld) -> usize {
         hld.index[self.deeper] - hld.index[self.higher] + 1
     }
 }
 
-/// Iterator for [`Hld::path_segments()`].
+/// [`Hld::path_segments()`] のイテレータ。
 pub struct PathSegments<'a> {
     hld: &'a Hld,
     from: usize,
