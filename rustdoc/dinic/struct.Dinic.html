@@ -134,7 +134,7 @@ dinic.flow(<span class="number">0</span>, <span class="number">2</span>);
 </div></details><details class="toggle method-toggle" open><summary><section id="method.change_edge" class="method"><a class="src rightside" href="../src/dinic/lib.rs.html#400-418">Source</a><h4 class="code-header">pub fn <a href="#method.change_edge" class="fn">change_edge</a>(&amp;mut self, edge_key: <a class="struct" href="struct.EdgeKey.html" title="struct dinic::EdgeKey">EdgeKey</a>, new_cap: T, new_flow: T)</h4></section></summary><div class="docblock"><p>辺 <code>edge_key</code> の容量・流量を <code>new_cap</code>, <code>new_flow</code> に直接書き換える。他の辺は変わらない。</p>
 <p>下限付き最大流や、特定の辺の使用を禁止した上で最大流を求め直す用途に使う危険な操作。</p>
 <h5 id="仕様-3"><a class="doc-anchor" href="#仕様-3">§</a>仕様</h5>
-<p><code>T::zero() &lt;= new_flow &lt;= new_cap</code> が前提。</p>
+<p><code>T::ZERO &lt;= new_flow &lt;= new_cap</code> が前提。</p>
 <h5 id="計算量-7"><a class="doc-anchor" href="#計算量-7">§</a>計算量</h5>
 <p>$O(1)$。</p>
 <h5 id="例-9"><a class="doc-anchor" href="#例-9">§</a>例</h5>

@@ -49,14 +49,14 @@
 <a href=#25 id=25 data-nosnippet>25</a>///
 <a href=#26 id=26 data-nosnippet>26</a>/// $O(\log \min(m_0, m_1))$
 <a href=#27 id=27 data-nosnippet>27</a></span><span class="kw">pub fn </span>crt&lt;T: Signed&gt;(res0: T, mod0: T, res1: T, mod1: T) -&gt; <span class="prelude-ty">Option</span>&lt;(T, T)&gt; {
-<a href=#28 id=28 data-nosnippet>28</a>    <span class="macro">assert!</span>(T::zero() &lt; mod0);
-<a href=#29 id=29 data-nosnippet>29</a>    <span class="macro">assert!</span>(T::zero() &lt; mod1);
+<a href=#28 id=28 data-nosnippet>28</a>    <span class="macro">assert!</span>(T::ZERO &lt; mod0);
+<a href=#29 id=29 data-nosnippet>29</a>    <span class="macro">assert!</span>(T::ZERO &lt; mod1);
 <a href=#30 id=30 data-nosnippet>30</a>    <span class="kw">let </span>(a, _b, g) = <span class="kw">super</span>::ext_gcd(mod0, mod1);
 <a href=#31 id=31 data-nosnippet>31</a>    <span class="kw">if </span>g.divides(res1 - res0) {
 <a href=#32 id=32 data-nosnippet>32</a>        <span class="kw">let </span>quot = mod1 / g;
 <a href=#33 id=33 data-nosnippet>33</a>        <span class="kw">let </span>a = ((res1 - res0) / g * a) % quot;
-<a href=#34 id=34 data-nosnippet>34</a>        <span class="kw">let </span>a = <span class="kw">if </span>a &lt; T::zero() { a + quot } <span class="kw">else </span>{ a };
-<a href=#35 id=35 data-nosnippet>35</a>        <span class="macro">assert!</span>(T::zero() &lt;= a &amp;&amp; a &lt; quot);
+<a href=#34 id=34 data-nosnippet>34</a>        <span class="kw">let </span>a = <span class="kw">if </span>a &lt; T::ZERO { a + quot } <span class="kw">else </span>{ a };
+<a href=#35 id=35 data-nosnippet>35</a>        <span class="macro">assert!</span>(T::ZERO &lt;= a &amp;&amp; a &lt; quot);
 <a href=#36 id=36 data-nosnippet>36</a>        <span class="prelude-val">Some</span>((res0 + a * mod0, mod0 * quot))
 <a href=#37 id=37 data-nosnippet>37</a>    } <span class="kw">else </span>{
 <a href=#38 id=38 data-nosnippet>38</a>        <span class="prelude-val">None

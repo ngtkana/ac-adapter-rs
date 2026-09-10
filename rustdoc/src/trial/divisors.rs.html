@@ -43,7 +43,7 @@
 <a href=#19 id=19 data-nosnippet>19</a></span><span class="kw">pub fn </span>divisors&lt;T: Value&gt;(n: T) -&gt; Vec&lt;T&gt; {
 <a href=#20 id=20 data-nosnippet>20</a>    <span class="kw">let </span><span class="kw-2">mut </span>former = Vec::new();
 <a href=#21 id=21 data-nosnippet>21</a>    <span class="kw">let </span><span class="kw-2">mut </span>latter = Vec::new();
-<a href=#22 id=22 data-nosnippet>22</a>    <span class="kw">let </span><span class="kw-2">mut </span>d = T::one();
+<a href=#22 id=22 data-nosnippet>22</a>    <span class="kw">let </span><span class="kw-2">mut </span>d = T::ONE;
 <a href=#23 id=23 data-nosnippet>23</a>    <span class="kw">while </span>d * d &lt;= n {
 <a href=#24 id=24 data-nosnippet>24</a>        <span class="kw">if </span>d.divides(n) {
 <a href=#25 id=25 data-nosnippet>25</a>            former.push(d);
@@ -84,7 +84,7 @@
 <a href=#60 id=60 data-nosnippet>60</a></span><span class="kw">pub fn </span>divisors_unordered&lt;T: Value&gt;(n: T) -&gt; Divisors&lt;T&gt; {
 <a href=#61 id=61 data-nosnippet>61</a>    Divisors {
 <a href=#62 id=62 data-nosnippet>62</a>        n,
-<a href=#63 id=63 data-nosnippet>63</a>        d: T::zero(),
+<a href=#63 id=63 data-nosnippet>63</a>        d: T::ZERO,
 <a href=#64 id=64 data-nosnippet>64</a>        rev: <span class="bool-val">false</span>,
 <a href=#65 id=65 data-nosnippet>65</a>    }
 <a href=#66 id=66 data-nosnippet>66</a>}
