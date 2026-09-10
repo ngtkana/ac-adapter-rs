@@ -11,7 +11,7 @@ use super::SieveBase;
 /// 篩は必要に応じて暗黙に伸長されるため、その分の追加時間がかかる。
 ///
 /// - 構築: $O(n \log n)$
-/// - 素因数分解: $O(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
+/// - 素因数分解: $\Theta(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
 #[derive(Default, Debug, Clone, PartialEq)]
 pub struct LpdSieve {
     base: SieveBase<sieve_kind::Usize>,
@@ -80,10 +80,6 @@ impl LpdSieve {
     ///
     /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
-    /// # Panics
-    ///
-    /// `x <= 0` のとき panic する。
-    ///
     /// # 例
     ///
     /// ```
@@ -93,6 +89,10 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `x <= 0` のとき panic する。
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
         self.base.is_prime(x)
     }
@@ -101,10 +101,6 @@ impl LpdSieve {
     ///
     /// `self.len() <= x` のとき、篩は `x` を超える最小の 2 冪まで自動的に伸長される。
     ///
-    /// # Panics
-    ///
-    /// `x <= 1` のとき panic する。
-    ///
     /// # 例
     ///
     /// ```
@@ -114,15 +110,15 @@ impl LpdSieve {
     /// assert!(sieve.is_prime(2));
     /// assert!(!sieve.is_prime(6));
     /// ```
+    ///
+    /// # Panics
+    ///
+    /// `x <= 1` のとき panic する。
     pub fn lpd<T: Int>(&mut self, x: T) -> T {
         self.base.lpd(x)
     }
 
     /// 素数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
-    ///
-    /// # 計算量
-    ///
-    /// 伸長分を除き $\Theta(\pi(n))$（$\pi(n)$ は $n$ 未満の素数の個数）
     ///
     /// # 例
     ///
@@ -136,15 +132,15 @@ impl LpdSieve {
     /// assert_eq!(prime_numbers.next(), Some(5));
     /// assert_eq!(prime_numbers.next(), Some(7));
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\pi(n))$（$\pi(n)$ は $n$ 未満の素数の個数）
     pub fn prime_numbers<T: Int>(&mut self) -> PrimeNumbers<'_, sieve_kind::Usize, T> {
         self.base.prime_numbers()
     }
 
     /// テーブル引きにより、`x` の素因数を昇順に列挙するイテレータを返す。必要に応じて篩を繰り返し伸長する。
-    ///
-    /// # 計算量
-    ///
-    /// 伸長分を除き $O(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
     ///
     /// # 例
     ///
@@ -154,6 +150,10 @@ impl LpdSieve {
     /// let mut sieve = LpdSieve::new();
     /// itertools::assert_equal(sieve.prime_factors(84), vec![2, 2, 3, 7]);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// 伸長分を除き $\Theta(\omega(n))$（$\omega(n)$ は重複込みの素因数の個数）
     pub fn prime_factors<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<'_, T> {
         self.base.prime_factors_by_lookup(n)
     }
