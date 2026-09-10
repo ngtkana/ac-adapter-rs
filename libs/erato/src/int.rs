@@ -26,12 +26,12 @@ pub trait Int:
     + Rem<Output = Self>
     + RemAssign
 {
-    /// Returns `0`.
-    fn zero() -> Self;
-    /// Returns `1`.
-    fn one() -> Self;
-    /// Returns `2`.
-    fn two() -> Self;
+    /// `0`
+    const ZERO: Self;
+    /// `1`
+    const ONE: Self;
+    /// `2`
+    const TWO: Self;
     /// Converts into `usize`
     fn as_usize(self) -> usize;
     /// Converts an `usize` into `Self`
@@ -41,15 +41,9 @@ pub trait Int:
 macro_rules! impl_int {
     ($($t:ty),* $(,)?) => {$(
         impl Int for $t {
-            fn zero() -> Self {
-                0
-            }
-            fn one() -> Self {
-                1
-            }
-            fn two() -> Self {
-                2
-            }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
+            const TWO: Self = 2;
             fn as_usize(self) -> usize {
                 self as usize
             }
