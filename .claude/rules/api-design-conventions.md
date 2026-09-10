@@ -66,6 +66,22 @@
 **根拠**: `assert!`直書きだとメッセージがクレートごとにばらつく。専用関数に切り出すことで
 メッセージの一貫性と可読性を保てる（issue #269）。参考実装: `libs/dual_segtree`, `libs/splay_tree`
 
+## 8. fold系メソッドの空区間の扱い
+
+- `Op`（`Ops`）トレイトが恒等元（`identity`）を要求する設計なら `fold` は `Value` を直接返す
+- 恒等元を要求しない半群設計なら `Option<Value>` を返す
+
+| クレート | `Op`トレイトの設計 | `fold`の返り値 |
+|---|---|---|
+| segtree, lazy_segtree | `identity`あり（モノイド） | `Value` |
+| sparse_table, splay_tree, swag | `identity`なし（半群のみ） | `Option<Value>` |
+
+**根拠**: `identity`がある場合は空区間の畳み込み結果を恒等元として自然に定義できるが、
+`identity`がない半群設計では空区間の畳み込みを表現する値が存在しないため、`Option`で
+「結果なし」を表現するほかない（issue #265）。`splay_tree::Ops`, `swag::Op` はいずれも
+`identity`関連関数を持たない半群トレイトとして設計されており、`sparse_table`と同じ理由で
+`Option`返却は本方針に沿っている。実装変更は不要と確認済み。
+
 ## 適用例
 
 このルールに沿って以下のクレートを改修した（詳細は関連PR参照）:
