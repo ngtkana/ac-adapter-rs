@@ -10,12 +10,12 @@
 //!
 //! [`Op`] トレイトで冪等半群を定義する。
 //!
-//! - [`Op::mul`][]: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）
+//! - [`Op::op`][]: 積 $x \cdot y$（結合律・冪等律 $x \cdot x = x$ を満たすこと）
 //!
 //! 構造体は次の $2$ 種類。
 //!
 //! - [`SparseTable`]（1 次元）
-//! - [`SparseTable2d`]（2 次元。[`Op::mul`] にさらに可換律も要求する）
+//! - [`SparseTable2d`]（2 次元。[`Op::op`] にさらに可換律も要求する）
 //!
 //! # 例
 //!
@@ -26,19 +26,19 @@
 //! enum Max {}
 //! impl Op for Max {
 //!     type Value = i64;
-//!     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+//!     fn op(lhs: &i64, rhs: &i64) -> i64 {
 //!         (*lhs).max(*rhs)
 //!     }
 //! }
 //!
-//! let st = SparseTable::<Max>::clone_from_slice(&[3, 1, 4, 1, 5]);
+//! let st = SparseTable::<Max>::from_slice(&[3, 1, 4, 1, 5]);
 //! assert_eq!(st.fold(1..4), Some(4)); // max(1, 4, 1)
 //! assert_eq!(st.fold(2..2), None); // 空区間
 //! ```
 //!
 //! # 計算量
 //!
-//! - 構築（[`SparseTable::new`]）: $O(n \log n)$
+//! - 構築（[`SparseTable::from_vec`], [`SparseTable::from_slice`]）: $O(n \log n)$
 //! - 畳み込み（[`SparseTable::fold`]）: $O(1)$
 
 use std::fmt::Debug;
@@ -52,7 +52,7 @@ pub trait Op {
     type Value;
 
     /// 積 $x \cdot y$ を計算する。
-    fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
+    fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value;
 }
 
 /// 1 次元のスパーステーブル。区間 $[l, r)$ の畳み込みを $O(1)$ で答える。
@@ -61,12 +61,12 @@ pub struct SparseTable<O: Op> {
 }
 impl<O: Op> SparseTable<O> {
     /// 値の列からスパーステーブルを構築する。$O(n \log n)$。
-    pub fn new(values: Vec<O::Value>) -> Self {
+    pub fn from_vec(values: Vec<O::Value>) -> Self {
         values.into()
     }
 
     /// 値のスライスを複製してスパーステーブルを構築する。$O(n \log n)$。
-    pub fn clone_from_slice(values: &[O::Value]) -> Self
+    pub fn from_slice(values: &[O::Value]) -> Self
     where
         O::Value: Clone,
     {
@@ -89,12 +89,12 @@ impl<O: Op> SparseTable<O> {
     /// enum Max {}
     /// impl Op for Max {
     ///     type Value = i64;
-    ///     fn mul(lhs: &i64, rhs: &i64) -> i64 {
+    ///     fn op(lhs: &i64, rhs: &i64) -> i64 {
     ///         (*lhs).max(*rhs)
     ///     }
     /// }
     ///
-    /// let st = SparseTable::<Max>::clone_from_slice(&[3, 1, 4, 1, 5]);
+    /// let st = SparseTable::<Max>::from_slice(&[3, 1, 4, 1, 5]);
     /// assert_eq!(st.fold(1..4), Some(4));
     /// assert_eq!(st.fold(2..2), None);
     /// ```
@@ -104,7 +104,7 @@ impl<O: Op> SparseTable<O> {
         (start < end).then_some(())?;
         let p = (end - start).ilog2() as usize;
         let row = &self.table[p];
-        Some(O::mul(&row[start], &row[end - (1 << p)]))
+        Some(O::op(&row[start], &row[end - (1 << p)]))
     }
 
     /// $x_0, x_1, \ldots, x_{n-1}$ を順に返すイテレータ。
@@ -152,7 +152,7 @@ impl<O: Op> From<Vec<O::Value>> for SparseTable<O> {
             let current = last
                 .iter()
                 .zip(&last[i..])
-                .map(|(a, b)| O::mul(a, b))
+                .map(|(a, b)| O::op(a, b))
                 .collect();
             table.push(current);
             i *= 2;
@@ -186,19 +186,19 @@ impl<O: Op> Index<usize> for SparseTable<O> {
 
 /// 2 次元のスパーステーブル。矩形領域の畳み込みを $O(1)$ で答える。
 ///
-/// 矩形を高々 4 個の角ブロックに分解して積を取るため、[`Op::mul`] は可換律も満たす必要がある。
+/// 矩形を高々 4 個の角ブロックに分解して積を取るため、[`Op::op`] は可換律も満たす必要がある。
 pub struct SparseTable2d<O: Op> {
     table: Vec<Vec<Vec<Vec<O::Value>>>>,
 }
 
 impl<O: Op> SparseTable2d<O> {
     /// 値の 2 次元配列からスパーステーブルを構築する。$O(hw \log h \log w)$。
-    pub fn new(values: Vec<Vec<O::Value>>) -> Self {
+    pub fn from_vec(values: Vec<Vec<O::Value>>) -> Self {
         values.into()
     }
 
     /// 値の 2 次元スライスを複製してスパーステーブルを構築する。$O(hw \log h \log w)$。
-    pub fn clone_from_slice(values: &[Vec<O::Value>]) -> Self
+    pub fn from_slice(values: &[Vec<O::Value>]) -> Self
     where
         O::Value: Clone,
     {
@@ -219,9 +219,9 @@ impl<O: Op> SparseTable2d<O> {
         let grid = &self.table[p][q];
         i1 -= 1 << p;
         j1 -= 1 << q;
-        Some(O::mul(
-            &O::mul(&grid[i0][j0], &grid[i1][j0]),
-            &O::mul(&grid[i0][j1], &grid[i1][j1]),
+        Some(O::op(
+            &O::op(&grid[i0][j0], &grid[i1][j0]),
+            &O::op(&grid[i0][j1], &grid[i1][j1]),
         ))
     }
 
@@ -274,7 +274,7 @@ impl<O: Op> From<Vec<Vec<O::Value>>> for SparseTable2d<O> {
                 .map(|row| {
                     row.iter()
                         .zip(&row[j..])
-                        .map(|(a, b)| O::mul(a, b))
+                        .map(|(a, b)| O::op(a, b))
                         .collect::<Vec<_>>()
                 })
                 .collect();
@@ -292,7 +292,7 @@ impl<O: Op> From<Vec<Vec<O::Value>>> for SparseTable2d<O> {
                         .map(|(a, b)| {
                             a.iter()
                                 .zip(b)
-                                .map(|(a, b)| O::mul(a, b))
+                                .map(|(a, b)| O::op(a, b))
                                 .collect::<Vec<_>>()
                         })
                         .collect::<Vec<_>>()
@@ -341,7 +341,7 @@ mod tests {
     impl Op for O {
         type Value = u64;
 
-        fn mul(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
+        fn op(lhs: &Self::Value, rhs: &Self::Value) -> Self::Value {
             (*lhs).max(*rhs)
         }
     }
@@ -355,7 +355,7 @@ mod tests {
             let vec = (0..n)
                 .map(|_| rng.gen_range(0..u64::MAX))
                 .collect::<Vec<_>>();
-            let st = SparseTable::<O>::clone_from_slice(&vec);
+            let st = SparseTable::<O>::from_slice(&vec);
             for _ in 0..q {
                 let range = random_range(&mut rng, n);
                 let expected = vec[range.clone()].iter().copied().max();
@@ -379,7 +379,7 @@ mod tests {
                         .collect::<Vec<_>>()
                 })
                 .collect::<Vec<_>>();
-            let st = SparseTable2d::<O>::clone_from_slice(&vec);
+            let st = SparseTable2d::<O>::from_slice(&vec);
             for _ in 0..q {
                 let i = random_range(&mut rng, h);
                 let j = random_range(&mut rng, w);

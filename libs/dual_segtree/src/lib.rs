@@ -7,10 +7,10 @@
 //!
 //! # 仕様
 //!
-//! [`Ops`] トレイトで右作用の演算を定義する。
+//! [`Op`] トレイトで右作用の演算を定義する。
 //!
-//! - 単位元: [`Ops::identity`]
-//! - 結合律 $\mathrm{op}(\mathrm{op}(x, y), z) = \mathrm{op}(x, \mathrm{op}(y, z))$ を満たす右作用: [`Ops::op`]
+//! - 単位元: [`Op::identity`]
+//! - 結合律 $\mathrm{op}(\mathrm{op}(x, y), z) = \mathrm{op}(x, \mathrm{op}(y, z))$ を満たす右作用: [`Op::op`]
 //!
 //! [`DualSegtree::apply`] は区間 $[l, r)$ の各要素 $v$ を $\mathrm{op}(v, x)$ に置き換える。
 //!
@@ -18,11 +18,11 @@
 //!
 //! ```
 //! use dual_segtree::DualSegtree;
-//! use dual_segtree::Ops;
+//! use dual_segtree::Op;
 //!
 //! // 区間加算・1 点取得（右作用なので op(v, x) = v + x）
 //! enum Add {}
-//! impl Ops for Add {
+//! impl Op for Add {
 //!     type Value = i32;
 //!     fn op(lhs: i32, rhs: i32) -> i32 {
 //!         lhs + rhs
@@ -32,14 +32,14 @@
 //!     }
 //! }
 //!
-//! let mut seg = DualSegtree::<Add>::new(vec![0, 0, 0]);
+//! let mut seg = DualSegtree::<Add>::from_values(vec![0, 0, 0]);
 //! seg.apply(0..2, &10); // [0, 2) に +10
 //! assert_eq!(seg.collect_vec(), vec![10, 10, 0]);
 //! ```
 //!
 //! # 計算量
 //!
-//! - 構築（[`DualSegtree::new`]）: $O(n)$
+//! - 構築（[`DualSegtree::from_values`]）: $O(n)$
 //! - 区間作用（[`DualSegtree::apply`]）: $O(\log n)$
 //! - 1 点取得（[`DualSegtree::get`], [`DualSegtree::get_mut`]）: $O(\log n)$
 //! - 全体展開（[`DualSegtree::collect_vec`], [`DualSegtree::into_vec`]）: $O(n)$
@@ -54,13 +54,13 @@ use std::ops::RangeBounds;
 
 /// 双対セグメント木本体。長さ $n$ の配列を管理する。
 #[derive(Clone, Default, PartialEq)]
-pub struct DualSegtree<O: Ops> {
+pub struct DualSegtree<O: Op> {
     table: Vec<O::Value>,
 }
 /// 双対セグメント木が扱う右作用の演算。
 ///
 /// [`op`](Self::op) は結合律 $\mathrm{op}(\mathrm{op}(x, y), z) = \mathrm{op}(x, \mathrm{op}(y, z))$ を満たす必要がある。
-pub trait Ops {
+pub trait Op {
     /// 値型。
     type Value: Clone + Debug;
     /// 右作用 $\mathrm{op}(lhs, rhs)$：`lhs` に `rhs` を右から作用させた結果。
@@ -72,9 +72,9 @@ pub trait Ops {
         *lhs = Self::op(lhs.clone(), rhs);
     }
 }
-impl<O: Ops> DualSegtree<O> {
+impl<O: Op> DualSegtree<O> {
     /// 長さ $n$ の [`ExactSizeIterator`] から構築する。各要素の初期値をそのまま並べる。
-    pub fn new<
+    pub fn from_values<
         T: IntoIterator<IntoIter = I, Item = O::Value>,
         I: ExactSizeIterator<Item = O::Value>,
     >(
@@ -105,9 +105,9 @@ impl<O: Ops> DualSegtree<O> {
     ///
     /// ```
     /// use dual_segtree::DualSegtree;
-    /// use dual_segtree::Ops;
+    /// use dual_segtree::Op;
     /// enum Add {}
-    /// impl Ops for Add {
+    /// impl Op for Add {
     ///     type Value = i32;
     ///     fn op(lhs: i32, rhs: i32) -> i32 {
     ///         lhs + rhs
@@ -116,7 +116,7 @@ impl<O: Ops> DualSegtree<O> {
     ///         0
     ///     }
     /// }
-    /// let mut seg = DualSegtree::<Add>::new(vec![1, 2, 3]);
+    /// let mut seg = DualSegtree::<Add>::from_values(vec![1, 2, 3]);
     /// seg.apply(1..3, &10);
     /// assert_eq!(seg.collect_vec(), vec![1, 12, 13]);
     /// ```
@@ -213,7 +213,7 @@ impl<O: Ops> DualSegtree<O> {
         res[self.len()..].to_vec()
     }
 }
-fn update_all<O: Ops>(a: &mut [O::Value]) {
+fn update_all<O: Op>(a: &mut [O::Value]) {
     (0..a.len() / 2).for_each(|i| {
         let x = replace(&mut a[i], O::identity());
         a[2 * i..2 * i + 2]
@@ -222,7 +222,7 @@ fn update_all<O: Ops>(a: &mut [O::Value]) {
     });
 }
 // フォーマット
-impl<O: Ops> Debug for DualSegtree<O> {
+impl<O: Op> Debug for DualSegtree<O> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         self.silent_collect().fmt(f)
     }
@@ -268,12 +268,12 @@ fn slice_end_index_overflow_fail() -> ! {
 ////////////////////////////////////////////////////////////////////////////////
 // 変換
 ////////////////////////////////////////////////////////////////////////////////
-impl<O: Ops> From<Vec<O::Value>> for DualSegtree<O> {
+impl<O: Op> From<Vec<O::Value>> for DualSegtree<O> {
     fn from(v: Vec<O::Value>) -> Self {
-        Self::new(v)
+        Self::from_values(v)
     }
 }
-impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
+impl<O: Op> FromIterator<O::Value> for DualSegtree<O> {
     fn from_iter<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
         let v = iter.into_iter().collect::<VecDeque<_>>();
         Self {
@@ -285,7 +285,7 @@ impl<O: Ops> FromIterator<O::Value> for DualSegtree<O> {
 #[cfg(test)]
 mod tests {
     use super::DualSegtree;
-    use super::Ops;
+    use super::Op;
     use rand::prelude::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
@@ -294,10 +294,10 @@ mod tests {
     use std::ops::Range;
 
     #[derive(Clone, Debug, Default, Hash, PartialEq)]
-    struct Brute<O: Ops> {
+    struct Brute<O: Op> {
         table: Vec<O::Value>,
     }
-    impl<O: Ops> Brute<O> {
+    impl<O: Op> Brute<O> {
         fn new<T: IntoIterator<Item = O::Value>>(iter: T) -> Self {
             Self {
                 table: iter.into_iter().collect::<Vec<_>>(),
@@ -321,7 +321,7 @@ mod tests {
     #[test]
     fn test_dual_segtree() {
         enum O {}
-        impl Ops for O {
+        impl Op for O {
             type Value = String;
 
             fn op(lhs: Self::Value, rhs: Self::Value) -> Self::Value {
@@ -339,7 +339,7 @@ mod tests {
             let vec = repeat_with(|| new_value(&mut rng))
                 .take(n)
                 .collect::<Vec<_>>();
-            let mut seg = DualSegtree::<O>::new(vec.iter().cloned());
+            let mut seg = DualSegtree::<O>::from_values(vec.iter().cloned());
             let mut brute = Brute::<O>::new(vec.iter().cloned());
             for _ in 0..20 {
                 match rng.gen_range(0..3) {
