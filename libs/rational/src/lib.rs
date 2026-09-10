@@ -88,7 +88,7 @@ impl<T: Signed> Rational<T> {
     ///
     /// $O(\log(\min(|\mathrm{num}|, |\mathrm{den}|)))$
     pub fn new(num: T, den: T) -> Self {
-        assert_ne!(den, T::zero(), "分母 0 はだめです。: {:?}/{:?}", &num, &den);
+        assert_ne!(den, T::ZERO, "分母 0 はだめです。: {:?}/{:?}", &num, &den);
         let g = gcd(num, den).generic_abs() * den.generic_signum();
         Self(num / g, den / g)
     }
@@ -158,7 +158,7 @@ impl<T: Signed> PartialOrd for Rational<T> {
 /// ```
 impl<T: Signed> Debug for Rational<T> {
     fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        if self.1 == T::one() {
+        if self.1 == T::ONE {
             write!(f, "{:?}", self.0)
         } else {
             write!(f, "{:?}/{:?}", self.0, self.1)
@@ -194,7 +194,7 @@ impl<T: Signed> FromStr for Rational<T> {
             Some(x) => x.parse::<T>()?,
         };
         let den = match s.next() {
-            None => T::one(),
+            None => T::ONE,
             Some(x) => x.parse()?,
         };
         assert!(
@@ -231,7 +231,7 @@ impl<T: Signed> DivAssign for Rational<T> {
     fn div_assign(&mut self, rhs: Self) {
         assert_ne!(
             rhs.0,
-            T::zero(),
+            T::ZERO,
             "有理数の 0 除算はだめです。: self = {self:?}, rhs = {rhs:?}"
         );
         *self = Self::new(self.0 * rhs.1, self.1 * rhs.0);
@@ -248,25 +248,25 @@ impl<T: Signed> Neg for Rational<T> {
 /// $0$ を単位元として畳み込み和を計算する。
 impl<T: Signed> Sum for Rational<T> {
     fn sum<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self(T::zero(), T::one()), Add::add)
+        iter.fold(Self(T::ZERO, T::ONE), Add::add)
     }
 }
 /// $1$ を単位元として畳み込み積を計算する。
 impl<T: Signed> Product for Rational<T> {
     fn product<I: Iterator<Item = Self>>(iter: I) -> Self {
-        iter.fold(Self(T::one(), T::one()), Mul::mul)
+        iter.fold(Self(T::ONE, T::ONE), Mul::mul)
     }
 }
 /// $0$ を単位元として畳み込み和を計算する（参照イテレータ版）。
 impl<'a, T: 'a + Signed> Sum<&'a Self> for Rational<T> {
     fn sum<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Self(T::zero(), T::one()), Add::add)
+        iter.fold(Self(T::ZERO, T::ONE), Add::add)
     }
 }
 /// $1$ を単位元として畳み込み積を計算する（参照イテレータ版）。
 impl<'a, T: 'a + Signed> Product<&'a Self> for Rational<T> {
     fn product<I: Iterator<Item = &'a Self>>(iter: I) -> Self {
-        iter.fold(Self(T::one(), T::one()), Mul::mul)
+        iter.fold(Self(T::ONE, T::ONE), Mul::mul)
     }
 }
 
@@ -297,9 +297,9 @@ pub trait Signed:
     + Ord
 {
     /// 加法単位元 $0$。
-    fn zero() -> Self;
+    const ZERO: Self;
     /// 乗法単位元 $1$。
-    fn one() -> Self;
+    const ONE: Self;
     /// 絶対値 $|x|$。
     fn generic_abs(self) -> Self;
     /// 符号 $\operatorname{sgn}(x) \in \{-1, 0, 1\}$。
@@ -308,8 +308,8 @@ pub trait Signed:
 macro_rules! impl_signed {
     ($($T:ty),* $(,)?) => {$(
         impl Signed for $T {
-            fn zero() -> Self { 0 }
-            fn one() -> Self { 1 }
+            const ZERO: Self = 0;
+            const ONE: Self = 1;
             fn generic_abs(self) -> Self { self.abs() }
             fn generic_signum(self) -> Self { self.signum() }
         }
@@ -359,7 +359,7 @@ fn gcd<T: Signed>(mut x: T, mut y: T) -> T {
     if x < y {
         swap(&mut x, &mut y);
     }
-    while y != T::zero() {
+    while y != T::ZERO {
         x %= y;
         swap(&mut x, &mut y);
     }

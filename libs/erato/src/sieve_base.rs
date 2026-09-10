@@ -41,7 +41,7 @@ impl<S: SieveKind> SieveBase<S> {
     }
 
     pub fn is_prime<T: Int>(&mut self, x: T) -> bool {
-        assert!(T::zero() <= x);
+        assert!(T::ZERO <= x);
         let x = x.as_usize();
         if self.sieve.len() <= x {
             self.extend(2 * (x + 1));
@@ -74,7 +74,7 @@ impl SieveBase<sieve_kind::Boolean> {
         &mut self,
         n: T,
     ) -> PrimeFactorsByTrialDivision<'_, T> {
-        assert!(T::zero() < n);
+        assert!(T::ZERO < n);
         let mut prime_numbers = self.prime_numbers();
         PrimeFactorsByTrialDivision {
             p: prime_numbers.next().unwrap(),
@@ -130,10 +130,10 @@ impl<T: Int> Iterator for PrimeFactorsByTrialDivision<'_, T> {
             p,
             n,
         } = self;
-        if *n == T::one() {
+        if *n == T::ONE {
             None
         } else {
-            while *n % *p != T::zero() {
+            while *n % *p != T::ZERO {
                 if *n <= *p * *p {
                     *p = *n;
                     break;
@@ -153,7 +153,7 @@ pub struct PrimeFactorsByLookup<'a, T: Int> {
 }
 impl SieveBase<sieve_kind::Usize> {
     pub fn prime_factors_by_lookup<T: Int>(&mut self, n: T) -> PrimeFactorsByLookup<'_, T> {
-        assert!(T::zero() < n);
+        assert!(T::ZERO < n);
         PrimeFactorsByLookup { sieve: self, n }
     }
 
@@ -181,7 +181,7 @@ impl<T: Int> Iterator for PrimeFactorsByLookup<'_, T> {
 
     fn next(&mut self) -> Option<Self::Item> {
         let Self { sieve, n } = self;
-        if *n == T::one() {
+        if *n == T::ONE {
             None
         } else {
             let p = sieve.lpd(*n);
