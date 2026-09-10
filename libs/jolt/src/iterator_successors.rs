@@ -14,7 +14,7 @@ pub trait IteratorSuccessors: Iterator {
     /// # 例
     ///
     /// ```
-    /// # use riff::IteratorSuccessors;
+    /// # use jolt::IteratorSuccessors;
     /// let a = (1..=3)
     ///     .successors(Some([0]), |x, &[y]| Some([x + y]))
     ///     .collect::<Vec<_>>();

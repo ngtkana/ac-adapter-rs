@@ -11,7 +11,7 @@ use std::cmp::Ordering::Less;
 /// # 例
 ///
 /// ```
-/// use riff::SliceBinarySearch;
+/// use jolt::SliceBinarySearch;
 /// let a = [10, 12];
 /// assert_eq!(a.lower_bound(&11), 1); // 11 以上が現れる最初の位置
 /// assert_eq!(a.upper_bound(&10), 1); // 10 より大きい値が現れる最初の位置

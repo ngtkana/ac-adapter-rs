@@ -19,7 +19,7 @@ unsafe impl<T: Sync + Send, F: Send> Sync for LazyLock<T, F> {}
 /// # 例
 ///
 /// ```
-/// use riff::LazyLock;
+/// use jolt::LazyLock;
 /// let lock = LazyLock::new(|| 1 + 2);
 /// assert_eq!(*lock, 3);
 /// ```

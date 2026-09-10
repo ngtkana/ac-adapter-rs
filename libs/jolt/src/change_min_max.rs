@@ -7,7 +7,7 @@ pub trait ChangeMinMax: PartialOrd + Sized {
     /// # 例
     ///
     /// ```
-    /// use riff::ChangeMinMax;
+    /// use jolt::ChangeMinMax;
     /// let mut x = 5;
     /// x.change_min(3);
     /// assert_eq!(x, 3);
@@ -25,7 +25,7 @@ pub trait ChangeMinMax: PartialOrd + Sized {
     /// # 例
     ///
     /// ```
-    /// use riff::ChangeMinMax;
+    /// use jolt::ChangeMinMax;
     /// let mut x = 5;
     /// x.change_max(10);
     /// assert_eq!(x, 10);
