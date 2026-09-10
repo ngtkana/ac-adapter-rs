@@ -238,10 +238,10 @@ a:focus-visible,
   color: var(--color-text-quaternary);
 }
 
-/* hover/selected 時は背景が濃くなりコントラストが下がるため、視認性を保つ濃さに戻す */
+/* hover/selected 時は背景が濃くなりコントラストが下がるため、WCAG AA(4.5:1)を満たす濃さに戻す */
 .catalog-item:hover .desc,
 .catalog-item.selected .desc {
-  color: var(--color-text-tertiary);
+  color: var(--color-text-secondary);
 }
 
 .catalog-main {
