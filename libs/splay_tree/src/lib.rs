@@ -17,7 +17,7 @@
 //!
 //! 主な操作：
 //!
-//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete): 添字を指定した挿入・削除
+//! - [`insert`](SplayTree::insert), [`remove`](SplayTree::remove): 添字を指定した挿入・削除
 //! - [`reverse`](SplayTree::reverse): 区間 $[l, r)$ の反転
 //! - [`act`](SplayTree::act): 区間 $[l, r)$ への作用の適用
 //! - [`fold`](SplayTree::fold): 区間 $[l, r)$ の集約値の取得
@@ -53,7 +53,7 @@
 //!
 //! # 計算量
 //!
-//! - [`insert`](SplayTree::insert), [`delete`](SplayTree::delete), [`get`](SplayTree::get), [`entry`](SplayTree::entry): ならし $O(\log n)$
+//! - [`insert`](SplayTree::insert), [`remove`](SplayTree::remove), [`get`](SplayTree::get), [`entry`](SplayTree::entry): ならし $O(\log n)$
 //! - [`reverse`](SplayTree::reverse), [`act`](SplayTree::act), [`fold`](SplayTree::fold): ならし $O(\log n)$
 //! - [`split_off`](SplayTree::split_off), [`append`](SplayTree::append): ならし $O(\log n)$
 
@@ -71,7 +71,7 @@ mod node;
 ///
 /// # APIs
 ///
-/// insert, delete, reverse, act, fold
+/// insert, remove, reverse, act, fold
 ///
 /// # 提出 (3051 ms)
 ///
@@ -320,10 +320,10 @@ impl<O: LazyOps> SplayTree<O> {
     ///     .collect::<SplayTree<Nop<i32>>>();
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 11, 12]);
     ///
-    /// splay.delete(1);
+    /// splay.remove(1);
     /// assert_eq!(splay.iter().copied().collect::<Vec<_>>(), vec![10, 12]);
     /// ```
-    pub fn delete(&mut self, at: usize) -> O::Value {
+    pub fn remove(&mut self, at: usize) -> O::Value {
         if self.len() <= at {
             splay_tree_index_out_of_range_fail(at, self.len());
         }

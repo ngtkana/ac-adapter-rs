@@ -111,7 +111,7 @@ fn test_hash() {
 fn test_len() {
     let mut splay = (0..10).collect::<SplayTree<Nop<i32>>>();
     assert_eq!(splay.len(), 10);
-    splay.delete(3);
+    splay.remove(3);
     assert_eq!(splay.len(), 9);
     splay.insert(4, 42);
     assert_eq!(splay.len(), 10);
@@ -129,7 +129,7 @@ fn test_entry() {
 fn test_fold_all() {
     let mut splay = (0..5).collect::<SplayTree<I32Add>>();
     assert_eq!(splay.fold(..).unwrap(), 10);
-    splay.delete(3);
+    splay.remove(3);
     assert_eq!(splay.fold(..).unwrap(), 7);
     splay.insert(4, 12);
     assert_eq!(splay.fold(..).unwrap(), 19);
