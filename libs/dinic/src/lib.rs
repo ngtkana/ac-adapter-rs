@@ -97,10 +97,6 @@ where
     ///
     /// `from, to < n`、`cap >= 0` が前提。
     ///
-    /// # 計算量
-    ///
-    /// $O(1)$ 償却。
-    ///
     /// # 例
     ///
     /// ```
@@ -110,6 +106,10 @@ where
     /// let key = dinic.add_edge(0, 1, 10);
     /// assert_eq!(dinic.get_edge(key).cap, 10);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(1)$ 償却。
     pub fn add_edge(&mut self, from: usize, to: usize, cap: T) -> EdgeKey {
         assert!(
             from < self.res.len() && to < self.res.len(),
@@ -152,10 +152,6 @@ where
     ///
     /// `s != t` が前提。戻り値は `T` で表現できる範囲に収まる必要がある。
     ///
-    /// # 計算量
-    ///
-    /// $O(n^2 m)$。全ての容量が1なら $O(\min(n^{2/3} m, m^{3/2}))$。
-    ///
     /// # 例
     ///
     /// ```
@@ -167,6 +163,10 @@ where
     /// dinic.add_edge(0, 2, 20);
     /// assert_eq!(dinic.flow(0, 2), 30);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(n^2 m)$。全ての容量が1なら $O(\min(n^{2/3} m, m^{3/2}))$。
     pub fn flow(&mut self, s: usize, t: usize) -> T {
         assert!(
             s < self.res.len() && t < self.res.len(),
@@ -184,10 +184,6 @@ where
     ///
     /// `s != t` が前提。
     ///
-    /// # 計算量
-    ///
-    /// [`flow`](Dinic::flow) と同じ。
-    ///
     /// # 例
     ///
     /// ```
@@ -199,6 +195,10 @@ where
     /// dinic.add_edge(0, 2, 20);
     /// assert_eq!(dinic.flow_with_limit(0, 2, 28), 28);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// [`flow`](Dinic::flow) と同じ。
     pub fn flow_with_limit(&mut self, s: usize, t: usize, flow_with_limit: T) -> T {
         assert!(
             s < self.res.len() && t < self.res.len(),
@@ -379,10 +379,6 @@ where
     ///
     /// `T::ZERO <= new_flow <= new_cap` が前提。
     ///
-    /// # 計算量
-    ///
-    /// $O(1)$。
-    ///
     /// # 例
     ///
     /// ```
@@ -397,6 +393,10 @@ where
     /// assert_eq!(dinic.get_edge(e).cap, 5);
     /// assert_eq!(dinic.get_edge(e).flow, 5);
     /// ```
+    ///
+    /// # 計算量
+    ///
+    /// $O(1)$。
     pub fn change_edge(&mut self, edge_key: EdgeKey, new_cap: T, new_flow: T) {
         let EdgeKey(edge_key) = edge_key;
         assert!(
