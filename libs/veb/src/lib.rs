@@ -4,7 +4,7 @@
 //! van Emde Boas 木として再帰的に管理する。どのチャンクが空でないかは
 //! 別の van Emde Boas 木（summary）で管理し、目的の値が属するチャンク内に
 //! 答えがなければ summary を辿って次の非空チャンクへ飛ぶ。この再帰により
-//! 容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、`succ`/`pred`/`insert`/`remove`
+//! 容量 $n$ の木の深さは $O(\log \log n)$ に抑えられ、`successor_excluding`/`predecessor_excluding`/`insert`/`remove`
 //! もすべて同じ計算量で行える。最小値・最大値は各ノードにキャッシュしておくことで
 //! `min`/`max` を $O(1)$ で返す。ハッシュマップ実装のため、事前に確保するのは
 //! 容量 $n$ の数値のみで、実メモリは要素数に応じて増える。
@@ -17,8 +17,8 @@
 //!   - `remove(x)`: $S \leftarrow S \setminus \{x\}$、存在したら `true`
 //!   - `contains(x)`: $x \in S$
 //!   - `min()`, `max()`: $\min(S)$, $\max(S)$（空なら `None`）
-//!   - `succ(x)`: $x$ より大きい最小要素、`pred(x)`: $x$ より小さい最大要素
-//!   - `pred_eq(x)`: $x$ 以下の最大要素
+//!   - `successor_excluding(x)`: $x$ より大きい最小要素、`predecessor_excluding(x)`: $x$ より小さい最大要素
+//!   - `predecessor_including(x)`: $x$ 以下の最大要素
 //!   - `len()`, `is_empty()`, `collect()`: 要素数、空判定、昇順の [`Vec`] 化
 //! - [`VebMap`][]`<V>`: [`VebSet`] にキーごとの値 `V` を付加したマップ
 //!   - 各操作はキー用の `VebSet` と値の `HashMap` を同期して更新する
@@ -38,8 +38,8 @@
 //! assert_eq!(veb.collect(), vec![12, 34, 56, 78]);
 //! assert_eq!(veb.min(), Some(12));
 //! assert_eq!(veb.max(), Some(78));
-//! assert_eq!(veb.succ(34), Some(56));
-//! assert_eq!(veb.pred(34), Some(12));
+//! assert_eq!(veb.successor_excluding(34), Some(56));
+//! assert_eq!(veb.predecessor_excluding(34), Some(12));
 //! assert_eq!(veb.contains(34), true);
 //! assert_eq!(veb.contains(35), false);
 //! assert_eq!(veb.len(), 4);
@@ -49,7 +49,7 @@
 //!
 //! $n$ を容量とする。
 //!
-//! - `insert`, `remove`, `contains`, `succ`, `pred`, `pred_eq`: $O(\log \log n)$
+//! - `insert`, `remove`, `contains`, `successor_excluding`, `predecessor_excluding`, `predecessor_including`: $O(\log \log n)$
 //! - `min`, `max`, `len`, `is_empty`: $O(1)$
 //! - `collect`: $O(|S| \log \log n)$
 
@@ -248,13 +248,13 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_key(34), Some(56));
-    /// assert_eq!(veb.succ_value(34), Some(&"baz"));
-    /// assert_eq!(veb.succ(34), Some((56, &"baz")));
-    /// assert_eq!(veb.succ(78), None);
+    /// assert_eq!(veb.successor_excluding_key(34), Some(56));
+    /// assert_eq!(veb.successor_excluding_value(34), Some(&"baz"));
+    /// assert_eq!(veb.successor_excluding(34), Some((56, &"baz")));
+    /// assert_eq!(veb.successor_excluding(78), None);
     /// ```
-    pub fn succ_key(&self, i: usize) -> Option<usize> {
-        self.veb.succ(i)
+    pub fn successor_excluding_key(&self, i: usize) -> Option<usize> {
+        self.veb.successor_excluding(i)
     }
 
     /// $i$ より大きい最小キーに対応する値を返す。
@@ -263,11 +263,13 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_value(34), Some(&"baz"));
-    /// assert_eq!(veb.succ_value(78), None);
+    /// assert_eq!(veb.successor_excluding_value(34), Some(&"baz"));
+    /// assert_eq!(veb.successor_excluding_value(78), None);
     /// ```
-    pub fn succ_value(&self, i: usize) -> Option<&V> {
-        self.veb.succ(i).and_then(|i| self.map.get(&i))
+    pub fn successor_excluding_value(&self, i: usize) -> Option<&V> {
+        self.veb
+            .successor_excluding(i)
+            .and_then(|i| self.map.get(&i))
     }
 
     /// $i$ より大きい最小キーとその値の組を返す。
@@ -276,12 +278,12 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ(34), Some((56, &"baz")));
-    /// assert_eq!(veb.succ(78), None);
+    /// assert_eq!(veb.successor_excluding(34), Some((56, &"baz")));
+    /// assert_eq!(veb.successor_excluding(78), None);
     /// ```
-    pub fn succ(&self, i: usize) -> Option<(usize, &V)> {
+    pub fn successor_excluding(&self, i: usize) -> Option<(usize, &V)> {
         self.veb
-            .succ(i)
+            .successor_excluding(i)
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
@@ -291,14 +293,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq_key(34), Some(34));
-    /// assert_eq!(veb.succ_eq_key(35), Some(56));
+    /// assert_eq!(veb.successor_including_key(34), Some(34));
+    /// assert_eq!(veb.successor_including_key(35), Some(56));
     /// ```
-    pub fn succ_eq_key(&self, i: usize) -> Option<usize> {
+    pub fn successor_including_key(&self, i: usize) -> Option<usize> {
         if self.contains_key(i) {
             return Some(i);
         }
-        self.succ_key(i)
+        self.successor_excluding_key(i)
     }
 
     /// $i$ 以上の最小キーに対応する値を返す。
@@ -307,14 +309,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq_value(34), Some(&"bar"));
-    /// assert_eq!(veb.succ_eq_value(35), Some(&"baz"));
+    /// assert_eq!(veb.successor_including_value(34), Some(&"bar"));
+    /// assert_eq!(veb.successor_including_value(35), Some(&"baz"));
     /// ```
-    pub fn succ_eq_value(&self, i: usize) -> Option<&V> {
+    pub fn successor_including_value(&self, i: usize) -> Option<&V> {
         if let Some(v) = self.get(i) {
             return Some(v);
         }
-        self.succ_value(i)
+        self.successor_excluding_value(i)
     }
 
     /// $i$ 以上の最小キーとその値の組を返す。
@@ -323,14 +325,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.succ_eq(34), Some((34, &"bar")));
-    /// assert_eq!(veb.succ_eq(35), Some((56, &"baz")));
+    /// assert_eq!(veb.successor_including(34), Some((34, &"bar")));
+    /// assert_eq!(veb.successor_including(35), Some((56, &"baz")));
     /// ```
-    pub fn succ_eq(&self, i: usize) -> Option<(usize, &V)> {
+    pub fn successor_including(&self, i: usize) -> Option<(usize, &V)> {
         if let Some(v) = self.get(i) {
             return Some((i, v));
         }
-        self.succ(i)
+        self.successor_excluding(i)
     }
 
     /// $i$ より小さい最大キーを返す。
@@ -339,13 +341,13 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_key(34), Some(12));
-    /// assert_eq!(veb.pred_value(34), Some(&"foo"));
-    /// assert_eq!(veb.pred(34), Some((12, &"foo")));
-    /// assert_eq!(veb.pred(12), None);
+    /// assert_eq!(veb.predecessor_excluding_key(34), Some(12));
+    /// assert_eq!(veb.predecessor_excluding_value(34), Some(&"foo"));
+    /// assert_eq!(veb.predecessor_excluding(34), Some((12, &"foo")));
+    /// assert_eq!(veb.predecessor_excluding(12), None);
     /// ```
-    pub fn pred_key(&self, i: usize) -> Option<usize> {
-        self.veb.pred(i)
+    pub fn predecessor_excluding_key(&self, i: usize) -> Option<usize> {
+        self.veb.predecessor_excluding(i)
     }
 
     /// $i$ より小さい最大キーに対応する値を返す。
@@ -354,11 +356,13 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_value(34), Some(&"foo"));
-    /// assert_eq!(veb.pred_value(12), None);
+    /// assert_eq!(veb.predecessor_excluding_value(34), Some(&"foo"));
+    /// assert_eq!(veb.predecessor_excluding_value(12), None);
     /// ```
-    pub fn pred_value(&self, i: usize) -> Option<&V> {
-        self.veb.pred(i).and_then(|i| self.map.get(&i))
+    pub fn predecessor_excluding_value(&self, i: usize) -> Option<&V> {
+        self.veb
+            .predecessor_excluding(i)
+            .and_then(|i| self.map.get(&i))
     }
 
     /// $i$ より小さい最大キーとその値の組を返す。
@@ -367,12 +371,12 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred(34), Some((12, &"foo")));
-    /// assert_eq!(veb.pred(12), None);
+    /// assert_eq!(veb.predecessor_excluding(34), Some((12, &"foo")));
+    /// assert_eq!(veb.predecessor_excluding(12), None);
     /// ```
-    pub fn pred(&self, i: usize) -> Option<(usize, &V)> {
+    pub fn predecessor_excluding(&self, i: usize) -> Option<(usize, &V)> {
         self.veb
-            .pred(i)
+            .predecessor_excluding(i)
             .and_then(|i| self.map.get(&i).map(|v| (i, v)))
     }
 
@@ -382,14 +386,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq_key(34), Some(34));
-    /// assert_eq!(veb.pred_eq_key(33), Some(12));
+    /// assert_eq!(veb.predecessor_including_key(34), Some(34));
+    /// assert_eq!(veb.predecessor_including_key(33), Some(12));
     /// ```
-    pub fn pred_eq_key(&self, i: usize) -> Option<usize> {
+    pub fn predecessor_including_key(&self, i: usize) -> Option<usize> {
         if self.contains_key(i) {
             return Some(i);
         }
-        self.pred_key(i)
+        self.predecessor_excluding_key(i)
     }
 
     /// $i$ 以下の最大キーに対応する値を返す。
@@ -398,14 +402,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq_value(34), Some(&"bar"));
-    /// assert_eq!(veb.pred_eq_value(33), Some(&"foo"));
+    /// assert_eq!(veb.predecessor_including_value(34), Some(&"bar"));
+    /// assert_eq!(veb.predecessor_including_value(33), Some(&"foo"));
     /// ```
-    pub fn pred_eq_value(&self, i: usize) -> Option<&V> {
+    pub fn predecessor_including_value(&self, i: usize) -> Option<&V> {
         if let Some(v) = self.get(i) {
             return Some(v);
         }
-        self.pred_value(i)
+        self.predecessor_excluding_value(i)
     }
 
     /// $i$ 以下の最大キーとその値の組を返す。
@@ -414,14 +418,14 @@ impl<V> VebMap<V> {
     /// ```
     /// # use veb::VebMap;
     /// let veb = VebMap::from_iter(vec![(12, "foo"), (34, "bar"), (56, "baz"), (78, "qux")]);
-    /// assert_eq!(veb.pred_eq(34), Some((34, &"bar")));
-    /// assert_eq!(veb.pred_eq(33), Some((12, &"foo")));
+    /// assert_eq!(veb.predecessor_including(34), Some((34, &"bar")));
+    /// assert_eq!(veb.predecessor_including(33), Some((12, &"foo")));
     /// ```
-    pub fn pred_eq(&self, i: usize) -> Option<(usize, &V)> {
+    pub fn predecessor_including(&self, i: usize) -> Option<(usize, &V)> {
         if let Some(v) = self.get(i) {
             return Some((i, v));
         }
-        self.pred(i)
+        self.predecessor_excluding(i)
     }
 
     /// マップの要素数 $|S|$ を返す。
@@ -741,10 +745,10 @@ impl VebSet {
     /// ```
     /// # use veb::VebSet;
     /// let veb: VebSet = vec![12, 34, 56, 78].into_iter().collect();
-    /// assert_eq!(veb.succ(34), Some(56));
-    /// assert_eq!(veb.succ(78), None);
+    /// assert_eq!(veb.successor_excluding(34), Some(56));
+    /// assert_eq!(veb.successor_excluding(78), None);
     /// ```
-    pub fn succ(&self, i: usize) -> Option<usize> {
+    pub fn successor_excluding(&self, i: usize) -> Option<usize> {
         match self {
             Self::Internal {
                 min,
@@ -763,10 +767,10 @@ impl VebSet {
                     () => multi_or_else!(
                         chunks
                             .get(&j)
-                            .and_then(|chunk| chunk.succ(k))
+                            .and_then(|chunk| chunk.successor_excluding(k))
                             .map(|k1| j * csize + k1),
                         summary
-                            .succ(j)
+                            .successor_excluding(j)
                             .map(|j1| j1 * csize + chunks[&j1].min().unwrap())
                     ),
                 }
@@ -784,10 +788,10 @@ impl VebSet {
     /// ```
     /// # use veb::VebSet;
     /// let veb: VebSet = vec![12, 34, 56, 78].into_iter().collect();
-    /// assert_eq!(veb.pred(34), Some(12));
-    /// assert_eq!(veb.pred(12), None);
+    /// assert_eq!(veb.predecessor_excluding(34), Some(12));
+    /// assert_eq!(veb.predecessor_excluding(12), None);
     /// ```
-    pub fn pred(&self, i: usize) -> Option<usize> {
+    pub fn predecessor_excluding(&self, i: usize) -> Option<usize> {
         match self {
             Self::Internal {
                 min,
@@ -805,10 +809,10 @@ impl VebSet {
                     () => multi_or_else!(
                         chunks
                             .get(&j)
-                            .and_then(|chunk| chunk.pred(k))
+                            .and_then(|chunk| chunk.predecessor_excluding(k))
                             .map(|k1| { j * csize + k1 }),
                         summary
-                            .pred(j)
+                            .predecessor_excluding(j)
                             .map(|j1| { j1 * csize + chunks[&j1].max().unwrap() }),
                         Some(*min)
                     ),
@@ -819,11 +823,11 @@ impl VebSet {
     }
 
     /// $i$ 以下の最大要素 $\max\{j \in S \mid j \le i\}$ を返す。
-    pub fn pred_eq(&self, i: usize) -> Option<usize> {
+    pub fn predecessor_including(&self, i: usize) -> Option<usize> {
         if self.contains(i) {
             return Some(i);
         }
-        self.pred(i)
+        self.predecessor_excluding(i)
     }
 
     /// 集合が指定した要素を含むなら `true` を返す。
@@ -858,7 +862,7 @@ impl VebSet {
         let mut i = self.min();
         for _ in 0..self.len() {
             result.push(i.unwrap());
-            i = self.succ(i.unwrap());
+            i = self.successor_excluding(i.unwrap());
         }
         result
     }
@@ -884,9 +888,9 @@ impl std::iter::FromIterator<usize> for VebSet {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::rngs::StdRng;
     use rand::Rng;
     use rand::SeedableRng;
+    use rand::rngs::StdRng;
     use rstest::rstest;
     use std::collections::BTreeMap;
     use std::collections::BTreeSet;
@@ -909,11 +913,15 @@ mod tests {
                 match rng.gen_range(0..5) {
                     0 => assert_eq!(veb.insert(i), set.insert(i), "insert({i})"),
                     1 => assert_eq!(veb.remove(i), set.remove(&i), "remove({i})"),
-                    2 => assert_eq!(veb.succ(i), set.range(i + 1..).next().copied(), "succ({i})"),
+                    2 => assert_eq!(
+                        veb.successor_excluding(i),
+                        set.range(i + 1..).next().copied(),
+                        "successor_excluding({i})"
+                    ),
                     3 => assert_eq!(
-                        veb.pred(i),
+                        veb.predecessor_excluding(i),
                         set.range(..i).next_back().copied(),
-                        "pred({i})"
+                        "predecessor_excluding({i})"
                     ),
                     4 => assert_eq!(veb.contains(i), set.contains(&i), "contains({i})"),
                     _ => unreachable!(),
@@ -940,14 +948,14 @@ mod tests {
                     }
                     1 => assert_eq!(veb.remove(i), map.remove(&i), "remove({i})"),
                     2 => assert_eq!(
-                        veb.succ(i),
+                        veb.successor_excluding(i),
                         map.range(i + 1..).next().map(|(&i, v)| (i, v)),
-                        "succ({i})"
+                        "successor_excluding({i})"
                     ),
                     3 => assert_eq!(
-                        veb.pred(i),
+                        veb.predecessor_excluding(i),
                         map.range(..i).next_back().map(|(&i, v)| (i, v)),
-                        "pred({i})"
+                        "predecessor_excluding({i})"
                     ),
                     4 => assert_eq!(veb.get(i), map.get(&i), "get({i})"),
                     _ => unreachable!(),
