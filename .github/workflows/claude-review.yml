@@ -23,7 +23,12 @@ jobs:
       - name: Run Claude Code Review
         uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 静的なAPIキーの代わりにWorkload Identity Federationを使う（GitHub ActionsのOIDCトークンを短期アクセストークンに交換する）。
+          # anthropic_api_key と併用すると静的キーが優先されfederationが使われなくなるため、両方を設定しないこと。
+          anthropic_federation_rule_id: fdrl_01B8UepWdqiDe43tUKaP2rbu
+          anthropic_organization_id: 797c3154-972f-4033-b7a7-b1df5629e3d4
+          anthropic_service_account_id: svac_0186LW9Ad8LRr72yMD26mNC5
+          anthropic_workspace_id: wrkspc_01CQgj6LwnfWxQcWs9dbRJUQ
           track_progress: true
           prompt: |
             REPO: ${{ github.repository }}
