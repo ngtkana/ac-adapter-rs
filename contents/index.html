@@ -44,14 +44,15 @@
     <header id="toolbar">
       <h1>AC Adapter</h1>
       <span class="subtitle">競技プログラミングのための Rust ライブラリコレクション</span>
-      <a class="toolbar-link" href="https://github.com/ngtkana/ac-adapter-rs" target="_blank">GitHub</a>
+      <a class="toolbar-link" href="https://github.com/ngtkana/ac-adapter-rs" target="_blank" rel="noopener noreferrer">GitHub <span aria-hidden="true">↗</span><span class="visually-hidden">（新しいタブで開く）</span></a>
     </header>
 
     <div id="main-layout">
-      <aside class="catalog-sidebar">
+      <aside class="catalog-sidebar" aria-label="クレート一覧">
         <div class="catalog-search">
-          <input type="text" id="search-input" placeholder="segtree / tag:string ..." />
-          <div class="hint">名前・説明・アイテム名で全文検索。<code>tag:xxx</code> でタグ絞り込み</div>
+          <label for="search-input" class="visually-hidden">クレートを検索</label>
+          <input type="text" id="search-input" placeholder="segtree / tag:string ..." aria-describedby="search-hint" />
+          <div class="hint" id="search-hint">名前・説明・アイテム名で全文検索。<code>tag:xxx</code> でタグ絞り込み</div>
         </div>
         <div class="catalog-list" id="catalog-list" tabindex="-1"></div>
       </aside>
@@ -62,7 +63,7 @@
     </div>
 
     <footer id="shortcuts-bar">
-      <span><kbd>j</kbd>/<kbd>k</kbd> 前後のクレートに移動</span>
+      <span><kbd>j</kbd>/<kbd>k</kbd>・<kbd>↑</kbd>/<kbd>↓</kbd> 前後のクレートに移動</span>
       <span><kbd>/</kbd> 検索欄にフォーカス</span>
       <span><kbd>Esc</kbd> 検索欄を離れる</span>
     </footer>

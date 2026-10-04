@@ -101,15 +101,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return chunk.replace(/\[(<code>([^<]*)<\/code>)\](\[\])?/g, (_, codeSpan, refText) => {
         const stdTarget = stdDocLinkFor(refText);
         const target = stdTarget || localTarget;
-        const attrs = stdTarget ? ' target="_blank" rel="noopener"' : '';
-        return `<a href="${target}"${attrs}>${codeSpan}</a>`;
+        const attrs = stdTarget ? ' target="_blank" rel="noopener noreferrer"' : '';
+        const newTabNote = stdTarget ? '<span class="visually-hidden">（新しいタブで開く）</span>' : '';
+        return `<a href="${target}"${attrs}>${codeSpan}${newTabNote}</a>`;
       });
     }).join('');
   }
 
+  // crate doc の見出し（h1〜）を2段下げる。ページの h1（サイト名）→ h2（クレート名）の下に来るようにする。
+  function demoteHeadings(html) {
+    return html.replace(/<(\/?)h([1-6])(?=[\s>])/g, (_, slash, level) =>
+      `<${slash}h${Math.min(6, Number(level) + 2)}`);
+  }
+
   function showDetail(crateName, crateMetadata) {
     const bodyHtml = crateMetadata.full
-      ? linkifyIntraDocRefs(crateMetadata.full, crateName)
+      ? demoteHeadings(linkifyIntraDocRefs(crateMetadata.full, crateName))
       : '<p class="placeholder">(doc comment 未整備。一覧の要約のみ)</p>';
     const summaryHtml = crateMetadata.description_html
       ? linkifyIntraDocRefs(crateMetadata.description_html, crateName)
@@ -121,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="meta-bar">
         ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}" role="button" tabindex="0">#${t}</span>`).join("")}
         <span>依存: ${crateMetadata.dependencies.length ? crateMetadata.dependencies.join(", ") : "なし"}</span>
-        <a href="rustdoc/${crateName}/index.html">rustdocはこちら →</a>
+        <a href="rustdoc/${crateName}/index.html">${crateName} の rustdoc →</a>
       </div>
       <div class="doc-body">${bodyHtml}</div>
     `;
@@ -157,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function hideMobileDetailView() {
     app.classList.remove("mobile-detail");
-    sidebar.focus();
+    (sidebar.querySelector(".catalog-item.selected") || sidebar).focus();
   }
 
   // モバイルの一覧⇔詳細切り替えをブラウザの戻る/進む操作（スワイプ等）に対応させる。
@@ -179,9 +186,22 @@ document.addEventListener('DOMContentLoaded', function () {
     else hideMobileDetailView();
   });
 
+  // 詳細表示中のクレート名。一覧の再描画（検索・タグ絞り込み）後も選択状態を復元するために保持する
+  let selectedCrate = null;
+
   function selectItem(item) {
-    document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
+    selectedCrate = item.dataset.crate;
+    const focusWasInList = sidebar.contains(document.activeElement);
+    document.querySelectorAll(".catalog-item").forEach(el => {
+      el.classList.remove("selected");
+      el.removeAttribute("aria-current");
+      el.tabIndex = -1;
+    });
     item.classList.add("selected");
+    item.setAttribute("aria-current", "true");
+    item.tabIndex = 0;
+    // j/k でリスト内を移動したときはフォーカスも追従させる
+    if (focusWasInList) item.focus({ preventScroll: true });
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
     enterDetail();
@@ -200,13 +220,26 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([crateName, crateMetadata]) => {
-        const item = document.createElement("div");
+        const item = document.createElement("button");
+        item.type = "button";
         item.className = "catalog-item";
         item.dataset.crate = crateName;
+        if (crateName === selectedCrate) {
+          item.classList.add("selected");
+          item.setAttribute("aria-current", "true");
+        }
         item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description_html || ''}</span>`;
+        // roving tabindex: 一覧全体を Tab ストップ1つにし、項目間は j/k・↑/↓ で移動する
+        item.tabIndex = crateName === selectedCrate ? 0 : -1;
         item.addEventListener("click", () => selectItem(item));
         sidebar.appendChild(item);
       });
+
+    // 選択中の項目が絞り込みで消えた（または未選択の）場合は先頭を Tab ストップにする
+    if (!sidebar.querySelector('.catalog-item[tabindex="0"]')) {
+      const first = sidebar.querySelector(".catalog-item");
+      if (first) first.tabIndex = 0;
+    }
 
     if (!sidebar.children.length) {
       sidebar.innerHTML = '<p class="placeholder">該当するライブラリが見つかりません。</p>';
@@ -214,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(sidebar);
   }
 
-  // j/k で前後のクレートに移動、/ で検索欄にフォーカス、Esc で検索欄を離れる
+  // j/k（一覧にフォーカスがあるときは ↑/↓ も）で前後のクレートに移動、/ で検索欄にフォーカス、Esc で検索欄を離れる
   document.addEventListener('keydown', (e) => {
     if (document.activeElement === searchInput) {
       if (e.key === 'Escape') searchInput.blur();
@@ -222,10 +255,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const items = Array.from(sidebar.querySelectorAll('.catalog-item'));
     if (!items.length) return;
-    if (e.key === 'j' || e.key === 'k') {
+    const arrowInList = (e.key === 'ArrowDown' || e.key === 'ArrowUp') && sidebar.contains(document.activeElement);
+    if (e.key === 'j' || e.key === 'k' || arrowInList) {
       e.preventDefault();
       const currentIndex = items.findIndex(el => el.classList.contains('selected'));
-      const step = e.key === 'j' ? 1 : -1;
+      const step = (e.key === 'j' || e.key === 'ArrowDown') ? 1 : -1;
       const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + step));
       selectItem(items[nextIndex]);
     } else if (e.key === '/') {
