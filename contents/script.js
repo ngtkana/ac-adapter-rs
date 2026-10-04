@@ -195,9 +195,11 @@ document.addEventListener('DOMContentLoaded', function () {
     document.querySelectorAll(".catalog-item").forEach(el => {
       el.classList.remove("selected");
       el.removeAttribute("aria-current");
+      el.tabIndex = -1;
     });
     item.classList.add("selected");
     item.setAttribute("aria-current", "true");
+    item.tabIndex = 0;
     // j/k でリスト内を移動したときはフォーカスも追従させる
     if (focusWasInList) item.focus({ preventScroll: true });
     item.scrollIntoView({ block: "nearest" });
@@ -227,9 +229,17 @@ document.addEventListener('DOMContentLoaded', function () {
           item.setAttribute("aria-current", "true");
         }
         item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description_html || ''}</span>`;
+        // roving tabindex: 一覧全体を Tab ストップ1つにし、項目間は j/k・↑/↓ で移動する
+        item.tabIndex = crateName === selectedCrate ? 0 : -1;
         item.addEventListener("click", () => selectItem(item));
         sidebar.appendChild(item);
       });
+
+    // 選択中の項目が絞り込みで消えた（または未選択の）場合は先頭を Tab ストップにする
+    if (!sidebar.querySelector('.catalog-item[tabindex="0"]')) {
+      const first = sidebar.querySelector(".catalog-item");
+      if (first) first.tabIndex = 0;
+    }
 
     if (!sidebar.children.length) {
       sidebar.innerHTML = '<p class="placeholder">該当するライブラリが見つかりません。</p>';
@@ -237,7 +247,7 @@ document.addEventListener('DOMContentLoaded', function () {
     renderMath(sidebar);
   }
 
-  // j/k で前後のクレートに移動、/ で検索欄にフォーカス、Esc で検索欄を離れる
+  // j/k（一覧にフォーカスがあるときは ↑/↓ も）で前後のクレートに移動、/ で検索欄にフォーカス、Esc で検索欄を離れる
   document.addEventListener('keydown', (e) => {
     if (document.activeElement === searchInput) {
       if (e.key === 'Escape') searchInput.blur();
@@ -245,10 +255,11 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     const items = Array.from(sidebar.querySelectorAll('.catalog-item'));
     if (!items.length) return;
-    if (e.key === 'j' || e.key === 'k') {
+    const arrowInList = (e.key === 'ArrowDown' || e.key === 'ArrowUp') && sidebar.contains(document.activeElement);
+    if (e.key === 'j' || e.key === 'k' || arrowInList) {
       e.preventDefault();
       const currentIndex = items.findIndex(el => el.classList.contains('selected'));
-      const step = e.key === 'j' ? 1 : -1;
+      const step = (e.key === 'j' || e.key === 'ArrowDown') ? 1 : -1;
       const nextIndex = Math.max(0, Math.min(items.length - 1, currentIndex + step));
       selectItem(items[nextIndex]);
     } else if (e.key === '/') {
