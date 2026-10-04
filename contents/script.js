@@ -164,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function hideMobileDetailView() {
     app.classList.remove("mobile-detail");
-    sidebar.focus();
+    (sidebar.querySelector(".catalog-item.selected") || sidebar).focus();
   }
 
   // モバイルの一覧⇔詳細切り替えをブラウザの戻る/進む操作（スワイプ等）に対応させる。
@@ -186,7 +186,11 @@ document.addEventListener('DOMContentLoaded', function () {
     else hideMobileDetailView();
   });
 
+  // 詳細表示中のクレート名。一覧の再描画（検索・タグ絞り込み）後も選択状態を復元するために保持する
+  let selectedCrate = null;
+
   function selectItem(item) {
+    selectedCrate = item.dataset.crate;
     const focusWasInList = sidebar.contains(document.activeElement);
     document.querySelectorAll(".catalog-item").forEach(el => {
       el.classList.remove("selected");
@@ -218,6 +222,10 @@ document.addEventListener('DOMContentLoaded', function () {
         item.type = "button";
         item.className = "catalog-item";
         item.dataset.crate = crateName;
+        if (crateName === selectedCrate) {
+          item.classList.add("selected");
+          item.setAttribute("aria-current", "true");
+        }
         item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description_html || ''}</span>`;
         item.addEventListener("click", () => selectItem(item));
         sidebar.appendChild(item);

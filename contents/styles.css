@@ -209,6 +209,10 @@ a:focus-visible {
   transition: border-color .15s, box-shadow .15s;
 }
 
+.catalog-search input::placeholder {
+  color: var(--color-text-tertiary);
+}
+
 .catalog-search .hint {
   font-size: .875rem;
   color: var(--color-text-tertiary);
@@ -220,8 +224,9 @@ a:focus-visible {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  /* 子のフォーカスリング（outline 4px + offset 2px）が切れない余白 */
+  /* 子のフォーカスリング（outline 4px + offset 2px）が切れない余白。scrollIntoView 時も確保する */
   padding: .5rem;
+  scroll-padding-block: .5rem;
 }
 
 .catalog-item {
@@ -373,6 +378,15 @@ a:focus-visible {
   padding-bottom: .25rem;
 }
 
+.doc-body h4 {
+  font-size: 1rem;
+}
+
+.doc-body h5,
+.doc-body h6 {
+  font-size: .875rem;
+}
+
 .doc-body a {
   color: var(--color-accent);
 }
@@ -486,7 +500,8 @@ a:focus-visible {
     padding: 0 .9rem;
   }
 
-  .meta-bar .tag-pill {
+  .meta-bar .tag-pill,
+  .meta-bar a {
     display: inline-flex;
     align-items: center;
     min-height: 44px;
@@ -548,7 +563,9 @@ a:focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  * {
+  *,
+  *::before,
+  *::after {
     transition: none !important;
   }
 
