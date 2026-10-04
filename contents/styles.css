@@ -7,6 +7,8 @@
   --color-bg-hover: #fff2ce;
   --color-border: #f0e0b0;
   --color-border-light: #f7edd2;
+  /* 入力欄など操作部品の境界。背景に対し 3:1 以上（WCAG 1.4.11） */
+  --color-border-strong: #8f7b55;
   --color-header-bg: #fff7e0;
   --color-accent: #8a5706;
   --color-accent-strong: #ffbf00;
@@ -15,6 +17,9 @@
   --color-danger: oklch(0.556 0.217 27);
   --code-bg: #fff7e3;
   --shadow-soft: 0 2px 10px rgba(201, 127, 10, 0.12);
+  /* フォーカス表示: DADS 準拠の二重リング（濃色 outline + 黄 #ffd43d） */
+  --color-focus-outline: #1a1a1c;
+  --color-focus-ring: #ffd43d;
 }
 
 html,
@@ -33,8 +38,8 @@ body {
 body {
   font-family: "Zen Maru Gothic", -apple-system, BlinkMacSystemFont,
     "Hiragino Kaku Gothic ProN", "Hiragino Sans", "Yu Gothic", "Segoe UI", sans-serif;
-  font-size: 15px;
-  line-height: 1.5;
+  font-size: 16px;
+  line-height: 1.7;
   color: var(--color-text-primary);
   background: var(--color-bg-primary);
 }
@@ -49,14 +54,38 @@ a {
   color: var(--color-accent);
 }
 
+/* フォーカス表示: 濃色 outline と黄リングの二重構造で、どの背景色でも 3:1 以上を確保（DADS 準拠） */
 a:focus-visible,
-.tag-pill:focus-visible,
-.catalog-item:focus-visible,
+button:focus-visible,
+input:focus-visible,
+.tag-pill:focus-visible {
+  outline: 4px solid var(--color-focus-outline);
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--color-focus-ring);
+}
+
+a:focus-visible {
+  border-radius: 4px;
+}
+
+/* スクロール領域はスクロールコンテナに outline が切られるため内側に描く */
 #catalog-main:focus-visible,
 #catalog-list:focus-visible {
-  outline: 2px solid var(--color-accent-strong);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: 4px solid var(--color-focus-outline);
+  outline-offset: -4px;
+}
+
+/* 視覚的に隠すがスクリーンリーダーには読ませる */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 ::selection {
@@ -115,7 +144,7 @@ a:focus-visible,
 }
 
 #toolbar .subtitle {
-  font-size: .78rem;
+  font-size: .875rem;
   color: var(--color-text-secondary);
   white-space: nowrap;
   overflow: hidden;
@@ -125,7 +154,7 @@ a:focus-visible,
 
 #toolbar .toolbar-link {
   margin-left: auto;
-  font-size: .8rem;
+  font-size: .875rem;
   color: var(--color-text-secondary);
   text-decoration: none;
   padding: .2rem .65rem;
@@ -153,8 +182,8 @@ a:focus-visible,
 }
 
 .catalog-sidebar {
-  width: 300px;
-  min-width: 300px;
+  width: 320px;
+  min-width: 320px;
   border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
@@ -171,23 +200,17 @@ a:focus-visible,
 .catalog-search input {
   width: 100%;
   box-sizing: border-box;
-  font-size: .8rem;
+  font-size: .875rem;
   padding: .45rem .85rem;
-  border: 1px solid var(--color-border);
+  border: 1px solid var(--color-border-strong);
   border-radius: 999px;
   background: var(--color-bg-primary);
   color: var(--color-text-primary);
-  outline: none;
   transition: border-color .15s, box-shadow .15s;
 }
 
-.catalog-search input:focus {
-  border-color: var(--color-accent-strong);
-  box-shadow: 0 0 0 3px var(--color-accent-soft);
-}
-
 .catalog-search .hint {
-  font-size: .72rem;
+  font-size: .875rem;
   color: var(--color-text-tertiary);
   margin-top: .35rem;
   padding: 0 .3rem;
@@ -197,7 +220,8 @@ a:focus-visible,
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: .3rem;
+  /* 子のフォーカスリング（outline 4px + offset 2px）が切れない余白 */
+  padding: .5rem;
 }
 
 .catalog-item {
@@ -210,6 +234,13 @@ a:focus-visible,
   overflow: hidden;
   border-radius: 10px;
   transition: background .12s, transform .12s;
+  /* <button> のデフォルトスタイルを打ち消す */
+  width: 100%;
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: left;
 }
 
 .catalog-item:hover {
@@ -219,12 +250,17 @@ a:focus-visible,
 
 .catalog-item.selected {
   background: var(--color-accent-soft);
-  box-shadow: inset 3px 0 0 var(--color-accent-strong);
+  /* 色だけに頼らず左バーでも示す。バーは背景に対し 3:1 以上 */
+  box-shadow: inset 4px 0 0 var(--color-accent);
+}
+
+.catalog-item.selected:focus-visible {
+  box-shadow: 0 0 0 2px var(--color-focus-ring), inset 4px 0 0 var(--color-accent);
 }
 
 .catalog-item .name {
   flex: 0 0 auto;
-  font-size: .85rem;
+  font-size: .875rem;
   font-weight: 600;
   color: var(--color-accent);
 }
@@ -234,7 +270,7 @@ a:focus-visible,
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: .76rem;
+  font-size: .875rem;
   color: var(--color-text-quaternary);
 }
 
@@ -264,7 +300,7 @@ a:focus-visible,
   background: var(--color-accent-soft);
   color: var(--color-accent);
   font-family: inherit;
-  font-size: .82rem;
+  font-size: .875rem;
   font-weight: 600;
   cursor: pointer;
   transition: background .15s, color .15s;
@@ -300,7 +336,7 @@ a:focus-visible,
   flex-wrap: wrap;
   align-items: center;
   gap: .4rem;
-  font-size: .8rem;
+  font-size: .875rem;
   color: var(--color-text-tertiary);
   margin-bottom: .8rem;
   padding-bottom: .6rem;
@@ -329,8 +365,9 @@ a:focus-visible,
   line-height: 1.7;
 }
 
-.doc-body h1 {
-  font-size: 1rem;
+/* crate doc の見出し（# / ##）は h2 のクレート名の下に来るよう h3 以下へ下げて描画する */
+.doc-body h3 {
+  font-size: 1.125rem;
   margin-top: 1.2rem;
   border-bottom: 1px solid var(--color-border-light);
   padding-bottom: .25rem;
@@ -344,7 +381,7 @@ a:focus-visible,
   background: var(--code-bg);
   padding: .7rem .9rem;
   border-radius: 10px;
-  font-size: .8rem;
+  font-size: .875rem;
   white-space: pre-wrap;
   overflow-x: auto;
   border: 1px solid var(--color-border-light);
@@ -360,7 +397,7 @@ a:focus-visible,
   border-collapse: separate;
   border-spacing: 0;
   margin: .8rem 0;
-  font-size: .85rem;
+  font-size: .875rem;
   border: 1px solid var(--color-border);
   border-radius: 10px;
   overflow: hidden;
@@ -395,7 +432,7 @@ a:focus-visible,
   gap: 1rem;
   padding: .35rem 1.25rem;
   border-top: 1px solid var(--color-border);
-  font-size: .72rem;
+  font-size: .875rem;
   color: var(--color-text-secondary);
   background: var(--color-header-bg);
 }
@@ -407,7 +444,7 @@ a:focus-visible,
   border-bottom-width: 2px;
   border-radius: 6px;
   font-family: inherit;
-  font-size: .9em;
+  font-size: 1em;
   background: var(--color-bg-primary);
 }
 
@@ -432,14 +469,28 @@ a:focus-visible,
   /* iOSでinput focus時に自動ズームされるのを防ぐ（16px未満だと発生） */
   .catalog-search input {
     font-size: 16px;
+    min-height: 44px;
   }
 
+  /* タップ領域は 44px 以上（DADS 推奨） */
   .catalog-item {
+    align-items: center;
+    min-height: 44px;
     padding: .55rem .7rem;
   }
 
+  #toolbar .toolbar-link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 .9rem;
+  }
+
   .meta-bar .tag-pill {
-    padding: .3rem .8rem;
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 .9rem;
   }
 
   .catalog-main {
@@ -485,10 +536,23 @@ a:focus-visible,
     --color-accent-strong: #ffbf00;
     --color-accent-soft: #4a3820;
     --code-bg: #33260f;
+    --color-border-strong: #8a7550;
+    --color-danger: #ff8a7a;
+    --color-focus-outline: #ffffff;
     --shadow-soft: 0 2px 10px rgba(0, 0, 0, 0.3);
   }
 
   body {
     background: var(--color-bg-primary);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+
+  .catalog-item:hover {
+    transform: none;
   }
 }

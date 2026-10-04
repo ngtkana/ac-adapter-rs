@@ -101,15 +101,22 @@ document.addEventListener('DOMContentLoaded', function () {
       return chunk.replace(/\[(<code>([^<]*)<\/code>)\](\[\])?/g, (_, codeSpan, refText) => {
         const stdTarget = stdDocLinkFor(refText);
         const target = stdTarget || localTarget;
-        const attrs = stdTarget ? ' target="_blank" rel="noopener"' : '';
-        return `<a href="${target}"${attrs}>${codeSpan}</a>`;
+        const attrs = stdTarget ? ' target="_blank" rel="noopener noreferrer"' : '';
+        const newTabNote = stdTarget ? '<span class="visually-hidden">（新しいタブで開く）</span>' : '';
+        return `<a href="${target}"${attrs}>${codeSpan}${newTabNote}</a>`;
       });
     }).join('');
   }
 
+  // crate doc の見出し（h1〜）を2段下げる。ページの h1（サイト名）→ h2（クレート名）の下に来るようにする。
+  function demoteHeadings(html) {
+    return html.replace(/<(\/?)h([1-6])(?=[\s>])/g, (_, slash, level) =>
+      `<${slash}h${Math.min(6, Number(level) + 2)}`);
+  }
+
   function showDetail(crateName, crateMetadata) {
     const bodyHtml = crateMetadata.full
-      ? linkifyIntraDocRefs(crateMetadata.full, crateName)
+      ? demoteHeadings(linkifyIntraDocRefs(crateMetadata.full, crateName))
       : '<p class="placeholder">(doc comment 未整備。一覧の要約のみ)</p>';
     const summaryHtml = crateMetadata.description_html
       ? linkifyIntraDocRefs(crateMetadata.description_html, crateName)
@@ -121,7 +128,7 @@ document.addEventListener('DOMContentLoaded', function () {
       <div class="meta-bar">
         ${crateMetadata.tags.map(t => `<span class="tag-pill clickable-tag" data-tag="${t}" role="button" tabindex="0">#${t}</span>`).join("")}
         <span>依存: ${crateMetadata.dependencies.length ? crateMetadata.dependencies.join(", ") : "なし"}</span>
-        <a href="rustdoc/${crateName}/index.html">rustdocはこちら →</a>
+        <a href="rustdoc/${crateName}/index.html">${crateName} の rustdoc →</a>
       </div>
       <div class="doc-body">${bodyHtml}</div>
     `;
@@ -180,8 +187,15 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   function selectItem(item) {
-    document.querySelectorAll(".catalog-item").forEach(el => el.classList.remove("selected"));
+    const focusWasInList = sidebar.contains(document.activeElement);
+    document.querySelectorAll(".catalog-item").forEach(el => {
+      el.classList.remove("selected");
+      el.removeAttribute("aria-current");
+    });
     item.classList.add("selected");
+    item.setAttribute("aria-current", "true");
+    // j/k でリスト内を移動したときはフォーカスも追従させる
+    if (focusWasInList) item.focus({ preventScroll: true });
     item.scrollIntoView({ block: "nearest" });
     showDetail(item.dataset.crate, dependencies[item.dataset.crate]);
     enterDetail();
@@ -200,7 +214,8 @@ document.addEventListener('DOMContentLoaded', function () {
       })
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([crateName, crateMetadata]) => {
-        const item = document.createElement("div");
+        const item = document.createElement("button");
+        item.type = "button";
         item.className = "catalog-item";
         item.dataset.crate = crateName;
         item.innerHTML = `<span class="name">${crateName}</span><span class="desc">${crateMetadata.description_html || ''}</span>`;
